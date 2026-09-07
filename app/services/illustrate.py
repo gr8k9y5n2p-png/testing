@@ -36,6 +36,7 @@ from app.schemas import (
     PortfolioHoldingGap,
     PortfolioHoldingIn,
     PortfolioHoldingOut,
+    PortfolioHoldingUpcoming,
     PortfolioIllustrateRequest,
     PortfolioIllustrateResponse,
     TaxRates,
@@ -468,6 +469,27 @@ def _select_holding_rows(
     return rows, warnings, stage_used
 
 
+def _holding_upcoming(
+    illustration: IllustrateResponse | None, stage_used: str | None
+) -> PortfolioHoldingUpcoming | None:
+    if illustration is None:
+        return None
+    dist = illustration.totals.distribution_dollars
+    if dist is None or dist <= 0:
+        return None
+    as_ofs = [
+        component.as_of
+        for component in illustration.components
+        if component.included_in_totals and component.as_of is not None
+    ]
+    return PortfolioHoldingUpcoming(
+        distribution_dollars=_money(dist),
+        estimated_tax=_money(illustration.totals.estimated_tax),
+        as_of=max(as_ofs) if as_ofs else None,
+        publication_stage=stage_used,
+    )
+
+
 def illustrate_portfolio(session: Session, body: PortfolioIllustrateRequest) -> PortfolioIllustrateResponse:
     holding_outs: list[PortfolioHoldingOut] = []
     gaps: list[PortfolioHoldingGap] = []
@@ -536,7 +558,7 @@ def illustrate_portfolio(session: Session, body: PortfolioIllustrateRequest) -> 
         covered_n += 1
         ident = holding.fund_identifier or (rows[0].fund_identifier if rows else None)
         family = holding.fund_family or (rows[0].fund_family if rows else None)
-        holding_outs.append(
+            holding_outs.append(
             PortfolioHoldingOut(
                 holding_index=index,
                 ticker=holding.ticker or rows[0].ticker,
@@ -546,6 +568,7 @@ def illustrate_portfolio(session: Session, body: PortfolioIllustrateRequest) -> 
                 holding_dollars=_money(dollars),
                 covered=True,
                 publication_stage_used=stage_used,
+                upcoming=_holding_upcoming(illustration, stage_used),
                 warnings=warnings,
                 illustration=illustration,
             )
@@ -587,7 +610,7 @@ def illustrate_portfolio(session: Session, body: PortfolioIllustrateRequest) -> 
 
 PORTFOLIO_COMPARE_NOTES = [
     "Deltas are proposed − current. Interactive Modules charts Current vs Proposed Allocation (center-zero bars).",
-    "Each side is a full POST /illustrate/portfolio result. Gaps and warnings stay on that side — never dropped.",
+    "Each side is a full POST /illustrate/portfolio result, including per-holding upcoming. Gaps and warnings stay on that side — never dropped.",
     "Omit periods[] for one shared snapshot. When periods[] is present, each year is a Proposed − Current pair; top-level current/proposed/deltas copy the latest period.",
     "summary dollar fields are scaled linearly to $10,000, same as POST /illustrate/compare.",
 ]

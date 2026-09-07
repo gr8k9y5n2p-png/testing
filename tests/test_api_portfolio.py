@@ -60,11 +60,22 @@ def test_portfolio_illustrate_coverage_and_gaps(client: TestClient) -> None:
     # Latest prelim is 2025 3–5% NAV on $1M → $40,000 mid, 25% tax → $10,000
     assert Decimal(amcap["illustration"]["totals"]["distribution_dollars"]) == Decimal("40000.00")
     assert Decimal(amcap["illustration"]["totals"]["estimated_tax"]) == Decimal("10000.00")
+    assert amcap["upcoming"] == {
+        "distribution_dollars": "40000.00",
+        "estimated_tax": "10000.00",
+        "as_of": "2025-09-19",
+        "publication_stage": "preliminary_estimate",
+    }
 
     cghm = next(h for h in body["holdings"] if h["ticker"] == "CGHM")
     assert cghm["covered"] is True
     assert any("nav_per_share" in w for w in cghm["warnings"])
     assert Decimal(cghm["illustration"]["totals"]["distribution_dollars"]) == Decimal("0.00")
+    assert cghm["upcoming"] is None
+
+    xyzax = next(h for h in body["holdings"] if h["ticker"] == "XYZAX")
+    assert xyzax["covered"] is False
+    assert xyzax["upcoming"] is None
 
     assert Decimal(body["totals"]["distribution_dollars"]) == Decimal("40000.00")
     assert Decimal(body["totals"]["estimated_tax"]) == Decimal("10000.00")
@@ -86,6 +97,11 @@ def test_portfolio_per_share_with_nav(client: TestClient) -> None:
     assert holding["covered"] is True
     assert Decimal(holding["illustration"]["totals"]["distribution_dollars"]) > 0
     assert holding["publication_stage_used"] == "paid"
+    assert holding["upcoming"] is not None
+    assert Decimal(holding["upcoming"]["distribution_dollars"]) == Decimal(
+        holding["illustration"]["totals"]["distribution_dollars"]
+    )
+    assert holding["upcoming"]["publication_stage"] == "paid"
 
 
 def test_portfolio_holding_requires_lookup(client: TestClient) -> None:

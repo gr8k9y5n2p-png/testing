@@ -536,6 +536,15 @@ class PortfolioHoldingGap(BaseModel):
     reason: str
 
 
+class PortfolioHoldingUpcoming(BaseModel):
+    """Convenience slice of the illustration chosen for this holding."""
+
+    distribution_dollars: Decimal
+    estimated_tax: Decimal
+    as_of: date | None = None
+    publication_stage: str | None = None
+
+
 class PortfolioHoldingOut(BaseModel):
     holding_index: int
     ticker: str | None
@@ -545,6 +554,10 @@ class PortfolioHoldingOut(BaseModel):
     holding_dollars: Decimal
     covered: bool
     publication_stage_used: str | None = None
+    upcoming: PortfolioHoldingUpcoming | None = Field(
+        default=None,
+        description="Null when uncovered/gap or the chosen illustration has no distribution dollars.",
+    )
     warnings: list[str] = Field(default_factory=list)
     illustration: IllustrateResponse | None = None
     gap_reason: str | None = None

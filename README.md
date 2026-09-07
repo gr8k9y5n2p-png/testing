@@ -240,10 +240,10 @@ curl -s -X POST http://127.0.0.1:8000/illustrate/portfolio \
     "snapshot": {
       "prefer_publication_stages": ["preliminary_estimate", "updated_estimate", "final", "paid"]
     }
-  }' | jq '{coverage, gaps, totals, warnings, holdings: [.holdings[] | {ticker, fund_identifier, covered, publication_stage_used, gap_reason, warnings}]}'
+  }' | jq '{coverage, gaps, totals, warnings, holdings: [.holdings[] | {ticker, fund_identifier, covered, publication_stage_used, upcoming, gap_reason, warnings}]}'
 ```
 
-On the American Funds fixtures: $1.25M covered / $150k uncovered → `coverage_pct` ≈ 89.3%. AMCAP uses the latest preliminary (3–5% NAV → $40,000 / $10,000 tax at 20%+5%). CGHM matches paid midyear rows but warns that NAV is missing. `XYZAX` is a gap.
+On the American Funds fixtures: $1.25M covered / $150k uncovered → `coverage_pct` ≈ 89.3%. AMCAP uses the latest preliminary (3–5% NAV → $40,000 / $10,000 tax at 20%+5%). Each covered holding with distribution dollars also gets `upcoming: {distribution_dollars, estimated_tax, as_of, publication_stage}` from that chosen illustration (`null` on gaps or when dollars are zero — e.g. CGHM without NAV). `XYZAX` is a gap.
 
 Holdings may send **`holding_dollars`** or **`weight_pct` + `book_dollars`**. `weight_pct` is Interactive Modules UI percent **0–100** (`25` = 25% of book; `1` = 1%). The server sets `holding_dollars = book_dollars × weight_pct / 100`.
 
@@ -255,7 +255,7 @@ Interactive Modules **Current Allocation vs Proposed Allocation**. Same center-z
 
 Each holding sends `ticker` and/or `fund_identifier`, and **either** `holding_dollars` **or** `weight_pct` plus the side’s `book_dollars`. `weight_pct` is **0–100** (UI %). `AMCPX` resolves to stored `amcap-fund` when the Capital Group HTML has no ticker column.
 
-Each side is a full `/illustrate/portfolio` result plus `label` (defaults: `Current Allocation` / `Proposed Allocation`). Gaps stay on that side.
+Each side is a full `/illustrate/portfolio` result plus `label` (defaults: `Current Allocation` / `Proposed Allocation`). Gaps stay on that side. Covered holdings include `upcoming` (same convenience field as `/illustrate/portfolio`).
 
 **Sign convention:** `deltas` are **proposed − current**.
 
