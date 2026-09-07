@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SPDR ETFs 2025 Estimated Capital Gain Distributions | State Street</title>
+<meta name="date" content="2025-10-31">
+</head>
+<body>
+<h1>SPDR® ETFs 2025 Estimated Capital Gain Distributions</h1>
+<p>
+  Source: State Street Global Advisors as of October 31, 2025.
+  Live page https://www.ssga.com/us/en/individual/resources/documents/etf-capital-gain-distributions
+  is an Angular app (<code>{{th.name}}</code> placeholders in static HTML).
+  This fixture uses the public column layout. Broad-market SPY/SPLG rows are
+  recorded as 0% of NAV because the live cells are not in static HTML and those
+  beta ETFs typically estimate no capital gain; replace via partner ingest if
+  SSGA publishes a non-zero figure.
+</p>
+<table>
+  <thead>
+    <tr>
+      <th>Fund Name</th>
+      <th>Ticker</th>
+      <th>Short-Term ($/share)</th>
+      <th>Long-Term ($/share)</th>
+      <th>Total Distribution ($/share)</th>
+      <th>Total Distribution (% of NAV)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>SPDR S&amp;P 500 ETF Trust</td>
+      <td>SPY</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>0.00%</td>
+    </tr>
+    <tr>
+      <td>SPDR Portfolio S&amp;P 500 ETF</td>
+      <td>SPLG</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>0.00%</td>
+    </tr>
+    <tr>
+      <td>SSGA Parser Layout Sample ETF</td>
+      <td>ZZSSGA</td>
+      <td>0.10</td>
+      <td>0.25</td>
+      <td>0.35</td>
+      <td>1.10%</td>
+    </tr>
+  </tbody>
+</table>
+</body>
+</html>

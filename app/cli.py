@@ -62,8 +62,9 @@ def cmd_fetch(args: argparse.Namespace) -> int:
 
 def cmd_families(_args: argparse.Namespace) -> int:
     for source in list_sources():
-        flag = "ready" if source.implemented else "stub"
-        print(f"{source.slug:20} {flag:6} {source.display_name}")
+        flag = source.coverage_tier
+        rank = source.aum_rank if source.aum_rank is not None else "-"
+        print(f"{rank!s:>2} {source.slug:20} {flag:12} {source.display_name}")
     return 0
 
 

@@ -153,6 +153,9 @@ class FundFamilyOut(BaseModel):
     slug: str
     display_name: str
     implemented: bool
+    coverage_tier: str = "stub"
+    aum_rank: int | None = None
+    priority: int | None = None
     notes: str | None = None
     source_urls: list[str] = Field(default_factory=list)
     last_ingest_at: datetime | None = None
@@ -161,6 +164,61 @@ class FundFamilyOut(BaseModel):
     last_ingest_created: int | None = None
     last_ingest_updated: int | None = None
     last_error: str | None = None
+
+
+class CoverageOut(BaseModel):
+    top_n: int
+    implemented_count: int
+    stub_count: int
+    implemented_pct: float
+    logged_gap_count: int
+    families: list[FundFamilyOut]
+
+
+class CoverageGapIn(BaseModel):
+    ticker: str | None = Field(default=None, max_length=32)
+    fund_name: str | None = Field(default=None, max_length=512)
+    fund_family: str | None = Field(default=None, max_length=128)
+    holding_dollars: Decimal | None = Field(default=None, ge=0)
+
+    @field_validator("ticker", "fund_name", "fund_family", mode="before")
+    @classmethod
+    def blank_gap_fields(cls, value: Any) -> Any:
+        return _empty_to_none(value)
+
+    @field_validator("ticker", mode="after")
+    @classmethod
+    def gap_ticker_upper(cls, value: str | None) -> str | None:
+        return value.upper() if value else value
+
+    @field_validator("holding_dollars", mode="before")
+    @classmethod
+    def gap_dollars(cls, value: Any) -> Any:
+        if isinstance(value, float):
+            return Decimal(str(value))
+        return value
+
+    @model_validator(mode="after")
+    def require_ticker_or_name(self) -> CoverageGapIn:
+        if not self.ticker and not self.fund_name:
+            raise ValueError("ticker or fund_name is required")
+        return self
+
+
+class CoverageGapOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    ticker: str | None
+    fund_name: str | None
+    fund_family: str | None
+    holding_dollars: Decimal | None
+    adapter_slug: str | None
+    adapter_exists: bool
+    adapter_implemented: bool
+    suggested_next_step: str
+    detail: str | None
+    created_at: datetime
 
 
 _SLUG_RE = re.compile(r"[^a-z0-9]+")

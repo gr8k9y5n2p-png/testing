@@ -18,6 +18,7 @@ def normalized_to_in(record: NormalizedRecord) -> DistributionIn:
         fund_family=record.fund_family,
         fund_name=record.fund_name,
         ticker=record.ticker,
+        cusip=record.cusip,
         share_class=record.share_class,
         estimate_type=record.estimate_type,
         amount=record.amount,

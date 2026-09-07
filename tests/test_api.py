@@ -25,9 +25,12 @@ def test_fetch_unknown_family(client: TestClient) -> None:
     assert response.status_code == 404
 
 
-def test_fetch_stub_family(client: TestClient) -> None:
+def test_fetch_vanguard_fixture(client: TestClient) -> None:
     response = client.post("/ingest/fetch", json={"fund_family": "vanguard", "mode": "fixture"})
-    assert response.status_code == 400
+    assert response.status_code == 200, response.text
+    assert response.json()["created"] > 0
+    found = client.get("/distributions", params={"ticker": "VBIAX"})
+    assert found.json()["total"] >= 1
 
 
 def test_fixture_fetch_and_search_filters(client: TestClient) -> None:
@@ -83,8 +86,13 @@ def test_fixture_fetch_and_search_filters(client: TestClient) -> None:
     assert families.status_code == 200
     slugs = {row["slug"]: row for row in families.json()}
     assert slugs["american_funds"]["implemented"] is True
+    assert slugs["american_funds"]["coverage_tier"] == "implemented"
+    assert slugs["american_funds"]["aum_rank"] == 7
     assert slugs["american_funds"]["last_ingest_status"] == "success"
-    assert slugs["vanguard"]["implemented"] is False
+    assert slugs["vanguard"]["implemented"] is True
+    assert slugs["vanguard"]["aum_rank"] == 2
+    assert slugs["blackrock"]["aum_rank"] == 1
+    assert len(slugs) == 10
 
 
 def test_manual_ingest_partner_feed(client: TestClient) -> None:

@@ -12,7 +12,8 @@ The default demo uses **SQLite** and bundled Capital Group HTML fixtures so the 
 - Idempotent upserts on `(fund_family, fund identifier, share class, estimate type, as_of, ex-date)`
 - Search API with filters, text search, and pagination
 - `POST /illustrate` — server-side tax-impact math for a dollar holding (Website Engineering owns the UI)
-- American Funds / Capital Group HTML parser plus stubs for Vanguard, Fidelity, and T. Rowe Price
+- Top-10 US-advisor fund-family adapters (`GET /fund-families`, `GET /coverage`) plus `POST /coverage/gaps` when a portfolio ticker is missing
+- Partner ingest (`POST /ingest/distributions`) remains the escape hatch for uncovered names
 
 ## Quick start
 
@@ -64,10 +65,14 @@ curl -s 'http://127.0.0.1:8000/distributions?q=AMCAP&estimate_type=long_term_cap
 curl -s 'http://127.0.0.1:8000/distributions?ticker=CGHM' | jq
 curl -s 'http://127.0.0.1:8000/distributions?ex_date_from=2026-06-01&ex_date_to=2026-06-30' | jq
 curl -s 'http://127.0.0.1:8000/fund-families' | jq
+curl -s http://127.0.0.1:8000/coverage | jq '{implemented_count,implemented_pct,families:[.families[]|{slug,coverage_tier,aum_rank}]}'
+curl -s -X POST http://127.0.0.1:8000/coverage/gaps \
+  -H 'Content-Type: application/json' \
+  -d '{"ticker":"XYZAX","fund_family":"dimensional","holding_dollars":150000}' | jq
 curl -s http://127.0.0.1:8000/distributions/<id> | jq
 ```
 
-`POST /ingest/fetch` with `"fund_family":"all"` runs every **implemented** adapter (currently American Funds).
+`POST /ingest/fetch` with `"fund_family":"all"` runs every **implemented** adapter (all 10 top families in fixture mode).
 
 Live fetch (hits public Capital Group pages; may change or rate-limit):
 
@@ -178,9 +183,38 @@ Each stored row is one estimate **component** (a fund can have long-term and sho
 
 Re-running the **same** source document updates the existing row. A new `as_of` (September preliminary vs December update vs January final) inserts a new snapshot.
 
+## Top-10 coverage (portfolio review)
+
+Sparse family coverage makes Aftertax-style portfolio analytics wrong: a book that is 40% Vanguard / iShares / Fidelity looks like it has no taxable distributions if those adapters are stubs. The registry is the **top 10 US-advisor-relevant firms**. `GET /coverage` returns `implemented_pct` (today 10/10 fixture parsers) so the website can later compute *% of portfolio dollars covered*.
+
+`GET /fund-families` includes `coverage_tier` (`implemented` | `stub`), `aum_rank` (1 = largest / highest priority), and `priority`.
+
+When a holding’s ticker or family is not in the store, Website Engineering should call `POST /coverage/gaps` with `{ticker or fund_name, fund_family?, holding_dollars?}`. The API logs the gap in SQLite and returns:
+
+| `suggested_next_step` | Meaning |
+| --- | --- |
+| `fetch_adapter` | A top-10 parser exists — run `POST /ingest/fetch` for that slug, then search. If the ticker is still missing, partner-ingest the row. |
+| `queued` | Slug is registered but not implemented (none of the top 10 today). |
+| `manual_ingest` | Unknown family — `POST /ingest/distributions` is the escape hatch. |
+
+| Rank | Slug | Display name | Parser | Live HTML | Public source (verified 2026-09-07) |
+| --- | --- | --- | --- | --- | --- |
+| 1 | `blackrock` (alias `ishares`) | BlackRock / iShares | implemented | yes | https://www.ishares.com/us/capital-gains-distributions |
+| 2 | `vanguard` | Vanguard | implemented | JS SPA — fixture fallback | https://advisors.vanguard.com/tax-center/year-end-distributions |
+| 3 | `fidelity` | Fidelity | implemented | yes | https://institutional.fidelity.com/app/tabbed/products/FIIS_SP52_DPL6.html?navId=324 |
+| 4 | `state_street` (aliases `spdr`, `ssga`) | State Street / SPDR | implemented | Angular — fixture fallback | https://www.ssga.com/us/en/individual/resources/documents/etf-capital-gain-distributions |
+| 5 | `jpmorgan` (alias `jpm`) | J.P. Morgan AM | implemented | PDF / no HTML grid | Section 19a PDFs under am.jpmorgan.com `.../section-19-notices/` |
+| 6 | `goldman_sachs` (aliases `gs`, `gsam`) | Goldman Sachs AM | implemented | 403 / PDF library | https://www.gsam.com/content/gsam/us/en/advisors/literature-and-forms/forms-and-tax-center.html |
+| 7 | `american_funds` (alias `capital_group`) | American Funds | implemented | yes | Capital Group individual tax center (see below) |
+| 8 | `pimco` | PIMCO | implemented | PDF / notices | https://www.pimco.com/us/en/resources/tax-center |
+| 9 | `invesco` | Invesco | implemented | PDF + PR | https://www.invesco.com/content/dam/invesco/us/en/documents/tax-centre/2025%20Invesco%20Estimated%20Capital%20Gains%20pdf.pdf |
+| 10 | `t_rowe_price` (alias `trp`) | T. Rowe Price | implemented | yes | https://www.troweprice.com/personal-investing/resources/planning/tax/dividend-distributions/mutual-funds/2025-year-end-distributions.html |
+
+**Live honesty:** Vanguard and State Street pages are client-rendered (static GET parses 0 rows → fixture fallback). JPM, Goldman, PIMCO, and Invesco publish estimates as PDFs or login-walled docs — fixture parsers ship the table layout plus transcribed public figures where we have them; do not treat those fixture rows as a complete live book. `POST /ingest/distributions` is always valid for an advisor-uploaded notice.
+
 ## Source adapters
 
-`FundSource.fetch(mode=...)` returns normalized records. Register new families in `app/sources/registry.py`.
+`FundSource.fetch(mode=...)` returns normalized records. Register new families in `app/sources/registry.py`. Coverage metadata lives on `FundSource` (`coverage_tier`, `aum_rank`, `priority`).
 
 ### American Funds / Capital Group (implemented)
 
@@ -204,9 +238,9 @@ The parser is built against **real AEM table markup**: multi-row headers, contin
 
 Captured markup used in tests lives under `fixtures/american_funds/`.
 
-### Stubs
+### Other top-10 families
 
-`vanguard`, `fidelity`, and `t_rowe_price` are registered so `/fund-families` shows them. Fetching a stub returns HTTP 400 until you add a parser.
+Each family has a `HtmlTableSource` (except American Funds, which keeps its original adapter) plus fixtures under `fixtures/<slug>/`. The shared HTML table parser understands Fidelity Symbol/Cusip cells, iShares `(TICKER)` suffixes, Vanguard “distribution type” rows, T. Rowe two-row headers, `% of NAV` vs NAV price, and per-row as-of dates.
 
 ## Adding a fund-family adapter
 
@@ -228,9 +262,9 @@ class VanguardSource(FundSource):
 ```
 
 2. Drop a sample HTML/JSON file in `fixtures/<slug>/`.
-3. Replace the stub in `app/sources/registry.py` with your class (and add aliases if useful).
+3. Register the class in `app/sources/registry.py` (and add aliases if useful). Prefer subclassing `HtmlTableSource` when the source is an HTML table.
 4. Add a parser test that reads the fixture.
-5. `POST /ingest/fetch` with `"fund_family":"vanguard"`.
+5. `POST /ingest/fetch` with that family's slug.
 
 Keep normalization in the adapter: the ingest API only accepts the shared `DistributionIn` shape.
 
@@ -253,7 +287,7 @@ pip install -r requirements-dev.txt
 pytest -q
 ```
 
-Coverage includes HTML normalization, upsert idempotency, search filters, and tax illustration math (`percent_of_nav`, `per_share`, rate overrides, validation).
+Coverage includes HTML normalization (American Funds plus top-10 family fixtures), upsert idempotency, search filters, tax illustration math, and coverage-gap logging.
 
 ## Layout
 
@@ -265,7 +299,8 @@ app/
   sources/             FundSource adapters + HTML parser
   services/ingest.py   Fetch + upsert orchestration
   services/illustrate.py  Tax-impact illustration
+  services/coverage.py Coverage snapshot + gap logging
   cli.py               seed / fetch / families
-fixtures/american_funds/
+fixtures/<family>/     HTML fixtures (American Funds + top 10)
 tests/
 ```

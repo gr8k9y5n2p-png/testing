@@ -25,6 +25,9 @@ class AmericanFundsSource(FundSource):
     slug = "american_funds"
     display_name = "American Funds"
     implemented = True
+    coverage_tier = "implemented"
+    aum_rank = 7
+    priority = 7
     notes = (
         "Parses Capital Group public HTML tables (midyear/year-end per-share amounts, "
         "special dividends, qualified-dividend percentages, and estimate % of NAV). "

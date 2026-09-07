@@ -19,6 +19,9 @@ class FundSource(ABC):
     slug: str
     display_name: str
     implemented: bool = True
+    coverage_tier: str = "implemented"  # implemented | stub
+    aum_rank: int | None = None
+    priority: int | None = None
     notes: str | None = None
 
     @abstractmethod

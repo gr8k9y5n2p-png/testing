@@ -6,9 +6,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from app.crud import get_by_id, latest_run, search_distributions
+from app.crud import get_by_id, list_coverage_gaps, search_distributions
 from app.db import get_session
 from app.schemas import (
+    CoverageGapIn,
+    CoverageGapOut,
+    CoverageOut,
     DistributionIn,
     DistributionListOut,
     DistributionOut,
@@ -20,6 +23,7 @@ from app.schemas import (
     IngestRequest,
     IngestResponse,
 )
+from app.services.coverage import coverage_snapshot, family_to_out, record_gap
 from app.services.illustrate import illustrate
 from app.services.ingest import fetch_and_ingest, ingest_records
 from app.sources.registry import list_sources
@@ -107,25 +111,27 @@ def get_distribution(distribution_id: str, session: Session = Depends(get_sessio
 
 @router.get("/fund-families", response_model=list[FundFamilyOut], tags=["search"])
 def fund_families(session: Session = Depends(get_session)) -> list[FundFamilyOut]:
-    out: list[FundFamilyOut] = []
-    for source in list_sources():
-        run = latest_run(session, source.slug)
-        out.append(
-            FundFamilyOut(
-                slug=source.slug,
-                display_name=source.display_name,
-                implemented=source.implemented,
-                notes=source.notes,
-                source_urls=source.source_urls(),
-                last_ingest_at=run.finished_at if run else None,
-                last_ingest_status=run.status if run else None,
-                last_ingest_mode=run.mode if run else None,
-                last_ingest_created=run.records_created if run else None,
-                last_ingest_updated=run.records_updated if run else None,
-                last_error=run.error_message if run else None,
-            )
-        )
-    return out
+    return [family_to_out(source, session) for source in list_sources()]
+
+
+@router.get("/coverage", response_model=CoverageOut, tags=["coverage"])
+def coverage(session: Session = Depends(get_session)) -> CoverageOut:
+    """Top-10 adapter coverage for portfolio-review % covered later."""
+    return CoverageOut.model_validate(coverage_snapshot(session))
+
+
+@router.post("/coverage/gaps", response_model=CoverageGapOut, tags=["coverage"])
+def report_coverage_gap(body: CoverageGapIn, session: Session = Depends(get_session)) -> CoverageGapOut:
+    """Log an uncovered portfolio ticker/family and return the suggested next step."""
+    return record_gap(session, body)
+
+
+@router.get("/coverage/gaps", response_model=list[CoverageGapOut], tags=["coverage"])
+def coverage_gaps(
+    limit: int = Query(default=100, ge=1, le=500),
+    session: Session = Depends(get_session),
+) -> list[CoverageGapOut]:
+    return [CoverageGapOut.model_validate(row) for row in list_coverage_gaps(session, limit=limit)]
 
 
 @router.post("/illustrate", response_model=IllustrateResponse, tags=["illustrate"])

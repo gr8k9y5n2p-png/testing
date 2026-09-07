@@ -77,6 +77,29 @@ class DistributionEstimate(Base):
     )
 
 
+class CoverageGap(Base):
+    """Advisor-reported holding that the website could not match to an adapter."""
+
+    __tablename__ = "coverage_gaps"
+    __table_args__ = (Index("ix_gap_created", "created_at"),)
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    ticker: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    fund_name: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    fund_family: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    holding_dollars: Mapped[Decimal | None] = mapped_column(Numeric(18, 2), nullable=True)
+    adapter_slug: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    adapter_exists: Mapped[bool] = mapped_column(default=False)
+    adapter_implemented: Mapped[bool] = mapped_column(default=False)
+    suggested_next_step: Mapped[str] = mapped_column(String(32), nullable=False)
+    detail: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+
+
 class IngestRun(Base):
     __tablename__ = "ingest_runs"
     __table_args__ = (Index("ix_ingest_family_started", "fund_family", "started_at"),)

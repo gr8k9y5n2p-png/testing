@@ -6,7 +6,7 @@ from decimal import Decimal
 from sqlalchemy import Select, func, or_, select
 from sqlalchemy.orm import Session
 
-from app.models import DistributionEstimate, IngestRun
+from app.models import CoverageGap, DistributionEstimate, IngestRun
 from app.schemas import DistributionIn, fund_identifier, make_upsert_key
 
 
@@ -232,4 +232,20 @@ def latest_run(session: Session, fund_family: str) -> IngestRun | None:
         .where(IngestRun.fund_family == fund_family)
         .order_by(IngestRun.started_at.desc())
         .limit(1)
+    )
+
+
+def log_coverage_gap(session: Session, gap: CoverageGap) -> CoverageGap:
+    session.add(gap)
+    session.flush()
+    return gap
+
+
+def count_coverage_gaps(session: Session) -> int:
+    return int(session.scalar(select(func.count()).select_from(CoverageGap)) or 0)
+
+
+def list_coverage_gaps(session: Session, *, limit: int = 100) -> list[CoverageGap]:
+    return list(
+        session.scalars(select(CoverageGap).order_by(CoverageGap.created_at.desc()).limit(limit)).all()
     )

@@ -7,6 +7,7 @@ class StubFundSource(FundSource):
     """Placeholder so additional families can be registered before a parser exists."""
 
     implemented = False
+    coverage_tier = "stub"
 
     def __init__(self, slug: str, display_name: str, notes: str, urls: list[str] | None = None) -> None:
         self.slug = slug
