@@ -73,7 +73,11 @@ export function TaxDeltaCompareCard({
       <div
         className="mt-4 flex-1"
         role="img"
-        aria-label={`Year-over-year tax impact delta for ${model.leftLabel} versus ${model.rightLabel}. Left is more tax, right is less tax.`}
+        aria-label={
+          model.bars.length === 0
+            ? `No overlapping years for ${model.leftLabel} versus ${model.rightLabel}. Upcoming coverage is still shown.`
+            : `Year-over-year tax impact delta for ${model.leftLabel} versus ${model.rightLabel}. Left is more tax, right is less tax.`
+        }
       >
         <div className="mb-1 grid grid-cols-[2.75rem_1fr] items-end text-[10px] font-medium text-faint">
           <span />
@@ -99,14 +103,21 @@ export function TaxDeltaCompareCard({
           </div>
         </div>
 
-        <ul className="mt-1 space-y-1.5">
-          {model.bars.map((bar) => (
-            <li key={bar.year} className="grid grid-cols-[2.75rem_1fr] items-center gap-1">
-              <span className="font-mono text-[11px] text-muted">{bar.year}</span>
-              <BarTrack bar={bar} scale={scale} ticks={ticks} />
-            </li>
-          ))}
-        </ul>
+        {model.bars.length === 0 ? (
+          <p className="mt-6 px-1 text-sm text-muted">
+            No overlapping years — historical bars stay empty. Upcoming below is
+            per fund, so a missing announcement does not hide this card.
+          </p>
+        ) : (
+          <ul className="mt-1 space-y-1.5">
+            {model.bars.map((bar) => (
+              <li key={bar.year} className="grid grid-cols-[2.75rem_1fr] items-center gap-1">
+                <span className="font-mono text-[11px] text-muted">{bar.year}</span>
+                <BarTrack bar={bar} scale={scale} ticks={ticks} />
+              </li>
+            ))}
+          </ul>
+        )}
         <span className="sr-only">
           {model.bars.map((bar) => barAriaLabel(bar)).join(". ")}
         </span>
@@ -121,10 +132,36 @@ export function TaxDeltaCompareCard({
             <dt className="text-[10px] font-semibold uppercase tracking-[0.12em] text-faint">
               {metric.label}
             </dt>
-            <dd className={`mt-1 font-serif text-[17px] leading-tight tracking-tight ${POLARITY_TEXT[metric.polarity]}`}>
-              {metric.headline}
-            </dd>
-            <dd className="mt-1 text-[10px] leading-snug text-faint">{metric.detail}</dd>
+            {metric.key === "upcoming_tax" ? (
+              <>
+                <dd
+                  className={`mt-1 font-serif text-[17px] leading-tight tracking-tight ${POLARITY_TEXT[metric.polarity]}`}
+                >
+                  {metric.headline}
+                </dd>
+                <dd className="mt-1 font-mono text-[11px] leading-snug text-ink">
+                  A {model.upcoming.left.display}
+                  <span className="text-faint"> · </span>
+                  B {model.upcoming.right.display}
+                </dd>
+                <dd className="mt-1 text-[10px] leading-snug text-faint">
+                  {model.upcoming.left.announced
+                    ? `A ${model.upcoming.left.statusLabel}`
+                    : "A Not announced"}
+                  <span> · </span>
+                  {model.upcoming.right.announced
+                    ? `B ${model.upcoming.right.statusLabel}`
+                    : "B Not announced"}
+                </dd>
+              </>
+            ) : (
+              <>
+                <dd className={`mt-1 font-serif text-[17px] leading-tight tracking-tight ${POLARITY_TEXT[metric.polarity]}`}>
+                  {metric.headline}
+                </dd>
+                <dd className="mt-1 text-[10px] leading-snug text-faint">{metric.detail}</dd>
+              </>
+            )}
           </div>
         ))}
       </dl>

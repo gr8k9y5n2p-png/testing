@@ -1,7 +1,15 @@
 export { FundTaxDeltaCompare } from "@/components/illustrate/FundTaxDeltaCompare";
 export type { FundTaxDeltaCompareProps } from "@/components/illustrate/FundTaxDeltaCompare";
 export { TaxDeltaCompareCard } from "@/components/illustrate/TaxDeltaCompareCard";
+export { YoYTaxChart } from "@/components/illustrate/YoYTaxChart";
+export type { YoYTaxChartProps } from "@/components/illustrate/YoYTaxChart";
 export { toTaxDeltaCardModel } from "@/lib/illustrate/compare-map";
+export {
+  computeYoyLine,
+  toYoYTaxChartModel,
+  yoyBarsFromComparePeriods,
+} from "@/lib/illustrate/yoy-tax-chart";
+export type { YoYTaxChartModel, YoYTaxChartPoint } from "@/lib/illustrate/yoy-tax-chart";
 export { postIllustrateCompare } from "@/lib/illustrate/compare-client";
 export type {
   CompareRequest,
