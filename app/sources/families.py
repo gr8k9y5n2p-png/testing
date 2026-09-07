@@ -46,9 +46,11 @@ class VanguardSource(HtmlTableSource):
         "2023 https://advisors.vanguard.com/content/dam/fas/pdfs/2023_ICI_Primary_Layout.pdf "
         "2022 https://advisors.vanguard.com/content/dam/fas/pdfs/2022_ICI_Primary_Layout.pdf "
         "2021 https://advisors.vanguard.com/content/dam/fas/pdfs/2021_ICI_Primary_Layout.pdf. "
-        "December-only ≥$1B Admiral / mega-ETF allowlist. "
-        "2025 ICI skips VFIAX / VBIAX / VIGAX so the existing YE HTML fixture "
-        "is not double-counted. Tax center hub: https://advisors.vanguard.com/tax-center."
+        "2025 ICI is a column-safe full December book (31-token layout; "
+        "VFIAX / VBIAX / VIGAX omitted so the YE HTML fixture "
+        "is not double-counted). 2024 ICI is the same full-December extract "
+        "(includes VFIAX / VBIAX / VIGAX). 2021–2023 ICI CSVs remain flagship-only. "
+        "Tax center hub: https://advisors.vanguard.com/tax-center."
     )
     live_limitations = (
         "Advisor year-end page is JavaScript-rendered; ICI archives are PDFs "
@@ -70,7 +72,7 @@ class VanguardSource(HtmlTableSource):
                 fixture="ici_primary_2025.csv",
                 live=False,
                 parser="ici",
-                large_aum_only=True,
+                large_aum_only=False,
             ),
             PageSpec(
                 name="ici_primary_2024",
@@ -78,7 +80,7 @@ class VanguardSource(HtmlTableSource):
                 fixture="ici_primary_2024.csv",
                 live=False,
                 parser="ici",
-                large_aum_only=True,
+                large_aum_only=False,
             ),
             PageSpec(
                 name="ici_primary_2023",
@@ -180,8 +182,9 @@ class JPMorganSource(HtmlTableSource):
     notes = (
         "Public tax-center HTML 404’d (2026-09-07). Estimates appear in Section 19a PDFs, e.g. "
         "https://am.jpmorgan.com/content/dam/jpm-am-aem/americas/us/en/supplemental/section-19-notices/2025-19a-notice-etfs.pdf "
-        "and section-19a-notice-aa-funds-12-2025.pdf. Fixture parser covers that table layout "
-        "plus the published Large Cap Growth $9.32525 year-end capital gain. "
+        "and section-19a-notice-aa-funds-12-2025.pdf. The 2025 fixture is the full Appendix A "
+        "from both notices (unsplit estimated CG $/share). SEEGX / JLGMX keep the previously "
+        "identified Large Cap Growth long-term mapping ($9.32525). "
         "No official 2024 (or earlier) $/share 19a HTML/PDF with SEEGX amounts was "
         "confirmed on this pass — third-party histories are not used."
     )

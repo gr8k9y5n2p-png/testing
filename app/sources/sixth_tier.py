@@ -12,12 +12,14 @@ class SeiSource(HtmlTableSource):
         "Public 11/20/2025 estimate PDF: "
         "https://www.seic.com/sites/default/files/2025-11/"
         "SEI%20Capital%20gains%20distribution%20estimates_11.20.2025.pdf "
+        "is the full paying-fund book "
         "(e.g. SIMT Large Cap Growth ST $1.189 / LT $8.018 / 16.16% of NAV; "
         "SIMT Mid-Cap ST $0.080 / LT $5.609 / 17.81% of NAV). "
         "Equity record 12/16/2025, ex 12/17/2025, pay 12/18/2025. "
-        "The PDF is fund-level (no ticker column)."
+        "The PDF is fund-level (ETF tickers kept when printed in the name). "
+        "All-dash / not-expected rows are omitted."
     )
-    live_limitations = "Estimate book is PDF. Fixture transcribes public SIMT equity rows."
+    live_limitations = "Estimate book is PDF. Fixture transcribes the public paying-fund table."
 
     def pages(self) -> list[PageSpec]:
         return [
@@ -42,9 +44,12 @@ class BrownAdvisorySource(HtmlTableSource):
         "Public 2025 capital-gains estimate PDF: "
         "https://www.brownadvisory.com/sites/default/files/2025-10/"
         "2025-Capital-Gain-Distribution-Update.pdf "
+        "is the full listed-fund book "
         "(e.g. Flexible Equity Institutional BAFFX ST $0.23 / LT $2.17; "
         "Growth Equity Institutional BAFGX ST $0.34 / LT $7.86; "
         "Sustainable Growth Institutional BAFWX ST $0.07 / LT $10.90). "
+        "Institutional / Investor / Advisor columns are ingested when printed. "
+        "Tickers only for previously identified Institutional classes. "
         "Record/declaration 12/12/2025; ex/reinvest and pay 12/15/2025."
     )
     live_limitations = (
@@ -80,9 +85,11 @@ class WilliamBlairSource(HtmlTableSource):
         "(e.g. Growth Class I BGFIX ST $0.02557 / LT $2.91999 / 31% of NAV; "
         "Large Cap Growth Class I LCGFX LT $2.57994 / 8% of NAV; "
         "Global Leaders Class I WGFIX LT $5.52579 / 47% of NAV). "
-        "Record 12/17/2025; ex 12/18/2025; pay 12/19/2025."
+        "Record 12/17/2025; ex 12/18/2025; pay 12/19/2025. "
+        "PDF text extraction reverses amount/name columns — not column-safe "
+        "for a full-book auto-extract; Class I flagship rows remain."
     )
-    live_limitations = "Year-end book is PDF. Fixture transcribes public Class I rows."
+    live_limitations = "Year-end book is PDF. Text extract is wrap-unsafe; fixture keeps Class I flagships."
 
     def pages(self) -> list[PageSpec]:
         return [
@@ -108,8 +115,10 @@ class VaneckSource(HtmlTableSource):
     notes = (
         "Public 2025 mutual-fund estimate PDF: "
         "https://www.vaneck.com/us/en/vaneck-funds-estimated-yearend-distributions-2025.pdf "
+        "is the full listed mutual-fund book "
         "(e.g. Morningstar Wide Moat I MWMIX forecasted ST $1.94 / LT $1.68; "
         "International Investors Gold A INIVX income $1.56 / no CG). "
+        "Printed None for capital gains is omitted. CM Commodity ‡ estimates-to-come omitted. "
         "Most funds record 12/17/2025, ex/pay 12/18/2025. "
         "ETF estimate reprint: https://www.vaneck.com/us/en/vaneck-etfs-yearend-distributions-2025.pdf"
     )
@@ -137,10 +146,11 @@ class WisdomtreeSource(HtmlTableSource):
         "Public 12/10/2025 final capital-gains PDF: "
         "https://www.wisdomtree.com/investments/-/media/us-media-files/documents/about/pdf/2025/"
         "wisdomtree-etfs-declare-final-capital-gains-distributions-2025.pdf "
+        "lists the family; payers are ingested "
         "(e.g. Target Range GTR ST $0.84657 / 3.23% of NAV; "
         "True Emerging Markets XC ST $0.72040 / LT $2.49286 / 9.13% of NAV; "
         "Equity Premium Income WTPI LT $0.72183 / 2.14% of NAV). "
-        "Ex/record 12/10/2025; pay 12/12/2025."
+        "Dashed (no 2025 CG) rows are omitted. Ex/record 12/10/2025; pay 12/12/2025."
     )
     live_limitations = "Family book is PDF. Fixture transcribes public ETFs that paid 2025 CG."
 
@@ -170,9 +180,11 @@ class AqrSource(HtmlTableSource):
         "Public 2025 estimate PDF: "
         "https://funds.aqr.com/-/media/Funds/Tax-Documents/2025/"
         "2025-AQR-Funds-Announces-Estimated-Distributions.pdf?sc_lang=en "
+        "is the full I/N/R6 share-class book "
         "(e.g. Global Equity I AQGIX ST $0.9086 / LT $0.4747 / 11.41% of NAV; "
         "Large Cap Defensive Style I AUEIX ST $0.0619 / LT $3.0673 / 15.62% of NAV). "
-        "Most funds record 12/16/2025, ex 12/17/2025, pay 12/18/2025. "
+        "Most funds record 12/16/2025, ex 12/17/2025, pay 12/18/2025; "
+        "Diversifying Strategies uses 12/19 / 12/22 / 12/23. "
         "Estimates as of 9/30/2025; NAV/shares as of 10/31/2025."
     )
     live_limitations = "Estimate book is PDF. Fixture transcribes public Class I rows."
@@ -199,6 +211,7 @@ class CausewaySource(HtmlTableSource):
     notes = (
         "Public 2025 final distributions PDF: "
         "https://www.causewaycap.com/wp-content/uploads/2025_Causeway-Funds-Final-Distributions.pdf "
+        "is the full Institutional + Investor book "
         "(e.g. International Value Institutional CIVIX ST $0.3957 / LT $1.5537; "
         "Global Value Institutional CGVIX ST $0.4236 / LT $0.9631; "
         "International Small Cap Institutional CIISX ST $0.2609 / LT $1.5623). "
@@ -226,10 +239,11 @@ class AlgerSource(HtmlTableSource):
         "Hub: https://www.alger.com/Pages/Page.aspx?pageLabel=DividendsDistributions "
         "Public 2025 mutual-fund distributions PDF: "
         "https://www.alger.com/AlgerDocuments/Distrib_FUNDS.pdf "
+        "is the full share-class book "
         "(e.g. Global Equity A CHUSX ST $0.0024 / LT $2.4670 / 8.3% of NAV; "
         "International Opportunities A ALGAX LT $2.0655 / 10.4% of NAV; "
         "Small Cap Growth Institutional I ALSRX LT $0.4912 / 2.7% of NAV). "
-        "Record 12/16/2025; ex/pay 12/17/2025. "
+        "Record 12/16/2025; ex/pay 12/17/2025. Published $0.00 amounts are stored. "
         "The PDF lists International Small Cap A as ALCZX (same ticker as Opportunities Z) — that row is omitted."
     )
     live_limitations = "Year-end book is PDF. Fixture transcribes public Class A / Institutional I rows."

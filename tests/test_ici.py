@@ -105,7 +105,8 @@ def test_parse_ici_primary_2024_december_flagships() -> None:
         r for r in records if r.ticker == "VOO" and r.estimate_type == EstimateType.ordinary_income
     )
     assert voo.amount == Decimal("1.738500")
-    assert {r.ticker for r in records} <= LARGE_AUM_TICKERS
+    assert len({r.ticker for r in records}) >= 200
+    assert {"VFIAX", "VFINX", "VWENX", "VPMAX"} <= {r.ticker for r in records}
     assert not any(r.ticker == "VFIAX" and r.estimate_type == EstimateType.long_term_capital_gains for r in records)
     vwenx_lt = next(
         r
@@ -144,4 +145,5 @@ def test_parse_ici_primary_2021_and_2025_ongoing() -> None:
         r for r in y2025 if r.ticker == "VOO" and r.estimate_type == EstimateType.ordinary_income
     )
     assert voo.amount == Decimal("1.771000")
-    assert {r.ticker for r in y2025} <= LARGE_AUM_TICKERS
+    assert len({r.ticker for r in y2025}) >= 200
+    assert {"VTSAX", "VOO", "VWENX", "VPMAX", "VFINX"} <= {r.ticker for r in y2025}

@@ -88,7 +88,7 @@ class BnyMellonSource(HtmlTableSource):
     aum_rank = 13
     priority = 13
     notes = (
-        "Public 2025 estimate PDF "
+        "Public 2025 estimate PDF is the full paying-fund book "
         "https://www.bny.com/assets/investments/im/documents/manual/tax-forms/2025-Estimated-capital-gains.pdf "
         "(as of 10/31/2025; e.g. Appreciation Fund LT $6.29 / 15.0% of NAV). "
         "Paid YE for DGAGX (≥$1B Investor class) from the public product page "
@@ -152,6 +152,8 @@ class NuveenSource(HtmlTableSource):
         "https://documents.nuveen.com/Documents/Nuveen/Default.aspx?uniqueId=3c3be13d-d800-48e2-a537-c251162ab9f4 "
         "(e.g. Core Equity TIIRX LT $1.97 / 6.49% of NAV). Hub: "
         "https://www.nuveen.com/en-us/investments/tax-information-forms-and-applications. "
+        "The document-viewer URL returns a JavaScript shell (no fetchable PDF in this "
+        "environment) — remaining funds not transcribed. "
         "No public filled ICI file. 2024 posted files are tax-character letters "
         "(QDI / DRD / US-gov %), not ST/LT $/share — skipped, not invented."
     )
@@ -178,8 +180,9 @@ class NorthernTrustSource(HtmlTableSource):
         "(e.g. .../nf-ici-primary-reports-2025.pdf, .../nf-ici-primary-2024.pdf) "
         "but PDF text extraction merges income/CG into one column and includes "
         "quarterly lines — not ingested (illustration would sum). December YE "
-        "ST/LT come from the companion capital-gains PDFs: 2025 "
-        ".../estimated-capital-gains-2025.pdf (NOSIX ST $0.041654 / LT $1.182288), "
+        "ST/LT come from the companion capital-gains PDFs. 2025 "
+        ".../estimated-capital-gains-2025.pdf is the full equity book "
+        "(NOSIX ST $0.041654 / LT $1.182288; NOMIX/NSGRX/NSCKX LT skipped — not column-safe). "
         "2024 .../estimated-capital-gains-2024.pdf (NOSIX ST $0.088060 / LT $0.699110), "
         "2023 .../capital-gains-2023.pdf (NOSIX LT $1.697952), "
         "2022 .../capital-gains-2022.pdf (NOSIX LT $1.243605). "
@@ -356,6 +359,8 @@ class ColumbiaThreadneedleSource(HtmlTableSource):
         "https://www.columbiathreadneedleus.com/binaries/content/assets/cti/public/2024-cap-gains---mutual-funds.pdf "
         "(LBSAX LT $1.38581; ELGAX LT $4.05105; IEVAX $0 CG not stored). "
         "No public filled ICI file. 2023 YE PDF URL was 404. "
+        "The 2025 mid-year all-funds PDF is wrap-unsafe (share-class % ranges "
+        "interleaved with $0.00 fund headers) — not a column-safe full extract. "
         "Investor hub: https://www.columbiathreadneedleus.com/investor"
     )
     live_limitations = "Estimates are PDF. Fixture transcribes the public mid-year ranges and 2024 YE rows."

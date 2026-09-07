@@ -1,14 +1,27 @@
 from __future__ import annotations
 
 from app.sources.american_funds import AmericanFundsSource
-from app.sources.families import BlackRockSource, FidelitySource, InvescoSource, TRowePriceSource
-from app.sources.next_tier import DimensionalSource
+from app.sources.families import (
+    BlackRockSource,
+    FidelitySource,
+    InvescoSource,
+    JPMorganSource,
+    TRowePriceSource,
+    VanguardSource,
+)
+from app.sources.next_tier import BnyMellonSource, DimensionalSource, NorthernTrustSource
 from app.sources.fifth_tier import HarborSource, VoyaSource
+from app.sources.third_tier import AmericanCenturySource, JanusHendersonSource
+from app.sources.sixth_tier import AqrSource, AlgerSource, SeiSource
 
 
 def _funds_and_tickers(source) -> tuple[set[str], set[str]]:
     result = source.fetch(mode="fixture")
-    tickers = {(row.ticker or "").upper() for row in result.records if row.ticker}
+    tickers = {
+        (row.ticker or "").upper()
+        for row in result.records
+        if row.ticker and row.ticker not in {"—", "-", "–"}
+    }
     funds = {(row.ticker or "").upper() or row.fund_name for row in result.records}
     assert not any(ticker.startswith("ZZ") for ticker in tickers if source.slug != "state_street")
     return funds, tickers
@@ -40,6 +53,46 @@ def test_full_book_american_funds_invesco_dimensional() -> None:
     dfa_funds, dfa_tickers = _funds_and_tickers(DimensionalSource())
     assert "DISVX" in dfa_tickers
     assert len(dfa_tickers) >= 100
+
+
+def test_full_book_vanguard_ici_and_next_wave() -> None:
+    vg_funds, vg_tickers = _funds_and_tickers(VanguardSource())
+    assert {"VFIAX", "VTSAX", "VOO", "VFINX"} <= vg_tickers
+    assert len(vg_tickers) >= 200
+
+    bny_funds, bny_tickers = _funds_and_tickers(BnyMellonSource())
+    assert "DGAGX" in bny_tickers
+    assert len(bny_funds) >= 25
+
+    nt_funds, nt_tickers = _funds_and_tickers(NorthernTrustSource())
+    assert "NOSIX" in nt_tickers
+    assert len(nt_tickers) >= 10
+
+    janus_funds, janus_tickers = _funds_and_tickers(JanusHendersonSource())
+    assert "JDCAX" in janus_tickers
+    assert len(janus_tickers) >= 100
+
+
+def test_full_book_jpm_aci_sei_aqr_alger() -> None:
+    jpm_funds, jpm_tickers = _funds_and_tickers(JPMorganSource())
+    assert "SEEGX" in jpm_tickers
+    assert len(jpm_funds) >= 30
+
+    aci_funds, aci_tickers = _funds_and_tickers(AmericanCenturySource())
+    assert "TWCGX" in aci_tickers
+    assert len(aci_tickers) >= 300
+
+    sei_funds, _sei_tickers = _funds_and_tickers(SeiSource())
+    assert any("Large Cap Growth" in name for name in sei_funds)
+    assert len(sei_funds) >= 40
+
+    aqr_funds, aqr_tickers = _funds_and_tickers(AqrSource())
+    assert "AQGIX" in aqr_tickers
+    assert len(aqr_tickers) >= 50
+
+    alger_funds, alger_tickers = _funds_and_tickers(AlgerSource())
+    assert "CHUSX" in alger_tickers
+    assert len(alger_tickers) >= 50
 
 
 def test_full_book_harbor_voya_keep_heroes() -> None:

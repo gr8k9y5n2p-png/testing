@@ -12,7 +12,7 @@ The default demo uses **SQLite** and bundled Capital Group HTML fixtures so the 
 2. **PDF / HTML archives** when no public ICI download exists.
 3. Skip JavaScript SPA pages when an ICI or PDF book is available.
 
-Vanguard is the first-choice ICI book: official Primary Layout PDFs on the advisor tax center cover the full fund list; we transcribe December year-end rows for identified **≥$1B** Admiral / mega-ETF classes (2021–2025). Other top-AUM families are checked for ICI downloads in rank order; Invesco *lists* ICI Primary files on its open-end tax guide, but no stable public file URL was fetchable (JS / 406), so Invesco stays on PDF/HTML archives. Northern Trust publishes filled ICI Primary Reports (2022–2025) on its tax center; PDF text extraction merges income/CG and includes quarterly lines, so December YE ST/LT are transcribed from the companion capital-gains PDFs (same hub).
+Vanguard is the first-choice ICI book: official Primary Layout PDFs on the advisor tax center cover the full fund list. 2024–2025 December rows are a column-safe full-book extract (31-token layout); 2021–2023 remain identified **≥$1B** Admiral / mega-ETF flagships. Other top-AUM families are checked for ICI downloads in rank order; Invesco *lists* ICI Primary files on its open-end tax guide, but no stable public file URL was fetchable (JS / 406), so Invesco stays on PDF/HTML archives. Northern Trust publishes filled ICI Primary Reports (2022–2025) on its tax center; PDF text extraction merges income/CG and includes quarterly lines, so December YE ST/LT are transcribed from the companion capital-gains PDFs (same hub).
 
 **Full-book vs flagship history.** Current-year / published-table fixtures now ingest **every fund listed on that family’s public book** (skip synthetic `ZZ*` parser samples; skip Amundi / Pioneer). The ≥$1B allowlist in `app/sources/aum.py` still applies to **older multi-year archives** when those packs were transcribed as flagships only. It is not a live AUM feed. Illustrate / compare / performance contracts are unchanged.
 
@@ -490,22 +490,40 @@ curl -s 'http://127.0.0.1:8000/performance?fund_identifier=the-growth-fund-of-am
 
 Goal: for **existing US-domiciled adapters**, ingest every fund on the published distribution / capital-gains book — not 1–2 sample tickers. **Skip Amundi / Pioneer.** Do not invent amounts. Synthetic `ZZ*` parser samples stay samples.
 
-**This wave (ranks 1–10 HTML books + selected PDF books):** unique tickers **431 → 1,168**; unique funds **482 → 1,298** on fixture ingest. Tax / illustrate / performance contracts and weekly refresh are unchanged.
+**Wave 1:** unique tickers **431 → 1,168**; funds **482 → 1,298**.
+
+**Wave 2 (this batch):** unique tickers **1,168 → 2,165**; funds **1,298 → 2,434**. Tax / illustrate / performance contracts and weekly refresh are unchanged.
 
 | Rank | Family | Before (tickers / funds) | After | Book used | Full-book vs flagship history |
 | --- | --- | --- | --- | --- | --- |
 | 1 | BlackRock / iShares | 12 / 12 | **44 / 44** | Live `ishares.com/us/capital-gains-distributions` (mid-year + YE tables) | Current HTML is full published CG table. 2023–2024 tax kits still not an HTML grid. |
-| 2 | Vanguard | 26 / 26 | 26 / 26 | Unchanged this wave | **Flagship-only** ICI CSVs 2021–2025 (`large_aum_only`). YE HTML is SPA. Next wave: column-safe full ICI December extract. |
+| 2 | Vanguard | 26 / 26 | **239 / 239** | Column-safe full ICI December 2024 (232) + 2025 (234) (31-token layout) | **2024–2025 full December.** 2025 omits VFIAX/VBIAX/VIGAX (YE HTML). 2021–2023 ICI still flagship-only. YE page is SPA. |
 | 3 | Fidelity | 15 / 15 | **350 / 350** | Live prior-year paid table `FIIS_SP10_DPL6` + estimate `FIIS_SP52_DPL6` | Estimate table is still “funds expecting CG” (15). Prior-year paid is the full book. |
+| 5 | J.P. Morgan | 2 / 2 | 2 / **34** | Full 2025 Section 19a Appendix A (open-end + ETF) | Notices are unsplit CG $/share. SEEGX / JLGMX keep the Large Cap Growth LT mapping. No 2024 19a. |
 | 7 | American Funds | 3 / 46 | **22 / 84** | Live 2025 YE HTML | 2025 YE is the public table. 2024 YE + estimate samples unchanged (name-heavy). |
 | 9 | Invesco | 2 / 5 | 2 / **45** | Full 2025 estimate PDF (Class A $/share). ETF PIN/PSCI kept | PDF has no MF tickers — funds stored by name. 2024 estimate still thin. |
 | 10 | T. Rowe Price | 18 / 18 | **232 / 232** | Live 2023–2025 YE HTML | **2023–2025 full-book.** 2022 YE + prelim remain PDF flagship transcriptions. |
+| 13 | BNY Mellon | 3 / 3 | 2 / **30** | Full 2025 estimate PDF paying funds | Tickers only for DGAGX / PEOPX. Paid YE product pages still flagship. |
+| 15 | Northern Trust | 5 / 5 | **13 / 13** | Full 2025 equity CG PDF (column-safe rows) | NOMIX / NSGRX / NSCKX LT skipped (PDF spacing). FI book is em-dash / no CG. 2022–2024 still flagship. |
 | 18 | Dimensional | 3 / 3 | **140 / 140** | Full 2025 CG PDF (published $0.000 kept) | 2025 full-book. 2024 paid PDF still flagship-only. |
+| 20 | Amundi / Pioneer | 4 / 4 | 4 / 4 | **Skipped** | Off the expansion ladder. |
+| 22 | Janus Henderson | 3 / 3 | **222 / 222** | Full 2025 final estimate PDF (all share classes) | 2023–2024 estimate PDFs still A-share flagships. |
+| 23 | American Century | 3 / 3 | **389 / 389** | Full 2025 retail estimate PDF (every share class) | Paid TWCGX product page still flagship. 2024 sibling PDFs 404. |
+| 27 | AllianceBernstein | 3 / 3 | 3 / **19** | Full 2025 paying-fund estimate PDF | Class A tickers only for AGRFX / APGAX / ABASX. 2023 book still flagship. |
+| 29 | Virtus | 3 / 3 | 3 / **4** | Full listed June 2026 estimate PDF (4 funds) | 2025 paid / 2024 19(a) still flagship. |
 | 41 | Harbor | 3 / 3 | 3 / **9** | 2025 estimate PDF Institutional rows | Tickers only where already identified (HACAX / HASCX / HAIDX). |
 | 43 | Voya | 3 / 3 | 3 / **17** | 2025 estimate PDF paying funds | Class A tickers only for NLCAX / VYCAX / NMCAX; other rows are PDF names. |
-| 20 | Amundi / Pioneer | 4 / 4 | 4 / 4 | **Skipped** | Off the expansion ladder. |
+| 51 | SEI | 0 / 3 | 1 / **51** | Full 2025 paying-fund estimate PDF | Fund-level (QALT ticker when printed). All-dash rows omitted. |
+| 52 | Brown Advisory | 4 / 4 | 4 / **17** | Full 2025 Inst/Inv/Adv estimate PDF | Tickers only for BAFFX / BAFGX / BAFWX / BVALX. All-dash funds omitted. |
+| 54 | VanEck | 3 / 3 | **13 / 13** | Full 2025 mutual-fund estimate PDF | Printed `None` CG omitted. CM Commodity ‡ estimates-to-come omitted. |
+| 55 | WisdomTree | 4 / 4 | **7 / 7** | Full 2025 final CG PDF (payers only) | Dashed no-CG rows omitted, not stored as $0. |
+| 56 | AQR | 4 / 4 | **75 / 75** | Full 2025 I/N/R6 estimate PDF | Diversifying Strategies uses the later 12/19–12/23 dates. |
+| 57 | Causeway | 3 / 3 | **10 / 10** | Full 2025 Institutional + Investor final PDF | — |
+| 58 | Alger | 3 / 3 | **84 / 84** | Full 2025 share-class PDF | International Small Cap ALCZX collision omitted. Published $0.00 stored. |
 
-**Handoff for the next wave (do not start 41+ history packs):** continue largest → smallest among remaining thin US adapters (State Street SPA, JPM/GS/PIMCO samples, UBS 403, Franklin SPA, BNY/Schwab/Northern product-page flagships, Dodge/MFS/Janus PDFs, ranks 21–40 product pages, then 51–110). Prefer live HTML or column-safe PDF tables. Login-walled → README gap only.
+**Still thin (public book not column-safe / SPA / 403):** State Street (Angular; `ZZSSGA` sample), Goldman / PIMCO (samples), UBS (403 / unparseable price page), Franklin (SPA + CEF 19a only), Schwab (SPA family grid), Dodge (Q1 2026 PDF is 2 funds; December tax-letter URL returned the foreign-source booklet), MFS (class-level % ranges, wrap-unsafe), Nuveen (document viewer is JS; no fetchable PDF), Columbia 2025 mid-year all-funds PDF (wrap-unsafe), William Blair 2025 PDF (text extract reverses columns).
+
+**Handoff:** remaining thin top-20 are SSGA / Goldman / PIMCO / UBS / Franklin / Schwab / Dodge / MFS / Nuveen / Columbia. Then ranks 31–40 product/PDF books (John Hancock, Hartford, Macquarie, First Eagle, …) and 61–110 where a public multi-fund table exists. Vanguard 2021–2023 ICI still flagship. Prefer live HTML or column-safe PDF. Login-walled → README gap only. Do not start 41+ history packs. Do not expand Amundi.
 
 ## Multi-year history and estimate → actual
 
@@ -527,10 +545,10 @@ Fixture packs today (ranks 1–40 historical pass):
 | Family | Years in fixtures | Live archive notes |
 | --- | --- | --- |
 | BlackRock / iShares | 2026 midyear paid + 2025 YE final | Live HTML https://www.ishares.com/us/capital-gains-distributions. 2023–2024 archives are 1099-style PDF tax kits (not an HTML CG grid) — skipped, not invented. 2024 kit: https://www.ishares.com/us/library/2024-tax-kit |
-| Vanguard | 2021–2025 ICI December YE (≥$1B Admiral / mega ETFs) + 2025 YE HTML for VFIAX / VBIAX / VIGAX | **ICI first.** Official Primary Layout PDFs on the advisor tax center (not SPA scrape). December-only / ≥$1B filter. 2025 ICI skips those three heroes so the YE HTML fixture is not double-counted. |
+| Vanguard | 2024–2025 ICI **full December** + 2021–2023 ICI flagships + 2025 YE HTML for VFIAX / VBIAX / VIGAX | **ICI first.** Official Primary Layout PDFs. 2024–2025 December rows are column-safe full-book (31-token layout). 2025 ICI skips VFIAX / VBIAX / VIGAX so the YE HTML fixture is not double-counted. 2021–2023 remain flagship-only. |
 | Fidelity | 2025 prior-year paid + 2026 estimate | Live HTML: current estimates `FIIS_SP52_DPL6` and prior-year `FIIS_SP10_DPL6` (FBGRX 2025 paid LT $5.07300 ex 2025-09-12; 2026 estimate LT $21.021 as of 2026-07-31). |
 | State Street / SPDR | 2025 estimate (SPY/SPLG 0% NAV placeholder) | Angular live page. Historical XLSX is linked but not a stable public file URL — 2024 paid ST/LT not transcribed. ZZSSGA is a parser-layout sample, not official. |
-| J.P. Morgan | 2025 Section 19a sample (SEEGX) | No confirmed official 2024 $/share 19a PDF/HTML. Third-party histories unused. |
+| J.P. Morgan | 2025 Section 19a full Appendix A (open-end + ETF) | Unsplit estimated CG $/share. SEEGX / JLGMX keep Large Cap Growth LT $9.32525. No confirmed official 2024 $/share 19a. |
 | Goldman Sachs | 2025 sample (GLCGX) | Advisor tax center 403-walled; no public historical HTML. |
 | American Funds | 2024 prelim + 2024 final, 2025 prelim + 2025 final, 2026 midyear paid | 2025 YE + 2026 midyear HTML are public. 2024 advisor YE URL 302s to login (transcribed fixture). Official 2024 YE lists CGHM with em-dash ST/LT (no CG — not stored as $0). Per-fund tool: https://www.capitalgroup.com/individual/investments/historicaldistributions/ |
 | PIMCO | Layout sample only (ZZPIMI / ZZPIMB) | No public HTML estimate grid. No additional years invented. |
@@ -538,23 +556,23 @@ Fixture packs today (ranks 1–40 historical pass):
 | T. Rowe Price | 2022 prelim + 2022–2025 YE | 2023–2025 HTML (same path, year in the filename). 2022 YE + 2022 prelim are official PDFs (TRBCX LT $6.0394 final / $5.75 prelim). |
 | UBS | 2025 estimate + 2025 paid (PWTAX) | No public filled ICI. Estimate PDF is rotating AEM/JCR and often 403. 2023–2024 paid archives not fetchable — skipped. |
 | Franklin Templeton | 2024 + 2025 CEF 19(a) (FT) | ICI hub is a JS SPA (no filled Primary download). Open-end estimate tool is SPA. ≥$1B open-end (FKINX) not on a scrapeable grid — skipped. |
-| BNY Mellon | 2022–2025 paid YE (DGAGX) + 2025 estimate | No public filled ICI. 2024 family estimate PDF URL was empty. Paid YE from the public Appreciation product page (2025 LT $6.4552 coexists with 10/31 estimate LT $6.29). |
-| Nuveen | 2025 estimate (TIIRX) | No public filled ICI. 2024 posted files are tax-character letters (not ST/LT $/share) — skipped. |
-| Northern Trust | 2022–2025 YE paid (NOSIX / NOLCX / NOMIX) | **ICI listed.** Filled Primary Reports 2022–2025 are public PDFs; column extract merges income/CG and includes quarterly lines — not ingested. December ST/LT from companion CG PDFs on the same tax center. |
+| BNY Mellon | 2022–2025 paid YE (DGAGX) + 2025 full estimate book | No public filled ICI. 2024 family estimate PDF URL was empty. 2025 estimate is every paying fund (tickers only DGAGX / PEOPX). Paid YE from the public Appreciation product page (2025 LT $6.4552 coexists with 10/31 estimate LT $6.29). |
+| Nuveen | 2025 estimate sample (TIIRX) | No public filled ICI. Document-viewer URL is a JS shell (no fetchable PDF here). 2024 posted files are tax-character letters (not ST/LT $/share) — skipped. |
+| Northern Trust | 2022–2024 YE flagship + 2025 full equity CG book | **ICI listed.** Filled Primary Reports 2022–2025 are public PDFs; column extract merges income/CG and includes quarterly lines — not ingested. December ST/LT from companion CG PDFs. 2025 equity book is column-safe (NOSIX LT $1.182288); NOMIX/NSGRX/NSCKX LT skipped. |
 | Morgan Stanley | 2024 + 2025 ETF YE (CVLC income; 0% CG) | No public filled ICI. Live ETF PDFs often Akamai 403; fixtures transcribe official document text. 2025 open-end PDF blocked. |
 | Schwab | 2022–2025 annual (SWTSX / SWPPX income; 2025 also SWLVX) | No public filled ICI. Family annual page is a JS SPA — skip. Product-page HTML history used (2022–2024 CG $0, income stored). |
 | Dimensional | 2024 paid + 2025 estimate (DISVX / DFELX / DFQTX) | No public filled ICI. 2024 December book `2024-distributions.pdf` (DISVX LT $0.184). |
-| Columbia Threadneedle | 2024 YE paid + 2025 midyear estimate | No public filled ICI. 2024 YE PDF (LBSAX LT $1.38581; ELGAX LT $4.05105). IEVAX 2024 $0 CG not stored. 2023 YE PDF 404. |
+| Columbia Threadneedle | 2024 YE paid + 2025 midyear sample | No public filled ICI. 2025 mid-year all-funds PDF is wrap-unsafe (not a column-safe full extract). 2024 YE PDF (LBSAX LT $1.38581; ELGAX LT $4.05105). IEVAX 2024 $0 CG not stored. 2023 YE PDF 404. |
 | Amundi / Pioneer | 2025 estimate (PIODX) only | **Off the history ladder** (non-US parent). Existing 2025 fixture left as-is; do not expand. 2024 Pioneer siblings 404 after the Victory transfer. |
 | Allspring | 2022–2025 paid YE (WFMIX / SGRNX) | No public filled ICI. Family estimate PDFs are gated login HTML. Product-page paid history used (WFMIX 2025 LT $4.26857; 2024 $2.93497; 2023 $1.7935; 2022 $3.13277). |
-| Janus Henderson | 2023 final + 2024 prelim + 2025 final estimates (JDCAX) | No public filled ICI. Rackcdn tax PDFs still posted (JDCAX LT $3.87 / $5.42 / $6.92). 2024 Final sibling filename 404. |
-| American Century | 2025 estimate + 2025 paid (TWCGX) | No public filled ICI. 2025 retail estimate PDF (TWCGX LT $10.4978) plus product-page paid Total $9.7631 (no ST/LT split). 2024 sibling PDFs 404. |
+| Janus Henderson | 2023–2024 A-share flagships + 2025 full share-class final | No public filled ICI. Rackcdn tax PDFs still posted (JDCAX LT $3.87 / $5.42 / $6.92). 2025 final is every share class. 2024 Final sibling filename 404. |
+| American Century | 2025 full retail estimate + 2025 paid (TWCGX) | No public filled ICI. 2025 retail estimate PDF is every share class (TWCGX LT $10.4978) plus product-page paid Total $9.7631 (no ST/LT split). 2024 sibling PDFs 404. |
 | Dodge & Cox | 2024 + 2025 Dec YE paid + Q1 2026 estimate | No public filled ICI. Supplemental tax letters (DODGX Dec 2025 LT $1.1999 / 2024 LT $12.036). 2023 letter siblings 404. Quarters omitted so one as_of is not summed. |
 | MFS | 2025 estimate + 2025 YE paid + 2026 midyear paid | No public filled ICI. 2025 %NAV estimate PDF (MIGHX 8%–9%) plus product-page paid (2025 YE LT $4.20618; 2026 midyear LT $0.54043). 2024 fly PDF 404; older years behind a download control. |
 | Lord Abbett | 2025 $0 no-pay list | No public filled ICI. Public PDF lists funds not expected to pay 2025 CG. 2024 sibling 404. No paying-fund ST/LT grid. |
-| AllianceBernstein | 2023 + 2025 estimates (AGRFX) | No public filled ICI. 2025 Final_GEN-5796-1025.pdf (AGRFX LT $16.36). Unversioned FINAL_GEN-5796.pdf now serves 2025; 2024 overwritten. 2023 book from the public Wayback snapshot of that path (AGRFX LT $6.95). |
+| AllianceBernstein | 2023 flagship + 2025 full paying-fund estimate | No public filled ICI. 2025 Final_GEN-5796-1025.pdf is every listed payer (AGRFX LT $16.36; Class A tickers only AGRFX / APGAX / ABASX). Unversioned FINAL_GEN-5796.pdf now serves 2025; 2024 overwritten. 2023 book from the public Wayback snapshot of that path (AGRFX LT $6.95). |
 | Federated Hermes | 2025 PAYR 19(a) | ICI Primary/Secondary listed on token URLs (not a stable public download; some books are monthly muni lines). Family tax-center grids are JS. Kaufmann pages have no scrapeable ST/LT history. |
-| Virtus | 2024 19(a) + 2025 paid + 2026 June estimate | No public filled ICI. 2026 June estimate (STVTX LT $0.1767); 2025 calyr paid Dec (STVTX LT $0.427834); 2024 19(a) income + combined CG $1.907616. |
+| Virtus | 2024 19(a) + 2025 paid + 2026 June full listed estimate | No public filled ICI. 2026 June PDF lists 4 funds (STVTX LT $0.1767); 2025 calyr paid Dec (STVTX LT $0.427834); 2024 19(a) income + combined CG $1.907616. |
 | Eaton Vance | 2025 CEF 19(b) (EOI) | No public filled ICI. March 2025 19(b) (EOI $0.1338 LT). 2024 sibling PDFs 403. Open-end YE stays on `morgan_stanley`. |
 | John Hancock | 2022–2025 estimate ranges (TAGRX / JBGAX; USGLX 2024–2025) | No public filled ICI. Press-release PDFs still posted. USGLX 2022–2023 em-dash (no CG — omitted). Manulife parent; US JH Investments book. |
 | Hartford | 2024 final + 2025 estimate + 2025 final (HFMCX) | No public filled ICI. Final equity PDFs (HFMCX LT $1.67 / $5.44). 10/31/2025 estimate LT $5.36 coexists (estimate→actual). |
@@ -655,7 +673,7 @@ When a holding’s ticker or family is not in the store, Website Engineering sho
 | Rank | Slug | Display name | Parser | Live HTML | Public source (verified 2026-09-07) |
 | --- | --- | --- | --- | --- | --- |
 | 1 | `blackrock` (alias `ishares`) | BlackRock / iShares | implemented | yes | https://www.ishares.com/us/capital-gains-distributions |
-| 2 | `vanguard` | Vanguard | implemented | JS SPA + ICI PDF fixtures | **ICI first:** Primary Layout PDFs 2021–2025 under `/content/dam/fas/pdfs/` (full-book historical + ongoing). YE SPA is fallback for 2025 heroes only. |
+| 2 | `vanguard` | Vanguard | implemented | JS SPA + ICI PDF fixtures | **ICI first:** Primary Layout PDFs 2021–2025 under `/content/dam/fas/pdfs/`. 2024–2025 December rows are full-book; 2021–2023 remain flagship. YE SPA is fallback for 2025 VFIAX / VBIAX / VIGAX only. |
 | 3 | `fidelity` | Fidelity | implemented | yes (estimates + prior-year) | https://institutional.fidelity.com/app/tabbed/products/FIIS_SP52_DPL6.html?navId=324 ; prior-year `FIIS_SP10_DPL6` |
 | 4 | `state_street` (aliases `spdr`, `ssga`) | State Street / SPDR | implemented | Angular — fixture fallback | https://www.ssga.com/us/en/individual/resources/documents/etf-capital-gain-distributions |
 | 5 | `jpmorgan` (alias `jpm`) | J.P. Morgan AM | implemented | PDF / no HTML grid | Section 19a PDFs under am.jpmorgan.com `.../section-19-notices/` |
