@@ -45,8 +45,9 @@ function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" ? (value as Record<string, unknown>) : {};
 }
 
-function normalizeUpcoming(raw: unknown): PortfolioUpcoming | null {
-  if (!raw || typeof raw !== "object") return null;
+function normalizeUpcoming(raw: unknown): PortfolioUpcoming | null | undefined {
+  if (raw === undefined) return undefined;
+  if (raw == null || typeof raw !== "object") return null;
   const row = asRecord(raw);
   return {
     distribution_dollars: numOrNull(
@@ -54,11 +55,25 @@ function normalizeUpcoming(raw: unknown): PortfolioUpcoming | null {
     ),
     estimated_tax: numOrNull(row.estimated_tax ?? row.estimated_tax_dollars),
     as_of: row.as_of == null ? null : String(row.as_of),
-    stage:
-      row.stage == null && row.publication_stage == null
+    publication_stage:
+      row.publication_stage == null && row.stage == null
         ? null
-        : String(row.stage ?? row.publication_stage),
+        : String(row.publication_stage ?? row.stage),
   };
+}
+
+/** v1 single snapshot — never send Data API `periods[]`. */
+export function toPortfolioCompareRequestBody(
+  request: PortfolioCompareRequest,
+): Record<string, unknown> {
+  const body: Record<string, unknown> = {
+    current: request.current,
+    proposed: request.proposed,
+    tax_rates: request.tax_rates ?? {},
+    combine_state_with_federal: request.combine_state_with_federal !== false,
+  };
+  if (request.snapshot) body.snapshot = request.snapshot;
+  return body;
 }
 
 function normalizeHolding(raw: unknown, index: number): PortfolioHoldingOut {
@@ -98,7 +113,9 @@ function normalizeHolding(raw: unknown, index: number): PortfolioHoldingOut {
     publication_stage_used:
       row.publication_stage_used == null ? null : String(row.publication_stage_used),
     warnings: Array.isArray(row.warnings) ? row.warnings.map(String) : [],
-    upcoming: normalizeUpcoming(row.upcoming),
+    upcoming: normalizeUpcoming(
+      Object.prototype.hasOwnProperty.call(row, "upcoming") ? row.upcoming : undefined,
+    ),
     gap_reason: row.gap_reason == null ? null : String(row.gap_reason),
     illustration: illustrationRaw
       ? {
@@ -342,7 +359,7 @@ export async function postIllustratePortfolioCompare(
 
   let response: Response | undefined;
   try {
-    response = await jsonPost(endpoint, request, init?.signal);
+    response = await jsonPost(endpoint, toPortfolioCompareRequestBody(request), init?.signal);
     if (remote && (response.status >= 500 || response.status === 404)) {
       response = undefined;
     }
@@ -409,7 +426,7 @@ export async function postIllustratePortfolioCompare(
     try {
       const fallback = await jsonPost(
         "/api/illustrate/portfolio/compare",
-        request,
+        toPortfolioCompareRequestBody(request),
         init?.signal,
       );
       if (fallback.ok) {

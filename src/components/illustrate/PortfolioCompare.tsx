@@ -171,7 +171,7 @@ export function PortfolioCompare({
   );
 
   return (
-    <article className={`w-full ${className}`}>
+    <article className={`portfolio-compare w-full ${className}`}>
       <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-faint">

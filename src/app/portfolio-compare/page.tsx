@@ -20,10 +20,13 @@ export default async function PortfolioCompareDemoPage() {
 
   return (
     <main className="mx-auto w-full max-w-7xl px-4 pb-16 pt-8 sm:px-6 lg:px-8">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
+      <p
+        data-print-hide
+        className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted"
+      >
         Illustrate module
       </p>
-      <p className="mt-2 max-w-2xl text-sm text-muted">
+      <p data-print-hide className="mt-2 max-w-2xl text-sm text-muted">
         Reusable module for Website Engineering. Drop{" "}
         <code className="font-mono text-[13px] text-ink">PortfolioCompare</code>{" "}
         into a page. This demo posts{" "}
@@ -38,10 +41,20 @@ export default async function PortfolioCompareDemoPage() {
         <PortfolioCompare funds={funds} />
       </div>
 
-      <pre className="mt-10 overflow-auto rounded-lg border border-line bg-surface p-4 text-[12px] leading-relaxed text-muted">
-        {`import { PortfolioCompare } from "@/components/illustrate";
+      <pre
+        data-print-hide
+        className="mt-10 overflow-auto rounded-lg border border-line bg-surface p-4 text-[12px] leading-relaxed text-muted"
+      >
+        {`import {
+  PortfolioCompare,
+  exportToPdf,
+  toPortfolioCompareExportModel,
+} from "@/components/illustrate";
 
 <PortfolioCompare />
+
+// Website wires the Export button + freemium gate, then:
+exportToPdf(toPortfolioCompareExportModel(result, bookDollars));
 
 // Optional: pass book size, funds for autocomplete, or tax rates
 <PortfolioCompare
@@ -51,7 +64,9 @@ export default async function PortfolioCompareDemoPage() {
 />`}
       </pre>
 
-      <p className="mt-6 text-xs text-faint">{COPY.trust}</p>
+      <p data-print-hide className="mt-6 text-xs text-faint">
+        {COPY.trust}
+      </p>
     </main>
   );
 }

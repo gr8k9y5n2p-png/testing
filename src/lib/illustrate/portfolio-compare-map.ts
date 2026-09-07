@@ -53,18 +53,22 @@ function num(value: unknown): number | null {
 }
 
 export function upcomingFromHolding(holding: PortfolioHoldingOut): PortfolioUpcoming | null {
-  const direct = holding.upcoming;
-  if (direct) {
-    const dist = num(direct.distribution_dollars);
-    const tax = num(direct.estimated_tax);
-    if (dist != null || tax != null || direct.as_of || direct.stage) {
+  if (holding.upcoming === null) return null;
+
+  if (holding.upcoming) {
+    const dist = num(holding.upcoming.distribution_dollars);
+    const tax = num(holding.upcoming.estimated_tax);
+    const stage =
+      holding.upcoming.publication_stage ?? holding.publication_stage_used ?? null;
+    if (dist != null || tax != null || holding.upcoming.as_of || stage) {
       return {
         distribution_dollars: dist,
         estimated_tax: tax,
-        as_of: direct.as_of ?? null,
-        stage: direct.stage ?? holding.publication_stage_used ?? null,
+        as_of: holding.upcoming.as_of ?? null,
+        publication_stage: stage,
       };
     }
+    return null;
   }
 
   const illustration = holding.illustration;
@@ -74,24 +78,25 @@ export function upcomingFromHolding(holding: PortfolioHoldingOut): PortfolioUpco
   const components = illustration.components ?? [];
   const first = components[0];
   const dist =
+    num(first?.distribution_dollars) ??
     num(totals?.distribution_dollars) ??
     components.reduce((sum, row) => sum + (num(row.distribution_dollars) ?? 0), 0);
   const tax =
-    num(totals?.estimated_tax) ??
-    num(totals?.estimated_tax_dollars) ??
     num(first?.estimated_tax) ??
-    num(first?.estimated_tax_dollars);
+    num(first?.estimated_tax_dollars) ??
+    num(totals?.estimated_tax) ??
+    num(totals?.estimated_tax_dollars);
 
   const asOf = first?.as_of ?? first?.ex_date ?? null;
   const stage =
-    holding.publication_stage_used ?? first?.publication_stage ?? null;
+    first?.publication_stage ?? holding.publication_stage_used ?? null;
 
   if (dist == null && tax == null && !asOf && !stage) return null;
   return {
     distribution_dollars: dist,
     estimated_tax: tax,
     as_of: asOf,
-    stage,
+    publication_stage: stage,
   };
 }
 
@@ -148,7 +153,7 @@ function rowsForSide(
         distributionDollars: dist,
         estimatedTax: num(upcoming.estimated_tax),
         asOf: upcoming.as_of ?? null,
-        stage: upcoming.stage ?? holding.publication_stage_used ?? null,
+        stage: upcoming.publication_stage ?? holding.publication_stage_used ?? null,
         heat: 0,
       },
     ];
@@ -212,13 +217,13 @@ export function colorForTicker(ticker: string, used = new Set<string>()): string
 }
 
 function taxImpactDollars(holding: PortfolioHoldingOut): number {
-  const upcoming = upcomingFromHolding(holding);
-  const fromUpcoming = num(upcoming?.estimated_tax);
-  if (fromUpcoming != null) return fromUpcoming;
-  return (
-    num(holding.illustration?.totals?.estimated_tax) ??
-    num(holding.illustration?.totals?.estimated_tax_dollars) ??
-    0
+  return num(upcomingFromHolding(holding)?.estimated_tax) ?? 0;
+}
+
+export function totalUpcomingTax(allocation: PortfolioAllocationOut): number {
+  return allocation.holdings.reduce(
+    (sum, holding) => sum + (num(upcomingFromHolding(holding)?.estimated_tax) ?? 0),
+    0,
   );
 }
 

@@ -11,6 +11,15 @@ export type {
 export { PortfolioCompare } from "@/components/illustrate/PortfolioCompare";
 export type { PortfolioCompareProps } from "@/components/illustrate/PortfolioCompare";
 export { postIllustratePortfolioCompare } from "@/lib/illustrate/portfolio-compare-client";
+export {
+  exportToPdf,
+  renderPortfolioComparePrintHtml,
+  toPortfolioCompareExportModel,
+} from "@/lib/illustrate/portfolio-compare-export";
+export type {
+  PortfolioCompareExportModel,
+  PortfolioCompareExportSide,
+} from "@/lib/illustrate/portfolio-compare-export";
 export type {
   PortfolioCompareRequest,
   PortfolioCompareResponse,

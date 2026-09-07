@@ -50,11 +50,12 @@ export type PortfolioCompareRequest = {
   snapshot?: IllustrationSnapshot;
 };
 
+/** Data API `holdings[].upcoming`. Null when uncovered or no upcoming dollars. */
 export type PortfolioUpcoming = {
   distribution_dollars?: number | null;
   estimated_tax?: number | null;
   as_of?: string | null;
-  stage?: string | null;
+  publication_stage?: string | null;
 };
 
 export type PortfolioHoldingIllustrationTotals = {
@@ -88,7 +89,10 @@ export type PortfolioHoldingOut = {
   publication_stage_used?: string | null;
   warnings: string[];
   illustration?: PortfolioHoldingIllustration | null;
-  /** Optional Data API / mock extension. Prefer this for the upcoming table. */
+  /**
+   * Prefer this for bar charts + heat tables.
+   * `null` = no upcoming (do not derive). Omitted = older payload; derive from illustration.
+   */
   upcoming?: PortfolioUpcoming | null;
   gap_reason?: string | null;
 };

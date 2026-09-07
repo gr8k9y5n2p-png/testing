@@ -121,7 +121,7 @@ function mockHoldingOut(
       distribution_dollars: dist,
       estimated_tax: upcomingTax,
       as_of: rates.asOf,
-      stage,
+      publication_stage: stage,
     },
     illustration: {
       totals: {
