@@ -6,7 +6,9 @@ from pathlib import Path
 import httpx
 
 from app.config import settings
+from app.sources.aum import filter_large_aum
 from app.sources.base import FetchResult, FundSource
+from app.sources.ici import ici_as_of_from_name, parse_ici_primary
 from app.sources.parser import parse_distribution_html
 
 
@@ -16,6 +18,8 @@ class PageSpec:
     url: str
     fixture: str
     live: bool = True
+    parser: str = "html"  # html | ici
+    large_aum_only: bool = False
 
 
 class HtmlTableSource(FundSource):
@@ -76,7 +80,15 @@ class HtmlTableSource(FundSource):
             else:
                 html = self._http_get(spec.url)
                 url = spec.url
-            out.append({"name": spec.name, "url": url, "html": html})
+            out.append(
+                {
+                    "name": spec.name,
+                    "url": url,
+                    "html": html,
+                    "parser": spec.parser,
+                    "large_aum_only": spec.large_aum_only,
+                }
+            )
         if mode == "live" and not out:
             raise RuntimeError(f"No live pages configured for {self.slug}.")
         return out
@@ -86,14 +98,30 @@ class HtmlTableSource(FundSource):
         urls: list[str] = []
         notes = list(extra_notes)
         for page in pages:
-            parsed = parse_distribution_html(
-                page["html"],
-                source_url=page["url"],
-                fund_family=self.display_name,
-            )
+            if page.get("parser") == "ici":
+                parsed = parse_ici_primary(
+                    page["html"],
+                    source_url=page["url"],
+                    fund_family=self.display_name,
+                    default_as_of=ici_as_of_from_name(page["name"]),
+                )
+            else:
+                parsed = parse_distribution_html(
+                    page["html"],
+                    source_url=page["url"],
+                    fund_family=self.display_name,
+                )
+            if page.get("large_aum_only"):
+                before = len(parsed)
+                parsed = filter_large_aum(parsed)
+                notes.append(
+                    f"{page['name']}: {len(parsed)} records "
+                    f"(ICI/large-AUM filter kept {len(parsed)} of {before})"
+                )
+            else:
+                notes.append(f"{page['name']}: {len(parsed)} records")
             records.extend(parsed)
             urls.append(page["url"])
-            notes.append(f"{page['name']}: {len(parsed)} records")
         return FetchResult(records=records, source_urls=urls, notes=notes)
 
     def _http_get(self, url: str) -> str:

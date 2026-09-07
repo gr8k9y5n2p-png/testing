@@ -4,6 +4,12 @@ Backend service that ingests **taxable distribution estimates** published by fun
 
 The default demo uses **SQLite** and bundled Capital Group HTML fixtures so the pipeline runs offline. The same SQLAlchemy models work with **Postgres** by changing `DATABASE_URL`.
 
+**Build, not buy.** This service ingests public manager HTML, ICI layout files, and PDF archives. It does not license CapGainsValet, YCharts, or other paid distribution feeds.
+
+Historical packs prefer **ICI Primary Layout / PDF archives** over JavaScript SPA pages (Vanguard advisor year-end and product tables are SPAs; the official ICI PDFs on the tax center are the source of record for prior years).
+
+**>$1B AUM filter.** When expanding *within* a family, historical rows are limited to funds identified as above **$1 billion AUM** — flagship Admiral / Investor classes and mega ETFs — plus locked compare heroes (`AMCPX`, `CGHM`, `TRBCX`, `VFIAX`, `VBIAX`, `FBGRX`). The allowlist lives in `app/sources/aum.py` (`LARGE_AUM_TICKERS`). It is not a live AUM feed. Micro share classes and synthetic parser samples stay out of multi-year packs. Illustrate/compare contracts are unchanged.
+
 ## What you get
 
 - Normalized data model for distribution estimates (family, fund, ticker, share class, type, amount + unit, tax dates, source URL, raw JSON audit payload)
@@ -269,7 +275,7 @@ Each side is a full `/illustrate/portfolio` result plus `label` (defaults: `Curr
 | `deltas.coverage_pct` | Coverage-percentage points |
 | `summary` | Dollar fields at **$10,000**. YoY also sets `total_tax_difference`, `annualized_tax_drag_delta`, `distribution_dollars_difference`, `periods_compared`, `common_inception` (same footer idea as `/illustrate/compare`) |
 
-**Sparse history:** Vanguard, Fidelity, and Dodge & Cox fixtures are one vintage each. A YoY `periods[]` pin that misses that `as_of` / year is an explicit **gap** on that side, not a silent $0. American Funds and T. Rowe Price have multi-year fixture snapshots (2024–2025 prelim/final; TRBCX 2023–2025).
+**Sparse history:** Dodge & Cox is still one vintage. Vanguard now has ICI December year-end rows for 2022–2024 (VFIAX / VBIAX / VIGAX) plus the 2025 YE fixture. Fidelity has 2025 paid + 2026 estimate (FBGRX). A YoY `periods[]` pin that misses that `as_of` / year is an explicit **gap** on that side, not a silent $0. American Funds (AMCAP 2024–2025) and T. Rowe Price (TRBCX 2022–2025) have multi-year fixture snapshots.
 
 ```bash
 curl -s -X POST http://127.0.0.1:8000/illustrate/portfolio/compare \
@@ -429,12 +435,20 @@ The upsert key includes `as_of` and `ex_date`, so a September preliminary, a Dec
 3. `GET /distributions?fund_identifier=amcap-fund&as_of_from=2024-01-01&as_of_to=2024-12-31` — one tax year’s publication window.
 4. Units differ (`percent_of_nav` vs `per_share`); convert with NAV before subtracting. Illustration uses `as_of` or `prefer_publication_stages` so you do not add estimate + final.
 
-Fixture packs today:
+Fixture packs today (ranks 1–10 historical pass):
 
 | Family | Years in fixtures | Live archive notes |
 | --- | --- | --- |
-| American Funds | 2024 prelim + 2024 final, 2025 prelim + 2025 final, 2026 midyear paid | 2025 YE + 2026 midyear HTML are public. 2024 advisor YE URL 302s to login (transcribed fixture). Per-fund tool: https://www.capitalgroup.com/individual/investments/historicaldistributions/ |
-| T. Rowe Price | 2023, 2024, 2025 year-end HTML | Same public path with the year in the filename (verified 2026-09-07) |
+| BlackRock / iShares | 2026 midyear paid + 2025 YE final | Live HTML https://www.ishares.com/us/capital-gains-distributions. 2023–2024 archives are 1099-style PDF tax kits (not an HTML CG grid) — skipped, not invented. 2024 kit: https://www.ishares.com/us/library/2024-tax-kit |
+| Vanguard | 2022–2024 ICI December YE (VFIAX / VBIAX / VIGAX) + 2025 YE HTML | ICI Primary Layout PDFs on the advisor tax center (not SPA scrape). December-only / >$1B filter. 2025 ICI not double-ingested (existing YE fixture). |
+| Fidelity | 2025 prior-year paid + 2026 estimate | Live HTML: current estimates `FIIS_SP52_DPL6` and prior-year `FIIS_SP10_DPL6` (FBGRX 2025 paid LT $5.07300 ex 2025-09-12; 2026 estimate LT $21.021 as of 2026-07-31). |
+| State Street / SPDR | 2025 estimate (SPY/SPLG 0% NAV placeholder) | Angular live page. Historical XLSX is linked but not a stable public file URL — 2024 paid ST/LT not transcribed. ZZSSGA is a parser-layout sample, not official. |
+| J.P. Morgan | 2025 Section 19a sample (SEEGX) | No confirmed official 2024 $/share 19a PDF/HTML. Third-party histories unused. |
+| Goldman Sachs | 2025 sample (GLCGX) | Advisor tax center 403-walled; no public historical HTML. |
+| American Funds | 2024 prelim + 2024 final, 2025 prelim + 2025 final, 2026 midyear paid | 2025 YE + 2026 midyear HTML are public. 2024 advisor YE URL 302s to login (transcribed fixture). Official 2024 YE lists CGHM with em-dash ST/LT (no CG — not stored as $0). Per-fund tool: https://www.capitalgroup.com/individual/investments/historicaldistributions/ |
+| PIMCO | Layout sample only (ZZPIMI / ZZPIMB) | No public HTML estimate grid. No additional years invented. |
+| Invesco | 2024 estimate + 2025 estimate | 2025 PDF + 2024 In Focus page (as of 2024-09-30; American Franchise LT $0.93). Live PDF/contentdetail is not HTML-parsed. |
+| T. Rowe Price | 2022 prelim + 2022–2025 YE | 2023–2025 HTML (same path, year in the filename). 2022 YE + 2022 prelim are official PDFs (TRBCX LT $6.0394 final / $5.75 prelim). |
 
 ## Data model
 
@@ -475,15 +489,15 @@ When a holding’s ticker or family is not in the store, Website Engineering sho
 | Rank | Slug | Display name | Parser | Live HTML | Public source (verified 2026-09-07) |
 | --- | --- | --- | --- | --- | --- |
 | 1 | `blackrock` (alias `ishares`) | BlackRock / iShares | implemented | yes | https://www.ishares.com/us/capital-gains-distributions |
-| 2 | `vanguard` | Vanguard | implemented | JS SPA — fixture fallback | https://advisors.vanguard.com/tax-center/year-end-distributions |
-| 3 | `fidelity` | Fidelity | implemented | yes | https://institutional.fidelity.com/app/tabbed/products/FIIS_SP52_DPL6.html?navId=324 |
+| 2 | `vanguard` | Vanguard | implemented | JS SPA + ICI PDF fixtures | YE SPA + ICI Primary Layout PDFs under `/content/dam/fas/pdfs/` |
+| 3 | `fidelity` | Fidelity | implemented | yes (estimates + prior-year) | https://institutional.fidelity.com/app/tabbed/products/FIIS_SP52_DPL6.html?navId=324 ; prior-year `FIIS_SP10_DPL6` |
 | 4 | `state_street` (aliases `spdr`, `ssga`) | State Street / SPDR | implemented | Angular — fixture fallback | https://www.ssga.com/us/en/individual/resources/documents/etf-capital-gain-distributions |
 | 5 | `jpmorgan` (alias `jpm`) | J.P. Morgan AM | implemented | PDF / no HTML grid | Section 19a PDFs under am.jpmorgan.com `.../section-19-notices/` |
 | 6 | `goldman_sachs` (aliases `gs`, `gsam`) | Goldman Sachs AM | implemented | 403 / PDF library | https://www.gsam.com/content/gsam/us/en/advisors/literature-and-forms/forms-and-tax-center.html |
 | 7 | `american_funds` (alias `capital_group`) | American Funds | implemented | yes | Capital Group individual tax center (see below) |
 | 8 | `pimco` | PIMCO | implemented | PDF / notices | https://www.pimco.com/us/en/resources/tax-center |
-| 9 | `invesco` | Invesco | implemented | PDF + PR | https://www.invesco.com/content/dam/invesco/us/en/documents/tax-centre/2025%20Invesco%20Estimated%20Capital%20Gains%20pdf.pdf |
-| 10 | `t_rowe_price` (alias `trp`) | T. Rowe Price | implemented | yes | https://www.troweprice.com/personal-investing/resources/planning/tax/dividend-distributions/mutual-funds/2025-year-end-distributions.html |
+| 9 | `invesco` | Invesco | implemented | PDF + PR (2024–2025 fixtures) | 2025 PDF + 2024 In Focus `contentId=29096ee0-8ec4-4199-930f-645be9d07e64` |
+| 10 | `t_rowe_price` (alias `trp`) | T. Rowe Price | implemented | yes (2023–2025 HTML; 2022 PDF) | https://www.troweprice.com/personal-investing/resources/planning/tax/dividend-distributions/mutual-funds/2025-year-end-distributions.html |
 | 11 | `ubs` | UBS Asset Management | implemented | price-page HTML / PDF | https://www.ubs.com/us/en/assetmanagement/funds/mutual-fund-price.html (paid PWTAX); estimate PDF from the mutual-fund product hub |
 | 12 | `franklin_templeton` (aliases `franklin`, `templeton`, `putnam`) | Franklin Templeton | implemented | JS SPA + 19(a) PDF | https://www.franklintempleton.com/tools-and-resources/tax-center ; CEF 19(a) e.g. `.../ft-section-19-notice-12-31-2025` |
 | 13 | `bny_mellon` (aliases `bny`, `dreyfus`) | BNY Mellon / Dreyfus | implemented | PDF | https://www.bny.com/assets/investments/im/documents/manual/tax-forms/2025-Estimated-capital-gains.pdf |

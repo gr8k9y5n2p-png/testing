@@ -13,9 +13,13 @@ class BlackRockSource(HtmlTableSource):
         "https://www.ishares.com/us/capital-gains-distributions "
         "(mid-year and year-end $/share, % of NAV, ex/pay dates). Table captions "
         "set publication_stage: mid-year paid vs year-end final. Verified 2026-09-07. "
-        "Do not use BlackRock Canada PDFs as the US source."
+        "Do not use BlackRock Canada PDFs as the US source. "
+        "Prior-year archives are 1099-style PDFs in the tax kits "
+        "(2024: https://www.ishares.com/us/library/2024-tax-kit ; "
+        "2023: https://www.ishares.com/us/literature/tax-information/2023-ishares-distribution-summary-stamped.pdf) "
+        "— not an HTML CG grid, so they are not fixture-transcribed."
     )
-    live_limitations = "Live HTML on ishares.com/us/capital-gains-distributions is supported."
+    live_limitations = "Live HTML on ishares.com/us/capital-gains-distributions is supported. 2023–2024 YE archives are PDF tax kits, not scrapeable HTML."
 
     def pages(self) -> list[PageSpec]:
         return [
@@ -34,30 +38,57 @@ class VanguardSource(HtmlTableSource):
     aum_rank = 2
     priority = 2
     notes = (
-        "Fixture parser for the advisor year-end distribution table "
-        "(fund / symbol / distribution type / per share / dates). "
-        "https://advisors.vanguard.com/tax-center/year-end-distributions is a JS SPA "
-        "with no rows in static HTML (verified 2026-09-07). Live fetch falls back to fixtures. "
-        "VIGAX year-end 2025 income $0.251100 is from the public product distribution table "
-        "https://advisors.vanguard.com/investments/products/vigax/vanguard-morningstar-growth-index-fund-admiral-shares "
-        "(Income only; no 2025 capital-gain row). "
-        "Tax center hub: https://advisors.vanguard.com/tax-center. "
-        "Workplace supplemental PDF: "
-        "https://workplace.vanguard.com/content/dam/inst/iig-transformation/insights/pdf/2026/ESDF_032026.pdf"
+        "2025 year-end HTML fixture (advisor table columns) plus ICI Primary Layout "
+        "ingest for 2022–2024 December year-end rows. "
+        "Official ICI PDFs (not SPA HTML): "
+        "https://advisors.vanguard.com/content/dam/fas/pdfs/ICI_revised_2024_Primary_layout_spreadsheet.pdf "
+        "https://advisors.vanguard.com/content/dam/fas/pdfs/2023_ICI_Primary_Layout.pdf "
+        "https://advisors.vanguard.com/content/dam/fas/pdfs/2022_ICI_Primary_Layout.pdf "
+        "and 2025 https://advisors.vanguard.com/content/dam/fas/pdfs/ICIprimary_012026.pdf "
+        "(2025 ICI is not double-ingested — the existing YE fixture already has those heroes). "
+        "ICI rows are filtered to the >$1B / hero allowlist (VFIAX, VBIAX, VIGAX). "
+        "December-only so quarterly income lines are not summed on one as_of. "
+        "https://advisors.vanguard.com/tax-center/year-end-distributions is a JS SPA; "
+        "live fetch falls back to fixtures. Tax center hub: https://advisors.vanguard.com/tax-center."
     )
     live_limitations = (
-        "Advisor year-end page is JavaScript-rendered; static GET yields 0 rows. "
-        "Use fixture mode or POST /ingest/distributions."
+        "Advisor year-end page is JavaScript-rendered; ICI archives are PDFs "
+        "(fixture transcription). Use fixture mode or POST /ingest/distributions."
     )
 
     def pages(self) -> list[PageSpec]:
+        ici = "https://advisors.vanguard.com/content/dam/fas/pdfs"
         return [
             PageSpec(
                 name="year_end_distributions",
                 url="https://advisors.vanguard.com/tax-center/year-end-distributions",
                 fixture="year_end_distributions.html",
                 live=True,
-            )
+            ),
+            PageSpec(
+                name="ici_primary_2024",
+                url=f"{ici}/ICI_revised_2024_Primary_layout_spreadsheet.pdf",
+                fixture="ici_primary_2024.csv",
+                live=False,
+                parser="ici",
+                large_aum_only=True,
+            ),
+            PageSpec(
+                name="ici_primary_2023",
+                url=f"{ici}/2023_ICI_Primary_Layout.pdf",
+                fixture="ici_primary_2023.csv",
+                live=False,
+                parser="ici",
+                large_aum_only=True,
+            ),
+            PageSpec(
+                name="ici_primary_2022",
+                url=f"{ici}/2022_ICI_Primary_Layout.pdf",
+                fixture="ici_primary_2022.csv",
+                live=False,
+                parser="ici",
+                large_aum_only=True,
+            ),
         ]
 
 
@@ -68,10 +99,15 @@ class FidelitySource(HtmlTableSource):
     priority = 3
     notes = (
         "Parses Fidelity Institutional estimated capital-gains HTML "
-        "(Symbol/Cusip, ex/pay, % of NAV, ST/LT, total per share, as-of). "
-        "Verified 2026-09-07. Hub: https://www.fidelity.com/mutual-funds/information/overview"
+        "(Symbol/Cusip, ex/pay, % of NAV, ST/LT, total per share, as-of) "
+        "plus the public prior-year paid table "
+        "https://institutional.fidelity.com/app/tabbed/products/FIIS_SP10_DPL6.html?navId=324 "
+        "(Dividends / ST / LT / Reinvest NAV). "
+        "Verified 2026-09-07. FBGRX 2026 estimate LT $21.021 (as of 2026-07-31) "
+        "coexists with 2025 paid LT $5.07300 (ex 2025-09-12). "
+        "Hub: https://www.fidelity.com/mutual-funds/information/overview"
     )
-    live_limitations = "Live HTML table on institutional.fidelity.com is supported."
+    live_limitations = "Live HTML tables on institutional.fidelity.com are supported (current estimates + prior-year paid)."
 
     def pages(self) -> list[PageSpec]:
         return [
@@ -80,7 +116,13 @@ class FidelitySource(HtmlTableSource):
                 url="https://institutional.fidelity.com/app/tabbed/products/FIIS_SP52_DPL6.html?navId=324",
                 fixture="estimated_capital_gains.html",
                 live=True,
-            )
+            ),
+            PageSpec(
+                name="prior_year_distributions",
+                url="https://institutional.fidelity.com/app/tabbed/products/FIIS_SP10_DPL6.html?navId=324",
+                fixture="prior_year_distributions.html",
+                live=True,
+            ),
         ]
 
 
@@ -94,11 +136,14 @@ class StateStreetSource(HtmlTableSource):
         "https://www.ssga.com/us/en/individual/resources/documents/etf-capital-gain-distributions "
         "(as of Oct 31, 2025) is an Angular app — static HTML has {{th.name}} placeholders. "
         "MF companion: .../mf-capital-gain-distributions. Fixture parser covers the published "
-        "column layout; live fetch falls back to fixtures."
+        "column layout; live fetch falls back to fixtures. "
+        "The dividend-distributions page links a Historical Distributions XLSX, but that "
+        "file has no stable public URL (Angular). 2024 paid ST/LT for SPY/SPLG were not "
+        "transcribed without a fetchable official file."
     )
     live_limitations = (
-        "SSGA estimate tables are client-rendered. Fixture mode is the supported path; "
-        "replace figures via POST /ingest/distributions when the Angular table is exported."
+        "SSGA estimate tables are client-rendered. Historical XLSX is not a stable public "
+        "file URL. Fixture mode is the supported path; replace figures via POST /ingest/distributions."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -121,9 +166,11 @@ class JPMorganSource(HtmlTableSource):
         "Public tax-center HTML 404’d (2026-09-07). Estimates appear in Section 19a PDFs, e.g. "
         "https://am.jpmorgan.com/content/dam/jpm-am-aem/americas/us/en/supplemental/section-19-notices/2025-19a-notice-etfs.pdf "
         "and section-19a-notice-aa-funds-12-2025.pdf. Fixture parser covers that table layout "
-        "plus the published Large Cap Growth $9.32525 year-end capital gain."
+        "plus the published Large Cap Growth $9.32525 year-end capital gain. "
+        "No official 2024 (or earlier) $/share 19a HTML/PDF with SEEGX amounts was "
+        "confirmed on this pass — third-party histories are not used."
     )
-    live_limitations = "No scrapeable HTML grid; fixture / partner ingest only."
+    live_limitations = "No scrapeable HTML grid; 2024+ archives not confirmed as public $/share PDFs. Fixture / partner ingest only."
 
     def pages(self) -> list[PageSpec]:
         return [
@@ -146,9 +193,9 @@ class GoldmanSachsSource(HtmlTableSource):
         "https://www.gsam.com/content/gsam/us/en/advisors/literature-and-forms/forms-and-tax-center.html "
         "Advisor tax-center HTML returned 403 (2026-09-07); estimates are typically Q4 PDFs. "
         "Fixture parser uses the GSAM table layout plus the public 2025 year-end distribution "
-        "for Large Cap Growth Insights (GLCGX)."
+        "for Large Cap Growth Insights (GLCGX). Prior-year advisor archives remain 403-walled."
     )
-    live_limitations = "Advisor tax center is login/403-walled. Use fixtures or POST /ingest/distributions."
+    live_limitations = "Advisor tax center is login/403-walled (including historical packs). Use fixtures or POST /ingest/distributions."
 
     def pages(self) -> list[PageSpec]:
         return [
@@ -170,10 +217,10 @@ class PimcoSource(HtmlTableSource):
         "Public hub https://www.pimco.com/us/en/resources/tax-center (verified 2026-09-07). "
         "Year-end forms: https://www.pimco.com/us/en/resources/tax-center/2025-tax-information-and-year-end-forms. "
         "Preliminary estimate grids are PDF / Section 19 notices, not a scrapeable HTML table. "
-        "Fixture is a layout sample (synthetic tickers ZZPIMI/ZZPIMB). Partner ingest is the "
-        "escape hatch for official notices."
+        "Fixture is a layout sample (synthetic tickers ZZPIMI/ZZPIMB) — no additional "
+        "tax years are invented. Partner ingest is the escape hatch for official notices."
     )
-    live_limitations = "No public HTML estimate table; fixture parser + POST /ingest/distributions."
+    live_limitations = "No public HTML estimate table or scrapeable multi-year archive; fixture parser + POST /ingest/distributions."
 
     def pages(self) -> list[PageSpec]:
         return [
@@ -192,12 +239,14 @@ class InvescoSource(HtmlTableSource):
     aum_rank = 9
     priority = 9
     notes = (
-        "Mutual-fund estimates are a public PDF: "
-        "https://www.invesco.com/content/dam/invesco/us/en/documents/tax-centre/2025%20Invesco%20Estimated%20Capital%20Gains%20pdf.pdf "
-        "(American Franchise LT $2.89 / 8.55% of NAV, etc.). ETF estimates via the 20 Nov 2025 "
-        "press release. Fixture HTML transcribes those tables; live PDF is not HTML-parsed."
+        "Mutual-fund estimates are public PDFs / In Focus pages. "
+        "2025: https://www.invesco.com/content/dam/invesco/us/en/documents/tax-centre/2025%20Invesco%20Estimated%20Capital%20Gains%20pdf.pdf "
+        "(American Franchise LT $2.89 / 8.55% of NAV). "
+        "2024: https://www.invesco.com/us-rest/contentdetail?contentId=29096ee0-8ec4-4199-930f-645be9d07e64 "
+        "(as of 2024-09-30; American Franchise LT $0.93 / 3.29% of NAV). "
+        "ETF estimates via press releases. Fixture HTML transcribes those tables; live PDF is not HTML-parsed."
     )
-    live_limitations = "Estimates are PDF/PR, not an HTML grid. Fixture mode transcribes the public PDF."
+    live_limitations = "Estimates are PDF/PR/contentdetail, not an HTML grid. Fixture mode transcribes the public tables."
 
     def pages(self) -> list[PageSpec]:
         return [
@@ -206,7 +255,13 @@ class InvescoSource(HtmlTableSource):
                 url="https://www.invesco.com/content/dam/invesco/us/en/documents/tax-centre/2025%20Invesco%20Estimated%20Capital%20Gains%20pdf.pdf",
                 fixture="2025_estimated_capital_gains.html",
                 live=False,
-            )
+            ),
+            PageSpec(
+                name="estimated_capital_gains_2024",
+                url="https://www.invesco.com/us-rest/contentdetail?contentId=29096ee0-8ec4-4199-930f-645be9d07e64",
+                fixture="2024_estimated_capital_gains.html",
+                live=False,
+            ),
         ]
 
 
@@ -220,9 +275,13 @@ class TRowePriceSource(HtmlTableSource):
         "(ticker, income dividends, ST/LT) at "
         "https://www.troweprice.com/personal-investing/resources/planning/tax/dividend-distributions/mutual-funds/2025-year-end-distributions.html "
         "plus public archives for 2024 and 2023 (same path, year in the filename). "
-        "Verified 2026-09-07; e.g. TRBCX LT $10.9575 (2025), $16.1515 (2024), $5.2095 (2023)."
+        "2022 year-end and 2022 preliminary are official PDFs (no 2022 HTML sibling): "
+        "https://www.troweprice.com/content/dam/fai/Funds/Tax_Center/2022-Year-End-Tax-Distributions.pdf "
+        "and .../T.%20Rowe%20Price%202022%20Preliminary%20Estimated%20Distributions%20as%20of%2010.31.2022.pdf. "
+        "Verified 2026-09-07; e.g. TRBCX LT $10.9575 (2025), $16.1515 (2024), $5.2095 (2023), "
+        "$6.0394 final / $5.75 prelim (2022)."
     )
-    live_limitations = "Live year-end HTML is supported for 2023–2025. Preliminary estimate pages may be intermediary-only."
+    live_limitations = "Live year-end HTML is supported for 2023–2025. 2022 packs are PDF transcriptions (live=False)."
 
     def pages(self) -> list[PageSpec]:
         base = (
@@ -247,5 +306,20 @@ class TRowePriceSource(HtmlTableSource):
                 url=f"{base}/2023-year-end-distributions.html",
                 fixture="2023_year_end_distributions.html",
                 live=True,
+            ),
+            PageSpec(
+                name="year_end_2022",
+                url="https://www.troweprice.com/content/dam/fai/Funds/Tax_Center/2022-Year-End-Tax-Distributions.pdf",
+                fixture="2022_year_end_distributions.html",
+                live=False,
+            ),
+            PageSpec(
+                name="prelim_2022",
+                url=(
+                    "https://www.troweprice.com/content/dam/fai/Funds/Tax_Center/"
+                    "T.%20Rowe%20Price%202022%20Preliminary%20Estimated%20Distributions%20as%20of%2010.31.2022.pdf"
+                ),
+                fixture="2022_preliminary_estimated_distributions.html",
+                live=False,
             ),
         ]

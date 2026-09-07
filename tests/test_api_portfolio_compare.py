@@ -522,7 +522,7 @@ def test_portfolio_compare_yoy_fixture_smoke_af_and_trp(client: TestClient) -> N
 
 
 def test_portfolio_compare_yoy_sparse_history_is_gap(client: TestClient) -> None:
-    """Vanguard / Fidelity / Dodge fixtures are one vintage — a missed pin is a gap, not $0."""
+    """A missed exact as_of pin is a gap, not $0 — even when the family has other vintages."""
     _seed(client, "vanguard", "fidelity", "dodge_cox")
     response = client.post(
         "/illustrate/portfolio/compare",

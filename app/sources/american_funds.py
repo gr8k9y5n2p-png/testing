@@ -36,7 +36,8 @@ class AmericanFundsSource(FundSource):
         "Live year-end *preliminary* estimate pages are seasonal and often advisor-gated; "
         "fixture mode includes estimate + final snapshots for 2024 and 2025 so time-series "
         "(as_of + publication_stage) coexist. 2024 advisor HTML now 302s to login; "
-        "per-fund history also lives at the Historical Distributions tool."
+        "per-fund history also lives at the Historical Distributions tool. "
+        "CGHM is on the official 2024 YE table with em-dash ST/LT (no capital gain — not stored as $0)."
     )
 
     def __init__(self, fixtures_dir: Path | None = None) -> None:

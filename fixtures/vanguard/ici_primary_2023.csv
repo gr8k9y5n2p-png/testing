@@ -1,0 +1,4 @@
+as_of,fund_name,cusip,ticker,record_date,ex_dividend_date,payable_date,income_dividends,short_term_capital_gain,total_capital_gain_distribution
+2023-12-31,Vanguard 500 Index Fund Admiral Shares,922908710,VFIAX,12/18/2023,12/19/2023,12/20/2023,1.806000,,
+2023-12-31,Vanguard Balanced Index Fund Admiral Shares,921931200,VBIAX,12/19/2023,12/20/2023,12/21/2023,0.250700,,0.888001
+2023-12-31,Vanguard Growth Index Fund Admiral Shares,922908660,VIGAX,12/19/2023,12/20/2023,12/21/2023,0.297300,,

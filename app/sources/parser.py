@@ -299,11 +299,15 @@ def classify_header(text: str, table_title: str) -> ColSpec | None:
         return ColSpec("dist_type")
     if h.startswith("as of"):
         return ColSpec("as_of")
+    if h in {"nav", "nav price", "price", "nav share", "reinvest nav"}:
+        return None
     if "ex date" in h or "ex dividend" in h or h in {"ex", "exdividend date"}:
         return ColSpec("ex_date")
     if "record date" in h or h == "record":
         return ColSpec("record_date")
-    if any(k in h for k in ("payment date", "payable", "reinvest", "pay date")):
+    if any(k in h for k in ("payment date", "payable", "pay date")) or (
+        "reinvest" in h and "nav" not in h and "price" not in h
+    ):
         return ColSpec("payable_date")
     if "long term" in h:
         unit = AmountUnit.percent_of_nav if "%" in h or "percent" in h or "nav" in h else AmountUnit.per_share
@@ -323,12 +327,10 @@ def classify_header(text: str, table_title: str) -> ColSpec | None:
     if "nii" in h or ("income" in h and ("dividend" in h or "ordinary" in h)):
         unit = AmountUnit.percent_of_nav if "%" in h or "nav" in h or "percent" in h else AmountUnit.per_share
         return ColSpec("amount", EstimateType.ordinary_income, unit)
-    if h == "income":
+    if h in {"income", "dividends", "dividend"} or h.startswith("dividends "):
         return ColSpec("amount", EstimateType.ordinary_income, AmountUnit.per_share)
     if "of nav" in h or h in {"pct nav", "percent nav"}:
         return ColSpec("amount", EstimateType.total_capital_gains, AmountUnit.percent_of_nav)
-    if h in {"nav", "nav price", "price", "nav share"}:
-        return None
     if "capital gain" in h or ("nav" in h and "gain" in h):
         unit = AmountUnit.percent_of_nav if "%" in h or "nav" in h or "percent" in h else AmountUnit.per_share
         return ColSpec("amount", EstimateType.total_capital_gains, unit)
