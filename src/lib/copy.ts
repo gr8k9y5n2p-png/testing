@@ -1,6 +1,6 @@
 /**
  * Locked GTM draft copy for Aftertax. Iterate later; do not paraphrase in the UI.
- * Canonical host: getaftertax.com
+ * Canonical host: getaftertax.com (registered, Cloudflare Registrar).
  */
 export const COPY = {
   hero: "See the taxable impact in dollars — before the meeting ends.",

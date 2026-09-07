@@ -32,6 +32,13 @@ export const metadata: Metadata = {
   description: `${COPY.hero} ${COPY.sub}`,
   alternates: { canonical: AFTERTAX_ORIGIN },
   applicationName: "Aftertax",
+  openGraph: {
+    type: "website",
+    url: AFTERTAX_ORIGIN,
+    siteName: "Aftertax",
+    title: "Aftertax — taxable impact in dollars",
+    description: `${COPY.hero} ${COPY.sub}`,
+  },
 };
 
 export default function RootLayout({

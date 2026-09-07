@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "description": "Aftertax — taxable impact in dollars for wholesalers and advisors.",
+  "homepage": "https://getaftertax.com",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

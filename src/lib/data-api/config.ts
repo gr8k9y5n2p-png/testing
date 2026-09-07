@@ -1,5 +1,6 @@
 import { HOST } from "@/lib/copy";
 
+/** Canonical public origin. Apex host getaftertax.com (Cloudflare Registrar). */
 export const AFTERTAX_ORIGIN = `https://${HOST}`;
 
 export function getDataApiBaseUrl(): string | null {

@@ -11,7 +11,9 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). Canonical host: **https://getaftertax.com**.
+Open [http://localhost:3000](http://localhost:3000) for local development.
+
+**Canonical host:** [https://getaftertax.com](https://getaftertax.com) (registered at Cloudflare Registrar; DNS may still be settling). Use the apex host, not `www`. No production deploy is required for this UI slice until DNS and hosting are pointed.
 
 - `npm run build` / `npm run lint` / `npm run typecheck`
 
@@ -102,6 +104,7 @@ The Aftertax **website** creates Stripe Checkout Sessions server-side (`POST /ap
 - Price `price_1UD6C0RqA7bY5N5qVleZso0d` (product `prod_VDXGeprN4QkxsM`, account `acct_1UD66TRqA7bY5N5q`)
 - `success_url` → `https://getaftertax.com/?checkout=success` (same search/portfolio flow)
 - `cancel_url` → `https://getaftertax.com/?checkout=cancel` (reopens paywall)
+- Override the public origin with `AFTERTAX_PUBLIC_URL` only if you must; default remains `https://getaftertax.com`.
 - **Mocked demo does not need live keys.** Without `STRIPE_SECRET_KEY`, Unlock Aftertax is stubbed (501) and the funnel still works.
 - When keys are available: set `STRIPE_SECRET_KEY` and optional `STRIPE_PRICE_ID` / `AFTERTAX_PUBLIC_URL`. The same route creates a live Checkout Session and redirects.
 
