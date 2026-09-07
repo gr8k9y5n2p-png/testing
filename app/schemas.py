@@ -413,3 +413,103 @@ class IllustrateResponse(BaseModel):
     components: list[IllustrationComponent]
     totals: IllustrationTotals
     notes: list[str]
+
+
+class PortfolioHoldingIn(BaseModel):
+    holding_dollars: Decimal = Field(..., gt=0)
+    ticker: str | None = Field(default=None, max_length=32)
+    fund_family: str | None = None
+    fund_identifier: str | None = None
+    fund_name: str | None = None
+    distribution_ids: list[str] | None = None
+    nav_per_share: Decimal | None = Field(default=None, gt=0)
+    shares: Decimal | None = Field(default=None, gt=0)
+
+    @field_validator("ticker", "fund_family", "fund_identifier", "fund_name", mode="before")
+    @classmethod
+    def blank_holding(cls, value: Any) -> Any:
+        return _empty_to_none(value)
+
+    @field_validator("ticker", mode="after")
+    @classmethod
+    def holding_ticker_upper(cls, value: str | None) -> str | None:
+        return value.upper() if value else value
+
+    @field_validator("holding_dollars", "nav_per_share", "shares", mode="before")
+    @classmethod
+    def holding_money(cls, value: Any) -> Any:
+        if isinstance(value, float):
+            return Decimal(str(value))
+        return value
+
+    @model_validator(mode="after")
+    def require_lookup(self) -> PortfolioHoldingIn:
+        if not any([self.ticker, self.fund_identifier, self.fund_name, self.distribution_ids]):
+            raise ValueError("each holding needs ticker, fund_identifier, fund_name, or distribution_ids")
+        return self
+
+
+class IllustrationSnapshot(BaseModel):
+    prefer_publication_stages: list[str] = Field(
+        default_factory=lambda: [
+            PublicationStage.preliminary_estimate.value,
+            PublicationStage.updated_estimate.value,
+            PublicationStage.final.value,
+            PublicationStage.paid.value,
+        ],
+        description="Walk this order and keep the first stage that has rows for the holding.",
+    )
+    as_of: date | None = Field(default=None, description="Pin every holding to one publication as_of.")
+    latest_as_of_only: bool = True
+
+
+class PortfolioIllustrateRequest(BaseModel):
+    holdings: list[PortfolioHoldingIn] = Field(..., min_length=1, max_length=500)
+    tax_rates: TaxRates = Field(default_factory=TaxRates)
+    combine_state_with_federal: bool = True
+    snapshot: IllustrationSnapshot = Field(default_factory=IllustrationSnapshot)
+
+
+class PortfolioHoldingGap(BaseModel):
+    holding_index: int
+    ticker: str | None
+    fund_identifier: str | None
+    fund_family: str | None
+    fund_name: str | None
+    holding_dollars: Decimal
+    reason: str
+
+
+class PortfolioHoldingOut(BaseModel):
+    holding_index: int
+    ticker: str | None
+    fund_identifier: str | None
+    fund_family: str | None
+    fund_name: str | None
+    holding_dollars: Decimal
+    covered: bool
+    publication_stage_used: str | None = None
+    warnings: list[str] = Field(default_factory=list)
+    illustration: IllustrateResponse | None = None
+    gap_reason: str | None = None
+
+
+class PortfolioCoverage(BaseModel):
+    dollars_total: Decimal
+    dollars_covered: Decimal
+    dollars_uncovered: Decimal
+    coverage_pct: Decimal
+    holdings_covered: int
+    holdings_uncovered: int
+
+
+class PortfolioIllustrateResponse(BaseModel):
+    holdings: list[PortfolioHoldingOut]
+    totals: IllustrationTotals
+    coverage: PortfolioCoverage
+    gaps: list[PortfolioHoldingGap]
+    warnings: list[str]
+    tax_rates: TaxRates
+    combine_state_with_federal: bool
+    rate_mapping: dict[str, str]
+    notes: list[str]

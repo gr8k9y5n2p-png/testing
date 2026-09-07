@@ -20,11 +20,13 @@ from app.schemas import (
     HealthOut,
     IllustrateRequest,
     IllustrateResponse,
+    PortfolioIllustrateRequest,
+    PortfolioIllustrateResponse,
     IngestRequest,
     IngestResponse,
 )
 from app.services.coverage import coverage_snapshot, family_to_out, record_gap
-from app.services.illustrate import illustrate
+from app.services.illustrate import illustrate, illustrate_portfolio
 from app.services.ingest import fetch_and_ingest, ingest_records
 from app.sources.registry import list_sources
 
@@ -64,12 +66,25 @@ def ingest_fetch(body: FetchRequest, session: Session = Depends(get_session)) ->
 def list_distributions(
     q: str | None = Query(default=None, description="Text search across family, fund name, ticker"),
     fund_family: str | None = None,
+    fund_identifier: str | None = Query(
+        default=None,
+        description="Exact fund_identifier (ticker or name slug), e.g. amcap-fund",
+    ),
     ticker: str | None = None,
     fund_name: str | None = None,
     estimate_type: str | None = None,
-    publication_stage: str | None = None,
-    as_of_from: date | None = None,
-    as_of_to: date | None = None,
+    publication_stage: str | None = Query(
+        default=None,
+        description="Filter one snapshot type: preliminary_estimate, updated_estimate, final, paid.",
+    ),
+    as_of_from: date | None = Query(
+        default=None,
+        description="Inclusive publication as_of lower bound for multi-year history.",
+    ),
+    as_of_to: date | None = Query(
+        default=None,
+        description="Inclusive publication as_of upper bound for multi-year history.",
+    ),
     ex_date_from: date | None = None,
     ex_date_to: date | None = None,
     page: int = Query(default=1, ge=1),
@@ -81,6 +96,7 @@ def list_distributions(
         session,
         q=q,
         fund_family=fund_family,
+        fund_identifier=fund_identifier,
         ticker=ticker,
         fund_name=fund_name,
         estimate_type=estimate_type,
@@ -138,3 +154,11 @@ def coverage_gaps(
 def illustrate_tax(body: IllustrateRequest, session: Session = Depends(get_session)) -> IllustrateResponse:
     """Server-side tax-impact illustration for a dollar holding against stored estimates."""
     return illustrate(session, body)
+
+
+@router.post("/illustrate/portfolio", response_model=PortfolioIllustrateResponse, tags=["illustrate"])
+def illustrate_portfolio_tax(
+    body: PortfolioIllustrateRequest, session: Session = Depends(get_session)
+) -> PortfolioIllustrateResponse:
+    """Aftertax portfolio review: per-holding math, coverage by dollars, and explicit gaps."""
+    return illustrate_portfolio(session, body)

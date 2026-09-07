@@ -214,19 +214,33 @@ class TRowePriceSource(HtmlTableSource):
         "Parses public year-end HTML tables "
         "(ticker, income dividends, ST/LT) at "
         "https://www.troweprice.com/personal-investing/resources/planning/tax/dividend-distributions/mutual-funds/2025-year-end-distributions.html "
-        "(verified 2026-09-07; e.g. TRBCX LT $10.9575). Two-row headers with rowspan/colspan."
+        "plus public archives for 2024 and 2023 (same path, year in the filename). "
+        "Verified 2026-09-07; e.g. TRBCX LT $10.9575 (2025), $16.1515 (2024), $5.2095 (2023)."
     )
-    live_limitations = "Live year-end HTML is supported. Preliminary estimate pages may be intermediary-only."
+    live_limitations = "Live year-end HTML is supported for 2023–2025. Preliminary estimate pages may be intermediary-only."
 
     def pages(self) -> list[PageSpec]:
+        base = (
+            "https://www.troweprice.com/personal-investing/resources/planning/tax/"
+            "dividend-distributions/mutual-funds"
+        )
         return [
             PageSpec(
                 name="year_end_2025",
-                url=(
-                    "https://www.troweprice.com/personal-investing/resources/planning/tax/"
-                    "dividend-distributions/mutual-funds/2025-year-end-distributions.html"
-                ),
+                url=f"{base}/2025-year-end-distributions.html",
                 fixture="2025_year_end_distributions.html",
                 live=True,
-            )
+            ),
+            PageSpec(
+                name="year_end_2024",
+                url=f"{base}/2024-year-end-distributions.html",
+                fixture="2024_year_end_distributions.html",
+                live=True,
+            ),
+            PageSpec(
+                name="year_end_2023",
+                url=f"{base}/2023-year-end-distributions.html",
+                fixture="2023_year_end_distributions.html",
+                live=True,
+            ),
         ]

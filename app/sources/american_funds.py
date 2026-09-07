@@ -17,8 +17,10 @@ MIDYEAR_2026_URL = (
 YEAR_END_2025_URL = (
     "https://www.capitalgroup.com/individual/service-and-support/tax-center/2025-year-end-distributions.html"
 )
+YEAR_END_2024_URL = "https://www.capitalgroup.com/advisor/tax/2024-year-end-distributions.html"
 TAX_CENTER_URL = "https://www.capitalgroup.com/individual/service-and-support/tax-center.html"
 CALENDAR_URL = "https://www.capitalgroup.com/individual/news/distribution-dates.html"
+HISTORICAL_TOOL_URL = "https://www.capitalgroup.com/individual/investments/historicaldistributions/"
 
 
 class AmericanFundsSource(FundSource):
@@ -32,14 +34,16 @@ class AmericanFundsSource(FundSource):
         "Parses Capital Group public HTML tables (midyear/year-end per-share amounts, "
         "special dividends, qualified-dividend percentages, and estimate % of NAV). "
         "Live year-end *preliminary* estimate pages are seasonal and often advisor-gated; "
-        "fixture mode includes a realistic estimate table plus captured live markup."
+        "fixture mode includes estimate + final snapshots for 2024 and 2025 so time-series "
+        "(as_of + publication_stage) coexist. 2024 advisor HTML now 302s to login; "
+        "per-fund history also lives at the Historical Distributions tool."
     )
 
     def __init__(self, fixtures_dir: Path | None = None) -> None:
         self.fixtures_dir = Path(fixtures_dir or settings.fixtures_dir) / "american_funds"
 
     def source_urls(self) -> list[str]:
-        return [MIDYEAR_2026_URL, YEAR_END_2025_URL, TAX_CENTER_URL, CALENDAR_URL]
+        return [MIDYEAR_2026_URL, YEAR_END_2025_URL, YEAR_END_2024_URL, TAX_CENTER_URL, CALENDAR_URL, HISTORICAL_TOOL_URL]
 
     def fetch(self, *, mode: str = "fixture") -> FetchResult:
         pages = self._pages(mode)
@@ -73,6 +77,18 @@ class AmericanFundsSource(FundSource):
                 "name": "year_end_estimates",
                 "url": "fixture://american_funds/year_end_estimates_sample.html",
                 "fixture": "year_end_estimates_sample.html",
+                "live": False,
+            },
+            {
+                "name": "year_end_2024",
+                "url": YEAR_END_2024_URL,
+                "fixture": "year_end_2024_distributions.html",
+                "live": False,
+            },
+            {
+                "name": "year_end_2024_estimates",
+                "url": "fixture://american_funds/year_end_2024_estimates_sample.html",
+                "fixture": "year_end_2024_estimates_sample.html",
                 "live": False,
             },
         ]

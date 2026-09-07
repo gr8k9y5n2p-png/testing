@@ -12,6 +12,7 @@ The default demo uses **SQLite** and bundled Capital Group HTML fixtures so the 
 - Idempotent upserts on `(fund_family, fund identifier, share class, estimate type, as_of, ex-date)`
 - Search API with filters, text search, and pagination
 - `POST /illustrate` — server-side tax-impact math for a dollar holding (Website Engineering owns the UI)
+- `POST /illustrate/portfolio` — book-level review with coverage % and explicit gaps
 - Top-10 US-advisor fund-family adapters (`GET /fund-families`, `GET /coverage`) plus `POST /coverage/gaps` when a portfolio ticker is missing
 - Partner ingest (`POST /ingest/distributions`) remains the escape hatch for uncovered names
 
@@ -64,6 +65,10 @@ curl -s -X POST http://127.0.0.1:8000/ingest/distributions \
 curl -s 'http://127.0.0.1:8000/distributions?q=AMCAP&estimate_type=long_term_capital_gains' | jq
 curl -s 'http://127.0.0.1:8000/distributions?ticker=CGHM' | jq
 curl -s 'http://127.0.0.1:8000/distributions?ex_date_from=2026-06-01&ex_date_to=2026-06-30' | jq
+# Multi-year / estimate-vs-actual (same fund_identifier, different as_of + publication_stage)
+curl -s 'http://127.0.0.1:8000/distributions?fund_identifier=amcap-fund&as_of_from=2024-01-01&as_of_to=2024-12-31' | jq
+curl -s 'http://127.0.0.1:8000/distributions?fund_identifier=amcap-fund&publication_stage=preliminary_estimate' | jq
+curl -s 'http://127.0.0.1:8000/distributions?fund_identifier=amcap-fund&publication_stage=final' | jq
 curl -s 'http://127.0.0.1:8000/fund-families' | jq
 curl -s http://127.0.0.1:8000/coverage | jq '{implemented_count,implemented_pct,families:[.families[]|{slug,coverage_tier,aum_rank}]}'
 curl -s -X POST http://127.0.0.1:8000/coverage/gaps \
@@ -160,6 +165,57 @@ curl -s -X POST http://127.0.0.1:8000/illustrate \
 ```
 
 Expected for the $1M / 3–5% AMCAP example at 15% LTCG + 9.3% state: midpoint 4% → `$40,000` distributed, `$9,720` tax; range `$30,000–$50,000` / `$7,290–$12,150`.
+
+### Portfolio review (`POST /illustrate/portfolio`)
+
+Aftertax sends a book of holdings. The API reuses single-holding math, then rolls up **portfolio totals**, **coverage by dollars**, and **explicit gaps** (never silently drop an uncovered ticker).
+
+`snapshot.prefer_publication_stages` walks that order and keeps the first stage that has rows for the holding (default: preliminary → updated → final → paid). Pin `snapshot.as_of` for a historical book. Missing `nav_per_share` on `per_share` rows is a **warning**, not a 422 — those components are excluded from dollar totals.
+
+```bash
+curl -s -X POST http://127.0.0.1:8000/illustrate/portfolio \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "holdings": [
+      {"ticker": "CGHM", "holding_dollars": 250000},
+      {"fund_identifier": "amcap-fund", "fund_family": "American Funds", "holding_dollars": 1000000},
+      {"ticker": "XYZAX", "fund_family": "dimensional", "holding_dollars": 150000}
+    ],
+    "tax_rates": {
+      "ordinary_income": 0.37,
+      "long_term_capital_gains": 0.20,
+      "short_term_capital_gains": 0.37,
+      "qualified_dividend": 0.20,
+      "state": 0.05
+    },
+    "combine_state_with_federal": true,
+    "snapshot": {
+      "prefer_publication_stages": ["preliminary_estimate", "updated_estimate", "final", "paid"]
+    }
+  }' | jq '{coverage, gaps, totals, warnings, holdings: [.holdings[] | {ticker, fund_identifier, covered, publication_stage_used, gap_reason, warnings}]}'
+```
+
+On the American Funds fixtures: $1.25M covered / $150k uncovered → `coverage_pct` ≈ 89.3%. AMCAP uses the latest preliminary (3–5% NAV → $40,000 / $10,000 tax at 20%+5%). CGHM matches paid midyear rows but warns that NAV is missing. `XYZAX` is a gap.
+
+## Multi-year history and estimate → actual
+
+The upsert key includes `as_of` and `ex_date`, so a September preliminary, a December update, and a January final are **separate rows**. Do not collapse them.
+
+`GET /distributions` already supports `as_of_from` / `as_of_to`, `publication_stage`, and `fund_identifier` (exact slug or ticker identity).
+
+**Compare estimate vs paid for one fund:**
+
+1. `GET /distributions?fund_identifier=amcap-fund&publication_stage=preliminary_estimate` — % of NAV ranges (often `total_capital_gains`).
+2. `GET /distributions?fund_identifier=amcap-fund&publication_stage=final` — year-end per-share LTCG/STCG.
+3. `GET /distributions?fund_identifier=amcap-fund&as_of_from=2024-01-01&as_of_to=2024-12-31` — one tax year’s publication window.
+4. Units differ (`percent_of_nav` vs `per_share`); convert with NAV before subtracting. Illustration uses `as_of` or `prefer_publication_stages` so you do not add estimate + final.
+
+Fixture packs today:
+
+| Family | Years in fixtures | Live archive notes |
+| --- | --- | --- |
+| American Funds | 2024 prelim + 2024 final, 2025 prelim + 2025 final, 2026 midyear paid | 2025 YE + 2026 midyear HTML are public. 2024 advisor YE URL 302s to login (transcribed fixture). Per-fund tool: https://www.capitalgroup.com/individual/investments/historicaldistributions/ |
+| T. Rowe Price | 2023, 2024, 2025 year-end HTML | Same public path with the year in the filename (verified 2026-09-07) |
 
 ## Data model
 
@@ -287,7 +343,7 @@ pip install -r requirements-dev.txt
 pytest -q
 ```
 
-Coverage includes HTML normalization (American Funds plus top-10 family fixtures), upsert idempotency, search filters, tax illustration math, and coverage-gap logging.
+Coverage includes HTML normalization (American Funds plus top-10 family fixtures), multi-year history filters, upsert idempotency, search filters, tax illustration math, portfolio coverage, and coverage-gap logging.
 
 ## Layout
 

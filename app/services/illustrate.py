@@ -10,9 +10,16 @@ from app.crud import get_by_ids, list_matching
 from app.models import AmountUnit, DistributionEstimate, EstimateType
 from app.schemas import (
     IllustrationComponent,
+    IllustrationSnapshot,
     IllustrationTotals,
     IllustrateRequest,
     IllustrateResponse,
+    PortfolioCoverage,
+    PortfolioHoldingGap,
+    PortfolioHoldingIn,
+    PortfolioHoldingOut,
+    PortfolioIllustrateRequest,
+    PortfolioIllustrateResponse,
     TaxRates,
 )
 
@@ -101,7 +108,8 @@ def _distribution_dollars(
     if unit == AmountUnit.percent_of_nav.value:
         return holding * (amount / Decimal("100"))
     if unit == AmountUnit.per_share.value:
-        assert shares is not None
+        if shares is None:
+            return None
         return shares * amount
     return None
 
@@ -121,6 +129,36 @@ def _illustrate_row(
     rate_key = RATE_MAPPING.get(row.estimate_type, "ordinary_income")
     federal = getattr(rates, rate_key)
     state = rates.state
+
+    if unit == AmountUnit.per_share.value and shares is None:
+        return IllustrationComponent(
+            distribution_id=row.id,
+            fund_family=row.fund_family,
+            fund_name=row.fund_name,
+            fund_identifier=row.fund_identifier,
+            ticker=row.ticker,
+            estimate_type=row.estimate_type,
+            amount_unit=unit,
+            amount=point,
+            amount_min=low,
+            amount_max=high,
+            as_of=row.as_of,
+            ex_date=row.ex_date,
+            federal_rate_key=rate_key,
+            federal_rate=_rate(federal),
+            state_rate=_rate(state),
+            applied_rate=None,
+            distribution_dollars=None,
+            distribution_dollars_min=None,
+            distribution_dollars_max=None,
+            estimated_tax=None,
+            estimated_tax_min=None,
+            estimated_tax_max=None,
+            federal_tax=None,
+            state_tax=None,
+            included_in_totals=False,
+            skip_reason="nav_per_share or shares is required when illustrating per_share distributions",
+        )
 
     if unit == AmountUnit.percent.value:
         return IllustrationComponent(
@@ -260,41 +298,244 @@ def illustrate(session: Session, body: IllustrateRequest) -> IllustrateResponse:
         if not rows:
             raise HTTPException(status_code=404, detail="No distribution estimates matched the selectors")
 
+    extra = []
+    if body.latest_as_of_only and not body.distribution_ids:
+        extra.append("selectors used latest_as_of_only=true (newest as_of per fund). Pass as_of or IDs to pin a snapshot.")
+    return illustrate_from_rows(
+        rows,
+        holding=body.holding_dollars,
+        nav_per_share=body.nav_per_share,
+        shares=body.shares,
+        rates=body.tax_rates,
+        combine=body.combine_state_with_federal,
+        extra_notes=extra,
+        require_nav_for_per_share=True,
+    )
+
+
+def _response(
+    *,
+    holding: Decimal,
+    shares: Decimal | None,
+    nav_per_share: Decimal | None,
+    rates: TaxRates,
+    combine: bool,
+    components: list[IllustrationComponent],
+    notes: list[str],
+) -> IllustrateResponse:
+    return IllustrateResponse(
+        holding_dollars=_money(holding),
+        shares=_money(shares) if shares is not None else None,
+        nav_per_share=nav_per_share,
+        tax_rates=rates,
+        combine_state_with_federal=combine,
+        rate_mapping=dict(RATE_MAPPING),
+        components=components,
+        totals=_totals(components, holding),
+        notes=notes,
+    )
+
+
+def illustrate_from_rows(
+    rows: list[DistributionEstimate],
+    *,
+    holding: Decimal,
+    nav_per_share: Decimal | None,
+    shares: Decimal | None,
+    rates: TaxRates,
+    combine: bool,
+    extra_notes: list[str] | None = None,
+    require_nav_for_per_share: bool = True,
+) -> IllustrateResponse:
     needs_shares = any(row.amount_unit == AmountUnit.per_share.value for row in rows)
-    shares = body.shares
-    if needs_shares and shares is None:
-        if body.nav_per_share is None:
-            raise HTTPException(
-                status_code=422,
-                detail="nav_per_share or shares is required when illustrating per_share distributions",
-                headers={"X-Error-Code": "nav_required"},
-            )
-        shares = body.holding_dollars / body.nav_per_share
-    elif shares is None and body.nav_per_share is not None:
-        shares = body.holding_dollars / body.nav_per_share
+    resolved = shares
+    if needs_shares and resolved is None and nav_per_share is not None:
+        resolved = holding / nav_per_share
+    if needs_shares and resolved is None and require_nav_for_per_share:
+        raise HTTPException(
+            status_code=422,
+            detail="nav_per_share or shares is required when illustrating per_share distributions",
+            headers={"X-Error-Code": "nav_required"},
+        )
+    elif resolved is None and nav_per_share is not None:
+        resolved = holding / nav_per_share
 
     components = [
-        _illustrate_row(
-            row,
-            holding=body.holding_dollars,
-            shares=shares,
-            rates=body.tax_rates,
-            combine=body.combine_state_with_federal,
-        )
+        _illustrate_row(row, holding=holding, shares=resolved, rates=rates, combine=combine)
         for row in rows
     ]
     notes = list(ILLUSTRATION_NOTES)
-    if body.latest_as_of_only and not body.distribution_ids:
-        notes.append("selectors used latest_as_of_only=true (newest as_of per fund). Pass as_of or IDs to pin a snapshot.")
+    if extra_notes:
+        notes.extend(extra_notes)
+    return _response(
+        holding=holding,
+        shares=resolved,
+        nav_per_share=nav_per_share,
+        rates=rates,
+        combine=combine,
+        components=components,
+        notes=notes,
+    )
 
-    return IllustrateResponse(
-        holding_dollars=_money(body.holding_dollars),
-        shares=_money(shares) if shares is not None else None,
-        nav_per_share=body.nav_per_share,
+
+def _select_holding_rows(
+    session: Session,
+    holding: PortfolioHoldingIn,
+    snapshot: IllustrationSnapshot,
+) -> tuple[list, list[str], str | None]:
+    warnings: list[str] = []
+    stage_used: str | None = None
+    if holding.distribution_ids:
+        rows, missing = get_by_ids(session, holding.distribution_ids)
+        if missing:
+            warnings.append(f"Unknown distribution_ids: {missing}")
+        if not rows:
+            return [], warnings, None
+        return rows, warnings, rows[0].publication_stage
+
+    rows = list_matching(
+        session,
+        fund_family=holding.fund_family,
+        fund_identifier=holding.fund_identifier,
+        ticker=holding.ticker,
+        fund_name=holding.fund_name,
+    )
+    if snapshot.as_of:
+        rows = [row for row in rows if row.as_of == snapshot.as_of]
+
+    if snapshot.prefer_publication_stages:
+        chosen: list = []
+        for stage in snapshot.prefer_publication_stages:
+            staged = [row for row in rows if row.publication_stage == stage]
+            if staged:
+                chosen = staged
+                stage_used = stage
+                break
+        if chosen:
+            rows = chosen
+        elif rows:
+            warnings.append(
+                "No rows matched prefer_publication_stages; using all matching snapshots."
+            )
+
+    if snapshot.latest_as_of_only and not snapshot.as_of:
+        rows = filter_latest_as_of(rows)
+
+    idents = {row.fund_identifier.lower() for row in rows}
+    if len(idents) > 1:
+        warnings.append(
+            f"Ambiguous match: {sorted(idents)} fund_identifiers for "
+            f"ticker={holding.ticker or holding.fund_identifier}."
+        )
+    return rows, warnings, stage_used
+
+
+def illustrate_portfolio(session: Session, body: PortfolioIllustrateRequest) -> PortfolioIllustrateResponse:
+    holding_outs: list[PortfolioHoldingOut] = []
+    gaps: list[PortfolioHoldingGap] = []
+    portfolio_warnings: list[str] = []
+    covered_components: list[IllustrationComponent] = []
+    dollars_covered = Decimal("0")
+    dollars_uncovered = Decimal("0")
+    covered_n = 0
+    uncovered_n = 0
+
+    for index, holding in enumerate(body.holdings):
+        rows, warnings, stage_used = _select_holding_rows(session, holding, body.snapshot)
+        if not rows:
+            reason = "No matching distribution estimates for this holding."
+            dollars_uncovered += holding.holding_dollars
+            uncovered_n += 1
+            gaps.append(
+                PortfolioHoldingGap(
+                    holding_index=index,
+                    ticker=holding.ticker,
+                    fund_identifier=holding.fund_identifier,
+                    fund_family=holding.fund_family,
+                    fund_name=holding.fund_name,
+                    holding_dollars=_money(holding.holding_dollars),
+                    reason=reason,
+                )
+            )
+            holding_outs.append(
+                PortfolioHoldingOut(
+                    holding_index=index,
+                    ticker=holding.ticker,
+                    fund_identifier=holding.fund_identifier,
+                    fund_family=holding.fund_family,
+                    fund_name=holding.fund_name,
+                    holding_dollars=_money(holding.holding_dollars),
+                    covered=False,
+                    warnings=warnings,
+                    gap_reason=reason,
+                )
+            )
+            continue
+
+        illustration = illustrate_from_rows(
+            rows,
+            holding=holding.holding_dollars,
+            nav_per_share=holding.nav_per_share,
+            shares=holding.shares,
+            rates=body.tax_rates,
+            combine=body.combine_state_with_federal,
+            extra_notes=[],
+            require_nav_for_per_share=False,
+        )
+        if any(c.skip_reason and "nav_per_share" in (c.skip_reason or "") for c in illustration.components):
+            warnings.append(
+                "per_share rows skipped (nav_per_share or shares missing). "
+                "Dollar totals exclude those components — not a silent understatement."
+            )
+        covered_components.extend(illustration.components)
+        dollars_covered += holding.holding_dollars
+        covered_n += 1
+        ident = holding.fund_identifier or (rows[0].fund_identifier if rows else None)
+        family = holding.fund_family or (rows[0].fund_family if rows else None)
+        holding_outs.append(
+            PortfolioHoldingOut(
+                holding_index=index,
+                ticker=holding.ticker or rows[0].ticker,
+                fund_identifier=ident,
+                fund_family=family,
+                fund_name=holding.fund_name or rows[0].fund_name,
+                holding_dollars=_money(holding.holding_dollars),
+                covered=True,
+                publication_stage_used=stage_used,
+                warnings=warnings,
+                illustration=illustration,
+            )
+        )
+        portfolio_warnings.extend(f"holding[{index}]: {w}" for w in warnings)
+
+    dollars_total = dollars_covered + dollars_uncovered
+    coverage_pct = (dollars_covered / dollars_total * Decimal("100")) if dollars_total else Decimal("0")
+    notes = list(ILLUSTRATION_NOTES)
+    notes.append(
+        "Portfolio coverage is by holding dollars with at least one matched estimate. "
+        "Unmatched holdings are listed in gaps and excluded from tax totals."
+    )
+    if body.snapshot.prefer_publication_stages:
+        notes.append(
+            "Snapshot prefers publication_stage in order: "
+            + ", ".join(body.snapshot.prefer_publication_stages)
+        )
+
+    return PortfolioIllustrateResponse(
+        holdings=holding_outs,
+        totals=_totals(covered_components, dollars_covered if dollars_covered else Decimal("0")),
+        coverage=PortfolioCoverage(
+            dollars_total=_money(dollars_total),
+            dollars_covered=_money(dollars_covered),
+            dollars_uncovered=_money(dollars_uncovered),
+            coverage_pct=_rate(coverage_pct),
+            holdings_covered=covered_n,
+            holdings_uncovered=uncovered_n,
+        ),
+        gaps=gaps,
+        warnings=portfolio_warnings,
         tax_rates=body.tax_rates,
         combine_state_with_federal=body.combine_state_with_federal,
         rate_mapping=dict(RATE_MAPPING),
-        components=components,
-        totals=_totals(components, body.holding_dollars),
         notes=notes,
     )
