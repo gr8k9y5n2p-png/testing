@@ -345,6 +345,87 @@ def test_search_multi_year_top_families(client: TestClient) -> None:
         item["as_of"][:4] for item in stvtx.json()["items"] if item.get("as_of")
     }
 
+    for family in (
+        "john_hancock",
+        "hartford",
+        "macquarie",
+        "first_eagle",
+        "gmo",
+        "artisan",
+        "calamos",
+        "wasatch",
+        "harbor",
+        "nationwide",
+    ):
+        fetched = client.post("/ingest/fetch", json={"fund_family": family, "mode": "fixture"})
+        assert fetched.status_code == 200, fetched.text
+
+    tagrx = client.get("/distributions", params={"fund_identifier": "TAGRX", "page_size": 50})
+    assert {"2022", "2023", "2024", "2025"} <= {
+        item["as_of"][:4] for item in tagrx.json()["items"] if item.get("as_of")
+    }
+
+    hfmcx = client.get("/distributions", params={"fund_identifier": "HFMCX", "page_size": 50})
+    assert {"2024", "2025"} <= {item["as_of"][:4] for item in hfmcx.json()["items"] if item.get("as_of")}
+    hfmcx_2024 = client.get(
+        "/distributions",
+        params={
+            "fund_identifier": "HFMCX",
+            "as_of_from": "2024-01-01",
+            "as_of_to": "2024-12-31",
+            "page_size": 20,
+        },
+    )
+    assert any(
+        item["estimate_type"] == "long_term_capital_gains"
+        and Decimal(item["amount"]) == Decimal("1.67")
+        for item in hfmcx_2024.json()["items"]
+    )
+
+    wstax = client.get("/distributions", params={"fund_identifier": "WSTAX", "page_size": 20})
+    assert {"2024", "2025"} <= {item["as_of"][:4] for item in wstax.json()["items"] if item.get("as_of")}
+
+    sgenx = client.get("/distributions", params={"fund_identifier": "SGENX", "page_size": 50})
+    assert {"2023", "2024", "2025"} <= {
+        item["as_of"][:4] for item in sgenx.json()["items"] if item.get("as_of")
+    }
+
+    cvgrx = client.get("/distributions", params={"fund_identifier": "CVGRX", "page_size": 20})
+    assert {"2024", "2025"} <= {item["as_of"][:4] for item in cvgrx.json()["items"] if item.get("as_of")}
+
+    wgrox = client.get("/distributions", params={"fund_identifier": "WGROX", "page_size": 50})
+    assert {"2022", "2024", "2025"} <= {
+        item["as_of"][:4] for item in wgrox.json()["items"] if item.get("as_of")
+    }
+
+    gqetx = client.get("/distributions", params={"fund_identifier": "GQETX", "page_size": 20})
+    assert any(
+        item["estimate_type"] == "long_term_capital_gains"
+        and Decimal(item["amount"]) == Decimal("0.7242")
+        for item in gqetx.json()["items"]
+    )
+
+    artkx = client.get("/distributions", params={"fund_identifier": "ARTKX", "page_size": 20})
+    assert any(
+        item["estimate_type"] == "ordinary_income"
+        and Decimal(item["amount"]) == Decimal("0.338342")
+        for item in artkx.json()["items"]
+    )
+
+    hacax = client.get("/distributions", params={"fund_identifier": "HACAX", "page_size": 20})
+    assert any(
+        item["estimate_type"] == "long_term_capital_gains"
+        and Decimal(item["amount"]) == Decimal("11.89")
+        for item in hacax.json()["items"]
+    )
+
+    nwhox = client.get("/distributions", params={"fund_identifier": "NWHOX", "page_size": 20})
+    assert any(
+        item["estimate_type"] == "long_term_capital_gains"
+        and Decimal(item["amount"]) == Decimal("3.7231")
+        for item in nwhox.json()["items"]
+    )
+
 
 def test_compare_hero_yoy_fixture_bars(client: TestClient) -> None:
     """Hero tickers get real compare periods[] bars where public multi-year data exists."""

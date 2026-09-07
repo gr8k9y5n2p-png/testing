@@ -1035,6 +1035,111 @@ def test_fourth_tier_fixtures() -> None:
     )
     assert wgrox.amount == Decimal("6.01")
 
+    jh_2024 = parse_distribution_html(
+        (ROOT / "john_hancock" / "2024_estimated_capital_gains.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://jh-2024",
+        fund_family="John Hancock / Manulife",
+    )
+    tagrx_2024 = next(
+        r
+        for r in jh_2024
+        if r.ticker == "TAGRX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert tagrx_2024.amount_min == Decimal("7.80")
+    assert tagrx_2024.amount_max == Decimal("8.80")
+
+    jh_2022 = parse_distribution_html(
+        (ROOT / "john_hancock" / "2022_estimated_capital_gains.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://jh-2022",
+        fund_family="John Hancock / Manulife",
+    )
+    tagrx_2022 = next(
+        r
+        for r in jh_2022
+        if r.ticker == "TAGRX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert tagrx_2022.amount_min == Decimal("3.00")
+    assert tagrx_2022.amount_max == Decimal("3.60")
+
+    hartford_final = parse_distribution_html(
+        (ROOT / "hartford" / "2025_final_capital_gains.html").read_text(encoding="utf-8"),
+        source_url="fixture://hartford-2025-final",
+        fund_family="Hartford Funds",
+    )
+    hfmcx_final = next(
+        r
+        for r in hartford_final
+        if r.ticker == "HFMCX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert hfmcx_final.amount == Decimal("5.44")
+    assert hfmcx_final.publication_stage == PublicationStage.final
+
+    hartford_2024 = parse_distribution_html(
+        (ROOT / "hartford" / "2024_final_capital_gains.html").read_text(encoding="utf-8"),
+        source_url="fixture://hartford-2024",
+        fund_family="Hartford Funds",
+    )
+    hfmcx_2024 = next(
+        r
+        for r in hartford_2024
+        if r.ticker == "HFMCX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert hfmcx_2024.amount == Decimal("1.67")
+
+    mac_2024 = parse_distribution_html(
+        (ROOT / "macquarie" / "2024_paid_capital_gains.html").read_text(encoding="utf-8"),
+        source_url="fixture://mac-2024",
+        fund_family="Macquarie / Delaware Funds",
+    )
+    wstax_2024 = next(
+        r
+        for r in mac_2024
+        if r.ticker == "WSTAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert wstax_2024.amount == Decimal("8.135")
+
+    fei_2024 = parse_distribution_html(
+        (ROOT / "first_eagle" / "2024_paid_year_end.html").read_text(encoding="utf-8"),
+        source_url="fixture://fei-2024",
+        fund_family="First Eagle",
+    )
+    sgenx_2024 = next(
+        r
+        for r in fei_2024
+        if r.ticker == "SGENX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert sgenx_2024.amount == Decimal("2.038")
+
+    calamos_2024 = parse_distribution_html(
+        (ROOT / "calamos" / "2024_estimated_capital_gains.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://calamos-2024",
+        fund_family="Calamos",
+    )
+    cvgrx_2024 = next(
+        r
+        for r in calamos_2024
+        if r.ticker == "CVGRX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert cvgrx_2024.amount == Decimal("1.84")
+
+    wasatch_2024 = parse_distribution_html(
+        (ROOT / "wasatch" / "2024_paid_year_end.html").read_text(encoding="utf-8"),
+        source_url="fixture://wasatch-2024",
+        fund_family="Wasatch",
+    )
+    wgrox_2024 = next(
+        r
+        for r in wasatch_2024
+        if r.ticker == "WGROX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert wgrox_2024.amount == Decimal("8.282696")
+
 
 def test_fifth_tier_fixtures() -> None:
     harbor = parse_distribution_html(

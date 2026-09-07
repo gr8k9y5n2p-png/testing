@@ -9,31 +9,52 @@ class JohnHancockSource(HtmlTableSource):
     aum_rank = 31
     priority = 31
     notes = (
-        "Press release HTML: "
-        "https://www.jhinvestments.com/about-us/press-releases/2025-estimated-capital-gain-and-income-distributions "
-        "Public 2025 estimate PDF (as of 9/30/2025, starred rows 10/31/2025): "
+        "US John Hancock Investments book (Manulife parent). No public filled ICI. "
+        "Press-release estimate PDFs still posted: 2025 "
         "https://www.jhinvestments.com/content/dam/jhi-investments/JHINV/public/Corporate/News/"
         "CorporatePressReleases/estimated-capital-gain-and-income-distribution-press-release-2025-jhi.pdf "
-        "(e.g. Fundamental Large Cap Core TAGRX LT $6.85–$7.60 / 9.11%–10.11% of NAV; "
-        "U.S. Global Leaders Growth USGLX LT $11.50–$12.50 / 16.38%–17.80%). "
-        "Tickers are the public Class A identifiers; the PDF is fund-level ranges."
+        "(TAGRX LT $6.85–$7.60) plus 2024 / 2023 / 2022 sibling filenames "
+        "(TAGRX LT $7.80–$8.80 / $3.60–$4.10 / $3.00–$3.60). USGLX listed "
+        "em-dashes in 2022–2023 (no CG — omitted, not stored as $0). "
+        "HTML press-release shells are viewers; the PDFs are the books."
     )
     live_limitations = (
         "Family book is a PDF (press-release HTML is a viewer/shell). Fixture transcribes public A-share ranges."
     )
 
     def pages(self) -> list[PageSpec]:
+        press = (
+            "https://www.jhinvestments.com/content/dam/jhi-investments/JHINV/public/"
+            "Corporate/News/CorporatePressReleases/"
+        )
         return [
             PageSpec(
                 name="2025_estimated_capital_gains",
-                url=(
-                    "https://www.jhinvestments.com/content/dam/jhi-investments/JHINV/public/"
-                    "Corporate/News/CorporatePressReleases/"
-                    "estimated-capital-gain-and-income-distribution-press-release-2025-jhi.pdf"
-                ),
+                url=press + "estimated-capital-gain-and-income-distribution-press-release-2025-jhi.pdf",
                 fixture="2025_estimated_capital_gains.html",
                 live=False,
-            )
+            ),
+            PageSpec(
+                name="2024_estimated_capital_gains",
+                url=press + "estimated-capital-gain-and-income-distribution-press-release-2024-jhi.pdf",
+                fixture="2024_estimated_capital_gains.html",
+                live=False,
+                large_aum_only=True,
+            ),
+            PageSpec(
+                name="2023_estimated_capital_gains",
+                url=press + "estimated-capital-gain-and-income-distribution-press-release-2023-jhi.pdf",
+                fixture="2023_estimated_capital_gains.html",
+                live=False,
+                large_aum_only=True,
+            ),
+            PageSpec(
+                name="2022_estimated_capital_gains",
+                url=press + "estimated-capital-gain-and-income-distribution-press-release-2022-jhi.pdf",
+                fixture="2022_estimated_capital_gains.html",
+                live=False,
+                large_aum_only=True,
+            ),
         ]
 
 
@@ -106,27 +127,42 @@ class HartfordSource(HtmlTableSource):
     priority = 34
     notes = (
         "Tax center: https://www.hartfordfunds.com/resources/taxcenter.html "
-        "Public 10/31/2025 estimate PDF: "
+        "No public filled ICI. Public 10/31/2025 estimate PDF: "
         "https://www.hartfordfunds.com/dam/en/docs/pub/funddocuments/regulatorydocument/"
         "Tax%20Center/HMFCapitalGains_December2025EstimateMemo.pdf "
-        "(e.g. MidCap Fund LT $5.36 / 19.67% of Class I NAV; Core Equity LT $6.12 / 10.09%). "
-        "Final equity rates (12/11/2025): "
-        "https://www.hartfordfunds.com/dam/en/docs/pub/funddocuments/regulatorydocument/"
-        "Tax%20Center/capgainsdistributions/2025HartfordFundsCapitalGainsDistributions.pdf."
+        "(MidCap HFMCX LT $5.36 / 19.67% of Class I NAV). Final equity books "
+        "under .../capgainsdistributions/: 2025 "
+        "2025HartfordFundsCapitalGainsDistributions.pdf (HFMCX LT $5.44) and 2024 "
+        "2024HartfordFundsCapitalGainsDistributions.pdf (HFMCX LT $1.67). "
+        "Amounts are fund-level; tickers are public Class A identifiers."
     )
-    live_limitations = "Estimate and final books are PDF. Fixture transcribes the public 10/31 estimate."
+    live_limitations = "Estimate and final books are PDF. Fixture transcribes the public 10/31 estimate plus finals."
 
     def pages(self) -> list[PageSpec]:
+        dam = (
+            "https://www.hartfordfunds.com/dam/en/docs/pub/funddocuments/regulatorydocument/"
+        )
         return [
             PageSpec(
                 name="2025_estimated_capital_gains",
-                url=(
-                    "https://www.hartfordfunds.com/dam/en/docs/pub/funddocuments/regulatorydocument/"
-                    "Tax%20Center/HMFCapitalGains_December2025EstimateMemo.pdf"
-                ),
+                url=dam + "Tax%20Center/HMFCapitalGains_December2025EstimateMemo.pdf",
                 fixture="2025_estimated_capital_gains.html",
                 live=False,
-            )
+            ),
+            PageSpec(
+                name="2025_final_capital_gains",
+                url=dam + "Tax%20Center/capgainsdistributions/2025HartfordFundsCapitalGainsDistributions.pdf",
+                fixture="2025_final_capital_gains.html",
+                live=False,
+                large_aum_only=True,
+            ),
+            PageSpec(
+                name="2024_final_capital_gains",
+                url=dam + "Tax%20Center/capgainsdistributions/2024HartfordFundsCapitalGainsDistributions.pdf",
+                fixture="2024_final_capital_gains.html",
+                live=False,
+                large_aum_only=True,
+            ),
         ]
 
 
@@ -136,14 +172,16 @@ class MacquarieSource(HtmlTableSource):
     aum_rank = 35
     priority = 35
     notes = (
-        "Delaware Funds by Macquarie was renamed Macquarie Funds on 12/31/2024. "
-        "Public US retail 2025 estimate PDF (as of 9/30/2025, CGE-RET 2510): "
+        "US Delaware / Macquarie Funds book only (Australian parent; do not ingest "
+        "non-US Macquarie trusts). Renamed Macquarie Funds on 12/31/2024. "
+        "No public filled ICI. Public US retail 2025 estimate PDF "
         "https://mim.fgsfulfillment.com/download.aspx?sku=CGE-RET "
-        "(e.g. Science and Technology WSTAX LT $10.051 / 15.05% of Class A NAV; "
-        "Large Cap Growth WLGAX LT $3.337 / 8.47%; Value DDVAX LT $3.011 / 20.79%). "
-        "Literature hub: https://www.macquarie.com/mam/literature."
+        "(WSTAX LT $10.051 / 15.05% of Class A NAV). 2024 paid book "
+        "https://mim.fgsfulfillment.com/download.aspx?sku=CGE-RET-ACT-2024 "
+        "(WSTAX ST $1.108 / LT $8.135). Literature hub: "
+        "https://www.macquarie.com/mam/literature."
     )
-    live_limitations = "US estimate book is a fulfillment PDF, not an HTML grid."
+    live_limitations = "US estimate/paid books are fulfillment PDFs, not an HTML grid."
 
     def pages(self) -> list[PageSpec]:
         return [
@@ -152,7 +190,14 @@ class MacquarieSource(HtmlTableSource):
                 url="https://mim.fgsfulfillment.com/download.aspx?sku=CGE-RET",
                 fixture="2025_estimated_capital_gains.html",
                 live=False,
-            )
+            ),
+            PageSpec(
+                name="2024_paid_capital_gains",
+                url="https://mim.fgsfulfillment.com/download.aspx?sku=CGE-RET-ACT-2024",
+                fixture="2024_paid_capital_gains.html",
+                live=False,
+                large_aum_only=True,
+            ),
         ]
 
 
@@ -163,14 +208,16 @@ class FirstEagleSource(HtmlTableSource):
     priority = 36
     notes = (
         "Tax hub: https://www.firsteagle.com/tax-information "
-        "Public 9/30/2025 ordinary-income and capital-gains estimate PDF: "
+        "No public filled ICI. Public 9/30/2025 estimate PDF: "
         "https://www.firsteagle.com/sites/default/files/fei-documents/FEF_Ordinary_Income_Gains_Estimates.pdf "
-        "(e.g. Global Fund SGENX LT $4.12–$4.17; Overseas Fund SGOVX LT $0.72–$0.77). "
-        "Paid per-share history is on product pages, e.g. U.S. Fund "
-        "https://www.firsteagle.com/funds/us-fund "
-        "(FEVAX 2025-12-05 ST $0.038 / LT $1.683)."
+        "(SGENX LT $4.12–$4.17). Paid YE from the 2024 official PDF "
+        "https://www.firsteagle.com/sites/default/files/2024-12/2024_Capital_Gains_%20Income_Distributions.pdf "
+        "(SGENX ST $0.027 / LT $2.038) and product-page history "
+        "https://www.firsteagle.com/funds/global-fund (SGENX 2025 LT $4.654 / "
+        "2023 LT $1.407), overseas-fund (SGOVX), and us-fund (FEVAX). "
+        "2025 family paid PDF URL was not a stable public file in this environment."
     )
-    live_limitations = "Family estimate book is PDF. Fixture transcribes public Class A ranges."
+    live_limitations = "Family estimate book is PDF. Paid history is on public product pages."
 
     def pages(self) -> list[PageSpec]:
         return [
@@ -179,7 +226,28 @@ class FirstEagleSource(HtmlTableSource):
                 url="https://www.firsteagle.com/sites/default/files/fei-documents/FEF_Ordinary_Income_Gains_Estimates.pdf",
                 fixture="2025_estimated_income_and_gains.html",
                 live=False,
-            )
+            ),
+            PageSpec(
+                name="2025_paid_year_end",
+                url="https://www.firsteagle.com/funds/global-fund",
+                fixture="2025_paid_year_end.html",
+                live=False,
+                large_aum_only=True,
+            ),
+            PageSpec(
+                name="2024_paid_year_end",
+                url="https://www.firsteagle.com/sites/default/files/2024-12/2024_Capital_Gains_%20Income_Distributions.pdf",
+                fixture="2024_paid_year_end.html",
+                live=False,
+                large_aum_only=True,
+            ),
+            PageSpec(
+                name="2023_paid_year_end",
+                url="https://www.firsteagle.com/funds/global-fund",
+                fixture="2023_paid_year_end.html",
+                live=False,
+                large_aum_only=True,
+            ),
         ]
 
 
@@ -189,13 +257,15 @@ class GmoSource(HtmlTableSource):
     aum_rank = 37
     priority = 37
     notes = (
-        "Document library: https://www.gmo.com/americas/document-library/ "
+        "US GMO Trust book only — skip GMO Australia unit-trust estimates. "
+        "No public filled ICI. Document library: "
+        "https://www.gmo.com/americas/document-library/ "
         "Public GMO Trust July 2026 net-income and capital-gain estimate PDF "
         "(release date 6/17/2026): "
         "https://www.gmo.com/globalassets/documents---manually-loaded/documents/"
         "distribution-estimates-and-dates/gmo-trust-funds---july-2026-distribution-estimate.pdf "
-        "(e.g. Quality Fund GQETX ST $0.2331 / LT $0.7242; U.S. Equity GMUEX ST $0.3501 / LT $0.7979). "
-        "Share classes are institutional Trust classes; the PDF is public and fund-level."
+        "(Quality Fund GQETX ST $0.2331 / LT $0.7242). July/December 2025 "
+        "sibling filenames 404 — single-vintage, not invented."
     )
     live_limitations = "Estimate book is PDF. Fixture transcribes public Trust-class rows."
 
@@ -222,9 +292,10 @@ class ArtisanSource(HtmlTableSource):
         "Tax-center distributions HTML: "
         "https://www.artisanpartners.com/individual-investors/resources/tax-center/distributions.html "
         "publishes paid year-to-date income/gain tables (e.g. International Value ARTKX "
-        "2026-06-29 income $0.338342; Emerging Markets Debt Opportunities APFOX "
-        "2026-01-29 income $0.068306). No family-level 2025/2026 capital-gains *estimate* "
-        "PDF was found on 2026-09-07; NRA / DRD PDFs are after-the-fact tax characterization."
+        "2026-06-29 income $0.338342). No family-level 2025/2026 capital-gains *estimate* "
+        "PDF was found. Year selector for 2024/2025 YE is JavaScript — skip SPA. "
+        "NRA PDFs (Nonresident-Alien-Reporting-2024/2025.pdf) are FIRPTA / ICI "
+        "tax-character layouts, not full ST/LT $/share — not ingested as CG."
     )
     live_limitations = (
         "Live page is public HTML but year-end equity capital-gains sit behind a year selector. "
@@ -249,11 +320,12 @@ class CalamosSource(HtmlTableSource):
     priority = 39
     notes = (
         "Tax center: https://www.calamos.com/resources/tax-center/ "
-        "Public 2025 mutual-fund estimate PDF (snapshot 10/9/2025): "
+        "No public filled ICI. Public 2025 mutual-fund estimate PDF "
+        "(snapshot 10/9/2025): "
         "https://www.calamos.com/globalassets/media/documents/tax-center/2025-calamos-estimated-capital-gains.pdf "
-        "(e.g. Growth Fund CVGRX LT $4.07 / 7.76% of Class A NAV; Growth and Income "
-        "CVTRX ST $0.36 / LT $3.25 / 6.31% of Class A NAV). Record 12/12/2025; "
-        "ex/payable 12/15/2025."
+        "(Growth Fund CVGRX LT $4.07 / 7.76% of Class A NAV). 2024 sibling "
+        "2024-calamos-estimated-capital-gains.pdf (CVGRX ST $1.24 / LT $1.84). "
+        "2023 sibling filename 404."
     )
     live_limitations = "Estimate book is PDF. Fixture transcribes public Class A rows."
 
@@ -264,7 +336,14 @@ class CalamosSource(HtmlTableSource):
                 url="https://www.calamos.com/globalassets/media/documents/tax-center/2025-calamos-estimated-capital-gains.pdf",
                 fixture="2025_estimated_capital_gains.html",
                 live=False,
-            )
+            ),
+            PageSpec(
+                name="2024_estimated_capital_gains",
+                url="https://www.calamos.com/globalassets/media/documents/tax-center/2024-calamos-estimated-capital-gains.pdf",
+                fixture="2024_estimated_capital_gains.html",
+                live=False,
+                large_aum_only=True,
+            ),
         ]
 
 
@@ -274,14 +353,17 @@ class WasatchSource(HtmlTableSource):
     aum_rank = 40
     priority = 40
     notes = (
-        "Public 2025 year-end distribution estimate PDF (composite NAV as of 11/20/2025): "
+        "No public filled ICI. Public 2025 year-end distribution estimate PDF "
+        "(composite NAV as of 11/20/2025): "
         "https://wasatchglobal.com/wp-content/uploads/2025/11/WGI_2025_Yr_End_Dist_Estimates.pdf "
-        "(e.g. Core Growth WGROX LT $6.01 / 7.71% of NAV; International Growth WAIGX "
-        "LT $7.66 / 34.93%). Record 12/17/2025; payable 12/18/2025. "
-        "Registered as the Putnam replacement: Putnam.com now redirects to Franklin Templeton "
-        "and has no distinct Putnam-branded family estimate book."
+        "(Core Growth WGROX LT $6.01 / 7.71% of NAV). 2024 estimate sibling "
+        "WGI_2024_Yr_End_Dist_Estimates.pdf 404. Paid YE from "
+        "https://wasatchglobal.com/wasatch-core-growth-fund-investor/ "
+        "(WGROX 2025 LT $6.345749; 2024 LT $8.282696; 2022 LT $0.457965). "
+        "Product page has no 2023 YE row — gap, not invented. "
+        "Registered as the Putnam replacement: Putnam.com now redirects to Franklin Templeton."
     )
-    live_limitations = "Estimate book is PDF. Fixture transcribes public Investor-class rows."
+    live_limitations = "Estimate book is PDF. Paid history is on the public product page."
 
     def pages(self) -> list[PageSpec]:
         return [
@@ -290,5 +372,26 @@ class WasatchSource(HtmlTableSource):
                 url="https://wasatchglobal.com/wp-content/uploads/2025/11/WGI_2025_Yr_End_Dist_Estimates.pdf",
                 fixture="2025_year_end_distribution_estimates.html",
                 live=False,
-            )
+            ),
+            PageSpec(
+                name="2025_paid_year_end",
+                url="https://wasatchglobal.com/wasatch-core-growth-fund-investor/",
+                fixture="2025_paid_year_end.html",
+                live=False,
+                large_aum_only=True,
+            ),
+            PageSpec(
+                name="2024_paid_year_end",
+                url="https://wasatchglobal.com/wasatch-core-growth-fund-investor/",
+                fixture="2024_paid_year_end.html",
+                live=False,
+                large_aum_only=True,
+            ),
+            PageSpec(
+                name="2022_paid_year_end",
+                url="https://wasatchglobal.com/wasatch-core-growth-fund-investor/",
+                fixture="2022_paid_year_end.html",
+                live=False,
+                large_aum_only=True,
+            ),
         ]

@@ -96,6 +96,28 @@ LARGE_AUM_TICKERS: frozenset[str] = frozenset(
         "STVTX",
         "STCIX",
         "UNWGX",
+        # Ranks 31–42 historical flagships (US books / ≥$1B / family heroes)
+        "TAGRX",
+        "USGLX",
+        "JBGAX",
+        "HFMCX",
+        "HAIAX",
+        "IHGIX",
+        "WSTAX",
+        "WLGAX",
+        "DDVAX",
+        "SGENX",
+        "SGOVX",
+        "FEVAX",
+        "GQETX",
+        "GMUEX",
+        "ARTKX",
+        "CVGRX",
+        "CVTRX",
+        "CCVIX",
+        "WGROX",
+        "HACAX",
+        "NWHOX",
     }
 )
 

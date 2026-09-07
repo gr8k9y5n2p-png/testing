@@ -9,13 +9,12 @@ class HarborSource(HtmlTableSource):
     aum_rank = 41
     priority = 41
     notes = (
-        "Tax center: https://www.harborcapital.com/tax-center/ "
-        "Public 10/23/2025 year-end estimate PDF: "
+        "US-domiciled. Tax center: https://www.harborcapital.com/tax-center/ "
+        "No public filled ICI. Public 10/23/2025 year-end estimate PDF: "
         "https://assets.harborcapital.com/docs/Distribution_Estimates_Mutual_Funds_2025.pdf "
-        "(e.g. Capital Appreciation Institutional HACAX LT $11.89 / 9% of NAV; "
-        "Small Cap Value Institutional HASCX LT $0.86 / 2% of NAV). "
-        "Ordinary-income + capital-gains record/ex/pay 12/18–12/19/2025; "
-        "a second date set is 12/10–12/11/2025."
+        "(Capital Appreciation Institutional HACAX LT $11.89 / 9% of NAV). "
+        "2024 sibling Distribution_Estimates_Mutual_Funds_2024.pdf 404. "
+        "Third-party combined dividend totals unused (no official ST/LT split)."
     )
     live_limitations = "Estimate book is PDF. Fixture transcribes public Institutional-class rows."
 
@@ -36,14 +35,13 @@ class NationwideSource(HtmlTableSource):
     aum_rank = 42
     priority = 42
     notes = (
-        "Year-end hub: "
+        "US-domiciled. Year-end hub: "
         "https://www.nationwide.com/personal/investing/mutual-funds/year-end-information/ "
-        "Public 2025 capital-gains distribution PDF (MFN-0435AO): "
+        "No public filled ICI. Public 2025 capital-gains distribution PDF (MFN-0435AO): "
         "https://nationwidefinancial.com/media/pdf/MFN-0435AO.pdf "
-        "(e.g. Bailard Technology & Science Class A NWHOX LT $3.7231 / 12.48% of NAV; "
-        "Bailard International Equities Class A NWHJX LT $0.6148 / 5.19%). "
-        "Most funds record 12/17/2025, ex 12/18/2025, pay 12/19/2025; "
-        "Investor/Target Destination funds record 12/22/2025."
+        "(Bailard Technology & Science Class A NWHOX LT $3.7231 / 12.48% of NAV). "
+        "2024 sibling MFN-0434AO is not a capital-gains book (HTML/8937-style). "
+        "Hub PDF link is unversioned — prior-year ST/LT not transcribed."
     )
     live_limitations = (
         "Family book is PDF. Automated GET is sometimes Akamai-denied without a "
