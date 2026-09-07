@@ -13,23 +13,35 @@ type FreemiumState = {
 const empty: FreemiumState = { tickers: [], unlocked: false };
 const listeners = new Set<() => void>();
 
+let cachedRaw: string | null | undefined;
+let cachedState: FreemiumState = empty;
+
 function read(): FreemiumState {
   if (typeof window === "undefined") return empty;
+  const raw = window.localStorage.getItem(STORAGE_KEY);
+  if (raw === cachedRaw) return cachedState;
+  cachedRaw = raw;
+  if (!raw) {
+    cachedState = empty;
+    return cachedState;
+  }
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return empty;
     const parsed = JSON.parse(raw) as FreemiumState;
-    return {
+    cachedState = {
       tickers: Array.isArray(parsed.tickers) ? parsed.tickers : [],
       unlocked: Boolean(parsed.unlocked),
     };
   } catch {
-    return empty;
+    cachedState = empty;
   }
+  return cachedState;
 }
 
 function write(next: FreemiumState) {
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+  const raw = JSON.stringify(next);
+  window.localStorage.setItem(STORAGE_KEY, raw);
+  cachedRaw = raw;
+  cachedState = next;
   listeners.forEach((listener) => listener());
 }
 
@@ -38,8 +50,12 @@ function subscribe(listener: () => void) {
   return () => listeners.delete(listener);
 }
 
+function getServerSnapshot(): FreemiumState {
+  return empty;
+}
+
 export function useFreemium() {
-  const state = useSyncExternalStore(subscribe, read, () => empty);
+  const state = useSyncExternalStore(subscribe, read, getServerSnapshot);
   const used = state.unlocked ? 0 : state.tickers.length;
   const remaining = state.unlocked
     ? Number.POSITIVE_INFINITY
