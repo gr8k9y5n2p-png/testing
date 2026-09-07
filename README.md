@@ -230,6 +230,23 @@ curl -s -X POST http://127.0.0.1:8000/illustrate/compare \
 - one `selectors` (or `left.selectors`) block plus `periods` of length ≥ 2 — consecutive pairs; the response `year` / `as_of` are the **newer** (right) vintage, or
 - `left` / `right` with the same selectors and different `as_of` (no `periods` required).
 
+`mode` may be omitted: the same fund on both sides infers `yoy`; different funds infer `fund_vs_fund`. A single-pair response also copies `left`, `right`, and `deltas` to the **top level** (diverging-bar sketch). Each side may override `holding_dollars` / `nav_per_share` / `shares`.
+
+YoY AMCAP (defaults: 20% LTCG + 5% state → 2024 $20k / $5k tax vs 2025 $40k / $10k tax):
+
+```bash
+curl -s -X POST http://127.0.0.1:8000/illustrate/compare \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "holding_dollars": 1000000,
+    "nav_per_share": null,
+    "tax_rates": {},
+    "combine_state_with_federal": true,
+    "left": { "label": "2024", "selectors": { "fund_identifier": "amcap-fund", "as_of": "2024-12-15" } },
+    "right": { "label": "2025", "selectors": { "fund_identifier": "amcap-fund", "as_of": "2025-09-19" } }
+  }' | jq '{mode, left: .left.label, right: .right.label, deltas, notes}'
+```
+
 A missing side is **not** a 404. That illustration is empty (zeros, `matched: false`) and a note is appended so the chart still has a period row.
 
 Top-level or per-side `nav_per_share` / `shares` apply the same way as single-holding illustrate.

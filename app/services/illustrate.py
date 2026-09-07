@@ -608,8 +608,9 @@ def _side_request(
     ids = side.distribution_ids if side else None
     if not ids and not (pinned and pinned.has_any()):
         return None
+    holding = side.holding_dollars if side and side.holding_dollars is not None else body.holding_dollars
     return IllustrateRequest(
-        holding_dollars=body.holding_dollars,
+        holding_dollars=holding,
         distribution_ids=ids if ids else None,
         selectors=None if ids else pinned,
         nav_per_share=(side.nav_per_share if side and side.nav_per_share is not None else body.nav_per_share),
@@ -927,7 +928,16 @@ def _compare_response(
     notes: list[str],
 ) -> CompareResponse:
     summary = build_compare_summary(session, body, period_outs, notes)
-    return CompareResponse(mode=body.mode, periods=period_outs, summary=summary, notes=notes)
+    pair = period_outs[-1] if period_outs else None
+    return CompareResponse(
+        mode=body.mode or "yoy",
+        left=pair.left if pair else None,
+        right=pair.right if pair else None,
+        deltas=pair.deltas if pair else None,
+        periods=period_outs,
+        summary=summary,
+        notes=notes,
+    )
 
 
 def illustrate_compare(session: Session, body: CompareRequest) -> CompareResponse:

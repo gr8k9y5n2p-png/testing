@@ -519,10 +519,11 @@ class CompareSideIn(BaseModel):
     label: str | None = None
     selectors: IllustrateSelectors | None = None
     distribution_ids: list[str] | None = None
+    holding_dollars: Decimal | None = Field(default=None, gt=0)
     nav_per_share: Decimal | None = Field(default=None, gt=0)
     shares: Decimal | None = Field(default=None, gt=0)
 
-    @field_validator("nav_per_share", "shares", mode="before")
+    @field_validator("holding_dollars", "nav_per_share", "shares", mode="before")
     @classmethod
     def side_money(cls, value: Any) -> Any:
         if isinstance(value, float):
@@ -533,13 +534,31 @@ class CompareSideIn(BaseModel):
         return bool(self.distribution_ids) or bool(self.selectors and self.selectors.has_any())
 
 
+def _selector_key(selectors: IllustrateSelectors | None, attr: str) -> str:
+    raw = getattr(selectors, attr, None) if selectors else None
+    return (raw or "").strip().lower()
+
+
+def sides_look_like_same_fund(left: CompareSideIn | None, right: CompareSideIn | None) -> bool:
+    if not left or not right or not left.selectors or not right.selectors:
+        return False
+    for attr in ("fund_identifier", "ticker", "fund_name"):
+        a, b = _selector_key(left.selectors, attr), _selector_key(right.selectors, attr)
+        if a and b and a == b:
+            return True
+    return False
+
+
 class ComparePeriodIn(BaseModel):
     year: int = Field(..., ge=1900, le=2100)
     as_of: date | None = Field(default=None, description="Pin both sides (or this YoY vintage) to one as_of.")
 
 
 class CompareRequest(BaseModel):
-    mode: Literal["fund_vs_fund", "yoy"]
+    mode: Literal["fund_vs_fund", "yoy"] | None = Field(
+        default=None,
+        description="Omit to infer: same fund on left/right → yoy; otherwise fund_vs_fund.",
+    )
     holding_dollars: Decimal = Field(..., gt=0)
     tax_rates: TaxRates = Field(default_factory=TaxRates)
     combine_state_with_federal: bool = True
@@ -569,18 +588,28 @@ class CompareRequest(BaseModel):
         left_ok = bool(self.left and self.left.has_lookup())
         right_ok = bool(self.right and self.right.has_lookup())
         shared = bool(self.selectors and self.selectors.has_any())
-        if self.mode == "fund_vs_fund":
+        mode = self.mode
+        if mode is None:
+            if left_ok and right_ok and sides_look_like_same_fund(self.left, self.right):
+                mode = "yoy"
+            elif left_ok and right_ok:
+                mode = "fund_vs_fund"
+            elif shared or left_ok:
+                mode = "yoy"
+            else:
+                raise ValueError("provide left and right (or mode + selectors/periods)")
+        if mode == "fund_vs_fund":
             if not left_ok:
                 raise ValueError("fund_vs_fund requires left.selectors or left.distribution_ids")
             if not right_ok:
                 raise ValueError("fund_vs_fund requires right.selectors or right.distribution_ids")
-            return self
+            return self.model_copy(update={"mode": mode})
         if left_ok and right_ok:
-            return self
+            return self.model_copy(update={"mode": mode})
         if shared or left_ok:
             if len(self.periods) < 2:
                 raise ValueError("yoy with one selectors block requires at least two periods")
-            return self
+            return self.model_copy(update={"mode": mode})
         raise ValueError(
             "yoy requires selectors (or left.selectors) plus two periods, or left and right sides"
         )
@@ -650,6 +679,15 @@ class CompareSummary(BaseModel):
 
 class CompareResponse(BaseModel):
     mode: Literal["fund_vs_fund", "yoy"]
+    left: CompareIllustration | None = Field(
+        default=None,
+        description="Newest (or only) pair's left illustration — YoY AMCAP sketch shape.",
+    )
+    right: CompareIllustration | None = None
+    deltas: CompareDeltas | None = Field(
+        default=None,
+        description="Newest (or only) pair's right − left deltas.",
+    )
     periods: list[ComparePeriodOut]
     summary: CompareSummary
     notes: list[str]

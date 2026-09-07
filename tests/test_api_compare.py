@@ -172,6 +172,69 @@ def test_compare_yoy_same_fund_periods(client: TestClient) -> None:
     assert summary["common_inception"]["to_year"] == 2025
 
 
+def test_compare_yoy_amcap_sketch_infers_mode(client: TestClient) -> None:
+    """Interactive Modules YoY sketch: no mode, left/right as_of, tax_rates {}."""
+    _ingest_compare_book(client)
+    response = client.post(
+        "/illustrate/compare",
+        json={
+            "holding_dollars": 1000000,
+            "nav_per_share": None,
+            "tax_rates": {},
+            "combine_state_with_federal": True,
+            "left": {
+                "label": "2024",
+                "selectors": {"fund_identifier": "amcap-fund", "as_of": "2024-12-15"},
+            },
+            "right": {
+                "label": "2025",
+                "selectors": {"fund_identifier": "amcap-fund", "as_of": "2025-09-19"},
+            },
+        },
+    )
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["mode"] == "yoy"
+    assert body["left"]["label"] == "2024"
+    assert body["right"]["label"] == "2025"
+    assert body["left"]["matched"] is True
+    assert body["right"]["matched"] is True
+    assert Decimal(body["left"]["totals"]["distribution_dollars"]) == Decimal("20000.00")
+    assert Decimal(body["right"]["totals"]["distribution_dollars"]) == Decimal("40000.00")
+    assert Decimal(body["deltas"]["distribution_dollars"]) == Decimal("20000.00")
+    assert Decimal(body["deltas"]["estimated_tax"]) == Decimal("5000.00")
+    assert Decimal(body["deltas"]["effective_tax_on_holding"]) == Decimal("0.005000")
+    assert Decimal(body["left"]["tax_rates"]["long_term_capital_gains"]) == Decimal("0.20")
+    assert body["notes"]
+
+
+def test_compare_per_side_holding_and_missing_rows(client: TestClient) -> None:
+    _ingest_compare_book(client)
+    response = client.post(
+        "/illustrate/compare",
+        json={
+            "holding_dollars": 1000000,
+            "left": {
+                "label": "2024",
+                "holding_dollars": 500000,
+                "selectors": {"fund_identifier": "amcap-fund", "as_of": "2024-12-15"},
+            },
+            "right": {
+                "label": "missing year",
+                "selectors": {"fund_identifier": "amcap-fund", "as_of": "2019-01-01"},
+            },
+        },
+    )
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["left"]["matched"] is True
+    assert Decimal(body["left"]["holding_dollars"]) == Decimal("500000.00")
+    assert Decimal(body["left"]["totals"]["distribution_dollars"]) == Decimal("10000.00")
+    assert body["right"]["matched"] is False
+    assert Decimal(body["right"]["totals"]["estimated_tax"]) == Decimal("0.00")
+    assert any("No distribution" in note for note in body["notes"])
+
+
 def test_compare_yoy_left_right_as_of(client: TestClient) -> None:
     _ingest_compare_book(client)
     response = client.post(
