@@ -759,7 +759,7 @@ def resolve_portfolio_holding_dollars(
     dollars = book * normalize_weight_pct(holding.weight_pct)
     if dollars <= 0:
         raise ValueError("book_dollars * weight_pct must be greater than 0")
-    return holding.model_copy(update={"holding_dollars": dollars})
+    return holding.model_copy(update={"holding_dollars": dollars, "weight_pct": None})
 
 
 class PortfolioCompareSideIn(BaseModel):
