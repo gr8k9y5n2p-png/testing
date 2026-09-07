@@ -33,7 +33,8 @@ export default function GrowthTaxDemoPage() {
         <code className="font-mono text-[13px] text-ink">
           POST /illustrate/compare
         </code>{" "}
-        periods, drawn negative and side-by-side. Localhost uses mock fallbacks.
+        periods, drawn negative and side-by-side, with a % / $ toggle. Localhost
+        uses mock fallbacks.
       </p>
 
       <div className="mt-8">

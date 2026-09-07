@@ -211,7 +211,9 @@ export function formatTaxDragValue(
 ): string {
   if (metric === "effective_tax") {
     const pct = value * 100;
-    const digits = Math.abs(pct) >= 10 ? 1 : 2;
+    if (Math.abs(pct) < 0.005) return "0%";
+    const tenths = Number((Math.abs(pct) * 10).toFixed(6));
+    const digits = Math.abs(pct) >= 10 || Number.isInteger(tenths) ? 1 : 2;
     return `${pct.toFixed(digits)}%`;
   }
   return formatUsd(value, 0);

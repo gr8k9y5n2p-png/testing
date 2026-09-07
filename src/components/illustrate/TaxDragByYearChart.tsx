@@ -41,6 +41,8 @@ export type TaxDragByYearChartProps = {
   years?: number[];
   /** Shared x-scale with the growth chart. */
   axis?: YearLayout;
+  /** Locked-sketch % / $ control on the tax-drag panel. */
+  onUnitChange?: (metric: TaxDragMetric) => void;
 };
 
 const CARD_W = 360;
@@ -67,6 +69,7 @@ export function TaxDragByYearChart({
   pad,
   years: yearsProp,
   axis: axisProp,
+  onUnitChange,
 }: TaxDragByYearChartProps) {
   const flush = layout === "flush";
   const chartW = width ?? (flush ? SHARED_CHART_WIDTH : CARD_W);
@@ -314,20 +317,50 @@ export function TaxDragByYearChart({
             {title}
           </h3>
           {fundSeries.length > 0 ? (
-            <ul className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-muted">
-              {fundSeries.map((row) => (
-                <li key={row.id} className="flex items-center gap-1.5">
-                  <span
-                    className="inline-block size-2 rounded-[2px]"
-                    style={{ background: row.color }}
-                  />
-                  <span className="text-ink">{row.label}</span>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <ul className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-muted">
+                {fundSeries.map((row) => (
+                  <li key={row.id} className="flex items-center gap-1.5">
+                    <span
+                      className="inline-block size-2 rounded-[2px]"
+                      style={{ background: row.color }}
+                    />
+                    <span className="text-ink">{row.label}</span>
+                  </li>
+                ))}
+                <li className="text-faint">
+                  {metric === "effective_tax" ? "% of portfolio value" : "tax $"}
                 </li>
-              ))}
-              <li className="text-faint">
-                {metric === "effective_tax" ? "% of portfolio value" : "tax $"}
-              </li>
-            </ul>
+              </ul>
+              {onUnitChange ? (
+                <div
+                  className="inline-flex rounded-md border border-line bg-paper p-0.5 text-[11px] font-semibold"
+                  role="group"
+                  aria-label="Tax drag units"
+                >
+                  <button
+                    type="button"
+                    title="Effective tax on holding"
+                    onClick={() => onUnitChange("effective_tax")}
+                    className={`h-7 rounded px-2 ${
+                      metric === "effective_tax" ? "bg-ink text-white" : "text-muted"
+                    }`}
+                  >
+                    %
+                  </button>
+                  <button
+                    type="button"
+                    title="Estimated tax dollars"
+                    onClick={() => onUnitChange("tax_dollars")}
+                    className={`h-7 rounded px-2 ${
+                      metric === "tax_dollars" ? "bg-ink text-white" : "text-muted"
+                    }`}
+                  >
+                    $
+                  </button>
+                </div>
+              ) : null}
+            </div>
           ) : null}
         </header>
         {plot}

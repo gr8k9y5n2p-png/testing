@@ -24,6 +24,7 @@ import {
   toNegativeTaxDrag,
   toTaxDragPeriods,
   type TaxDragFundSeries,
+  type TaxDragMetric,
 } from "@/lib/illustrate/tax-drag-chart";
 import { fetchPerformance, postPerformanceGrowth } from "@/lib/performance/client";
 import {
@@ -66,7 +67,7 @@ const DEFAULT_FUNDS: GrowthFundInput[] = [
 ];
 
 const SKETCH_DISCLAIMER =
-  "Hypothetical illustration based on estimated distributions and assumed tax rates. Estimates only — not tax advice. Past performance does not guarantee future results.";
+  "Hypothetical illustration based on estimated distributions and assumed tax rates. Estimates only — not tax advice. Past performance does not guarantee future results. Up to 6 funds + benchmark.";
 
 type LoadedFund = {
   input: GrowthFundInput;
@@ -92,7 +93,7 @@ export function GrowthAndTaxDragModule({
   const [principalDraft, setPrincipalDraft] = useState(formatPrincipal(startDollars));
   const [addTicker, setAddTicker] = useState("");
   const [adding, setAdding] = useState(false);
-  const [unit, setUnit] = useState<"dollars" | "percent">("dollars");
+  const [taxMetric, setTaxMetric] = useState<TaxDragMetric>("effective_tax");
   const [retry, setRetry] = useState(0);
   const [rows, setRows] = useState<LoadedFund[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -144,12 +145,11 @@ export function GrowthAndTaxDragModule({
 
   const growthSeries = useMemo<GrowthLineSeries[]>(() => {
     if (!rows) return [];
-    const asReturn = unit === "percent";
     const lines: GrowthLineSeries[] = rows.map((row) => ({
       id: row.performance.fund_ticker,
       label: row.performance.fund_ticker,
       color: row.color,
-      points: windowedGrowth(row.performance.fund.points, years, principal, asReturn),
+      points: windowedGrowth(row.performance.fund.points, years, principal),
     }));
     const bench = rows[0]?.performance.benchmark;
     if (bench) {
@@ -158,11 +158,11 @@ export function GrowthAndTaxDragModule({
         label: rows[0].performance.benchmark_tracks || bench.ticker,
         color: BENCHMARK_COLOR,
         dashed: true,
-        points: windowedGrowth(bench.points, years, principal, asReturn),
+        points: windowedGrowth(bench.points, years, principal),
       });
     }
     return lines;
-  }, [principal, rows, unit, years]);
+  }, [principal, rows, years]);
 
   const taxSeries = useMemo<TaxDragFundSeries[]>(() => {
     if (!rows) return [];
@@ -173,16 +173,13 @@ export function GrowthAndTaxDragModule({
       points: row.tax
         ? toNegativeTaxDrag(
             alignYears(
-              toTaxDragPeriods(
-                row.tax,
-                unit === "dollars" ? "tax_dollars" : "effective_tax",
-              ),
+              toTaxDragPeriods(row.tax, taxMetric),
               years,
             ),
           )
         : years.map((year) => ({ year, value: null })),
     }));
-  }, [rows, unit, years]);
+  }, [rows, taxMetric, years]);
 
   const annualized = useMemo(() => {
     if (!rows || years.length < 2) return [];
@@ -197,14 +194,14 @@ export function GrowthAndTaxDragModule({
         id: row.performance.fund_ticker,
         label: row.performance.fund_ticker,
         color: row.color,
-        points: windowedGrowth(row.performance.fund.points, years, principal, false),
+        points: windowedGrowth(row.performance.fund.points, years, principal),
       }));
     const bench = rows[0]?.performance.benchmark;
     if (bench) {
       dollarSeries.push({
         id: `bench-${bench.ticker}`,
         label: rows[0].performance.benchmark_tracks || bench.ticker,
-        points: windowedGrowth(bench.points, years, principal, false),
+        points: windowedGrowth(bench.points, years, principal),
       });
     }
     return dollarSeries.map((row) => {
@@ -264,9 +261,6 @@ export function GrowthAndTaxDragModule({
     (ticker) => !selected.some((fund) => fundKey(fund).ticker === ticker),
   );
 
-  const growthUnit = unit === "percent" ? "percent" : "dollars";
-  const taxMetric = unit === "dollars" ? "tax_dollars" : "effective_tax";
-
   return (
     <article
       className={`rounded-2xl border border-line bg-surface px-5 py-5 shadow-[0_8px_24px_rgba(26,29,26,0.08)] ${className}`}
@@ -283,53 +277,35 @@ export function GrowthAndTaxDragModule({
         </div>
 
         <div className="flex flex-wrap items-end gap-2">
-          <div
-            className="inline-flex rounded-md border border-line bg-paper p-0.5 text-[11px] font-semibold uppercase tracking-[0.12em]"
-            role="group"
-            aria-label="Dollars or percent"
-          >
-            <button
-              type="button"
-              title="Growth of $X · tax $"
-              onClick={() => setUnit("dollars")}
-              className={`h-8 rounded px-2.5 ${
-                unit === "dollars" ? "bg-accent text-white" : "text-muted"
-              }`}
-            >
-              $
-            </button>
-            <button
-              type="button"
-              title="Returns · tax % of value"
-              onClick={() => setUnit("percent")}
-              className={`h-8 rounded px-2.5 ${
-                unit === "percent" ? "bg-accent text-white" : "text-muted"
-              }`}
-            >
-              %
-            </button>
-          </div>
           {editablePrincipal ? (
             <label className="block text-[10px] font-semibold uppercase tracking-[0.12em] text-faint">
               Growth of $
-              <input
-                type="text"
-                inputMode="decimal"
-                value={principalDraft}
-                onChange={(event) => setPrincipalDraft(event.target.value)}
-                onFocus={() => setPrincipalDraft(String(principal))}
-                onBlur={() => {
-                  commitPrincipal();
-                  setPrincipalDraft(formatPrincipal(principal));
-                }}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") {
-                    event.currentTarget.blur();
-                  }
-                }}
-                className="mt-1 block h-9 w-[7.5rem] rounded-md border border-line bg-paper px-2 text-right font-mono text-sm font-normal normal-case tracking-normal text-ink"
-                aria-label="Starting dollars"
-              />
+              <span className="relative mt-1 block">
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 font-mono text-sm text-faint"
+                >
+                  $
+                </span>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={principalDraft}
+                  onChange={(event) => setPrincipalDraft(event.target.value)}
+                  onFocus={() => setPrincipalDraft(String(principal))}
+                  onBlur={() => {
+                    commitPrincipal();
+                    setPrincipalDraft(formatPrincipal(principal));
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.currentTarget.blur();
+                    }
+                  }}
+                  className="block h-9 w-[7.5rem] rounded-md border border-line bg-paper pl-6 pr-2 text-right font-mono text-sm font-normal normal-case tracking-normal text-ink"
+                  aria-label="Starting dollars"
+                />
+              </span>
             </label>
           ) : (
             <p className="text-sm text-muted">{formatUsd(principal, 0)}</p>
@@ -371,9 +347,6 @@ export function GrowthAndTaxDragModule({
                 className="h-9 rounded-md border border-dashed border-line-strong px-3 text-[12px] text-muted hover:border-ink hover:text-ink"
               >
                 + Add Fund
-                <span className="ml-1 text-[10px] text-faint">
-                  {selected.length}/{MAX_GROWTH_FUNDS}
-                </span>
               </button>
             )
           ) : allowAddFund ? (
@@ -384,7 +357,7 @@ export function GrowthAndTaxDragModule({
         </div>
       </header>
 
-      {selected.length > 0 ? (
+      {selected.length > 2 ? (
         <div className="mt-3 flex flex-wrap gap-2">
           {selected.map((fund, index) => (
             <span
@@ -428,7 +401,7 @@ export function GrowthAndTaxDragModule({
               years={years}
               series={growthSeries}
               startDollars={principal}
-              unit={growthUnit}
+              unit="dollars"
               annualized={annualized}
               showAnnualized={showAnnualized}
               loading={loading}
@@ -440,6 +413,7 @@ export function GrowthAndTaxDragModule({
               series={taxSeries}
               years={years}
               metric={taxMetric}
+              onUnitChange={setTaxMetric}
               orientation="down"
               showBarLabels={selected.length <= 2}
               layout="flush"
@@ -463,17 +437,11 @@ function windowedGrowth(
   points: { date: string; growth_of_x: number }[],
   years: number[],
   principal: number,
-  asReturn: boolean,
 ) {
-  const rebased = rebaseWindow(
+  return rebaseWindow(
     yearEndGrowth(points).filter((point) => years.includes(point.year)),
     principal,
   );
-  if (!asReturn) return rebased;
-  return rebased.map((point) => ({
-    year: point.year,
-    value: principal > 0 ? point.value / principal - 1 : 0,
-  }));
 }
 
 function formatPrincipal(value: number): string {

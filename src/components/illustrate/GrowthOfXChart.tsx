@@ -77,7 +77,8 @@ export function GrowthOfXChart({
 
   const lo = Math.min(unit === "percent" ? 0 : startDollars, ...values);
   const hi = Math.max(unit === "percent" ? 0 : startDollars, ...values);
-  const scale = unit === "percent" ? nicePctScale(lo, hi) : niceMoneyScale(lo, hi);
+  const scale =
+    unit === "percent" ? nicePctScale(lo, hi) : niceMoneyScale(lo, hi, startDollars);
   const innerH = height - pad.top - pad.bottom;
   const layout = axisProp ?? yearLayout(years, 1, width, pad);
   const xAt = (year: number) => {
@@ -281,15 +282,17 @@ function formatAxisPct(value: number): string {
   return `${(value * 100).toFixed(0)}%`;
 }
 
-function niceMoneyScale(min: number, max: number) {
-  const pad = Math.max((max - min) * 0.08, 400);
-  const lo = Math.max(0, min - pad * 0.25);
-  const hi = max + pad;
-  const span = hi - lo;
-  const step = span <= 12_000 ? 2_500 : span <= 25_000 ? 5_000 : span <= 60_000 ? 10_000 : 20_000;
+function niceMoneyScale(min: number, max: number, startDollars: number) {
+  const step = 2_500;
+  const floor =
+    min >= startDollars * 0.95
+      ? Math.round(startDollars / step) * step
+      : Math.max(0, Math.floor(min / step) * step);
+  const range = Math.max(max - floor, step * 3);
+  const padded = max + range * 0.15;
   return {
-    min: Math.floor(lo / step) * step,
-    max: Math.ceil(hi / step) * step,
+    min: floor,
+    max: Math.max(floor + step * 4, Math.ceil(padded / step) * step),
   };
 }
 
