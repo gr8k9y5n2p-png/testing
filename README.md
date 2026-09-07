@@ -440,7 +440,7 @@ Fixture packs today (ranks 1–10 historical pass):
 | Family | Years in fixtures | Live archive notes |
 | --- | --- | --- |
 | BlackRock / iShares | 2026 midyear paid + 2025 YE final | Live HTML https://www.ishares.com/us/capital-gains-distributions. 2023–2024 archives are 1099-style PDF tax kits (not an HTML CG grid) — skipped, not invented. 2024 kit: https://www.ishares.com/us/library/2024-tax-kit |
-| Vanguard | 2022–2024 ICI December YE (VFIAX / VBIAX / VIGAX) + 2025 YE HTML | ICI Primary Layout PDFs on the advisor tax center (not SPA scrape). December-only / >$1B filter. 2025 ICI not double-ingested (existing YE fixture). |
+| Vanguard | 2022–2024 ICI December YE (VFIAX / VBIAX / VIGAX / VTSAX / VTIAX / VOO) + 2025 YE HTML | ICI Primary Layout PDFs on the advisor tax center (not SPA scrape). December-only / >$1B filter (flagship Admiral / mega ETF). 2025 ICI not double-ingested (existing YE fixture). |
 | Fidelity | 2025 prior-year paid + 2026 estimate | Live HTML: current estimates `FIIS_SP52_DPL6` and prior-year `FIIS_SP10_DPL6` (FBGRX 2025 paid LT $5.07300 ex 2025-09-12; 2026 estimate LT $21.021 as of 2026-07-31). |
 | State Street / SPDR | 2025 estimate (SPY/SPLG 0% NAV placeholder) | Angular live page. Historical XLSX is linked but not a stable public file URL — 2024 paid ST/LT not transcribed. ZZSSGA is a parser-layout sample, not official. |
 | J.P. Morgan | 2025 Section 19a sample (SEEGX) | No confirmed official 2024 $/share 19a PDF/HTML. Third-party histories unused. |

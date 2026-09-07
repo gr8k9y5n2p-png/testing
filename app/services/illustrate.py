@@ -302,7 +302,12 @@ def _totals(components: list[IllustrationComponent], holding: Decimal) -> Illust
     )
 
 
-def illustrate(session: Session, body: IllustrateRequest) -> IllustrateResponse:
+def illustrate(
+    session: Session,
+    body: IllustrateRequest,
+    *,
+    as_of_year: int | None = None,
+) -> IllustrateResponse:
     if body.distribution_ids:
         rows, missing = get_by_ids(session, body.distribution_ids)
         if missing:
@@ -319,6 +324,9 @@ def illustrate(session: Session, body: IllustrateRequest) -> IllustrateResponse:
             as_of=body.selectors.as_of,
             publication_stage=body.selectors.publication_stage,
         )
+        # Internal YoY vintage filter (HTTP illustrate/compare schemas unchanged).
+        if as_of_year is not None and not body.selectors.as_of:
+            rows = [row for row in rows if row.as_of is not None and row.as_of.year == as_of_year]
         if body.latest_as_of_only:
             rows = filter_latest_as_of(rows)
         if not rows:
@@ -843,9 +851,14 @@ def _empty_illustration(body: IllustrateRequest, *, reason: str) -> IllustrateRe
     )
 
 
-def _try_illustrate(session: Session, request: IllustrateRequest) -> tuple[IllustrateResponse, bool, str | None]:
+def _try_illustrate(
+    session: Session,
+    request: IllustrateRequest,
+    *,
+    as_of_year: int | None = None,
+) -> tuple[IllustrateResponse, bool, str | None]:
     try:
-        return illustrate(session, request), True, None
+        return illustrate(session, request, as_of_year=as_of_year), True, None
     except HTTPException as exc:
         if exc.status_code in {404, 422}:
             detail = exc.detail if isinstance(exc.detail, str) else str(exc.detail)
@@ -997,6 +1010,7 @@ def _run_side(
     as_of: date | None,
     pin_as_of: bool,
     fallback_label: str,
+    as_of_year: int | None = None,
 ) -> tuple[CompareIllustration, str | None]:
     request = _side_request(body, side, selectors=selectors, as_of=as_of, pin_as_of=pin_as_of)
     if request is None:
@@ -1014,7 +1028,7 @@ def _run_side(
         error = "No selectors or distribution_ids for this side."
         matched = False
     else:
-        illustration, matched, error = _try_illustrate(session, request)
+        illustration, matched, error = _try_illustrate(session, request, as_of_year=as_of_year)
     label = _label_for(side, illustration, fallback_label)
     return _compare_illustration(illustration, label=label, matched=matched), error
 
@@ -1223,6 +1237,7 @@ def illustrate_compare(session: Session, body: CompareRequest) -> CompareRespons
                 as_of=older.as_of,
                 pin_as_of=True,
                 fallback_label=str(older.year),
+                as_of_year=None if older.as_of is not None else older.year,
             )
             right_ill, right_err = _run_side(
                 session,
@@ -1232,6 +1247,7 @@ def illustrate_compare(session: Session, body: CompareRequest) -> CompareRespons
                 as_of=newer.as_of,
                 pin_as_of=True,
                 fallback_label=str(newer.year),
+                as_of_year=None if newer.as_of is not None else newer.year,
             )
             if not (body.left and body.left.label):
                 left_ill = left_ill.model_copy(update={"label": str(older.year)})
@@ -1260,6 +1276,7 @@ def illustrate_compare(session: Session, body: CompareRequest) -> CompareRespons
         jobs.append((stamp.year if stamp else 0, None, False))
 
     for year, as_of, pin in jobs:
+        year_filter = year if pin and as_of is None and year else None
         left_ill, left_err = _run_side(
             session,
             body,
@@ -1268,6 +1285,7 @@ def illustrate_compare(session: Session, body: CompareRequest) -> CompareRespons
             as_of=as_of,
             pin_as_of=pin,
             fallback_label="left",
+            as_of_year=year_filter,
         )
         right_ill, right_err = _run_side(
             session,
@@ -1277,6 +1295,7 @@ def illustrate_compare(session: Session, body: CompareRequest) -> CompareRespons
             as_of=as_of,
             pin_as_of=pin,
             fallback_label="right",
+            as_of_year=year_filter,
         )
         _append_side_note(notes, left_ill, left_err, str(year or as_of))
         _append_side_note(notes, right_ill, right_err, str(year or as_of))

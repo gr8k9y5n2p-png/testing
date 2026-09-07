@@ -2,3 +2,6 @@ as_of,fund_name,cusip,ticker,record_date,ex_dividend_date,payable_date,income_di
 2024-12-31,Vanguard 500 Index Fund Admiral Shares,922908710,VFIAX,12/20/2024,12/23/2024,12/24/2024,1.739200,,
 2024-12-31,Vanguard Balanced Index Fund Admiral Shares,921931200,VBIAX,12/27/2024,12/30/2024,12/31/2024,0.263000,0.025872,1.298076
 2024-12-31,Vanguard Growth Index Fund Admiral Shares,922908660,VIGAX,12/20/2024,12/23/2024,12/24/2024,0.270100,,
+2024-12-31,Vanguard Total Stock Market Index Fund Admiral Shares,922908728,VTSAX,12/20/2024,12/23/2024,12/24/2024,0.454900,,
+2024-12-31,Vanguard Total International Stock Index Fund Admiral Shares,921909818,VTIAX,12/19/2024,12/20/2024,12/23/2024,0.537000,,
+2024-12-31,Vanguard S&P 500 ETF,922908363,VOO,12/23/2024,12/23/2024,12/26/2024,1.738500,,

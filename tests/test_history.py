@@ -218,6 +218,8 @@ def test_search_multi_year_top_families(client: TestClient) -> None:
     vfiax_years = client.get("/distributions", params={"fund_identifier": "VFIAX", "page_size": 50})
     vfiax_as_ofs = {item["as_of"][:4] for item in vfiax_years.json()["items"] if item.get("as_of")}
     assert {"2022", "2023", "2024", "2025"} <= vfiax_as_ofs
+    vtsax_years = client.get("/distributions", params={"fund_identifier": "VTSAX", "page_size": 50})
+    assert {"2022", "2023", "2024"} <= {item["as_of"][:4] for item in vtsax_years.json()["items"] if item.get("as_of")}
 
 
 def test_compare_hero_yoy_fixture_bars(client: TestClient) -> None:
@@ -244,7 +246,12 @@ def test_compare_hero_yoy_fixture_bars(client: TestClient) -> None:
     assert all(p["left"]["matched"] and p["right"]["matched"] for p in trbcx_body["periods"])
     trbcx_dists = [Decimal(p["right"]["totals"]["distribution_dollars"]) for p in trbcx_body["periods"]]
     assert all(d > 0 for d in trbcx_dists)
-    assert len(set(trbcx_dists)) >= 2
+    assert trbcx_dists == [
+        Decimal("5209.50"),   # 2023 LT $5.2095
+        Decimal("16908.90"),  # 2024 ST $0.7574 + LT $16.1515
+        Decimal("11032.30"),  # 2025 ST $0.0748 + LT $10.9575
+    ]
+    assert Decimal(trbcx_body["periods"][0]["left"]["totals"]["distribution_dollars"]) == Decimal("6071.90")
 
     fbgrx = client.post(
         "/illustrate/compare",

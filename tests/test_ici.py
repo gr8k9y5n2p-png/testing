@@ -14,7 +14,7 @@ VG = Path(__file__).resolve().parents[1] / "fixtures" / "vanguard"
 
 
 def test_large_aum_allowlist_covers_heroes() -> None:
-    for ticker in ("VFIAX", "VBIAX", "VIGAX", "FBGRX", "TRBCX", "AMCPX", "CGHM"):
+    for ticker in ("VFIAX", "VBIAX", "VIGAX", "VTSAX", "VTIAX", "VOO", "FBGRX", "TRBCX", "AMCPX", "CGHM"):
         assert is_large_aum_ticker(ticker)
     assert not is_large_aum_ticker("ZZTINY")
     assert not is_large_aum_ticker(None)
@@ -69,4 +69,18 @@ def test_parse_ici_primary_2024_december_flagships() -> None:
         r for r in records if r.ticker == "VIGAX" and r.estimate_type == EstimateType.ordinary_income
     )
     assert vigax.amount == Decimal("0.270100")
+    vtsax = next(
+        r for r in records if r.ticker == "VTSAX" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert vtsax.amount == Decimal("0.454900")
+    assert str(vtsax.ex_date) == "2024-12-23"
+    vtiax = next(
+        r for r in records if r.ticker == "VTIAX" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert vtiax.amount == Decimal("0.537000")
+    voo = next(
+        r for r in records if r.ticker == "VOO" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert voo.amount == Decimal("1.738500")
+    assert {r.ticker for r in records} <= LARGE_AUM_TICKERS
     assert not any(r.ticker == "VFIAX" and r.estimate_type == EstimateType.long_term_capital_gains for r in records)
