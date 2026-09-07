@@ -379,7 +379,7 @@ function niceScale(peak: number, metric: TaxDragMetric): number {
   if (peak <= 0) return metric === "effective_tax" ? 0.01 : 50;
   if (metric === "effective_tax") {
     const pct = peak * 100;
-    const step = pct <= 1 ? 0.5 : 1;
+    const step = pct <= 1.5 ? 0.5 : 1;
     return (Math.ceil(pct / step) * step) / 100;
   }
   const step = peak <= 100 ? 25 : 50;
