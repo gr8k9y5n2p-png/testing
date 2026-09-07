@@ -7,17 +7,18 @@ import type {
   HighlightSets,
   SearchFilters,
 } from "./types";
+import { loadFundsFromDataApi } from "@/lib/data-api/distributions";
 
 /**
- * In-memory repository backed by seeded sample estimates.
- * Prefer GET /distributions from the Data API (NEXT_PUBLIC_DATA_API_URL) when
- * that service is aggregated into this table model; until then the seed remains.
+ * In-memory repository. Prefers GET /distributions from the Data API
+ * (NEXT_PUBLIC_DATA_API_URL) when that host is up; seed fills tickers the
+ * API does not yet return.
  */
 export class SeedDistributionRepository implements DistributionRepository {
   private readonly views: FundEstimateView[];
 
-  constructor(funds = SAMPLE_FUNDS) {
-    this.views = withPeerContext(funds);
+  constructor(funds: FundEstimateView[]) {
+    this.views = funds;
   }
 
   async search(filters: SearchFilters = {}): Promise<FundEstimateView[]> {
@@ -37,9 +38,19 @@ export class SeedDistributionRepository implements DistributionRepository {
   }
 }
 
-let singleton: SeedDistributionRepository | undefined;
+function mergeFunds(
+  apiFunds: FundEstimateView[],
+  seedFunds: FundEstimateView[],
+): FundEstimateView[] {
+  const tickers = new Set(apiFunds.map((fund) => fund.ticker.toUpperCase()));
+  return [...apiFunds, ...seedFunds.filter((fund) => !tickers.has(fund.ticker.toUpperCase()))];
+}
 
-export function getDistributionRepository(): DistributionRepository {
-  singleton ??= new SeedDistributionRepository();
-  return singleton;
+export async function getDistributionRepository(): Promise<DistributionRepository> {
+  const seed = withPeerContext(SAMPLE_FUNDS);
+  const apiFunds = await loadFundsFromDataApi();
+  if (apiFunds?.length) {
+    return new SeedDistributionRepository(mergeFunds(apiFunds, seed));
+  }
+  return new SeedDistributionRepository(seed);
 }

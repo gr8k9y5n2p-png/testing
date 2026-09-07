@@ -1,4 +1,4 @@
-import { getDataApiBaseUrl } from "@/lib/data-api/config";
+import { getDataApiBaseUrl, dataApiUrl, isRemoteDataApi } from "@/lib/data-api/config";
 import type { TaxRates } from "@/lib/illustrate/types";
 
 export type PortfolioHoldingIn = {
@@ -37,18 +37,76 @@ export type PortfolioIllustrateResponse = {
   warnings: string[];
 };
 
+function num(value: unknown, fallback = 0): number {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+export function normalizePortfolioResponse(
+  raw: Record<string, unknown>,
+): PortfolioIllustrateResponse {
+  const coverageRaw = (raw.coverage ?? {}) as Record<string, unknown>;
+  const gapsRaw = Array.isArray(raw.gaps) ? raw.gaps : [];
+  const warnings = [
+    ...(Array.isArray(raw.warnings) ? raw.warnings : []),
+    ...(Array.isArray(raw.notes) ? raw.notes : []),
+  ].map(String);
+
+  return {
+    coverage: {
+      dollars_total: num(coverageRaw.dollars_total),
+      dollars_covered: num(coverageRaw.dollars_covered),
+      dollars_uncovered: num(coverageRaw.dollars_uncovered),
+      coverage_pct: num(coverageRaw.coverage_pct),
+    },
+    gaps: gapsRaw.map((item) => {
+      const row = item as Record<string, unknown>;
+      return {
+        ticker: row.ticker == null ? null : String(row.ticker),
+        fund_family: row.fund_family == null ? null : String(row.fund_family),
+        holding_dollars: num(row.holding_dollars),
+        reason: String(row.reason ?? ""),
+      };
+    }),
+    warnings,
+  };
+}
+
 export async function postIllustratePortfolio(
   request: PortfolioIllustrateRequest,
+  init?: { signal?: AbortSignal },
 ): Promise<PortfolioIllustrateResponse> {
-  const base = getDataApiBaseUrl();
-  const endpoint = base ? `${base}/illustrate/portfolio` : "/api/illustrate/portfolio";
-  const response = await fetch(endpoint, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(request),
-  });
+  const endpoint = dataApiUrl("/illustrate/portfolio");
+  const remote = isRemoteDataApi();
+
+  async function post(url: string) {
+    return fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify(request),
+      signal: init?.signal,
+    });
+  }
+
+  let response: Response;
+  try {
+    response = await post(endpoint);
+    if (remote && response.status >= 500) {
+      response = await post("/api/illustrate/portfolio");
+    }
+  } catch (error) {
+    if (remote && !init?.signal?.aborted) {
+      response = await post("/api/illustrate/portfolio");
+    } else {
+      throw error;
+    }
+  }
+
   if (!response.ok) {
     throw new Error(`Portfolio illustrate failed (${response.status})`);
   }
-  return (await response.json()) as PortfolioIllustrateResponse;
+  const raw = (await response.json()) as Record<string, unknown>;
+  return normalizePortfolioResponse(raw);
 }
+
+export { getDataApiBaseUrl };

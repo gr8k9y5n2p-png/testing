@@ -1,6 +1,6 @@
-import { getDataApiBaseUrl } from "@/lib/data-api/config";
+import { getDataApiBaseUrl, dataApiUrl } from "@/lib/data-api/config";
 
-export { getDataApiBaseUrl };
+export { getDataApiBaseUrl, dataApiUrl };
 
 export async function pingDistributionsApi(): Promise<boolean> {
   const base = getDataApiBaseUrl();
@@ -10,29 +10,5 @@ export async function pingDistributionsApi(): Promise<boolean> {
     return response.ok;
   } catch {
     return false;
-  }
-}
-
-export async function fetchFundFamilies() {
-  const base = getDataApiBaseUrl();
-  const endpoint = base ? `${base}/fund-families` : "/api/fund-families";
-  try {
-    const response = await fetch(endpoint);
-    if (!response.ok) return null;
-    return (await response.json()) as unknown;
-  } catch {
-    return null;
-  }
-}
-
-export async function fetchCoverage() {
-  const base = getDataApiBaseUrl();
-  const endpoint = base ? `${base}/coverage` : "/api/coverage/gaps";
-  try {
-    const response = await fetch(endpoint);
-    if (!response.ok) return null;
-    return (await response.json()) as unknown;
-  } catch {
-    return null;
   }
 }

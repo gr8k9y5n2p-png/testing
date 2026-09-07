@@ -36,9 +36,10 @@ function requiredNum(value: unknown, fallback = 0): number {
 }
 
 /**
- * POSTs the locked request JSON as-is (`selector`, not `selectors`).
- * Inbound responses are coerced into the locked response shape if a host
- * still returns older aliases (`estimated_tax`, `notes`).
+ * POSTs the locked request JSON. UI field is `selector`.
+ * PR #2 FastAPI expects `selectors` — both are sent to the Data API.
+ * Inbound responses are coerced into the locked UI shape (`estimated_tax_dollars`,
+ * `warnings`, `tax_rates_applied`) from older aliases (`estimated_tax`, `notes`, `tax_rates`).
  */
 export function normalizeIllustrateResponse(raw: Record<string, unknown>): IllustrateResponse {
   const componentsRaw = Array.isArray(raw.components) ? raw.components : [];
@@ -50,7 +51,11 @@ export function normalizeIllustrateResponse(raw: Record<string, unknown>): Illus
       estimate_type: String(row.estimate_type ?? ""),
       amount_unit: String(row.amount_unit ?? ""),
       publication_stage:
-        row.publication_stage == null ? null : String(row.publication_stage),
+        row.publication_stage == null
+          ? row.as_of == null
+            ? null
+            : String(row.as_of)
+          : String(row.publication_stage),
       distribution_dollars: num(row.distribution_dollars),
       distribution_dollars_min: num(row.distribution_dollars_min),
       distribution_dollars_max: num(row.distribution_dollars_max),
@@ -103,29 +108,50 @@ export function normalizeIllustrateResponse(raw: Record<string, unknown>): Illus
   };
 }
 
+export function toDataApiIllustrateBody(
+  request: IllustrateRequest,
+): Record<string, unknown> {
+  const { selector, nav_per_share, ...rest } = request;
+  const body: Record<string, unknown> = { ...rest };
+  if (selector) {
+    body.selector = selector;
+    body.selectors = {
+      fund_family: selector.fund_family,
+      fund_identifier: selector.fund_identifier,
+      ticker: selector.ticker ?? selector.fund_identifier,
+    };
+  }
+  if (nav_per_share != null) body.nav_per_share = nav_per_share;
+  body.latest_as_of_only = true;
+  return body;
+}
+
 export async function postIllustrate(
   request: IllustrateRequest,
   init?: { signal?: AbortSignal },
 ): Promise<IllustrateResponse> {
   const endpoint = getIllustrateEndpoint();
   const remote = !isMockIllustrateEndpoint(endpoint);
+  const payload = remote ? toDataApiIllustrateBody(request) : request;
+
+  async function post(url: string, body: unknown) {
+    return fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify(body),
+      signal: init?.signal,
+    });
+  }
 
   let response: Response;
   try {
-    response = await fetch(endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify(request),
-      signal: init?.signal,
-    });
+    response = await post(endpoint, payload);
+    if (remote && response.status >= 500) {
+      response = await post("/api/illustrate", request);
+    }
   } catch (error) {
     if (remote && !init?.signal?.aborted) {
-      response = await fetch("/api/illustrate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify(request),
-        signal: init?.signal,
-      });
+      response = await post("/api/illustrate", request);
     } else {
       throw error;
     }

@@ -7,17 +7,26 @@ export function getDataApiBaseUrl(): string | null {
   return value ? value.replace(/\/$/, "") : null;
 }
 
+/** Same-origin mock path, or the Data API host + path when NEXT_PUBLIC_DATA_API_URL is set. */
+export function dataApiUrl(path: string): string {
+  const clean = path.startsWith("/") ? path : `/${path}`;
+  const base = getDataApiBaseUrl();
+  return base ? `${base}${clean}` : `/api${clean}`;
+}
+
 export function getIllustrateEndpoint(): string {
   if (process.env.NEXT_PUBLIC_ILLUSTRATE_URL?.trim()) {
     return process.env.NEXT_PUBLIC_ILLUSTRATE_URL.replace(/\/$/, "");
   }
-  const base = getDataApiBaseUrl();
-  if (base) return `${base}/illustrate`;
-  return "/api/illustrate";
+  return dataApiUrl("/illustrate");
 }
 
 export function isMockIllustrateEndpoint(endpoint = getIllustrateEndpoint()): boolean {
   return endpoint.startsWith("/");
+}
+
+export function isRemoteDataApi(): boolean {
+  return Boolean(getDataApiBaseUrl());
 }
 
 export function checkoutUrls() {

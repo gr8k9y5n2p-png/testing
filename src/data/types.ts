@@ -34,8 +34,8 @@ export interface FundEstimate {
   fundName: string;
   ticker: string;
   cusip: string;
-  family: FundFamily;
-  category: FundCategory;
+  family: string;
+  category: string;
   shareClass: string;
   /** Latest reported NAV used for the % of NAV estimate. */
   nav: number;

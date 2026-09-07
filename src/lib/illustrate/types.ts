@@ -33,6 +33,7 @@ export type TaxRates = {
 export type IllustrateSelector = {
   fund_family?: string;
   fund_identifier?: string;
+  ticker?: string;
 };
 
 export type IllustrateRequest = {

@@ -8,8 +8,10 @@ import { HighlightsSection } from "@/components/HighlightsSection";
 import { Hero } from "@/components/landing/Hero";
 import { IllustratePanel } from "@/components/illustrate/IllustratePanel";
 import { PaywallDialog } from "@/components/paywall/PaywallDialog";
+import { CoverageProvider, useCoverage } from "@/components/coverage/CoverageProvider";
 import { COPY, STRIPE } from "@/lib/copy";
-import { isLiveCoveredFamily, reportCoverageGap } from "@/lib/coverage";
+import type { FundFamilyCoverage } from "@/lib/coverage";
+import { reportCoverageGap } from "@/lib/coverage";
 import { useFreemium } from "@/lib/freemium";
 
 export type CheckoutReturn = "success" | "cancel" | null;
@@ -17,6 +19,31 @@ export type CheckoutReturn = "success" | "cancel" | null;
 const CHECKOUT_SUCCESS_MESSAGE = `Checkout is not live yet. You’ll return to this same search flow after Stripe is wired (price ${STRIPE.priceId}).`;
 
 export function AftertaxApp({
+  funds,
+  highlights,
+  facets,
+  coverageFamilies,
+  checkout = null,
+}: {
+  funds: FundEstimateView[];
+  highlights: HighlightSets;
+  facets: Facets;
+  coverageFamilies: FundFamilyCoverage[];
+  checkout?: CheckoutReturn;
+}) {
+  return (
+    <CoverageProvider families={coverageFamilies}>
+      <AftertaxAppInner
+        funds={funds}
+        highlights={highlights}
+        facets={facets}
+        checkout={checkout}
+      />
+    </CoverageProvider>
+  );
+}
+
+function AftertaxAppInner({
   funds,
   highlights,
   facets,
@@ -33,6 +60,7 @@ export function AftertaxApp({
     checkout === "success" ? CHECKOUT_SUCCESS_MESSAGE : null,
   );
   const freemium = useFreemium();
+  const coverage = useCoverage();
 
   function selectFund(fund: FundEstimateView) {
     const result = freemium.trySearch(fund.ticker);
@@ -41,7 +69,7 @@ export function AftertaxApp({
       return;
     }
     setSelected(fund);
-    if (!isLiveCoveredFamily(fund.family)) {
+    if (!coverage.isLive(fund.family)) {
       void reportCoverageGap({
         ticker: fund.ticker,
         fund_name: fund.fundName,

@@ -2,9 +2,13 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { FundEstimateView } from "@/data/types";
-import { isLiveCoveredFamily } from "@/lib/coverage";
+import { useCoverage } from "@/components/coverage/CoverageProvider";
 import { isMockIllustrate, postIllustrate } from "@/lib/illustrate/client";
 import { distributionIdsForFund } from "@/lib/illustrate/ids";
+import {
+  postIllustratePortfolio,
+  type PortfolioIllustrateResponse,
+} from "@/lib/illustrate/portfolio";
 import {
   AMOUNT_UNITS,
   DEFAULT_HOLDING_DOLLARS,
@@ -15,6 +19,7 @@ import {
   type TaxRates,
 } from "@/lib/illustrate/types";
 import { IllustrationResults } from "@/components/illustrate/IllustrationResults";
+import { PortfolioCoverageCard } from "@/components/illustrate/PortfolioCoverageCard";
 import { TaxRateFields } from "@/components/illustrate/TaxRateFields";
 
 export function IllustratePanel({
@@ -22,6 +27,10 @@ export function IllustratePanel({
 }: {
   selected: FundEstimateView | null;
 }) {
+  const coverage = useCoverage();
+  const live = selected ? coverage.isLive(selected.family) : true;
+  const meta = selected ? coverage.familyMeta(selected.family) : undefined;
+
   return (
     <section
       id="illustrate"
@@ -45,10 +54,18 @@ export function IllustratePanel({
             dollar result.
           </p>
         </div>
-        {selected && !isLiveCoveredFamily(selected.family) ? (
+        {selected && !live ? (
           <p className="max-w-xs rounded-md border border-gold/30 bg-gold-soft px-3 py-2 text-xs text-navy">
-            Coverage gap: {selected.family} is not in live ingest yet. Result uses
-            sample data and can understate tax impact.
+            Coverage gap: {selected.family}
+            {meta?.aum_rank ? ` · AUM rank ${meta.aum_rank}` : ""} is not in live
+            ingest yet. Result can understate tax impact.
+          </p>
+        ) : null}
+        {selected && live && meta ? (
+          <p className="max-w-xs rounded-md border border-above/20 bg-above-soft px-3 py-2 text-xs text-above">
+            Live coverage: {meta.display_name}
+            {meta.aum_rank ? ` · AUM rank ${meta.aum_rank}` : ""}
+            {meta.priority ? ` · priority ${meta.priority}` : ""}
           </p>
         ) : null}
       </div>
@@ -74,6 +91,7 @@ function IllustrationWorkspace({ fund }: { fund: FundEstimateView }) {
   const [unit, setUnit] = useState<AmountUnit>(AMOUNT_UNITS.percent_of_nav);
   const [navInput, setNavInput] = useState(String(fund.nav));
   const [result, setResult] = useState<IllustrateResponse | null>(null);
+  const [portfolio, setPortfolio] = useState<PortfolioIllustrateResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -88,22 +106,24 @@ function IllustrationWorkspace({ fund }: { fund: FundEstimateView }) {
     needsNav && !(nav > 0)
       ? "Enter NAV per share to illustrate $ / share amounts."
       : null;
-  const canFetch = distributionIds.length > 0 && !navError;
+  const mock = isMockIllustrate();
+  const useIds = mock && !fund.id.startsWith("api:");
+  const canFetch = !navError && (useIds ? distributionIds.length > 0 : Boolean(fund.ticker));
 
   useEffect(() => {
     if (!canFetch) return;
 
     const controller = new AbortController();
     const timer = window.setTimeout(() => {
-      const mock = isMockIllustrate();
       const request: IllustrateRequest = {
         holding_dollars: holding,
-        ...(mock
+        ...(useIds
           ? { distribution_ids: distributionIds }
           : {
               selector: {
                 fund_family: fund.family,
                 fund_identifier: fund.ticker,
+                ticker: fund.ticker,
               },
             }),
         nav_per_share: needsNav ? nav : null,
@@ -123,13 +143,33 @@ function IllustrationWorkspace({ fund }: { fund: FundEstimateView }) {
           setError(caught instanceof Error ? caught.message : "Illustration failed");
           setLoading(false);
         });
+
+      void postIllustratePortfolio(
+        {
+          holdings: [
+            {
+              holding_dollars: holding,
+              ticker: fund.ticker,
+              fund_family: fund.family,
+              fund_identifier: fund.ticker,
+              fund_name: fund.fundName,
+              nav_per_share: needsNav ? nav : undefined,
+            },
+          ],
+          tax_rates: rates,
+          combine_state_with_federal: combine,
+        },
+        { signal: controller.signal },
+      )
+        .then(setPortfolio)
+        .catch(() => setPortfolio(null));
     }, 250);
 
     return () => {
       controller.abort();
       window.clearTimeout(timer);
     };
-  }, [canFetch, distributionIds, holding, rates, combine, needsNav, nav, fund.family, fund.ticker]);
+  }, [canFetch, useIds, distributionIds, holding, rates, combine, needsNav, nav, fund.family, fund.ticker, fund.fundName]);
 
   function commitHolding(raw: string) {
     const parsed = Number(raw.replace(/,/g, ""));
@@ -213,7 +253,10 @@ function IllustrationWorkspace({ fund }: { fund: FundEstimateView }) {
             {error}
           </p>
         ) : result ? (
-          <IllustrationResults result={result} />
+          <div className="space-y-4">
+            {portfolio ? <PortfolioCoverageCard result={portfolio} /> : null}
+            <IllustrationResults result={result} />
+          </div>
         ) : null}
       </div>
     </div>

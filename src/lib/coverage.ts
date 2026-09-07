@@ -1,11 +1,12 @@
 /**
- * Coverage model for upcoming Data team GET /fund-families
+ * Coverage model for Data team GET /fund-families and GET /coverage
  * (`coverage_tier`, `priority`, `aum_rank`) and POST /coverage/gaps.
  *
- * Live ingest today: Capital Group / American Funds. Illustrate still runs on
- * sample rows for other families, but the UI must flag the gap so tax impact
- * is not silently understated.
+ * Live ingest fallback (when the Data API is down): Capital Group / American Funds.
+ * Other families must be flagged so tax impact is not silently understated.
  */
+
+import { dataApiUrl, isRemoteDataApi } from "@/lib/data-api/config";
 
 export type CoverageTier = "live" | "planned" | "uncovered";
 
@@ -34,11 +35,43 @@ export const TOP_ADVISOR_FAMILIES: FundFamilyCoverage[] = [
 /** Seed uses "American Funds" for Capital Group products. */
 export const LIVE_INGEST_FAMILIES = new Set(["American Funds", "Capital Group"]);
 
-export const PLANNED_COVERAGE_FAMILIES = TOP_ADVISOR_FAMILIES.map(
-  (family) => family.display_name,
-);
+const FAMILY_ALIASES: Record<string, string> = {
+  "american funds": "capital_group",
+  "capital group": "capital_group",
+  "j.p. morgan am": "jpmorgan",
+  "j.p. morgan asset management": "jpmorgan",
+  "blackrock / ishares": "blackrock",
+  "state street / spdr": "state_street",
+  "goldman sachs am": "goldman_sachs",
+  "t. rowe price": "t_rowe_price",
+};
 
-export function isLiveCoveredFamily(family: string): boolean {
+export function familySlug(family: string): string {
+  const key = family.trim().toLowerCase();
+  if (FAMILY_ALIASES[key]) return FAMILY_ALIASES[key];
+  return key.replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+}
+
+export function findFamilyCoverage(
+  family: string,
+  families: FundFamilyCoverage[] = TOP_ADVISOR_FAMILIES,
+): FundFamilyCoverage | undefined {
+  const slug = familySlug(family);
+  const lower = family.trim().toLowerCase();
+  return families.find(
+    (item) =>
+      item.slug === slug ||
+      item.display_name.toLowerCase() === lower ||
+      familySlug(item.display_name) === slug,
+  );
+}
+
+export function isLiveCoveredFamily(
+  family: string,
+  families: FundFamilyCoverage[] = TOP_ADVISOR_FAMILIES,
+): boolean {
+  const match = findFamilyCoverage(family, families);
+  if (match) return match.coverage_tier === "live";
   return LIVE_INGEST_FAMILIES.has(family);
 }
 
@@ -51,15 +84,32 @@ export type CoverageGapIn = {
 
 export async function reportCoverageGap(body: CoverageGapIn): Promise<void> {
   if (!body.ticker && !body.fund_name) return;
-  const base = process.env.NEXT_PUBLIC_DATA_API_URL?.replace(/\/$/, "");
-  const endpoint = base ? `${base}/coverage/gaps` : "/api/coverage/gaps";
+  const endpoint = dataApiUrl("/coverage/gaps");
+  const fallback = "/api/coverage/gaps";
   try {
-    await fetch(endpoint, {
+    const response = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
+    if (isRemoteDataApi() && !response.ok && response.status >= 500) {
+      await fetch(fallback, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+    }
   } catch {
-    /* Gap logging is best-effort; never block illustrate. */
+    if (isRemoteDataApi()) {
+      try {
+        await fetch(fallback, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+      } catch {
+        /* Gap logging is best-effort; never block illustrate. */
+      }
+    }
   }
 }

@@ -26,33 +26,41 @@ Open [http://localhost:3000](http://localhost:3000). Canonical host: **https://g
 
 ## Mock vs real Data API (PR #2)
 
-The browser **does not** compute tax. Clients in `src/lib/illustrate/` POST the locked contract.
+The browser **does not** compute tax. Aftertax calls the Data API when `NEXT_PUBLIC_DATA_API_URL` is set, and falls back to local mocks only if that host is down (network / 5xx). 4xx from a running API is shown as an error.
 
 | Mode | How |
 | --- | --- |
-| Demo (default) | Local mocks: `POST /api/illustrate`, `POST /api/illustrate/portfolio` |
-| Data team FastAPI | `NEXT_PUBLIC_DATA_API_URL=http://localhost:8000` |
+| Demo (default) | Local mocks: `POST /api/illustrate`, `POST /api/illustrate/portfolio`, `GET /api/coverage`, `GET /api/fund-families` |
+| Data team FastAPI (PR #2) | `NEXT_PUBLIC_DATA_API_URL=http://localhost:8000` |
 
-With the Data API base set, Aftertax calls:
+Wired endpoints:
 
-- `POST /illustrate` (selector by ticker/family; response normalized to the locked UI shape)
-- `POST /illustrate/portfolio`
-- `GET /distributions`, `GET /coverage`, `GET /fund-families`
-- `POST /coverage/gaps`
+- `POST /illustrate` — UI sends locked `selector: { fund_family, fund_identifier }`; the client also sends PR #2’s `selectors` alias. Response is normalized to `tax_rates_applied`, `estimated_tax_dollars`, `warnings`.
+- `POST /illustrate/portfolio` — coverage `dollars_covered` / `dollars_uncovered` / `coverage_pct` + `gaps[]` + `warnings` (shown on the illustrate panel).
+- `GET /distributions` — aggregated into the search table (seed fills tickers the API does not yet return).
+- `GET /coverage`, `GET /fund-families` — `coverage_tier`, `aum_rank`, `priority` (Live vs Gap in picker / results / illustrate).
+- `POST /coverage/gaps` — logged when a gap ticker is selected.
 
-If the Data API is not running, illustrate falls back to the local mock.
+### Run UI + Data API side by side
 
-Run both PRs side by side:
+PRs stay separate (this UI is PR #1; ingest/API is PR #2). Do not merge the branches. Checkout PR #2 in a second worktree or clone:
 
 ```bash
-# Data API (PR #2), typically port 8000
-# UI (this PR)
+# Data API — PR #2 branch cursor/fund-distribution-ingest-api-85ed
+git fetch origin cursor/fund-distribution-ingest-api-85ed
+git worktree add /tmp/aftertax-data-api origin/cursor/fund-distribution-ingest-api-85ed
+cd /tmp/aftertax-data-api
+pip install -r requirements-dev.txt
+python -m app.cli seed
+uvicorn app.main:app --reload --port 8000
+
+# UI — this PR, from the Aftertax repo root
 NEXT_PUBLIC_DATA_API_URL=http://localhost:8000 npm run dev
 ```
 
-Optional override for illustrate only: `NEXT_PUBLIC_ILLUSTRATE_URL=http://localhost:8000/illustrate`.
+Optional illustrate-only override: `NEXT_PUBLIC_ILLUSTRATE_URL=http://localhost:8000/illustrate`.
 
-Types live in `src/lib/illustrate/types.ts` and must not drift. The client POSTs that JSON as-is (`selector`, not `selectors`). Mock `POST /api/illustrate` returns `tax_rates_applied`, `components[]`, `totals`, and `warnings[]`.
+Types live in `src/lib/illustrate/types.ts`. Mock `POST /api/illustrate` returns `tax_rates_applied`, `components[]`, `totals`, and `warnings[]`.
 
 Request: `holding_dollars`, `distribution_ids` **or** `selector: { fund_family, fund_identifier }`, optional `nav_per_share`, `tax_rates`, `combine_state_with_federal`.
 
@@ -72,13 +80,11 @@ Prefer one `publication_stage` / `as_of` snapshot in the panel so midyear paid +
 
 ## Search data vs `GET /distributions`
 
-Search and highlights currently use `src/data/seed.ts`. When the Data API is up, set `NEXT_PUBLIC_DATA_API_URL` (see `.env.example`). Prefer `GET /distributions` once those rows can be aggregated into the table model; until then the seed remains.
+When `NEXT_PUBLIC_DATA_API_URL` is set and PR #2 is running, search/highlights load `GET /distributions` (aggregated to one row per ticker) and keep seed funds for tickers the API does not return yet. If the Data API is down, the seed table is used alone.
 
 ## Coverage gaps
 
-Live ingest today: **Capital Group / American Funds**. Planned top-10 families (with `coverage_tier` / `priority` stubs in `src/lib/coverage.ts` and `GET /api/fund-families`): BlackRock/iShares, Vanguard, Fidelity, State Street/SPDR, J.P. Morgan AM, Goldman Sachs AM, PIMCO, Invesco, and T. Rowe Price.
-
-Uncovered holdings are flagged in the fund picker (Gap vs Live) and the illustrate panel so tax impact is not silently understated. Selecting a gap ticker POSTs `POST /api/coverage/gaps` (or Data team `POST /coverage/gaps` when `NEXT_PUBLIC_DATA_API_URL` is set).
+`GET /coverage` and `GET /fund-families` drive Live vs Gap badges (`coverage_tier`, `aum_rank`, `priority`). Fallback when the API is down: Capital Group / American Funds is treated as live. Selecting a gap ticker POSTs `POST /coverage/gaps`. The illustrate panel also POSTs `POST /illustrate/portfolio` for the current holding so `dollars_covered` / `dollars_uncovered` / `coverage_pct` and `gaps[]` are visible.
 
 ## Funnel (this UI)
 

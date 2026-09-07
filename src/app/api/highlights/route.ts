@@ -1,7 +1,7 @@
 import { DATA_SOURCE, getDistributionRepository, OUTLIER_THRESHOLD_PP } from "@/data";
 
 export async function GET() {
-  const repository = getDistributionRepository();
+  const repository = await getDistributionRepository();
   const highlights = await repository.highlights(5);
 
   return Response.json({

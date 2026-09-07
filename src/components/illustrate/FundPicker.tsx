@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import type { FundEstimateView } from "@/data/types";
 import { searchFunds } from "@/data/queries";
 import { COPY } from "@/lib/copy";
-import { isLiveCoveredFamily } from "@/lib/coverage";
+import { useCoverage } from "@/components/coverage/CoverageProvider";
 
 export function FundPicker({
   funds,
@@ -21,6 +21,7 @@ export function FundPicker({
 }) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
+  const coverage = useCoverage();
 
   const matches = useMemo(
     () => searchFunds(funds, { query }).slice(0, 8),
@@ -77,7 +78,7 @@ export function FundPicker({
                       {fund.ticker} · {fund.family}
                     </span>
                   </span>
-                  {!isLiveCoveredFamily(fund.family) ? (
+                  {!coverage.isLive(fund.family) ? (
                     <span className="mt-0.5 shrink-0 rounded-sm bg-gold-soft px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-gold">
                       Gap
                     </span>

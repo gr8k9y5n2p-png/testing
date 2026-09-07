@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { FundEstimateView } from "@/data/types";
 import { DeltaBadge } from "@/components/DeltaBadge";
-import { isLiveCoveredFamily } from "@/lib/coverage";
+import { useCoverage } from "@/components/coverage/CoverageProvider";
 import {
   formatDate,
   formatPct,
@@ -23,6 +23,7 @@ export function ResultsTable({
   const [sortKey, setSortKey] = useState<SortKey>("fundName");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const coverage = useCoverage();
 
   const rows = sortFunds(funds, sortKey, sortDirection);
 
@@ -117,7 +118,7 @@ export function ResultsTable({
                     </td>
                     <td className="px-3 py-3 text-muted">
                       {fund.family}
-                      {!isLiveCoveredFamily(fund.family) ? (
+                      {!coverage.isLive(fund.family) ? (
                         <span className="mt-1 block text-[10px] font-semibold uppercase tracking-[0.08em] text-gold">
                           Coverage gap
                         </span>
@@ -177,6 +178,11 @@ export function ResultsTable({
                 <p className="mt-0.5 font-mono text-[11px] text-faint">
                   {fund.ticker} · {fund.family}
                 </p>
+                {!coverage.isLive(fund.family) ? (
+                  <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-gold">
+                    Coverage gap
+                  </p>
+                ) : null}
               </div>
               <DeltaBadge fund={fund} compact />
             </div>

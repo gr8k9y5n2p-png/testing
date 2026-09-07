@@ -4,7 +4,7 @@ import { DATA_SOURCE } from "@/data/types";
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const yearValue = searchParams.get("year");
-  const repository = getDistributionRepository();
+  const repository = await getDistributionRepository();
   const funds = await repository.search({
     query: searchParams.get("q") ?? undefined,
     family: searchParams.get("family") ?? undefined,

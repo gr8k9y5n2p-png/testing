@@ -1,5 +1,6 @@
 import { AftertaxApp, type CheckoutReturn } from "@/components/AftertaxApp";
 import { getDistributionRepository } from "@/data";
+import { loadCoverageSnapshot } from "@/lib/data-api/coverage";
 
 export const dynamic = "force-dynamic";
 
@@ -17,11 +18,12 @@ export default async function Home({
   searchParams: Promise<{ checkout?: string | string[] }>;
 }) {
   const params = await searchParams;
-  const repository = getDistributionRepository();
-  const [funds, highlights, facets] = await Promise.all([
+  const repository = await getDistributionRepository();
+  const [funds, highlights, facets, coverage] = await Promise.all([
     repository.search(),
     repository.highlights(5),
     repository.facets(),
+    loadCoverageSnapshot(),
   ]);
 
   return (
@@ -30,6 +32,7 @@ export default async function Home({
         funds={funds}
         highlights={highlights}
         facets={facets}
+        coverageFamilies={coverage.families}
         checkout={checkoutFromSearchParams(params.checkout)}
       />
     </main>
