@@ -28,6 +28,7 @@ export function AllocationColumn({
   inputIdPrefix,
   onUnitChange,
   onChange,
+  className = "",
 }: {
   title: string;
   holdings: PortfolioHoldingDraft[];
@@ -37,6 +38,7 @@ export function AllocationColumn({
   inputIdPrefix: string;
   onUnitChange: (unit: AllocationUnit) => void;
   onChange: (holdings: PortfolioHoldingDraft[]) => void;
+  className?: string;
 }) {
   const totalDollars = holdings.reduce((sum, holding) => sum + holding.holdingDollars, 0);
   const totalWeight = holdings.reduce((sum, holding) => sum + holding.weightPct, 0);
@@ -64,7 +66,7 @@ export function AllocationColumn({
   }
 
   return (
-    <section className="flex min-h-0 flex-col rounded-2xl border border-line bg-surface p-4 shadow-[0_8px_24px_rgba(26,29,26,0.06)] sm:p-5">
+    <section className={`flex min-h-0 flex-col rounded-2xl border border-line bg-surface p-4 shadow-[0_8px_24px_rgba(26,29,26,0.06)] sm:p-5 ${className}`}>
       <header className="mb-4 flex items-center justify-between gap-3">
         <h2 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-faint">
           {title}

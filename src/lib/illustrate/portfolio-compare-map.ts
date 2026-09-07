@@ -1,7 +1,6 @@
 import { formatUsd } from "@/lib/format";
 import type {
   PortfolioAllocationOut,
-  PortfolioCompareResponse,
   PortfolioHoldingOut,
   PortfolioUpcoming,
 } from "@/lib/illustrate/portfolio-compare-types";
@@ -156,12 +155,14 @@ function rowsForSide(
   });
 }
 
-export function upcomingTableRows(response: PortfolioCompareResponse): UpcomingRow[] {
-  const rows = [
-    ...rowsForSide(response.current, "current"),
-    ...rowsForSide(response.proposed, "proposed"),
-  ].sort((a, b) => b.distributionDollars - a.distributionDollars);
-
+/** Sort + heat within one allocation so Current and Proposed tables stay independent. */
+export function upcomingRowsForSide(
+  allocation: PortfolioAllocationOut,
+  side: "current" | "proposed",
+): UpcomingRow[] {
+  const rows = rowsForSide(allocation, side).sort(
+    (a, b) => b.distributionDollars - a.distributionDollars,
+  );
   const max = rows[0]?.distributionDollars ?? 0;
   return rows.map((row) => ({
     ...row,

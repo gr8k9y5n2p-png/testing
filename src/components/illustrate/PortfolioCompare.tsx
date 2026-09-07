@@ -10,7 +10,7 @@ import {
   smokeProposedHoldings,
 } from "@/lib/illustrate/portfolio-compare-catalog";
 import { postIllustratePortfolioCompare } from "@/lib/illustrate/portfolio-compare-client";
-import { upcomingTableRows } from "@/lib/illustrate/portfolio-compare-map";
+import { upcomingRowsForSide } from "@/lib/illustrate/portfolio-compare-map";
 import type {
   AllocationUnit,
   PortfolioCompareResponse,
@@ -152,7 +152,12 @@ export function PortfolioCompare({
     };
   }, [canFetch, requestKey]);
 
-  const rows = result ? upcomingTableRows(result) : [];
+  const currentUpcoming = result
+    ? upcomingRowsForSide(result.current, "current")
+    : [];
+  const proposedUpcoming = result
+    ? upcomingRowsForSide(result.proposed, "proposed")
+    : [];
   const sample = Boolean(
     result &&
       (result.source === "mock" ||
@@ -190,7 +195,7 @@ export function PortfolioCompare({
         </label>
       </header>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
         <AllocationColumn
           title="Current allocation"
           holdings={current}
@@ -200,6 +205,7 @@ export function PortfolioCompare({
           inputIdPrefix="current"
           onUnitChange={setCurrentUnit}
           onChange={setCurrent}
+          className="order-1"
         />
         <AllocationColumn
           title="Proposed allocation"
@@ -210,7 +216,38 @@ export function PortfolioCompare({
           inputIdPrefix="proposed"
           onUnitChange={setProposedUnit}
           onChange={setProposed}
+          className="order-3 lg:order-2"
         />
+
+        {!canFetch ? null : loading && !result ? (
+          <>
+            <div
+              className="order-2 h-48 animate-pulse rounded-2xl border border-line bg-surface lg:order-3"
+              aria-busy
+              aria-label="Loading current upcoming distributions"
+            />
+            <div
+              className="order-4 h-48 animate-pulse rounded-2xl border border-line bg-surface"
+              aria-busy
+              aria-label="Loading proposed upcoming distributions"
+            />
+          </>
+        ) : result ? (
+          <>
+            <UpcomingTable
+              headingId="upcoming-current"
+              rows={currentUpcoming}
+              sample={sample}
+              className="order-2 lg:order-3"
+            />
+            <UpcomingTable
+              headingId="upcoming-proposed"
+              rows={proposedUpcoming}
+              sample={sample}
+              className="order-4"
+            />
+          </>
+        ) : null}
       </div>
 
       <div className="mt-4">
@@ -240,14 +277,6 @@ export function PortfolioCompare({
           <div className={loading ? "opacity-70" : ""}>
             <SummaryStrip result={result} bookDollars={bookDollars} />
           </div>
-        ) : null}
-      </div>
-
-      <div className="mt-4">
-        {!canFetch ? null : loading && !result ? (
-          <div className="h-64 animate-pulse rounded-2xl border border-line bg-surface" />
-        ) : result ? (
-          <UpcomingTable rows={rows} sample={sample} />
         ) : null}
       </div>
     </article>

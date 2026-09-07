@@ -8,73 +8,65 @@ import {
 export function UpcomingTable({
   rows,
   sample,
+  headingId,
+  className = "",
 }: {
   rows: UpcomingRow[];
   sample: boolean;
+  headingId: string;
+  className?: string;
 }) {
   return (
     <section
-      aria-labelledby="upcoming-heading"
-      className="rounded-2xl border border-line bg-surface p-4 shadow-[0_8px_24px_rgba(26,29,26,0.06)] sm:p-5"
+      aria-labelledby={headingId}
+      className={`rounded-2xl border border-line bg-surface p-3 shadow-[0_8px_24px_rgba(26,29,26,0.06)] sm:p-4 ${className}`}
     >
-      <header className="mb-4 flex flex-wrap items-end justify-between gap-2">
+      <header className="mb-3 flex flex-wrap items-end justify-between gap-2">
         <h2
-          id="upcoming-heading"
-          className="font-serif text-xl tracking-tight text-ink"
+          id={headingId}
+          className="font-serif text-lg tracking-tight text-ink"
         >
           Upcoming distributions
         </h2>
-        <p className="text-[11px] text-muted">
-          on allocated dollars · sorted by est. dist ↓
-        </p>
+        <p className="text-[10px] text-muted">sorted by est. dist ↓</p>
       </header>
 
       <div className="overflow-x-auto">
         <table className="min-w-full text-sm">
           <thead className="text-[10px] font-semibold uppercase tracking-[0.12em] text-faint">
             <tr className="border-b border-line">
-              <th className="py-2 pr-3 text-left">Ticker / Fund</th>
-              <th className="px-3 py-2 text-left">Side</th>
-              <th className="px-3 py-2 text-right">Est. upcoming dist</th>
-              <th className="px-3 py-2 text-right">Est. tax on upcoming</th>
-              <th className="py-2 pl-3 text-right">As-of / Stage</th>
+              <th className="py-1.5 pr-2 text-left">Ticker / Fund</th>
+              <th className="px-2 py-1.5 text-right">Est. dist</th>
+              <th className="px-2 py-1.5 text-right">Est. tax</th>
+              <th className="py-1.5 pl-2 text-right">As-of / Stage</th>
             </tr>
           </thead>
           <tbody>
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={5} className="py-8 text-center text-sm text-muted">
-                  No upcoming distribution estimates for these holdings.
+                <td colSpan={4} className="py-6 text-center text-sm text-muted">
+                  No upcoming estimates for these holdings.
                 </td>
               </tr>
             ) : (
               rows.map((row) => (
                 <tr key={row.key} className="border-b border-line last:border-0">
-                  <td className="py-2.5 pr-3">
-                    <span className="block font-mono text-sm font-medium text-ink">
+                  <td className="py-2 pr-2">
+                    <span className="block font-mono text-[13px] font-medium text-ink">
                       {row.ticker}
                     </span>
-                    <span className="block text-[11px] text-muted">{row.fundName}</span>
-                  </td>
-                  <td className="px-3 py-2.5">
-                    <span
-                      className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium ${
-                        row.side === "proposed"
-                          ? "bg-accent-soft text-accent"
-                          : "bg-notice text-muted"
-                      }`}
-                    >
-                      {row.sideLabel}
+                    <span className="block text-[10px] leading-snug text-muted">
+                      {row.fundName}
                     </span>
                   </td>
-                  <td className="px-3 py-2.5 text-right">
+                  <td className="px-2 py-2 text-right">
                     <span
-                      className={`inline-block min-w-[5.5rem] rounded-md px-2 py-1 font-mono text-[13px] tabular-nums ${heatBackground(row.heat)}`}
+                      className={`inline-block min-w-[4.5rem] rounded-md px-1.5 py-0.5 font-mono text-[12px] tabular-nums ${heatBackground(row.heat)}`}
                     >
                       {formatUsd(row.distributionDollars, 0)}
                     </span>
                   </td>
-                  <td className="px-3 py-2.5 text-right font-mono text-[13px] tabular-nums">
+                  <td className="px-2 py-2 text-right font-mono text-[12px] tabular-nums">
                     {row.estimatedTax == null ? (
                       "—"
                     ) : Math.abs(row.estimatedTax) < 0.5 ? (
@@ -83,7 +75,7 @@ export function UpcomingTable({
                       formatUsd(row.estimatedTax, 0)
                     )}
                   </td>
-                  <td className="py-2.5 pl-3 text-right text-[12px] text-muted">
+                  <td className="py-2 pl-2 text-right text-[11px] text-muted">
                     {formatAsOfStage(row.asOf, row.stage)}
                   </td>
                 </tr>
@@ -92,8 +84,8 @@ export function UpcomingTable({
           </tbody>
         </table>
       </div>
-      <p className="mt-3 text-[10px] text-faint">
-        {sample ? "demo · " : ""}from Data upcoming components · heat = relative est. dist $
+      <p className="mt-2 text-[10px] text-faint">
+        {sample ? "demo · " : ""}heat = relative est. dist $ in this column
       </p>
     </section>
   );
