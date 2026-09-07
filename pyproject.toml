@@ -23,9 +23,6 @@ postgres = ["psycopg[binary]>=3.2.0"]
 [project.scripts]
 distributions-seed = "app.cli:main"
 
-[tool.vercel]
-entrypoint = "app.main:app"
-
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]

@@ -70,7 +70,7 @@ This FastAPI service is **not** the Aftertax Next.js app on `main`. The existing
 1. [Vercel → Add New → Project](https://vercel.com/new) → import `gr8k9y5n2p-png/testing`.
 2. Name it `aftertax-data-api` (not `testing`).
 3. Set **Production Branch** to `cursor/fund-distribution-ingest-api-85ed` (this API branch) until the API lives in its own repo.
-4. Framework: leave auto / Other. This branch already exports `app` from `app/main.py` (`[tool.vercel] entrypoint`).
+4. Framework: Other / FastAPI. In that **new** project only, add a root `vercel.json` with `"framework": null` and `[tool.vercel] entrypoint = "app.main:app"` in `pyproject.toml`. Do **not** commit those onto this GitHub repo’s shared Website project — that is what broke the `aftertax/testing` preview CI.
 5. Environment variables:
    - `FETCH_MODE` = `fixture`
    - `SEED_ON_START` = `true`
