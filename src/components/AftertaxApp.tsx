@@ -1,12 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { Facets, FundEstimateView, HighlightSets } from "@/data/types";
 import { Dashboard } from "@/components/Dashboard";
 import { DemoBanner } from "@/components/DemoBanner";
 import { HighlightsSection } from "@/components/HighlightsSection";
 import { Hero } from "@/components/landing/Hero";
 import { FundCompareRail } from "@/components/illustrate/FundCompareRail";
+import {
+  GrowthAndTaxDragModule,
+  type GrowthFundInput,
+} from "@/components/illustrate/GrowthAndTaxDragModule";
 import { IllustratePanel } from "@/components/illustrate/IllustratePanel";
 import { PaywallDialog } from "@/components/paywall/PaywallDialog";
 import { CoverageProvider, useCoverage } from "@/components/coverage/CoverageProvider";
@@ -15,6 +19,12 @@ import { STRIPE } from "@/lib/copy";
 import type { FundFamilyCoverage } from "@/lib/coverage";
 import { reportCoverageGap } from "@/lib/coverage";
 import { useFreemium } from "@/lib/freemium";
+import { DEFAULT_START_DOLLARS } from "@/lib/performance/types";
+
+const HOMEPAGE_GROWTH_FUNDS: GrowthFundInput[] = [
+  { ticker: "AGTHX", label: "AGTHX", fundFamily: "American Funds" },
+  { ticker: "FCNTX", label: "FCNTX", fundFamily: "Fidelity" },
+];
 
 export type CheckoutReturn = "success" | "cancel" | null;
 
@@ -79,12 +89,17 @@ function AftertaxAppInner({
       });
     }
     requestAnimationFrame(() => {
-      document.getElementById("illustrate")?.scrollIntoView({
+      document.getElementById("growth-and-tax")?.scrollIntoView({
         behavior: "smooth",
         block: "start",
       });
     });
   }
+
+  const seedFunds = useMemo(
+    () => (selected ? [toGrowthFund(selected)] : undefined),
+    [selected],
+  );
 
   function openImportPaywall() {
     setPaywallOpen(true);
@@ -121,6 +136,18 @@ function AftertaxAppInner({
         onSelect={selectFund}
         onImport={openImportPaywall}
       />
+
+      <section
+        id="growth-and-tax"
+        aria-label="Growth of dollars and tax drag"
+        className="mb-10"
+      >
+        <GrowthAndTaxDragModule
+          funds={HOMEPAGE_GROWTH_FUNDS}
+          seedFunds={seedFunds}
+          startDollars={DEFAULT_START_DOLLARS}
+        />
+      </section>
 
       {selected ? (
         <div className="mb-10 grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(20rem,26.25rem)]">
@@ -178,4 +205,13 @@ function AftertaxAppInner({
       ) : null}
     </>
   );
+}
+
+function toGrowthFund(fund: FundEstimateView): GrowthFundInput {
+  return {
+    ticker: fund.ticker,
+    label: fund.ticker,
+    fundIdentifier: fund.ticker,
+    fundFamily: fund.family,
+  };
 }
