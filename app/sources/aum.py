@@ -76,6 +76,26 @@ LARGE_AUM_TICKERS: frozenset[str] = frozenset(
         "LBSAX",
         "PIODX",
         "PIGFX",
+        # Ranks 21–30 historical flagships (≥$1B / family book heroes)
+        "WFMIX",
+        "SGRNX",
+        "JDCAX",
+        "JDMAX",
+        "JCNAX",
+        "TWCGX",
+        "BEQGX",
+        "DODGX",
+        "DODBX",
+        "DODFX",
+        "DODIX",
+        "MIGHX",
+        "MITTX",
+        "AGRFX",
+        "APGAX",
+        "ABASX",
+        "STVTX",
+        "STCIX",
+        "UNWGX",
     }
 )
 

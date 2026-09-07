@@ -755,6 +755,127 @@ def test_third_tier_fixtures() -> None:
     )
     assert eoi.amount == Decimal("0.1338")
 
+    allspring_2024 = parse_distribution_html(
+        (ROOT / "allspring" / "2024_paid_distributions.html").read_text(encoding="utf-8"),
+        source_url="fixture://allspring-2024",
+        fund_family="Allspring",
+    )
+    wfmix_2024 = next(
+        r
+        for r in allspring_2024
+        if r.ticker == "WFMIX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert wfmix_2024.amount == Decimal("2.93497")
+    assert wfmix_2024.publication_stage == PublicationStage.final
+
+    janus_2024 = parse_distribution_html(
+        (ROOT / "janus_henderson" / "2024_distribution_estimates.html").read_text(encoding="utf-8"),
+        source_url="fixture://janus-2024",
+        fund_family="Janus Henderson",
+    )
+    jdcax_2024 = next(
+        r
+        for r in janus_2024
+        if r.ticker == "JDCAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert jdcax_2024.amount == Decimal("5.42")
+    assert str(jdcax_2024.as_of) == "2024-11-01"
+
+    janus_2023 = parse_distribution_html(
+        (ROOT / "janus_henderson" / "2023_final_distribution_estimates.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://janus-2023",
+        fund_family="Janus Henderson",
+    )
+    jdcax_2023 = next(
+        r
+        for r in janus_2023
+        if r.ticker == "JDCAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert jdcax_2023.amount == Decimal("3.87")
+
+    aci_paid = parse_distribution_html(
+        (ROOT / "american_century" / "2025_paid_distributions.html").read_text(encoding="utf-8"),
+        source_url="fixture://aci-paid",
+        fund_family="American Century",
+    )
+    twcgx_paid = next(
+        r
+        for r in aci_paid
+        if r.ticker == "TWCGX" and r.estimate_type == EstimateType.total_capital_gains
+    )
+    assert twcgx_paid.amount == Decimal("9.7631")
+
+    dodge_2024 = parse_distribution_html(
+        (ROOT / "dodge_cox" / "2024_supplemental_tax_letter.html").read_text(encoding="utf-8"),
+        source_url="fixture://dodge-2024",
+        fund_family="Dodge & Cox",
+    )
+    dodgx_2024 = next(
+        r
+        for r in dodge_2024
+        if r.ticker == "DODGX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert dodgx_2024.amount == Decimal("12.036")
+    assert str(dodgx_2024.as_of) == "2024-12-18"
+
+    dodge_2025_gx = next(
+        r
+        for r in dodge_paid
+        if r.ticker == "DODGX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert dodge_2025_gx.amount == Decimal("1.1999")
+
+    mfs_paid = parse_distribution_html(
+        (ROOT / "mfs" / "2025_paid_year_end.html").read_text(encoding="utf-8"),
+        source_url="fixture://mfs-paid",
+        fund_family="MFS Investment Management",
+    )
+    mighx_paid = next(
+        r
+        for r in mfs_paid
+        if r.ticker == "MIGHX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert mighx_paid.amount == Decimal("4.20618")
+
+    ab_2023 = parse_distribution_html(
+        (ROOT / "ab" / "2023_estimated_capital_gains.html").read_text(encoding="utf-8"),
+        source_url="fixture://ab-2023",
+        fund_family="AllianceBernstein",
+    )
+    agrfx_2023 = next(
+        r
+        for r in ab_2023
+        if r.ticker == "AGRFX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert agrfx_2023.amount == Decimal("6.95")
+    assert str(agrfx_2023.as_of) == "2023-10-31"
+
+    virtus_2025 = parse_distribution_html(
+        (ROOT / "virtus" / "2025_paid_year_end.html").read_text(encoding="utf-8"),
+        source_url="fixture://virtus-2025",
+        fund_family="Virtus",
+    )
+    stvtx_2025 = next(
+        r
+        for r in virtus_2025
+        if r.ticker == "STVTX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert stvtx_2025.amount == Decimal("0.427834")
+
+    virtus_2024 = parse_distribution_html(
+        (ROOT / "virtus" / "2024_section_19a.html").read_text(encoding="utf-8"),
+        source_url="fixture://virtus-2024",
+        fund_family="Virtus",
+    )
+    stvtx_2024 = next(
+        r
+        for r in virtus_2024
+        if r.ticker == "STVTX" and r.estimate_type == EstimateType.total_capital_gains
+    )
+    assert stvtx_2024.amount == Decimal("1.907616")
+
 
 def test_thrivent_live_header_shape() -> None:
     html = """

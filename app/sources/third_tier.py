@@ -11,16 +11,16 @@ class AllspringSource(HtmlTableSource):
     notes = (
         "Weekly watch: product-alerts hub "
         "https://www.allspringglobal.com/resources/product-alerts/ "
-        "(midyear / special / interim books would land here first). As of "
-        "2026-09-07 there is no open-end midyear capital-gains table — the latest "
-        "family book is Allspring Funds 2025 Capital Gains Estimates (10/10/2025) "
-        "https://www.allspringglobal.com/globalassets/assets/public/pdf/product-alerts/20251010-productalert.pdf "
-        "(image/gated; append ?view=1). Public product pages publish HTML paid "
-        "year-end history, e.g. Special Mid Cap Value "
+        "(midyear / special / interim books would land here first). No public "
+        "filled ICI Primary Layout. Family estimate PDFs (20251010 / 20241015 "
+        "product-alert paths) are gated HTML login pages. Public product pages "
+        "publish HTML paid YE history for ≥$1B Institutional classes: Special "
+        "Mid Cap Value WFMIX "
         "https://www.allspringglobal.com/investments/equity/mutual-funds/special-mid-cap-value/ "
-        "(2025-12-15 ST $0.34918 / LT $4.26857) and Growth "
+        "(2025 LT $4.26857; 2024 LT $2.93497; 2023 LT $1.7935; 2022 LT $3.13277) "
+        "and Growth SGRNX "
         "https://www.allspringglobal.com/investments/equity/mutual-funds/growth/i/ "
-        "(2025-12-15 ST $0.01467 / LT $8.85612). Fixture transcribes those paid rows."
+        "(2025 LT $8.85612; 2024 LT $9.55498; 2023 LT $2.92658; 2022 LT $1.62055)."
     )
     live_limitations = (
         "Family estimate PDF is gated/image-based. Product-page tables put the date "
@@ -40,7 +40,28 @@ class AllspringSource(HtmlTableSource):
                 url="https://www.allspringglobal.com/investments/equity/mutual-funds/special-mid-cap-value/",
                 fixture="2025_paid_distributions.html",
                 live=True,
-            )
+            ),
+            PageSpec(
+                name="2024_paid_product_pages",
+                url="https://www.allspringglobal.com/investments/equity/mutual-funds/special-mid-cap-value/",
+                fixture="2024_paid_distributions.html",
+                live=False,
+                large_aum_only=True,
+            ),
+            PageSpec(
+                name="2023_paid_product_pages",
+                url="https://www.allspringglobal.com/investments/equity/mutual-funds/special-mid-cap-value/",
+                fixture="2023_paid_distributions.html",
+                live=False,
+                large_aum_only=True,
+            ),
+            PageSpec(
+                name="2022_paid_product_pages",
+                url="https://www.allspringglobal.com/investments/equity/mutual-funds/special-mid-cap-value/",
+                fixture="2022_paid_distributions.html",
+                live=False,
+                large_aum_only=True,
+            ),
         ]
 
 
@@ -52,11 +73,12 @@ class JanusHendersonSource(HtmlTableSource):
     notes = (
         "Advisor tax hub: "
         "https://www.janushenderson.com/en-us/advisor/annual-distributions-supplemental-tax-documents-mutual-funds/ "
-        "hosts public estimate and final PDFs. 2025 final year-end estimates "
-        "(income and gains through 11/03/2025): "
-        "https://2deaa804a6dc693855a0-eba658c6bc03668a61900f643427d64d.ssl.cf1.rackcdn.com/"
-        "Documents/product/distribution-tax/2025-Janus-Henderson-Final-Distribution-Estimates.pdf "
-        "(e.g. Forty Fund JDCAX LT $6.92 / 10.77% of NAV; Enterprise JDMAX ST $0.27 / LT $9.88)."
+        "hosts public estimate and final PDFs on the rackcdn distribution-tax path. "
+        "No public filled ICI. 2025 final YE estimates (through 11/03/2025) "
+        "2025-Janus-Henderson-Final-Distribution-Estimates.pdf (JDCAX LT $6.92). "
+        "2024 Preliminary Distribution Estimates 2024.pdf (JDCAX LT $5.42; "
+        "2024 Final sibling 404). 2023 Final Distribution Estimates 2023.pdf "
+        "(JDCAX LT $3.87)."
     )
     live_limitations = "Year-end book is PDF. Fixture transcribes public A-share estimate rows."
 
@@ -70,7 +92,29 @@ class JanusHendersonSource(HtmlTableSource):
                 ),
                 fixture="2025_final_distribution_estimates.html",
                 live=False,
-            )
+            ),
+            PageSpec(
+                name="2024_distribution_estimates",
+                url=(
+                    "https://2deaa804a6dc693855a0-eba658c6bc03668a61900f643427d64d.ssl.cf1.rackcdn.com/"
+                    "Documents/product/distribution-tax/"
+                    "Janus%20Henderson%20Preliminary%20Distribution%20Estimates%202024.pdf"
+                ),
+                fixture="2024_distribution_estimates.html",
+                live=False,
+                large_aum_only=True,
+            ),
+            PageSpec(
+                name="2023_final_distribution_estimates",
+                url=(
+                    "https://2deaa804a6dc693855a0-eba658c6bc03668a61900f643427d64d.ssl.cf1.rackcdn.com/"
+                    "Documents/product/distribution-tax/"
+                    "Janus%20Henderson%20Final%20Distribution%20Estimates%202023.pdf"
+                ),
+                fixture="2023_final_distribution_estimates.html",
+                live=False,
+                large_aum_only=True,
+            ),
         ]
 
 
@@ -82,10 +126,13 @@ class AmericanCenturySource(HtmlTableSource):
     notes = (
         "Tax-center HTML hub "
         "https://www.americancentury.com/plan/tax-center/estimated-distributions/ "
-        "is a JavaScript grid (verified 2026-09-07). The same 10/31/2025 book is a "
-        "public PDF: https://res.americancentury.com/docs/estimated-distributions-november-retail.pdf "
-        "(e.g. Growth Investor TWCGX LT $10.4978 / 15.30% of NAV; Equity Growth "
-        "Investor BEQGX ST $0.2159 / LT $3.6325)."
+        "is a JavaScript grid (verified 2026-09-07). No public filled ICI. "
+        "2025 retail estimate PDF "
+        "https://res.americancentury.com/docs/estimated-distributions-november-retail.pdf "
+        "(TWCGX LT $10.4978 / 15.30% of NAV). Official Growth product page "
+        "https://www.americancentury.com/invest/funds/growth/twcgx/ publishes "
+        "2025 paid Total $9.7631 (no ST/LT split — stored as total capital gains). "
+        "2024 retail estimate sibling PDFs 404. Historical-distribution CSV is not public."
     )
     live_limitations = "Family HTML grid is JavaScript-rendered; the retail PDF is the parseable book."
 
@@ -96,7 +143,14 @@ class AmericanCenturySource(HtmlTableSource):
                 url="https://res.americancentury.com/docs/estimated-distributions-november-retail.pdf",
                 fixture="2025_estimated_distributions.html",
                 live=False,
-            )
+            ),
+            PageSpec(
+                name="2025_paid_twcgx",
+                url="https://www.americancentury.com/invest/funds/growth/twcgx/",
+                fixture="2025_paid_distributions.html",
+                live=False,
+                large_aum_only=True,
+            ),
         ]
 
 
@@ -107,13 +161,14 @@ class DodgeCoxSource(HtmlTableSource):
     priority = 24
     notes = (
         "Tax center: https://www.dodgeandcox.com/institutional-investor/us/en/resources/tax-center.html "
-        "Current public estimate PDF (Q1 2026, as of 2/23/2026): "
+        "No public filled ICI. Q1 2026 estimate PDF "
         "https://www.dodgeandcox.com/content/dam/dc/us/en/pdf/dc-us-estimated-distributions-1Q2026.pdf "
-        "(Balanced DODBX / Stock DODGX LT $0.09 / $0.16; Income DODIX is not listed — "
-        "no estimated Q1 2026 capital gain). Paid 2025 per-share amounts "
-        "are in the Supplemental Tax Letter "
+        "(DODGX LT $0.16; DODIX not listed). Paid December YE from Supplemental "
+        "Tax Letters: 2025 "
         "https://www.dodgeandcox.com/content/dam/dc/us/en/pdf/guides/dc_us_supplemental_tax_letter.pdf "
-        "(Income DODIX ordinary income only, e.g. Dec 2025 $0.1347; no 2025 ST/LT)."
+        "(DODGX LT $1.1999; DODIX income $0.1347) and 2024 "
+        ".../dc_us_supplemental_tax_letter_2024.pdf (DODGX LT $12.036). 2023 letter "
+        "siblings 404. March/June/September rows omitted so one as_of is not summed."
     )
     live_limitations = "Estimates and the tax letter are PDF. Fixtures transcribe those public tables."
 
@@ -131,6 +186,13 @@ class DodgeCoxSource(HtmlTableSource):
                 fixture="2025_supplemental_tax_letter.html",
                 live=False,
             ),
+            PageSpec(
+                name="2024_supplemental_tax_letter",
+                url="https://www.dodgeandcox.com/content/dam/dc/us/en/pdf/guides/dc_us_supplemental_tax_letter_2024.pdf",
+                fixture="2024_supplemental_tax_letter.html",
+                live=False,
+                large_aum_only=True,
+            ),
         ]
 
 
@@ -141,10 +203,12 @@ class MfsSource(HtmlTableSource):
     priority = 25
     notes = (
         "Tax center: https://www.mfs.com/en-us/individual-investor/resources/service-support/tax-center.html "
-        "Public 2025 capital-gain estimate PDF (as of 9/30/2025, published 11/7/2025): "
+        "No public filled ICI. 2025 estimate PDF "
         "https://www.mfs.com/content/dam/mfs-enterprise/mfscom/backlot/mfs_cg_fly.pdf "
-        "(e.g. Massachusetts Investors Growth Stock Class A LT 8%–9% of average NAV; "
-        "Massachusetts Investors Trust all classes LT 10%–12%)."
+        "(MIGHX LT 8%–9% of average NAV). Paid YE / midyear from product pages "
+        "MIGHX / MITTX (2025 YE MIGHX LT $4.20618; 2026 midyear LT $0.54043). "
+        "2024 mfs_cg_fly_2024.pdf 404. Earlier years are behind a download control, "
+        "not static HTML — skipped, not invented."
     )
     live_limitations = "Estimates are PDF percent-of-NAV ranges. Fixture transcribes public rows."
 
@@ -155,7 +219,27 @@ class MfsSource(HtmlTableSource):
                 url="https://www.mfs.com/content/dam/mfs-enterprise/mfscom/backlot/mfs_cg_fly.pdf",
                 fixture="2025_capital_gain_estimates.html",
                 live=False,
-            )
+            ),
+            PageSpec(
+                name="2025_paid_year_end",
+                url=(
+                    "https://www.mfs.com/en-us/individual-investor/product-strategies/"
+                    "mutual-funds/MIGHX-massachusetts-investors-growth-stock-fund.html"
+                ),
+                fixture="2025_paid_year_end.html",
+                live=False,
+                large_aum_only=True,
+            ),
+            PageSpec(
+                name="2026_midyear_paid",
+                url=(
+                    "https://www.mfs.com/en-us/individual-investor/product-strategies/"
+                    "mutual-funds/MIGHX-massachusetts-investors-growth-stock-fund.html"
+                ),
+                fixture="2026_midyear_paid.html",
+                live=False,
+                large_aum_only=True,
+            ),
         ]
 
 
@@ -167,11 +251,13 @@ class LordAbbettSource(HtmlTableSource):
     notes = (
         "Capital-gains hub "
         "https://www.lordabbett.com/en-us/financial-advisor/resources/tax-center/capital-gains-distributions.html "
-        "is a JavaScript shell. The public 2025 estimate document is a no-pay list: "
+        "is a JavaScript shell. No public filled ICI. The public 2025 document is "
+        "a no-pay list: "
         "https://www.lordabbett.com/content/dam/lordabbett-captivate/documents/TaxCenter/UnitedStates/Funds-with-Losses.pdf "
-        "(Bond Debenture, Developing Growth, and many others 'not expected to pay "
+        "(Bond Debenture, Developing Growth, Total Return 'not expected to pay "
         "2025 capital gain distributions'). Fixture stores those as $0.00 estimates. "
-        "Tickers are the public Class A identifiers; the PDF is fund-level."
+        "2024 Funds-with-Losses sibling 404. No public paying-fund ST/LT $/share "
+        "grid — skipped, not invented."
     )
     live_limitations = (
         "HTML hub has no table. The public PDF lists funds expected to pay $0, "
@@ -199,10 +285,11 @@ class AllianceBernsteinSource(HtmlTableSource):
     priority = 27
     notes = (
         "Tax center: https://www.alliancebernstein.com/us/en-us/investments/resources/tax-center.html "
-        "Public 10/31/2025 estimate PDF: "
-        "https://www.alliancebernstein.com/content/dam/alliancebernstein/us-retail/us-retail-pdfs/tax-center/Final_GEN-5796-1025.pdf "
-        "(e.g. AB Growth Fund ST $0.73 / LT $16.36 / 13.68% of Class A NAV; "
-        "AB Large Cap Growth ST $0.48 / LT $10.37 / 9.84%)."
+        "No public filled ICI. 2025 estimate PDF Final_GEN-5796-1025.pdf "
+        "(AGRFX LT $16.36). The unversioned FINAL_GEN-5796.pdf path now serves "
+        "2025; 2024 was overwritten (not invented). 2023 book GEN–5796–1023 is "
+        "still in the public Wayback snapshot of that path "
+        "(AGRFX LT $6.95; APGAX LT $1.50)."
     )
     live_limitations = "Estimates are PDF. Fixture transcribes public Class A rows."
 
@@ -216,7 +303,18 @@ class AllianceBernsteinSource(HtmlTableSource):
                 ),
                 fixture="2025_estimated_capital_gains.html",
                 live=False,
-            )
+            ),
+            PageSpec(
+                name="2023_estimated_capital_gains",
+                url=(
+                    "https://web.archive.org/web/20241115000000/"
+                    "https://www.alliancebernstein.com/content/dam/alliancebernstein/"
+                    "us-retail/us-retail-pdfs/tax-center/FINAL_GEN-5796.pdf"
+                ),
+                fixture="2023_estimated_capital_gains.html",
+                live=False,
+                large_aum_only=True,
+            ),
         ]
 
 
@@ -229,10 +327,13 @@ class FederatedHermesSource(HtmlTableSource):
         "Tax-center HTML grids "
         "https://www.federatedhermes.com/us/resources/resource-centers/tax-center/capital-gains/preliminary.do "
         "and .../final.do are JavaScript (API-backed; verified 2026-09-07). "
-        "Public Section 19(a) notices publish per-share estimates, e.g. Enhanced "
-        "Income ETF (PAYR) "
+        "ICI Primary/Secondary tax-info PDFs are listed on services.federatedhermes.com "
+        "token URLs (not a stable public download; some books are monthly muni "
+        "lines). Public Section 19(a) notices publish per-share amounts, e.g. "
+        "Enhanced Income ETF (PAYR) "
         "https://www.federatedhermes.com/siteassets/documents/regulatory/19a-notices/g85307-06.pdf "
-        "(12/31/2025 income $0.184310 / ST $0.010122 / LT $0.015178)."
+        "(12/31/2025 income $0.184310 / ST $0.010122 / LT $0.015178). Kaufmann "
+        "product pages do not expose a scrapeable ST/LT history grid."
     )
     live_limitations = "Family tax-center tables are JavaScript. Fixture transcribes a public 19(a) notice."
 
@@ -254,12 +355,13 @@ class VirtusSource(HtmlTableSource):
     priority = 29
     notes = (
         "Tax center: https://www.virtus.com/investor-resources/mutual-fund-account-information-resources/tax-center "
-        "Public June 2026 capital-gains estimate PDF (as of 5/29/2026): "
+        "No public filled ICI. June 2026 estimate "
         "https://www.virtus.com/assets/files/abi/cap_gains_estimate_6-26_8569.pdf "
-        "(e.g. Ceredex Large-Cap Value Equity ST $0.2779 / LT $0.1767; "
-        "Zevenbergen Innovative Growth Stock LT $2.4917 / 3.74% of NAV). "
-        "2025 paid calendar-year detail: "
-        "https://www.virtus.com/assets/files/8ua/2025-mfs_distributions_calyr_detail.pdf."
+        "(STVTX ST $0.2779 / LT $0.1767). 2025 paid calendar-year book "
+        "https://www.virtus.com/assets/files/8ua/2025-mfs_distributions_calyr_detail.pdf "
+        "(STVTX Dec ST $0.664597 / LT $0.427834). 2024 Section 19(a) "
+        "https://www.virtus.com/assets/files/8o4/section-19a-notice--retail-oef-template-12.18.2024.pdf "
+        "(STVTX income $0.141942 / total CG $1.907616 — notice is not ST/LT split)."
     )
     live_limitations = "Estimate book is PDF. Fixture transcribes the public June 2026 table."
 
@@ -270,7 +372,24 @@ class VirtusSource(HtmlTableSource):
                 url="https://www.virtus.com/assets/files/abi/cap_gains_estimate_6-26_8569.pdf",
                 fixture="2026_june_capital_gain_estimates.html",
                 live=False,
-            )
+            ),
+            PageSpec(
+                name="2025_paid_year_end",
+                url="https://www.virtus.com/assets/files/8ua/2025-mfs_distributions_calyr_detail.pdf",
+                fixture="2025_paid_year_end.html",
+                live=False,
+                large_aum_only=True,
+            ),
+            PageSpec(
+                name="2024_section_19a",
+                url=(
+                    "https://www.virtus.com/assets/files/8o4/"
+                    "section-19a-notice--retail-oef-template-12.18.2024.pdf"
+                ),
+                fixture="2024_section_19a.html",
+                live=False,
+                large_aum_only=True,
+            ),
         ]
 
 
@@ -284,9 +403,9 @@ class EatonVanceSource(HtmlTableSource):
         "still publishes distinct public CEF Section 19(b) estimated-source notices, "
         "e.g. https://www.eatonvance.com/content/dam/im/assets/publication/thought-leadership/"
         "press-release/combined19bpressreleasemarch2025.pdf "
-        "(Enhanced Equity Income Fund EOI March 2025 distribution $0.1338, 100% LT). "
-        "Business Wire reprints the same monthly tables. Open-end family estimate "
-        "HTML was not found on 2026-09-07."
+        "(EOI March 2025 $0.1338, 100% LT). No public filled ICI. 2024 sibling "
+        "combined19bpressreleasemarch2024.pdf / combined_19b_press_release_022924.pdf "
+        "returned 403. Open-end family estimate HTML was not found on 2026-09-07."
     )
     live_limitations = (
         "Open-end estimates are not a public HTML grid. Fixture transcribes a public CEF 19(b) notice."

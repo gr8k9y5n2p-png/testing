@@ -441,7 +441,7 @@ The upsert key includes `as_of` and `ex_date`, so a September preliminary, a Dec
 3. `GET /distributions?fund_identifier=amcap-fund&as_of_from=2024-01-01&as_of_to=2024-12-31` — one tax year’s publication window.
 4. Units differ (`percent_of_nav` vs `per_share`); convert with NAV before subtracting. Illustration uses `as_of` or `prefer_publication_stages` so you do not add estimate + final.
 
-Fixture packs today (ranks 1–20 historical pass):
+Fixture packs today (ranks 1–30 historical pass):
 
 | Family | Years in fixtures | Live archive notes |
 | --- | --- | --- |
@@ -465,6 +465,16 @@ Fixture packs today (ranks 1–20 historical pass):
 | Dimensional | 2024 paid + 2025 estimate (DISVX / DFELX / DFQTX) | No public filled ICI. 2024 December book `2024-distributions.pdf` (DISVX LT $0.184). |
 | Columbia Threadneedle | 2024 YE paid + 2025 midyear estimate | No public filled ICI. 2024 YE PDF (LBSAX LT $1.38581; ELGAX LT $4.05105). IEVAX 2024 $0 CG not stored. 2023 YE PDF 404. |
 | Amundi / Pioneer | 2025 estimate (PIODX) | No public filled ICI. 2024 estimate/final sibling URLs on the Pioneer tax-center path returned 404 after the Victory transfer — skipped. |
+| Allspring | 2022–2025 paid YE (WFMIX / SGRNX) | No public filled ICI. Family estimate PDFs are gated login HTML. Product-page paid history used (WFMIX 2025 LT $4.26857; 2024 $2.93497; 2023 $1.7935; 2022 $3.13277). |
+| Janus Henderson | 2023 final + 2024 prelim + 2025 final estimates (JDCAX) | No public filled ICI. Rackcdn tax PDFs still posted (JDCAX LT $3.87 / $5.42 / $6.92). 2024 Final sibling filename 404. |
+| American Century | 2025 estimate + 2025 paid (TWCGX) | No public filled ICI. 2025 retail estimate PDF (TWCGX LT $10.4978) plus product-page paid Total $9.7631 (no ST/LT split). 2024 sibling PDFs 404. |
+| Dodge & Cox | 2024 + 2025 Dec YE paid + Q1 2026 estimate | No public filled ICI. Supplemental tax letters (DODGX Dec 2025 LT $1.1999 / 2024 LT $12.036). 2023 letter siblings 404. Quarters omitted so one as_of is not summed. |
+| MFS | 2025 estimate + 2025 YE paid + 2026 midyear paid | No public filled ICI. 2025 %NAV estimate PDF (MIGHX 8%–9%) plus product-page paid (2025 YE LT $4.20618; 2026 midyear LT $0.54043). 2024 fly PDF 404; older years behind a download control. |
+| Lord Abbett | 2025 $0 no-pay list | No public filled ICI. Public PDF lists funds not expected to pay 2025 CG. 2024 sibling 404. No paying-fund ST/LT grid. |
+| AllianceBernstein | 2023 + 2025 estimates (AGRFX) | No public filled ICI. 2025 Final_GEN-5796-1025.pdf (AGRFX LT $16.36). Unversioned FINAL_GEN-5796.pdf now serves 2025; 2024 overwritten. 2023 book from the public Wayback snapshot of that path (AGRFX LT $6.95). |
+| Federated Hermes | 2025 PAYR 19(a) | ICI Primary/Secondary listed on token URLs (not a stable public download; some books are monthly muni lines). Family tax-center grids are JS. Kaufmann pages have no scrapeable ST/LT history. |
+| Virtus | 2024 19(a) + 2025 paid + 2026 June estimate | No public filled ICI. 2026 June estimate (STVTX LT $0.1767); 2025 calyr paid Dec (STVTX LT $0.427834); 2024 19(a) income + combined CG $1.907616. |
+| Eaton Vance | 2025 CEF 19(b) (EOI) | No public filled ICI. March 2025 19(b) (EOI $0.1338 LT). 2024 sibling PDFs 403. Open-end YE stays on `morgan_stanley`. |
 
 **ICI Primary Layout inventory (top AUM, verified 2026-09-07):**
 
@@ -490,6 +500,16 @@ Fixture packs today (ranks 1–20 historical pass):
 | 18 | Dimensional | no | Public chmedia distribution PDFs. |
 | 19 | Columbia Threadneedle | no | Public midyear estimate + YE cap-gains PDFs. |
 | 20 | Amundi / Pioneer | no | Pioneer/Victory tax-center PDFs; 2024 siblings 404. |
+| 21 | Allspring | no | Product-alert estimate PDFs gated; product-page paid HTML used. |
+| 22 | Janus Henderson | no | Public rackcdn estimate/final PDFs 2023–2025. |
+| 23 | American Century | no | JS hub + 2025 retail PDF; 2024 siblings 404. |
+| 24 | Dodge & Cox | no | Supplemental tax letters + Q1 estimate PDFs. |
+| 25 | MFS | no | 2025 %NAV fly PDF + product-page paid history. |
+| 26 | Lord Abbett | no | JS hub; public file is a 2025 no-pay list. |
+| 27 | AllianceBernstein | no | Versioned 2025 estimate PDF; unversioned path overwritten (2023 via Wayback). |
+| 28 | Federated Hermes | listed, not fetchable | Token-walled ICI Primary/Secondary on services.federatedhermes.com; some books are monthly lines. |
+| 29 | Virtus | no | Public estimate + calendar-year + 19(a) PDFs. |
+| 30 | Eaton Vance | no | CEF 19(b) press-release PDFs; 2024 siblings 403. |
 
 Blank ICI templates on https://www.ici.org/year-end-tax-reporting are instructions, not a manager feed.
 
@@ -551,16 +571,16 @@ When a holding’s ticker or family is not in the store, Website Engineering sho
 | 18 | `dimensional` (alias `dfa`) | Dimensional | implemented | PDF | 2025 estimates + 2024 `2024-distributions.pdf` |
 | 19 | `columbia_threadneedle` (aliases `columbia`, `ameriprise`) | Columbia Threadneedle | implemented | PDF | 2025 midyear estimates + 2024 YE `2024-cap-gains---mutual-funds.pdf` |
 | 20 | `amundi` (alias `pioneer`) | Amundi US / Pioneer | implemented | PDF | https://pioneerinvestments.com/content/dam/pioneer/en/documents/resources/tax-center/2025/10152025-mutual-funds-2025-capital-gain-estimates.pdf |
-| 21 | `allspring` (aliases `wells_fargo`, `wfam`) | Allspring | implemented | product-page HTML / gated PDF | https://www.allspringglobal.com/resources/product-alerts/ ; paid history e.g. `.../special-mid-cap-value/` |
-| 22 | `janus_henderson` (alias `janus`) | Janus Henderson | implemented | PDF | https://www.janushenderson.com/en-us/advisor/annual-distributions-supplemental-tax-documents-mutual-funds/ ; 2025 estimates on the rackcdn `distribution-tax` path |
-| 23 | `american_century` | American Century | implemented | JS hub + PDF | https://res.americancentury.com/docs/estimated-distributions-november-retail.pdf |
-| 24 | `dodge_cox` (aliases `dodge`, `dodgx`) | Dodge & Cox | implemented | PDF | https://www.dodgeandcox.com/content/dam/dc/us/en/pdf/dc-us-estimated-distributions-1Q2026.pdf (DODIX not listed). Paid 2025 DODIX income: `.../dc_us_supplemental_tax_letter.pdf` |
-| 25 | `mfs` | MFS Investment Management | implemented | PDF | https://www.mfs.com/content/dam/mfs-enterprise/mfscom/backlot/mfs_cg_fly.pdf |
-| 26 | `lord_abbett` (alias `lord`) | Lord Abbett | implemented | PDF (no-pay list) | https://www.lordabbett.com/content/dam/lordabbett-captivate/documents/TaxCenter/UnitedStates/Funds-with-Losses.pdf |
-| 27 | `ab` (aliases `alliancebernstein`, `alliance_bernstein`) | AllianceBernstein | implemented | PDF | https://www.alliancebernstein.com/content/dam/alliancebernstein/us-retail/us-retail-pdfs/tax-center/Final_GEN-5796-1025.pdf |
-| 28 | `federated_hermes` (alias `federated`) | Federated Hermes | implemented | JS tax center + 19(a) PDF | https://www.federatedhermes.com/siteassets/documents/regulatory/19a-notices/g85307-06.pdf |
-| 29 | `virtus` | Virtus | implemented | PDF | https://www.virtus.com/assets/files/abi/cap_gains_estimate_6-26_8569.pdf |
-| 30 | `eaton_vance` (alias `ev`) | Eaton Vance | implemented | CEF 19(b) PDF | https://www.eatonvance.com/content/dam/im/assets/publication/thought-leadership/press-release/combined19bpressreleasemarch2025.pdf |
+| 21 | `allspring` (aliases `wells_fargo`, `wfam`) | Allspring | implemented | product-page HTML / gated PDF | Paid YE 2022–2025 on `.../special-mid-cap-value/` and `.../growth/i/` (WFMIX / SGRNX). Family estimate PDFs gated. |
+| 22 | `janus_henderson` (alias `janus`) | Janus Henderson | implemented | PDF | Rackcdn `distribution-tax` 2023 Final + 2024 Preliminary + 2025 Final (JDCAX LT $3.87 / $5.42 / $6.92). |
+| 23 | `american_century` | American Century | implemented | JS hub + PDF + product HTML | 2025 retail estimate PDF + TWCGX product-page paid Total $9.7631. 2024 siblings 404. |
+| 24 | `dodge_cox` (aliases `dodge`, `dodgx`) | Dodge & Cox | implemented | PDF | Q1 2026 estimate + 2024/2025 supplemental tax letters (DODGX Dec YE). 2023 letter 404. |
+| 25 | `mfs` | MFS Investment Management | implemented | PDF + product HTML | 2025 %NAV fly PDF + MIGHX/MITTX paid YE 2025 and midyear 2026. 2024 fly 404. |
+| 26 | `lord_abbett` (alias `lord`) | Lord Abbett | implemented | PDF (no-pay list) | 2025 Funds-with-Losses.pdf. 2024 sibling 404. No paying-fund ST/LT grid. |
+| 27 | `ab` (aliases `alliancebernstein`, `alliance_bernstein`) | AllianceBernstein | implemented | PDF | 2025 Final_GEN-5796-1025.pdf; 2023 via Wayback of FINAL_GEN-5796.pdf. 2024 overwritten. |
+| 28 | `federated_hermes` (alias `federated`) | Federated Hermes | implemented | JS tax center + 19(a) PDF | PAYR 19(a) 2025. ICI token-walled. Kaufmann pages have no ST/LT grid. |
+| 29 | `virtus` | Virtus | implemented | PDF | 2026 June estimate + 2025 calyr paid + 2024 19(a) (STVTX). |
+| 30 | `eaton_vance` (alias `ev`) | Eaton Vance | implemented | CEF 19(b) PDF | March 2025 combined 19(b) (EOI). 2024 siblings 403. |
 | 31 | `john_hancock` (aliases `manulife`, `jh`) | John Hancock / Manulife | implemented | PDF | https://www.jhinvestments.com/content/dam/jhi-investments/JHINV/public/Corporate/News/CorporatePressReleases/estimated-capital-gain-and-income-distribution-press-release-2025-jhi.pdf |
 | 32 | `principal` | Principal | implemented | product-page HTML / viewer PDF | https://www.principalam.com/us/fund/pqiax ; tax hub https://www.principal.com/help/help-individuals/tax-center/dividends-capital-gains-distributions |
 | 33 | `thrivent` | Thrivent | implemented | yes | https://www.thriventfunds.com/support/tax-resource-center/capital-gains.html |

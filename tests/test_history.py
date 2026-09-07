@@ -288,6 +288,63 @@ def test_search_multi_year_top_families(client: TestClient) -> None:
     ft = client.get("/distributions", params={"fund_identifier": "FT", "page_size": 20})
     assert {"2024", "2025"} <= {item["as_of"][:4] for item in ft.json()["items"] if item.get("as_of")}
 
+    for family in (
+        "allspring",
+        "janus_henderson",
+        "american_century",
+        "dodge_cox",
+        "mfs",
+        "ab",
+        "virtus",
+    ):
+        fetched = client.post("/ingest/fetch", json={"fund_family": family, "mode": "fixture"})
+        assert fetched.status_code == 200, fetched.text
+
+    wfmix = client.get("/distributions", params={"fund_identifier": "WFMIX", "page_size": 50})
+    assert {"2022", "2023", "2024", "2025"} <= {
+        item["as_of"][:4] for item in wfmix.json()["items"] if item.get("as_of")
+    }
+    wfmix_2024 = client.get(
+        "/distributions",
+        params={
+            "fund_identifier": "WFMIX",
+            "as_of_from": "2024-01-01",
+            "as_of_to": "2024-12-31",
+            "page_size": 20,
+        },
+    )
+    assert any(
+        item["estimate_type"] == "long_term_capital_gains"
+        and Decimal(item["amount"]) == Decimal("2.93497")
+        for item in wfmix_2024.json()["items"]
+    )
+
+    jdcax = client.get("/distributions", params={"fund_identifier": "JDCAX", "page_size": 50})
+    assert {"2023", "2024", "2025"} <= {
+        item["as_of"][:4] for item in jdcax.json()["items"] if item.get("as_of")
+    }
+
+    twcgx = client.get("/distributions", params={"fund_identifier": "TWCGX", "page_size": 20})
+    twcgx_types = {item["estimate_type"] for item in twcgx.json()["items"]}
+    assert "long_term_capital_gains" in twcgx_types
+    assert "total_capital_gains" in twcgx_types
+
+    dodgx = client.get("/distributions", params={"fund_identifier": "DODGX", "page_size": 50})
+    assert {"2024", "2025", "2026"} <= {
+        item["as_of"][:4] for item in dodgx.json()["items"] if item.get("as_of")
+    }
+
+    mighx = client.get("/distributions", params={"fund_identifier": "MIGHX", "page_size": 50})
+    assert {"2025", "2026"} <= {item["as_of"][:4] for item in mighx.json()["items"] if item.get("as_of")}
+
+    agrfx = client.get("/distributions", params={"fund_identifier": "AGRFX", "page_size": 20})
+    assert {"2023", "2025"} <= {item["as_of"][:4] for item in agrfx.json()["items"] if item.get("as_of")}
+
+    stvtx = client.get("/distributions", params={"fund_identifier": "STVTX", "page_size": 20})
+    assert {"2024", "2025", "2026"} <= {
+        item["as_of"][:4] for item in stvtx.json()["items"] if item.get("as_of")
+    }
+
 
 def test_compare_hero_yoy_fixture_bars(client: TestClient) -> None:
     """Hero tickers get real compare periods[] bars where public multi-year data exists."""
