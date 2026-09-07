@@ -57,6 +57,57 @@ docker compose up --build
 
 The API listens on port 8000. SQLite is stored in the `dist-data` volume.
 
+## Public HTTPS URL (Website `NEXT_PUBLIC_DATA_API_URL`)
+
+This FastAPI service is **not** the Aftertax Next.js app on `main`. The existing Vercel project (`aftertax/testing`, previews like `testing-*-aftertax.vercel.app`) deploys **Website** from `main` and currently has **Vercel Authentication / Deployment Protection** (unauthenticated `GET /health` 302s to `vercel.com/login`). There is no Railway / Render / Fly token in this environment, and the Vercel MCP integration is not authenticated — **do not invent credentials**.
+
+**Do not** change that Website project’s framework to FastAPI. It would break production `main`.
+
+### Eric — create a dedicated API host (pick one)
+
+**Option A — new Vercel project (Eric already has Aftertax on Vercel)**
+
+1. [Vercel → Add New → Project](https://vercel.com/new) → import `gr8k9y5n2p-png/testing`.
+2. Name it `aftertax-data-api` (not `testing`).
+3. Set **Production Branch** to `cursor/fund-distribution-ingest-api-85ed` (this API branch) until the API lives in its own repo.
+4. Framework: leave auto / Other. This branch already exports `app` from `app/main.py` (`[tool.vercel] entrypoint`).
+5. Environment variables:
+   - `FETCH_MODE` = `fixture`
+   - `SEED_ON_START` = `true`
+   - `DATABASE_URL` = `sqlite:////tmp/distributions.db` (Vercel serverless is ephemeral)
+6. **Deployment Protection → Vercel Authentication → Off** (or “Only Preview”) so the Website can call the API without a SSO cookie.
+7. Deploy. Copy the production URL, e.g. `https://aftertax-data-api.vercel.app` (no trailing slash).
+8. Verify: `curl -sS https://<that-host>/health` → HTTP 200 `{"status":"ok",...}`.
+
+**Option B — Render (Docker, better for SQLite + weekly refresh)**
+
+1. [Render → New → Blueprint](https://dashboard.render.com/select-repo?type=blueprint) → this GitHub repo, this branch (`render.yaml`).
+2. Service name `aftertax-data-api`, health path `/health`.
+3. Copy `https://aftertax-data-api.onrender.com` (or the URL Render prints).
+4. Verify `GET /health` 200 as above.
+
+**Website env** (project that serves `testing-seven-umber-19.vercel.app`):
+
+```
+NEXT_PUBLIC_DATA_API_URL=https://<api-host>
+```
+
+No trailing slash. Redeploy Website after setting it. Local Next: `NEXT_PUBLIC_DATA_API_URL=http://127.0.0.1:8000`.
+
+CORS already allows `https://testing-seven-umber-19.vercel.app`, `http://localhost:3000`, `http://127.0.0.1:3000`, and other `https://*.vercel.app` previews (`CORS_ORIGINS` / `CORS_ORIGIN_REGEX`). Tax / illustrate / performance contracts are unchanged.
+
+### Weekly refresh on the public API
+
+Fixture seed on boot (`SEED_ON_START=true`) loads American Funds only so `/health` and demo illustrate paths work. Full-book ingest is the existing CLI / Action:
+
+```bash
+python -m app.cli refresh --mode fixture   # offline, all registered families
+# or
+python -m app.cli refresh                  # REFRESH_MODE=auto: live then fixture
+```
+
+GitHub Action `.github/workflows/weekly-ingest.yml` (Monday 14:00 UTC + `workflow_dispatch`). For a durable book, set repo secret `DATABASE_URL` to the **same Postgres** the API uses (`postgresql+psycopg://…`) and install `psycopg[binary]`. Vercel `/tmp` SQLite does **not** persist across deploys or the weekly job — use Render disk or Postgres if Website needs the full 1–40 book.
+
 ## Example curl
 
 ```bash

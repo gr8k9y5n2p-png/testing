@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -8,9 +9,11 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from sqlalchemy import func, select
 
 from app import __version__
 from app.api import router
+from app import db as app_db
 from app.config import settings
 from app.db import init_db
 
@@ -25,10 +28,34 @@ def _ensure_sqlite_dir() -> None:
     Path(db_path).parent.mkdir(parents=True, exist_ok=True)
 
 
+def cors_origins() -> list[str]:
+    return [part.strip() for part in settings.cors_origins.split(",") if part.strip()]
+
+
+def _should_seed_on_start() -> bool:
+    return bool(settings.seed_on_start or os.getenv("VERCEL"))
+
+
+def _seed_fixture_if_empty() -> None:
+    from app.models import DistributionEstimate
+    from app.services.ingest import fetch_and_ingest
+
+    if app_db.SessionLocal is None:
+        return
+    with app_db.SessionLocal() as session:
+        count = session.scalar(select(func.count()).select_from(DistributionEstimate)) or 0
+        if count:
+            return
+        fetch_and_ingest(session, "american_funds", settings.fetch_mode or "fixture")
+        session.commit()
+
+
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     _ensure_sqlite_dir()
     init_db()
+    if _should_seed_on_start():
+        _seed_fixture_if_empty()
     yield
 
 
@@ -47,9 +74,11 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+_origins = cors_origins()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_origins if _origins != ["*"] else ["*"],
+    allow_origin_regex=settings.cors_origin_regex or None,
     allow_methods=["*"],
     allow_headers=["*"],
 )
