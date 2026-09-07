@@ -10,30 +10,19 @@ export function TaxImpactChart({
   headingId: string;
   className?: string;
 }) {
-  const peak = bars.reduce((max, bar) => Math.max(max, bar.taxDollars), 0);
-
   return (
     <section
       aria-labelledby={headingId}
       className={`rounded-2xl border border-line bg-surface p-3 shadow-[0_8px_24px_rgba(26,29,26,0.06)] sm:p-4 ${className}`}
     >
       <header className="mb-3 flex flex-wrap items-end justify-between gap-2">
-        <div>
-          <h2
-            id={headingId}
-            className="font-serif text-lg tracking-tight text-ink"
-          >
-            Tax impact
-          </h2>
-          <p className="mt-0.5 text-[10px] text-muted">
-            est. tax on upcoming · vs peers in this book
-          </p>
-        </div>
-        {peak > 0 ? (
-          <p className="font-mono text-[10px] text-faint">
-            max {formatUsd(peak, 0)}
-          </p>
-        ) : null}
+        <h2
+          id={headingId}
+          className="font-serif text-lg tracking-tight text-ink"
+        >
+          Est. tax on upcoming
+        </h2>
+        <p className="text-[10px] text-muted">$ per fund · allocated</p>
       </header>
 
       {bars.length === 0 ? (

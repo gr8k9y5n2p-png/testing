@@ -263,13 +263,13 @@ export function PortfolioCompare({
             <UpcomingTable
               headingId="upcoming-current"
               rows={currentUpcoming}
-              sample={sample}
+              sideLabel="Current"
               className="order-3 lg:order-5"
             />
             <UpcomingTable
               headingId="upcoming-proposed"
               rows={proposedUpcoming}
-              sample={sample}
+              sideLabel="Proposed"
               className="order-6"
             />
           </>
@@ -305,6 +305,10 @@ export function PortfolioCompare({
           </div>
         ) : null}
       </div>
+
+      <p className="mt-5 text-center text-[10px] leading-relaxed text-faint">
+        Demo data · weights × Portfolio Value → dollars · tax from Data API TBD
+      </p>
     </article>
   );
 }

@@ -197,7 +197,7 @@ export function AllocationColumn({
         <span>Total</span>
         <span className="font-mono text-sm font-medium normal-case tracking-normal text-ink">
           {formatUsd(totalDollars, 0)}
-          <span className="text-muted"> • {formatWeight(totalWeight)}%</span>
+          <span className="text-muted"> · {formatWeight(totalWeight)}%</span>
         </span>
       </p>
     </section>

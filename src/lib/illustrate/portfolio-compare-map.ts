@@ -246,11 +246,11 @@ export function taxImpactBarsForSide(allocation: PortfolioAllocationOut): TaxImp
 }
 
 export function heatBackground(heat: number): string {
-  if (heat >= 0.85) return "bg-[#f6e4e0]";
-  if (heat >= 0.65) return "bg-[#f8e8d8]";
-  if (heat >= 0.45) return "bg-[#f7efd6]";
-  if (heat >= 0.25) return "bg-[#f4f1e4]";
-  return "bg-surface";
+  if (heat >= 0.85) return "bg-[#e8a598] text-[#6b1d16]";
+  if (heat >= 0.65) return "bg-[#f0c49a] text-[#6b3a12]";
+  if (heat >= 0.4) return "bg-[#f3e3a3] text-[#5c4d12]";
+  if (heat >= 0.2) return "bg-[#d7e6f0] text-[#3d4f5c]";
+  return "bg-[#eef4f8] text-[#5c6b5e]";
 }
 
 export function compactBookLabel(bookDollars: number): string {

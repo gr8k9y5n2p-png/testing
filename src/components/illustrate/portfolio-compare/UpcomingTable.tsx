@@ -7,13 +7,13 @@ import {
 
 export function UpcomingTable({
   rows,
-  sample,
   headingId,
+  sideLabel,
   className = "",
 }: {
   rows: UpcomingRow[];
-  sample: boolean;
   headingId: string;
+  sideLabel: "Current" | "Proposed";
   className?: string;
 }) {
   return (
@@ -35,10 +35,10 @@ export function UpcomingTable({
         <table className="min-w-full text-sm">
           <thead className="text-[10px] font-semibold uppercase tracking-[0.12em] text-faint">
             <tr className="border-b border-line">
-              <th className="py-1.5 pr-2 text-left">Ticker / Fund</th>
-              <th className="px-2 py-1.5 text-right">Est. dist</th>
+              <th className="py-1.5 pr-2 text-left">Ticker</th>
+              <th className="px-2 py-1.5 text-right">Est. dist $</th>
               <th className="px-2 py-1.5 text-right">Est. tax</th>
-              <th className="py-1.5 pl-2 text-right">As-of / Stage</th>
+              <th className="py-1.5 pl-2 text-right">Stage</th>
             </tr>
           </thead>
           <tbody>
@@ -51,17 +51,12 @@ export function UpcomingTable({
             ) : (
               rows.map((row) => (
                 <tr key={row.key} className="border-b border-line last:border-0">
-                  <td className="py-2 pr-2">
-                    <span className="block font-mono text-[13px] font-medium text-ink">
-                      {row.ticker}
-                    </span>
-                    <span className="block text-[10px] leading-snug text-muted">
-                      {row.fundName}
-                    </span>
+                  <td className="py-2 pr-2 font-mono text-[13px] font-medium text-ink">
+                    {row.ticker}
                   </td>
                   <td className="px-2 py-2 text-right">
                     <span
-                      className={`inline-block min-w-[4.5rem] rounded-md px-1.5 py-0.5 font-mono text-[12px] tabular-nums ${heatBackground(row.heat)}`}
+                      className={`inline-block min-w-[4.25rem] rounded-md px-1.5 py-0.5 text-center font-mono text-[12px] tabular-nums ${heatBackground(row.heat)}`}
                     >
                       {formatUsd(row.distributionDollars, 0)}
                     </span>
@@ -85,7 +80,7 @@ export function UpcomingTable({
         </table>
       </div>
       <p className="mt-2 text-[10px] text-faint">
-        {sample ? "demo · " : ""}heat = relative est. dist $ in this column
+        heat = relative within {sideLabel}
       </p>
     </section>
   );
