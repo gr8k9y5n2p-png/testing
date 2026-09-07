@@ -617,7 +617,39 @@ class ComparePeriodOut(BaseModel):
     deltas: CompareDeltas
 
 
+class CompareCommonInception(BaseModel):
+    from_year: int | None = None
+    to_year: int | None = None
+    from_as_of: date | None = None
+    to_as_of: date | None = None
+
+
+class CompareUpcomingDistribution(BaseModel):
+    """Current-calendar-year upcoming taxable $ on the $10k summary holding."""
+
+    left_dollars: Decimal | None = None
+    right_dollars: Decimal | None = None
+    delta_dollars: Decimal | None = None
+    left_as_of: date | None = None
+    right_as_of: date | None = None
+    left_publication_stage: str | None = None
+    right_publication_stage: str | None = None
+
+
+class CompareSummary(BaseModel):
+    """Interactive Modules footer. Dollar fields are always normalized to $10,000."""
+
+    normalized_holding_dollars: Decimal
+    total_tax_difference: Decimal
+    annualized_tax_drag_delta: Decimal
+    distribution_dollars_difference: Decimal
+    periods_compared: int
+    common_inception: CompareCommonInception
+    upcoming_taxable_distribution: CompareUpcomingDistribution | None = None
+
+
 class CompareResponse(BaseModel):
     mode: Literal["fund_vs_fund", "yoy"]
     periods: list[ComparePeriodOut]
+    summary: CompareSummary
     notes: list[str]

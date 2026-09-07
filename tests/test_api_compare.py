@@ -117,6 +117,21 @@ def test_compare_fund_vs_fund_chart_contract(client: TestClient) -> None:
     assert Decimal(y2025["deltas"]["distribution_dollars_min"]) == Decimal("30000.00")
     assert Decimal(y2025["deltas"]["distribution_dollars_max"]) == Decimal("10000.00")
 
+    summary = body["summary"]
+    assert Decimal(summary["normalized_holding_dollars"]) == Decimal("10000")
+    assert summary["periods_compared"] == 2
+    assert Decimal(summary["total_tax_difference"]) == Decimal("24.30")
+    assert Decimal(summary["distribution_dollars_difference"]) == Decimal("100.00")
+    assert Decimal(summary["annualized_tax_drag_delta"]) == Decimal("0.001215")
+    assert summary["common_inception"] == {
+        "from_year": 2024,
+        "to_year": 2025,
+        "from_as_of": "2024-12-15",
+        "to_as_of": "2025-09-19",
+    }
+    assert summary["upcoming_taxable_distribution"] is None
+    assert any("upcoming_taxable_distribution is null" in note for note in body["notes"])
+
 
 def test_compare_yoy_same_fund_periods(client: TestClient) -> None:
     _ingest_compare_book(client)
@@ -148,6 +163,13 @@ def test_compare_yoy_same_fund_periods(client: TestClient) -> None:
     assert Decimal(period["deltas"]["distribution_dollars"]) == Decimal("20000.00")
     assert Decimal(period["deltas"]["estimated_tax"]) == Decimal("4860.00")
     assert Decimal(period["deltas"]["effective_tax_on_holding"]) == Decimal("0.004860")
+    summary = body["summary"]
+    assert summary["periods_compared"] == 1
+    assert Decimal(summary["total_tax_difference"]) == Decimal("48.60")
+    assert Decimal(summary["distribution_dollars_difference"]) == Decimal("200.00")
+    assert Decimal(summary["annualized_tax_drag_delta"]) == Decimal("0.004860")
+    assert summary["common_inception"]["from_year"] == 2024
+    assert summary["common_inception"]["to_year"] == 2025
 
 
 def test_compare_yoy_left_right_as_of(client: TestClient) -> None:
@@ -197,6 +219,74 @@ def test_compare_empty_tax_rates_and_missing_side(client: TestClient) -> None:
     assert Decimal(period["deltas"]["distribution_dollars"]) == Decimal("-40000.00")
     assert any("ZZNOPE" in note or "No distribution" in note for note in body["notes"])
     assert Decimal(period["left"]["tax_rates"]["long_term_capital_gains"]) == Decimal("0.20")
+
+
+def test_compare_upcoming_prefers_current_year_estimate(client: TestClient) -> None:
+    _ingest_compare_book(client)
+    seeded = client.post(
+        "/ingest/distributions",
+        json={
+            "records": [
+                {
+                    "fund_family": "American Funds",
+                    "fund_name": "AMCAP Fund",
+                    "estimate_type": "total_capital_gains",
+                    "amount": "9",
+                    "amount_unit": "percent_of_nav",
+                    "as_of": "2026-06-16",
+                    "publication_stage": "paid",
+                    "source_url": "https://example.invalid/amcap-2026-paid",
+                },
+                {
+                    "fund_family": "American Funds",
+                    "fund_name": "AMCAP Fund",
+                    "estimate_type": "total_capital_gains",
+                    "amount": "5",
+                    "amount_unit": "percent_of_nav",
+                    "as_of": "2026-09-01",
+                    "publication_stage": "preliminary_estimate",
+                    "source_url": "https://example.invalid/amcap-2026-prelim",
+                },
+                {
+                    "fund_family": "American Funds",
+                    "fund_name": "Capital Group Municipal High-Income ETF",
+                    "ticker": "CGHM",
+                    "estimate_type": "total_capital_gains",
+                    "amount": "3",
+                    "amount_unit": "percent_of_nav",
+                    "as_of": "2026-09-01",
+                    "publication_stage": "updated_estimate",
+                    "source_url": "https://example.invalid/cghm-2026-updated",
+                },
+            ]
+        },
+    )
+    assert seeded.status_code == 200, seeded.text
+
+    response = client.post(
+        "/illustrate/compare",
+        json={
+            "mode": "fund_vs_fund",
+            "holding_dollars": 1000000,
+            "tax_rates": RATES,
+            "left": {"label": "Fund A", "selectors": {"fund_identifier": "amcap-fund"}},
+            "right": {"label": "Fund B", "selectors": {"ticker": "CGHM"}},
+            "periods": [
+                {"year": 2024, "as_of": "2024-12-15"},
+                {"year": 2025, "as_of": "2025-09-19"},
+            ],
+        },
+    )
+    assert response.status_code == 200, response.text
+    upcoming = response.json()["summary"]["upcoming_taxable_distribution"]
+    assert upcoming is not None
+    assert Decimal(upcoming["left_dollars"]) == Decimal("500.00")
+    assert Decimal(upcoming["right_dollars"]) == Decimal("300.00")
+    assert Decimal(upcoming["delta_dollars"]) == Decimal("-200.00")
+    assert upcoming["left_as_of"] == "2026-09-01"
+    assert upcoming["right_as_of"] == "2026-09-01"
+    assert upcoming["left_publication_stage"] == "preliminary_estimate"
+    assert upcoming["right_publication_stage"] == "updated_estimate"
 
 
 def test_compare_validation(client: TestClient) -> None:

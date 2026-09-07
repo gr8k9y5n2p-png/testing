@@ -234,6 +234,24 @@ A missing side is **not** a 404. That illustration is empty (zeros, `matched: fa
 
 Top-level or per-side `nav_per_share` / `shares` apply the same way as single-holding illustrate.
 
+**`summary` (React footer, always at $10,000)**
+
+Dollar fields are scaled linearly from the request holding: `value_at_10k = value × (10000 / holding_dollars)`. Tax-drag rates are already fractions of the holding, so they are **not** rescaled.
+
+| Field | Meaning |
+| --- | --- |
+| `normalized_holding_dollars` | Always `10000` |
+| `total_tax_difference` | Σ `periods[].deltas.estimated_tax` × scale (right − left) |
+| `distribution_dollars_difference` | Σ `periods[].deltas.distribution_dollars` × scale |
+| `annualized_tax_drag_delta` | Arithmetic mean of `periods[].deltas.effective_tax_on_holding` |
+| `periods_compared` | Number of period rows in the response |
+| `common_inception` | `from_year` / `from_as_of` → `to_year` / `to_as_of` of the compared window |
+| `upcoming_taxable_distribution` | This calendar year’s upcoming taxable $ on $10k (see below) |
+
+`upcoming_taxable_distribution` looks up **current calendar year** rows for each side (selectors without the period `as_of` pin). Stage order: `updated_estimate` → `preliminary_estimate` → `final`. Paid rows are ignored. When a side has a match, the payload includes `left_dollars` / `right_dollars`, `delta_dollars` (right − left), and `left|right_as_of` plus `left|right_publication_stage`. If neither side has current-year upcoming data the object is `null` and a note is added.
+
+Period `deltas` still carry `_min`/`_max` for the chart; those ranges are **not** repeated on `summary`.
+
 ## Multi-year history and estimate → actual
 
 The upsert key includes `as_of` and `ex_date`, so a September preliminary, a December update, and a January final are **separate rows**. Do not collapse them.

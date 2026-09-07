@@ -8,14 +8,17 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app.crud import get_by_ids, list_matching
-from app.models import AmountUnit, DistributionEstimate, EstimateType
+from app.models import AmountUnit, DistributionEstimate, EstimateType, PublicationStage
 from app.schemas import (
+    CompareCommonInception,
     CompareDeltas,
     CompareIllustration,
     ComparePeriodOut,
     CompareRequest,
     CompareResponse,
     CompareSideIn,
+    CompareSummary,
+    CompareUpcomingDistribution,
     IllustrationComponent,
     IllustrationSnapshot,
     IllustrationTotals,
@@ -552,7 +555,15 @@ def illustrate_portfolio(session: Session, body: PortfolioIllustrateRequest) -> 
 COMPARE_NOTES = [
     "Deltas are right − left (B − A). Interactive Modules charts deltas.effective_tax_on_holding.",
     "A missing side returns an empty illustration (zeros) and a note; the compare itself is not 404.",
+    "summary dollar fields are scaled linearly to $10,000 (value × 10000 / holding_dollars).",
 ]
+
+SUMMARY_HOLDING = Decimal("10000")
+UPCOMING_STAGES = (
+    PublicationStage.updated_estimate.value,
+    PublicationStage.preliminary_estimate.value,
+    PublicationStage.final.value,
+)
 
 
 def _empty_illustration(body: IllustrateRequest, *, reason: str) -> IllustrateResponse:
@@ -774,6 +785,151 @@ def _yoy_shared_selectors(body: CompareRequest) -> IllustrateSelectors | None:
     return None
 
 
+def _scale_to_summary(value: Decimal, holding: Decimal) -> Decimal:
+    if not holding:
+        return Decimal("0.00")
+    return _money(value * (SUMMARY_HOLDING / holding))
+
+
+def _unbound_selectors(selectors: IllustrateSelectors | None) -> IllustrateSelectors | None:
+    if selectors is None or not selectors.has_any():
+        return None
+    return selectors.model_copy(update={"as_of": None, "publication_stage": None})
+
+
+def _upcoming_side(
+    session: Session,
+    body: CompareRequest,
+    side: CompareSideIn | None,
+    selectors: IllustrateSelectors | None,
+) -> tuple[Decimal | None, date | None, str | None]:
+    unbound = _unbound_selectors(selectors)
+    if unbound is None:
+        return None, None, None
+    rows = list_matching(
+        session,
+        fund_family=unbound.fund_family,
+        fund_identifier=unbound.fund_identifier,
+        ticker=unbound.ticker,
+        fund_name=unbound.fund_name,
+        estimate_type=unbound.estimate_type,
+    )
+    year = date.today().year
+    current = [row for row in rows if row.as_of is not None and row.as_of.year == year]
+    chosen: list[DistributionEstimate] = []
+    stage_used: str | None = None
+    for stage in UPCOMING_STAGES:
+        staged = [row for row in current if row.publication_stage == stage]
+        if staged:
+            chosen = staged
+            stage_used = stage
+            break
+    if not chosen:
+        return None, None, None
+    latest = max(row.as_of for row in chosen if row.as_of is not None)
+    chosen = [row for row in chosen if row.as_of == latest]
+    illustration = illustrate_from_rows(
+        chosen,
+        holding=body.holding_dollars,
+        nav_per_share=(side.nav_per_share if side and side.nav_per_share is not None else body.nav_per_share),
+        shares=side.shares if side and side.shares is not None else body.shares,
+        rates=body.tax_rates,
+        combine=body.combine_state_with_federal,
+        extra_notes=[],
+        require_nav_for_per_share=False,
+    )
+    return (
+        _scale_to_summary(illustration.totals.distribution_dollars, body.holding_dollars),
+        latest,
+        stage_used,
+    )
+
+
+def _upcoming_distribution(
+    session: Session,
+    body: CompareRequest,
+    notes: list[str],
+) -> CompareUpcomingDistribution | None:
+    left_sel = (body.left.selectors if body.left else None) or body.selectors
+    right_sel = (body.right.selectors if body.right else None) or body.selectors or left_sel
+    left_dollars, left_as_of, left_stage = _upcoming_side(session, body, body.left, left_sel)
+    right_dollars, right_as_of, right_stage = _upcoming_side(session, body, body.right, right_sel)
+    if left_dollars is None and right_dollars is None:
+        notes.append(
+            f"upcoming_taxable_distribution is null: no {date.today().year} "
+            "preliminary/updated estimate (or final fallback) on either side."
+        )
+        return None
+    left_amt = left_dollars or Decimal("0.00")
+    right_amt = right_dollars or Decimal("0.00")
+    return CompareUpcomingDistribution(
+        left_dollars=left_dollars,
+        right_dollars=right_dollars,
+        delta_dollars=_money(right_amt - left_amt),
+        left_as_of=left_as_of,
+        right_as_of=right_as_of,
+        left_publication_stage=left_stage,
+        right_publication_stage=right_stage,
+    )
+
+
+def _common_inception(body: CompareRequest, period_outs: list[ComparePeriodOut]) -> CompareCommonInception:
+    if body.periods:
+        first, last = body.periods[0], body.periods[-1]
+        return CompareCommonInception(
+            from_year=first.year,
+            to_year=last.year,
+            from_as_of=first.as_of,
+            to_as_of=last.as_of,
+        )
+    left_as_of = body.left.selectors.as_of if body.left and body.left.selectors else None
+    right_as_of = body.right.selectors.as_of if body.right and body.right.selectors else None
+    first_as_of = period_outs[0].as_of if period_outs else None
+    last_as_of = period_outs[-1].as_of if period_outs else None
+    start = left_as_of or first_as_of
+    end = right_as_of or last_as_of
+    return CompareCommonInception(
+        from_year=start.year if start else (period_outs[0].year if period_outs else None),
+        to_year=end.year if end else (period_outs[-1].year if period_outs else None),
+        from_as_of=start,
+        to_as_of=end,
+    )
+
+
+def build_compare_summary(
+    session: Session,
+    body: CompareRequest,
+    period_outs: list[ComparePeriodOut],
+    notes: list[str],
+) -> CompareSummary:
+    count = len(period_outs)
+    tax_delta = sum((period.deltas.estimated_tax for period in period_outs), Decimal("0"))
+    dist_delta = sum((period.deltas.distribution_dollars for period in period_outs), Decimal("0"))
+    if count:
+        drag = sum((period.deltas.effective_tax_on_holding for period in period_outs), Decimal("0")) / Decimal(count)
+    else:
+        drag = Decimal("0")
+    return CompareSummary(
+        normalized_holding_dollars=SUMMARY_HOLDING,
+        total_tax_difference=_scale_to_summary(tax_delta, body.holding_dollars),
+        annualized_tax_drag_delta=_rate(drag),
+        distribution_dollars_difference=_scale_to_summary(dist_delta, body.holding_dollars),
+        periods_compared=count,
+        common_inception=_common_inception(body, period_outs),
+        upcoming_taxable_distribution=_upcoming_distribution(session, body, notes),
+    )
+
+
+def _compare_response(
+    session: Session,
+    body: CompareRequest,
+    period_outs: list[ComparePeriodOut],
+    notes: list[str],
+) -> CompareResponse:
+    summary = build_compare_summary(session, body, period_outs, notes)
+    return CompareResponse(mode=body.mode, periods=period_outs, summary=summary, notes=notes)
+
+
 def illustrate_compare(session: Session, body: CompareRequest) -> CompareResponse:
     notes = list(COMPARE_NOTES)
     notes.append(ILLUSTRATION_NOTES[0])
@@ -817,7 +973,7 @@ def illustrate_compare(session: Session, body: CompareRequest) -> CompareRespons
                     holding=body.holding_dollars,
                 )
             )
-        return CompareResponse(mode=body.mode, periods=period_outs, notes=notes)
+        return _compare_response(session, body, period_outs, notes)
 
     jobs: list[tuple[int, date | None, bool]] = []
     if body.periods:
@@ -858,4 +1014,4 @@ def illustrate_compare(session: Session, body: CompareRequest) -> CompareRespons
                 holding=body.holding_dollars,
             )
         )
-    return CompareResponse(mode=body.mode, periods=period_outs, notes=notes)
+    return _compare_response(session, body, period_outs, notes)
