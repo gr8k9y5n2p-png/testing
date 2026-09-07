@@ -501,6 +501,12 @@ class IllustrationSnapshot(BaseModel):
         description="Walk this order and keep the first stage that has rows for the holding.",
     )
     as_of: date | None = Field(default=None, description="Pin every holding to one publication as_of.")
+    as_of_year: int | None = Field(
+        default=None,
+        ge=1900,
+        le=2100,
+        description="When as_of is omitted, keep rows whose as_of falls in this calendar year.",
+    )
     latest_as_of_only: bool = True
 
 
@@ -780,13 +786,20 @@ class PortfolioCompareSideIn(BaseModel):
 
 
 class PortfolioCompareRequest(BaseModel):
-    """Single-snapshot Current vs Proposed Allocation. ``periods[]`` YoY is not in v1."""
+    """Current vs Proposed Allocation. Omit ``periods`` for one snapshot; send ``periods`` for YoY bars."""
 
     current: PortfolioCompareSideIn
     proposed: PortfolioCompareSideIn
     tax_rates: TaxRates = Field(default_factory=TaxRates)
     combine_state_with_federal: bool = True
     snapshot: IllustrationSnapshot = Field(default_factory=IllustrationSnapshot)
+    periods: list[ComparePeriodIn] = Field(
+        default_factory=list,
+        description=(
+            "Optional YoY vintages. Each entry pins both books via snapshot.as_of "
+            "(or as_of_year when as_of is omitted). Omit for single-snapshot compare."
+        ),
+    )
 
     @model_validator(mode="after")
     def resolve_weights(self) -> PortfolioCompareRequest:
@@ -833,11 +846,43 @@ class PortfolioCompareSummary(BaseModel):
     distribution_dollars: Decimal
     effective_tax_on_holding: Decimal
     coverage_pct: Decimal
+    total_tax_difference: Decimal | None = Field(
+        default=None,
+        description="Σ period estimated_tax Δ scaled to $10k (periods mode).",
+    )
+    annualized_tax_drag_delta: Decimal | None = Field(
+        default=None,
+        description="Mean of period effective_tax_on_holding Δ.",
+    )
+    distribution_dollars_difference: Decimal | None = Field(
+        default=None,
+        description="Σ period distribution_dollars Δ scaled to $10k (periods mode).",
+    )
+    periods_compared: int = 0
+    common_inception: CompareCommonInception | None = None
 
 
-class PortfolioCompareResponse(BaseModel):
+class PortfolioComparePeriodOut(BaseModel):
+    year: int
+    as_of: date | None
     current: PortfolioCompareAllocationOut
     proposed: PortfolioCompareAllocationOut
     deltas: PortfolioCompareDeltas
+
+
+class PortfolioCompareResponse(BaseModel):
+    current: PortfolioCompareAllocationOut | None = Field(
+        default=None,
+        description="Single snapshot, or the latest periods[] row when YoY is requested.",
+    )
+    proposed: PortfolioCompareAllocationOut | None = None
+    deltas: PortfolioCompareDeltas | None = Field(
+        default=None,
+        description="Single snapshot or latest period: proposed − current.",
+    )
+    periods: list[PortfolioComparePeriodOut] = Field(
+        default_factory=list,
+        description="Empty when periods[] was omitted (single-snapshot mode).",
+    )
     summary: PortfolioCompareSummary
     notes: list[str]

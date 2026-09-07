@@ -13,6 +13,7 @@ from app.schemas import (
     CompareCommonInception,
     CompareDeltas,
     CompareIllustration,
+    ComparePeriodIn,
     ComparePeriodOut,
     CompareRequest,
     CompareResponse,
@@ -27,6 +28,7 @@ from app.schemas import (
     IllustrateSelectors,
     PortfolioCompareAllocationOut,
     PortfolioCompareDeltas,
+    PortfolioComparePeriodOut,
     PortfolioCompareRequest,
     PortfolioCompareResponse,
     PortfolioCompareSummary,
@@ -432,6 +434,12 @@ def _select_holding_rows(
             )
     if snapshot.as_of:
         rows = [row for row in rows if row.as_of == snapshot.as_of]
+    elif snapshot.as_of_year is not None:
+        rows = [
+            row
+            for row in rows
+            if row.as_of is not None and row.as_of.year == snapshot.as_of_year
+        ]
 
     if snapshot.prefer_publication_stages:
         chosen: list = []
@@ -578,9 +586,9 @@ def illustrate_portfolio(session: Session, body: PortfolioIllustrateRequest) -> 
 
 
 PORTFOLIO_COMPARE_NOTES = [
-    "Deltas are proposed − current on one shared snapshot. Interactive Modules charts Current vs Proposed Allocation.",
+    "Deltas are proposed − current. Interactive Modules charts Current vs Proposed Allocation (center-zero bars).",
     "Each side is a full POST /illustrate/portfolio result. Gaps and warnings stay on that side — never dropped.",
-    "v1 is a single snapshot (shared snapshot + tax_rates). periods[] year-over-year is not in this contract.",
+    "Omit periods[] for one shared snapshot. When periods[] is present, each year is a Proposed − Current pair; top-level current/proposed/deltas copy the latest period.",
     "summary dollar fields are scaled linearly to $10,000, same as POST /illustrate/compare.",
 ]
 
@@ -597,36 +605,10 @@ def _scale_to_book(value: Decimal, book: Decimal, common: Decimal) -> Decimal:
     return value * (common / book)
 
 
-def illustrate_portfolio_compare(
-    session: Session, body: PortfolioCompareRequest
-) -> PortfolioCompareResponse:
-    current = illustrate_portfolio(
-        session,
-        PortfolioIllustrateRequest(
-            holdings=body.current.holdings,
-            tax_rates=body.tax_rates,
-            combine_state_with_federal=body.combine_state_with_federal,
-            snapshot=body.snapshot,
-        ),
-    )
-    proposed = illustrate_portfolio(
-        session,
-        PortfolioIllustrateRequest(
-            holdings=body.proposed.holdings,
-            tax_rates=body.tax_rates,
-            combine_state_with_federal=body.combine_state_with_federal,
-            snapshot=body.snapshot,
-        ),
-    )
-    current_out = PortfolioCompareAllocationOut(
-        label=body.current.label or "Current Allocation",
-        **current.model_dump(),
-    )
-    proposed_out = PortfolioCompareAllocationOut(
-        label=body.proposed.label or "Proposed Allocation",
-        **proposed.model_dump(),
-    )
-    deltas = PortfolioCompareDeltas(
+def _portfolio_pair_deltas(
+    current: PortfolioIllustrateResponse, proposed: PortfolioIllustrateResponse
+) -> PortfolioCompareDeltas:
+    return PortfolioCompareDeltas(
         estimated_tax=_money(proposed.totals.estimated_tax - current.totals.estimated_tax),
         distribution_dollars=_money(
             proposed.totals.distribution_dollars - current.totals.distribution_dollars
@@ -644,39 +626,169 @@ def illustrate_portfolio_compare(
             proposed.totals.distribution_dollars_max, current.totals.distribution_dollars_max
         ),
     )
-    current_book = current.coverage.dollars_total
-    proposed_book = proposed.coverage.dollars_total
-    common = SUMMARY_HOLDING
-    summary = PortfolioCompareSummary(
-        normalized_book_dollars=common,
-        estimated_tax=_money(
-            _scale_to_book(proposed.totals.estimated_tax, proposed_book, common)
-            - _scale_to_book(current.totals.estimated_tax, current_book, common)
+
+
+def _run_allocation_pair(
+    session: Session,
+    body: PortfolioCompareRequest,
+    snapshot: IllustrationSnapshot,
+) -> tuple[PortfolioCompareAllocationOut, PortfolioCompareAllocationOut, PortfolioCompareDeltas]:
+    current = illustrate_portfolio(
+        session,
+        PortfolioIllustrateRequest(
+            holdings=body.current.holdings,
+            tax_rates=body.tax_rates,
+            combine_state_with_federal=body.combine_state_with_federal,
+            snapshot=snapshot,
         ),
-        distribution_dollars=_money(
-            _scale_to_book(proposed.totals.distribution_dollars, proposed_book, common)
-            - _scale_to_book(current.totals.distribution_dollars, current_book, common)
-        ),
-        effective_tax_on_holding=deltas.effective_tax_on_holding,
-        coverage_pct=deltas.coverage_pct,
     )
-    notes = list(PORTFOLIO_COMPARE_NOTES)
+    proposed = illustrate_portfolio(
+        session,
+        PortfolioIllustrateRequest(
+            holdings=body.proposed.holdings,
+            tax_rates=body.tax_rates,
+            combine_state_with_federal=body.combine_state_with_federal,
+            snapshot=snapshot,
+        ),
+    )
+    current_out = PortfolioCompareAllocationOut(
+        label=body.current.label or "Current Allocation",
+        **current.model_dump(),
+    )
+    proposed_out = PortfolioCompareAllocationOut(
+        label=body.proposed.label or "Proposed Allocation",
+        **proposed.model_dump(),
+    )
+    return current_out, proposed_out, _portfolio_pair_deltas(current, proposed)
+
+
+def _period_snapshot(base: IllustrationSnapshot, period: ComparePeriodIn) -> IllustrationSnapshot:
+    if period.as_of is not None:
+        return base.model_copy(update={"as_of": period.as_of, "as_of_year": None, "latest_as_of_only": False})
+    return base.model_copy(update={"as_of": None, "as_of_year": period.year, "latest_as_of_only": True})
+
+
+def _book_for_scale(current: PortfolioCompareAllocationOut, proposed: PortfolioCompareAllocationOut) -> Decimal:
+    return proposed.coverage.dollars_total or current.coverage.dollars_total or SUMMARY_HOLDING
+
+
+def _gap_notes(current: PortfolioCompareAllocationOut, proposed: PortfolioCompareAllocationOut) -> list[str]:
+    notes: list[str] = []
     if current.gaps or proposed.gaps:
         notes.append(
             f"Uncovered holdings: current={len(current.gaps)}, proposed={len(proposed.gaps)}. "
             "See current.gaps and proposed.gaps — never dropped silently."
         )
-    if current_book != proposed_book:
-        notes.append(
-            f"Books differ (${current_book} vs ${proposed_book}); "
-            f"summary dollar deltas are scaled to ${common}."
-        )
     notes.extend(f"current: {warning}" for warning in current.warnings)
     notes.extend(f"proposed: {warning}" for warning in proposed.warnings)
+    return notes
+
+
+def _portfolio_compare_summary(
+    *,
+    current: PortfolioCompareAllocationOut,
+    proposed: PortfolioCompareAllocationOut,
+    deltas: PortfolioCompareDeltas,
+    period_outs: list[PortfolioComparePeriodOut],
+) -> PortfolioCompareSummary:
+    current_book = current.coverage.dollars_total
+    proposed_book = proposed.coverage.dollars_total
+    common = SUMMARY_HOLDING
+    latest_tax = _money(
+        _scale_to_book(proposed.totals.estimated_tax, proposed_book, common)
+        - _scale_to_book(current.totals.estimated_tax, current_book, common)
+    )
+    latest_dist = _money(
+        _scale_to_book(proposed.totals.distribution_dollars, proposed_book, common)
+        - _scale_to_book(current.totals.distribution_dollars, current_book, common)
+    )
+    if period_outs:
+        tax_sum = Decimal("0")
+        dist_sum = Decimal("0")
+        drag_sum = Decimal("0")
+        for period in period_outs:
+            book = _book_for_scale(period.current, period.proposed)
+            tax_sum += _scale_to_book(period.deltas.estimated_tax, book, common)
+            dist_sum += _scale_to_book(period.deltas.distribution_dollars, book, common)
+            drag_sum += period.deltas.effective_tax_on_holding
+        count = len(period_outs)
+        first, last = period_outs[0], period_outs[-1]
+        inception = CompareCommonInception(
+            from_year=first.year,
+            to_year=last.year,
+            from_as_of=first.as_of,
+            to_as_of=last.as_of,
+        )
+        return PortfolioCompareSummary(
+            normalized_book_dollars=common,
+            estimated_tax=latest_tax,
+            distribution_dollars=latest_dist,
+            effective_tax_on_holding=deltas.effective_tax_on_holding,
+            coverage_pct=deltas.coverage_pct,
+            total_tax_difference=_money(tax_sum),
+            annualized_tax_drag_delta=_rate(drag_sum / Decimal(count)),
+            distribution_dollars_difference=_money(dist_sum),
+            periods_compared=count,
+            common_inception=inception,
+        )
+    return PortfolioCompareSummary(
+        normalized_book_dollars=common,
+        estimated_tax=latest_tax,
+        distribution_dollars=latest_dist,
+        effective_tax_on_holding=deltas.effective_tax_on_holding,
+        coverage_pct=deltas.coverage_pct,
+        total_tax_difference=latest_tax,
+        annualized_tax_drag_delta=deltas.effective_tax_on_holding,
+        distribution_dollars_difference=latest_dist,
+        periods_compared=0,
+    )
+
+
+def illustrate_portfolio_compare(
+    session: Session, body: PortfolioCompareRequest
+) -> PortfolioCompareResponse:
+    notes = list(PORTFOLIO_COMPARE_NOTES)
+    period_outs: list[PortfolioComparePeriodOut] = []
+    if body.periods:
+        for period in body.periods:
+            snapshot = _period_snapshot(body.snapshot, period)
+            current_out, proposed_out, deltas = _run_allocation_pair(session, body, snapshot)
+            period_outs.append(
+                PortfolioComparePeriodOut(
+                    year=period.year,
+                    as_of=period.as_of,
+                    current=current_out,
+                    proposed=proposed_out,
+                    deltas=deltas,
+                )
+            )
+            notes.extend(_gap_notes(current_out, proposed_out))
+        latest = period_outs[-1]
+        current_out, proposed_out, deltas = latest.current, latest.proposed, latest.deltas
+        notes.append(
+            f"periods[] YoY: {len(period_outs)} year(s). "
+            "Top-level current / proposed / deltas are the latest period."
+        )
+    else:
+        current_out, proposed_out, deltas = _run_allocation_pair(session, body, body.snapshot)
+        notes.extend(_gap_notes(current_out, proposed_out))
+        if current_out.coverage.dollars_total != proposed_out.coverage.dollars_total:
+            notes.append(
+                f"Books differ (${current_out.coverage.dollars_total} vs "
+                f"${proposed_out.coverage.dollars_total}); "
+                f"summary dollar deltas are scaled to ${SUMMARY_HOLDING}."
+            )
+    summary = _portfolio_compare_summary(
+        current=current_out,
+        proposed=proposed_out,
+        deltas=deltas,
+        period_outs=period_outs,
+    )
     return PortfolioCompareResponse(
         current=current_out,
         proposed=proposed_out,
         deltas=deltas,
+        periods=period_outs,
         summary=summary,
         notes=notes,
     )

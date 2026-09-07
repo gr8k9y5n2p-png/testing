@@ -140,6 +140,8 @@ def test_portfolio_compare_im_field_names_and_hero_tickers(client: TestClient) -
     )
     assert Decimal(deltas["coverage_pct"]) == Decimal("0.000000")
     assert Decimal(body["summary"]["normalized_book_dollars"]) == Decimal("10000.00")
+    assert body["periods"] == []
+    assert body["summary"]["periods_compared"] == 0
     assert "periods[]" in " ".join(body["notes"])
 
 
@@ -251,6 +253,265 @@ def test_portfolio_compare_preserves_gaps_on_both_sides(client: TestClient) -> N
     assert body["current"]["holdings"][0]["covered"] is False
     assert any(gap["ticker"] == "XYZAX" for gap in body["proposed"]["gaps"])
     assert any("Uncovered holdings" in note for note in body["notes"])
+
+
+COMPARE_RATES = {
+    "ordinary_income": 0.35,
+    "long_term_capital_gains": 0.15,
+    "short_term_capital_gains": 0.35,
+    "qualified_dividend": 0.15,
+    "state": 0.093,
+}
+
+YOY_BOOKS = {
+    "current": {
+        "label": "Current Allocation",
+        "book_dollars": 1000000,
+        "holdings": [{"fund_identifier": "amcap-fund", "weight_pct": 100}],
+    },
+    "proposed": {
+        "label": "Proposed Allocation",
+        "book_dollars": 1000000,
+        "holdings": [
+            {"fund_identifier": "amcap-fund", "weight_pct": 50},
+            {"ticker": "CGHM", "weight_pct": 50},
+        ],
+    },
+    "tax_rates": COMPARE_RATES,
+    "combine_state_with_federal": True,
+}
+
+
+def _ingest_compare_book(client: TestClient) -> None:
+    response = client.post(
+        "/ingest/distributions",
+        json={
+            "records": [
+                {
+                    "fund_family": "American Funds",
+                    "fund_name": "AMCAP Fund",
+                    "estimate_type": "total_capital_gains",
+                    "amount": "2",
+                    "amount_unit": "percent_of_nav",
+                    "as_of": "2024-12-15",
+                    "publication_stage": "updated_estimate",
+                    "source_url": "https://example.invalid/amcap-2024",
+                },
+                {
+                    "fund_family": "American Funds",
+                    "fund_name": "AMCAP Fund",
+                    "estimate_type": "total_capital_gains",
+                    "amount": "4",
+                    "amount_unit": "percent_of_nav",
+                    "as_of": "2025-09-19",
+                    "publication_stage": "preliminary_estimate",
+                    "source_url": "https://example.invalid/amcap-2025",
+                },
+                {
+                    "fund_family": "American Funds",
+                    "fund_name": "Capital Group Municipal High-Income ETF",
+                    "ticker": "CGHM",
+                    "estimate_type": "total_capital_gains",
+                    "amount": "1",
+                    "amount_unit": "percent_of_nav",
+                    "as_of": "2024-12-15",
+                    "publication_stage": "final",
+                    "source_url": "https://example.invalid/cghm-2024",
+                },
+                {
+                    "fund_family": "American Funds",
+                    "fund_name": "Capital Group Municipal High-Income ETF",
+                    "ticker": "CGHM",
+                    "estimate_type": "total_capital_gains",
+                    "amount": "6",
+                    "amount_unit": "percent_of_nav",
+                    "as_of": "2025-09-19",
+                    "publication_stage": "preliminary_estimate",
+                    "source_url": "https://example.invalid/cghm-2025",
+                },
+            ]
+        },
+    )
+    assert response.status_code == 200, response.text
+
+
+def test_portfolio_compare_yoy_periods_proposed_minus_current(client: TestClient) -> None:
+    _ingest_compare_book(client)
+    response = client.post(
+        "/illustrate/portfolio/compare",
+        json={
+            **YOY_BOOKS,
+            "periods": [
+                {"year": 2024, "as_of": "2024-12-15"},
+                {"year": 2025, "as_of": "2025-09-19"},
+            ],
+        },
+    )
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert len(body["periods"]) == 2
+    assert any("latest period" in note for note in body["notes"])
+
+    y2024 = body["periods"][0]
+    assert y2024["year"] == 2024
+    assert y2024["as_of"] == "2024-12-15"
+    assert Decimal(y2024["current"]["totals"]["distribution_dollars"]) == Decimal("20000.00")
+    assert Decimal(y2024["current"]["totals"]["estimated_tax"]) == Decimal("4860.00")
+    assert Decimal(y2024["proposed"]["totals"]["distribution_dollars"]) == Decimal("15000.00")
+    assert Decimal(y2024["proposed"]["totals"]["estimated_tax"]) == Decimal("3645.00")
+    assert Decimal(y2024["deltas"]["distribution_dollars"]) == Decimal("-5000.00")
+    assert Decimal(y2024["deltas"]["estimated_tax"]) == Decimal("-1215.00")
+    assert Decimal(y2024["deltas"]["effective_tax_on_holding"]) == Decimal("-0.001215")
+    assert Decimal(y2024["deltas"]["coverage_pct"]) == Decimal("0.000000")
+
+    y2025 = body["periods"][1]
+    assert y2025["year"] == 2025
+    assert y2025["as_of"] == "2025-09-19"
+    assert Decimal(y2025["current"]["totals"]["distribution_dollars"]) == Decimal("40000.00")
+    assert Decimal(y2025["current"]["totals"]["estimated_tax"]) == Decimal("9720.00")
+    assert Decimal(y2025["proposed"]["totals"]["distribution_dollars"]) == Decimal("50000.00")
+    assert Decimal(y2025["proposed"]["totals"]["estimated_tax"]) == Decimal("12150.00")
+    assert Decimal(y2025["deltas"]["distribution_dollars"]) == Decimal("10000.00")
+    assert Decimal(y2025["deltas"]["estimated_tax"]) == Decimal("2430.00")
+    assert Decimal(y2025["deltas"]["effective_tax_on_holding"]) == Decimal("0.002430")
+
+    # Top-level current / proposed / deltas copy the latest period.
+    assert Decimal(body["deltas"]["estimated_tax"]) == Decimal(y2025["deltas"]["estimated_tax"])
+    assert Decimal(body["current"]["totals"]["distribution_dollars"]) == Decimal("40000.00")
+    assert Decimal(body["proposed"]["totals"]["distribution_dollars"]) == Decimal("50000.00")
+
+    summary = body["summary"]
+    assert Decimal(summary["normalized_book_dollars"]) == Decimal("10000.00")
+    assert Decimal(summary["estimated_tax"]) == Decimal("24.30")
+    assert Decimal(summary["distribution_dollars"]) == Decimal("100.00")
+    assert Decimal(summary["effective_tax_on_holding"]) == Decimal("0.002430")
+    assert summary["periods_compared"] == 2
+    assert Decimal(summary["total_tax_difference"]) == Decimal("12.15")
+    assert Decimal(summary["distribution_dollars_difference"]) == Decimal("50.00")
+    assert Decimal(summary["annualized_tax_drag_delta"]) == Decimal("0.000608")
+    assert summary["common_inception"] == {
+        "from_year": 2024,
+        "to_year": 2025,
+        "from_as_of": "2024-12-15",
+        "to_as_of": "2025-09-19",
+    }
+
+
+def test_portfolio_compare_yoy_year_window_without_as_of(client: TestClient) -> None:
+    _ingest_compare_book(client)
+    response = client.post(
+        "/illustrate/portfolio/compare",
+        json={
+            **YOY_BOOKS,
+            "periods": [{"year": 2024}, {"year": 2025}],
+        },
+    )
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert len(body["periods"]) == 2
+    assert body["periods"][0]["as_of"] is None
+    assert body["periods"][1]["as_of"] is None
+    assert Decimal(body["periods"][0]["deltas"]["estimated_tax"]) == Decimal("-1215.00")
+    assert Decimal(body["periods"][1]["deltas"]["estimated_tax"]) == Decimal("2430.00")
+    assert Decimal(body["summary"]["annualized_tax_drag_delta"]) == Decimal("0.000608")
+
+
+def test_portfolio_compare_yoy_fixture_smoke_af_and_trp(client: TestClient) -> None:
+    _seed(client, "american_funds", "t_rowe_price")
+    response = client.post(
+        "/illustrate/portfolio/compare",
+        json={
+            "current": {
+                "label": "Current Allocation",
+                "book_dollars": 1000000,
+                "holdings": [
+                    {"fund_identifier": "amcap-fund", "weight_pct": 70},
+                    {"ticker": "TRBCX", "weight_pct": 30, "nav_per_share": 100},
+                ],
+            },
+            "proposed": {
+                "label": "Proposed Allocation",
+                "book_dollars": 1000000,
+                "holdings": [
+                    {"fund_identifier": "amcap-fund", "weight_pct": 40},
+                    {"ticker": "CGHM", "weight_pct": 30},
+                    {"ticker": "TRBCX", "weight_pct": 30, "nav_per_share": 100},
+                ],
+            },
+            "tax_rates": {},
+            "periods": [
+                {"year": 2024, "as_of": "2024-09-18"},
+                {"year": 2025, "as_of": "2025-09-19"},
+            ],
+        },
+    )
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert len(body["periods"]) == 2
+    assert body["summary"]["periods_compared"] == 2
+    y2024, y2025 = body["periods"]
+    amcap_2024 = next(
+        h for h in y2024["current"]["holdings"] if h["fund_identifier"] == "amcap-fund"
+    )
+    amcap_2025 = next(
+        h for h in y2025["current"]["holdings"] if h["fund_identifier"] == "amcap-fund"
+    )
+    assert amcap_2024["covered"] is True
+    assert amcap_2025["covered"] is True
+    assert Decimal(y2024["deltas"]["estimated_tax"]) != Decimal(y2025["deltas"]["estimated_tax"])
+    assert Decimal(body["deltas"]["estimated_tax"]) == Decimal(y2025["deltas"]["estimated_tax"])
+
+
+def test_portfolio_compare_yoy_sparse_history_is_gap(client: TestClient) -> None:
+    """Vanguard / Fidelity / Dodge fixtures are one vintage — a missed pin is a gap, not $0."""
+    _seed(client, "vanguard", "fidelity", "dodge_cox")
+    response = client.post(
+        "/illustrate/portfolio/compare",
+        json={
+            "current": {
+                "book_dollars": 1000000,
+                "holdings": [
+                    {"ticker": "VFIAX", "weight_pct": 40, "nav_per_share": 100},
+                    {"ticker": "FBGRX", "weight_pct": 30, "nav_per_share": 100},
+                    {"ticker": "DODGX", "weight_pct": 30, "nav_per_share": 100},
+                ],
+            },
+            "proposed": {
+                "book_dollars": 1000000,
+                "holdings": [
+                    {"ticker": "VFIAX", "weight_pct": 50, "nav_per_share": 100},
+                    {"ticker": "FBGRX", "weight_pct": 50, "nav_per_share": 100},
+                ],
+            },
+            "tax_rates": {},
+            "periods": [
+                {"year": 2024, "as_of": "2024-12-15"},
+                {"year": 2025, "as_of": "2025-12-24"},
+            ],
+        },
+    )
+    assert response.status_code == 200, response.text
+    body = response.json()
+    missed = body["periods"][0]
+    assert missed["year"] == 2024
+    assert all(not h["covered"] for h in missed["current"]["holdings"])
+    assert all(not h["covered"] for h in missed["proposed"]["holdings"])
+    assert len(missed["current"]["gaps"]) == 3
+    assert {g["ticker"] for g in missed["current"]["gaps"]} == {"VFIAX", "FBGRX", "DODGX"}
+    assert Decimal(missed["current"]["totals"]["estimated_tax"]) == Decimal("0.00")
+    assert Decimal(missed["proposed"]["totals"]["estimated_tax"]) == Decimal("0.00")
+    assert Decimal(missed["deltas"]["estimated_tax"]) == Decimal("0.00")
+    assert Decimal(missed["current"]["coverage"]["coverage_pct"]) == Decimal("0.000000")
+    assert any("Uncovered holdings" in note for note in body["notes"])
+
+    vanguard_year = body["periods"][1]
+    vfiax = next(h for h in vanguard_year["current"]["holdings"] if h["ticker"] == "VFIAX")
+    fbgrx = next(h for h in vanguard_year["current"]["holdings"] if h["ticker"] == "FBGRX")
+    dodgx = next(h for h in vanguard_year["current"]["holdings"] if h["ticker"] == "DODGX")
+    assert vfiax["covered"] is True
+    assert fbgrx["covered"] is False
+    assert dodgx["covered"] is False
+    assert Decimal(vanguard_year["current"]["coverage"]["coverage_pct"]) == Decimal("40.000000")
 
 
 def test_portfolio_compare_validation(client: TestClient) -> None:

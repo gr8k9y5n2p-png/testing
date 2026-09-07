@@ -181,7 +181,7 @@ def illustrate_portfolio_tax(
 def illustrate_portfolio_compare_tax(
     body: PortfolioCompareRequest, session: Session = Depends(get_session)
 ) -> PortfolioCompareResponse:
-    """Current vs Proposed Allocation (single snapshot). periods[] YoY is not in v1."""
+    """Current vs Proposed Allocation. Omit periods for one snapshot; send periods[] for YoY bars."""
     return illustrate_portfolio_compare(session, body)
 
 

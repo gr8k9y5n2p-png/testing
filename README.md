@@ -14,7 +14,7 @@ The default demo uses **SQLite** and bundled Capital Group HTML fixtures so the 
 - Search API with filters, text search, and pagination
 - `POST /illustrate` — server-side tax-impact math for a dollar holding (Website Engineering owns the UI)
 - `POST /illustrate/portfolio` — book-level review with coverage % and explicit gaps
-- `POST /illustrate/portfolio/compare` — Interactive Modules Current vs Proposed Allocation (single snapshot)
+- `POST /illustrate/portfolio/compare` — Interactive Modules Current vs Proposed Allocation (single snapshot or YoY `periods[]`)
 - `POST /illustrate/compare` — Interactive Modules chart contract (`fund_vs_fund` or `yoy`)
 - Top-110 US-advisor fund-family adapters (`GET /fund-families`, `GET /coverage`) plus `POST /coverage/gaps` when a portfolio ticker is missing
 - Partner ingest (`POST /ingest/distributions`) remains the escape hatch for uncovered names
@@ -249,7 +249,9 @@ Holdings may send **`holding_dollars`** or **`weight_pct` + `book_dollars`**. `w
 
 ### Current vs Proposed (`POST /illustrate/portfolio/compare`)
 
-Interactive Modules **Current Allocation vs Proposed Allocation** on **one shared snapshot**. **`periods[]` year-over-year is not in v1**.
+Interactive Modules **Current Allocation vs Proposed Allocation**. Same center-zero bars as fund compare, but each series is **Proposed − Current**.
+
+**Single snapshot** (omit `periods`): one shared `snapshot` + `tax_rates`. **YoY** (send `periods[]`, e.g. `[{year:2024,as_of:…},{year:2025,as_of:…}]`): each period re-runs both books with that `as_of` pinned, or a calendar-year window when `as_of` is omitted (`snapshot.as_of_year`). Top-level `current` / `proposed` / `deltas` **copy the latest period** so the diverging-bar sketch still has one pair. `periods[]` is empty in single-snapshot mode.
 
 Each holding sends `ticker` and/or `fund_identifier`, and **either** `holding_dollars` **or** `weight_pct` plus the side’s `book_dollars`. `weight_pct` is **0–100** (UI %). `AMCPX` resolves to stored `amcap-fund` when the Capital Group HTML has no ticker column.
 
@@ -259,12 +261,15 @@ Each side is a full `/illustrate/portfolio` result plus `label` (defaults: `Curr
 
 | Field | Meaning |
 | --- | --- |
-| `current` / `proposed` | Full `PortfolioIllustrateResponse` + `label` |
+| `current` / `proposed` | Full `PortfolioIllustrateResponse` + `label` (latest period when YoY) |
+| `periods[]` | YoY rows: `{year, as_of, current, proposed, deltas}` |
 | `deltas.estimated_tax` | Dollar tax delta |
 | `deltas.distribution_dollars` | Dollar distribution delta |
-| `deltas.effective_tax_on_holding` | Rate delta |
+| `deltas.effective_tax_on_holding` | Rate delta (chart field) |
 | `deltas.coverage_pct` | Coverage-percentage points |
-| `summary` | Same four fields; dollar amounts scaled to **$10,000** (parallel to `/illustrate/compare`) |
+| `summary` | Dollar fields at **$10,000**. YoY also sets `total_tax_difference`, `annualized_tax_drag_delta`, `distribution_dollars_difference`, `periods_compared`, `common_inception` (same footer idea as `/illustrate/compare`) |
+
+**Sparse history:** Vanguard, Fidelity, and Dodge & Cox fixtures are one vintage each. A YoY `periods[]` pin that misses that `as_of` / year is an explicit **gap** on that side, not a silent $0. American Funds and T. Rowe Price have multi-year fixture snapshots (2024–2025 prelim/final; TRBCX 2023–2025).
 
 ```bash
 curl -s -X POST http://127.0.0.1:8000/illustrate/portfolio/compare \
@@ -296,6 +301,33 @@ curl -s -X POST http://127.0.0.1:8000/illustrate/portfolio/compare \
 ```
 
 Hero tickers used in tests: `AMCPX` / `amcap-fund`, `CGHM`, `TRBCX`, `VFIAX`, `VBIAX`, `FBGRX`.
+
+YoY example (same books, two `as_of` pins):
+
+```bash
+curl -s -X POST http://127.0.0.1:8000/illustrate/portfolio/compare \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "current": {
+      "label": "Current Allocation",
+      "book_dollars": 1000000,
+      "holdings": [{"fund_identifier": "amcap-fund", "weight_pct": 100}]
+    },
+    "proposed": {
+      "label": "Proposed Allocation",
+      "book_dollars": 1000000,
+      "holdings": [
+        {"fund_identifier": "amcap-fund", "weight_pct": 50},
+        {"ticker": "CGHM", "weight_pct": 50}
+      ]
+    },
+    "tax_rates": {},
+    "periods": [
+      {"year": 2024, "as_of": "2024-12-15"},
+      {"year": 2025, "as_of": "2025-09-19"}
+    ]
+  }' | jq '{summary, periods: [.periods[] | {year, as_of, deltas}]}'
+```
 
 ### Compare chart (`POST /illustrate/compare`)
 
