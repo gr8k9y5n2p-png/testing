@@ -9,9 +9,9 @@ class BlackRockSource(HtmlTableSource):
     aum_rank = 1
     priority = 1
     notes = (
-        "Parses the public iShares US capital-gains HTML "
+        "Full published iShares US capital-gains HTML "
         "https://www.ishares.com/us/capital-gains-distributions "
-        "(mid-year and year-end $/share, % of NAV, ex/pay dates). Table captions "
+        "(every fund on the mid-year and year-end tables; $/share, % of NAV, ex/pay). Table captions "
         "set publication_stage: mid-year paid vs year-end final. Verified 2026-09-07. "
         "Do not use BlackRock Canada PDFs as the US source. "
         "Prior-year archives are 1099-style PDFs in the tax kits "
@@ -117,7 +117,7 @@ class FidelitySource(HtmlTableSource):
         "(Symbol/Cusip, ex/pay, % of NAV, ST/LT, total per share, as-of) "
         "plus the public prior-year paid table "
         "https://institutional.fidelity.com/app/tabbed/products/FIIS_SP10_DPL6.html?navId=324 "
-        "(Dividends / ST / LT / Reinvest NAV). "
+        "(full book: Dividends / ST / LT / Reinvest NAV). "
         "Verified 2026-09-07. FBGRX 2026 estimate LT $21.021 (as of 2026-07-31) "
         "coexists with 2025 paid LT $5.07300 (ex 2025-09-12). "
         "Hub: https://www.fidelity.com/mutual-funds/information/overview"
@@ -259,7 +259,7 @@ class InvescoSource(HtmlTableSource):
         "(American Franchise LT $2.89 / 8.55% of NAV). "
         "2024: https://www.invesco.com/us-rest/contentdetail?contentId=29096ee0-8ec4-4199-930f-645be9d07e64 "
         "(as of 2024-09-30; American Franchise LT $0.93 / 3.29% of NAV). "
-        "ETF estimates via press releases. Fixture HTML transcribes those tables; live PDF is not HTML-parsed. "
+        "ETF estimates via press releases. 2025 MF fixture is the full paying-fund PDF table (names; no MF tickers). "
         "Invesco lists ICI Primary distribution files on "
         "https://www.invesco.com/us/en/accounts/tax-center/open-end-tax-guide.html "
         "(2023–2025 most funds / REIT / SteelPath). No stable public file URL "
@@ -298,8 +298,9 @@ class TRowePriceSource(HtmlTableSource):
         "2022 year-end and 2022 preliminary are official PDFs (no 2022 HTML sibling): "
         "https://www.troweprice.com/content/dam/fai/Funds/Tax_Center/2022-Year-End-Tax-Distributions.pdf "
         "and .../T.%20Rowe%20Price%202022%20Preliminary%20Estimated%20Distributions%20as%20of%2010.31.2022.pdf. "
+        "2023–2025 fixtures are the full public YE HTML books. "
         "Verified 2026-09-07; e.g. TRBCX LT $10.9575 (2025), $16.1515 (2024), $5.2095 (2023), "
-        "$6.0394 final / $5.75 prelim (2022)."
+        "$6.0394 final / $5.75 prelim (2022). 2022 remains PDF flagship transcription."
     )
     live_limitations = "Live year-end HTML is supported for 2023–2025. 2022 packs are PDF transcriptions (live=False)."
 

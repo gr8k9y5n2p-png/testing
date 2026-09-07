@@ -14,7 +14,7 @@ The default demo uses **SQLite** and bundled Capital Group HTML fixtures so the 
 
 Vanguard is the first-choice ICI book: official Primary Layout PDFs on the advisor tax center cover the full fund list; we transcribe December year-end rows for identified **≥$1B** Admiral / mega-ETF classes (2021–2025). Other top-AUM families are checked for ICI downloads in rank order; Invesco *lists* ICI Primary files on its open-end tax guide, but no stable public file URL was fetchable (JS / 406), so Invesco stays on PDF/HTML archives. Northern Trust publishes filled ICI Primary Reports (2022–2025) on its tax center; PDF text extraction merges income/CG and includes quarterly lines, so December YE ST/LT are transcribed from the companion capital-gains PDFs (same hub).
 
-**≥$1B AUM filter.** When expanding *within* a family, historical rows are limited to funds identified as above **$1 billion AUM** — flagship Admiral / Investor classes and mega ETFs — plus locked compare heroes (`AMCPX`, `CGHM`, `TRBCX`, `VFIAX`, `VBIAX`, `FBGRX`). The allowlist lives in `app/sources/aum.py` (`LARGE_AUM_TICKERS`). It is not a live AUM feed. Micro share classes and synthetic parser samples stay out of multi-year packs. Illustrate/compare contracts are unchanged.
+**Full-book vs flagship history.** Current-year / published-table fixtures now ingest **every fund listed on that family’s public book** (skip synthetic `ZZ*` parser samples; skip Amundi / Pioneer). The ≥$1B allowlist in `app/sources/aum.py` still applies to **older multi-year archives** when those packs were transcribed as flagships only. It is not a live AUM feed. Illustrate / compare / performance contracts are unchanged.
 
 ## What you get
 
@@ -485,6 +485,27 @@ curl -s 'http://127.0.0.1:8000/performance?fund_identifier=the-growth-fund-of-am
 ```
 
 `disclaimers[]` always states that performance is illustrative only, is **not tax advice**, and that default series are ETF total-return proxies rather than official index levels.
+
+## Full-book fixture expansion (overnight wave)
+
+Goal: for **existing US-domiciled adapters**, ingest every fund on the published distribution / capital-gains book — not 1–2 sample tickers. **Skip Amundi / Pioneer.** Do not invent amounts. Synthetic `ZZ*` parser samples stay samples.
+
+**This wave (ranks 1–10 HTML books + selected PDF books):** unique tickers **431 → 1,168**; unique funds **482 → 1,298** on fixture ingest. Tax / illustrate / performance contracts and weekly refresh are unchanged.
+
+| Rank | Family | Before (tickers / funds) | After | Book used | Full-book vs flagship history |
+| --- | --- | --- | --- | --- | --- |
+| 1 | BlackRock / iShares | 12 / 12 | **44 / 44** | Live `ishares.com/us/capital-gains-distributions` (mid-year + YE tables) | Current HTML is full published CG table. 2023–2024 tax kits still not an HTML grid. |
+| 2 | Vanguard | 26 / 26 | 26 / 26 | Unchanged this wave | **Flagship-only** ICI CSVs 2021–2025 (`large_aum_only`). YE HTML is SPA. Next wave: column-safe full ICI December extract. |
+| 3 | Fidelity | 15 / 15 | **350 / 350** | Live prior-year paid table `FIIS_SP10_DPL6` + estimate `FIIS_SP52_DPL6` | Estimate table is still “funds expecting CG” (15). Prior-year paid is the full book. |
+| 7 | American Funds | 3 / 46 | **22 / 84** | Live 2025 YE HTML | 2025 YE is the public table. 2024 YE + estimate samples unchanged (name-heavy). |
+| 9 | Invesco | 2 / 5 | 2 / **45** | Full 2025 estimate PDF (Class A $/share). ETF PIN/PSCI kept | PDF has no MF tickers — funds stored by name. 2024 estimate still thin. |
+| 10 | T. Rowe Price | 18 / 18 | **232 / 232** | Live 2023–2025 YE HTML | **2023–2025 full-book.** 2022 YE + prelim remain PDF flagship transcriptions. |
+| 18 | Dimensional | 3 / 3 | **140 / 140** | Full 2025 CG PDF (published $0.000 kept) | 2025 full-book. 2024 paid PDF still flagship-only. |
+| 41 | Harbor | 3 / 3 | 3 / **9** | 2025 estimate PDF Institutional rows | Tickers only where already identified (HACAX / HASCX / HAIDX). |
+| 43 | Voya | 3 / 3 | 3 / **17** | 2025 estimate PDF paying funds | Class A tickers only for NLCAX / VYCAX / NMCAX; other rows are PDF names. |
+| 20 | Amundi / Pioneer | 4 / 4 | 4 / 4 | **Skipped** | Off the expansion ladder. |
+
+**Handoff for the next wave (do not start 41+ history packs):** continue largest → smallest among remaining thin US adapters (State Street SPA, JPM/GS/PIMCO samples, UBS 403, Franklin SPA, BNY/Schwab/Northern product-page flagships, Dodge/MFS/Janus PDFs, ranks 21–40 product pages, then 51–110). Prefer live HTML or column-safe PDF tables. Login-walled → README gap only.
 
 ## Multi-year history and estimate → actual
 

@@ -1,9 +1,9 @@
-"""Curated ≥$1B AUM filter for historical multi-year packs.
+"""Curated ≥$1B AUM filter for *older* multi-year history packs.
 
-Eric's locked strategy: do not license CapGainsValet/YCharts. When expanding
-*within* a family, keep flagship / large-AUM share classes rather than every
-micro class. This is a curated allowlist of funds identified as above $1B AUM
-(or locked hero tickers), not a live AUM feed.
+Current-year / published-table fixtures ingest the full public book (every
+listed fund except synthetic ZZ* samples). This allowlist still applies when
+a PageSpec sets large_aum_only=True — typically sparse older archives.
+Not a live AUM feed. Do not license CapGainsValet/YCharts.
 """
 
 from __future__ import annotations
