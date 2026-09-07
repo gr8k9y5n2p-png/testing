@@ -345,6 +345,19 @@ def classify_header(text: str, table_title: str) -> ColSpec | None:
     return None
 
 
+# Product universe is US open-end mutual funds + ETFs only.
+# Skip SMAs / separate accounts / institutional SMA sleeves even when mixed into a family table.
+_EXCLUDED_PRODUCT_RE = re.compile(
+    r"(?:\bSMA\b|separate\s+accounts?|sma\s+sleeve|managed\s+account)",
+    re.I,
+)
+
+
+def is_excluded_product(fund_name: str | None, ticker: str | None = None) -> bool:
+    blob = " ".join(part for part in (fund_name, ticker) if part)
+    return bool(_EXCLUDED_PRODUCT_RE.search(blob))
+
+
 def _row_cells(row: Tag) -> list[Tag]:
     return [c for c in row.find_all(["th", "td"], recursive=False)]
 
@@ -497,6 +510,8 @@ def parse_distribution_html(
             if values.get("cusip"):
                 cusip = clean_text(values["cusip"]).upper() or cusip
             if not fund_name:
+                continue
+            if is_excluded_product(fund_name, ticker):
                 continue
 
             rec_date = _parse_mdy(values.get("record_date", ""), default_year)

@@ -22,7 +22,13 @@ from datetime import date
 from decimal import Decimal
 
 from app.models import AmountUnit, EstimateType, PublicationStage
-from app.sources.parser import NormalizedRecord, _parse_mdy, parse_amount, split_fund_identity
+from app.sources.parser import (
+    NormalizedRecord,
+    _parse_mdy,
+    is_excluded_product,
+    parse_amount,
+    split_fund_identity,
+)
 
 def _norm_header(value: str) -> str:
     return " ".join(value.strip().lower().replace("_", " ").replace("-", " ").split())
@@ -81,6 +87,8 @@ def parse_ici_primary(
         ticker = (row.get("ticker") or ticker or "").upper() or ticker
         cusip = (row.get("cusip") or cusip or "").upper() or cusip
         if not ticker:
+            continue
+        if is_excluded_product(fund_name, ticker):
             continue
         rec_date = _parse_mdy(row.get("record_date") or "", None)
         ex_date = _parse_mdy(row.get("ex_date") or "", rec_date.year if rec_date else None)

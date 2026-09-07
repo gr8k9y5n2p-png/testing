@@ -9,9 +9,12 @@ class BlackRockSource(HtmlTableSource):
     aum_rank = 1
     priority = 1
     notes = (
-        "Full published iShares US capital-gains HTML "
+        "iShares US ETF capital-gains HTML "
         "https://www.ishares.com/us/capital-gains-distributions "
-        "(every fund on the mid-year and year-end tables; $/share, % of NAV, ex/pay). Table captions "
+        "(every fund on the mid-year and year-end tables; $/share, % of NAV, ex/pay) plus the "
+        "BlackRock open-end mutual-fund 2025 distribution book "
+        "https://www.blackrock.com/us/individual/resources/tax-information/2025-distributions "
+        "(Investor A when listed). Mutual funds + ETFs only; SMAs skipped. Table captions "
         "set publication_stage: mid-year paid vs year-end final. Verified 2026-09-07. "
         "Do not use BlackRock Canada PDFs as the US source. "
         "Prior-year archives are 1099-style PDFs in the tax kits "
@@ -29,7 +32,13 @@ class BlackRockSource(HtmlTableSource):
                 url="https://www.ishares.com/us/capital-gains-distributions",
                 fixture="capital_gains_distributions.html",
                 live=True,
-            )
+            ),
+            PageSpec(
+                name="2025_open_end_distributions",
+                url="https://www.blackrock.com/us/individual/resources/tax-information/2025-distributions",
+                fixture="2025_open_end_distributions.html",
+                live=False,
+            ),
         ]
 
 
@@ -262,7 +271,9 @@ class InvescoSource(HtmlTableSource):
         "(American Franchise LT $2.89 / 8.55% of NAV). "
         "2024: https://www.invesco.com/us-rest/contentdetail?contentId=29096ee0-8ec4-4199-930f-645be9d07e64 "
         "(as of 2024-09-30; American Franchise LT $0.93 / 3.29% of NAV). "
-        "ETF estimates via press releases. 2025 MF fixture is the full paying-fund PDF table (names; no MF tickers). "
+        "ETF estimates via the 20 Nov 2025 press-release table (full listed ETFs). "
+        "2025 MF fixture is the full paying-fund PDF table (names; no MF tickers; "
+        "SMA High Yield Bond skipped). "
         "Invesco lists ICI Primary distribution files on "
         "https://www.invesco.com/us/en/accounts/tax-center/open-end-tax-guide.html "
         "(2023–2025 most funds / REIT / SteelPath). No stable public file URL "

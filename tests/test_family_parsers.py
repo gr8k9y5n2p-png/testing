@@ -149,6 +149,26 @@ def test_split_fidelity_symbol_cusip() -> None:
     assert cusip == "316389303"
 
 
+def test_skip_sma_and_separate_account_rows() -> None:
+    html = """
+    <html><head><title>Mixed book</title><meta name="date" content="2025-12-15"></head>
+    <body>
+    <table>
+      <tr><th>Fund Name</th><th>Ticker</th><th>Long-Term</th></tr>
+      <tr><td>Example Growth Fund</td><td>EXMPX</td><td>1.25</td></tr>
+      <tr><td>Example SMA High Yield Bond Fund</td><td>EXSMA</td><td>0.40</td></tr>
+      <tr><td>Example Separate Account Sleeve</td><td>EXSEP</td><td>0.55</td></tr>
+    </table>
+    </body></html>
+    """
+    records = parse_distribution_html(html, source_url="fixture://sma", fund_family="Example")
+    tickers = {r.ticker for r in records}
+    assert "EXMPX" in tickers
+    assert "EXSMA" not in tickers
+    assert "EXSEP" not in tickers
+    assert not any("SMA" in (r.fund_name or "") for r in records)
+
+
 def test_split_ishares_ticker_suffix() -> None:
     name, ticker, _cusip, _cls = split_fund_identity(
         "iShares Disciplined Volatility Equity Active ETF ( BDVL )"
@@ -183,6 +203,19 @@ def test_blackrock_ishares_fixture() -> None:
     bemb = next(r for r in records if r.ticker == "BEMB" and r.estimate_type == EstimateType.long_term_capital_gains)
     assert bemb.amount == Decimal("0.393930")
     assert bemb.publication_stage == PublicationStage.final
+
+    oef = parse_distribution_html(
+        (ROOT / "blackrock" / "2025_open_end_distributions.html").read_text(encoding="utf-8"),
+        source_url="fixture://blackrock-oef",
+        fund_family="BlackRock / iShares",
+    )
+    equity_div = next(
+        r
+        for r in oef
+        if "Equity Dividend" in r.fund_name and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert equity_div.amount == Decimal("0.999925")
+    assert not any("SMA" in (r.fund_name or "") for r in oef)
 
 
 def test_vanguard_fixture() -> None:

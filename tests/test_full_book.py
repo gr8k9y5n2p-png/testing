@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 from app.sources.american_funds import AmericanFundsSource
 from app.sources.families import (
     BlackRockSource,
@@ -31,6 +33,8 @@ def test_full_book_ishares_fidelity_trp() -> None:
     ishares_funds, ishares_tickers = _funds_and_tickers(BlackRockSource())
     assert "BDVL" in ishares_tickers
     assert len(ishares_tickers) >= 40
+    assert len(ishares_funds) >= 50
+    assert not any(re.search(r"\bSMA\b", name, re.I) for name in ishares_funds)
 
     fidelity_funds, fidelity_tickers = _funds_and_tickers(FidelitySource())
     assert "FBGRX" in fidelity_tickers
@@ -48,7 +52,8 @@ def test_full_book_american_funds_invesco_dimensional() -> None:
 
     inv_funds, _inv_tickers = _funds_and_tickers(InvescoSource())
     assert any("American Franchise" in name for name in inv_funds)
-    assert len(inv_funds) >= 40
+    assert len(inv_funds) >= 50
+    assert not any(re.search(r"\bSMA\b", name, re.I) for name in inv_funds)
 
     dfa_funds, dfa_tickers = _funds_and_tickers(DimensionalSource())
     assert "DISVX" in dfa_tickers
