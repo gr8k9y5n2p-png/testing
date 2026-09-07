@@ -1,36 +1,50 @@
-import { COPY } from "@/lib/copy";
+import { COPY, freeSearchLabel } from "@/lib/copy";
+import type { FundEstimateView } from "@/data/types";
+import { FundPicker } from "@/components/illustrate/FundPicker";
 
 export function Hero({
-  onSearch,
+  funds,
+  selected,
+  onSelect,
   onImport,
+  remaining,
+  unlimited,
 }: {
-  onSearch: () => void;
+  funds: FundEstimateView[];
+  selected: FundEstimateView | null;
+  onSelect: (fund: FundEstimateView) => void;
   onImport: () => void;
+  remaining: number;
+  unlimited: boolean;
 }) {
   return (
-    <section className="mb-8 max-w-3xl pt-4">
+    <section className="mb-8 max-w-3xl pt-6 sm:pt-10">
       <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-teal">
         Aftertax
       </p>
-      <h1 className="mt-2 font-serif text-3xl tracking-tight text-navy sm:text-[2.35rem] sm:leading-tight">
+      <h1 className="mt-2 font-serif text-3xl tracking-tight text-navy sm:text-[2.5rem] sm:leading-[1.15]">
         {COPY.hero}
       </h1>
       <p className="mt-3 text-[16px] leading-relaxed text-muted">{COPY.sub}</p>
-      <div className="mt-5 flex flex-wrap items-center gap-3">
-        <button
-          type="button"
-          onClick={onSearch}
-          className="inline-flex h-11 items-center rounded-md bg-navy px-4 text-sm font-medium text-white hover:bg-navy-deep"
-        >
-          {COPY.searchCta}
-        </button>
+      <div className="mt-6">
+        <FundPicker
+          funds={funds}
+          selected={selected}
+          onSelect={onSelect}
+          autoFocus
+        />
+      </div>
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
         <button
           type="button"
           onClick={onImport}
-          className="inline-flex h-11 items-center rounded-md border border-line px-4 text-sm text-ink hover:border-line-strong"
+          className="inline-flex h-10 items-center rounded-md border border-line px-4 text-sm text-ink hover:border-line-strong"
         >
           {COPY.importCta}
         </button>
+        <p className="font-mono text-xs text-faint" aria-live="polite">
+          {unlimited ? "Unlimited searches" : freeSearchLabel(remaining)}
+        </p>
       </div>
       <p className="mt-4 text-xs text-faint">{COPY.trust}</p>
     </section>

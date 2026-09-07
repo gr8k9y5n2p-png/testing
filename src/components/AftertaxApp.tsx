@@ -8,27 +8,37 @@ import { HighlightsSection } from "@/components/HighlightsSection";
 import { Hero } from "@/components/landing/Hero";
 import { IllustratePanel } from "@/components/illustrate/IllustratePanel";
 import { PaywallDialog } from "@/components/paywall/PaywallDialog";
-import { COPY, STRIPE, freeSearchLabel } from "@/lib/copy";
+import { COPY, STRIPE } from "@/lib/copy";
 import { isLiveCoveredFamily, reportCoverageGap } from "@/lib/coverage";
 import { useFreemium } from "@/lib/freemium";
+
+export type CheckoutReturn = "success" | "cancel" | null;
+
+const CHECKOUT_SUCCESS_MESSAGE = `Checkout is not live yet. You’ll return to this same search flow after Stripe is wired (price ${STRIPE.priceId}).`;
 
 export function AftertaxApp({
   funds,
   highlights,
   facets,
+  checkout = null,
 }: {
   funds: FundEstimateView[];
   highlights: HighlightSets;
   facets: Facets;
+  checkout?: CheckoutReturn;
 }) {
   const [selected, setSelected] = useState<FundEstimateView | null>(null);
-  const [paywallOpen, setPaywallOpen] = useState(false);
-  const [unlockMessage, setUnlockMessage] = useState<string | null>(null);
+  const [paywallOpen, setPaywallOpen] = useState(checkout === "cancel");
+  const [paywallReason, setPaywallReason] = useState<"import" | "limit">("limit");
+  const [unlockMessage, setUnlockMessage] = useState<string | null>(
+    checkout === "success" ? CHECKOUT_SUCCESS_MESSAGE : null,
+  );
   const freemium = useFreemium();
 
   function selectFund(fund: FundEstimateView) {
     const result = freemium.trySearch(fund.ticker);
     if (!result.allowed) {
+      setPaywallReason("limit");
       setPaywallOpen(true);
       return;
     }
@@ -40,19 +50,33 @@ export function AftertaxApp({
         fund_family: fund.family,
       });
     }
-    document.getElementById("illustrate")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    requestAnimationFrame(() => {
+      document.getElementById("illustrate")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
   }
 
-  function focusSearch() {
-    const input = document.getElementById("fund-search");
-    input?.scrollIntoView({ behavior: "smooth", block: "center" });
-    if (input instanceof HTMLInputElement) input.focus();
+  function openImportPaywall() {
+    if (freemium.unlimited) {
+      setUnlockMessage(
+        "Portfolio import is a paid feature. Stripe Checkout is not wired yet, so aggregation is still a placeholder.",
+      );
+      return;
+    }
+    setPaywallReason("import");
+    setPaywallOpen(true);
   }
 
   async function unlock() {
     try {
       const response = await fetch("/api/checkout", { method: "POST" });
-      const body = (await response.json()) as { detail?: string; price_id?: string };
+      const body = (await response.json()) as {
+        detail?: string;
+        price_id?: string;
+      };
+      setPaywallOpen(false);
       setUnlockMessage(
         `${body.detail ?? "Checkout is stubbed."} Price ${body.price_id ?? STRIPE.priceId}.`,
       );
@@ -63,20 +87,48 @@ export function AftertaxApp({
 
   return (
     <>
-      <DemoBanner />
-      <div className="mb-2 flex justify-end">
-        <p className="font-mono text-xs text-faint" aria-live="polite">
-          {freemium.unlimited ? "Unlimited searches" : freeSearchLabel(freemium.remaining)}
+      <Hero
+        funds={funds}
+        selected={selected}
+        remaining={freemium.remaining}
+        unlimited={freemium.unlimited}
+        onSelect={selectFund}
+        onImport={openImportPaywall}
+      />
+
+      {selected ? <IllustratePanel selected={selected} /> : null}
+
+      <section
+        className="mt-4 border-t border-line pt-10"
+        aria-labelledby="universe-heading"
+      >
+        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-faint">
+          Sample universe
         </p>
-      </div>
-      <Hero onSearch={focusSearch} onImport={() => setPaywallOpen(true)} />
-      <IllustratePanel funds={funds} selected={selected} onSelect={selectFund} />
-      <HighlightsSection highlights={highlights} />
-      <Dashboard funds={funds} facets={facets} onIllustrate={selectFund} />
+        <h2
+          id="universe-heading"
+          className="mt-1 font-serif text-xl tracking-tight text-navy"
+        >
+          Estimates behind the search
+        </h2>
+        <p className="mt-2 max-w-2xl text-sm text-muted">
+          The dollar illustration is the product. This table is the sample
+          dataset search reads from — not a feature grid.
+        </p>
+        <div className="mt-5">
+          <DemoBanner />
+        </div>
+        <div className="mt-8">
+          <HighlightsSection highlights={highlights} />
+          <Dashboard funds={funds} facets={facets} onIllustrate={selectFund} />
+        </div>
+      </section>
+
       <p className="mt-8 text-xs leading-relaxed text-muted">{COPY.disclaimer}</p>
       <PaywallDialog
         open={paywallOpen}
         remaining={freemium.remaining}
+        reason={paywallReason}
         onClose={() => setPaywallOpen(false)}
         onUnlock={() => {
           void unlock();

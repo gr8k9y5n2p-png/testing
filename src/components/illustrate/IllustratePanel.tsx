@@ -14,18 +14,13 @@ import {
   type IllustrateResponse,
   type TaxRates,
 } from "@/lib/illustrate/types";
-import { FundPicker } from "@/components/illustrate/FundPicker";
 import { IllustrationResults } from "@/components/illustrate/IllustrationResults";
 import { TaxRateFields } from "@/components/illustrate/TaxRateFields";
 
 export function IllustratePanel({
-  funds,
   selected,
-  onSelect,
 }: {
-  funds: FundEstimateView[];
   selected: FundEstimateView | null;
-  onSelect: (fund: FundEstimateView) => void;
 }) {
   return (
     <section
@@ -45,8 +40,9 @@ export function IllustratePanel({
             Dollar illustration
           </h2>
           <p className="mt-1 max-w-2xl text-sm text-muted">
-            Pick a fund and a holding size. Aftertax posts rates to the illustrate
-            API and shows estimated distribution and tax in dollars.
+            Instant estimated distribution and tax in dollars. Adjust holding
+            size and rates; Aftertax posts them to illustrate and returns the
+            dollar result.
           </p>
         </div>
         {selected && !isLiveCoveredFamily(selected.family) ? (
@@ -57,16 +53,13 @@ export function IllustratePanel({
         ) : null}
       </div>
 
-      <div className="space-y-4">
-        <FundPicker funds={funds} selected={selected} onSelect={onSelect} />
-        {selected ? (
-          <IllustrationWorkspace key={selected.id} fund={selected} />
-        ) : (
-          <div className="flex min-h-[16rem] items-center justify-center rounded-md border border-dashed border-line-strong px-6 text-center text-sm text-muted">
-            Search a fund to see estimated distribution and tax in dollars.
-          </div>
-        )}
-      </div>
+      {selected ? (
+        <IllustrationWorkspace key={selected.id} fund={selected} />
+      ) : (
+        <div className="flex min-h-[12rem] items-center justify-center rounded-md border border-dashed border-line-strong px-6 text-center text-sm text-muted">
+          Search a fund above to see taxable impact in dollars.
+        </div>
+      )}
     </section>
   );
 }

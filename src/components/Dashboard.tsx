@@ -37,7 +37,7 @@ export function Dashboard({
             id="results-heading"
             className="font-serif text-xl tracking-tight text-navy"
           >
-            All estimates
+            Sample estimates
           </h2>
           <p className="mt-1 text-sm text-muted">
             Filter by name, ticker, CUSIP, family, category, or distribution year.

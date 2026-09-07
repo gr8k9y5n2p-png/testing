@@ -10,11 +10,13 @@ export function FundPicker({
   selected,
   onSelect,
   inputId = "fund-search",
+  autoFocus = false,
 }: {
   funds: FundEstimateView[];
   selected: FundEstimateView | null;
   onSelect: (fund: FundEstimateView) => void;
   inputId?: string;
+  autoFocus?: boolean;
 }) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
@@ -47,6 +49,7 @@ export function FundPicker({
         placeholder="Ticker, name, CUSIP, or family"
         className="h-12 w-full rounded-md border border-line bg-surface px-3 text-base text-ink placeholder:text-faint"
         autoComplete="off"
+        autoFocus={autoFocus}
       />
       {open ? (
         <ul className="absolute z-20 mt-1 max-h-72 w-full overflow-auto rounded-md border border-line bg-surface shadow-lg">

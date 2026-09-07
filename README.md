@@ -17,11 +17,12 @@ Open [http://localhost:3000](http://localhost:3000). Canonical host: **https://g
 
 ## What you will see
 
-- Landing hero and **Search a fund** (primary). Import a portfolio is a paid tease.
-- Advisor **tax impact illustration**: fund picker, $1,000,000 holding default, editable federal/state rates, estimated distribution and tax in dollars (with min/max when present).
-- Searchable estimates table + highlights (most recent, largest % of NAV, vs category average).
-- Soft free-search counter (`2 of 3 free searches left` …) and a paywall placeholder.
+- One-screen landing: hero (taxable impact in dollars) + **Search a fund** as the primary action. **Import a portfolio** is secondary and opens the paywall.
+- Instant **dollar illustration** after a fund is selected ($1,000,000 holding default, editable federal/state rates, min/max when present).
+- Soft counter (`3 of 3 free searches left` → `2 of 3…` → `0 free searches left`). After 3 unique tickers, the next search opens the paywall.
+- Highlights + estimates table sit below the fold as the sample universe — not a landing feature grid.
 - Sample/demo data banner. Capital Group / American Funds is treated as live ingest; other families show a **coverage gap**.
+- Checkout is stubbed (`POST /api/checkout` → 501). Price id `price_1UD6C0RqA7bY5N5qVleZso0d`. Return URLs: `/?checkout=success` stays in this flow; `/?checkout=cancel` reopens the paywall. No onboarding tour.
 
 ## Mock vs real Data API (PR #2)
 
@@ -78,6 +79,15 @@ Search and highlights currently use `src/data/seed.ts`. When the Data API is up,
 Live ingest today: **Capital Group / American Funds**. Planned top-10 families (with `coverage_tier` / `priority` stubs in `src/lib/coverage.ts` and `GET /api/fund-families`): BlackRock/iShares, Vanguard, Fidelity, State Street/SPDR, J.P. Morgan AM, Goldman Sachs AM, PIMCO, Invesco, and T. Rowe Price.
 
 Uncovered holdings are flagged in the fund picker (Gap vs Live) and the illustrate panel so tax impact is not silently understated. Selecting a gap ticker POSTs `POST /api/coverage/gaps` (or Data team `POST /coverage/gaps` when `NEXT_PUBLIC_DATA_API_URL` is set).
+
+## Funnel (this UI)
+
+1. Land → search a fund (primary). Import a portfolio is a paywall tease.
+2. Instant dollar illustration. Counter: `2 of 3 free searches left`.
+3. After 3 unique fund searches → paywall (`$39 / user / month`).
+4. Checkout stub returns to the same flow (`?checkout=success`) or paywall (`?checkout=cancel`). No onboarding tour.
+
+Highlights and the full estimates table sit below the illustration as the sample universe — not a landing feature grid.
 
 ## Freemium / Stripe (not live yet)
 
