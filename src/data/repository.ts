@@ -10,7 +10,8 @@ import type {
 
 /**
  * In-memory repository backed by seeded sample estimates.
- * Replace this implementation with a Postgres/API adapter when ingest ships.
+ * Prefer GET /distributions from the Data API (NEXT_PUBLIC_DATA_API_URL) when
+ * that service is aggregated into this table model; until then the seed remains.
  */
 export class SeedDistributionRepository implements DistributionRepository {
   private readonly views: FundEstimateView[];

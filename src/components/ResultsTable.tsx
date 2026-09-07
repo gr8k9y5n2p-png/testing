@@ -12,7 +12,13 @@ import {
   type SortKey,
 } from "@/lib/format";
 
-export function ResultsTable({ funds }: { funds: FundEstimateView[] }) {
+export function ResultsTable({
+  funds,
+  onIllustrate,
+}: {
+  funds: FundEstimateView[];
+  onIllustrate?: (fund: FundEstimateView) => void;
+}) {
   const [sortKey, setSortKey] = useState<SortKey>("fundName");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -79,6 +85,7 @@ export function ResultsTable({ funds }: { funds: FundEstimateView[] }) {
                   onSort={toggleSort}
                   align="right"
                 />
+                {onIllustrate ? <th className="px-3 py-2.5"> </th> : null}
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
@@ -131,6 +138,17 @@ export function ResultsTable({ funds }: { funds: FundEstimateView[] }) {
                         </span>
                       </div>
                     </td>
+                    {onIllustrate ? (
+                      <td className="px-3 py-3 text-right">
+                        <button
+                          type="button"
+                          onClick={() => onIllustrate(fund)}
+                          className="rounded-md border border-line px-2 py-1 text-xs text-navy hover:border-navy"
+                        >
+                          Illustrate
+                        </button>
+                      </td>
+                    ) : null}
                   </tr>
                 );
               })}
@@ -171,6 +189,15 @@ export function ResultsTable({ funds }: { funds: FundEstimateView[] }) {
                 value={formatPct(fund.categoryAveragePctNav)}
               />
             </dl>
+            {onIllustrate ? (
+              <button
+                type="button"
+                onClick={() => onIllustrate(fund)}
+                className="mt-3 h-9 w-full rounded-md border border-line text-sm text-navy"
+              >
+                Illustrate
+              </button>
+            ) : null}
           </article>
         ))}
       </div>

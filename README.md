@@ -1,8 +1,8 @@
-# Estimated Taxable Distributions
+# Aftertax
 
-Searchable template for **fund-manager estimated taxable distributions**, aimed at asset management teams and financial advisors.
+See the taxable impact in dollars — before the meeting ends.
 
-Fund complexes (for example American Funds) publish year-end estimates on their websites. This first slice uses **seeded sample data** so the product can be reviewed as a stakeholder template. Live ingest, authentication, and billing are intentionally out of scope.
+Aftertax is a search-first workspace for wholesalers and financial advisors. This repo slice is the **website UI**: fund search, highlights, holding size, adjustable tax rates, and results. The Data team owns ingest, `GET /distributions`, and production `POST /illustrate` math (see PR #2).
 
 ## Run locally
 
@@ -11,50 +11,70 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:3000). Planned host: `getaftertax.com`.
 
-Useful scripts:
-
-- `npm run build` — production build
-- `npm run lint` — ESLint
-- `npm run typecheck` — `tsc --noEmit`
+- `npm run build` / `npm run lint` / `npm run typecheck`
 
 ## What you will see
 
-- Global search across fund name, ticker, CUSIP, family, category, and distribution year
-- Filters for family, category, and year
-- Results table with estimated distribution ($/share and **% of NAV**), as-of / published dates, and vs category average
-- Three highlight modules: **most recent**, **largest (% of NAV)**, and **well above / below category average**
-- A persistent **Sample / demo data** banner
+- Landing hero and **Search a fund** (primary). Import a portfolio is a paid tease.
+- Advisor **tax impact illustration**: fund picker, $1,000,000 holding default, editable federal/state rates, estimated distribution and tax in dollars (with min/max when present).
+- Searchable estimates table + highlights (most recent, largest % of NAV, vs category average).
+- Soft free-search counter (`2 of 3 free searches left` …) and a paywall placeholder.
+- Sample/demo data banner. Capital Group / American Funds is treated as live ingest; other families show a **coverage gap**.
 
-JSON endpoints (same seed, same queries):
+## Mock vs real `POST /illustrate`
 
-- `GET /api/funds?q=&family=&category=&year=`
-- `GET /api/highlights`
+The browser **does not** compute tax. It POSTs the locked contract to an illustrate endpoint.
 
-## Sample data vs future ingest
-
-| Now | Later |
+| Mode | How |
 | --- | --- |
-| `src/data/seed.ts` — ~50 illustrative 2026 estimates | Manager-site / API ingest into a database |
-| `SeedDistributionRepository` in `src/data/repository.ts` | Postgres (or similar) adapter implementing the same interface |
-| Category averages computed in `src/data/queries.ts` | Stored or materialized peer stats refreshed with ingest |
-| No auth | Subscription SaaS auth + entitlements |
+| Demo (default) | `POST /api/illustrate` — clearly marked mock using seed rows |
+| Data team service | Set `NEXT_PUBLIC_ILLUSTRATE_URL=http://localhost:8000/illustrate` |
 
-Tickers are real. Dollar amounts, dates, and CUSIPs are **illustrative** and must not be used for tax, trading, or client reporting.
+That env var is the one-line swap. Types live in `src/lib/illustrate/types.ts` and must not drift from the locked request/response shape.
+
+Request: `holding_dollars`, `distribution_ids` **or** `selector: { fund_family, fund_identifier }`, optional `nav_per_share`, `tax_rates`, `combine_state_with_federal`.
+
+If `tax_rates` is omitted, the mock applies ordinary/STCG `0.37`, LTCG/QDI `0.20`, state `0.0`. The UI sends explicit advisor defaults (including state `0.05`) on every request.
+
+`% of NAV` works with holding dollars alone. `$ / share` requires `nav_per_share` (422 `nav_required` otherwise).
+
+### Rate mapping (locked)
+
+- `ordinary_income`, `special_dividend`, `return_of_capital`, `other` → ordinary (+ state if combined)
+- `long_term_capital_gains`, `total_capital_gains` → LTCG (+ state)
+- `short_term_capital_gains`, `qualified_short_term_gains` → STCG (+ state)
+- `qualified_dividend` → QDI (+ state)
+- `total` → ordinary unless the row is skipped
+
+Prefer one `publication_stage` / `as_of` snapshot in the panel so midyear paid + preliminary % NAV are not double-counted.
+
+## Search data vs `GET /distributions`
+
+Search and highlights currently use `src/data/seed.ts`. When the Data API is up, set `NEXT_PUBLIC_DATA_API_URL` (see `.env.example`). Prefer `GET /distributions` once those rows can be aggregated into the table model; until then the seed remains.
+
+## Coverage gaps
+
+Live ingest today: Capital Group / American Funds. Upcoming families include BlackRock/iShares, Vanguard, Fidelity, State Street/SPDR, J.P. Morgan AM, Goldman Sachs AM, PIMCO, Invesco, and T. Rowe Price.
+
+Uncovered holdings are flagged in the picker and illustrate panel so tax impact is not silently understated. Stub: `POST /api/coverage/gaps`. Replace with Data team `POST /coverage/gaps` when it ships.
+
+## Freemium / Stripe (not live yet)
+
+- 3 free unique fund searches (client `localStorage` for this demo).
+- Paywall copy is in `src/lib/copy.ts`.
+- Aftertax website will create Checkout Sessions server-side against price `price_1UD6C0RqA7bY5N5qVleZso0d` (product `prod_VDXGeprN4QkxsM`). `success_url` returns to search; `cancel_url` returns to the paywall.
+- `POST /api/checkout` is a stub until `STRIPE_SECRET_KEY` is available.
 
 ## Code structure
 
 ```
 src/
-  app/                 App Router pages and API routes
-  components/          Search, table, highlights, chrome
-  data/
-    types.ts           Typed domain model + repository contract
-    seed.ts            Sample funds
-    queries.ts         Search, facets, highlight queries
-    repository.ts      Swappable data-access implementation
-  lib/format.ts        Display helpers
+  app/                 App Router + mock API routes
+  components/          Search, highlights, illustrate, landing, paywall
+  data/                Seed + query helpers for the estimates table
+  lib/illustrate/      Typed client, locked contract, mock engine (server)
 ```
 
-Auth and billing are not implemented; modules are kept separate so those can be added without rewriting the data or query layer.
+Auth is not implemented. Billing is stubbed only.

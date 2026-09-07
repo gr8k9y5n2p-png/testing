@@ -30,6 +30,23 @@ export function formatUsd(value: number, digits = 2): string {
   }).format(value);
 }
 
+export function formatUsdRange(
+  point: number | null | undefined,
+  min?: number | null,
+  max?: number | null,
+  digits = 0,
+): string {
+  if (min != null && max != null && min !== max) {
+    return `${formatUsd(min, digits)}–${formatUsd(max, digits)}`;
+  }
+  if (point == null) return "—";
+  return formatUsd(point, digits);
+}
+
+export function formatRatePct(decimal: number): string {
+  return `${(decimal * 100).toFixed(1)}%`;
+}
+
 export function formatPct(value: number, digits = 2): string {
   return `${value.toFixed(digits)}%`;
 }

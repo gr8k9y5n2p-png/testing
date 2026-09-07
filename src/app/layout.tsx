@@ -25,9 +25,9 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Estimated Taxable Distributions",
+  title: "Aftertax — taxable impact in dollars",
   description:
-    "Search fund-manager estimated taxable distributions for asset management teams and financial advisors.",
+    "See the taxable impact in dollars — before the meeting ends. Live fund comparisons for wholesalers. Portfolio import for advisors.",
 };
 
 export default function RootLayout({

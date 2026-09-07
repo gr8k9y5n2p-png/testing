@@ -1,3 +1,5 @@
+import { HOST } from "@/lib/copy";
+
 export function AppHeader() {
   return (
     <header className="border-b border-line bg-navy-deep text-white">
@@ -8,21 +10,21 @@ export function AppHeader() {
             className="flex h-8 w-8 items-center justify-center rounded-sm border border-white/20 bg-white/5"
           >
             <span className="font-serif text-sm leading-none tracking-tight">
-              Dx
+              At
             </span>
           </div>
           <div>
             <p className="font-serif text-[15px] leading-tight tracking-tight">
-              Distribution Estimates
+              Aftertax
             </p>
             <p className="text-[11px] uppercase tracking-[0.14em] text-white/55">
-              Asset management · advisors
+              Wholesalers · advisors
             </p>
           </div>
         </div>
         <p className="hidden text-right text-xs text-white/60 sm:block">
-          Estimated taxable distributions
-          <span className="mt-0.5 block text-white/40">2026 sample universe</span>
+          Taxable impact in dollars
+          <span className="mt-0.5 block text-white/40">{HOST}</span>
         </p>
       </div>
     </header>

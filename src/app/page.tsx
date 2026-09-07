@@ -1,7 +1,4 @@
-import { Dashboard } from "@/components/Dashboard";
-import { DemoBanner } from "@/components/DemoBanner";
-import { HighlightsSection } from "@/components/HighlightsSection";
-import { PageIntro } from "@/components/PageIntro";
+import { AftertaxApp } from "@/components/AftertaxApp";
 import { getDistributionRepository } from "@/data";
 
 export const dynamic = "force-dynamic";
@@ -16,10 +13,7 @@ export default async function Home() {
 
   return (
     <main className="mx-auto w-full max-w-7xl px-4 pb-16 pt-6 sm:px-6 lg:px-8">
-      <DemoBanner />
-      <PageIntro fundCount={funds.length} />
-      <HighlightsSection highlights={highlights} />
-      <Dashboard funds={funds} facets={facets} />
+      <AftertaxApp funds={funds} highlights={highlights} facets={facets} />
     </main>
   );
 }

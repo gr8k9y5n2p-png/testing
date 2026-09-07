@@ -10,9 +10,11 @@ import { SearchToolbar } from "@/components/SearchToolbar";
 export function Dashboard({
   funds,
   facets,
+  onIllustrate,
 }: {
   funds: FundEstimateView[];
   facets: Facets;
+  onIllustrate?: (fund: FundEstimateView) => void;
 }) {
   const [filters, setFilters] = useState<SearchFilters>({});
   const deferredFilters = useDeferredValue(filters);
@@ -57,7 +59,7 @@ export function Dashboard({
             onClear={() => setFilters({})}
           />
         ) : (
-          <ResultsTable funds={results} />
+          <ResultsTable funds={results} onIllustrate={onIllustrate} />
         )}
       </div>
     </section>
