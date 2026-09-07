@@ -201,7 +201,7 @@ export function PortfolioCompare({
         </label>
       </header>
 
-      <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-2 lg:grid-rows-[auto_auto_auto]">
+      <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-2 lg:grid-rows-[auto_auto_auto] lg:[grid-template-areas:'holdings-c_holdings-p'_'charts-c_charts-p'_'tables-c_tables-p']">
         <AllocationColumn
           title="Current allocation"
           holdings={current}
@@ -211,11 +211,11 @@ export function PortfolioCompare({
           inputIdPrefix="current"
           onUnitChange={setCurrentUnit}
           onChange={setCurrent}
-          className="h-full lg:col-start-1 lg:row-start-1"
+          className="h-full lg:[grid-area:holdings-c]"
         />
         {!canFetch ? null : loading && !result ? (
           <div
-            className="h-44 animate-pulse rounded-2xl border border-line bg-surface lg:col-start-1 lg:row-start-2 lg:h-full"
+            className="h-44 min-h-44 animate-pulse rounded-2xl border border-line bg-surface lg:h-full lg:[grid-area:charts-c]"
             aria-busy
             aria-label="Loading current tax impact"
           />
@@ -223,12 +223,12 @@ export function PortfolioCompare({
           <TaxImpactChart
             headingId="tax-impact-current"
             bars={currentBars}
-            className="h-full lg:col-start-1 lg:row-start-2"
+            className="h-full min-h-44 lg:[grid-area:charts-c]"
           />
         ) : null}
         {!canFetch ? null : loading && !result ? (
           <div
-            className="h-48 animate-pulse rounded-2xl border border-line bg-surface lg:col-start-1 lg:row-start-3 lg:h-full"
+            className="h-48 min-h-48 animate-pulse rounded-2xl border border-line bg-surface lg:h-full lg:[grid-area:tables-c]"
             aria-busy
             aria-label="Loading current upcoming distributions"
           />
@@ -237,7 +237,7 @@ export function PortfolioCompare({
             headingId="upcoming-current"
             rows={currentUpcoming}
             sideLabel="Current"
-            className="h-full lg:col-start-1 lg:row-start-3"
+            className="h-full lg:[grid-area:tables-c]"
           />
         ) : null}
 
@@ -250,11 +250,11 @@ export function PortfolioCompare({
           inputIdPrefix="proposed"
           onUnitChange={setProposedUnit}
           onChange={setProposed}
-          className="h-full lg:col-start-2 lg:row-start-1"
+          className="h-full lg:[grid-area:holdings-p]"
         />
         {!canFetch ? null : loading && !result ? (
           <div
-            className="h-44 animate-pulse rounded-2xl border border-line bg-surface lg:col-start-2 lg:row-start-2 lg:h-full"
+            className="h-44 min-h-44 animate-pulse rounded-2xl border border-line bg-surface lg:h-full lg:[grid-area:charts-p]"
             aria-busy
             aria-label="Loading proposed tax impact"
           />
@@ -262,12 +262,12 @@ export function PortfolioCompare({
           <TaxImpactChart
             headingId="tax-impact-proposed"
             bars={proposedBars}
-            className="h-full lg:col-start-2 lg:row-start-2"
+            className="h-full min-h-44 lg:[grid-area:charts-p]"
           />
         ) : null}
         {!canFetch ? null : loading && !result ? (
           <div
-            className="h-48 animate-pulse rounded-2xl border border-line bg-surface lg:col-start-2 lg:row-start-3 lg:h-full"
+            className="h-48 min-h-48 animate-pulse rounded-2xl border border-line bg-surface lg:h-full lg:[grid-area:tables-p]"
             aria-busy
             aria-label="Loading proposed upcoming distributions"
           />
@@ -276,7 +276,7 @@ export function PortfolioCompare({
             headingId="upcoming-proposed"
             rows={proposedUpcoming}
             sideLabel="Proposed"
-            className="h-full lg:col-start-2 lg:row-start-3"
+            className="h-full lg:[grid-area:tables-p]"
           />
         ) : null}
       </div>

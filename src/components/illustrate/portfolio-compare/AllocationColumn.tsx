@@ -89,7 +89,7 @@ export function AllocationColumn({
         </div>
       </header>
 
-      <ul className="flex flex-1 flex-col gap-2.5">
+      <ul className="flex flex-col gap-2.5">
         {holdings.map((holding, index) => (
           <li
             key={holding.id}
@@ -169,37 +169,39 @@ export function AllocationColumn({
         ))}
       </ul>
 
-      <button
-        type="button"
-        onClick={() => {
-          const option = funds[0];
-          onChange([
-            ...holdings,
-            {
-              id: `${inputIdPrefix}-${Date.now()}`,
-              ticker: "",
-              fundName: "",
-              family: option?.family,
-              weightPct: 0,
-              holdingDollars: 0,
-            },
-          ]);
-        }}
-        className="mt-3 flex h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-line-strong text-sm font-medium text-muted hover:border-ink/30 hover:text-ink"
-      >
-        <span aria-hidden className="text-base leading-none">
-          +
-        </span>
-        Add holding
-      </button>
+      <div className="mt-auto pt-3">
+        <button
+          type="button"
+          onClick={() => {
+            const option = funds[0];
+            onChange([
+              ...holdings,
+              {
+                id: `${inputIdPrefix}-${Date.now()}`,
+                ticker: "",
+                fundName: "",
+                family: option?.family,
+                weightPct: 0,
+                holdingDollars: 0,
+              },
+            ]);
+          }}
+          className="flex h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-line-strong text-sm font-medium text-muted hover:border-ink/30 hover:text-ink"
+        >
+          <span aria-hidden className="text-base leading-none">
+            +
+          </span>
+          Add holding
+        </button>
 
-      <p className="mt-4 flex items-center justify-between border-t border-line pt-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-faint">
-        <span>Total</span>
-        <span className="font-mono text-sm font-medium normal-case tracking-normal text-ink">
-          {formatUsd(totalDollars, 0)}
-          <span className="text-muted"> · {formatWeight(totalWeight)}%</span>
-        </span>
-      </p>
+        <p className="mt-4 flex items-center justify-between border-t border-line pt-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-faint">
+          <span>Total</span>
+          <span className="font-mono text-sm font-medium normal-case tracking-normal text-ink">
+            {formatUsd(totalDollars, 0)}
+            <span className="text-muted"> · {formatWeight(totalWeight)}%</span>
+          </span>
+        </p>
+      </div>
     </section>
   );
 }
