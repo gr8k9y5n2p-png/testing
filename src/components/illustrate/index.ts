@@ -18,6 +18,7 @@ export type {
 } from "@/lib/illustrate/compare-types";
 export { PortfolioCompare } from "@/components/illustrate/PortfolioCompare";
 export type { PortfolioCompareProps } from "@/components/illustrate/PortfolioCompare";
+export { HomepagePortfolioCompare } from "@/components/illustrate/HomepagePortfolioCompare";
 export { postIllustratePortfolioCompare } from "@/lib/illustrate/portfolio-compare-client";
 export {
   exportToPdf,

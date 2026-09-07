@@ -9,6 +9,7 @@ export const COPY = {
   sub: "Live fund comparisons for wholesalers. Portfolio import for advisors.",
   trust: "Illustrative estimates only. Not tax, legal, or investment advice.",
   searchCta: "Search a fund",
+  compareCta: "Fund Comparison",
   importCta: "Import a portfolio",
   paywallHeadline: "Keep going with Aftertax",
   paywallBody:

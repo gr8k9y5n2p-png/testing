@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Facets, FundEstimateView, HighlightSets } from "@/data/types";
 import { Dashboard } from "@/components/Dashboard";
 import { DemoBanner } from "@/components/DemoBanner";
 import { HighlightsSection } from "@/components/HighlightsSection";
 import { Hero } from "@/components/landing/Hero";
 import { FundCompareRail } from "@/components/illustrate/FundCompareRail";
+import { HomepagePortfolioCompare } from "@/components/illustrate/HomepagePortfolioCompare";
 import { IllustratePanel } from "@/components/illustrate/IllustratePanel";
 import { PaywallDialog } from "@/components/paywall/PaywallDialog";
 import { CoverageProvider, useCoverage } from "@/components/coverage/CoverageProvider";
@@ -15,6 +16,15 @@ import { STRIPE } from "@/lib/copy";
 import type { FundFamilyCoverage } from "@/lib/coverage";
 import { reportCoverageGap } from "@/lib/coverage";
 import { useFreemium } from "@/lib/freemium";
+
+function scrollToId(id: string) {
+  requestAnimationFrame(() => {
+    document.getElementById(id)?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  });
+}
 
 export type CheckoutReturn = "success" | "cancel" | null;
 
@@ -64,6 +74,17 @@ function AftertaxAppInner({
   const freemium = useFreemium();
   const coverage = useCoverage();
 
+  useEffect(() => {
+    const id = window.location.hash.replace(/^#/, "");
+    if (
+      id === "portfolio-compare" ||
+      id === "fund-compare" ||
+      id === "illustrate"
+    ) {
+      scrollToId(id);
+    }
+  }, []);
+
   function selectFund(fund: FundEstimateView) {
     const result = freemium.trySearch(fund.ticker);
     if (!result.allowed) {
@@ -78,16 +99,19 @@ function AftertaxAppInner({
         fund_family: fund.family,
       });
     }
-    requestAnimationFrame(() => {
-      document.getElementById("illustrate")?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    });
+    scrollToId("illustrate");
   }
 
-  function openImportPaywall() {
-    setPaywallOpen(true);
+  function openFundCompare() {
+    if (selected) {
+      scrollToId("fund-compare");
+      return;
+    }
+    document.getElementById("fund-search")?.focus();
+  }
+
+  function openPortfolioCompare() {
+    scrollToId("portfolio-compare");
   }
 
   async function unlock() {
@@ -119,7 +143,8 @@ function AftertaxAppInner({
         remaining={freemium.remaining}
         unlimited={freemium.unlimited}
         onSelect={selectFund}
-        onImport={openImportPaywall}
+        onCompare={openFundCompare}
+        onImport={openPortfolioCompare}
       />
 
       {selected ? (
@@ -128,6 +153,8 @@ function AftertaxAppInner({
           <FundCompareRail funds={funds} selected={selected} />
         </div>
       ) : null}
+
+      <HomepagePortfolioCompare funds={funds} />
 
       <section
         className="mt-4 border-t border-line pt-10"

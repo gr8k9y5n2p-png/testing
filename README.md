@@ -13,7 +13,7 @@ Then open [http://localhost:3000](http://localhost:3000). Search **AMCPX** (Capi
 
 Standalone compare demo: [http://localhost:3000/compare](http://localhost:3000/compare). Import `FundTaxDeltaCompare` from `@/components/illustrate`.
 
-Standalone **portfolio comparison** demo: [http://localhost:3000/portfolio-compare](http://localhost:3000/portfolio-compare). Import `PortfolioCompare` from `@/components/illustrate`.
+**Portfolio comparison** is mounted on the homepage (`#portfolio-compare`). **Import a portfolio** scrolls there. Standalone demo: [http://localhost:3000/portfolio-compare](http://localhost:3000/portfolio-compare). Import `PortfolioCompare` from `@/components/illustrate`.
 
 Aftertax is a search-first workspace for wholesalers and financial advisors. This repo slice is the **website UI**: fund search, highlights, holding size, adjustable tax rates, and results. The Data team owns ingest, `GET /distributions`, and production `POST /illustrate` math (see PR #2).
 
@@ -54,10 +54,10 @@ Staging is `noindex`. Switch `AFTERTAX_PUBLIC_URL` to `https://getaftertax.com` 
 
 ## What you will see
 
-- One-screen landing: hero (taxable impact in dollars) + **Search a fund** as the primary action. **Import a portfolio** is secondary and opens the paywall.
+- One-screen landing: hero (taxable impact in dollars) + **Search a fund** as the primary action. CTA order when present: **Search a fund** → **Fund Comparison** → **Import a portfolio**. Import scrolls to the mounted Current vs Proposed module.
 - Instant **dollar illustration** after a fund is selected ($1,000,000 holding default, editable federal/state rates, min/max when present).
 - **Tax-delta compare** mounts next to that panel (selected fund vs a same-category peer; `/compare` is the standalone demo).
-- **Portfolio comparison** (`/portfolio-compare`): Current vs Proposed Allocation, per-column tax-impact bars, compact upcoming-distributions table, tax drag %, more/less tax Δ. No YoY bars.
+- **Portfolio comparison** on the homepage (and `/portfolio-compare`): Current vs Proposed Allocation, smoke books + $1M + state 0.05, per-column tax-impact bars, compact upcoming-distributions table, tax drag %, more/less tax Δ. Single snapshot only — no YoY bars / no `periods[]`. Export calls `exportToPdf` (freemium gate stubbed).
 - Soft counter (`3 of 3 free searches left` → `2 of 3…` → `0 free searches left`). After 3 unique tickers, the next search opens the paywall.
 - Highlights + estimates table sit below the fold as the sample universe — not a landing feature grid.
 - Sample/demo data banner. Capital Group / American Funds is treated as live ingest; other families show a **coverage gap**.
@@ -143,7 +143,7 @@ When `NEXT_PUBLIC_DATA_API_URL` is set and PR #2 is running, search/highlights l
 
 ## Funnel (this UI)
 
-1. Land → search a fund (primary). Import a portfolio is a paywall tease.
+1. Land → search a fund (primary). Import a portfolio opens Current vs Proposed.
 2. Instant dollar illustration. Counter: `2 of 3 free searches left`.
 3. After 3 unique fund searches → paywall (`$39 / user / month`).
 4. Checkout stub returns to the same flow (`?checkout=success`) or paywall (`?checkout=cancel`). No onboarding tour.
