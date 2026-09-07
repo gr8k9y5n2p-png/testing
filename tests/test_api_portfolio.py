@@ -94,3 +94,24 @@ def test_portfolio_holding_requires_lookup(client: TestClient) -> None:
         json={"holdings": [{"holding_dollars": 1000}]},
     )
     assert response.status_code == 422
+
+
+def test_portfolio_weight_pct_with_book_dollars(client: TestClient) -> None:
+    client.post("/ingest/fetch", json={"fund_family": "american_funds", "mode": "fixture"})
+    response = client.post(
+        "/illustrate/portfolio",
+        json={
+            "holdings": [
+                {
+                    "fund_identifier": "amcap-fund",
+                    "weight_pct": 0.80,
+                    "book_dollars": 1000000,
+                }
+            ],
+            "snapshot": {"prefer_publication_stages": ["preliminary_estimate"]},
+        },
+    )
+    assert response.status_code == 200, response.text
+    holding = response.json()["holdings"][0]
+    assert Decimal(holding["holding_dollars"]) == Decimal("800000.00")
+    assert Decimal(response.json()["totals"]["distribution_dollars"]) == Decimal("32000.00")

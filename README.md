@@ -14,6 +14,7 @@ The default demo uses **SQLite** and bundled Capital Group HTML fixtures so the 
 - Search API with filters, text search, and pagination
 - `POST /illustrate` — server-side tax-impact math for a dollar holding (Website Engineering owns the UI)
 - `POST /illustrate/portfolio` — book-level review with coverage % and explicit gaps
+- `POST /illustrate/portfolio/compare` — Interactive Modules Current vs Proposed Allocation (single snapshot)
 - `POST /illustrate/compare` — Interactive Modules chart contract (`fund_vs_fund` or `yoy`)
 - Top-110 US-advisor fund-family adapters (`GET /fund-families`, `GET /coverage`) plus `POST /coverage/gaps` when a portfolio ticker is missing
 - Partner ingest (`POST /ingest/distributions`) remains the escape hatch for uncovered names
@@ -243,6 +244,55 @@ curl -s -X POST http://127.0.0.1:8000/illustrate/portfolio \
 ```
 
 On the American Funds fixtures: $1.25M covered / $150k uncovered → `coverage_pct` ≈ 89.3%. AMCAP uses the latest preliminary (3–5% NAV → $40,000 / $10,000 tax at 20%+5%). CGHM matches paid midyear rows but warns that NAV is missing. `XYZAX` is a gap.
+
+Holdings may send **`holding_dollars`** or **`weight_pct` + `book_dollars`**. `weight_pct` in `(1, 100]` is percent (`40` = 40%); in `[0, 1]` it is a fraction (`0.40` = 40%, `1` = 100%). Use `0.01` for one percent. The server sets `holding_dollars = book_dollars × weight`.
+
+### Current vs Proposed (`POST /illustrate/portfolio/compare`)
+
+Interactive Modules **Current Allocation vs Proposed Allocation** on **one shared snapshot** (same `tax_rates`, `combine_state_with_federal`, and `snapshot` as `/illustrate/portfolio`). **`periods[]` year-over-year is not in v1** — that is a post-launch add-on; do not send it.
+
+Each side is a full `/illustrate/portfolio` result plus a `label` (defaults: `Current Allocation` / `Proposed Allocation`). Gaps and warnings stay on that side — never dropped.
+
+**Sign convention:** every delta is **proposed − current**.
+
+| Field | Meaning |
+| --- | --- |
+| `current` / `proposed` | Full portfolio illustration (`totals`, `coverage`, `holdings`, `gaps`, `notes`, `warnings`) + `label` |
+| `deltas.estimated_tax` / `distribution_dollars` / `federal_tax` / `state_tax` | Dollar deltas (plus `_min`/`_max` when a side published a range) |
+| `deltas.effective_tax_on_holding` | Rate delta (proposed − current) |
+| `deltas.coverage_pct` | Coverage-percentage points |
+| `deltas.dollars_covered` / `dollars_uncovered` | Coverage dollar deltas |
+| `summary` | Same dollar deltas scaled to a common book when the two books differ |
+
+`book_dollars` may be set on the request, a side, or a holding so `weight_pct` can share one book.
+
+```bash
+curl -s -X POST http://127.0.0.1:8000/illustrate/portfolio/compare \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "current": {
+      "label": "Current",
+      "holdings": [
+        {"ticker": "CGHM", "holding_dollars": 250000},
+        {"fund_identifier": "amcap-fund", "holding_dollars": 1000000},
+        {"ticker": "XYZAX", "fund_family": "dimensional", "holding_dollars": 150000}
+      ]
+    },
+    "proposed": {
+      "label": "Proposed",
+      "holdings": [
+        {"ticker": "CGHM", "holding_dollars": 250000},
+        {"fund_identifier": "amcap-fund", "holding_dollars": 1150000}
+      ]
+    },
+    "tax_rates": {},
+    "snapshot": {
+      "prefer_publication_stages": ["preliminary_estimate", "updated_estimate", "final", "paid"]
+    }
+  }' | jq '{notes, deltas, current: {label: .current.label, coverage: .current.coverage, gaps: .current.gaps}, proposed: {label: .proposed.label, coverage: .proposed.coverage}}'
+```
+
+On the American Funds fixtures, reallocating the $150k uncovered `XYZAX` into AMCAP raises proposed tax $10,000 → $11,500 (`deltas.estimated_tax` = $1,500) and `coverage_pct` by about 10.7 points. Current still lists the `XYZAX` gap.
 
 ### Compare chart (`POST /illustrate/compare`)
 

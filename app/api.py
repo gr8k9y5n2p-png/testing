@@ -22,13 +22,20 @@ from app.schemas import (
     CompareResponse,
     IllustrateRequest,
     IllustrateResponse,
+    PortfolioCompareRequest,
+    PortfolioCompareResponse,
     PortfolioIllustrateRequest,
     PortfolioIllustrateResponse,
     IngestRequest,
     IngestResponse,
 )
 from app.services.coverage import coverage_snapshot, family_to_out, record_gap
-from app.services.illustrate import illustrate, illustrate_compare, illustrate_portfolio
+from app.services.illustrate import (
+    illustrate,
+    illustrate_compare,
+    illustrate_portfolio,
+    illustrate_portfolio_compare,
+)
 from app.services.ingest import fetch_and_ingest, ingest_records
 from app.sources.registry import list_sources
 
@@ -164,6 +171,18 @@ def illustrate_portfolio_tax(
 ) -> PortfolioIllustrateResponse:
     """Aftertax portfolio review: per-holding math, coverage by dollars, and explicit gaps."""
     return illustrate_portfolio(session, body)
+
+
+@router.post(
+    "/illustrate/portfolio/compare",
+    response_model=PortfolioCompareResponse,
+    tags=["illustrate"],
+)
+def illustrate_portfolio_compare_tax(
+    body: PortfolioCompareRequest, session: Session = Depends(get_session)
+) -> PortfolioCompareResponse:
+    """Current vs Proposed Allocation (single snapshot). periods[] YoY is not in v1."""
+    return illustrate_portfolio_compare(session, body)
 
 
 @router.post("/illustrate/compare", response_model=CompareResponse, tags=["illustrate"])

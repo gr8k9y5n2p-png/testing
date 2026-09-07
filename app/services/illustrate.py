@@ -25,6 +25,11 @@ from app.schemas import (
     IllustrateRequest,
     IllustrateResponse,
     IllustrateSelectors,
+    PortfolioCompareAllocationOut,
+    PortfolioCompareDeltas,
+    PortfolioCompareRequest,
+    PortfolioCompareResponse,
+    PortfolioCompareSummary,
     PortfolioCoverage,
     PortfolioHoldingGap,
     PortfolioHoldingIn,
@@ -452,10 +457,16 @@ def illustrate_portfolio(session: Session, body: PortfolioIllustrateRequest) -> 
     uncovered_n = 0
 
     for index, holding in enumerate(body.holdings):
+        dollars = holding.holding_dollars
+        if dollars is None:
+            raise HTTPException(
+                status_code=422,
+                detail=f"holdings[{index}] needs holding_dollars or weight_pct with book_dollars",
+            )
         rows, warnings, stage_used = _select_holding_rows(session, holding, body.snapshot)
         if not rows:
             reason = "No matching distribution estimates for this holding."
-            dollars_uncovered += holding.holding_dollars
+            dollars_uncovered += dollars
             uncovered_n += 1
             gaps.append(
                 PortfolioHoldingGap(
@@ -464,7 +475,7 @@ def illustrate_portfolio(session: Session, body: PortfolioIllustrateRequest) -> 
                     fund_identifier=holding.fund_identifier,
                     fund_family=holding.fund_family,
                     fund_name=holding.fund_name,
-                    holding_dollars=_money(holding.holding_dollars),
+                    holding_dollars=_money(dollars),
                     reason=reason,
                 )
             )
@@ -475,7 +486,7 @@ def illustrate_portfolio(session: Session, body: PortfolioIllustrateRequest) -> 
                     fund_identifier=holding.fund_identifier,
                     fund_family=holding.fund_family,
                     fund_name=holding.fund_name,
-                    holding_dollars=_money(holding.holding_dollars),
+                    holding_dollars=_money(dollars),
                     covered=False,
                     warnings=warnings,
                     gap_reason=reason,
@@ -485,7 +496,7 @@ def illustrate_portfolio(session: Session, body: PortfolioIllustrateRequest) -> 
 
         illustration = illustrate_from_rows(
             rows,
-            holding=holding.holding_dollars,
+            holding=dollars,
             nav_per_share=holding.nav_per_share,
             shares=holding.shares,
             rates=body.tax_rates,
@@ -499,7 +510,7 @@ def illustrate_portfolio(session: Session, body: PortfolioIllustrateRequest) -> 
                 "Dollar totals exclude those components — not a silent understatement."
             )
         covered_components.extend(illustration.components)
-        dollars_covered += holding.holding_dollars
+        dollars_covered += dollars
         covered_n += 1
         ident = holding.fund_identifier or (rows[0].fund_identifier if rows else None)
         family = holding.fund_family or (rows[0].fund_family if rows else None)
@@ -510,7 +521,7 @@ def illustrate_portfolio(session: Session, body: PortfolioIllustrateRequest) -> 
                 fund_identifier=ident,
                 fund_family=family,
                 fund_name=holding.fund_name or rows[0].fund_name,
-                holding_dollars=_money(holding.holding_dollars),
+                holding_dollars=_money(dollars),
                 covered=True,
                 publication_stage_used=stage_used,
                 warnings=warnings,
@@ -548,6 +559,131 @@ def illustrate_portfolio(session: Session, body: PortfolioIllustrateRequest) -> 
         tax_rates=body.tax_rates,
         combine_state_with_federal=body.combine_state_with_federal,
         rate_mapping=dict(RATE_MAPPING),
+        notes=notes,
+    )
+
+
+PORTFOLIO_COMPARE_NOTES = [
+    "Deltas are proposed − current on one shared snapshot. Interactive Modules charts Current vs Proposed Allocation.",
+    "Each side is a full POST /illustrate/portfolio result. Gaps and warnings stay on that side — never dropped.",
+    "v1 is a single snapshot (shared snapshot + tax_rates). periods[] year-over-year is not in this contract.",
+]
+
+
+def _delta_optional(proposed: Decimal | None, current: Decimal | None) -> Decimal | None:
+    if proposed is None and current is None:
+        return None
+    return _money((proposed or Decimal("0")) - (current or Decimal("0")))
+
+
+def _scale_to_book(value: Decimal, book: Decimal, common: Decimal) -> Decimal:
+    if book <= 0:
+        return Decimal("0")
+    return value * (common / book)
+
+
+def illustrate_portfolio_compare(
+    session: Session, body: PortfolioCompareRequest
+) -> PortfolioCompareResponse:
+    current = illustrate_portfolio(
+        session,
+        PortfolioIllustrateRequest(
+            holdings=body.current.holdings,
+            tax_rates=body.tax_rates,
+            combine_state_with_federal=body.combine_state_with_federal,
+            snapshot=body.snapshot,
+        ),
+    )
+    proposed = illustrate_portfolio(
+        session,
+        PortfolioIllustrateRequest(
+            holdings=body.proposed.holdings,
+            tax_rates=body.tax_rates,
+            combine_state_with_federal=body.combine_state_with_federal,
+            snapshot=body.snapshot,
+        ),
+    )
+    current_out = PortfolioCompareAllocationOut(
+        label=body.current.label or "Current Allocation",
+        **current.model_dump(),
+    )
+    proposed_out = PortfolioCompareAllocationOut(
+        label=body.proposed.label or "Proposed Allocation",
+        **proposed.model_dump(),
+    )
+    deltas = PortfolioCompareDeltas(
+        estimated_tax=_money(proposed.totals.estimated_tax - current.totals.estimated_tax),
+        estimated_tax_min=_delta_optional(proposed.totals.estimated_tax_min, current.totals.estimated_tax_min),
+        estimated_tax_max=_delta_optional(proposed.totals.estimated_tax_max, current.totals.estimated_tax_max),
+        distribution_dollars=_money(
+            proposed.totals.distribution_dollars - current.totals.distribution_dollars
+        ),
+        distribution_dollars_min=_delta_optional(
+            proposed.totals.distribution_dollars_min, current.totals.distribution_dollars_min
+        ),
+        distribution_dollars_max=_delta_optional(
+            proposed.totals.distribution_dollars_max, current.totals.distribution_dollars_max
+        ),
+        federal_tax=_money(proposed.totals.federal_tax - current.totals.federal_tax),
+        state_tax=_money(proposed.totals.state_tax - current.totals.state_tax),
+        effective_tax_on_holding=_rate(
+            proposed.totals.effective_tax_on_holding - current.totals.effective_tax_on_holding
+        ),
+        coverage_pct=_rate(proposed.coverage.coverage_pct - current.coverage.coverage_pct),
+        dollars_covered=_money(proposed.coverage.dollars_covered - current.coverage.dollars_covered),
+        dollars_uncovered=_money(
+            proposed.coverage.dollars_uncovered - current.coverage.dollars_uncovered
+        ),
+        dollars_total=_money(proposed.coverage.dollars_total - current.coverage.dollars_total),
+        holdings_covered=proposed.coverage.holdings_covered - current.coverage.holdings_covered,
+        holdings_uncovered=proposed.coverage.holdings_uncovered - current.coverage.holdings_uncovered,
+    )
+    current_book = current.coverage.dollars_total
+    proposed_book = proposed.coverage.dollars_total
+    common = body.book_dollars or proposed_book or current_book or Decimal("10000")
+    if common <= 0:
+        common = Decimal("10000")
+    summary = PortfolioCompareSummary(
+        normalized_book_dollars=_money(common),
+        current_book_dollars=_money(current_book),
+        proposed_book_dollars=_money(proposed_book),
+        estimated_tax=_money(
+            _scale_to_book(proposed.totals.estimated_tax, proposed_book, common)
+            - _scale_to_book(current.totals.estimated_tax, current_book, common)
+        ),
+        distribution_dollars=_money(
+            _scale_to_book(proposed.totals.distribution_dollars, proposed_book, common)
+            - _scale_to_book(current.totals.distribution_dollars, current_book, common)
+        ),
+        federal_tax=_money(
+            _scale_to_book(proposed.totals.federal_tax, proposed_book, common)
+            - _scale_to_book(current.totals.federal_tax, current_book, common)
+        ),
+        state_tax=_money(
+            _scale_to_book(proposed.totals.state_tax, proposed_book, common)
+            - _scale_to_book(current.totals.state_tax, current_book, common)
+        ),
+        effective_tax_on_holding=deltas.effective_tax_on_holding,
+        coverage_pct=deltas.coverage_pct,
+    )
+    notes = list(PORTFOLIO_COMPARE_NOTES)
+    if current.gaps or proposed.gaps:
+        notes.append(
+            f"Uncovered holdings: current={len(current.gaps)}, proposed={len(proposed.gaps)}. "
+            "See current.gaps and proposed.gaps — never dropped silently."
+        )
+    if current_book != proposed_book:
+        notes.append(
+            f"Books differ (${current_book} vs ${proposed_book}); "
+            f"summary dollar deltas are scaled to ${common}."
+        )
+    notes.extend(f"current: {warning}" for warning in current.warnings)
+    notes.extend(f"proposed: {warning}" for warning in proposed.warnings)
+    return PortfolioCompareResponse(
+        current=current_out,
+        proposed=proposed_out,
+        deltas=deltas,
+        summary=summary,
         notes=notes,
     )
 
