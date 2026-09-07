@@ -483,6 +483,37 @@ def test_third_tier_fixtures() -> None:
     assert eoi.amount == Decimal("0.1338")
 
 
+def test_thrivent_live_header_shape() -> None:
+    html = """
+    <html><body>
+    <table>
+      <thead>
+        <tr>
+          <th>Thrivent Mutual Fund</th>
+          <th>Record Date</th>
+          <th>Payment Date</th>
+          <th>Short-Term Capital Gain (Per Share)</th>
+          <th>Long-Term Capital Gain (Per Share)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Mid Cap Stock Fund</td>
+          <td>12/10/2025</td>
+          <td>12/11/2025</td>
+          <td>$ -</td>
+          <td>$4.02</td>
+        </tr>
+      </tbody>
+    </table>
+    </body></html>
+    """
+    records = parse_distribution_html(html, source_url="https://www.thriventfunds.com/support/tax-resource-center/capital-gains.html", fund_family="Thrivent")
+    lt = next(r for r in records if r.estimate_type == EstimateType.long_term_capital_gains)
+    assert "Mid Cap Stock" in lt.fund_name
+    assert lt.amount == Decimal("4.02")
+
+
 def test_fourth_tier_fixtures() -> None:
     jh = parse_distribution_html(
         (ROOT / "john_hancock" / "2025_estimated_capital_gains.html").read_text(encoding="utf-8"),

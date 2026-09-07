@@ -83,7 +83,10 @@ class ThriventSource(HtmlTableSource):
         "https://fp.thriventfunds.com/resources/tax-resource-center.html. "
         "Tickers are the public Class S identifiers; the HTML table is fund-level."
     )
-    live_limitations = "Family page is public HTML; layout can change. Fixture fallback if 0 rows."
+    live_limitations = (
+        "Family page is public HTML with a 'Thrivent Mutual Fund' header (no ticker column). "
+        "Layout can change. Fixture fallback if 0 rows."
+    )
 
     def pages(self) -> list[PageSpec]:
         return [

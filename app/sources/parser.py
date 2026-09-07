@@ -263,7 +263,7 @@ def classify_header(text: str, table_title: str) -> ColSpec | None:
     if not h:
         return None
     title = table_title.lower()
-    if h in {"fund", "fund name", "name"}:
+    if h in {"fund", "fund name", "name"} or h.endswith("mutual fund"):
         return ColSpec("fund")
     if h in {"ticker", "symbol", "ticker symbol", "nasdaq"}:
         return ColSpec("ticker")
@@ -358,7 +358,9 @@ def _is_header_row(texts: list[str]) -> bool:
         return False
     first = _normalize_header(texts[0])
     rest = " ".join(_normalize_header(t) for t in texts[1:])
-    if first in {"fund", "fund name", "name", "ticker", "symbol", "ticker symbol", "nasdaq"}:
+    if first in {"fund", "fund name", "name", "ticker", "symbol", "ticker symbol", "nasdaq"} or first.endswith(
+        "mutual fund"
+    ):
         return any(k in rest or k in first for k in _HEADER_HINTS)
     return False
 
