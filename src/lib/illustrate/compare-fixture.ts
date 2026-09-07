@@ -3,6 +3,8 @@ import {
   type ComparePeriodOut,
   type CompareRequest,
   type CompareResponse,
+  type CompareSideIn,
+  type CompareUpcomingDistribution,
 } from "@/lib/illustrate/compare-types";
 
 /**
@@ -40,7 +42,180 @@ export const SKETCH_COMPARE_DEFAULTS = {
   rightLabel: "Active Growth Fund",
 } as const;
 
+/** Calendar-year tax $ on the $10k summary holding. `null` = gap / unmatched. */
+export const YOY_SKETCH_YEARS: { year: number; tax: number | null }[] = [
+  { year: 2021, tax: 120 },
+  { year: 2022, tax: 95 },
+  { year: 2023, tax: null },
+  { year: 2024, tax: 110 },
+  { year: 2025, tax: 85 },
+];
+
+const UNANNOUNCED_IDS = new Set(["UNANN", "NOANN"]);
+const UNANNOUNCED_STAGES = new Set([
+  "unannounced",
+  "not_announced",
+  "none",
+  "not announced",
+]);
+
+export function isUnannouncedSide(side?: CompareSideIn | null): boolean {
+  if (!side) return false;
+  const id = (
+    side.selectors?.fund_identifier ??
+    side.selectors?.ticker ??
+    ""
+  ).toUpperCase();
+  if (UNANNOUNCED_IDS.has(id)) return true;
+  const stage = (side.selectors?.publication_stage ?? "").trim().toLowerCase();
+  return UNANNOUNCED_STAGES.has(stage);
+}
+
+function sideHasLookup(side?: CompareSideIn | null): boolean {
+  return Boolean(
+    side?.distribution_ids?.length ||
+      side?.selectors?.fund_identifier ||
+      side?.selectors?.ticker ||
+      side?.selectors?.fund_name ||
+      side?.selectors?.fund_family,
+  );
+}
+
+function selectorsHasLookup(request: CompareRequest): boolean {
+  return Boolean(
+    request.selectors?.fund_identifier ||
+      request.selectors?.ticker ||
+      request.selectors?.fund_name ||
+      request.selectors?.fund_family,
+  );
+}
+
+function taxIllustration(
+  label: string,
+  tax: number | null,
+  holdingDollars = COMPARE_SUMMARY_HOLDING_DOLLARS,
+): ComparePeriodOut["left"] {
+  const matched = tax != null;
+  const dollars = tax ?? 0;
+  const holding =
+    holdingDollars > 0 ? holdingDollars : COMPARE_SUMMARY_HOLDING_DOLLARS;
+  return {
+    label,
+    matched,
+    holding_dollars: holding,
+    components: [],
+    totals: {
+      distribution_dollars: dollars,
+      estimated_tax: dollars,
+      estimated_tax_dollars: dollars,
+      effective_tax_on_holding: dollars / holding,
+    },
+    notes: matched ? [] : ["No distribution estimates matched the selector"],
+  };
+}
+
+function taxForYear(year: number, scale = 1): number | null {
+  const tax = YOY_SKETCH_YEARS.find((row) => row.year === year)?.tax ?? null;
+  return tax == null ? null : tax * scale;
+}
+
+function mockYoyResponse(request: CompareRequest): CompareResponse {
+  const years =
+    request.periods && request.periods.length > 0
+      ? request.periods.map((period) => period.year)
+      : YOY_SKETCH_YEARS.map((row) => row.year);
+  const fundLabel =
+    request.left?.label?.trim() ||
+    request.selectors?.fund_name?.trim() ||
+    request.selectors?.ticker?.trim() ||
+    "AMCAP Fund";
+  const holding =
+    request.holding_dollars > 0
+      ? request.holding_dollars
+      : COMPARE_SUMMARY_HOLDING_DOLLARS;
+  const scale = holding / COMPARE_SUMMARY_HOLDING_DOLLARS;
+
+  const pairs: ComparePeriodOut[] = [];
+  for (let index = 0; index < years.length - 1; index += 1) {
+    const older = years[index];
+    const newer = years[index + 1];
+    pairs.push({
+      year: newer,
+      as_of: `${newer}-12-15`,
+      left: taxIllustration(String(older), taxForYear(older, scale), holding),
+      right: taxIllustration(String(newer), taxForYear(newer, scale), holding),
+      deltas: {
+        distribution_dollars: 0,
+        estimated_tax: 0,
+        effective_tax_on_holding: 0,
+      },
+    });
+  }
+
+  const fromYear = years[0] ?? 2021;
+  const toYear = years[years.length - 1] ?? 2025;
+  const latestTax = taxForYear(toYear, scale);
+
+  return {
+    mode: "yoy",
+    source: "mock",
+    left:
+      pairs[0]?.left ??
+      taxIllustration(fundLabel, taxForYear(fromYear, scale), holding),
+    right:
+      pairs[pairs.length - 1]?.right ??
+      taxIllustration(fundLabel, latestTax, holding),
+    deltas: pairs[pairs.length - 1]?.deltas ?? null,
+    periods: pairs,
+    summary: {
+      normalized_holding_dollars: COMPARE_SUMMARY_HOLDING_DOLLARS,
+      total_tax_difference: 0,
+      annualized_tax_drag_delta: 0,
+      distribution_dollars_difference: 0,
+      periods_compared: pairs.length,
+      common_inception: {
+        from_year: fromYear,
+        to_year: toYear,
+        from_as_of: `${fromYear}-12-15`,
+        to_as_of: `${toYear}-12-15`,
+      },
+      upcoming_taxable_distribution: {
+        left_dollars: latestTax,
+        right_dollars: latestTax,
+        delta_dollars: 0,
+        left_publication_stage: latestTax == null ? null : "preliminary_estimate",
+        right_publication_stage: latestTax == null ? null : "preliminary_estimate",
+      },
+    },
+    notes: [
+      "MOCK /illustrate/compare mode=yoy — calendar-year tax $ with a 2023 gap.",
+      "Unmatched years stay null; the chart must not invent tax-drag rows.",
+    ],
+  };
+}
+
+function upcomingForRequest(
+  request: CompareRequest,
+): CompareUpcomingDistribution {
+  const leftUnannounced = isUnannouncedSide(request.left);
+  const rightUnannounced = isUnannouncedSide(request.right);
+  const leftDollars = leftUnannounced ? null : 185;
+  const rightDollars = rightUnannounced ? null : 100;
+  const mixed = leftUnannounced !== rightUnannounced;
+  const neither = leftUnannounced && rightUnannounced;
+  return {
+    left_dollars: leftDollars,
+    right_dollars: rightDollars,
+    delta_dollars: mixed || neither ? null : -85,
+    left_publication_stage: leftUnannounced ? null : "updated_estimate",
+    right_publication_stage: rightUnannounced ? null : "preliminary_estimate",
+  };
+}
+
 export function mockCompareResponse(request: CompareRequest): CompareResponse {
+  if (request.mode === "yoy") {
+    return mockYoyResponse(request);
+  }
   const leftLabel = request.left?.label?.trim() || SKETCH_COMPARE_DEFAULTS.leftLabel;
   const rightLabel = request.right?.label?.trim() || SKETCH_COMPARE_DEFAULTS.rightLabel;
   const years =
@@ -88,13 +263,7 @@ export function mockCompareResponse(request: CompareRequest): CompareResponse {
         from_as_of: `${fromYear}-12-15`,
         to_as_of: `${toYear}-12-15`,
       },
-      upcoming_taxable_distribution: {
-        left_dollars: 185,
-        right_dollars: 100,
-        delta_dollars: -85,
-        left_publication_stage: "updated_estimate",
-        right_publication_stage: "preliminary_estimate",
-      },
+      upcoming_taxable_distribution: upcomingForRequest(request),
     },
     notes: [
       "Deltas are right − left (B − A). Interactive Modules charts deltas.effective_tax_on_holding.",
@@ -106,20 +275,17 @@ export function mockCompareResponse(request: CompareRequest): CompareResponse {
 
 export function isCompareRequestValid(body: CompareRequest): string | null {
   if (!(body.holding_dollars > 0)) return "holding_dollars must be greater than 0";
-  const leftOk = Boolean(
-    body.left?.distribution_ids?.length ||
-      body.left?.selectors?.fund_identifier ||
-      body.left?.selectors?.ticker ||
-      body.left?.selectors?.fund_name ||
-      body.left?.selectors?.fund_family,
-  );
-  const rightOk = Boolean(
-    body.right?.distribution_ids?.length ||
-      body.right?.selectors?.fund_identifier ||
-      body.right?.selectors?.ticker ||
-      body.right?.selectors?.fund_name ||
-      body.right?.selectors?.fund_family,
-  );
+  const leftOk = sideHasLookup(body.left);
+  const rightOk = sideHasLookup(body.right);
+  if (body.mode === "yoy") {
+    if (!(selectorsHasLookup(body) || leftOk)) {
+      return "yoy requires selectors or left.selectors";
+    }
+    if ((body.periods?.length ?? 0) < 2 && !(leftOk && rightOk)) {
+      return "yoy requires at least two periods";
+    }
+    return null;
+  }
   if (body.mode === "fund_vs_fund" || body.mode == null) {
     if (!leftOk) return "fund_vs_fund requires left.selectors or left.distribution_ids";
     if (!rightOk) return "fund_vs_fund requires right.selectors or right.distribution_ids";

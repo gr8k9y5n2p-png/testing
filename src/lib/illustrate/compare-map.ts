@@ -3,7 +3,9 @@ import type {
   ComparePeriodOut,
   CompareResponse,
   CompareSummary,
+  CompareUpcomingDistribution,
 } from "@/lib/illustrate/compare-types";
+import { sideIsAnnounced } from "@/lib/illustrate/tax-drag-chart";
 
 /**
  * API deltas are **right − left** (Fund B − Fund A).
@@ -35,12 +37,28 @@ export type TaxDeltaBar = {
   polarity: TaxPolarity;
 };
 
+export type TaxDeltaMetricSide = {
+  label: string;
+  value: string;
+  announced: boolean;
+};
+
 export type TaxDeltaMetric = {
   key: "tax_difference" | "tax_drag" | "distributions" | "upcoming_tax";
   label: string;
   headline: string;
   detail: string;
   polarity: TaxPolarity;
+  /** Split announce — render both sides; never blank the upcoming cell. */
+  sides?: {
+    left: TaxDeltaMetricSide;
+    right: TaxDeltaMetricSide;
+  };
+};
+
+export type AnnounceChip = {
+  announced: boolean;
+  label: string;
 };
 
 export type TaxDeltaCardModel = {
@@ -51,6 +69,11 @@ export type TaxDeltaCardModel = {
   metrics: TaxDeltaMetric[];
   inceptionLabel: string;
   notes: string[];
+  /** Present only when exactly one fund has announced/upcoming. */
+  announceChips?: {
+    left: AnnounceChip;
+    right: AnnounceChip;
+  } | null;
 };
 
 const EVEN_DOLLARS = 0.5;
@@ -149,11 +172,11 @@ export function toTaxDeltaCardModel(
     Number(summary.distribution_dollars_difference ?? 0),
     EVEN_DOLLARS,
   );
-  const upcomingDelta = summary.upcoming_taxable_distribution?.delta_dollars;
-  const upcoming =
-    upcomingDelta == null
-      ? null
-      : fundACost(Number(upcomingDelta), EVEN_DOLLARS);
+  const upcomingModel = upcomingMetric(
+    summary.upcoming_taxable_distribution,
+    leftLabel,
+    rightLabel,
+  );
 
   const window = inceptionLabel(summary);
   const demo = sample ? " · demo" : "";
@@ -183,10 +206,10 @@ export function toTaxDeltaCardModel(
     {
       key: "upcoming_tax",
       label: "Upcoming tax",
-      headline:
-        upcoming == null ? "No estimate this year" : moreLessTaxHeadline(upcoming.costToA),
+      headline: upcomingModel.headline,
       detail: `this year · on $10k · vs peer${demo}`,
-      polarity: upcoming?.polarity ?? "even",
+      polarity: upcomingModel.polarity,
+      sides: upcomingModel.sides,
     },
   ];
 
@@ -198,6 +221,83 @@ export function toTaxDeltaCardModel(
     metrics,
     inceptionLabel: window,
     notes: response.notes,
+    announceChips: upcomingModel.chips,
+  };
+}
+
+function announcedUsdLabel(dollars: number | null): string {
+  if (dollars == null) return "Upcoming";
+  return `${wholeUsd(dollars)} announced`;
+}
+
+function upcomingMetric(
+  upcoming: CompareUpcomingDistribution | null | undefined,
+  leftLabel: string,
+  rightLabel: string,
+): {
+  headline: string;
+  polarity: TaxPolarity;
+  sides?: TaxDeltaMetric["sides"];
+  chips: TaxDeltaCardModel["announceChips"];
+} {
+  const leftAnnounced = sideIsAnnounced(
+    upcoming?.left_dollars,
+    upcoming?.left_publication_stage,
+  );
+  const rightAnnounced = sideIsAnnounced(
+    upcoming?.right_dollars,
+    upcoming?.right_publication_stage,
+  );
+  const leftValue = leftAnnounced
+    ? announcedUsdLabel(upcoming?.left_dollars ?? null)
+    : "Not announced";
+  const rightValue = rightAnnounced
+    ? announcedUsdLabel(upcoming?.right_dollars ?? null)
+    : "Not announced";
+  const sides = {
+    left: { label: leftLabel, value: leftValue, announced: leftAnnounced },
+    right: { label: rightLabel, value: rightValue, announced: rightAnnounced },
+  };
+
+  if (leftAnnounced && rightAnnounced) {
+    const upcomingDelta = upcoming?.delta_dollars;
+    const cost =
+      upcomingDelta == null
+        ? null
+        : fundACost(Number(upcomingDelta), EVEN_DOLLARS);
+    return {
+      headline: cost == null ? "About even" : moreLessTaxHeadline(cost.costToA),
+      polarity: cost?.polarity ?? "even",
+      chips: null,
+    };
+  }
+
+  if (leftAnnounced !== rightAnnounced) {
+    return {
+      headline: `${leftValue} · ${rightAnnounced ? rightValue : "—"}`,
+      polarity: "even",
+      sides,
+      chips: {
+        left: {
+          announced: leftAnnounced,
+          label: leftAnnounced ? leftValue : "Not announced",
+        },
+        right: {
+          announced: rightAnnounced,
+          label: rightAnnounced ? rightValue : "Not announced",
+        },
+      },
+    };
+  }
+
+  return {
+    headline: "Not announced",
+    polarity: "even",
+    sides: {
+      left: { label: leftLabel, value: "Not announced", announced: false },
+      right: { label: rightLabel, value: "—", announced: false },
+    },
+    chips: null,
   };
 }
 
