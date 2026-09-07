@@ -86,6 +86,20 @@ export function yearEndGrowth(points: { date: string; growth_of_x: number }[]) {
     .map(([year, point]) => ({ year, value: point.growth_of_x }));
 }
 
+/** Rebase a year-end series so the first visible year equals startDollars. */
+export function rebaseWindow(
+  points: { year: number; value: number }[],
+  startDollars: number,
+) {
+  if (points.length === 0) return points;
+  const base = points[0].value;
+  if (!(base > 0)) return points;
+  return points.map((point) => ({
+    year: point.year,
+    value: startDollars * (point.value / base),
+  }));
+}
+
 export function yearEndReturns(
   points: { date: string; growth_of_x: number }[],
   startDollars: number,

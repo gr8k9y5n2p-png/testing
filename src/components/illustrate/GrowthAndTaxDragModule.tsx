@@ -8,7 +8,12 @@ import {
   MAX_GROWTH_FUNDS,
   fundSeriesColor,
 } from "@/lib/charts/series-colors";
-import { cagr, sketchYears, yearEndGrowth, yearEndReturns } from "@/lib/charts/shared-axis";
+import {
+  cagr,
+  rebaseWindow,
+  sketchYears,
+  yearEndGrowth,
+} from "@/lib/charts/shared-axis";
 import { formatUsd } from "@/lib/format";
 import { postIllustrateCompare } from "@/lib/illustrate/compare-client";
 import type { ComparePeriodIn, CompareResponse } from "@/lib/illustrate/compare-types";
@@ -136,18 +141,12 @@ export function GrowthAndTaxDragModule({
 
   const growthSeries = useMemo<GrowthLineSeries[]>(() => {
     if (!rows) return [];
+    const asReturn = unit === "percent";
     const lines: GrowthLineSeries[] = rows.map((row) => ({
       id: row.performance.fund_ticker,
       label: row.performance.fund_ticker,
       color: row.color,
-      points:
-        unit === "percent"
-          ? yearEndReturns(row.performance.fund.points, principal).filter((point) =>
-              years.includes(point.year),
-            )
-          : yearEndGrowth(row.performance.fund.points).filter((point) =>
-              years.includes(point.year),
-            ),
+      points: windowedGrowth(row.performance.fund.points, years, principal, asReturn),
     }));
     const bench = rows[0]?.performance.benchmark;
     if (bench) {
@@ -156,12 +155,7 @@ export function GrowthAndTaxDragModule({
         label: rows[0].performance.benchmark_tracks || bench.ticker,
         color: BENCHMARK_COLOR,
         dashed: true,
-        points:
-          unit === "percent"
-            ? yearEndReturns(bench.points, principal).filter((point) =>
-                years.includes(point.year),
-              )
-            : yearEndGrowth(bench.points).filter((point) => years.includes(point.year)),
+        points: windowedGrowth(bench.points, years, principal, asReturn),
       });
     }
     return lines;
@@ -200,16 +194,14 @@ export function GrowthAndTaxDragModule({
         id: row.performance.fund_ticker,
         label: row.performance.fund_ticker,
         color: row.color,
-        points: yearEndGrowth(row.performance.fund.points).filter((point) =>
-          years.includes(point.year),
-        ),
+        points: windowedGrowth(row.performance.fund.points, years, principal, false),
       }));
     const bench = rows[0]?.performance.benchmark;
     if (bench) {
       dollarSeries.push({
         id: `bench-${bench.ticker}`,
         label: rows[0].performance.benchmark_tracks || bench.ticker,
-        points: yearEndGrowth(bench.points),
+        points: windowedGrowth(bench.points, years, principal, false),
       });
     }
     return dollarSeries.map((row) => {
@@ -223,7 +215,7 @@ export function GrowthAndTaxDragModule({
           first && last ? cagr(first.value, last.value, Math.max(span, 1)) : null,
       };
     });
-  }, [rows, years]);
+  }, [principal, rows, years]);
 
   function commitPrincipal() {
     const parsed = Number(principalDraft.replace(/[$,\s]/g, ""));
@@ -446,6 +438,23 @@ export function GrowthAndTaxDragModule({
       </p>
     </article>
   );
+}
+
+function windowedGrowth(
+  points: { date: string; growth_of_x: number }[],
+  years: number[],
+  principal: number,
+  asReturn: boolean,
+) {
+  const rebased = rebaseWindow(
+    yearEndGrowth(points).filter((point) => years.includes(point.year)),
+    principal,
+  );
+  if (!asReturn) return rebased;
+  return rebased.map((point) => ({
+    year: point.year,
+    value: principal > 0 ? point.value / principal - 1 : 0,
+  }));
 }
 
 function formatPrincipal(value: number): string {
