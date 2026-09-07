@@ -115,6 +115,8 @@ export function GrowthAndTaxDragModule({
   useEffect(() => {
     const seeds = JSON.parse(seedKey) as GrowthFundInput[];
     if (seeds.length === 0) return;
+    // Homepage remounts pass a new funds[] seed; merge without dropping user adds.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- sync selected to funds prop
     setSelected((current) => mergeSeedFunds(current, seeds));
   }, [seedKey]);
 
@@ -523,7 +525,7 @@ async function loadModule(
         tax = await postIllustrateCompare(
           {
             mode: "yoy",
-            holding_dollars: 10_000,
+            holding_dollars: principal,
             combine_state_with_federal: true,
             latest_as_of_only: true,
             selectors: {
@@ -534,6 +536,7 @@ async function loadModule(
             },
             left: {
               label: input.label ?? ticker,
+              holding_dollars: principal,
               selectors: {
                 ticker,
                 fund_identifier: input.fundIdentifier ?? ticker,

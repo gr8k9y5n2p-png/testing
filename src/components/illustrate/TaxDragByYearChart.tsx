@@ -1,3 +1,4 @@
+import { niceMoneyScale } from "@/lib/charts/money-axis";
 import {
   SHARED_CHART_PAD,
   SHARED_CHART_WIDTH,
@@ -150,7 +151,7 @@ export function TaxDragByYearChart({
   };
 
   const ticks = down
-    ? taxTicks(-scale)
+    ? taxTicks(-scale, metric)
     : [0, scale / 2, scale].filter((value, index, all) => all.indexOf(value) === index);
   const linePath = overlay ? polylinePath(overlay, years, xAt, yAt) : "";
   const zeroY = down ? chartPad.top : chartPad.top + innerH;
@@ -419,7 +420,11 @@ function UpcomingChip({ summary }: { summary: UpcomingSummary | null | undefined
   );
 }
 
-function taxTicks(min: number): number[] {
+function taxTicks(min: number, metric: TaxDragMetric): number[] {
+  if (metric === "tax_dollars") {
+    const { ticks } = niceMoneyScale(0, Math.abs(min), 0);
+    return ticks.map((tick) => (tick === 0 ? 0 : -tick));
+  }
   const floor = Math.min(min, 0);
   const step = Math.abs(floor) <= 0.02 ? 0.005 : Math.abs(floor) <= 0.04 ? 0.01 : Math.abs(floor) / 3;
   const ticks: number[] = [];
@@ -436,8 +441,7 @@ function niceScale(peak: number, metric: TaxDragMetric): number {
     const step = pct <= 1.5 ? 0.5 : 1;
     return (Math.ceil(pct / step) * step) / 100;
   }
-  const step = peak <= 100 ? 25 : 50;
-  return Math.ceil(peak / step) * step;
+  return niceMoneyScale(0, peak, 0).max;
 }
 
 function polylinePath(

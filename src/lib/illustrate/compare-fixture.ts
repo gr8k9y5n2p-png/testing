@@ -105,13 +105,15 @@ function taxRateFor(ticker: string, year: number): number | null {
 function taxIllustration(
   label: string,
   rate: number | null,
+  holding: number,
 ): ComparePeriodOut["left"] {
+  const book = holding > 0 ? holding : COMPARE_SUMMARY_HOLDING_DOLLARS;
   const matched = rate != null;
-  const dollars = rate == null ? 0 : rate * COMPARE_SUMMARY_HOLDING_DOLLARS;
+  const dollars = rate == null ? 0 : rate * book;
   return {
     label,
     matched,
-    holding_dollars: COMPARE_SUMMARY_HOLDING_DOLLARS,
+    holding_dollars: book,
     components: [],
     totals: {
       distribution_dollars: dollars,
@@ -131,6 +133,10 @@ function mockYoyResponse(request: CompareRequest): CompareResponse {
     request.selectors?.ticker?.trim() ||
     ticker ||
     "AMCAP Fund";
+  const holding =
+    request.holding_dollars > 0
+      ? request.holding_dollars
+      : COMPARE_SUMMARY_HOLDING_DOLLARS;
   const years =
     request.periods && request.periods.length > 0
       ? request.periods.map((period) => period.year)
@@ -140,14 +146,19 @@ function mockYoyResponse(request: CompareRequest): CompareResponse {
   for (let index = 0; index < Math.max(0, years.length - 1); index += 1) {
     const older = years[index];
     const newer = years[index + 1];
+    const left = taxIllustration(String(older), taxRateFor(ticker, older), holding);
+    const right = taxIllustration(String(newer), taxRateFor(ticker, newer), holding);
     pairs.push({
       year: newer,
       as_of: `${newer}-12-15`,
-      left: taxIllustration(String(older), taxRateFor(ticker, older)),
-      right: taxIllustration(String(newer), taxRateFor(ticker, newer)),
+      left,
+      right,
       deltas: {
-        distribution_dollars: 0,
-        estimated_tax: 0,
+        distribution_dollars:
+          (right.totals?.distribution_dollars ?? 0) -
+          (left.totals?.distribution_dollars ?? 0),
+        estimated_tax:
+          (right.totals?.estimated_tax ?? 0) - (left.totals?.estimated_tax ?? 0),
         effective_tax_on_holding: 0,
       },
     });
@@ -156,13 +167,13 @@ function mockYoyResponse(request: CompareRequest): CompareResponse {
   const fromYear = years[0] ?? 2021;
   const toYear = years[years.length - 1] ?? 2025;
   const latestRate = taxRateFor(ticker, toYear);
-  const latestTax = latestRate == null ? null : latestRate * COMPARE_SUMMARY_HOLDING_DOLLARS;
+  const latestTax = latestRate == null ? null : latestRate * holding;
 
   return {
     mode: "yoy",
     source: "mock",
-    left: pairs[0]?.left ?? taxIllustration(fundLabel, taxRateFor(ticker, fromYear)),
-    right: pairs[pairs.length - 1]?.right ?? taxIllustration(fundLabel, latestRate),
+    left: pairs[0]?.left ?? taxIllustration(fundLabel, taxRateFor(ticker, fromYear), holding),
+    right: pairs[pairs.length - 1]?.right ?? taxIllustration(fundLabel, latestRate, holding),
     deltas: pairs[pairs.length - 1]?.deltas ?? null,
     periods: pairs,
     summary: {
@@ -187,6 +198,7 @@ function mockYoyResponse(request: CompareRequest): CompareResponse {
     },
     notes: [
       "MOCK /illustrate/compare mode=yoy — calendar-year tax drag for GrowthAndTaxDragModule.",
+      "Period totals.estimated_tax scale with request holding_dollars. summary.*_difference stays at $10,000.",
       "Unmatched years stay null; the chart must not invent tax-drag rows.",
     ],
   };

@@ -1,3 +1,4 @@
+import { formatCompactUsd, niceMoneyScale } from "@/lib/charts/money-axis";
 import {
   SHARED_CHART_PAD,
   SHARED_CHART_WIDTH,
@@ -77,8 +78,9 @@ export function GrowthOfXChart({
 
   const lo = Math.min(unit === "percent" ? 0 : startDollars, ...values);
   const hi = Math.max(unit === "percent" ? 0 : startDollars, ...values);
-  const scale =
-    unit === "percent" ? nicePctScale(lo, hi) : niceMoneyScale(lo, hi, startDollars);
+  const moneyScale = unit === "dollars" ? niceMoneyScale(lo, hi, startDollars) : null;
+  const pctScale = unit === "percent" ? nicePctScale(lo, hi) : null;
+  const scale = moneyScale ?? pctScale ?? { min: lo, max: hi };
   const innerH = height - pad.top - pad.bottom;
   const layout = axisProp ?? yearLayout(years, 1, width, pad);
   const xAt = (year: number) => {
@@ -89,8 +91,7 @@ export function GrowthOfXChart({
   const yAt = (value: number) =>
     pad.top + innerH - ((value - scale.min) / (scale.max - scale.min || 1)) * innerH;
 
-  const ticks =
-    unit === "percent" ? pctTicks(scale.min, scale.max) : moneyTicks(scale.min, scale.max);
+  const ticks = moneyScale?.ticks ?? pctTicks(scale.min, scale.max);
   const heading =
     title ??
     (unit === "percent"
@@ -231,7 +232,9 @@ export function GrowthOfXChart({
                 fontFamily="ui-monospace, monospace"
                 fontWeight={500}
               >
-                {formatUsd(last.value, 0)}
+                {last.value >= 100_000
+                  ? formatCompactUsd(last.value)
+                  : formatUsd(last.value, 0)}
               </text>
             );
           })}
@@ -282,20 +285,6 @@ function formatAxisPct(value: number): string {
   return `${(value * 100).toFixed(0)}%`;
 }
 
-function niceMoneyScale(min: number, max: number, startDollars: number) {
-  const step = 2_500;
-  const floor =
-    min >= startDollars * 0.95
-      ? Math.round(startDollars / step) * step
-      : Math.max(0, Math.floor(min / step) * step);
-  const range = Math.max(max - floor, step * 3);
-  const padded = max + range * 0.15;
-  return {
-    min: floor,
-    max: Math.max(floor + step * 4, Math.ceil(padded / step) * step),
-  };
-}
-
 function pctTicks(min: number, max: number): number[] {
   const span = max - min;
   const step = span <= 0.5 ? 0.1 : span <= 1.5 ? 0.25 : 0.5;
@@ -306,17 +295,3 @@ function pctTicks(min: number, max: number): number[] {
   return ticks.length >= 2 ? ticks : [min, max];
 }
 
-function moneyTicks(min: number, max: number): number[] {
-  const span = max - min;
-  const step = span <= 12_000 ? 2_500 : span <= 25_000 ? 5_000 : span <= 60_000 ? 10_000 : 20_000;
-  const ticks: number[] = [];
-  for (let value = min; value <= max + 0.01; value += step) {
-    ticks.push(value);
-  }
-  return ticks.length >= 2 ? ticks : [min, max];
-}
-
-function formatCompactUsd(value: number): string {
-  if (value >= 1000) return `$${(value / 1000).toFixed(value % 1000 === 0 ? 0 : 1)}k`;
-  return formatUsd(value, 0);
-}
