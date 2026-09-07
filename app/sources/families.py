@@ -9,9 +9,11 @@ class BlackRockSource(HtmlTableSource):
     aum_rank = 1
     priority = 1
     notes = (
-        "Parses the public iShares US capital-gains HTML tables (mid-year and year-end "
-        "$/share, % of NAV, ex/pay dates). Verified 2026-09-07. Do not use BlackRock "
-        "Canada PDFs as the US source."
+        "Parses the public iShares US capital-gains HTML "
+        "https://www.ishares.com/us/capital-gains-distributions "
+        "(mid-year and year-end $/share, % of NAV, ex/pay dates). Table captions "
+        "set publication_stage: mid-year paid vs year-end final. Verified 2026-09-07. "
+        "Do not use BlackRock Canada PDFs as the US source."
     )
     live_limitations = "Live HTML on ishares.com/us/capital-gains-distributions is supported."
 

@@ -275,10 +275,11 @@ class DavisSource(HtmlTableSource):
     aum_rank = 70
     priority = 70
     notes = (
-        "Public 2025 paid distribution HTML: "
+        "Public paid distribution HTML (midyear + year-end + 2026 semi-annual): "
         "https://davisfunds.com/funds/distributions "
-        "(e.g. New York Venture Class A NYVTX year-end LT $0.89 on 12/12/2025 "
-        "and midyear LT $2.10 on 6/25/2025). Fixture transcribes the year-end rows."
+        "(NYVTX Class A midyear LT $2.10 on 6/25/2025; year-end LT $0.89 on "
+        "12/12/2025; 2026 semi-annual ST $0.12 / LT $1.60 on 6/24/2026). "
+        "Fixture transcribes those Class A rows; other share classes stay on the live page."
     )
     live_limitations = (
         "Live HTML is public but multi-fund / multi-class tables may not parse. "

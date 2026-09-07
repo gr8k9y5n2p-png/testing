@@ -2,19 +2,79 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from typing import Any
 
 from sqlalchemy.orm import Session
 
 from app.crud import record_ingest_run, upsert_records
-from app.models import IngestRun
+from app.models import DistributionEstimate, IngestRun
 from app.services.ingest import normalized_to_in
 from app.sources.base import FetchResult, FundSource
 from app.sources.registry import resolve_families
 
 REFRESH_MODES = ("auto", "live", "fixture")
+HORIZON_MIDYEAR = "midyear"
+HORIZON_YEAR_END = "year_end"
+
+_MIDYEAR_URL_RE = re.compile(r"mid[\s_-]*year|interim|semi[\s_-]*annual", re.I)
+_YEAR_END_URL_RE = re.compile(r"year[\s_-]*end|yearend", re.I)
+
+
+def classify_horizon(
+    *,
+    source_url: str | None = None,
+    as_of: date | None = None,
+    ex_date: date | None = None,
+    publication_stage: str | None = None,
+) -> str | None:
+    """Detect midyear vs year-end when the URL or calendar month is unambiguous.
+
+    URL keywords win (Capital Group ``midyear-cap-gains`` vs ``year-end-distributions``).
+    Otherwise May–August ``as_of`` / ``ex_date`` is midyear; October–January is year-end.
+    September and other months stay unclassified unless the URL decides.
+    ``publication_stage`` is accepted for callers but does not override dates/URL.
+    """
+    del publication_stage
+    url = source_url or ""
+    if _MIDYEAR_URL_RE.search(url):
+        return HORIZON_MIDYEAR
+    if _YEAR_END_URL_RE.search(url):
+        return HORIZON_YEAR_END
+    for when in (as_of, ex_date):
+        if when is None:
+            continue
+        if when.month in (5, 6, 7, 8):
+            return HORIZON_MIDYEAR
+        if when.month in (10, 11, 12, 1):
+            return HORIZON_YEAR_END
+    return None
+
+
+def _horizon_counts(
+    stored: list[tuple[str, DistributionEstimate]],
+) -> tuple[int, int, int, int]:
+    midyear_created = midyear_updated = year_end_created = year_end_updated = 0
+    for action, row in stored:
+        horizon = classify_horizon(
+            source_url=row.source_url,
+            as_of=row.as_of,
+            ex_date=row.ex_date,
+            publication_stage=row.publication_stage,
+        )
+        if horizon == HORIZON_MIDYEAR:
+            if action == "created":
+                midyear_created += 1
+            else:
+                midyear_updated += 1
+        elif horizon == HORIZON_YEAR_END:
+            if action == "created":
+                year_end_created += 1
+            else:
+                year_end_updated += 1
+    return midyear_created, midyear_updated, year_end_created, year_end_updated
 
 
 @dataclass
@@ -27,6 +87,10 @@ class FamilyRefreshResult:
     error: str | None = None
     notes: list[str] = field(default_factory=list)
     source_urls: list[str] = field(default_factory=list)
+    midyear_created: int = 0
+    midyear_updated: int = 0
+    year_end_created: int = 0
+    year_end_updated: int = 0
 
 
 @dataclass
@@ -35,6 +99,10 @@ class RefreshSummary:
     families_attempted: int
     created: int
     updated: int
+    midyear_created: int
+    midyear_updated: int
+    year_end_created: int
+    year_end_updated: int
     errors: list[str]
     live_vs_fixture: dict[str, int]
     families: list[FamilyRefreshResult] = field(default_factory=list)
@@ -49,6 +117,10 @@ class RefreshSummary:
             "families_attempted": self.families_attempted,
             "created": self.created,
             "updated": self.updated,
+            "midyear_created": self.midyear_created,
+            "midyear_updated": self.midyear_updated,
+            "year_end_created": self.year_end_created,
+            "year_end_updated": self.year_end_updated,
             "errors": list(self.errors),
             "live_vs_fixture": dict(self.live_vs_fixture),
             "families": [asdict(row) for row in self.families],
@@ -60,6 +132,14 @@ class RefreshSummary:
             f"  families_attempted: {self.families_attempted}",
             f"  created: {self.created}",
             f"  updated: {self.updated}",
+            (
+                f"  midyear: created={self.midyear_created} "
+                f"updated={self.midyear_updated}"
+            ),
+            (
+                f"  year_end: created={self.year_end_created} "
+                f"updated={self.year_end_updated}"
+            ),
             f"  errors: {len(self.errors)}",
             (
                 "  live_vs_fixture: "
@@ -87,6 +167,14 @@ class RefreshSummary:
             f"- Families attempted: **{self.families_attempted}**",
             f"- Created: **{self.created}**",
             f"- Updated: **{self.updated}**",
+            (
+                f"- Midyear: created={self.midyear_created}, "
+                f"updated={self.midyear_updated}"
+            ),
+            (
+                f"- Year-end: created={self.year_end_created}, "
+                f"updated={self.year_end_updated}"
+            ),
             f"- Errors: **{len(self.errors)}**",
             (
                 f"- live vs fixture: live={self.live_vs_fixture.get('live', 0)}, "
@@ -99,13 +187,15 @@ class RefreshSummary:
             lines.append("")
         lines.extend(
             [
-                "| Family | Status | Mode | Created | Updated |",
-                "| --- | --- | --- | ---: | ---: |",
+                "| Family | Status | Mode | Created | Updated | Midyear c/u | Year-end c/u |",
+                "| --- | --- | --- | ---: | ---: | ---: | ---: |",
             ]
         )
         for row in self.families:
             lines.append(
-                f"| `{row.slug}` | {row.status} | {row.mode_used} | {row.created} | {row.updated} |"
+                f"| `{row.slug}` | {row.status} | {row.mode_used} | {row.created} | {row.updated} "
+                f"| {row.midyear_created}/{row.midyear_updated} "
+                f"| {row.year_end_created}/{row.year_end_updated} |"
             )
         lines.append("")
         return "\n".join(lines)
@@ -149,16 +239,48 @@ def _record_run(
     record_ingest_run(session, run)
 
 
-def _ingest_fetch(session: Session, source: FundSource, mode: str) -> tuple[int, int, FetchResult]:
+def _ingest_fetch(
+    session: Session, source: FundSource, mode: str
+) -> tuple[int, int, FetchResult, tuple[int, int, int, int]]:
     result = source.fetch(mode=mode)
     incoming = [normalized_to_in(record) for record in result.records]
-    created, updated, _stored = upsert_records(session, incoming)
-    return created, updated, result
+    created, updated, stored = upsert_records(session, incoming)
+    return created, updated, result, _horizon_counts(stored)
+
+
+def _family_row(
+    source: FundSource,
+    *,
+    status: str,
+    mode_used: str,
+    created: int,
+    updated: int,
+    horizons: tuple[int, int, int, int],
+    error: str | None = None,
+    notes: list[str] | None = None,
+    source_urls: list[str] | None = None,
+) -> FamilyRefreshResult:
+    midyear_created, midyear_updated, year_end_created, year_end_updated = horizons
+    return FamilyRefreshResult(
+        slug=source.slug,
+        status=status,
+        mode_used=mode_used,
+        created=created,
+        updated=updated,
+        error=error,
+        notes=notes or [],
+        source_urls=source_urls or [],
+        midyear_created=midyear_created,
+        midyear_updated=midyear_updated,
+        year_end_created=year_end_created,
+        year_end_updated=year_end_updated,
+    )
 
 
 def _try_live_then_fixture(session: Session, source: FundSource) -> FamilyRefreshResult:
+    empty_horizons = (0, 0, 0, 0)
     try:
-        created, updated, result = _ingest_fetch(session, source, "live")
+        created, updated, result, horizons = _ingest_fetch(session, source, "live")
         if _notes_indicate_fixture_fallback(result.notes):
             _record_run(
                 session,
@@ -170,12 +292,13 @@ def _try_live_then_fixture(session: Session, source: FundSource) -> FamilyRefres
                 error="; ".join(result.notes[:2]) or None,
                 source_urls=result.source_urls,
             )
-            return FamilyRefreshResult(
-                slug=source.slug,
+            return _family_row(
+                source,
                 status="fallback",
                 mode_used="fixture",
                 created=created,
                 updated=updated,
+                horizons=horizons,
                 notes=result.notes,
                 source_urls=result.source_urls,
             )
@@ -188,18 +311,19 @@ def _try_live_then_fixture(session: Session, source: FundSource) -> FamilyRefres
             updated=updated,
             source_urls=result.source_urls,
         )
-        return FamilyRefreshResult(
-            slug=source.slug,
+        return _family_row(
+            source,
             status="success",
             mode_used="live",
             created=created,
             updated=updated,
+            horizons=horizons,
             notes=result.notes,
             source_urls=result.source_urls,
         )
     except Exception as live_exc:
         try:
-            created, updated, result = _ingest_fetch(session, source, "fixture")
+            created, updated, result, horizons = _ingest_fetch(session, source, "fixture")
         except Exception as fixture_exc:
             session.rollback()
             _record_run(
@@ -209,12 +333,13 @@ def _try_live_then_fixture(session: Session, source: FundSource) -> FamilyRefres
                 status="error",
                 error=f"live: {live_exc}; fixture: {fixture_exc}",
             )
-            return FamilyRefreshResult(
-                slug=source.slug,
+            return _family_row(
+                source,
                 status="error",
                 mode_used="live",
                 created=0,
                 updated=0,
+                horizons=empty_horizons,
                 error=f"live: {live_exc}; fixture: {fixture_exc}",
             )
         note = f"Live fetch failed ({live_exc}). Fell back to fixture."
@@ -228,29 +353,32 @@ def _try_live_then_fixture(session: Session, source: FundSource) -> FamilyRefres
             error=note,
             source_urls=result.source_urls,
         )
-        return FamilyRefreshResult(
-            slug=source.slug,
+        return _family_row(
+            source,
             status="fallback",
             mode_used="fixture",
             created=created,
             updated=updated,
+            horizons=horizons,
             notes=[note, *result.notes],
             source_urls=result.source_urls,
         )
 
 
 def _try_fixture(session: Session, source: FundSource) -> FamilyRefreshResult:
+    empty_horizons = (0, 0, 0, 0)
     try:
-        created, updated, result = _ingest_fetch(session, source, "fixture")
+        created, updated, result, horizons = _ingest_fetch(session, source, "fixture")
     except Exception as exc:
         session.rollback()
         _record_run(session, source, mode_used="fixture", status="error", error=str(exc))
-        return FamilyRefreshResult(
-            slug=source.slug,
+        return _family_row(
+            source,
             status="error",
             mode_used="fixture",
             created=0,
             updated=0,
+            horizons=empty_horizons,
             error=str(exc),
         )
     _record_run(
@@ -262,12 +390,13 @@ def _try_fixture(session: Session, source: FundSource) -> FamilyRefreshResult:
         updated=updated,
         source_urls=result.source_urls,
     )
-    return FamilyRefreshResult(
-        slug=source.slug,
+    return _family_row(
+        source,
         status="success",
         mode_used="fixture",
         created=created,
         updated=updated,
+        horizons=horizons,
         notes=result.notes,
         source_urls=result.source_urls,
     )
@@ -333,6 +462,10 @@ def refresh_families(
         families_attempted=len(rows),
         created=sum(row.created for row in rows),
         updated=sum(row.updated for row in rows),
+        midyear_created=sum(row.midyear_created for row in rows),
+        midyear_updated=sum(row.midyear_updated for row in rows),
+        year_end_created=sum(row.year_end_created for row in rows),
+        year_end_updated=sum(row.year_end_updated for row in rows),
         errors=errors,
         live_vs_fixture={"live": live_count, "fixture": fixture_count},
         families=rows,

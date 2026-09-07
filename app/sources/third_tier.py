@@ -9,22 +9,29 @@ class AllspringSource(HtmlTableSource):
     aum_rank = 21
     priority = 21
     notes = (
-        "Family 2025 capital-gains estimate PDF is linked from "
+        "Weekly watch: product-alerts hub "
         "https://www.allspringglobal.com/resources/product-alerts/ "
-        "(Allspring Funds 2025 Capital Gains Estimates, 10/10/2025) at "
+        "(midyear / special / interim books would land here first). As of "
+        "2026-09-07 there is no open-end midyear capital-gains table — the latest "
+        "family book is Allspring Funds 2025 Capital Gains Estimates (10/10/2025) "
         "https://www.allspringglobal.com/globalassets/assets/public/pdf/product-alerts/20251010-productalert.pdf "
-        "(unauthenticated GET is an interstitial; append ?view=1 for the PDF). "
-        "The estimate PDF is image-based. Public product pages publish HTML paid "
-        "distribution history, e.g. Special Mid Cap Value "
+        "(image/gated; append ?view=1). Public product pages publish HTML paid "
+        "year-end history, e.g. Special Mid Cap Value "
         "https://www.allspringglobal.com/investments/equity/mutual-funds/special-mid-cap-value/ "
         "(2025-12-15 ST $0.34918 / LT $4.26857) and Growth "
         "https://www.allspringglobal.com/investments/equity/mutual-funds/growth/i/ "
-        "(2025-12-15 ST $0.01467 / LT $8.85612). Fixture transcribes those public rows."
+        "(2025-12-15 ST $0.01467 / LT $8.85612). Fixture transcribes those paid rows."
     )
     live_limitations = (
         "Family estimate PDF is gated/image-based. Product-page tables put the date "
         "in the first column, so static parse may return 0 rows. Fixture fallback."
     )
+
+    def source_urls(self) -> list[str]:
+        return [
+            "https://www.allspringglobal.com/resources/product-alerts/",
+            *super().source_urls(),
+        ]
 
     def pages(self) -> list[PageSpec]:
         return [

@@ -3,8 +3,8 @@ from __future__ import annotations
 from decimal import Decimal
 from pathlib import Path
 
-from app.models import AmountUnit, EstimateType
-from app.sources.parser import parse_amount, parse_capital_group_html, split_fund_and_ticker
+from app.models import AmountUnit, EstimateType, PublicationStage
+from app.sources.parser import infer_stage, parse_amount, parse_capital_group_html, split_fund_and_ticker
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "american_funds"
 
@@ -43,6 +43,7 @@ def test_midyear_fixture_normalizes_live_markup() -> None:
     amcap = by_name[("AMCAP Fund", EstimateType.long_term_capital_gains)]
     assert amcap.amount == Decimal("3.5365")
     assert amcap.amount_unit == AmountUnit.per_share
+    assert amcap.publication_stage == PublicationStage.paid
     assert str(amcap.ex_date) == "2026-06-16"
     assert str(amcap.payable_date) == "2026-06-17"
     assert str(amcap.as_of) == "2026-07-08"
@@ -121,3 +122,46 @@ def test_estimate_fixture_percent_of_nav_ranges() -> None:
 
     cgdv = next(r for r in records if r.ticker == "CGDV")
     assert "Dividend Value" in cgdv.fund_name
+
+
+def test_infer_stage_midyear_paid_vs_estimate() -> None:
+    assert (
+        infer_stage(
+            "2026 midyear capital gain distributions",
+            source_url="https://www.capitalgroup.com/individual/service-and-support/tax-center/midyear-cap-gains.html",
+        )
+        == PublicationStage.paid
+    )
+    assert (
+        infer_stage(
+            "2025 Mid-Year Capital Gains Distributions Estimates",
+            source_url=(
+                "https://www.columbiathreadneedleus.com/binaries/content/assets/cti/"
+                "public/2025-mid-year-cap-gain-estimates-all-funds.pdf"
+            ),
+        )
+        == PublicationStage.preliminary_estimate
+    )
+    assert (
+        infer_stage(
+            "Capital Gains Distributions",
+            "2026 mid-year ETF capital gains distributions",
+            source_url="https://www.ishares.com/us/capital-gains-distributions",
+        )
+        == PublicationStage.paid
+    )
+    assert (
+        infer_stage(
+            "Capital Gains Distributions",
+            "2025 year-end ETF capital gains distributions",
+            source_url="https://www.ishares.com/us/capital-gains-distributions",
+        )
+        == PublicationStage.final
+    )
+    assert (
+        infer_stage(
+            "2026 Semi-Annual Distributions",
+            source_url="https://davisfunds.com/funds/distributions",
+        )
+        == PublicationStage.paid
+    )

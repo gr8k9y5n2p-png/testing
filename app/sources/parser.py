@@ -239,17 +239,43 @@ def infer_year(soup: BeautifulSoup, as_of: date | None) -> int | None:
     return None
 
 
-def infer_stage(soup: BeautifulSoup) -> PublicationStage | None:
-    title = (cell_text(soup.find("title")) + " " + cell_text(soup.find("h1"))).lower()
-    if "preliminary" in title:
+MIDYEAR_HORIZON_RE = re.compile(
+    r"mid[\s_-]*year|interim|semi[\s_-]*annual",
+    re.I,
+)
+YEAR_END_HORIZON_RE = re.compile(r"year[\s_-]*end|yearend", re.I)
+
+
+def infer_stage(*texts: str, source_url: str = "") -> PublicationStage | None:
+    """Map page/table/URL language onto publication_stage.
+
+    Midyear **estimate** books stay estimates so /illustrate and compare can
+    treat them as forward-looking. Midyear **paid** / special / interim /
+    semi-annual amounts map to ``paid`` so they are not confused with
+    year-end preliminary estimates.
+    """
+    blob = " ".join(text for text in texts if text).lower()
+    url = (source_url or "").lower()
+    combined = f"{blob} {url}".strip()
+    if not combined:
+        return None
+
+    is_estimate = "estimate" in combined
+    is_updated = "updated" in blob or "revised" in blob
+    is_preliminary = "preliminary" in blob
+    is_midyear = bool(MIDYEAR_HORIZON_RE.search(combined))
+
+    if is_preliminary:
         return PublicationStage.preliminary_estimate
-    if "updated estimate" in title or ("estimate" in title and "updated" in title):
+    if is_updated and is_estimate:
         return PublicationStage.updated_estimate
-    if "estimate" in title:
+    if is_estimate:
         return PublicationStage.preliminary_estimate
-    if "midyear" in title:
+    if is_midyear:
         return PublicationStage.paid
-    if "year-end" in title or "distribution" in title:
+    if YEAR_END_HORIZON_RE.search(combined):
+        return PublicationStage.final
+    if "distribution" in blob:
         return PublicationStage.final
     return None
 
@@ -389,12 +415,14 @@ def parse_distribution_html(
     soup = BeautifulSoup(html, "lxml")
     page_as_of = parse_as_of(soup)
     default_year = infer_year(soup, page_as_of)
-    stage = infer_stage(soup)
     page_title = cell_text(soup.find("title")) or cell_text(soup.find("h1"))
+    page_heading = cell_text(soup.find("h1"))
+    page_stage = infer_stage(page_title, page_heading, source_url=source_url)
 
     records: list[NormalizedRecord] = []
     column_map: dict[int, ColSpec] = {}
     table_title = page_title
+    table_stage = page_stage
     pending_split_header = False
 
     for table in soup.find_all("table"):
@@ -409,6 +437,9 @@ def parse_distribution_html(
             table_title = cell_text(caption)
         elif heading:
             table_title = heading
+        else:
+            table_title = page_title
+        table_stage = infer_stage(table_title, page_title, page_heading, source_url=source_url) or page_stage
 
         pending_split_header = False
         for row in table.find_all("tr"):
@@ -503,7 +534,7 @@ def parse_distribution_html(
                         ex_date=ex_date,
                         payable_date=payable,
                         as_of=row_as_of,
-                        publication_stage=stage,
+                        publication_stage=table_stage,
                         source_url=source_url,
                         raw_payload={
                             "page_title": page_title,

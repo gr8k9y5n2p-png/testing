@@ -3,8 +3,10 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from datetime import date
+
 from app.cli import main
-from app.services.refresh import refresh_families
+from app.services.refresh import HORIZON_MIDYEAR, HORIZON_YEAR_END, classify_horizon, refresh_families
 from app.sources.american_funds import AmericanFundsSource
 from app.sources.base import FetchResult
 
@@ -35,7 +37,14 @@ def test_cli_refresh_fixture_writes_summary(engine, tmp_path: Path, capsys) -> N
     assert payload["errors"] == []
     assert payload["live_vs_fixture"]["live"] == 0
     assert payload["live_vs_fixture"]["fixture"] == 110
-    assert "Weekly ingest refresh" in md_path.read_text(encoding="utf-8")
+    assert payload["midyear_created"] > 0
+    assert payload["year_end_created"] > 0
+    md = md_path.read_text(encoding="utf-8")
+    assert "Weekly ingest refresh" in md
+    assert "Midyear:" in md
+    assert "Year-end:" in md
+    assert "midyear:" in out
+    assert "year_end:" in out
 
 
 def test_cli_refresh_single_family(engine, capsys) -> None:
@@ -101,6 +110,56 @@ def test_refresh_fixture_only_does_not_call_live(session, monkeypatch) -> None:
     assert calls == ["fixture"]
     assert summary.families[0].mode_used == "fixture"
     assert summary.families[0].status == "success"
+
+
+def test_classify_horizon_url_and_month() -> None:
+    assert (
+        classify_horizon(
+            source_url="https://www.capitalgroup.com/individual/service-and-support/tax-center/midyear-cap-gains.html",
+            as_of=date(2026, 1, 22),
+        )
+        == HORIZON_MIDYEAR
+    )
+    assert (
+        classify_horizon(
+            source_url="https://www.capitalgroup.com/individual/service-and-support/tax-center/2025-year-end-distributions.html",
+            as_of=date(2026, 6, 16),
+        )
+        == HORIZON_YEAR_END
+    )
+    assert (
+        classify_horizon(
+            source_url="https://www.ishares.com/us/capital-gains-distributions",
+            as_of=date(2026, 9, 7),
+            ex_date=date(2026, 6, 15),
+        )
+        == HORIZON_MIDYEAR
+    )
+    assert (
+        classify_horizon(
+            source_url="https://www.ishares.com/us/capital-gains-distributions",
+            as_of=date(2026, 9, 7),
+            ex_date=date(2025, 12, 1),
+        )
+        == HORIZON_YEAR_END
+    )
+    assert (
+        classify_horizon(
+            source_url="https://www.allspringglobal.com/investments/equity/mutual-funds/special-mid-cap-value/",
+            as_of=date(2025, 12, 15),
+        )
+        == HORIZON_YEAR_END
+    )
+    assert classify_horizon(source_url="https://example.invalid/tax", as_of=date(2026, 9, 1)) is None
+
+
+def test_refresh_american_funds_breaks_out_midyear(session) -> None:
+    summary = refresh_families(session, mode="fixture", slugs=["american_funds"])
+    row = summary.families[0]
+    assert row.midyear_created > 0
+    assert row.year_end_created > 0
+    assert summary.midyear_created == row.midyear_created
+    assert summary.year_end_created == row.year_end_created
 
 
 def test_refresh_live_success_counts_as_live(session, monkeypatch) -> None:

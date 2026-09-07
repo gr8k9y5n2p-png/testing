@@ -9,6 +9,7 @@ The default demo uses **SQLite** and bundled Capital Group HTML fixtures so the 
 - Normalized data model for distribution estimates (family, fund, ticker, share class, type, amount + unit, tax dates, source URL, raw JSON audit payload)
 - `POST /ingest/distributions` for partner/manual feeds
 - `POST /ingest/fetch` to run a pluggable `FundSource` adapter (`fixture` or `live`)
+- `python -m app.cli refresh` for weekly all-family ingest (`REFRESH_MODE=auto`: live then fixture)
 - Idempotent upserts on `(fund_family, fund identifier, share class, estimate type, as_of, ex-date)`
 - Search API with filters, text search, and pagination
 - `POST /illustrate` — server-side tax-impact math for a dollar holding (Website Engineering owns the UI)
@@ -91,7 +92,9 @@ curl -s -X POST http://127.0.0.1:8000/ingest/fetch \
 
 ## Weekly refresh
 
-Most managers publish a capital-gains book once a year, but the ingest job should still run **weekly** so new `as_of` snapshots land and unchanged documents stay current.
+More managers now publish **mid-year** (and other interim / special) capital-gains books to get ahead of tax season and limit year-end outflows. Weekly ingest is how those paid midyear amounts land before the year-end preliminary estimates — midyear is first-class, not an off-season afterthought.
+
+Adapters prefer verified midyear / special / interim pages when they exist (Capital Group `midyear-cap-gains`, iShares mid-year + year-end tables, Columbia Threadneedle mid-year estimate PDF, Davis semi-annual rows, Allspring product-alerts as the watch hub). `publication_stage` keeps the books apart so `/illustrate` and compare do not treat a June paid amount as a YE preliminary.
 
 ```bash
 # Production default (REFRESH_MODE=auto): live HTML where the adapter supports it,
@@ -117,6 +120,8 @@ python -m app.cli refresh --output refresh-summary.json --markdown refresh-summa
 | `fixture` | Bundled HTML only (no outbound HTTP). |
 
 The command is the `POST /ingest/fetch` `fund_family=all` path with per-family error isolation. Upserts stay **idempotent**: the same document (`as_of` + ex-date + estimate type) updates the existing row; a new `as_of` inserts a new snapshot. Exit code is `0` on partial live fallbacks. Exit `1` only when **every** attempted family hard-fails (live and fixture both error).
+
+The JSON / Markdown summary breaks out **midyear vs year-end** created/updated when a row is detectable from the source URL (`midyear`, `mid-year`, `interim`, `semi-annual`, `year-end`) or from `as_of` / `ex_date` month (May–August vs October–January). Unclassified months (for example September) are counted only in the overall created/updated totals.
 
 Live pages often 403, challenge, or render as a JS/SPA shell and parse 0 rows. That is expected for a large share of the top 110 — fixture fallback is the documented recovery, not a job failure.
 
@@ -313,7 +318,7 @@ Dollar fields are scaled linearly from the request holding: `value_at_10k = valu
 | `common_inception` | `from_year` / `from_as_of` → `to_year` / `to_as_of` of the compared window |
 | `upcoming_taxable_distribution` | This calendar year’s upcoming taxable $ on $10k, or `null` |
 
-`upcoming_taxable_distribution` (slot 4) looks up **current calendar year** rows for each side (selectors without the period `as_of` pin). Among `preliminary_estimate` and `updated_estimate`, it keeps the **latest `as_of`**. Paid is ignored. `final` is used only when that year has no estimate. Same-day updated + preliminary prefers `updated_estimate`.
+`upcoming_taxable_distribution` (slot 4) looks up **current calendar year** rows for each side (selectors without the period `as_of` pin). Among `preliminary_estimate` and `updated_estimate`, it keeps the **latest `as_of`**. **Paid is ignored** — including midyear paid amounts — so a June ex-date does not masquerade as the year-end preliminary. `final` is used only when that year has no estimate. Same-day updated + preliminary prefers `updated_estimate`.
 
 | Slot 4 field | Meaning |
 | --- | --- |
@@ -359,7 +364,7 @@ Each stored row is one estimate **component** (a fund can have long-term and sho
 | `amount_unit` | `per_share`, `percent_of_nav`, or `percent` (qualified-dividend %) |
 | `record_date`, `ex_date`, `payable_date` | When published |
 | `as_of` | Page publication date (Capital Group `meta name=date`) |
-| `publication_stage` | `preliminary_estimate`, `updated_estimate`, `final`, `paid` |
+| `publication_stage` | `preliminary_estimate`, `updated_estimate`, `final`, `paid`. Midyear **estimate** books (Columbia `mid-year-cap-gain-estimates`) stay `preliminary_estimate` / `updated_estimate`. Midyear **paid** / special / interim / semi-annual amounts (Capital Group `midyear-cap-gains`, iShares mid-year table, Davis June rows) map to `paid`. Year-end HTML/PDF maps to `final` (or the matching estimate stage). |
 | `source_url` | Page or partner URL |
 | `raw_payload` | Original row/page context for audit (list endpoints omit it unless `include_raw=true`) |
 | `ingested_at` | Server timestamp of last upsert |

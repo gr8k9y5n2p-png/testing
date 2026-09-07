@@ -3,7 +3,7 @@ from __future__ import annotations
 from decimal import Decimal
 from pathlib import Path
 
-from app.models import AmountUnit, EstimateType
+from app.models import AmountUnit, EstimateType, PublicationStage
 from app.sources.families import (
     BlackRockSource,
     FidelitySource,
@@ -177,10 +177,12 @@ def test_blackrock_ishares_fixture() -> None:
     bdvl = [r for r in records if r.ticker == "BDVL"]
     lt = next(r for r in bdvl if r.estimate_type == EstimateType.long_term_capital_gains)
     assert lt.amount == Decimal("0.183738")
+    assert lt.publication_stage == PublicationStage.paid
     pct = next(r for r in bdvl if r.amount_unit == AmountUnit.percent_of_nav)
     assert pct.amount == Decimal("0.86")
     bemb = next(r for r in records if r.ticker == "BEMB" and r.estimate_type == EstimateType.long_term_capital_gains)
     assert bemb.amount == Decimal("0.393930")
+    assert bemb.publication_stage == PublicationStage.final
 
 
 def test_vanguard_fixture() -> None:
@@ -493,6 +495,7 @@ def test_next_tier_fixtures() -> None:
     assert ievax.amount_min == Decimal("0.86")
     assert ievax.amount_max == Decimal("1.25")
     assert ievax.amount_unit == AmountUnit.percent_of_nav
+    assert ievax.publication_stage == PublicationStage.preliminary_estimate
 
     amundi = parse_distribution_html(
         (ROOT / "amundi" / "2025_capital_gain_estimates.html").read_text(encoding="utf-8"),
@@ -1198,12 +1201,33 @@ def test_seventh_tier_fixtures() -> None:
         source_url="fixture://davis",
         fund_family="Davis Funds",
     )
-    nyvtx = next(
+    nyvtx_ye = next(
         r
         for r in davis
-        if r.ticker == "NYVTX" and r.estimate_type == EstimateType.long_term_capital_gains
+        if r.ticker == "NYVTX"
+        and r.estimate_type == EstimateType.long_term_capital_gains
+        and str(r.ex_date) == "2025-12-12"
     )
-    assert nyvtx.amount == Decimal("0.89")
+    assert nyvtx_ye.amount == Decimal("0.89")
+    assert nyvtx_ye.publication_stage == PublicationStage.final
+    nyvtx_mid = next(
+        r
+        for r in davis
+        if r.ticker == "NYVTX"
+        and r.estimate_type == EstimateType.long_term_capital_gains
+        and str(r.ex_date) == "2025-06-25"
+    )
+    assert nyvtx_mid.amount == Decimal("2.10")
+    assert nyvtx_mid.publication_stage == PublicationStage.paid
+    nyvtx_semi = next(
+        r
+        for r in davis
+        if r.ticker == "NYVTX"
+        and r.estimate_type == EstimateType.long_term_capital_gains
+        and str(r.ex_date) == "2026-06-24"
+    )
+    assert nyvtx_semi.amount == Decimal("1.60")
+    assert nyvtx_semi.publication_stage == PublicationStage.paid
 
 
 def test_eighth_tier_fixtures() -> None:
