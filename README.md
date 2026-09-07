@@ -11,7 +11,7 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). Planned host: `getaftertax.com`.
+Open [http://localhost:3000](http://localhost:3000). Canonical host: **https://getaftertax.com**.
 
 - `npm run build` / `npm run lint` / `npm run typecheck`
 
@@ -23,16 +23,35 @@ Open [http://localhost:3000](http://localhost:3000). Planned host: `getaftertax.
 - Soft free-search counter (`2 of 3 free searches left` …) and a paywall placeholder.
 - Sample/demo data banner. Capital Group / American Funds is treated as live ingest; other families show a **coverage gap**.
 
-## Mock vs real `POST /illustrate`
+## Mock vs real Data API (PR #2)
 
-The browser **does not** compute tax. It POSTs the locked contract to an illustrate endpoint.
+The browser **does not** compute tax. Clients in `src/lib/illustrate/` POST the locked contract.
 
 | Mode | How |
 | --- | --- |
-| Demo (default) | `POST /api/illustrate` — clearly marked mock using seed rows |
-| Data team service | Set `NEXT_PUBLIC_ILLUSTRATE_URL=http://localhost:8000/illustrate` |
+| Demo (default) | Local mocks: `POST /api/illustrate`, `POST /api/illustrate/portfolio` |
+| Data team FastAPI | `NEXT_PUBLIC_DATA_API_URL=http://localhost:8000` |
 
-That env var is the one-line swap. Types live in `src/lib/illustrate/types.ts` and must not drift from the locked request/response shape.
+With the Data API base set, Aftertax calls:
+
+- `POST /illustrate` (selector by ticker/family; response normalized to the locked UI shape)
+- `POST /illustrate/portfolio`
+- `GET /distributions`, `GET /coverage`, `GET /fund-families`
+- `POST /coverage/gaps`
+
+If the Data API is not running, illustrate falls back to the local mock.
+
+Run both PRs side by side:
+
+```bash
+# Data API (PR #2), typically port 8000
+# UI (this PR)
+NEXT_PUBLIC_DATA_API_URL=http://localhost:8000 npm run dev
+```
+
+Optional override for illustrate only: `NEXT_PUBLIC_ILLUSTRATE_URL=http://localhost:8000/illustrate`.
+
+Types live in `src/lib/illustrate/types.ts` (locked field names: `selector`, `tax_rates_applied`, `estimated_tax_dollars`, `warnings`). The client maps PR #2’s `selectors` / `estimated_tax` / `notes` into that shape.
 
 Request: `holding_dollars`, `distribution_ids` **or** `selector: { fund_family, fund_identifier }`, optional `nav_per_share`, `tax_rates`, `combine_state_with_federal`.
 
@@ -64,7 +83,7 @@ Uncovered holdings are flagged in the picker and illustrate panel so tax impact 
 
 - 3 free unique fund searches (client `localStorage` for this demo).
 - Paywall copy is in `src/lib/copy.ts`.
-- Aftertax website will create Checkout Sessions server-side against price `price_1UD6C0RqA7bY5N5qVleZso0d` (product `prod_VDXGeprN4QkxsM`). `success_url` returns to search; `cancel_url` returns to the paywall.
+- Aftertax website will create Checkout Sessions server-side against price `price_1UD6C0RqA7bY5N5qVleZso0d` (product `prod_VDXGeprN4QkxsM`). Placeholders: `success_url` `https://getaftertax.com/?checkout=success`, `cancel_url` `https://getaftertax.com/?checkout=cancel`.
 - `POST /api/checkout` is a stub until `STRIPE_SECRET_KEY` is available.
 
 ## Code structure

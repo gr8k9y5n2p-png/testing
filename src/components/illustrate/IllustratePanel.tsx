@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { FundEstimateView } from "@/data/types";
 import { isLiveCoveredFamily } from "@/lib/coverage";
-import { postIllustrate } from "@/lib/illustrate/client";
+import { isMockIllustrate, postIllustrate } from "@/lib/illustrate/client";
 import { distributionIdsForFund } from "@/lib/illustrate/ids";
 import {
   AMOUNT_UNITS,
@@ -102,9 +102,17 @@ function IllustrationWorkspace({ fund }: { fund: FundEstimateView }) {
 
     const controller = new AbortController();
     const timer = window.setTimeout(() => {
+      const mock = isMockIllustrate();
       const request: IllustrateRequest = {
         holding_dollars: holding,
-        distribution_ids: distributionIds,
+        ...(mock
+          ? { distribution_ids: distributionIds }
+          : {
+              selector: {
+                fund_family: fund.family,
+                fund_identifier: fund.ticker,
+              },
+            }),
         nav_per_share: needsNav ? nav : null,
         tax_rates: rates,
         combine_state_with_federal: combine,
@@ -128,7 +136,7 @@ function IllustrationWorkspace({ fund }: { fund: FundEstimateView }) {
       controller.abort();
       window.clearTimeout(timer);
     };
-  }, [canFetch, distributionIds, holding, rates, combine, needsNav, nav]);
+  }, [canFetch, distributionIds, holding, rates, combine, needsNav, nav, fund.family, fund.ticker]);
 
   function commitHolding(raw: string) {
     const parsed = Number(raw.replace(/,/g, ""));

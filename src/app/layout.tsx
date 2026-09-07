@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { IBM_Plex_Mono, Source_Sans_3, Source_Serif_4 } from "next/font/google";
 import { AppHeader } from "@/components/AppHeader";
 import { AppFooter } from "@/components/AppFooter";
+import { AFTERTAX_ORIGIN } from "@/lib/data-api/config";
 import "./globals.css";
 
 const sourceSans = Source_Sans_3({
@@ -25,9 +26,12 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(AFTERTAX_ORIGIN),
   title: "Aftertax — taxable impact in dollars",
   description:
     "See the taxable impact in dollars — before the meeting ends. Live fund comparisons for wholesalers. Portfolio import for advisors.",
+  alternates: { canonical: AFTERTAX_ORIGIN },
+  applicationName: "Aftertax",
 };
 
 export default function RootLayout({
