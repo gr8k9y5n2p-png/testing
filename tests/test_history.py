@@ -239,11 +239,12 @@ def test_compare_hero_yoy_fixture_bars(client: TestClient) -> None:
     )
     assert trbcx.status_code == 200, trbcx.text
     trbcx_body = trbcx.json()
-    assert len(trbcx_body["periods"]) == 4
+    # yoy periods[] are consecutive pairs (4 years → 3 bars). Contract unchanged.
+    assert len(trbcx_body["periods"]) == 3
+    assert all(p["left"]["matched"] and p["right"]["matched"] for p in trbcx_body["periods"])
     trbcx_dists = [Decimal(p["right"]["totals"]["distribution_dollars"]) for p in trbcx_body["periods"]]
-    assert all(p["right"]["matched"] for p in trbcx_body["periods"])
     assert all(d > 0 for d in trbcx_dists)
-    assert len(set(trbcx_dists)) >= 3
+    assert len(set(trbcx_dists)) >= 2
 
     fbgrx = client.post(
         "/illustrate/compare",
@@ -258,12 +259,12 @@ def test_compare_hero_yoy_fixture_bars(client: TestClient) -> None:
     )
     assert fbgrx.status_code == 200, fbgrx.text
     fbgrx_body = fbgrx.json()
-    assert len(fbgrx_body["periods"]) == 2
-    assert all(p["right"]["matched"] for p in fbgrx_body["periods"])
-    d2025 = Decimal(fbgrx_body["periods"][0]["right"]["totals"]["distribution_dollars"])
-    d2026 = Decimal(fbgrx_body["periods"][1]["right"]["totals"]["distribution_dollars"])
-    assert d2025 == Decimal("5073.00")  # $5.073 * 1000 shares
-    assert d2026 == Decimal("21021.00")
+    assert len(fbgrx_body["periods"]) == 1
+    pair = fbgrx_body["periods"][0]
+    assert pair["left"]["matched"] is True
+    assert pair["right"]["matched"] is True
+    assert Decimal(pair["left"]["totals"]["distribution_dollars"]) == Decimal("5073.00")  # $5.073 * 1000
+    assert Decimal(pair["right"]["totals"]["distribution_dollars"]) == Decimal("21021.00")
 
     amcpx = client.post(
         "/illustrate/compare",
@@ -280,10 +281,11 @@ def test_compare_hero_yoy_fixture_bars(client: TestClient) -> None:
     )
     assert amcpx.status_code == 200, amcpx.text
     amcpx_body = amcpx.json()
-    assert len(amcpx_body["periods"]) == 2
-    assert all(p["right"]["matched"] for p in amcpx_body["periods"])
+    assert len(amcpx_body["periods"]) == 1
+    assert amcpx_body["periods"][0]["left"]["matched"] is True
+    assert amcpx_body["periods"][0]["right"]["matched"] is True
+    assert Decimal(amcpx_body["periods"][0]["left"]["totals"]["distribution_dollars"]) > 0
     assert Decimal(amcpx_body["periods"][0]["right"]["totals"]["distribution_dollars"]) > 0
-    assert Decimal(amcpx_body["periods"][1]["right"]["totals"]["distribution_dollars"]) > 0
 
     vfiax = client.post(
         "/illustrate/compare",
@@ -298,10 +300,11 @@ def test_compare_hero_yoy_fixture_bars(client: TestClient) -> None:
     )
     assert vfiax.status_code == 200, vfiax.text
     vfiax_body = vfiax.json()
-    assert vfiax_body["periods"][0]["right"]["matched"] is True  # ICI 2024 December income
-    assert vfiax_body["periods"][1]["right"]["matched"] is True
-    assert Decimal(vfiax_body["periods"][0]["right"]["totals"]["distribution_dollars"]) == Decimal("1739.20")
-    assert Decimal(vfiax_body["periods"][1]["right"]["totals"]["distribution_dollars"]) > 0
+    assert len(vfiax_body["periods"]) == 1
+    assert vfiax_body["periods"][0]["left"]["matched"] is True  # ICI 2024 December income
+    assert vfiax_body["periods"][0]["right"]["matched"] is True
+    assert Decimal(vfiax_body["periods"][0]["left"]["totals"]["distribution_dollars"]) == Decimal("1739.20")
+    assert Decimal(vfiax_body["periods"][0]["right"]["totals"]["distribution_dollars"]) > 0
 
     vbiax = client.post(
         "/illustrate/compare",
@@ -315,5 +318,6 @@ def test_compare_hero_yoy_fixture_bars(client: TestClient) -> None:
         },
     )
     assert vbiax.status_code == 200, vbiax.text
-    assert all(p["right"]["matched"] for p in vbiax.json()["periods"])
-    assert len({p["right"]["totals"]["distribution_dollars"] for p in vbiax.json()["periods"]}) >= 3
+    assert len(vbiax.json()["periods"]) == 3
+    assert all(p["left"]["matched"] and p["right"]["matched"] for p in vbiax.json()["periods"])
+    assert len({p["right"]["totals"]["distribution_dollars"] for p in vbiax.json()["periods"]}) >= 2
