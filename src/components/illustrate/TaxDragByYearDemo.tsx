@@ -8,6 +8,7 @@ import type {
   CompareResponse,
   CompareSelectors,
 } from "@/lib/illustrate/compare-types";
+import type { TaxRates } from "@/lib/illustrate/types";
 import {
   taxDragLineFromPeriods,
   toTaxDragPeriods,
@@ -33,6 +34,8 @@ const DEFAULT_SELECTORS: CompareSelectors = {
 export type TaxDragByYearDemoProps = {
   selectors?: CompareSelectors;
   holdingDollars?: number;
+  taxRates?: Partial<TaxRates>;
+  combineState?: boolean;
   periods?: ComparePeriodIn[];
   metric?: TaxDragMetric;
   showLine?: boolean;
@@ -43,6 +46,8 @@ export type TaxDragByYearDemoProps = {
 type YoyQuery = {
   selectors: CompareSelectors;
   holdingDollars: number;
+  taxRates: Partial<TaxRates>;
+  combineState: boolean;
   periods: ComparePeriodIn[];
 };
 
@@ -53,13 +58,21 @@ type YoyQuery = {
 export function TaxDragByYearDemo({
   selectors = DEFAULT_SELECTORS,
   holdingDollars = 10_000,
+  taxRates = {},
+  combineState = true,
   periods = DEFAULT_YOY_PERIODS,
   metric = "tax_dollars",
   showLine = true,
   className,
   title,
 }: TaxDragByYearDemoProps) {
-  const requestKey = JSON.stringify({ selectors, holdingDollars, periods });
+  const requestKey = JSON.stringify({
+    selectors,
+    holdingDollars,
+    taxRates,
+    combineState,
+    periods,
+  });
   const [retry, setRetry] = useState(0);
   const fetchKey = `${requestKey}:${retry}`;
   const [settledKey, setSettledKey] = useState<string | null>(null);
@@ -78,8 +91,8 @@ export function TaxDragByYearDemo({
         selectors: next.selectors,
         left: { label: next.selectors.fund_name, selectors: next.selectors },
         periods: next.periods,
-        tax_rates: {},
-        combine_state_with_federal: true,
+        tax_rates: next.taxRates,
+        combine_state_with_federal: next.combineState,
         latest_as_of_only: true,
       },
       { signal: controller.signal },
@@ -128,7 +141,7 @@ export function TaxDragByYearDemo({
       metric={metric}
       title={title}
       lineSeries={showLine ? taxDragLineFromPeriods(nextPeriods) : null}
-      upcomingSummary={upcoming}
+      upcomingSummary={upcoming?.announced ? upcoming : null}
       loading={loading}
       sample={result?.source === "mock"}
       className={className}

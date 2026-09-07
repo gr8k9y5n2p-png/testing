@@ -225,24 +225,15 @@ export function TaxDragByYearChart({
 export const TaxYoYChart = TaxDragByYearChart;
 
 function UpcomingChip({ summary }: { summary: UpcomingSummary | null | undefined }) {
-  if (!summary) return null;
-  const announced = summary.announced;
+  if (!summary?.announced) return null;
   const text =
     summary.label ??
-    (announced
-      ? summary.dollars != null
-        ? `Upcoming · ${formatTaxDragValue(summary.dollars, "tax_dollars")}`
-        : "Upcoming"
-      : "Not announced");
+    (summary.dollars != null
+      ? `Upcoming · ${formatTaxDragValue(summary.dollars, "tax_dollars")}`
+      : "Upcoming");
 
   return (
-    <span
-      className={`mt-1 inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-medium ${
-        announced
-          ? "bg-tax-more-soft text-tax-more"
-          : "bg-paper text-muted ring-1 ring-line"
-      }`}
-    >
+    <span className="mt-1 inline-flex items-center rounded-full bg-tax-more-soft px-2.5 py-1 text-[11px] font-medium text-tax-more">
       {text}
     </span>
   );

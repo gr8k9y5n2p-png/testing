@@ -93,26 +93,30 @@ function selectorsHasLookup(request: CompareRequest): boolean {
 function taxIllustration(
   label: string,
   tax: number | null,
+  holdingDollars = COMPARE_SUMMARY_HOLDING_DOLLARS,
 ): ComparePeriodOut["left"] {
   const matched = tax != null;
   const dollars = tax ?? 0;
+  const holding =
+    holdingDollars > 0 ? holdingDollars : COMPARE_SUMMARY_HOLDING_DOLLARS;
   return {
     label,
     matched,
-    holding_dollars: COMPARE_SUMMARY_HOLDING_DOLLARS,
+    holding_dollars: holding,
     components: [],
     totals: {
       distribution_dollars: dollars,
       estimated_tax: dollars,
       estimated_tax_dollars: dollars,
-      effective_tax_on_holding: dollars / COMPARE_SUMMARY_HOLDING_DOLLARS,
+      effective_tax_on_holding: dollars / holding,
     },
     notes: matched ? [] : ["No distribution estimates matched the selector"],
   };
 }
 
-function taxForYear(year: number): number | null {
-  return YOY_SKETCH_YEARS.find((row) => row.year === year)?.tax ?? null;
+function taxForYear(year: number, scale = 1): number | null {
+  const tax = YOY_SKETCH_YEARS.find((row) => row.year === year)?.tax ?? null;
+  return tax == null ? null : tax * scale;
 }
 
 function mockYoyResponse(request: CompareRequest): CompareResponse {
@@ -125,6 +129,11 @@ function mockYoyResponse(request: CompareRequest): CompareResponse {
     request.selectors?.fund_name?.trim() ||
     request.selectors?.ticker?.trim() ||
     "AMCAP Fund";
+  const holding =
+    request.holding_dollars > 0
+      ? request.holding_dollars
+      : COMPARE_SUMMARY_HOLDING_DOLLARS;
+  const scale = holding / COMPARE_SUMMARY_HOLDING_DOLLARS;
 
   const pairs: ComparePeriodOut[] = [];
   for (let index = 0; index < years.length - 1; index += 1) {
@@ -133,8 +142,8 @@ function mockYoyResponse(request: CompareRequest): CompareResponse {
     pairs.push({
       year: newer,
       as_of: `${newer}-12-15`,
-      left: taxIllustration(String(older), taxForYear(older)),
-      right: taxIllustration(String(newer), taxForYear(newer)),
+      left: taxIllustration(String(older), taxForYear(older, scale), holding),
+      right: taxIllustration(String(newer), taxForYear(newer, scale), holding),
       deltas: {
         distribution_dollars: 0,
         estimated_tax: 0,
@@ -145,13 +154,17 @@ function mockYoyResponse(request: CompareRequest): CompareResponse {
 
   const fromYear = years[0] ?? 2021;
   const toYear = years[years.length - 1] ?? 2025;
-  const latestTax = taxForYear(toYear);
+  const latestTax = taxForYear(toYear, scale);
 
   return {
     mode: "yoy",
     source: "mock",
-    left: pairs[0]?.left ?? taxIllustration(fundLabel, taxForYear(fromYear)),
-    right: pairs[pairs.length - 1]?.right ?? taxIllustration(fundLabel, latestTax),
+    left:
+      pairs[0]?.left ??
+      taxIllustration(fundLabel, taxForYear(fromYear, scale), holding),
+    right:
+      pairs[pairs.length - 1]?.right ??
+      taxIllustration(fundLabel, latestTax, holding),
     deltas: pairs[pairs.length - 1]?.deltas ?? null,
     periods: pairs,
     summary: {

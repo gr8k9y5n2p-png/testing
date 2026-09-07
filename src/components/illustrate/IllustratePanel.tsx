@@ -9,6 +9,7 @@ import {
   postIllustratePortfolio,
   type PortfolioIllustrateResponse,
 } from "@/lib/illustrate/portfolio";
+import type { CompareSelectors } from "@/lib/illustrate/compare-types";
 import {
   AMOUNT_UNITS,
   DEFAULT_HOLDING_DOLLARS,
@@ -20,6 +21,7 @@ import {
 } from "@/lib/illustrate/types";
 import { IllustrationResults } from "@/components/illustrate/IllustrationResults";
 import { PortfolioCoverageCard } from "@/components/illustrate/PortfolioCoverageCard";
+import { TaxDragByYearDemo } from "@/components/illustrate/TaxDragByYearDemo";
 import { TaxRateFields } from "@/components/illustrate/TaxRateFields";
 
 export function IllustratePanel({
@@ -49,9 +51,9 @@ export function IllustratePanel({
             Dollar illustration
           </h2>
           <p className="mt-1 max-w-2xl text-sm text-muted">
-            Instant estimated distribution and tax in dollars. Adjust holding
+            Historical tax drag by year for the selected fund. Adjust holding
             size and rates; Aftertax posts them to illustrate and returns the
-            dollar result.
+            dollar result when this year is announced.
           </p>
         </div>
         {selected && !live ? (
@@ -98,6 +100,15 @@ function IllustrationWorkspace({ fund }: { fund: FundEstimateView }) {
   const distributionIds = useMemo(
     () => distributionIdsForFund(fund.id, unit),
     [fund.id, unit],
+  );
+  const selectors = useMemo<CompareSelectors>(
+    () => ({
+      fund_family: fund.family,
+      fund_identifier: fund.ticker,
+      ticker: fund.ticker,
+      fund_name: fund.fundName,
+    }),
+    [fund.family, fund.fundName, fund.ticker],
   );
 
   const needsNav = unit === AMOUNT_UNITS.per_share;
@@ -180,84 +191,95 @@ function IllustrationWorkspace({ fund }: { fund: FundEstimateView }) {
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-12">
-      <div className="space-y-4 lg:col-span-5">
-        <label className="block">
-          <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.12em] text-faint">
-            Holding
-          </span>
-          <div className="relative">
-            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-faint">
-              $
-            </span>
-            <input
-              inputMode="decimal"
-              value={holdingInput}
-              onChange={(event) => setHoldingInput(event.target.value)}
-              onBlur={(event) => commitHolding(event.target.value)}
-              className="h-12 w-full rounded-md border border-line bg-paper pl-7 pr-3 font-mono text-base text-ink"
-            />
-          </div>
-        </label>
-        <div className="flex flex-wrap gap-2">
-          <UnitToggle
-            active={unit === AMOUNT_UNITS.percent_of_nav}
-            onClick={() => setUnit(AMOUNT_UNITS.percent_of_nav)}
-            label="% of NAV"
-          />
-          <UnitToggle
-            active={unit === AMOUNT_UNITS.per_share}
-            onClick={() => setUnit(AMOUNT_UNITS.per_share)}
-            label="$ / share"
-          />
-        </div>
-        {needsNav ? (
+    <div className="space-y-6">
+      <TaxDragByYearDemo
+        selectors={selectors}
+        holdingDollars={holding}
+        taxRates={rates}
+        combineState={combine}
+        metric="tax_dollars"
+        showLine
+        title="Tax drag by year"
+      />
+      <div className="grid gap-6 lg:grid-cols-12">
+        <div className="space-y-4 lg:col-span-5">
           <label className="block">
             <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.12em] text-faint">
-              NAV per share
+              Holding
             </span>
-            <input
-              type="number"
-              min={0.01}
-              step={0.01}
-              value={navInput}
-              onChange={(event) => setNavInput(event.target.value)}
-              className="h-10 w-full rounded-md border border-line bg-paper px-3 font-mono text-sm"
-            />
-            <span className="mt-1 block text-[11px] text-faint">
-              Required for per_share amounts. Share count = holding ÷ NAV.
-            </span>
+            <div className="relative">
+              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-faint">
+                $
+              </span>
+              <input
+                inputMode="decimal"
+                value={holdingInput}
+                onChange={(event) => setHoldingInput(event.target.value)}
+                onBlur={(event) => commitHolding(event.target.value)}
+                className="h-12 w-full rounded-md border border-line bg-paper pl-7 pr-3 font-mono text-base text-ink"
+              />
+            </div>
           </label>
-        ) : (
-          <p className="text-xs text-faint">
-            % of NAV uses holding dollars only. Switch to $ / share to send
-            nav_per_share.
-          </p>
-        )}
-        <TaxRateFields
-          rates={rates}
-          combine={combine}
-          onRatesChange={setRates}
-          onCombineChange={setCombine}
-        />
-      </div>
-      <div className="lg:col-span-7">
-        {navError ? (
-          <p className="rounded-md border border-below/20 bg-below-soft px-4 py-3 text-sm text-below">
-            {navError}
-          </p>
-        ) : loading && !result ? (
-          <div className="h-64 animate-pulse rounded-md bg-paper" />
-        ) : error ? (
-          <p className="rounded-md border border-below/20 bg-below-soft px-4 py-3 text-sm text-below">
-            {error}
-          </p>
-        ) : result ? (
-          <div className="space-y-4">
-            {portfolio ? <PortfolioCoverageCard result={portfolio} /> : null}
-            <IllustrationResults result={result} />
+          <div className="flex flex-wrap gap-2">
+            <UnitToggle
+              active={unit === AMOUNT_UNITS.percent_of_nav}
+              onClick={() => setUnit(AMOUNT_UNITS.percent_of_nav)}
+              label="% of NAV"
+            />
+            <UnitToggle
+              active={unit === AMOUNT_UNITS.per_share}
+              onClick={() => setUnit(AMOUNT_UNITS.per_share)}
+              label="$ / share"
+            />
           </div>
-        ) : null}
+          {needsNav ? (
+            <label className="block">
+              <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.12em] text-faint">
+                NAV per share
+              </span>
+              <input
+                type="number"
+                min={0.01}
+                step={0.01}
+                value={navInput}
+                onChange={(event) => setNavInput(event.target.value)}
+                className="h-10 w-full rounded-md border border-line bg-paper px-3 font-mono text-sm"
+              />
+              <span className="mt-1 block text-[11px] text-faint">
+                Required for per_share amounts. Share count = holding ÷ NAV.
+              </span>
+            </label>
+          ) : (
+            <p className="text-xs text-faint">
+              % of NAV uses holding dollars only. Switch to $ / share to send
+              nav_per_share.
+            </p>
+          )}
+          <TaxRateFields
+            rates={rates}
+            combine={combine}
+            onRatesChange={setRates}
+            onCombineChange={setCombine}
+          />
+        </div>
+        <div className="lg:col-span-7">
+          {navError ? (
+            <p className="rounded-md border border-below/20 bg-below-soft px-4 py-3 text-sm text-below">
+              {navError}
+            </p>
+          ) : loading && !result ? (
+            <div className="h-64 animate-pulse rounded-md bg-paper" />
+          ) : error ? (
+            <p className="rounded-md border border-below/20 bg-below-soft px-4 py-3 text-sm text-below">
+              {error}
+            </p>
+          ) : result ? (
+            <div className="space-y-4">
+              {portfolio ? <PortfolioCoverageCard result={portfolio} /> : null}
+              <IllustrationResults result={result} />
+            </div>
+          ) : null}
+        </div>
       </div>
     </div>
   );
