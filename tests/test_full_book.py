@@ -11,8 +11,14 @@ from app.sources.families import (
     TRowePriceSource,
     VanguardSource,
 )
-from app.sources.next_tier import BnyMellonSource, DimensionalSource, NorthernTrustSource
+from app.sources.next_tier import (
+    BnyMellonSource,
+    DimensionalSource,
+    MorganStanleySource,
+    NorthernTrustSource,
+)
 from app.sources.fifth_tier import HarborSource, VoyaSource
+from app.sources.fourth_tier import HartfordSource, JohnHancockSource, MacquarieSource
 from app.sources.third_tier import AmericanCenturySource, JanusHendersonSource
 from app.sources.sixth_tier import AqrSource, AlgerSource, SeiSource
 
@@ -67,7 +73,8 @@ def test_full_book_vanguard_ici_and_next_wave() -> None:
 
     bny_funds, bny_tickers = _funds_and_tickers(BnyMellonSource())
     assert "DGAGX" in bny_tickers
-    assert len(bny_funds) >= 25
+    assert len(bny_funds) >= 40
+    assert any("Concentrated Growth ETF" in name for name in bny_funds)
 
     nt_funds, nt_tickers = _funds_and_tickers(NorthernTrustSource())
     assert "NOSIX" in nt_tickers
@@ -81,7 +88,8 @@ def test_full_book_vanguard_ici_and_next_wave() -> None:
 def test_full_book_jpm_aci_sei_aqr_alger() -> None:
     jpm_funds, jpm_tickers = _funds_and_tickers(JPMorganSource())
     assert "SEEGX" in jpm_tickers
-    assert len(jpm_funds) >= 30
+    assert len(jpm_funds) >= 35
+    assert any("Municipal Money Market" in name for name in jpm_funds)
 
     aci_funds, aci_tickers = _funds_and_tickers(AmericanCenturySource())
     assert "TWCGX" in aci_tickers
@@ -108,3 +116,22 @@ def test_full_book_harbor_voya_keep_heroes() -> None:
     voya_funds, voya_tickers = _funds_and_tickers(VoyaSource())
     assert "NLCAX" in voya_tickers
     assert len(voya_funds) >= 15
+
+
+def test_full_book_jh_hartford_macquarie_msim() -> None:
+    jh_funds, jh_tickers = _funds_and_tickers(JohnHancockSource())
+    assert "TAGRX" in jh_tickers
+    assert len(jh_funds) >= 40
+    assert not any("Closed-End" in name or "Premium Dividend" in name for name in jh_funds)
+
+    hartford_funds, hartford_tickers = _funds_and_tickers(HartfordSource())
+    assert "HFMCX" in hartford_tickers
+    assert len(hartford_funds) >= 20
+
+    mac_funds, mac_tickers = _funds_and_tickers(MacquarieSource())
+    assert "WSTAX" in mac_tickers
+    assert len(mac_tickers) >= 20
+
+    msim_funds, msim_tickers = _funds_and_tickers(MorganStanleySource())
+    assert "CVLC" in msim_tickers
+    assert len(msim_tickers) >= 15

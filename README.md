@@ -496,16 +496,18 @@ Goal: for **existing US-domiciled adapters**, ingest every **mutual fund and ETF
 
 **Wave 3 (MF/ETF-only + large-family 50-fund bar):** unique tickers **2,165 → 2,174**; funds **2,434 → 2,519**. SMA rows dropped. Tax / illustrate / performance contracts and weekly refresh are unchanged.
 
+**Wave 4 (same MF/ETF filter; keep pushing thin large books):** unique tickers **2,174 → 2,205**; funds **2,519 → 2,630**. BNY ETF $0.00 book, JPM MMKT 19a, MSIM ETF income table, plus ranks 31–35 paying-fund PDFs (JH / Hartford / Macquarie). Tax / illustrate / performance contracts and weekly refresh are unchanged.
+
 | Rank | Family | Before (tickers / funds) | After | Book used | Full-book vs flagship history |
 | --- | --- | --- | --- | --- | --- |
 | 1 | BlackRock / iShares | 12 / 12 | **44 / 121** | iShares ETF CG HTML + BlackRock 2025 open-end MF book | 44 ETF payers + 77 OEF funds (Investor A when listed). SMAs skipped. |
 | 2 | Vanguard | 26 / 26 | **239 / 239** | Column-safe full ICI December 2024 (232) + 2025 (234) (31-token layout) | **2024–2025 full December.** 2025 omits VFIAX/VBIAX/VIGAX (YE HTML). 2021–2023 ICI still flagship-only. YE page is SPA. |
 | 3 | Fidelity | 15 / 15 | **350 / 350** | Live prior-year paid table `FIIS_SP10_DPL6` + estimate `FIIS_SP52_DPL6` | Estimate table is still “funds expecting CG” (15). Prior-year paid is the full book. |
-| 5 | J.P. Morgan | 2 / 2 | 2 / **34** | Full 2025 Section 19a Appendix A (open-end + ETF) | Notices are unsplit CG $/share. SEEGX / JLGMX keep the Large Cap Growth LT mapping. No 2024 19a. |
+| 5 | J.P. Morgan | 2 / 2 | 2 / **38** | Full 2025 Section 19a Appendix A (open-end + ETF + 4 MMKT LT) | Notices are unsplit CG $/share except MMKT LT. SEEGX / JLGMX keep the Large Cap Growth LT mapping. No 2024 19a. |
 | 7 | American Funds | 3 / 46 | **22 / 84** | Live 2025 YE HTML | 2025 YE is the public table. 2024 YE + estimate samples unchanged (name-heavy). |
 | 9 | Invesco | 2 / 5 | **11 / 53** | Full 2025 MF estimate PDF + full 20 Nov 2025 ETF press-release table | SMA High Yield Bond skipped. PDF has no MF tickers. 2024 estimate still thin. |
 | 10 | T. Rowe Price | 18 / 18 | **232 / 232** | Live 2023–2025 YE HTML | **2023–2025 full-book.** 2022 YE + prelim remain PDF flagship transcriptions. |
-| 13 | BNY Mellon | 3 / 3 | 2 / **30** | Full 2025 estimate PDF paying funds | Tickers only for DGAGX / PEOPX. Paid YE product pages still flagship. |
+| 13 | BNY Mellon | 3 / 3 | 2 / **42** | Full 2025 MF paying-fund PDF + 12-ETF $0.00 book | Tickers only for DGAGX / PEOPX. Paid YE product pages still flagship. ETF PDF prints published $0.00 (stored). |
 | 15 | Northern Trust | 5 / 5 | **13 / 13** | Full 2025 equity CG PDF (column-safe rows) | NOMIX / NSGRX / NSCKX LT skipped (PDF spacing). FI book is em-dash / no CG. 2022–2024 still flagship. |
 | 18 | Dimensional | 3 / 3 | **140 / 140** | Full 2025 CG PDF (published $0.000 kept) | 2025 full-book. 2024 paid PDF still flagship-only. |
 | 20 | Amundi / Pioneer | 4 / 4 | 4 / 4 | **Skipped** | Off the expansion ladder. |
@@ -522,6 +524,10 @@ Goal: for **existing US-domiciled adapters**, ingest every **mutual fund and ETF
 | 56 | AQR | 4 / 4 | **75 / 75** | Full 2025 I/N/R6 estimate PDF | Diversifying Strategies uses the later 12/19–12/23 dates. |
 | 57 | Causeway | 3 / 3 | **10 / 10** | Full 2025 Institutional + Investor final PDF | — |
 | 58 | Alger | 3 / 3 | **84 / 84** | Full 2025 share-class PDF | International Small Cap ALCZX collision omitted. Published $0.00 stored. |
+| 16 | Morgan Stanley | 3 / 3 | **16 / 16** | Full listed 2025 ETF YE income table | CG columns were em-dash / 0.00% (omitted as $0 CG). Open-end YE PDF still Akamai-blocked. |
+| 31 | John Hancock | 3 / 3 | 3 / **45** | Full 2025 paying-fund CG PDF (MF + ETF ranges) | Closed-end rows skipped. All-dash / income-only tables omitted. 2022–2024 still A-share flagships. |
+| 34 | Hartford | 3 / 3 | 3 / **25** | Full 2025 paying-fund estimate + equity/FI finals | No-pay list omitted. Tickers only for HFMCX / HAIAX / IHGIX. 2024 final still flagship. |
+| 35 | Macquarie | 3 / 3 | **21 / 21** | Full 2025 paying-fund estimate PDF (Class A) | No-pay list omitted. 2024 paid still flagship. |
 
 **Still thin (public book not column-safe / SPA / 403):** State Street (Angular; `ZZSSGA` sample), Goldman / PIMCO (samples), UBS (403 / unparseable price page), Franklin (SPA + CEF 19a only), Schwab (SPA family grid), Dodge (Q1 2026 PDF is 2 funds; December tax-letter URL returned the foreign-source booklet), MFS (class-level % ranges, wrap-unsafe), Nuveen (document viewer is JS; no fetchable PDF), Columbia 2025 mid-year all-funds PDF (wrap-unsafe), William Blair 2025 PDF (text extract reverses columns).
 
@@ -530,15 +536,15 @@ Goal: for **existing US-domiciled adapters**, ingest every **mutual fund and ETF
 | Rank | Family | Funds now | Why under 50 |
 | --- | --- | --- | --- |
 | 4 | State Street / SPDR | 3 | Angular SPA; no stable public XLSX/HTML book |
-| 5 | J.P. Morgan | 34 | Full 2025 19a Appendix A exhausted (open-end + ETF payers). No broader YE HTML |
+| 5 | J.P. Morgan | 38 | Full 2025 19a Appendix A exhausted (open-end + ETF + 4 MMKT LT). No broader YE HTML |
 | 6 | Goldman Sachs | 2 | Advisor tax center 403; sample only |
 | 8 | PIMCO | 2 | No public HTML estimate grid; `ZZ*` sample |
 | 11 | UBS | 4 | Estimate PDF 403 / rotating JCR; price page unparseable |
 | 12 | Franklin Templeton | 1 | Open-end grid is SPA; CEF 19a only |
-| 13 | BNY Mellon | 30 | Full 2025 paying-fund PDF exhausted (30 listed payers) |
+| 13 | BNY Mellon | 42 | Full 2025 MF paying-fund PDF (30) + ETF $0.00 book (12) exhausted |
 | 14 | Nuveen | 4 | Document viewer is JS; no fetchable PDF |
 | 15 | Northern Trust | 13 | Column-safe 2025 equity CG book exhausted; ICI not column-safe; FI em-dash |
-| 16 | Morgan Stanley | 3 | Open-end YE PDF Akamai-blocked; ETF YE only |
+| 16 | Morgan Stanley | 16 | 2025 ETF YE income table exhausted; open-end YE PDF Akamai-blocked |
 | 17 | Schwab | 3 | Family annual grid is JS SPA |
 | 19 | Columbia Threadneedle | 4 | 2025 mid-year all-funds PDF wrap-unsafe |
 | 20 | Amundi / Pioneer | 4 | **Skipped** (non-US parent) |
@@ -551,9 +557,11 @@ Goal: for **existing US-domiciled adapters**, ingest every **mutual fund and ETF
 | 29 | Virtus | 4 | June 2026 estimate PDF lists 4 funds |
 | 30 | Eaton Vance | 1 | CEF 19(b) sample; open-end on MSIM |
 
-**Cleared the 50-fund bar this wave:** BlackRock / iShares (121 funds: 44 ETF + 77 OEF), Invesco (53). Already over: Vanguard, Fidelity, American Funds, T. Rowe, DFA, Janus, American Century.
+**Cleared the 50-fund bar:** BlackRock / iShares (121 funds: 44 ETF + 77 OEF), Invesco (53), Vanguard, Fidelity, American Funds, T. Rowe, DFA, Janus, American Century. Closest remaining public books: BNY (42; ETF $0.00 book exhausted), John Hancock (45; CG payers exhausted, CEFs skipped), JPM (38; 19a Appendix A exhausted).
 
-**Handoff:** keep pushing large families still under 50 when a new public MF/ETF book appears (SSGA XLSX URL, JPM broader YE, GS/PIMCO/UBS/Franklin/Schwab HTML, MSIM open-end PDF). Then ranks 31–40 / 61–110. Vanguard 2021–2023 ICI still flagship. ICI-first when column-safe. US-domiciled only. Do not start 41+ history packs. Do not expand Amundi. SMAs stay out.
+**Large families still under 50 MF/ETF tickers (name-heavy books or gated):** BlackRock 44 (OEF book has no ETF-style ticker column), American Funds 22, Invesco 11, plus every under-50-fund family above. JPM/BNY/JH/Hartford/AB stay name-heavy because the official PDFs are fund-level.
+
+**Handoff:** keep pushing large families still under 50 when a new public MF/ETF book appears (SSGA XLSX URL, JPM broader YE, GS/PIMCO/UBS/Franklin/Schwab HTML, MSIM open-end PDF). Then remaining ranks 31–40 / 61–110. Vanguard 2021–2023 ICI still flagship. ICI-first when column-safe. US-domiciled only. Do not start 41+ history packs. Do not expand Amundi. SMAs / separate accounts stay out. CEFs stay out of the 50-fund bar.
 
 ## Multi-year history and estimate → actual
 

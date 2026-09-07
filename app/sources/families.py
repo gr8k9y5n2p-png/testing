@@ -191,9 +191,12 @@ class JPMorganSource(HtmlTableSource):
     notes = (
         "Public tax-center HTML 404’d (2026-09-07). Estimates appear in Section 19a PDFs, e.g. "
         "https://am.jpmorgan.com/content/dam/jpm-am-aem/americas/us/en/supplemental/section-19-notices/2025-19a-notice-etfs.pdf "
-        "and section-19a-notice-aa-funds-12-2025.pdf. The 2025 fixture is the full Appendix A "
-        "from both notices (unsplit estimated CG $/share). SEEGX / JLGMX keep the previously "
-        "identified Large Cap Growth long-term mapping ($9.32525). "
+        "and section-19a-notice-aa-funds-12-2025.pdf plus the money-market notice "
+        "mutual-funds-annual-section-19a-notice-mmkt.pdf (four municipal MMKT LT "
+        "amounts). The 2025 fixture is the full Appendix A from those notices "
+        "(unsplit estimated CG $/share on open-end + ETF; LT $/share on MMKT). "
+        "SEEGX / JLGMX keep the previously identified Large Cap Growth long-term "
+        "mapping ($9.32525). Mutual funds + ETFs only. "
         "No official 2024 (or earlier) $/share 19a HTML/PDF with SEEGX amounts was "
         "confirmed on this pass — third-party histories are not used."
     )

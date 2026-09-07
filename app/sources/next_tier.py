@@ -90,7 +90,10 @@ class BnyMellonSource(HtmlTableSource):
     notes = (
         "Public 2025 estimate PDF is the full paying-fund book "
         "https://www.bny.com/assets/investments/im/documents/manual/tax-forms/2025-Estimated-capital-gains.pdf "
-        "(as of 10/31/2025; e.g. Appreciation Fund LT $6.29 / 15.0% of NAV). "
+        "(as of 10/31/2025; e.g. Appreciation Fund LT $6.29 / 15.0% of NAV) plus the "
+        "ETF estimate book "
+        "https://www.bny.com/content/dam/im/documents/manual/tax-forms/2025-exchange-traded-funds-estimated-capital-gains.pdf "
+        "(12 ETFs; published $0.00 total CG stored). "
         "Paid YE for DGAGX (≥$1B Investor class) from the public product page "
         "https://www.bny.com/investments/us/en/intermediary/products/lt/fund/"
         "bny-mellon-appreciation-fund-inc.html "
@@ -109,6 +112,12 @@ class BnyMellonSource(HtmlTableSource):
                 name="2025_estimated_capital_gains",
                 url="https://www.bny.com/assets/investments/im/documents/manual/tax-forms/2025-Estimated-capital-gains.pdf",
                 fixture="2025_estimated_capital_gains.html",
+                live=False,
+            ),
+            PageSpec(
+                name="2025_etf_estimated_capital_gains",
+                url="https://www.bny.com/content/dam/im/documents/manual/tax-forms/2025-exchange-traded-funds-estimated-capital-gains.pdf",
+                fixture="2025_etf_estimated_capital_gains.html",
                 live=False,
             ),
             PageSpec(
@@ -230,7 +239,8 @@ class MorganStanleySource(HtmlTableSource):
     priority = 16
     notes = (
         "Public ETF year-end PDFs under /im/publication/forms/tax/: "
-        "2025_etf_year_end_distributions.pdf (CVLC income $0.283927, 0% CG) and "
+        "2025_etf_year_end_distributions.pdf (full listed ETF ordinary-income "
+        "table; CVLC income $0.283927; CG columns em-dash / 0.00% omitted) and "
         "2024_etf_year_end_distributions.pdf (CVLC income $0.222291, 0% CG; "
         "ex/record 12/23/2024, payable 12/27/2024). Live GET is often Akamai 403. "
         "No public filled ICI file. Open-end 2025 PDF was Akamai-blocked."

@@ -13,8 +13,9 @@ class JohnHancockSource(HtmlTableSource):
         "Press-release estimate PDFs still posted: 2025 "
         "https://www.jhinvestments.com/content/dam/jhi-investments/JHINV/public/Corporate/News/"
         "CorporatePressReleases/estimated-capital-gain-and-income-distribution-press-release-2025-jhi.pdf "
-        "(TAGRX LT $6.85–$7.60) plus 2024 / 2023 / 2022 sibling filenames "
-        "(TAGRX LT $7.80–$8.80 / $3.60–$4.10 / $3.00–$3.60). USGLX listed "
+        "is the full paying-fund CG table (TAGRX LT $6.85–$7.60; mutual funds + "
+        "ETFs only — closed-end rows skipped; all-dash omitted). Plus 2024 / 2023 / 2022 "
+        "sibling filenames (TAGRX LT $7.80–$8.80 / $3.60–$4.10 / $3.00–$3.60). USGLX listed "
         "em-dashes in 2022–2023 (no CG — omitted, not stored as $0). "
         "HTML press-release shells are viewers; the PDFs are the books."
     )
@@ -130,11 +131,13 @@ class HartfordSource(HtmlTableSource):
         "No public filled ICI. Public 10/31/2025 estimate PDF: "
         "https://www.hartfordfunds.com/dam/en/docs/pub/funddocuments/regulatorydocument/"
         "Tax%20Center/HMFCapitalGains_December2025EstimateMemo.pdf "
-        "(MidCap HFMCX LT $5.36 / 19.67% of Class I NAV). Final equity books "
-        "under .../capgainsdistributions/: 2025 "
-        "2025HartfordFundsCapitalGainsDistributions.pdf (HFMCX LT $5.44) and 2024 "
-        "2024HartfordFundsCapitalGainsDistributions.pdf (HFMCX LT $1.67). "
-        "Amounts are fund-level; tickers are public Class A identifiers."
+        "is the full paying-fund book (MidCap HFMCX LT $5.36 / 19.67% of Class I NAV; "
+        "no-pay list omitted). Final books under .../capgainsdistributions/: 2025 equity "
+        "2025HartfordFundsCapitalGainsDistributions.pdf (HFMCX LT $5.44), 2025 "
+        "fixed-income / multi-strategy HartfordFundsCapitalGainsDistributions-12.17.2025.pdf, "
+        "and 2024 2024HartfordFundsCapitalGainsDistributions.pdf (HFMCX LT $1.67). "
+        "Amounts are fund-level; tickers are public Class A identifiers only where "
+        "previously identified."
     )
     live_limitations = "Estimate and final books are PDF. Fixture transcribes the public 10/31 estimate plus finals."
 
@@ -154,7 +157,12 @@ class HartfordSource(HtmlTableSource):
                 url=dam + "Tax%20Center/capgainsdistributions/2025HartfordFundsCapitalGainsDistributions.pdf",
                 fixture="2025_final_capital_gains.html",
                 live=False,
-                large_aum_only=True,
+            ),
+            PageSpec(
+                name="2025_final_fixed_income",
+                url=dam + "Tax%20Center/capgainsdistributions/HartfordFundsCapitalGainsDistributions-12.17.2025.pdf",
+                fixture="2025_final_fixed_income.html",
+                live=False,
             ),
             PageSpec(
                 name="2024_final_capital_gains",
@@ -176,7 +184,8 @@ class MacquarieSource(HtmlTableSource):
         "non-US Macquarie trusts). Renamed Macquarie Funds on 12/31/2024. "
         "No public filled ICI. Public US retail 2025 estimate PDF "
         "https://mim.fgsfulfillment.com/download.aspx?sku=CGE-RET "
-        "(WSTAX LT $10.051 / 15.05% of Class A NAV). 2024 paid book "
+        "is the full paying-fund book (WSTAX LT $10.051 / 15.05% of Class A NAV; "
+        "Class A tickers; no-pay list omitted). 2024 paid book "
         "https://mim.fgsfulfillment.com/download.aspx?sku=CGE-RET-ACT-2024 "
         "(WSTAX ST $1.108 / LT $8.135). Literature hub: "
         "https://www.macquarie.com/mam/literature."
