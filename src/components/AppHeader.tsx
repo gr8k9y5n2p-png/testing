@@ -9,8 +9,9 @@ export function AppHeader() {
           <Image
             src="/aftertax-monogram.png"
             alt=""
-            width={1500}
-            height={1538}
+            width={32}
+            height={33}
+            sizes="32px"
             className="h-8 w-auto"
             priority
           />
