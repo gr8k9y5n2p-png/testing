@@ -61,6 +61,18 @@ from app.sources.fifth_tier import (
     VictorySource,
     VoyaSource,
 )
+from app.sources.sixth_tier import (
+    AlgerSource,
+    AqrSource,
+    BrownAdvisorySource,
+    CausewaySource,
+    HardingLoevnerSource,
+    MatthewsAsiaSource,
+    SeiSource,
+    VaneckSource,
+    WilliamBlairSource,
+    WisdomtreeSource,
+)
 
 _ALIASES = {
     "american_funds": "american_funds",
@@ -190,6 +202,27 @@ _ALIASES = {
     "victory": "victory",
     "vcm": "victory",
     "victory_capital": "victory",
+    "sei": "sei",
+    "seic": "sei",
+    "brown_advisory": "brown_advisory",
+    "brown": "brown_advisory",
+    "william_blair": "william_blair",
+    "blair": "william_blair",
+    "wbim": "william_blair",
+    "vaneck": "vaneck",
+    "van_eck": "vaneck",
+    "wisdomtree": "wisdomtree",
+    "wt": "wisdomtree",
+    "aqr": "aqr",
+    "causeway": "causeway",
+    "alger": "alger",
+    "fred_alger": "alger",
+    "fredalger": "alger",
+    "harding_loevner": "harding_loevner",
+    "harding": "harding_loevner",
+    "hl": "harding_loevner",
+    "matthews_asia": "matthews_asia",
+    "matthews": "matthews_asia",
 }
 
 
@@ -245,6 +278,16 @@ def _sources() -> dict[str, FundSource]:
         NylifeSource(),
         TouchstoneSource(),
         VictorySource(),
+        SeiSource(),
+        BrownAdvisorySource(),
+        WilliamBlairSource(),
+        VaneckSource(),
+        WisdomtreeSource(),
+        AqrSource(),
+        CausewaySource(),
+        AlgerSource(),
+        HardingLoevnerSource(),
+        MatthewsAsiaSource(),
     ]
     return {source.slug: source for source in ordered}
 

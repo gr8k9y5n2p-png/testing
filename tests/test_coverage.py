@@ -3,12 +3,12 @@ from __future__ import annotations
 from fastapi.testclient import TestClient
 
 
-def test_coverage_endpoint_lists_top_50(client: TestClient) -> None:
+def test_coverage_endpoint_lists_top_60(client: TestClient) -> None:
     response = client.get("/coverage")
     assert response.status_code == 200
     body = response.json()
-    assert body["top_n"] == 50
-    assert body["implemented_count"] == 50
+    assert body["top_n"] == 60
+    assert body["implemented_count"] == 60
     assert body["stub_count"] == 0
     assert body["implemented_pct"] == 100.0
     slugs = [row["slug"] for row in body["families"]]
@@ -63,6 +63,16 @@ def test_coverage_endpoint_lists_top_50(client: TestClient) -> None:
         "nylife",
         "touchstone",
         "victory",
+        "sei",
+        "brown_advisory",
+        "william_blair",
+        "vaneck",
+        "wisdomtree",
+        "aqr",
+        "causeway",
+        "alger",
+        "harding_loevner",
+        "matthews_asia",
     ]
     assert all(row["coverage_tier"] == "implemented" for row in body["families"])
     assert body["families"][0]["priority"] == 1
@@ -74,6 +84,8 @@ def test_coverage_endpoint_lists_top_50(client: TestClient) -> None:
     assert body["families"][39]["slug"] == "wasatch"
     assert body["families"][40]["aum_rank"] == 41
     assert body["families"][49]["slug"] == "victory"
+    assert body["families"][50]["aum_rank"] == 51
+    assert body["families"][59]["slug"] == "matthews_asia"
 
 
 def test_coverage_gap_implemented_family(client: TestClient) -> None:
@@ -164,6 +176,27 @@ def test_coverage_gap_alias_fifth_tier(client: TestClient) -> None:
     victory = client.post("/coverage/gaps", json={"ticker": "MMEAX", "fund_family": "vcm"})
     assert victory.status_code == 200
     assert victory.json()["adapter_slug"] == "victory"
+
+
+def test_coverage_gap_alias_sixth_tier(client: TestClient) -> None:
+    sei = client.post("/coverage/gaps", json={"ticker": "SLGAX", "fund_family": "seic"})
+    assert sei.status_code == 200
+    assert sei.json()["adapter_slug"] == "sei"
+    brown = client.post("/coverage/gaps", json={"ticker": "BAFFX", "fund_family": "brown"})
+    assert brown.status_code == 200
+    assert brown.json()["adapter_slug"] == "brown_advisory"
+    blair = client.post("/coverage/gaps", json={"ticker": "BGFIX", "fund_family": "wbim"})
+    assert blair.status_code == 200
+    assert blair.json()["adapter_slug"] == "william_blair"
+    alger = client.post("/coverage/gaps", json={"ticker": "CHUSX", "fund_family": "fred_alger"})
+    assert alger.status_code == 200
+    assert alger.json()["adapter_slug"] == "alger"
+    hl = client.post("/coverage/gaps", json={"ticker": "HLMGX", "fund_family": "harding"})
+    assert hl.status_code == 200
+    assert hl.json()["adapter_slug"] == "harding_loevner"
+    matthews = client.post("/coverage/gaps", json={"ticker": "MEGMX", "fund_family": "matthews"})
+    assert matthews.status_code == 200
+    assert matthews.json()["adapter_slug"] == "matthews_asia"
 
 
 def test_coverage_gap_requires_ticker_or_name(client: TestClient) -> None:
