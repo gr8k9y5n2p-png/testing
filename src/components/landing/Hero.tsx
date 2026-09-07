@@ -19,10 +19,10 @@ export function Hero({
 }) {
   return (
     <section className="mb-8 max-w-3xl pt-6 sm:pt-10">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-teal">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
         Aftertax
       </p>
-      <h1 className="mt-2 font-serif text-3xl tracking-tight text-navy sm:text-[2.5rem] sm:leading-[1.15]">
+      <h1 className="mt-2 font-serif text-3xl tracking-tight text-ink sm:text-[2.5rem] sm:leading-[1.15]">
         {COPY.hero}
       </h1>
       <p className="mt-3 text-[16px] leading-relaxed text-muted">{COPY.sub}</p>

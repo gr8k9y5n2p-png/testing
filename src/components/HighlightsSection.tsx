@@ -9,7 +9,7 @@ export function HighlightsSection({ highlights }: { highlights: HighlightSets })
         <div>
           <h2
             id="highlights-heading"
-            className="font-serif text-xl tracking-tight text-navy"
+            className="font-serif text-xl tracking-tight text-ink"
           >
             Highlights
           </h2>

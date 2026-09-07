@@ -1,42 +1,52 @@
 @import "tailwindcss";
 
+/* Ledger Light — locked Aftertax palette. Accent is for CTAs and positive dollars only. */
 :root {
-  --navy: #1c3348;
-  --navy-deep: #122333;
-  --ink: #24303a;
-  --muted: #5d6c78;
-  --faint: #8a97a3;
-  --line: #d7dee5;
-  --line-strong: #c3ced8;
-  --paper: #f3f5f7;
+  --paper: #f7f8f6;
+  --ink: #1a1d1a;
+  --muted: #5c6b5e;
+  --accent: #0f7a4b;
+  --accent-hover: #0c6a41;
+  --accent-soft: #e4f1ea;
+  --line: #e6e9e4;
+  --line-strong: #d4d9d1;
+  --faint: #8b958c;
   --surface: #ffffff;
-  --teal: #2f5f62;
-  --gold: #8a6b2a;
-  --gold-soft: #f4ead2;
-  --above: #1f6b4a;
-  --above-soft: #e7f4ec;
-  --below: #8a4a24;
-  --below-soft: #f8eee6;
-  --focus: #2f5f62;
+  --focus: #0f7a4b;
+  --above: #0f7a4b;
+  --above-soft: #e4f1ea;
+  --below: #6b5348;
+  --below-soft: #f3eeea;
+  --notice: #eeefe8;
+  /* Aliases so leftover navy/teal/gold classes resolve to Ledger Light. */
+  --navy: #1a1d1a;
+  --navy-deep: #1a1d1a;
+  --teal: #5c6b5e;
+  --gold: #5c6b5e;
+  --gold-soft: #eeefe8;
 }
 
 @theme inline {
-  --color-navy: var(--navy);
-  --color-navy-deep: var(--navy-deep);
+  --color-paper: var(--paper);
   --color-ink: var(--ink);
   --color-muted: var(--muted);
-  --color-faint: var(--faint);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
   --color-line: var(--line);
   --color-line-strong: var(--line-strong);
-  --color-paper: var(--paper);
+  --color-faint: var(--faint);
   --color-surface: var(--surface);
-  --color-teal: var(--teal);
-  --color-gold: var(--gold);
-  --color-gold-soft: var(--gold-soft);
   --color-above: var(--above);
   --color-above-soft: var(--above-soft);
   --color-below: var(--below);
   --color-below-soft: var(--below-soft);
+  --color-notice: var(--notice);
+  --color-navy: var(--navy);
+  --color-navy-deep: var(--navy-deep);
+  --color-teal: var(--teal);
+  --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
   --font-sans: var(--font-source-sans);
   --font-serif: var(--font-source-serif);
   --font-mono: var(--font-plex-mono);
@@ -57,10 +67,14 @@ body {
 }
 
 ::selection {
-  background: #d5e4e3;
+  background: #dce8e1;
 }
 
 :focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
+}
+
+input[type="checkbox"] {
+  accent-color: var(--accent);
 }

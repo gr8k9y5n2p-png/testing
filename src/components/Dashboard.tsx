@@ -35,7 +35,7 @@ export function Dashboard({
         <div>
           <h2
             id="results-heading"
-            className="font-serif text-xl tracking-tight text-navy"
+            className="font-serif text-xl tracking-tight text-ink"
           >
             Sample estimates
           </h2>

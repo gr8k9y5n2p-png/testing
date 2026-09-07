@@ -12,13 +12,13 @@ export function PortfolioCoverageCard({
   return (
     <div
       className={`rounded-md border px-4 py-3 ${
-        uncovered ? "border-gold/30 bg-gold-soft" : "border-line bg-paper"
+        uncovered ? "border-line bg-notice" : "border-line bg-paper"
       }`}
     >
       <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-faint">
         Portfolio coverage
       </p>
-      <p className="mt-1 font-serif text-xl tracking-tight text-navy">
+      <p className={`mt-1 font-serif text-xl tracking-tight ${uncovered ? "text-ink" : "text-accent"}`}>
         {formatPct(coverage.coverage_pct, 1)} covered
       </p>
       <p className="mt-1 text-xs text-muted">
@@ -29,7 +29,7 @@ export function PortfolioCoverageCard({
           : ""}
       </p>
       {gaps.length > 0 ? (
-        <ul className="mt-2 space-y-1 text-xs text-navy">
+        <ul className="mt-2 space-y-1 text-xs text-ink">
           {gaps.map((gap, index) => (
             <li key={`${gap.ticker ?? "gap"}-${index}`}>
               Coverage gap
@@ -40,7 +40,7 @@ export function PortfolioCoverageCard({
         </ul>
       ) : null}
       {warnings.length > 0 ? (
-        <ul className="mt-2 space-y-1 text-xs text-gold">
+        <ul className="mt-2 space-y-1 text-xs text-muted">
           {warnings.map((warning) => (
             <li key={warning}>{warning}</li>
           ))}

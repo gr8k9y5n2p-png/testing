@@ -79,7 +79,7 @@ export function FundPicker({
                     </span>
                   </span>
                   {!coverage.isLive(fund.family) ? (
-                    <span className="mt-0.5 shrink-0 rounded-sm bg-gold-soft px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-gold">
+                    <span className="mt-0.5 shrink-0 rounded-sm bg-notice px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">
                       Gap
                     </span>
                   ) : (

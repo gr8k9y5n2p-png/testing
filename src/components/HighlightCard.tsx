@@ -26,12 +26,12 @@ export function HighlightCard({
   below?: FundEstimateView[];
 }) {
   return (
-    <article className="flex min-h-[22rem] flex-col rounded-lg border border-line bg-surface shadow-[0_1px_2px_rgba(28,51,72,0.04)]">
+    <article className="flex min-h-[22rem] flex-col rounded-lg border border-line bg-surface shadow-[0_1px_2px_rgba(26,29,26,0.04)]">
       <header className="border-b border-line px-4 py-3.5">
         <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-faint">
           {metricLabel}
         </p>
-        <h3 className="mt-1 font-serif text-lg text-navy">{title}</h3>
+        <h3 className="mt-1 font-serif text-lg text-ink">{title}</h3>
         <p className="mt-1 text-sm leading-snug text-muted">{description}</p>
       </header>
       {variant === "outliers" ? (
@@ -64,7 +64,7 @@ export function HighlightCard({
                     {fund.family}
                   </p>
                 </div>
-                <p className="shrink-0 text-right font-mono text-sm text-navy">
+                <p className="shrink-0 text-right font-mono text-sm text-ink">
                   {variant === "recent"
                     ? formatCompactDate(fund.publishedAt)
                     : formatPct(fund.estimatedDistributionPctNav)}

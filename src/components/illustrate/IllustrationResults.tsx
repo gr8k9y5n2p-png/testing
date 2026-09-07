@@ -96,7 +96,7 @@ export function IllustrationResults({
       </div>
 
       {warnings.length > 0 ? (
-        <ul className="space-y-1 text-xs text-gold">
+        <ul className="space-y-1 text-xs text-muted">
           {warnings.map((warning) => (
             <li key={warning}>{warning}</li>
           ))}
@@ -120,17 +120,23 @@ function StatCard({
   return (
     <div
       className={`rounded-md border px-4 py-3 ${
-        emphasize ? "border-navy/20 bg-navy text-white" : "border-line bg-paper"
+        emphasize ? "border-accent/25 bg-accent-soft" : "border-line bg-paper"
       }`}
     >
       <p
         className={`text-[11px] font-semibold uppercase tracking-[0.12em] ${
-          emphasize ? "text-white/60" : "text-faint"
+          emphasize ? "text-accent" : "text-faint"
         }`}
       >
         {label}
       </p>
-      <p className="mt-1 font-serif text-2xl tracking-tight">{value}</p>
+      <p
+        className={`mt-1 font-serif text-2xl tracking-tight ${
+          emphasize ? "text-accent" : "text-ink"
+        }`}
+      >
+        {value}
+      </p>
     </div>
   );
 }

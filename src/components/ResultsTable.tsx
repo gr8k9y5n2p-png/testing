@@ -38,7 +38,7 @@ export function ResultsTable({
 
   return (
     <>
-      <div className="hidden overflow-hidden rounded-lg border border-line bg-surface shadow-[0_1px_2px_rgba(28,51,72,0.04)] md:block">
+      <div className="hidden overflow-hidden rounded-lg border border-line bg-surface shadow-[0_1px_2px_rgba(26,29,26,0.04)] md:block">
         <div className="overflow-x-auto">
           <table className="min-w-full text-left text-sm">
             <thead className="border-b border-line bg-paper text-[11px] font-semibold uppercase tracking-[0.1em] text-faint">
@@ -119,7 +119,7 @@ export function ResultsTable({
                     <td className="px-3 py-3 text-muted">
                       {fund.family}
                       {!coverage.isLive(fund.family) ? (
-                        <span className="mt-1 block text-[10px] font-semibold uppercase tracking-[0.08em] text-gold">
+                        <span className="mt-1 block text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">
                           Coverage gap
                         </span>
                       ) : null}
@@ -152,7 +152,7 @@ export function ResultsTable({
                         <button
                           type="button"
                           onClick={() => onIllustrate(fund)}
-                          className="rounded-md border border-line px-2 py-1 text-xs text-navy hover:border-navy"
+                          className="rounded-md border border-line px-2 py-1 text-xs text-ink hover:border-accent"
                         >
                           Illustrate
                         </button>
@@ -179,7 +179,7 @@ export function ResultsTable({
                   {fund.ticker} · {fund.family}
                 </p>
                 {!coverage.isLive(fund.family) ? (
-                  <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-gold">
+                  <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">
                     Coverage gap
                   </p>
                 ) : null}
@@ -207,7 +207,7 @@ export function ResultsTable({
               <button
                 type="button"
                 onClick={() => onIllustrate(fund)}
-                className="mt-3 h-9 w-full rounded-md border border-line text-sm text-navy"
+                className="mt-3 h-9 w-full rounded-md border border-line text-sm text-ink"
               >
                 Illustrate
               </button>
@@ -270,9 +270,9 @@ function SortHeader({
       <button
         type="button"
         onClick={() => onSort(column)}
-        className={`inline-flex items-center gap-1 hover:text-navy ${
+        className={`inline-flex items-center gap-1 hover:text-ink ${
           align === "right" ? "flex-row-reverse" : ""
-        } ${isActive ? "text-navy" : ""}`}
+        } ${isActive ? "text-ink" : ""}`}
       >
         {label}
         <span aria-hidden="true" className="font-mono text-[10px]">

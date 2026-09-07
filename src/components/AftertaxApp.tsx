@@ -131,7 +131,7 @@ function AftertaxAppInner({
         </p>
         <h2
           id="universe-heading"
-          className="mt-1 font-serif text-xl tracking-tight text-navy"
+          className="mt-1 font-serif text-xl tracking-tight text-ink"
         >
           Estimates behind the search
         </h2>
@@ -162,7 +162,7 @@ function AftertaxAppInner({
           {unlockMessage}
           <button
             type="button"
-            className="ml-3 text-xs text-teal underline"
+            className="ml-3 text-xs text-accent underline"
             onClick={() => setUnlockMessage(null)}
           >
             Dismiss

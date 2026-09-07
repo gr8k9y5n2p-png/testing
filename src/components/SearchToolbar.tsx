@@ -19,7 +19,7 @@ export function SearchToolbar({
     "h-10 rounded-md border border-line bg-surface px-2.5 text-sm text-ink";
 
   return (
-    <div className="mb-4 rounded-lg border border-line bg-surface p-3 shadow-[0_1px_2px_rgba(28,51,72,0.04)]">
+    <div className="mb-4 rounded-lg border border-line bg-surface p-3 shadow-[0_1px_2px_rgba(26,29,26,0.04)]">
       <div className="grid gap-3 lg:grid-cols-12">
         <label className="block lg:col-span-6">
           <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.12em] text-faint">

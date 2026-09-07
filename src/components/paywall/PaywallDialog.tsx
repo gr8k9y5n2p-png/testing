@@ -17,7 +17,7 @@ export function PaywallDialog({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-navy-deep/50 px-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 px-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="paywall-heading"
@@ -25,7 +25,7 @@ export function PaywallDialog({
       <div className="w-full max-w-md rounded-lg border border-line bg-surface p-6 shadow-xl">
         <h2
           id="paywall-heading"
-          className="font-serif text-2xl tracking-tight text-navy"
+          className="font-serif text-2xl tracking-tight text-ink"
         >
           {COPY.paywallHeadline}
         </h2>
@@ -38,7 +38,7 @@ export function PaywallDialog({
           <button
             type="button"
             onClick={onUnlock}
-            className="inline-flex h-11 flex-1 items-center justify-center rounded-md bg-navy px-4 text-sm font-medium text-white hover:bg-navy-deep"
+            className="inline-flex h-11 flex-1 items-center justify-center rounded-md bg-accent px-4 text-sm font-medium text-white hover:bg-accent-hover"
           >
             {COPY.paywallCta}
           </button>

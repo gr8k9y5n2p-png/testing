@@ -35,16 +35,16 @@ export function IllustratePanel({
     <section
       id="illustrate"
       aria-labelledby="illustrate-heading"
-      className="mb-10 rounded-lg border border-line bg-surface p-4 shadow-[0_1px_2px_rgba(28,51,72,0.04)] sm:p-6"
+      className="mb-10 rounded-lg border border-line bg-surface p-4 shadow-[0_1px_2px_rgba(26,29,26,0.04)] sm:p-6"
     >
       <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-teal">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
             Tax impact
           </p>
           <h2
             id="illustrate-heading"
-            className="mt-1 font-serif text-xl tracking-tight text-navy"
+            className="mt-1 font-serif text-xl tracking-tight text-ink"
           >
             Dollar illustration
           </h2>
@@ -55,7 +55,7 @@ export function IllustratePanel({
           </p>
         </div>
         {selected && !live ? (
-          <p className="max-w-xs rounded-md border border-gold/30 bg-gold-soft px-3 py-2 text-xs text-navy">
+          <p className="max-w-xs rounded-md border border-line bg-notice px-3 py-2 text-xs text-ink">
             Coverage gap: {selected.family}
             {meta?.aum_rank ? ` · AUM rank ${meta.aum_rank}` : ""} is not in live
             ingest yet. Result can understate tax impact.
@@ -278,7 +278,7 @@ function UnitToggle({
       onClick={onClick}
       className={`h-9 rounded-md px-3 text-sm ${
         active
-          ? "bg-navy text-white"
+          ? "bg-accent text-white"
           : "border border-line text-muted hover:text-ink"
       }`}
     >
