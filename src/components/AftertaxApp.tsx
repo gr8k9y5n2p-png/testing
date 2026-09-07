@@ -6,6 +6,7 @@ import { Dashboard } from "@/components/Dashboard";
 import { DemoBanner } from "@/components/DemoBanner";
 import { HighlightsSection } from "@/components/HighlightsSection";
 import { Hero } from "@/components/landing/Hero";
+import { FundCompareRail } from "@/components/illustrate/FundCompareRail";
 import { IllustratePanel } from "@/components/illustrate/IllustratePanel";
 import { PaywallDialog } from "@/components/paywall/PaywallDialog";
 import { CoverageProvider, useCoverage } from "@/components/coverage/CoverageProvider";
@@ -121,7 +122,12 @@ function AftertaxAppInner({
         onImport={openImportPaywall}
       />
 
-      {selected ? <IllustratePanel selected={selected} /> : null}
+      {selected ? (
+        <div className="mb-10 grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(20rem,26.25rem)]">
+          <IllustratePanel selected={selected} />
+          <FundCompareRail funds={funds} selected={selected} />
+        </div>
+      ) : null}
 
       <section
         className="mt-4 border-t border-line pt-10"

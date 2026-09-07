@@ -12,12 +12,14 @@ export function FundPicker({
   onSelect,
   inputId = "fund-search",
   autoFocus = false,
+  label = COPY.searchCta,
 }: {
   funds: FundEstimateView[];
   selected: FundEstimateView | null;
   onSelect: (fund: FundEstimateView) => void;
   inputId?: string;
   autoFocus?: boolean;
+  label?: string;
 }) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
@@ -31,7 +33,7 @@ export function FundPicker({
   return (
     <div className="relative">
       <label htmlFor={inputId} className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.12em] text-faint">
-        {COPY.searchCta}
+        {label}
       </label>
       <input
         id={inputId}
