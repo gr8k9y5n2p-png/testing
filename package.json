@@ -2,7 +2,7 @@
   "name": "fund-distribution-estimates",
   "version": "0.1.0",
   "private": true,
-  "description": "Searchable template for fund manager estimated taxable distributions.",
+  "description": "Aftertax — taxable impact in dollars for wholesalers and advisors.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
