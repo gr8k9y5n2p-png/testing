@@ -131,6 +131,10 @@ def test_compare_fund_vs_fund_chart_contract(client: TestClient) -> None:
     }
     assert summary["upcoming_taxable_distribution"] is None
     assert any("upcoming_taxable_distribution is null" in note for note in body["notes"])
+    assert "estimated_tax_min" not in summary
+    assert "estimated_tax_max" not in summary
+    assert "distribution_dollars_min" not in summary
+    assert "distribution_dollars_max" not in summary
 
 
 def test_compare_yoy_same_fund_periods(client: TestClient) -> None:
@@ -304,6 +308,16 @@ def test_compare_upcoming_prefers_current_year_estimate(client: TestClient) -> N
                     "fund_family": "American Funds",
                     "fund_name": "AMCAP Fund",
                     "estimate_type": "total_capital_gains",
+                    "amount": "8",
+                    "amount_unit": "percent_of_nav",
+                    "as_of": "2026-06-01",
+                    "publication_stage": "updated_estimate",
+                    "source_url": "https://example.invalid/amcap-2026-updated-old",
+                },
+                {
+                    "fund_family": "American Funds",
+                    "fund_name": "AMCAP Fund",
+                    "estimate_type": "total_capital_gains",
                     "amount": "5",
                     "amount_unit": "percent_of_nav",
                     "as_of": "2026-09-01",
@@ -312,14 +326,24 @@ def test_compare_upcoming_prefers_current_year_estimate(client: TestClient) -> N
                 },
                 {
                     "fund_family": "American Funds",
+                    "fund_name": "AMCAP Fund",
+                    "estimate_type": "total_capital_gains",
+                    "amount": "7",
+                    "amount_unit": "percent_of_nav",
+                    "as_of": "2026-09-15",
+                    "publication_stage": "final",
+                    "source_url": "https://example.invalid/amcap-2026-final",
+                },
+                {
+                    "fund_family": "American Funds",
                     "fund_name": "Capital Group Municipal High-Income ETF",
                     "ticker": "CGHM",
                     "estimate_type": "total_capital_gains",
-                    "amount": "3",
+                    "amount": "2",
                     "amount_unit": "percent_of_nav",
                     "as_of": "2026-09-01",
-                    "publication_stage": "updated_estimate",
-                    "source_url": "https://example.invalid/cghm-2026-updated",
+                    "publication_stage": "final",
+                    "source_url": "https://example.invalid/cghm-2026-final",
                 },
             ]
         },
@@ -343,13 +367,15 @@ def test_compare_upcoming_prefers_current_year_estimate(client: TestClient) -> N
     assert response.status_code == 200, response.text
     upcoming = response.json()["summary"]["upcoming_taxable_distribution"]
     assert upcoming is not None
+    # Latest estimate (Sept prelim 5%) wins over older updated (8%), paid (9%), and later final (7%).
     assert Decimal(upcoming["left_dollars"]) == Decimal("500.00")
-    assert Decimal(upcoming["right_dollars"]) == Decimal("300.00")
-    assert Decimal(upcoming["delta_dollars"]) == Decimal("-200.00")
+    # CGHM has only a 2026 final → fallback.
+    assert Decimal(upcoming["right_dollars"]) == Decimal("200.00")
+    assert Decimal(upcoming["delta_dollars"]) == Decimal("-300.00")
     assert upcoming["left_as_of"] == "2026-09-01"
     assert upcoming["right_as_of"] == "2026-09-01"
     assert upcoming["left_publication_stage"] == "preliminary_estimate"
-    assert upcoming["right_publication_stage"] == "updated_estimate"
+    assert upcoming["right_publication_stage"] == "final"
 
 
 def test_compare_validation(client: TestClient) -> None:

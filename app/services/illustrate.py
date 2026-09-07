@@ -559,11 +559,10 @@ COMPARE_NOTES = [
 ]
 
 SUMMARY_HOLDING = Decimal("10000")
-UPCOMING_STAGES = (
+UPCOMING_ESTIMATE_STAGES = {
     PublicationStage.updated_estimate.value,
     PublicationStage.preliminary_estimate.value,
-    PublicationStage.final.value,
-)
+}
 
 
 def _empty_illustration(body: IllustrateRequest, *, reason: str) -> IllustrateResponse:
@@ -817,18 +816,18 @@ def _upcoming_side(
     )
     year = date.today().year
     current = [row for row in rows if row.as_of is not None and row.as_of.year == year]
-    chosen: list[DistributionEstimate] = []
-    stage_used: str | None = None
-    for stage in UPCOMING_STAGES:
-        staged = [row for row in current if row.publication_stage == stage]
-        if staged:
-            chosen = staged
-            stage_used = stage
-            break
-    if not chosen:
+    estimates = [row for row in current if row.publication_stage in UPCOMING_ESTIMATE_STAGES]
+    finals = [row for row in current if row.publication_stage == PublicationStage.final.value]
+    pool = estimates or finals
+    if not pool:
         return None, None, None
-    latest = max(row.as_of for row in chosen if row.as_of is not None)
-    chosen = [row for row in chosen if row.as_of == latest]
+    latest = max(row.as_of for row in pool if row.as_of is not None)
+    chosen = [row for row in pool if row.as_of == latest]
+    if estimates and any(row.publication_stage == PublicationStage.updated_estimate.value for row in chosen):
+        chosen = [row for row in chosen if row.publication_stage == PublicationStage.updated_estimate.value]
+        stage_used = PublicationStage.updated_estimate.value
+    else:
+        stage_used = chosen[0].publication_stage
     illustration = illustrate_from_rows(
         chosen,
         holding=body.holding_dollars,

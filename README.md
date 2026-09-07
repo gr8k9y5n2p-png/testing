@@ -251,9 +251,16 @@ A missing side is **not** a 404. That illustration is empty (zeros, `matched: fa
 
 Top-level or per-side `nav_per_share` / `shares` apply the same way as single-holding illustrate.
 
-**`summary` (React footer, always at $10,000)**
+**`summary` (React footer v1, always at $10,000)**
 
-Dollar fields are scaled linearly from the request holding: `value_at_10k = value × (10000 / holding_dollars)`. Tax-drag rates are already fractions of the holding, so they are **not** rescaled.
+Dollar fields are scaled linearly from the request holding: `value_at_10k = value × (10000 / holding_dollars)`. Tax-drag rates are already fractions of the holding, so they are **not** rescaled. Estimate min/max ranges stay on `periods[].deltas` only — they are not on `summary`.
+
+| Footer slot | Field |
+| --- | --- |
+| 1 — tax $ Δ | `summary.total_tax_difference` |
+| 2 — annualized tax drag Δ | `summary.annualized_tax_drag_delta` |
+| 3 — distribution $ Δ | `summary.distribution_dollars_difference` |
+| 4 — upcoming taxable $ | `summary.upcoming_taxable_distribution` |
 
 | Field | Meaning |
 | --- | --- |
@@ -263,11 +270,18 @@ Dollar fields are scaled linearly from the request holding: `value_at_10k = valu
 | `annualized_tax_drag_delta` | Arithmetic mean of `periods[].deltas.effective_tax_on_holding` |
 | `periods_compared` | Number of period rows in the response |
 | `common_inception` | `from_year` / `from_as_of` → `to_year` / `to_as_of` of the compared window |
-| `upcoming_taxable_distribution` | This calendar year’s upcoming taxable $ on $10k (see below) |
+| `upcoming_taxable_distribution` | This calendar year’s upcoming taxable $ on $10k, or `null` |
 
-`upcoming_taxable_distribution` looks up **current calendar year** rows for each side (selectors without the period `as_of` pin). Stage order: `updated_estimate` → `preliminary_estimate` → `final`. Paid rows are ignored. When a side has a match, the payload includes `left_dollars` / `right_dollars`, `delta_dollars` (right − left), and `left|right_as_of` plus `left|right_publication_stage`. If neither side has current-year upcoming data the object is `null` and a note is added.
+`upcoming_taxable_distribution` (slot 4) looks up **current calendar year** rows for each side (selectors without the period `as_of` pin). Among `preliminary_estimate` and `updated_estimate`, it keeps the **latest `as_of`**. Paid is ignored. `final` is used only when that year has no estimate. Same-day updated + preliminary prefers `updated_estimate`.
 
-Period `deltas` still carry `_min`/`_max` for the chart; those ranges are **not** repeated on `summary`.
+| Slot 4 field | Meaning |
+| --- | --- |
+| `left_dollars` / `right_dollars` | Upcoming taxable $ on $10k (`null` if that side has no current-year row) |
+| `delta_dollars` | right − left (missing side treated as $0) |
+| `left_as_of` / `right_as_of` | Publication `as_of` used |
+| `left_publication_stage` / `right_publication_stage` | Stage used |
+
+If neither side has current-year upcoming data the object is `null` and a note is added.
 
 ## Multi-year history and estimate → actual
 
