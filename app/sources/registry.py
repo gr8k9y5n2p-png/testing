@@ -85,6 +85,18 @@ from app.sources.seventh_tier import (
     OsterweisSource,
     TcwSource,
 )
+from app.sources.eighth_tier import (
+    ArielSource,
+    BairdSource,
+    BuffaloSource,
+    FmiSource,
+    GqgSource,
+    HeartlandSource,
+    ImpaxSource,
+    LongleafSource,
+    PrimecapSource,
+    ThirdAvenueSource,
+)
 
 _ALIASES = {
     "american_funds": "american_funds",
@@ -253,6 +265,24 @@ _ALIASES = {
     "ost": "osterweis",
     "davis": "davis",
     "davis_funds": "davis",
+    "primecap": "primecap",
+    "odyssey": "primecap",
+    "primecap_odyssey": "primecap",
+    "ariel": "ariel",
+    "baird": "baird",
+    "longleaf": "longleaf",
+    "southeastern": "longleaf",
+    "buffalo": "buffalo",
+    "gqg": "gqg",
+    "third_avenue": "third_avenue",
+    "thirdave": "third_avenue",
+    "tav": "third_avenue",
+    "heartland": "heartland",
+    "fmi": "fmi",
+    "fmimgt": "fmi",
+    "impax": "impax",
+    "pax": "impax",
+    "impaxam": "impax",
 }
 
 
@@ -328,6 +358,16 @@ def _sources() -> dict[str, FundSource]:
         MarsicoSource(),
         OsterweisSource(),
         DavisSource(),
+        PrimecapSource(),
+        ArielSource(),
+        BairdSource(),
+        LongleafSource(),
+        BuffaloSource(),
+        GqgSource(),
+        ThirdAvenueSource(),
+        HeartlandSource(),
+        FmiSource(),
+        ImpaxSource(),
     ]
     return {source.slug: source for source in ordered}
 

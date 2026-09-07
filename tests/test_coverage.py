@@ -3,12 +3,12 @@ from __future__ import annotations
 from fastapi.testclient import TestClient
 
 
-def test_coverage_endpoint_lists_top_70(client: TestClient) -> None:
+def test_coverage_endpoint_lists_top_80(client: TestClient) -> None:
     response = client.get("/coverage")
     assert response.status_code == 200
     body = response.json()
-    assert body["top_n"] == 70
-    assert body["implemented_count"] == 70
+    assert body["top_n"] == 80
+    assert body["implemented_count"] == 80
     assert body["stub_count"] == 0
     assert body["implemented_pct"] == 100.0
     slugs = [row["slug"] for row in body["families"]]
@@ -83,6 +83,16 @@ def test_coverage_endpoint_lists_top_70(client: TestClient) -> None:
         "marsico",
         "osterweis",
         "davis",
+        "primecap",
+        "ariel",
+        "baird",
+        "longleaf",
+        "buffalo",
+        "gqg",
+        "third_avenue",
+        "heartland",
+        "fmi",
+        "impax",
     ]
     assert all(row["coverage_tier"] == "implemented" for row in body["families"])
     assert body["families"][0]["priority"] == 1
@@ -98,6 +108,8 @@ def test_coverage_endpoint_lists_top_70(client: TestClient) -> None:
     assert body["families"][59]["slug"] == "matthews_asia"
     assert body["families"][60]["aum_rank"] == 61
     assert body["families"][69]["slug"] == "davis"
+    assert body["families"][70]["aum_rank"] == 71
+    assert body["families"][79]["slug"] == "impax"
 
 
 def test_coverage_gap_implemented_family(client: TestClient) -> None:
@@ -227,6 +239,26 @@ def test_coverage_gap_alias_seventh_tier(client: TestClient) -> None:
     davis = client.post("/coverage/gaps", json={"ticker": "NYVTX", "fund_family": "davis_funds"})
     assert davis.status_code == 200
     assert davis.json()["adapter_slug"] == "davis"
+
+
+def test_coverage_gap_alias_eighth_tier(client: TestClient) -> None:
+    odyssey = client.post("/coverage/gaps", json={"ticker": "POSKX", "fund_family": "odyssey"})
+    assert odyssey.status_code == 200
+    assert odyssey.json()["adapter_slug"] == "primecap"
+    southeastern = client.post(
+        "/coverage/gaps", json={"ticker": "LLPFX", "fund_family": "southeastern"}
+    )
+    assert southeastern.status_code == 200
+    assert southeastern.json()["adapter_slug"] == "longleaf"
+    thirdave = client.post("/coverage/gaps", json={"ticker": "TAVFX", "fund_family": "thirdave"})
+    assert thirdave.status_code == 200
+    assert thirdave.json()["adapter_slug"] == "third_avenue"
+    pax = client.post("/coverage/gaps", json={"ticker": "PAXLX", "fund_family": "pax"})
+    assert pax.status_code == 200
+    assert pax.json()["adapter_slug"] == "impax"
+    fmimgt = client.post("/coverage/gaps", json={"ticker": "FMIUX", "fund_family": "fmimgt"})
+    assert fmimgt.status_code == 200
+    assert fmimgt.json()["adapter_slug"] == "fmi"
 
 
 def test_coverage_gap_requires_ticker_or_name(client: TestClient) -> None:
