@@ -416,17 +416,13 @@ class IllustrateResponse(BaseModel):
 
 
 def normalize_weight_pct(value: Decimal) -> Decimal:
-    """Interpret ``weight_pct`` as a 0–1 fraction.
+    """Interpret ``weight_pct`` as Interactive Modules UI percent (0–100).
 
-    Values in ``(1, 100]`` are percent of book (``40`` → 40%).
-    Values in ``[0, 1]`` are fractions (``0.40`` → 40%, ``1`` → 100%).
-    One percent on the 0–1 scale is ``0.01`` (bare ``1`` is a full book).
+    ``25`` is 25% of ``book_dollars``. ``1`` is 1%, not a full book.
     """
-    if value < 0 or value > 100:
-        raise ValueError("weight_pct must be between 0 and 100")
-    if value > 1:
-        return value / Decimal("100")
-    return value
+    if value <= 0 or value > 100:
+        raise ValueError("weight_pct must be in (0, 100] (UI percent)")
+    return value / Decimal("100")
 
 
 class PortfolioHoldingIn(BaseModel):
@@ -437,17 +433,17 @@ class PortfolioHoldingIn(BaseModel):
     )
     weight_pct: Decimal | None = Field(
         default=None,
-        ge=0,
+        gt=0,
         le=100,
         description=(
-            "Allocation weight. (1, 100] is percent (40 = 40%); [0, 1] is a fraction "
-            "(0.40 = 40%, 1 = 100%). Use 0.01 for one percent."
+            "Allocation weight as Interactive Modules UI percent (0–100). "
+            "25 = 25% of the side's book_dollars. Mutually exclusive with holding_dollars."
         ),
     )
     book_dollars: Decimal | None = Field(
         default=None,
         gt=0,
-        description="Book size used with weight_pct: holding_dollars = book_dollars * weight.",
+        description="Optional holding-level book. Compare prefers book_dollars on the side object.",
     )
     ticker: str | None = Field(default=None, max_length=32)
     fund_family: str | None = None
@@ -479,7 +475,9 @@ class PortfolioHoldingIn(BaseModel):
     @model_validator(mode="after")
     def require_lookup(self) -> PortfolioHoldingIn:
         if not any([self.ticker, self.fund_identifier, self.fund_name, self.distribution_ids]):
-            raise ValueError("each holding needs ticker, fund_identifier, fund_name, or distribution_ids")
+            raise ValueError("each holding needs ticker and/or fund_identifier (or fund_name / distribution_ids)")
+        if self.holding_dollars is not None and self.weight_pct is not None:
+            raise ValueError("each holding needs either holding_dollars or weight_pct, not both")
         if self.holding_dollars is not None:
             return self
         if self.weight_pct is None:
@@ -749,20 +747,19 @@ def resolve_portfolio_holding_dollars(
     holding: PortfolioHoldingIn,
     *,
     side_book: Decimal | None = None,
-    request_book: Decimal | None = None,
 ) -> PortfolioHoldingIn:
-    """Fill holding_dollars from weight_pct × book when the dollar amount was omitted."""
+    """Fill holding_dollars from weight_pct × the side's book_dollars."""
     if holding.holding_dollars is not None:
         return holding
     if holding.weight_pct is None:
         raise ValueError("each holding needs holding_dollars, or weight_pct with book_dollars")
-    book = holding.book_dollars or side_book or request_book
+    book = side_book or holding.book_dollars
     if book is None:
-        raise ValueError("weight_pct requires book_dollars on the holding, side, or request")
+        raise ValueError("weight_pct requires book_dollars on the current/proposed side")
     dollars = book * normalize_weight_pct(holding.weight_pct)
     if dollars <= 0:
         raise ValueError("book_dollars * weight_pct must be greater than 0")
-    return holding.model_copy(update={"holding_dollars": dollars, "book_dollars": book})
+    return holding.model_copy(update={"holding_dollars": dollars})
 
 
 class PortfolioCompareSideIn(BaseModel):
@@ -770,7 +767,7 @@ class PortfolioCompareSideIn(BaseModel):
     book_dollars: Decimal | None = Field(
         default=None,
         gt=0,
-        description="Shared book for holdings that send weight_pct without their own book_dollars.",
+        description="Applies to weight_pct holdings on this side: holding_dollars = book_dollars * weight_pct / 100.",
     )
     holdings: list[PortfolioHoldingIn] = Field(..., min_length=1, max_length=500)
 
@@ -790,31 +787,15 @@ class PortfolioCompareRequest(BaseModel):
     tax_rates: TaxRates = Field(default_factory=TaxRates)
     combine_state_with_federal: bool = True
     snapshot: IllustrationSnapshot = Field(default_factory=IllustrationSnapshot)
-    book_dollars: Decimal | None = Field(
-        default=None,
-        gt=0,
-        description="Shared book for both sides when holdings use weight_pct.",
-    )
-
-    @field_validator("book_dollars", mode="before")
-    @classmethod
-    def request_book_money(cls, value: Any) -> Any:
-        if isinstance(value, float):
-            return Decimal(str(value))
-        return value
 
     @model_validator(mode="after")
     def resolve_weights(self) -> PortfolioCompareRequest:
         current_holdings = [
-            resolve_portfolio_holding_dollars(
-                holding, side_book=self.current.book_dollars, request_book=self.book_dollars
-            )
+            resolve_portfolio_holding_dollars(holding, side_book=self.current.book_dollars)
             for holding in self.current.holdings
         ]
         proposed_holdings = [
-            resolve_portfolio_holding_dollars(
-                holding, side_book=self.proposed.book_dollars, request_book=self.book_dollars
-            )
+            resolve_portfolio_holding_dollars(holding, side_book=self.proposed.book_dollars)
             for holding in self.proposed.holdings
         ]
         return self.model_copy(
@@ -832,35 +813,24 @@ class PortfolioCompareAllocationOut(PortfolioIllustrateResponse):
 
 
 class PortfolioCompareDeltas(BaseModel):
-    """proposed − current. Interactive Modules can chart effective_tax_on_holding or estimated_tax."""
+    """proposed − current. Interactive Modules charts these four fields."""
 
     estimated_tax: Decimal
-    estimated_tax_min: Decimal | None = None
-    estimated_tax_max: Decimal | None = None
     distribution_dollars: Decimal
-    distribution_dollars_min: Decimal | None = None
-    distribution_dollars_max: Decimal | None = None
-    federal_tax: Decimal
-    state_tax: Decimal
     effective_tax_on_holding: Decimal
     coverage_pct: Decimal
-    dollars_covered: Decimal
-    dollars_uncovered: Decimal
-    dollars_total: Decimal
-    holdings_covered: int
-    holdings_uncovered: int
+    estimated_tax_min: Decimal | None = None
+    estimated_tax_max: Decimal | None = None
+    distribution_dollars_min: Decimal | None = None
+    distribution_dollars_max: Decimal | None = None
 
 
 class PortfolioCompareSummary(BaseModel):
-    """Dollar deltas scaled to a common book when current and proposed books differ."""
+    """Interactive Modules footer. Dollar fields are scaled linearly to $10,000."""
 
     normalized_book_dollars: Decimal
-    current_book_dollars: Decimal
-    proposed_book_dollars: Decimal
     estimated_tax: Decimal
     distribution_dollars: Decimal
-    federal_tax: Decimal
-    state_tax: Decimal
     effective_tax_on_holding: Decimal
     coverage_pct: Decimal
 

@@ -41,6 +41,11 @@ from app.schemas import (
 
 CENTS = Decimal("0.01")
 RATE_PLACES = Decimal("0.000001")
+SUMMARY_HOLDING = Decimal("10000")
+# Class A ticker → stored fund_identifier when the HTML book has no ticker column.
+TICKER_LOOKUP_ALIASES: dict[str, dict[str, str]] = {
+    "AMCPX": {"fund_identifier": "amcap-fund"},
+}
 
 # estimate_type → TaxRates field. STCG has its own rate (defaults to ordinary).
 # Unspecified combined capital-gain estimates are treated as LTCG.
@@ -416,6 +421,15 @@ def _select_holding_rows(
         ticker=holding.ticker,
         fund_name=holding.fund_name,
     )
+    if not rows and holding.ticker:
+        alias = TICKER_LOOKUP_ALIASES.get(holding.ticker.upper())
+        if alias:
+            rows = list_matching(
+                session,
+                fund_family=holding.fund_family or alias.get("fund_family"),
+                fund_identifier=holding.fund_identifier or alias.get("fund_identifier"),
+                fund_name=holding.fund_name or alias.get("fund_name"),
+            )
     if snapshot.as_of:
         rows = [row for row in rows if row.as_of == snapshot.as_of]
 
@@ -567,6 +581,7 @@ PORTFOLIO_COMPARE_NOTES = [
     "Deltas are proposed − current on one shared snapshot. Interactive Modules charts Current vs Proposed Allocation.",
     "Each side is a full POST /illustrate/portfolio result. Gaps and warnings stay on that side — never dropped.",
     "v1 is a single snapshot (shared snapshot + tax_rates). periods[] year-over-year is not in this contract.",
+    "summary dollar fields are scaled linearly to $10,000, same as POST /illustrate/compare.",
 ]
 
 
@@ -613,40 +628,27 @@ def illustrate_portfolio_compare(
     )
     deltas = PortfolioCompareDeltas(
         estimated_tax=_money(proposed.totals.estimated_tax - current.totals.estimated_tax),
-        estimated_tax_min=_delta_optional(proposed.totals.estimated_tax_min, current.totals.estimated_tax_min),
-        estimated_tax_max=_delta_optional(proposed.totals.estimated_tax_max, current.totals.estimated_tax_max),
         distribution_dollars=_money(
             proposed.totals.distribution_dollars - current.totals.distribution_dollars
         ),
+        effective_tax_on_holding=_rate(
+            proposed.totals.effective_tax_on_holding - current.totals.effective_tax_on_holding
+        ),
+        coverage_pct=_rate(proposed.coverage.coverage_pct - current.coverage.coverage_pct),
+        estimated_tax_min=_delta_optional(proposed.totals.estimated_tax_min, current.totals.estimated_tax_min),
+        estimated_tax_max=_delta_optional(proposed.totals.estimated_tax_max, current.totals.estimated_tax_max),
         distribution_dollars_min=_delta_optional(
             proposed.totals.distribution_dollars_min, current.totals.distribution_dollars_min
         ),
         distribution_dollars_max=_delta_optional(
             proposed.totals.distribution_dollars_max, current.totals.distribution_dollars_max
         ),
-        federal_tax=_money(proposed.totals.federal_tax - current.totals.federal_tax),
-        state_tax=_money(proposed.totals.state_tax - current.totals.state_tax),
-        effective_tax_on_holding=_rate(
-            proposed.totals.effective_tax_on_holding - current.totals.effective_tax_on_holding
-        ),
-        coverage_pct=_rate(proposed.coverage.coverage_pct - current.coverage.coverage_pct),
-        dollars_covered=_money(proposed.coverage.dollars_covered - current.coverage.dollars_covered),
-        dollars_uncovered=_money(
-            proposed.coverage.dollars_uncovered - current.coverage.dollars_uncovered
-        ),
-        dollars_total=_money(proposed.coverage.dollars_total - current.coverage.dollars_total),
-        holdings_covered=proposed.coverage.holdings_covered - current.coverage.holdings_covered,
-        holdings_uncovered=proposed.coverage.holdings_uncovered - current.coverage.holdings_uncovered,
     )
     current_book = current.coverage.dollars_total
     proposed_book = proposed.coverage.dollars_total
-    common = body.book_dollars or proposed_book or current_book or Decimal("10000")
-    if common <= 0:
-        common = Decimal("10000")
+    common = SUMMARY_HOLDING
     summary = PortfolioCompareSummary(
-        normalized_book_dollars=_money(common),
-        current_book_dollars=_money(current_book),
-        proposed_book_dollars=_money(proposed_book),
+        normalized_book_dollars=common,
         estimated_tax=_money(
             _scale_to_book(proposed.totals.estimated_tax, proposed_book, common)
             - _scale_to_book(current.totals.estimated_tax, current_book, common)
@@ -654,14 +656,6 @@ def illustrate_portfolio_compare(
         distribution_dollars=_money(
             _scale_to_book(proposed.totals.distribution_dollars, proposed_book, common)
             - _scale_to_book(current.totals.distribution_dollars, current_book, common)
-        ),
-        federal_tax=_money(
-            _scale_to_book(proposed.totals.federal_tax, proposed_book, common)
-            - _scale_to_book(current.totals.federal_tax, current_book, common)
-        ),
-        state_tax=_money(
-            _scale_to_book(proposed.totals.state_tax, proposed_book, common)
-            - _scale_to_book(current.totals.state_tax, current_book, common)
         ),
         effective_tax_on_holding=deltas.effective_tax_on_holding,
         coverage_pct=deltas.coverage_pct,
@@ -694,7 +688,6 @@ COMPARE_NOTES = [
     "summary dollar fields are scaled linearly to $10,000 (value × 10000 / holding_dollars).",
 ]
 
-SUMMARY_HOLDING = Decimal("10000")
 UPCOMING_ESTIMATE_STAGES = {
     PublicationStage.updated_estimate.value,
     PublicationStage.preliminary_estimate.value,

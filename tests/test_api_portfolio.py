@@ -104,7 +104,7 @@ def test_portfolio_weight_pct_with_book_dollars(client: TestClient) -> None:
             "holdings": [
                 {
                     "fund_identifier": "amcap-fund",
-                    "weight_pct": 0.80,
+                    "weight_pct": 80,
                     "book_dollars": 1000000,
                 }
             ],
