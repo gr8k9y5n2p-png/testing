@@ -25,6 +25,8 @@ def upsert_records(
     updated = 0
     stored: list[tuple[str, DistributionEstimate]] = []
     now = datetime.now(timezone.utc)
+    collapsed: dict[str, DistributionIn] = {}
+    order: list[str] = []
     for record in records:
         ident = fund_identifier(record.ticker, record.fund_name)
         key = make_upsert_key(
@@ -35,6 +37,12 @@ def upsert_records(
             as_of=record.as_of,
             ex_date=record.ex_date,
         )
+        if key not in collapsed:
+            order.append(key)
+        collapsed[key] = record
+    for key in order:
+        record = collapsed[key]
+        ident = fund_identifier(record.ticker, record.fund_name)
         existing = session.scalar(select(DistributionEstimate).where(DistributionEstimate.upsert_key == key))
         payload = {
             "fund_family": record.fund_family,

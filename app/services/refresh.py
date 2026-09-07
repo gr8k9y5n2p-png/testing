@@ -201,6 +201,7 @@ def _try_live_then_fixture(session: Session, source: FundSource) -> FamilyRefres
         try:
             created, updated, result = _ingest_fetch(session, source, "fixture")
         except Exception as fixture_exc:
+            session.rollback()
             _record_run(
                 session,
                 source,
@@ -242,6 +243,7 @@ def _try_fixture(session: Session, source: FundSource) -> FamilyRefreshResult:
     try:
         created, updated, result = _ingest_fetch(session, source, "fixture")
     except Exception as exc:
+        session.rollback()
         _record_run(session, source, mode_used="fixture", status="error", error=str(exc))
         return FamilyRefreshResult(
             slug=source.slug,
@@ -292,15 +294,36 @@ def refresh_families(
     for source in sources:
         if not source.implemented:
             continue
-        if requested == "fixture":
-            rows.append(_try_fixture(session, source))
-        elif requested == "live":
-            rows.append(_try_live_then_fixture(session, source))
-        elif source.supports_live():
-            rows.append(_try_live_then_fixture(session, source))
-        else:
-            result = _try_fixture(session, source)
-            rows.append(result)
+        try:
+            if requested == "fixture":
+                row = _try_fixture(session, source)
+            elif requested == "live" or source.supports_live():
+                row = _try_live_then_fixture(session, source)
+            else:
+                row = _try_fixture(session, source)
+            session.commit()
+        except Exception as exc:
+            session.rollback()
+            row = FamilyRefreshResult(
+                slug=source.slug,
+                status="error",
+                mode_used=requested if requested != "auto" else "live",
+                created=0,
+                updated=0,
+                error=str(exc),
+            )
+            try:
+                _record_run(
+                    session,
+                    source,
+                    mode_used=row.mode_used,
+                    status="error",
+                    error=str(exc),
+                )
+                session.commit()
+            except Exception:
+                session.rollback()
+        rows.append(row)
 
     errors = [row.slug for row in rows if row.status == "error"]
     live_count = sum(1 for row in rows if row.mode_used == "live")
