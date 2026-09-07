@@ -19,6 +19,7 @@ export type GrowthLineSeries = {
 export type AnnualizedRow = {
   id: string;
   label: string;
+  color?: string;
   value: number | null;
 };
 
@@ -33,7 +34,7 @@ export function GrowthOfXChart({
   loading = false,
   className = "",
   width = SHARED_CHART_WIDTH,
-  height = 228,
+  height = 236,
   pad = SHARED_CHART_PAD,
 }: {
   years: number[];
@@ -84,12 +85,13 @@ export function GrowthOfXChart({
   const yAt = (value: number) =>
     pad.top + innerH - ((value - scale.min) / (scale.max - scale.min || 1)) * innerH;
 
-  const ticks = [scale.max, (scale.min + scale.max) / 2, scale.min];
+  const ticks =
+    unit === "percent" ? pctTicks(scale.min, scale.max) : moneyTicks(scale.min, scale.max);
   const heading =
     title ??
     (unit === "percent"
       ? "Cumulative return"
-      : `Cumulative investment performance (Growth of ${formatUsd(startDollars, 0)})`);
+      : `Cumulative growth of ${formatUsd(startDollars, 0)}`);
 
   const aria = series
     .map((row) => {
@@ -100,52 +102,45 @@ export function GrowthOfXChart({
     })
     .join(". ");
 
+  const fundSeries = series.filter((row) => !row.dashed);
+  const lastYear = years[years.length - 1];
+
   return (
-    <section className={`relative w-full ${className}`}>
-      <header className="mb-2">
+    <section className={`w-full ${className}`}>
+      <header className="mb-2 flex flex-wrap items-end justify-between gap-3">
         <h3 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-faint">
           {heading}
         </h3>
+        <ul className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-ink">
+          {series.map((row) => {
+            const ann = annualized?.find((item) => item.id === row.id);
+            return (
+              <li key={row.id} className="flex items-center gap-1.5">
+                <span
+                  className="inline-block h-px w-4"
+                  style={{
+                    background: row.dashed ? "transparent" : row.color,
+                    borderTop: row.dashed ? `1.5px dashed ${row.color}` : undefined,
+                  }}
+                />
+                <span className="font-medium">{row.label}</span>
+                {showAnnualized && !row.dashed && ann?.value != null ? (
+                  <span
+                    className="inline-flex items-center gap-1 rounded-full bg-paper px-2 py-0.5 text-[10px] font-medium"
+                    style={{ color: row.color }}
+                  >
+                    <span
+                      className="inline-block size-1.5 rounded-full"
+                      style={{ background: row.color }}
+                    />
+                    {(ann.value * 100).toFixed(1)}% ann.
+                  </span>
+                ) : null}
+              </li>
+            );
+          })}
+        </ul>
       </header>
-
-      <ul className="pointer-events-none absolute left-14 top-8 z-10 flex flex-col gap-1 text-[11px] text-ink">
-        {series.map((row) => (
-          <li key={row.id} className="flex items-center gap-1.5">
-            <span
-              className="inline-block h-px w-4"
-              style={{
-                background: row.dashed ? "transparent" : row.color,
-                boxShadow: row.dashed ? `0 0 0 0.6px ${row.color}` : undefined,
-                borderTop: row.dashed ? `1px dashed ${row.color}` : undefined,
-              }}
-            />
-            {row.label}
-          </li>
-        ))}
-      </ul>
-
-      {showAnnualized && annualized && annualized.length > 0 ? (
-        <aside className="absolute bottom-10 right-4 z-10 rounded-md border border-line bg-surface/95 px-2.5 py-2 text-[10px] shadow-[0_4px_12px_rgba(26,29,26,0.06)]">
-          <p className="mb-1 font-semibold uppercase tracking-[0.12em] text-faint">
-            {years.length}-year annualized
-          </p>
-          <table>
-            <tbody>
-              {annualized.map((row) => (
-                <tr key={row.id}>
-                  <td className="pr-3 text-muted">{row.label}</td>
-                  <td className="text-right font-mono text-ink">
-                    {row.value == null ? "—" : `${(row.value * 100).toFixed(1)}%`}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <p className="mt-1 text-[9px] uppercase tracking-[0.08em] text-faint">
-            Hypothetical illustration only
-          </p>
-        </aside>
-      ) : null}
 
       <div role="img" aria-label={`${heading}. ${aria}`}>
         <svg viewBox={`0 0 ${width} ${height}`} className="h-auto w-full" aria-hidden>
@@ -178,6 +173,7 @@ export function GrowthOfXChart({
           {series.map((row) => {
             const d = polyline(row.points, xAt, yAt);
             if (!d) return null;
+            const last = row.points[row.points.length - 1];
             return (
               <g key={row.id}>
                 <path
@@ -189,16 +185,35 @@ export function GrowthOfXChart({
                   strokeLinejoin="round"
                   strokeLinecap="round"
                 />
-                {row.points.map((point) => (
+                {last && !row.dashed ? (
                   <circle
-                    key={`${row.id}-${point.year}`}
-                    cx={xAt(point.year)}
-                    cy={yAt(point.value)}
-                    r={2.4}
+                    cx={xAt(last.year)}
+                    cy={yAt(last.value)}
+                    r={3.2}
                     fill={row.color}
                   />
-                ))}
+                ) : null}
               </g>
+            );
+          })}
+
+          {fundSeries.map((row, index) => {
+            const last = row.points.find((point) => point.year === lastYear) ??
+              row.points[row.points.length - 1];
+            if (!last || unit === "percent") return null;
+            const offset = index === 0 ? -12 : 12;
+            return (
+              <text
+                key={`end-${row.id}`}
+                x={xAt(last.year) + 8}
+                y={yAt(last.value) + offset}
+                className="fill-ink"
+                fontSize={10}
+                fontFamily="ui-monospace, monospace"
+                fontWeight={500}
+              >
+                {formatUsd(last.value, 0)}
+              </text>
             );
           })}
 
@@ -236,11 +251,10 @@ function polyline(
 
 function nicePctScale(min: number, max: number) {
   const pad = Math.max((max - min) * 0.08, 0.05);
-  const lo = min >= 0 ? 0 : min - pad;
   const hi = max + pad;
   const step = hi <= 0.5 ? 0.1 : hi <= 1.5 ? 0.25 : 0.5;
   return {
-    min: min >= 0 ? 0 : Math.floor(lo / step) * step,
+    min: min >= 0 ? 0 : Math.floor((min - pad) / step) * step,
     max: Math.ceil(hi / step) * step,
   };
 }
@@ -250,14 +264,35 @@ function formatAxisPct(value: number): string {
 }
 
 function niceMoneyScale(min: number, max: number) {
-  const pad = Math.max((max - min) * 0.08, 500);
-  const lo = Math.max(0, min - pad);
+  const pad = Math.max((max - min) * 0.08, 400);
+  const lo = Math.max(0, min - pad * 0.25);
   const hi = max + pad;
-  const step = hi <= 20_000 ? 5_000 : hi <= 50_000 ? 10_000 : 20_000;
+  const span = hi - lo;
+  const step = span <= 12_000 ? 2_500 : span <= 25_000 ? 5_000 : span <= 60_000 ? 10_000 : 20_000;
   return {
     min: Math.floor(lo / step) * step,
     max: Math.ceil(hi / step) * step,
   };
+}
+
+function pctTicks(min: number, max: number): number[] {
+  const span = max - min;
+  const step = span <= 0.5 ? 0.1 : span <= 1.5 ? 0.25 : 0.5;
+  const ticks: number[] = [];
+  for (let value = min; value <= max + 0.001; value += step) {
+    ticks.push(Math.round(value * 1000) / 1000);
+  }
+  return ticks.length >= 2 ? ticks : [min, max];
+}
+
+function moneyTicks(min: number, max: number): number[] {
+  const span = max - min;
+  const step = span <= 12_000 ? 2_500 : span <= 25_000 ? 5_000 : span <= 60_000 ? 10_000 : 20_000;
+  const ticks: number[] = [];
+  for (let value = min; value <= max + 0.01; value += step) {
+    ticks.push(value);
+  }
+  return ticks.length >= 2 ? ticks : [min, max];
 }
 
 function formatCompactUsd(value: number): string {

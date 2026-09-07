@@ -7,11 +7,11 @@ export const DEFAULT_START_DOLLARS = 10_000;
 
 export const PERFORMANCE_FIXTURE_TICKERS = [
   "AGTHX",
+  "FCNTX",
   "AMCPX",
   "FBGRX",
   "VFIAX",
   "DODIX",
-  "VTIAX",
 ] as const;
 
 export const PERFORMANCE_BENCHMARKS = ["SPY", "AGG", "VXUS"] as const;

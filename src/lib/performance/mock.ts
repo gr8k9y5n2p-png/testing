@@ -30,6 +30,16 @@ const FUND_SPECS: FundSpec[] = [
     startAdj: 20.73,
   },
   {
+    ticker: "FCNTX",
+    name: "Fidelity Contrafund",
+    asset_class: "equity",
+    aliases: ["CONTRAFUND"],
+    seed: 29,
+    cagr: 0.118,
+    vol: 0.029,
+    startAdj: 14.8,
+  },
+  {
     ticker: "AMCPX",
     name: "AMCAP Fund",
     asset_class: "equity",
@@ -319,7 +329,7 @@ function resolveBenchmark(
 }
 
 export const PERFORMANCE_CATALOG = FUND_SPECS.filter((spec) =>
-  ["AGTHX", "AMCPX", "FBGRX", "VFIAX", "DODIX", "VTIAX"].includes(spec.ticker),
+  ["AGTHX", "FCNTX", "AMCPX", "FBGRX", "VFIAX", "DODIX"].includes(spec.ticker),
 ).map((spec) => ({ ticker: spec.ticker, name: spec.name }));
 
 export function mockPerformanceResponse(

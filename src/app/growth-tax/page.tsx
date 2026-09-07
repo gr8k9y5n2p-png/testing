@@ -39,8 +39,8 @@ export default function GrowthTaxDemoPage() {
       <div className="mt-8">
         <GrowthAndTaxDragModule
           funds={[
-            { ticker: "AGTHX", label: "The Growth Fund of America", fundFamily: "American Funds" },
-            { ticker: "VFIAX", label: "Vanguard 500 Index", fundFamily: "Vanguard" },
+            { ticker: "AGTHX", label: "AGTHX", fundFamily: "American Funds" },
+            { ticker: "FCNTX", label: "FCNTX", fundFamily: "Fidelity" },
           ]}
         />
       </div>
@@ -50,8 +50,8 @@ export default function GrowthTaxDemoPage() {
 
 <GrowthAndTaxDragModule
   funds={[
-    { ticker: "AGTHX", label: "The Growth Fund of America" },
-    { ticker: "VFIAX", label: "Vanguard 500 Index" },
+    { ticker: "AGTHX", label: "AGTHX" },
+    { ticker: "FCNTX", label: "FCNTX" },
   ]}
   startDollars={10000}
 />`}

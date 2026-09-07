@@ -8,7 +8,7 @@ import {
   MAX_GROWTH_FUNDS,
   fundSeriesColor,
 } from "@/lib/charts/series-colors";
-import { cagr, yearEndGrowth, yearEndReturns } from "@/lib/charts/shared-axis";
+import { cagr, sketchYears, yearEndGrowth, yearEndReturns } from "@/lib/charts/shared-axis";
 import { formatUsd } from "@/lib/format";
 import { postIllustrateCompare } from "@/lib/illustrate/compare-client";
 import type { ComparePeriodIn, CompareResponse } from "@/lib/illustrate/compare-types";
@@ -18,7 +18,6 @@ import {
   type TaxDragFundSeries,
 } from "@/lib/illustrate/tax-drag-chart";
 import { fetchPerformance, postPerformanceGrowth } from "@/lib/performance/client";
-import { PERFORMANCE_CATALOG } from "@/lib/performance/mock";
 import {
   DEFAULT_START_DOLLARS,
   PERFORMANCE_FIXTURE_TICKERS,
@@ -46,20 +45,20 @@ export type GrowthAndTaxDragModuleProps = {
 const DEFAULT_FUNDS: GrowthFundInput[] = [
   {
     ticker: "AGTHX",
-    label: "The Growth Fund of America",
+    label: "AGTHX",
     fundIdentifier: "AGTHX",
     fundFamily: "American Funds",
   },
+  {
+    ticker: "FCNTX",
+    label: "FCNTX",
+    fundIdentifier: "FCNTX",
+    fundFamily: "Fidelity",
+  },
 ];
 
-const TAX_FOCUS: Record<string, string> = {
-  AGTHX: "Focus on capital gains",
-  AMCPX: "Active large growth",
-  FBGRX: "Focus on capital gains",
-  VFIAX: "Index · lower turnover",
-  DODIX: "Ordinary income",
-  VTIAX: "International index",
-};
+const SKETCH_DISCLAIMER =
+  "Hypothetical illustration based on estimated distributions and assumed tax rates. Estimates only — not tax advice. Past performance does not guarantee future results.";
 
 type LoadedFund = {
   input: GrowthFundInput;
@@ -82,9 +81,10 @@ export function GrowthAndTaxDragModule({
     funds.length > 0 ? funds : DEFAULT_FUNDS,
   );
   const [principal, setPrincipal] = useState(startDollars);
-  const [principalDraft, setPrincipalDraft] = useState(String(startDollars));
+  const [principalDraft, setPrincipalDraft] = useState(formatPrincipal(startDollars));
   const [addTicker, setAddTicker] = useState("");
-  const [unit, setUnit] = useState<"dollars" | "percent">("dollars");
+  const [adding, setAdding] = useState(false);
+  const [unit, setUnit] = useState<"mixed" | "dollars" | "percent">("mixed");
   const [retry, setRetry] = useState(0);
   const [rows, setRows] = useState<LoadedFund[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -131,19 +131,23 @@ export function GrowthAndTaxDragModule({
         set.add(point.year);
       }
     }
-    return [...set].sort((a, b) => a - b);
+    return sketchYears([...set].sort((a, b) => a - b));
   }, [rows]);
 
   const growthSeries = useMemo<GrowthLineSeries[]>(() => {
     if (!rows) return [];
     const lines: GrowthLineSeries[] = rows.map((row) => ({
       id: row.performance.fund_ticker,
-      label: row.input.label || row.performance.fund_name,
+      label: row.performance.fund_ticker,
       color: row.color,
       points:
         unit === "percent"
-          ? yearEndReturns(row.performance.fund.points, principal)
-          : yearEndGrowth(row.performance.fund.points),
+          ? yearEndReturns(row.performance.fund.points, principal).filter((point) =>
+              years.includes(point.year),
+            )
+          : yearEndGrowth(row.performance.fund.points).filter((point) =>
+              years.includes(point.year),
+            ),
     }));
     const bench = rows[0]?.performance.benchmark;
     if (bench) {
@@ -154,26 +158,27 @@ export function GrowthAndTaxDragModule({
         dashed: true,
         points:
           unit === "percent"
-            ? yearEndReturns(bench.points, principal)
-            : yearEndGrowth(bench.points),
+            ? yearEndReturns(bench.points, principal).filter((point) =>
+                years.includes(point.year),
+              )
+            : yearEndGrowth(bench.points).filter((point) => years.includes(point.year)),
       });
     }
     return lines;
-  }, [principal, rows, unit]);
+  }, [principal, rows, unit, years]);
 
   const taxSeries = useMemo<TaxDragFundSeries[]>(() => {
     if (!rows) return [];
     return rows.map((row) => ({
       id: row.performance.fund_ticker,
-      label: `${row.input.label || row.performance.fund_name} tax drag`,
-      description: TAX_FOCUS[row.performance.fund_ticker],
+      label: row.performance.fund_ticker,
       color: row.color,
       points: row.tax
         ? toNegativeTaxDrag(
             alignYears(
               toTaxDragPeriods(
                 row.tax,
-                unit === "percent" ? "effective_tax" : "tax_dollars",
+                unit === "dollars" ? "tax_dollars" : "effective_tax",
               ),
               years,
             ),
@@ -185,11 +190,19 @@ export function GrowthAndTaxDragModule({
   const annualized = useMemo(() => {
     if (!rows || years.length < 2) return [];
     const span = years[years.length - 1] - years[0];
-    const dollarSeries: { id: string; label: string; points: { year: number; value: number }[] }[] =
+    const dollarSeries: {
+      id: string;
+      label: string;
+      color?: string;
+      points: { year: number; value: number }[];
+    }[] =
       rows.map((row) => ({
         id: row.performance.fund_ticker,
-        label: row.input.label || row.performance.fund_name,
-        points: yearEndGrowth(row.performance.fund.points),
+        label: row.performance.fund_ticker,
+        color: row.color,
+        points: yearEndGrowth(row.performance.fund.points).filter((point) =>
+          years.includes(point.year),
+        ),
       }));
     const bench = rows[0]?.performance.benchmark;
     if (bench) {
@@ -205,6 +218,7 @@ export function GrowthAndTaxDragModule({
       return {
         id: row.id,
         label: row.label,
+        color: row.color,
         value:
           first && last ? cagr(first.value, last.value, Math.max(span, 1)) : null,
       };
@@ -218,7 +232,7 @@ export function GrowthAndTaxDragModule({
       return;
     }
     setPrincipal(parsed);
-    setPrincipalDraft(String(parsed));
+    setPrincipalDraft(formatPrincipal(parsed));
   }
 
   function addFund(tickerRaw: string) {
@@ -226,16 +240,16 @@ export function GrowthAndTaxDragModule({
     if (!ticker) return;
     if (selected.some((fund) => fundKey(fund).ticker === ticker)) return;
     if (selected.length >= MAX_GROWTH_FUNDS) return;
-    const catalog = PERFORMANCE_CATALOG.find((row) => row.ticker === ticker);
     setSelected((current) => [
       ...current,
       {
         ticker,
-        label: catalog?.name ?? ticker,
+        label: ticker,
         fundIdentifier: ticker,
       },
     ]);
     setAddTicker("");
+    setAdding(false);
   }
 
   function removeFund(ticker: string) {
@@ -250,22 +264,25 @@ export function GrowthAndTaxDragModule({
     (ticker) => !selected.some((fund) => fundKey(fund).ticker === ticker),
   );
 
+  const growthUnit = unit === "percent" ? "percent" : "dollars";
+  const taxMetric = unit === "dollars" ? "tax_dollars" : "effective_tax";
+
   return (
     <article
       className={`rounded-2xl border border-line bg-surface px-5 py-5 shadow-[0_8px_24px_rgba(26,29,26,0.08)] ${className}`}
     >
-      <header className="flex flex-wrap items-end justify-between gap-3">
+      <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-faint">
             <span aria-hidden className="inline-block size-1.5 rounded-full bg-tax-less" />
-            Aftertax
+            Aftertax · Sample
           </p>
           <h2 className="mt-1 font-serif text-xl tracking-tight text-ink">
-            Growth and tax drag
+            Growth & tax drag
           </h2>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-end gap-2">
           <div
             className="inline-flex rounded-md border border-line bg-paper p-0.5 text-[11px] font-semibold uppercase tracking-[0.12em]"
             role="group"
@@ -291,84 +308,97 @@ export function GrowthAndTaxDragModule({
             </button>
           </div>
           {editablePrincipal ? (
-            <label className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-faint">
-              Growth of
-              <span className="sr-only">dollars</span>
+            <label className="block text-[10px] font-semibold uppercase tracking-[0.12em] text-faint">
+              Growth of $
               <input
                 type="text"
                 inputMode="decimal"
                 value={principalDraft}
                 onChange={(event) => setPrincipalDraft(event.target.value)}
-                onBlur={commitPrincipal}
+                onFocus={() => setPrincipalDraft(String(principal))}
+                onBlur={() => {
+                  commitPrincipal();
+                  setPrincipalDraft(formatPrincipal(principal));
+                }}
                 onKeyDown={(event) => {
                   if (event.key === "Enter") {
                     event.currentTarget.blur();
                   }
                 }}
-                className="h-9 w-[7.5rem] rounded-md border border-line bg-paper px-2 text-right font-mono text-sm font-normal normal-case tracking-normal text-ink"
+                className="mt-1 block h-9 w-[7.5rem] rounded-md border border-line bg-paper px-2 text-right font-mono text-sm font-normal normal-case tracking-normal text-ink"
                 aria-label="Starting dollars"
               />
             </label>
           ) : (
             <p className="text-sm text-muted">{formatUsd(principal, 0)}</p>
           )}
+          {allowAddFund && selected.length < MAX_GROWTH_FUNDS ? (
+            adding ? (
+              <form
+                className="flex items-end gap-1.5"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  addFund(addTicker);
+                }}
+              >
+                <input
+                  list="growth-tax-funds"
+                  value={addTicker}
+                  onChange={(event) => setAddTicker(event.target.value)}
+                  placeholder="Ticker"
+                  className="h-9 w-24 rounded-md border border-line bg-paper px-2 text-sm text-ink placeholder:text-faint"
+                  aria-label="Add fund ticker"
+                  autoFocus
+                />
+                <datalist id="growth-tax-funds">
+                  {remaining.map((ticker) => (
+                    <option key={ticker} value={ticker} />
+                  ))}
+                </datalist>
+                <button
+                  type="submit"
+                  className="h-9 rounded-md bg-accent px-2.5 text-[12px] text-white hover:bg-accent-hover"
+                >
+                  Add
+                </button>
+              </form>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setAdding(true)}
+                className="h-9 rounded-md border border-dashed border-line-strong px-3 text-[12px] text-muted hover:border-ink hover:text-ink"
+              >
+                + Add Fund
+              </button>
+            )
+          ) : null}
         </div>
       </header>
 
-      <div className="mt-4 flex flex-wrap items-center gap-2">
-        {selected.map((fund, index) => (
-          <span
-            key={fund.ticker}
-            className="inline-flex items-center gap-1.5 rounded-full bg-paper px-2.5 py-1 text-[12px] text-ink ring-1 ring-line"
-          >
+      {selected.length > 2 ? (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {selected.map((fund, index) => (
             <span
-              className="inline-block size-2 rounded-full"
-              style={{ background: fundSeriesColor(index) }}
-            />
-            {fund.label || fund.ticker}
-            {selected.length > 1 ? (
+              key={fund.ticker}
+              className="inline-flex items-center gap-1.5 rounded-full bg-paper px-2.5 py-1 text-[12px] text-ink ring-1 ring-line"
+            >
+              <span
+                className="inline-block size-2 rounded-full"
+                style={{ background: fundSeriesColor(index) }}
+              />
+              {fund.ticker}
               <button
                 type="button"
                 onClick={() => removeFund(fund.ticker)}
-                className="ml-0.5 text-faint hover:text-ink"
+                className="text-faint hover:text-ink"
                 aria-label={`Remove ${fund.ticker}`}
               >
                 ×
               </button>
-            ) : null}
-          </span>
-        ))}
-
-        {allowAddFund && selected.length < MAX_GROWTH_FUNDS ? (
-          <form
-            className="flex items-center gap-1.5"
-            onSubmit={(event) => {
-              event.preventDefault();
-              addFund(addTicker);
-            }}
-          >
-            <input
-              list="growth-tax-funds"
-              value={addTicker}
-              onChange={(event) => setAddTicker(event.target.value)}
-              placeholder="Add fund"
-              className="h-8 w-28 rounded-md border border-line bg-paper px-2 text-sm text-ink placeholder:text-faint"
-              aria-label="Add fund ticker"
-            />
-            <datalist id="growth-tax-funds">
-              {remaining.map((ticker) => (
-                <option key={ticker} value={ticker} />
-              ))}
-            </datalist>
-            <button
-              type="submit"
-              className="h-8 rounded-md bg-accent px-2.5 text-[12px] text-white hover:bg-accent-hover"
-            >
-              Add fund
-            </button>
-          </form>
-        ) : null}
-      </div>
+            </span>
+          ))}
+        </div>
+      ) : null}
 
       {error ? (
         <div className="mt-5 rounded-md border border-tax-more/20 bg-tax-more-soft px-4 py-4">
@@ -383,29 +413,27 @@ export function GrowthAndTaxDragModule({
           </button>
         </div>
       ) : (
-        <div className="mt-5 flex flex-col gap-6">
-          <GrowthOfXChart
-            years={years}
-            series={growthSeries}
-            startDollars={principal}
-            unit={unit}
-            annualized={annualized}
-            showAnnualized={showAnnualized}
-            loading={loading}
-          />
-          <div className="border-t border-line pt-5">
+        <div className="mt-5 flex flex-col gap-4">
+          <div className="rounded-xl border border-line bg-paper/40 px-3 py-3 sm:px-4">
+            <GrowthOfXChart
+              years={years}
+              series={growthSeries}
+              startDollars={principal}
+              unit={growthUnit}
+              annualized={annualized}
+              showAnnualized={showAnnualized}
+              loading={loading}
+            />
+          </div>
+          <div className="rounded-xl border border-line bg-paper/40 px-3 py-3 sm:px-4">
             <TaxDragByYearChart
               series={taxSeries}
               years={years}
-              metric={unit === "percent" ? "effective_tax" : "tax_dollars"}
+              metric={taxMetric}
               orientation="down"
               showBarLabels={selected.length <= 2}
               layout="flush"
-              title={
-                unit === "percent"
-                  ? "Estimated annual tax drag (based on hypothetical distributions & tax rates)"
-                  : "Estimated annual tax dollars (based on hypothetical distributions & tax rates)"
-              }
+              title="Estimated annual tax drag"
               loading={loading}
               emptyLabel="No overlapping tax-drag years"
             />
@@ -414,11 +442,14 @@ export function GrowthAndTaxDragModule({
       )}
 
       <p className="mt-4 text-[10px] leading-relaxed text-faint">
-        Growth from GET /performance and POST /performance/growth. Tax bars from
-        POST /illustrate/compare periods. Hypothetical illustration only.
+        {SKETCH_DISCLAIMER}
       </p>
     </article>
   );
+}
+
+function formatPrincipal(value: number): string {
+  return new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(value);
 }
 
 function fundKey(fund: GrowthFundInput): GrowthFundInput {

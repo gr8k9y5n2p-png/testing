@@ -4,7 +4,7 @@ export const SHARED_CHART_WIDTH = 800;
 
 export const SHARED_CHART_PAD = {
   top: 18,
-  right: 18,
+  right: 56,
   bottom: 28,
   left: 52,
 } as const;
@@ -94,6 +94,14 @@ export function yearEndReturns(
     year: point.year,
     value: startDollars > 0 ? point.value / startDollars - 1 : 0,
   }));
+}
+
+/** Sketch window: last complete five calendar years (2021–2025 in current fixtures). */
+export function sketchYears(years: number[]): number[] {
+  const complete = years.filter((year) => year <= 2025);
+  const windowed = complete.filter((year) => year >= 2021);
+  if (windowed.length >= 2) return windowed;
+  return complete.slice(-5);
 }
 
 /** (end / start) ^ (1 / years) − 1 */

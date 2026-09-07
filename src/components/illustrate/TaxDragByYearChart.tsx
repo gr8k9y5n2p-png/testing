@@ -140,7 +140,9 @@ export function TaxDragByYearChart({
     return chartPad.top + innerH - (value / scale) * innerH;
   };
 
-  const ticks = down ? [0, -scale / 2, -scale] : [0, scale / 2, scale];
+  const ticks = down
+    ? taxTicks(-scale)
+    : [0, scale / 2, scale].filter((value, index, all) => all.indexOf(value) === index);
   const linePath = overlay ? polylinePath(overlay, years, xAt, yAt) : "";
   const zeroY = down ? chartPad.top : chartPad.top + innerH;
 
@@ -286,30 +288,28 @@ export function TaxDragByYearChart({
   if (flush) {
     return (
       <section className={`w-full ${className}`}>
-        <header className="mb-2">
+        <header className="mb-2 flex flex-wrap items-end justify-between gap-3">
           <h3 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-faint">
             {title}
           </h3>
+          {fundSeries.length > 0 ? (
+            <ul className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-muted">
+              {fundSeries.map((row) => (
+                <li key={row.id} className="flex items-center gap-1.5">
+                  <span
+                    className="inline-block size-2 rounded-[2px]"
+                    style={{ background: row.color }}
+                  />
+                  <span className="text-ink">{row.label}</span>
+                </li>
+              ))}
+              <li className="text-faint">
+                {metric === "effective_tax" ? "% of portfolio value" : "tax $"}
+              </li>
+            </ul>
+          ) : null}
         </header>
         {plot}
-        {fundSeries.length > 0 ? (
-          <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted">
-            {fundSeries.map((row) => (
-              <li key={row.id} className="flex items-center gap-1.5">
-                <span
-                  className="inline-block size-2 rounded-[2px]"
-                  style={{ background: row.color }}
-                />
-                <span>
-                  {row.label}
-                  {row.description ? (
-                    <span className="text-faint"> · {row.description}</span>
-                  ) : null}
-                </span>
-              </li>
-            ))}
-          </ul>
-        ) : null}
       </section>
     );
   }
@@ -363,6 +363,16 @@ function UpcomingChip({ summary }: { summary: UpcomingSummary | null | undefined
       {text}
     </span>
   );
+}
+
+function taxTicks(min: number): number[] {
+  const floor = Math.min(min, 0);
+  const step = Math.abs(floor) <= 0.02 ? 0.005 : Math.abs(floor) <= 0.04 ? 0.01 : Math.abs(floor) / 3;
+  const ticks: number[] = [];
+  for (let value = 0; value >= floor - 0.0001; value -= step) {
+    ticks.push(Math.round(value * 1000) / 1000);
+  }
+  return ticks.length >= 2 ? ticks : [0, floor];
 }
 
 function niceScale(peak: number, metric: TaxDragMetric): number {
