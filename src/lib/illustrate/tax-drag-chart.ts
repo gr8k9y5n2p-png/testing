@@ -1,3 +1,4 @@
+import { formatCompactUsd } from "@/lib/charts/money-axis";
 import { formatUsd } from "@/lib/format";
 import type {
   CompareIllustration,
@@ -68,9 +69,12 @@ function pickMetric(
   const totals = illustration.totals;
   if (!totals) return null;
   if (metric === "tax_dollars") {
-    const tax = totals.estimated_tax_dollars ?? totals.estimated_tax;
+    // Request-holding dollars. Never summary.total_tax_difference
+    // (that footer field is always normalized to $10,000).
+    const tax = totals.estimated_tax ?? totals.estimated_tax_dollars;
     return tax == null ? null : Number(tax);
   }
+  // Rate — fraction of holding. Does not scale with $.
   const rate = totals.effective_tax_on_holding;
   return rate == null ? null : Number(rate);
 }
@@ -87,6 +91,10 @@ function yearFromLabel(label: string | undefined, fallback: number): number {
  * `mode: "yoy"` pairs consecutive vintages (period.year is the newer year;
  * `right` is that vintage, `left` is the prior). Gaps stay `null` when a
  * side is unmatched — years not present in `periods` are not invented.
+ *
+ * `$` reads `left`/`right` `totals.estimated_tax` at the request
+ * `holding_dollars`. Do not chart `summary.total_tax_difference` or
+ * `summary.distribution_dollars_difference`.
  */
 export function toTaxDragPeriods(
   response: CompareResponse,
@@ -216,5 +224,5 @@ export function formatTaxDragValue(
     const digits = Math.abs(pct) >= 10 || Number.isInteger(tenths) ? 1 : 2;
     return `${pct.toFixed(digits)}%`;
   }
-  return formatUsd(value, 0);
+  return Math.abs(value) >= 1000 ? formatCompactUsd(value) : formatUsd(value, 0);
 }

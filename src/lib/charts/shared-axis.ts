@@ -6,7 +6,7 @@ export const SHARED_CHART_PAD = {
   top: 18,
   right: 56,
   bottom: 28,
-  left: 52,
+  left: 58,
 } as const;
 
 /** Empty share of each year slot — keeps neighboring year groups apart. */
