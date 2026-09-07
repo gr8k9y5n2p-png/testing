@@ -13,6 +13,7 @@ import {
 import { postIllustratePortfolioCompare } from "@/lib/illustrate/portfolio-compare-client";
 import {
   taxImpactBarsForSide,
+  totalUpcomingTax,
   upcomingRowsForSide,
 } from "@/lib/illustrate/portfolio-compare-map";
 import type {
@@ -164,6 +165,8 @@ export function PortfolioCompare({
     : [];
   const currentBars = result ? taxImpactBarsForSide(result.current) : [];
   const proposedBars = result ? taxImpactBarsForSide(result.proposed) : [];
+  const currentTotalTax = result ? totalUpcomingTax(result.current) : 0;
+  const proposedTotalTax = result ? totalUpcomingTax(result.proposed) : 0;
   const sample = Boolean(
     result &&
       (result.source === "mock" ||
@@ -215,7 +218,7 @@ export function PortfolioCompare({
         />
         {!canFetch ? null : loading && !result ? (
           <div
-            className="h-44 min-h-44 animate-pulse rounded-2xl border border-line bg-surface lg:h-full lg:[grid-area:charts-c]"
+            className="h-52 min-h-52 animate-pulse rounded-2xl border border-line bg-surface lg:h-full lg:[grid-area:charts-c]"
             aria-busy
             aria-label="Loading current tax impact"
           />
@@ -223,7 +226,8 @@ export function PortfolioCompare({
           <TaxImpactChart
             headingId="tax-impact-current"
             bars={currentBars}
-            className="h-full min-h-44 lg:[grid-area:charts-c]"
+            totalTax={currentTotalTax}
+            className="h-full min-h-52 lg:[grid-area:charts-c]"
           />
         ) : null}
         {!canFetch ? null : loading && !result ? (
@@ -254,7 +258,7 @@ export function PortfolioCompare({
         />
         {!canFetch ? null : loading && !result ? (
           <div
-            className="h-44 min-h-44 animate-pulse rounded-2xl border border-line bg-surface lg:h-full lg:[grid-area:charts-p]"
+            className="h-52 min-h-52 animate-pulse rounded-2xl border border-line bg-surface lg:h-full lg:[grid-area:charts-p]"
             aria-busy
             aria-label="Loading proposed tax impact"
           />
@@ -262,7 +266,8 @@ export function PortfolioCompare({
           <TaxImpactChart
             headingId="tax-impact-proposed"
             bars={proposedBars}
-            className="h-full min-h-44 lg:[grid-area:charts-p]"
+            totalTax={proposedTotalTax}
+            className="h-full min-h-52 lg:[grid-area:charts-p]"
           />
         ) : null}
         {!canFetch ? null : loading && !result ? (
