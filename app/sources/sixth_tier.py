@@ -44,7 +44,7 @@ class BrownAdvisorySource(HtmlTableSource):
         "2025-Capital-Gain-Distribution-Update.pdf "
         "(e.g. Flexible Equity Institutional BAFFX ST $0.23 / LT $2.17; "
         "Growth Equity Institutional BAFGX ST $0.34 / LT $7.86; "
-        "Sustainable Growth Institutional BAWAX ST $0.07 / LT $10.90). "
+        "Sustainable Growth Institutional BAFWX ST $0.07 / LT $10.90). "
         "Record/declaration 12/12/2025; ex/reinvest and pay 12/15/2025."
     )
     live_limitations = (
