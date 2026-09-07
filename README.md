@@ -442,9 +442,11 @@ Interactive Modules can mount a **fund vs benchmark line chart** without calling
 | --- | --- | --- |
 | `equity` (default) | `SPY` | S&P 500 via SPY ETF total return |
 | `fixed_income` | `AGG` | Bloomberg US Aggregate via AGG ETF total return |
-| `international` | `VXUS` | MSCI ACWI ex USA via VXUS ETF total return |
+| `international` | `VXUS` (not ACWX) | MSCI ACWI ex USA via VXUS ETF total return |
 
-Pass `benchmark` to override, or send `asset_class` / `benchmark_hint` (`equity` | `fixed_income` | `international`) to pick the default. Response always includes `benchmark_id`, `benchmark_label`, `benchmark_tracks`, and `is_proxy` (`true` for SPY/AGG/VXUS).
+v1 is **ETF series only**. There is no licensed S&P / Bloomberg / MSCI index feed and no future index-license path. UI copy may say a line tracks the S&P 500, Agg, or ACWI ex USA; `benchmark_id` is still the ETF, and `is_proxy` is `true` for SPY / AGG / VXUS.
+
+Pass `benchmark` to override, or send `asset_class` / `benchmark_hint` (`equity` | `fixed_income` | `international`) to pick the default. Response always includes `benchmark_id`, `benchmark_label`, `benchmark_tracks`, and `is_proxy`.
 
 **Inputs:** `ticker` and/or `fund_identifier` (aliases: `the-growth-fund-of-america` → AGTHX; `amcap-fund` / `AMCAP` → AMCPX), optional `benchmark`, `start_dollars` (default **10000**), optional `start_date` / `end_date`, `mode` (`fixture` | `live` | `auto`; omit to use `FETCH_MODE`, which is `fixture` in CI).
 

@@ -8,7 +8,7 @@ adjusted) as a total-return proxy. Default benchmarks are ETFs only:
 - fixed_income → AGG (tracks Bloomberg US Aggregate)
 - international → VXUS (tracks MSCI ACWI ex USA)
 
-Official S&P / Bloomberg / MSCI index feeds are not used.
+v1 has no licensed-index path. The plotted series is always the ETF.
 """
 
 from __future__ import annotations
