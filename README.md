@@ -12,7 +12,7 @@ The default demo uses **SQLite** and bundled Capital Group HTML fixtures so the 
 2. **PDF / HTML archives** when no public ICI download exists.
 3. Skip JavaScript SPA pages when an ICI or PDF book is available.
 
-Vanguard is the first-choice ICI book: official Primary Layout PDFs on the advisor tax center cover the full fund list; we transcribe December year-end rows for identified **≥$1B** Admiral / mega-ETF classes (2021–2025). Other top-AUM families are checked for ICI downloads in rank order; Invesco *lists* ICI Primary files on its open-end tax guide, but no stable public file URL was fetchable (JS / 406), so Invesco stays on PDF/HTML archives.
+Vanguard is the first-choice ICI book: official Primary Layout PDFs on the advisor tax center cover the full fund list; we transcribe December year-end rows for identified **≥$1B** Admiral / mega-ETF classes (2021–2025). Other top-AUM families are checked for ICI downloads in rank order; Invesco *lists* ICI Primary files on its open-end tax guide, but no stable public file URL was fetchable (JS / 406), so Invesco stays on PDF/HTML archives. Northern Trust publishes filled ICI Primary Reports (2022–2025) on its tax center; PDF text extraction merges income/CG and includes quarterly lines, so December YE ST/LT are transcribed from the companion capital-gains PDFs (same hub).
 
 **≥$1B AUM filter.** When expanding *within* a family, historical rows are limited to funds identified as above **$1 billion AUM** — flagship Admiral / Investor classes and mega ETFs — plus locked compare heroes (`AMCPX`, `CGHM`, `TRBCX`, `VFIAX`, `VBIAX`, `FBGRX`). The allowlist lives in `app/sources/aum.py` (`LARGE_AUM_TICKERS`). It is not a live AUM feed. Micro share classes and synthetic parser samples stay out of multi-year packs. Illustrate/compare contracts are unchanged.
 
@@ -281,7 +281,7 @@ Each side is a full `/illustrate/portfolio` result plus `label` (defaults: `Curr
 | `deltas.coverage_pct` | Coverage-percentage points |
 | `summary` | Dollar fields at **$10,000**. YoY also sets `total_tax_difference`, `annualized_tax_drag_delta`, `distribution_dollars_difference`, `periods_compared`, `common_inception` (same footer idea as `/illustrate/compare`) |
 
-**Sparse history:** Dodge & Cox is still one vintage. Vanguard now has ICI December year-end rows for 2021–2025 (≥$1B Admiral / mega ETFs) plus the 2025 YE HTML fixture for VFIAX / VBIAX / VIGAX. Fidelity has 2025 paid + 2026 estimate (FBGRX). A YoY `periods[]` pin that misses that `as_of` / year is an explicit **gap** on that side, not a silent $0. American Funds (AMCAP 2024–2025) and T. Rowe Price (TRBCX 2022–2025) have multi-year fixture snapshots.
+**Sparse history:** Dodge & Cox is still one vintage. Vanguard now has ICI December year-end rows for 2021–2025 (≥$1B Admiral / mega ETFs) plus the 2025 YE HTML fixture for VFIAX / VBIAX / VIGAX. Fidelity has 2025 paid + 2026 estimate (FBGRX). A YoY `periods[]` pin that misses that `as_of` / year is an explicit **gap** on that side, not a silent $0. American Funds (AMCAP 2024–2025) and T. Rowe Price (TRBCX 2022–2025) have multi-year fixture snapshots. Among ranks 11–20, Northern Trust (NOSIX 2022–2025), BNY (DGAGX 2022–2025), and Schwab (SWTSX 2022–2025) now have multi-year paid books; UBS, Nuveen, and Amundi stay single-vintage.
 
 ```bash
 curl -s -X POST http://127.0.0.1:8000/illustrate/portfolio/compare \
@@ -441,7 +441,7 @@ The upsert key includes `as_of` and `ex_date`, so a September preliminary, a Dec
 3. `GET /distributions?fund_identifier=amcap-fund&as_of_from=2024-01-01&as_of_to=2024-12-31` — one tax year’s publication window.
 4. Units differ (`percent_of_nav` vs `per_share`); convert with NAV before subtracting. Illustration uses `as_of` or `prefer_publication_stages` so you do not add estimate + final.
 
-Fixture packs today (ranks 1–10 historical pass):
+Fixture packs today (ranks 1–20 historical pass):
 
 | Family | Years in fixtures | Live archive notes |
 | --- | --- | --- |
@@ -455,6 +455,16 @@ Fixture packs today (ranks 1–10 historical pass):
 | PIMCO | Layout sample only (ZZPIMI / ZZPIMB) | No public HTML estimate grid. No additional years invented. |
 | Invesco | 2024 estimate + 2025 estimate | ICI Primary files are *listed* on the open-end tax guide (2023–2025) but no stable public download URL was fetchable (JS / 406) — PDF/HTML archives used instead. 2025 PDF + 2024 In Focus (American Franchise LT $0.93). |
 | T. Rowe Price | 2022 prelim + 2022–2025 YE | 2023–2025 HTML (same path, year in the filename). 2022 YE + 2022 prelim are official PDFs (TRBCX LT $6.0394 final / $5.75 prelim). |
+| UBS | 2025 estimate + 2025 paid (PWTAX) | No public filled ICI. Estimate PDF is rotating AEM/JCR and often 403. 2023–2024 paid archives not fetchable — skipped. |
+| Franklin Templeton | 2024 + 2025 CEF 19(a) (FT) | ICI hub is a JS SPA (no filled Primary download). Open-end estimate tool is SPA. ≥$1B open-end (FKINX) not on a scrapeable grid — skipped. |
+| BNY Mellon | 2022–2025 paid YE (DGAGX) + 2025 estimate | No public filled ICI. 2024 family estimate PDF URL was empty. Paid YE from the public Appreciation product page (2025 LT $6.4552 coexists with 10/31 estimate LT $6.29). |
+| Nuveen | 2025 estimate (TIIRX) | No public filled ICI. 2024 posted files are tax-character letters (not ST/LT $/share) — skipped. |
+| Northern Trust | 2022–2025 YE paid (NOSIX / NOLCX / NOMIX) | **ICI listed.** Filled Primary Reports 2022–2025 are public PDFs; column extract merges income/CG and includes quarterly lines — not ingested. December ST/LT from companion CG PDFs on the same tax center. |
+| Morgan Stanley | 2024 + 2025 ETF YE (CVLC income; 0% CG) | No public filled ICI. Live ETF PDFs often Akamai 403; fixtures transcribe official document text. 2025 open-end PDF blocked. |
+| Schwab | 2022–2025 annual (SWTSX / SWPPX income; 2025 also SWLVX) | No public filled ICI. Family annual page is a JS SPA — skip. Product-page HTML history used (2022–2024 CG $0, income stored). |
+| Dimensional | 2024 paid + 2025 estimate (DISVX / DFELX / DFQTX) | No public filled ICI. 2024 December book `2024-distributions.pdf` (DISVX LT $0.184). |
+| Columbia Threadneedle | 2024 YE paid + 2025 midyear estimate | No public filled ICI. 2024 YE PDF (LBSAX LT $1.38581; ELGAX LT $4.05105). IEVAX 2024 $0 CG not stored. 2023 YE PDF 404. |
+| Amundi / Pioneer | 2025 estimate (PIODX) | No public filled ICI. 2024 estimate/final sibling URLs on the Pioneer tax-center path returned 404 after the Victory transfer — skipped. |
 
 **ICI Primary Layout inventory (top AUM, verified 2026-09-07):**
 
@@ -470,6 +480,16 @@ Fixture packs today (ranks 1–10 historical pass):
 | 8 | PIMCO | no | Notices / PDF hub; no ICI download. |
 | 9 | Invesco | listed, not fetchable | Open-end tax guide names ICI Primary files; no stable public URL (JS / 406). |
 | 10 | T. Rowe Price | no | Public YE HTML (2023–2025) + 2022 PDFs. |
+| 11 | UBS | no | Estimate PDF is rotating AEM/JCR; price-page HTML for 2025 paid. |
+| 12 | Franklin Templeton | listed, not fetchable | Tax-center ICI reports page is a JS SPA; no stable filled-file URL. |
+| 13 | BNY Mellon | no | Estimate PDFs + product-page paid history. |
+| 14 | Nuveen | no | Document-viewer estimate PDFs; 2024 letters are tax character only. |
+| 15 | Northern Trust | **yes (not ingested as ICI CSV)** | Public `nf-ici-primary-*.pdf` 2022–2025. Text extract merges columns / quarterly lines — December YE from companion CG PDFs. |
+| 16 | Morgan Stanley | no | ETF/open-end tax PDFs under `/im/publication/forms/tax/`. |
+| 17 | Schwab | no | SPA family grids; product-page HTML history. |
+| 18 | Dimensional | no | Public chmedia distribution PDFs. |
+| 19 | Columbia Threadneedle | no | Public midyear estimate + YE cap-gains PDFs. |
+| 20 | Amundi / Pioneer | no | Pioneer/Victory tax-center PDFs; 2024 siblings 404. |
 
 Blank ICI templates on https://www.ici.org/year-end-tax-reporting are instructions, not a manager feed.
 
@@ -523,13 +543,13 @@ When a holding’s ticker or family is not in the store, Website Engineering sho
 | 10 | `t_rowe_price` (alias `trp`) | T. Rowe Price | implemented | yes (2023–2025 HTML; 2022 PDF) | https://www.troweprice.com/personal-investing/resources/planning/tax/dividend-distributions/mutual-funds/2025-year-end-distributions.html |
 | 11 | `ubs` | UBS Asset Management | implemented | price-page HTML / PDF | https://www.ubs.com/us/en/assetmanagement/funds/mutual-fund-price.html (paid PWTAX); estimate PDF from the mutual-fund product hub |
 | 12 | `franklin_templeton` (aliases `franklin`, `templeton`, `putnam`) | Franklin Templeton | implemented | JS SPA + 19(a) PDF | https://www.franklintempleton.com/tools-and-resources/tax-center ; CEF 19(a) e.g. `.../ft-section-19-notice-12-31-2025` |
-| 13 | `bny_mellon` (aliases `bny`, `dreyfus`) | BNY Mellon / Dreyfus | implemented | PDF | https://www.bny.com/assets/investments/im/documents/manual/tax-forms/2025-Estimated-capital-gains.pdf |
+| 13 | `bny_mellon` (aliases `bny`, `dreyfus`) | BNY Mellon / Dreyfus | implemented | PDF + product HTML | 2025 estimate PDF + DGAGX paid YE 2022–2025 on the Appreciation product page |
 | 14 | `nuveen` (alias `tiaa`) | Nuveen / TIAA | implemented | PDF viewer | https://documents.nuveen.com/Documents/Nuveen/Default.aspx?uniqueId=3c3be13d-d800-48e2-a537-c251162ab9f4 |
-| 15 | `northern_trust` (aliases `nt`, `ntam`) | Northern Trust | implemented | PDF | https://ntam.northerntrust.com/content/dam/ntam/us/en/documents/account-resources/tax-center/all-investor/estimated-capital-gains-2025.pdf |
-| 16 | `morgan_stanley` (aliases `msim`, `ms`) | Morgan Stanley IM | implemented | PDF (often Akamai-walled) | https://www.morganstanley.com/im/publication/forms/tax/2025_etf_year_end_distributions.pdf |
-| 17 | `schwab` (alias `charles_schwab`) | Charles Schwab IM | implemented | JS family page; product HTML | https://www.schwabassetmanagement.com/resource/schwab-funds-actual-annual-distributions-2025 |
-| 18 | `dimensional` (alias `dfa`) | Dimensional | implemented | PDF | https://www.dimensional.com/chmedia/440098/source/download/2025-capital-gain-distribution-estimates.pdf |
-| 19 | `columbia_threadneedle` (aliases `columbia`, `ameriprise`) | Columbia Threadneedle | implemented | PDF | https://www.columbiathreadneedleus.com/binaries/content/assets/cti/public/2025-mid-year-cap-gain-estimates-all-funds.pdf |
+| 15 | `northern_trust` (aliases `nt`, `ntam`) | Northern Trust | implemented | PDF (ICI listed; CG PDFs used) | Tax center CG PDFs 2022–2025; ICI Primary Reports public but not column-safe |
+| 16 | `morgan_stanley` (aliases `msim`, `ms`) | Morgan Stanley IM | implemented | PDF (often Akamai-walled) | 2024 + 2025 ETF YE under `/im/publication/forms/tax/` |
+| 17 | `schwab` (alias `charles_schwab`) | Charles Schwab IM | implemented | JS family page; product HTML | Product pages `swtsx` / `swppx` (2022–2025); 2025 family SPA fallback |
+| 18 | `dimensional` (alias `dfa`) | Dimensional | implemented | PDF | 2025 estimates + 2024 `2024-distributions.pdf` |
+| 19 | `columbia_threadneedle` (aliases `columbia`, `ameriprise`) | Columbia Threadneedle | implemented | PDF | 2025 midyear estimates + 2024 YE `2024-cap-gains---mutual-funds.pdf` |
 | 20 | `amundi` (alias `pioneer`) | Amundi US / Pioneer | implemented | PDF | https://pioneerinvestments.com/content/dam/pioneer/en/documents/resources/tax-center/2025/10152025-mutual-funds-2025-capital-gain-estimates.pdf |
 | 21 | `allspring` (aliases `wells_fargo`, `wfam`) | Allspring | implemented | product-page HTML / gated PDF | https://www.allspringglobal.com/resources/product-alerts/ ; paid history e.g. `.../special-mid-cap-value/` |
 | 22 | `janus_henderson` (alias `janus`) | Janus Henderson | implemented | PDF | https://www.janushenderson.com/en-us/advisor/annual-distributions-supplemental-tax-documents-mutual-funds/ ; 2025 estimates on the rackcdn `distribution-tax` path |

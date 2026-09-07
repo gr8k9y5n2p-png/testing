@@ -519,6 +519,92 @@ def test_next_tier_fixtures() -> None:
     assert piodx.amount == Decimal("3.73")
     assert piodx.cusip == "92648C512"
 
+    ft_2024 = parse_distribution_html(
+        (ROOT / "franklin_templeton" / "2024_section_19a.html").read_text(encoding="utf-8"),
+        source_url="fixture://ft-2024",
+        fund_family="Franklin Templeton",
+    )
+    ft_2024_inc = next(
+        r for r in ft_2024 if r.ticker == "FT" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert ft_2024_inc.amount == Decimal("0.0387")
+    assert str(ft_2024_inc.as_of) == "2024-11-30"
+
+    bny_2024 = parse_distribution_html(
+        (ROOT / "bny_mellon" / "2024_paid_year_end.html").read_text(encoding="utf-8"),
+        source_url="fixture://bny-2024",
+        fund_family="BNY Mellon / Dreyfus",
+    )
+    dgagx_2024 = next(
+        r
+        for r in bny_2024
+        if r.ticker == "DGAGX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert dgagx_2024.amount == Decimal("5.6247")
+    assert dgagx_2024.publication_stage == PublicationStage.final
+
+    nt_2024 = parse_distribution_html(
+        (ROOT / "northern_trust" / "2024_capital_gain_distributions.html").read_text(encoding="utf-8"),
+        source_url="fixture://nt-2024",
+        fund_family="Northern Trust",
+    )
+    nosix_2024 = next(
+        r
+        for r in nt_2024
+        if r.ticker == "NOSIX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert nosix_2024.amount == Decimal("0.699110")
+    assert str(nosix_2024.as_of) == "2024-12-19"
+
+    msim_2024 = parse_distribution_html(
+        (ROOT / "morgan_stanley" / "2024_etf_year_end.html").read_text(encoding="utf-8"),
+        source_url="fixture://msim-2024",
+        fund_family="Morgan Stanley Investment Management",
+    )
+    cvlc_2024 = next(
+        r for r in msim_2024 if r.ticker == "CVLC" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert cvlc_2024.amount == Decimal("0.222291")
+
+    schwab_2024 = parse_distribution_html(
+        (ROOT / "schwab" / "2024_annual_distributions.html").read_text(encoding="utf-8"),
+        source_url="fixture://schwab-2024",
+        fund_family="Charles Schwab Investment Management",
+    )
+    swtsx_2024 = next(
+        r
+        for r in schwab_2024
+        if r.ticker == "SWTSX" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert swtsx_2024.amount == Decimal("1.2252")
+
+    dfa_2024 = parse_distribution_html(
+        (ROOT / "dimensional" / "2024_capital_gain_distributions.html").read_text(encoding="utf-8"),
+        source_url="fixture://dfa-2024",
+        fund_family="Dimensional Fund Advisors",
+    )
+    disvx_2024 = next(
+        r
+        for r in dfa_2024
+        if r.ticker == "DISVX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert disvx_2024.amount == Decimal("0.184")
+
+    columbia_2024 = parse_distribution_html(
+        (ROOT / "columbia_threadneedle" / "2024_year_end_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://columbia-2024",
+        fund_family="Columbia Threadneedle",
+    )
+    lbsax = next(
+        r
+        for r in columbia_2024
+        if r.ticker == "LBSAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert lbsax.amount == Decimal("1.38581")
+    assert lbsax.publication_stage == PublicationStage.final
+
 
 def test_third_tier_fixtures() -> None:
     allspring = parse_distribution_html(

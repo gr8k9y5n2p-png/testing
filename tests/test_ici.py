@@ -29,6 +29,14 @@ def test_large_aum_allowlist_covers_heroes() -> None:
         "TRBCX",
         "AMCPX",
         "CGHM",
+        "NOSIX",
+        "DGAGX",
+        "SWTSX",
+        "SWPPX",
+        "DISVX",
+        "LBSAX",
+        "PIODX",
+        "CVLC",
     ):
         assert is_large_aum_ticker(ticker)
     assert not is_large_aum_ticker("ZZTINY")

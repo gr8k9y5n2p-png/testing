@@ -228,6 +228,66 @@ def test_search_multi_year_top_families(client: TestClient) -> None:
     )
     assert vfiax_2021.json()["total"] >= 1
 
+    for family in (
+        "northern_trust",
+        "bny_mellon",
+        "schwab",
+        "dimensional",
+        "columbia_threadneedle",
+        "morgan_stanley",
+        "franklin_templeton",
+    ):
+        fetched = client.post("/ingest/fetch", json={"fund_family": family, "mode": "fixture"})
+        assert fetched.status_code == 200, fetched.text
+
+    nosix = client.get("/distributions", params={"fund_identifier": "NOSIX", "page_size": 50})
+    assert {"2022", "2023", "2024", "2025"} <= {
+        item["as_of"][:4] for item in nosix.json()["items"] if item.get("as_of")
+    }
+    nosix_2024 = client.get(
+        "/distributions",
+        params={
+            "fund_identifier": "NOSIX",
+            "as_of_from": "2024-01-01",
+            "as_of_to": "2024-12-31",
+            "page_size": 20,
+        },
+    )
+    assert any(
+        item["estimate_type"] == "long_term_capital_gains"
+        and Decimal(item["amount"]) == Decimal("0.699110")
+        for item in nosix_2024.json()["items"]
+    )
+
+    dgagx = client.get("/distributions", params={"fund_identifier": "DGAGX", "page_size": 50})
+    dgagx_years = {item["as_of"][:4] for item in dgagx.json()["items"] if item.get("as_of")}
+    assert {"2022", "2023", "2024", "2025"} <= dgagx_years
+    dgagx_stages = {item["publication_stage"] for item in dgagx.json()["items"]}
+    assert "preliminary_estimate" in dgagx_stages
+    assert "final" in dgagx_stages
+
+    swtsx = client.get("/distributions", params={"fund_identifier": "SWTSX", "page_size": 50})
+    assert {"2022", "2023", "2024", "2025"} <= {
+        item["as_of"][:4] for item in swtsx.json()["items"] if item.get("as_of")
+    }
+
+    disvx = client.get("/distributions", params={"fund_identifier": "DISVX", "page_size": 50})
+    disvx_years = {item["as_of"][:4] for item in disvx.json()["items"] if item.get("as_of")}
+    assert {"2024", "2025"} <= disvx_years
+
+    lbsax = client.get("/distributions", params={"fund_identifier": "LBSAX", "page_size": 20})
+    assert any(
+        item["estimate_type"] == "long_term_capital_gains"
+        and Decimal(item["amount"]) == Decimal("1.385810")
+        for item in lbsax.json()["items"]
+    )
+
+    cvlc = client.get("/distributions", params={"fund_identifier": "CVLC", "page_size": 20})
+    assert {"2024", "2025"} <= {item["as_of"][:4] for item in cvlc.json()["items"] if item.get("as_of")}
+
+    ft = client.get("/distributions", params={"fund_identifier": "FT", "page_size": 20})
+    assert {"2024", "2025"} <= {item["as_of"][:4] for item in ft.json()["items"] if item.get("as_of")}
+
 
 def test_compare_hero_yoy_fixture_bars(client: TestClient) -> None:
     """Hero tickers get real compare periods[] bars where public multi-year data exists."""
