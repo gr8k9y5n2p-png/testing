@@ -9,9 +9,9 @@ npm install
 npm run dev
 ```
 
-Then open [http://localhost:3000](http://localhost:3000). Search **AMCPX** (Capital Group / AMCAP) to see a dollar illustration. Ledger Light, monogram, and locked GTM hero copy are on that page. No Stripe keys and no Data API are required for this demo.
+Then open [http://localhost:3000](http://localhost:3000). Search **AMCPX** (Capital Group / AMCAP) to see a dollar illustration. The YoY tax-delta compare card mounts **next to** that panel (selected fund vs a same-category peer). Ledger Light, monogram, and locked GTM hero copy are on that page. No Stripe keys and no Data API are required for this demo.
 
-Fund-to-fund YoY tax-delta card: [http://localhost:3000/compare](http://localhost:3000/compare). Website Engineering can import `FundTaxDeltaCompare` from `@/components/illustrate`.
+Standalone compare demo: [http://localhost:3000/compare](http://localhost:3000/compare). Import `FundTaxDeltaCompare` from `@/components/illustrate`.
 
 Aftertax is a search-first workspace for wholesalers and financial advisors. This repo slice is the **website UI**: fund search, highlights, holding size, adjustable tax rates, and results. The Data team owns ingest, `GET /distributions`, and production `POST /illustrate` math (see PR #2).
 
@@ -83,7 +83,7 @@ The browser **does not** compute tax. Aftertax calls the Data API when `NEXT_PUB
 Wired endpoints:
 
 - `POST /illustrate` — UI sends locked `selector: { fund_family, fund_identifier }`; the client also sends PR #2’s `selectors` alias. Response is normalized to `tax_rates_applied`, `estimated_tax_dollars`, `warnings`.
-- `POST /illustrate/compare` — `mode: "fund_vs_fund"` with `left` / `right` selectors + `periods[]`. Deltas are **right − left**. The card maps them to Fund A (left) cost-to-holder prose (`costToA = −delta`). Chart field: `periods[].deltas.effective_tax_on_holding`. Footer uses `summary` at $10k. Local mock returns the locked sketch fixture when the Data API is down. Demo: `/compare`.
+- `POST /illustrate/compare` — `mode: "fund_vs_fund"` with `left` / `right` selectors + `periods[]`. Deltas are **right − left**. The card maps them to Fund A (left) cost-to-holder prose (`costToA = −delta`). Chart field: `periods[].deltas.effective_tax_on_holding`. Footer uses `summary` at $10k. Local mock returns the locked sketch fixture when the Data API is down. Homepage mounts `FundTaxDeltaCompare` next to dollar illustrate; standalone demo: `/compare`.
 - `POST /illustrate/portfolio` — coverage `dollars_covered` / `dollars_uncovered` / `coverage_pct` + `gaps[]` + `warnings` (shown on the illustrate panel).
 - `GET /distributions` — aggregated into the search table (seed fills tickers the API does not yet return).
 - `GET /coverage`, `GET /fund-families` — `coverage_tier`, `aum_rank`, `priority` (Live vs Gap in picker / results / illustrate).
