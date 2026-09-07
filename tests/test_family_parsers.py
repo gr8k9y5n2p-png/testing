@@ -99,6 +99,18 @@ from app.sources.eighth_tier import (
     PrimecapSource,
     ThirdAvenueSource,
 )
+from app.sources.ninth_tier import (
+    AmericanBeaconSource,
+    BaillieGiffordSource,
+    BostonTrustSource,
+    BrandesSource,
+    FamSource,
+    GrandeurPeakSource,
+    HennessySource,
+    KineticsSource,
+    MairsPowerSource,
+    MeridianSource,
+)
 from app.sources.parser import parse_distribution_html, split_fund_identity
 
 ROOT = Path(__file__).resolve().parents[1] / "fixtures"
@@ -309,6 +321,16 @@ def test_adapters_fetch_fixture_mode() -> None:
         HeartlandSource(),
         FmiSource(),
         ImpaxSource(),
+        AmericanBeaconSource(),
+        BaillieGiffordSource(),
+        BrandesSource(),
+        MairsPowerSource(),
+        BostonTrustSource(),
+        GrandeurPeakSource(),
+        HennessySource(),
+        FamSource(),
+        MeridianSource(),
+        KineticsSource(),
     ]
     for source in sources:
         result = source.fetch(mode="fixture")
@@ -1272,3 +1294,143 @@ def test_eighth_tier_fixtures() -> None:
         if r.ticker == "PAXLX" and r.estimate_type == EstimateType.long_term_capital_gains
     )
     assert paxlx.amount == Decimal("3.19835")
+
+
+def test_ninth_tier_fixtures() -> None:
+    beacon = parse_distribution_html(
+        (ROOT / "american_beacon" / "2025_annual_ordinary_income_and_capital_gains.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://american_beacon",
+        fund_family="American Beacon",
+    )
+    aadex = next(
+        r
+        for r in beacon
+        if r.ticker == "AADEX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert aadex.amount == Decimal("2.3846")
+
+    bg = parse_distribution_html(
+        (ROOT / "baillie_gifford" / "2025_estimated_capital_gains.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://baillie_gifford",
+        fund_family="Baillie Gifford",
+    )
+    bgakx = next(
+        r
+        for r in bg
+        if r.ticker == "BGAKX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert bgakx.amount == Decimal("4.8350")
+
+    brandes = parse_distribution_html(
+        (ROOT / "brandes" / "2025_estimated_capital_gains.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://brandes",
+        fund_family="Brandes",
+    )
+    bgvix = next(
+        r
+        for r in brandes
+        if r.ticker == "BGVIX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert bgvix.amount == Decimal("3.88")
+
+    mairs = parse_distribution_html(
+        (ROOT / "mairs_power" / "2025_capital_gains_and_dividends.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://mairs_power",
+        fund_family="Mairs & Power",
+    )
+    mpgfx = next(
+        r
+        for r in mairs
+        if r.ticker == "MPGFX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert mpgfx.amount == Decimal("6.77074")
+
+    boston = parse_distribution_html(
+        (ROOT / "boston_trust" / "2025_distribution_factors.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://boston_trust",
+        fund_family="Boston Trust Walden",
+    )
+    btbfx = next(
+        r
+        for r in boston
+        if r.ticker == "BTBFX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert btbfx.amount == Decimal("6.205293")
+
+    grandeur = parse_distribution_html(
+        (ROOT / "grandeur_peak" / "2025_year_end_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://grandeur_peak",
+        fund_family="Grandeur Peak",
+    )
+    gpeix = next(
+        r
+        for r in grandeur
+        if r.ticker == "GPEIX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert gpeix.amount == Decimal("2.30240")
+
+    hennessy = parse_distribution_html(
+        (ROOT / "hennessy" / "2025_year_end_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://hennessy",
+        fund_family="Hennessy",
+    )
+    hfcsx = next(
+        r
+        for r in hennessy
+        if r.ticker == "HFCSX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert hfcsx.amount == Decimal("17.84742")
+
+    fam = parse_distribution_html(
+        (ROOT / "fam" / "2025_year_end_distributions.html").read_text(encoding="utf-8"),
+        source_url="fixture://fam",
+        fund_family="FAM / Fenimore",
+    )
+    famvx = next(
+        r
+        for r in fam
+        if r.ticker == "FAMVX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert famvx.amount == Decimal("4.8682")
+
+    meridian = parse_distribution_html(
+        (ROOT / "meridian" / "2025_final_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://meridian",
+        fund_family="Meridian",
+    )
+    mvalx = next(
+        r
+        for r in meridian
+        if r.ticker == "MVALX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert mvalx.amount == Decimal("4.10477")
+
+    kinetics = parse_distribution_html(
+        (ROOT / "kinetics" / "2025_final_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://kinetics",
+        fund_family="Kinetics",
+    )
+    wwnpx = next(
+        r
+        for r in kinetics
+        if r.ticker == "WWNPX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert wwnpx.amount == Decimal("8.68572")

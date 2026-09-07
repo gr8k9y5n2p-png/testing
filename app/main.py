@@ -36,7 +36,7 @@ app = FastAPI(
     title="Fund Distribution Estimates API",
     description=(
         "Ingest and search taxable distribution estimates published by fund managers "
-        "(top-80 US-advisor families). POST /illustrate computes tax-impact math; "
+        "(top-90 US-advisor families). POST /illustrate computes tax-impact math; "
         "POST /illustrate/compare is the Interactive Modules chart contract; "
         "GET /coverage and POST /coverage/gaps support Aftertax portfolio review."
     ),

@@ -97,6 +97,18 @@ from app.sources.eighth_tier import (
     PrimecapSource,
     ThirdAvenueSource,
 )
+from app.sources.ninth_tier import (
+    AmericanBeaconSource,
+    BaillieGiffordSource,
+    BostonTrustSource,
+    BrandesSource,
+    FamSource,
+    GrandeurPeakSource,
+    HennessySource,
+    KineticsSource,
+    MairsPowerSource,
+    MeridianSource,
+)
 
 _ALIASES = {
     "american_funds": "american_funds",
@@ -283,6 +295,27 @@ _ALIASES = {
     "impax": "impax",
     "pax": "impax",
     "impaxam": "impax",
+    "american_beacon": "american_beacon",
+    "beacon": "american_beacon",
+    "baillie_gifford": "baillie_gifford",
+    "baillie": "baillie_gifford",
+    "bg": "baillie_gifford",
+    "brandes": "brandes",
+    "mairs_power": "mairs_power",
+    "mairs": "mairs_power",
+    "mairsandpower": "mairs_power",
+    "boston_trust": "boston_trust",
+    "walden": "boston_trust",
+    "boston_trust_walden": "boston_trust",
+    "grandeur_peak": "grandeur_peak",
+    "grandeur": "grandeur_peak",
+    "hennessy": "hennessy",
+    "fam": "fam",
+    "fenimore": "fam",
+    "meridian": "meridian",
+    "arrowmark": "meridian",
+    "kinetics": "kinetics",
+    "horizon_kinetics": "kinetics",
 }
 
 
@@ -368,6 +401,16 @@ def _sources() -> dict[str, FundSource]:
         HeartlandSource(),
         FmiSource(),
         ImpaxSource(),
+        AmericanBeaconSource(),
+        BaillieGiffordSource(),
+        BrandesSource(),
+        MairsPowerSource(),
+        BostonTrustSource(),
+        GrandeurPeakSource(),
+        HennessySource(),
+        FamSource(),
+        MeridianSource(),
+        KineticsSource(),
     ]
     return {source.slug: source for source in ordered}
 
