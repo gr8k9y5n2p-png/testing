@@ -18,14 +18,14 @@ export function TaxImpactChart({
       aria-labelledby={headingId}
       className={`flex flex-col rounded-2xl border border-line bg-surface p-3 shadow-[0_8px_24px_rgba(26,29,26,0.06)] sm:p-4 ${className}`}
     >
-      <p className="mb-3 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 border-b border-line pb-3">
-        <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-faint">
+      <div className="mb-4">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-faint">
           Total tax impact
-        </span>
-        <span className="font-serif text-2xl leading-none tracking-tight text-ink tabular-nums">
+        </p>
+        <p className="mt-1 font-serif text-[28px] leading-tight tracking-tight text-ink tabular-nums">
           {formatUsd(Math.round(totalTax), 0)}
-        </span>
-      </p>
+        </p>
+      </div>
       <header className="mb-3 flex flex-wrap items-end justify-between gap-2">
         <h2
           id={headingId}
