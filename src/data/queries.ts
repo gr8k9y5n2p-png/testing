@@ -44,8 +44,11 @@ export function withPeerContext(funds: FundEstimate[]): FundEstimateView[] {
     const categoryAveragePctNav = averages.get(categoryPeerKey(fund)) ?? 0;
     return {
       ...fund,
-      categoryAveragePctNav,
-      vsCategoryPctNav: fund.estimatedDistributionPctNav - categoryAveragePctNav,
+      categoryAveragePctNav: roundTo(categoryAveragePctNav, 4),
+      vsCategoryPctNav: roundTo(
+        fund.estimatedDistributionPctNav - categoryAveragePctNav,
+        4,
+      ),
     };
   });
 }
