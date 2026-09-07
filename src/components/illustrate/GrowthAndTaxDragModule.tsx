@@ -185,7 +185,21 @@ export function GrowthAndTaxDragModule({
   const annualized = useMemo(() => {
     if (!rows || years.length < 2) return [];
     const span = years[years.length - 1] - years[0];
-    return growthSeries.map((row) => {
+    const dollarSeries: { id: string; label: string; points: { year: number; value: number }[] }[] =
+      rows.map((row) => ({
+        id: row.performance.fund_ticker,
+        label: row.input.label || row.performance.fund_name,
+        points: yearEndGrowth(row.performance.fund.points),
+      }));
+    const bench = rows[0]?.performance.benchmark;
+    if (bench) {
+      dollarSeries.push({
+        id: `bench-${bench.ticker}`,
+        label: rows[0].performance.benchmark_tracks || bench.ticker,
+        points: yearEndGrowth(bench.points),
+      });
+    }
+    return dollarSeries.map((row) => {
       const first = row.points[0];
       const last = row.points[row.points.length - 1];
       return {
@@ -195,7 +209,7 @@ export function GrowthAndTaxDragModule({
           first && last ? cagr(first.value, last.value, Math.max(span, 1)) : null,
       };
     });
-  }, [growthSeries, rows, years]);
+  }, [rows, years]);
 
   function commitPrincipal() {
     const parsed = Number(principalDraft.replace(/[$,\s]/g, ""));

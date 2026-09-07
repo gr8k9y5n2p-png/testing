@@ -236,11 +236,11 @@ function polyline(
 
 function nicePctScale(min: number, max: number) {
   const pad = Math.max((max - min) * 0.08, 0.05);
-  const lo = min - pad;
+  const lo = min >= 0 ? 0 : min - pad;
   const hi = max + pad;
   const step = hi <= 0.5 ? 0.1 : hi <= 1.5 ? 0.25 : 0.5;
   return {
-    min: Math.floor(lo / step) * step,
+    min: min >= 0 ? 0 : Math.floor(lo / step) * step,
     max: Math.ceil(hi / step) * step,
   };
 }
