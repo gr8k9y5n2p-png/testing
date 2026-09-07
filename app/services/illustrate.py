@@ -558,7 +558,7 @@ def illustrate_portfolio(session: Session, body: PortfolioIllustrateRequest) -> 
         covered_n += 1
         ident = holding.fund_identifier or (rows[0].fund_identifier if rows else None)
         family = holding.fund_family or (rows[0].fund_family if rows else None)
-            holding_outs.append(
+        holding_outs.append(
             PortfolioHoldingOut(
                 holding_index=index,
                 ticker=holding.ticker or rows[0].ticker,
