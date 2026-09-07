@@ -18,6 +18,8 @@ from app.schemas import (
     FetchRequest,
     FundFamilyOut,
     HealthOut,
+    CompareRequest,
+    CompareResponse,
     IllustrateRequest,
     IllustrateResponse,
     PortfolioIllustrateRequest,
@@ -26,7 +28,7 @@ from app.schemas import (
     IngestResponse,
 )
 from app.services.coverage import coverage_snapshot, family_to_out, record_gap
-from app.services.illustrate import illustrate, illustrate_portfolio
+from app.services.illustrate import illustrate, illustrate_compare, illustrate_portfolio
 from app.services.ingest import fetch_and_ingest, ingest_records
 from app.sources.registry import list_sources
 
@@ -162,3 +164,9 @@ def illustrate_portfolio_tax(
 ) -> PortfolioIllustrateResponse:
     """Aftertax portfolio review: per-holding math, coverage by dollars, and explicit gaps."""
     return illustrate_portfolio(session, body)
+
+
+@router.post("/illustrate/compare", response_model=CompareResponse, tags=["illustrate"])
+def illustrate_compare_tax(body: CompareRequest, session: Session = Depends(get_session)) -> CompareResponse:
+    """Fund-vs-fund or year-over-year chart contract for Interactive Modules."""
+    return illustrate_compare(session, body)

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from datetime import date
 from decimal import ROUND_HALF_UP, Decimal
 
 from fastapi import HTTPException
@@ -9,11 +10,18 @@ from sqlalchemy.orm import Session
 from app.crud import get_by_ids, list_matching
 from app.models import AmountUnit, DistributionEstimate, EstimateType
 from app.schemas import (
+    CompareDeltas,
+    CompareIllustration,
+    ComparePeriodOut,
+    CompareRequest,
+    CompareResponse,
+    CompareSideIn,
     IllustrationComponent,
     IllustrationSnapshot,
     IllustrationTotals,
     IllustrateRequest,
     IllustrateResponse,
+    IllustrateSelectors,
     PortfolioCoverage,
     PortfolioHoldingGap,
     PortfolioHoldingIn,
@@ -539,3 +547,315 @@ def illustrate_portfolio(session: Session, body: PortfolioIllustrateRequest) -> 
         rate_mapping=dict(RATE_MAPPING),
         notes=notes,
     )
+
+
+COMPARE_NOTES = [
+    "Deltas are right − left (B − A). Interactive Modules charts deltas.effective_tax_on_holding.",
+    "A missing side returns an empty illustration (zeros) and a note; the compare itself is not 404.",
+]
+
+
+def _empty_illustration(body: IllustrateRequest, *, reason: str) -> IllustrateResponse:
+    return _response(
+        holding=body.holding_dollars,
+        shares=body.shares,
+        nav_per_share=body.nav_per_share,
+        rates=body.tax_rates,
+        combine=body.combine_state_with_federal,
+        components=[],
+        notes=[reason],
+    )
+
+
+def _try_illustrate(session: Session, request: IllustrateRequest) -> tuple[IllustrateResponse, bool, str | None]:
+    try:
+        return illustrate(session, request), True, None
+    except HTTPException as exc:
+        if exc.status_code in {404, 422}:
+            detail = exc.detail if isinstance(exc.detail, str) else str(exc.detail)
+            return _empty_illustration(request, reason=detail), False, detail
+        raise
+
+
+def _pin_selectors(selectors: IllustrateSelectors | None, as_of: date | None) -> IllustrateSelectors | None:
+    if as_of is None:
+        return selectors
+    if selectors is None:
+        return IllustrateSelectors(as_of=as_of)
+    return selectors.model_copy(update={"as_of": as_of})
+
+
+def _side_request(
+    body: CompareRequest,
+    side: CompareSideIn | None,
+    *,
+    selectors: IllustrateSelectors | None,
+    as_of: date | None,
+    pin_as_of: bool,
+) -> IllustrateRequest | None:
+    pinned = _pin_selectors(selectors, as_of) if pin_as_of else selectors
+    ids = side.distribution_ids if side else None
+    if not ids and not (pinned and pinned.has_any()):
+        return None
+    return IllustrateRequest(
+        holding_dollars=body.holding_dollars,
+        distribution_ids=ids if ids else None,
+        selectors=None if ids else pinned,
+        nav_per_share=(side.nav_per_share if side and side.nav_per_share is not None else body.nav_per_share),
+        shares=side.shares if side and side.shares is not None else body.shares,
+        tax_rates=body.tax_rates,
+        combine_state_with_federal=body.combine_state_with_federal,
+        latest_as_of_only=False if pin_as_of and as_of is not None else body.latest_as_of_only,
+    )
+
+
+def _label_for(
+    side: CompareSideIn | None,
+    illustration: IllustrateResponse,
+    fallback: str,
+) -> str:
+    if side and side.label:
+        return side.label
+    if illustration.components:
+        component = illustration.components[0]
+        return component.ticker or component.fund_identifier or component.fund_name or fallback
+    return fallback
+
+
+def _compare_illustration(
+    illustration: IllustrateResponse,
+    *,
+    label: str,
+    matched: bool,
+) -> CompareIllustration:
+    return CompareIllustration.model_validate({**illustration.model_dump(), "label": label, "matched": matched})
+
+
+def _delta_value(right: Decimal | None, left: Decimal | None, *, money: bool) -> Decimal:
+    value = (right or Decimal("0")) - (left or Decimal("0"))
+    return _money(value) if money else _rate(value)
+
+
+def _range_delta(
+    right_bound: Decimal | None,
+    right_point: Decimal,
+    left_bound: Decimal | None,
+    left_point: Decimal,
+    *,
+    money: bool,
+) -> Decimal | None:
+    if right_bound is None and left_bound is None:
+        return None
+    right = right_bound if right_bound is not None else right_point
+    left = left_bound if left_bound is not None else left_point
+    return _delta_value(right, left, money=money)
+
+
+def _effective_from_tax(tax: Decimal | None, holding: Decimal) -> Decimal | None:
+    if tax is None or not holding:
+        return None
+    return _rate(tax / holding)
+
+
+def compare_deltas(right: IllustrationTotals, left: IllustrationTotals, holding: Decimal) -> CompareDeltas:
+    return CompareDeltas(
+        distribution_dollars=_delta_value(right.distribution_dollars, left.distribution_dollars, money=True),
+        distribution_dollars_min=_range_delta(
+            right.distribution_dollars_min,
+            right.distribution_dollars,
+            left.distribution_dollars_min,
+            left.distribution_dollars,
+            money=True,
+        ),
+        distribution_dollars_max=_range_delta(
+            right.distribution_dollars_max,
+            right.distribution_dollars,
+            left.distribution_dollars_max,
+            left.distribution_dollars,
+            money=True,
+        ),
+        estimated_tax=_delta_value(right.estimated_tax, left.estimated_tax, money=True),
+        estimated_tax_min=_range_delta(
+            right.estimated_tax_min,
+            right.estimated_tax,
+            left.estimated_tax_min,
+            left.estimated_tax,
+            money=True,
+        ),
+        estimated_tax_max=_range_delta(
+            right.estimated_tax_max,
+            right.estimated_tax,
+            left.estimated_tax_max,
+            left.estimated_tax,
+            money=True,
+        ),
+        federal_tax=_delta_value(right.federal_tax, left.federal_tax, money=True),
+        state_tax=_delta_value(right.state_tax, left.state_tax, money=True),
+        effective_tax_on_holding=_delta_value(
+            right.effective_tax_on_holding, left.effective_tax_on_holding, money=False
+        ),
+        effective_tax_on_holding_min=_range_delta(
+            _effective_from_tax(right.estimated_tax_min, holding),
+            right.effective_tax_on_holding,
+            _effective_from_tax(left.estimated_tax_min, holding),
+            left.effective_tax_on_holding,
+            money=False,
+        ),
+        effective_tax_on_holding_max=_range_delta(
+            _effective_from_tax(right.estimated_tax_max, holding),
+            right.effective_tax_on_holding,
+            _effective_from_tax(left.estimated_tax_max, holding),
+            left.effective_tax_on_holding,
+            money=False,
+        ),
+    )
+
+
+def _run_side(
+    session: Session,
+    body: CompareRequest,
+    side: CompareSideIn | None,
+    *,
+    selectors: IllustrateSelectors | None,
+    as_of: date | None,
+    pin_as_of: bool,
+    fallback_label: str,
+) -> tuple[CompareIllustration, str | None]:
+    request = _side_request(body, side, selectors=selectors, as_of=as_of, pin_as_of=pin_as_of)
+    if request is None:
+        placeholder = IllustrateRequest(
+            holding_dollars=body.holding_dollars,
+            selectors=IllustrateSelectors(fund_identifier="__unmatched__"),
+            tax_rates=body.tax_rates,
+            combine_state_with_federal=body.combine_state_with_federal,
+            nav_per_share=body.nav_per_share,
+            shares=body.shares,
+        )
+        illustration = _empty_illustration(
+            placeholder, reason="No selectors or distribution_ids for this side."
+        )
+        error = "No selectors or distribution_ids for this side."
+        matched = False
+    else:
+        illustration, matched, error = _try_illustrate(session, request)
+    label = _label_for(side, illustration, fallback_label)
+    return _compare_illustration(illustration, label=label, matched=matched), error
+
+
+def _append_side_note(notes: list[str], illustration: CompareIllustration, error: str | None, stamp: str) -> None:
+    if error:
+        notes.append(f"{illustration.label} ({stamp}): {error}")
+
+
+def _period_out(
+    *,
+    year: int,
+    as_of: date | None,
+    left: CompareIllustration,
+    right: CompareIllustration,
+    holding: Decimal,
+) -> ComparePeriodOut:
+    return ComparePeriodOut(
+        year=year,
+        as_of=as_of,
+        left=left,
+        right=right,
+        deltas=compare_deltas(right.totals, left.totals, holding),
+    )
+
+
+def _yoy_shared_selectors(body: CompareRequest) -> IllustrateSelectors | None:
+    if body.selectors and body.selectors.has_any():
+        return body.selectors
+    if body.left and body.left.selectors and body.left.selectors.has_any():
+        return body.left.selectors
+    if body.right and body.right.selectors and body.right.selectors.has_any():
+        return body.right.selectors
+    return None
+
+
+def illustrate_compare(session: Session, body: CompareRequest) -> CompareResponse:
+    notes = list(COMPARE_NOTES)
+    notes.append(ILLUSTRATION_NOTES[0])
+    period_outs: list[ComparePeriodOut] = []
+
+    if body.mode == "yoy" and body.periods and len(body.periods) >= 2:
+        shared = _yoy_shared_selectors(body)
+        for older, newer in zip(body.periods, body.periods[1:]):
+            left_sel = shared or (body.left.selectors if body.left else None)
+            right_sel = shared or (body.right.selectors if body.right else None) or left_sel
+            left_ill, left_err = _run_side(
+                session,
+                body,
+                body.left,
+                selectors=left_sel,
+                as_of=older.as_of,
+                pin_as_of=True,
+                fallback_label=str(older.year),
+            )
+            right_ill, right_err = _run_side(
+                session,
+                body,
+                body.right,
+                selectors=right_sel,
+                as_of=newer.as_of,
+                pin_as_of=True,
+                fallback_label=str(newer.year),
+            )
+            if not (body.left and body.left.label):
+                left_ill = left_ill.model_copy(update={"label": str(older.year)})
+            if not (body.right and body.right.label):
+                right_ill = right_ill.model_copy(update={"label": str(newer.year)})
+            _append_side_note(notes, left_ill, left_err, str(older.year))
+            _append_side_note(notes, right_ill, right_err, str(newer.year))
+            period_outs.append(
+                _period_out(
+                    year=newer.year,
+                    as_of=newer.as_of,
+                    left=left_ill,
+                    right=right_ill,
+                    holding=body.holding_dollars,
+                )
+            )
+        return CompareResponse(mode=body.mode, periods=period_outs, notes=notes)
+
+    jobs: list[tuple[int, date | None, bool]] = []
+    if body.periods:
+        jobs.extend((period.year, period.as_of, True) for period in body.periods)
+    else:
+        left_as_of = body.left.selectors.as_of if body.left and body.left.selectors else None
+        right_as_of = body.right.selectors.as_of if body.right and body.right.selectors else None
+        stamp = right_as_of or left_as_of
+        jobs.append((stamp.year if stamp else 0, None, False))
+
+    for year, as_of, pin in jobs:
+        left_ill, left_err = _run_side(
+            session,
+            body,
+            body.left,
+            selectors=body.left.selectors if body.left else body.selectors,
+            as_of=as_of,
+            pin_as_of=pin,
+            fallback_label="left",
+        )
+        right_ill, right_err = _run_side(
+            session,
+            body,
+            body.right,
+            selectors=body.right.selectors if body.right else body.selectors,
+            as_of=as_of,
+            pin_as_of=pin,
+            fallback_label="right",
+        )
+        _append_side_note(notes, left_ill, left_err, str(year or as_of))
+        _append_side_note(notes, right_ill, right_err, str(year or as_of))
+        period_outs.append(
+            _period_out(
+                year=year,
+                as_of=as_of,
+                left=left_ill,
+                right=right_ill,
+                holding=body.holding_dollars,
+            )
+        )
+    return CompareResponse(mode=body.mode, periods=period_outs, notes=notes)

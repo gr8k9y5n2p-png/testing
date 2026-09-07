@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -512,4 +512,112 @@ class PortfolioIllustrateResponse(BaseModel):
     tax_rates: TaxRates
     combine_state_with_federal: bool
     rate_mapping: dict[str, str]
+    notes: list[str]
+
+
+class CompareSideIn(BaseModel):
+    label: str | None = None
+    selectors: IllustrateSelectors | None = None
+    distribution_ids: list[str] | None = None
+    nav_per_share: Decimal | None = Field(default=None, gt=0)
+    shares: Decimal | None = Field(default=None, gt=0)
+
+    @field_validator("nav_per_share", "shares", mode="before")
+    @classmethod
+    def side_money(cls, value: Any) -> Any:
+        if isinstance(value, float):
+            return Decimal(str(value))
+        return value
+
+    def has_lookup(self) -> bool:
+        return bool(self.distribution_ids) or bool(self.selectors and self.selectors.has_any())
+
+
+class ComparePeriodIn(BaseModel):
+    year: int = Field(..., ge=1900, le=2100)
+    as_of: date | None = Field(default=None, description="Pin both sides (or this YoY vintage) to one as_of.")
+
+
+class CompareRequest(BaseModel):
+    mode: Literal["fund_vs_fund", "yoy"]
+    holding_dollars: Decimal = Field(..., gt=0)
+    tax_rates: TaxRates = Field(default_factory=TaxRates)
+    combine_state_with_federal: bool = True
+    latest_as_of_only: bool = Field(
+        default=True,
+        description="When a period has no as_of, keep only the newest snapshot per fund.",
+    )
+    left: CompareSideIn | None = None
+    right: CompareSideIn | None = None
+    selectors: IllustrateSelectors | None = Field(
+        default=None,
+        description="YoY: one fund's selectors. periods[] supply the two (or more) vintages.",
+    )
+    periods: list[ComparePeriodIn] = Field(default_factory=list)
+    nav_per_share: Decimal | None = Field(default=None, gt=0)
+    shares: Decimal | None = Field(default=None, gt=0)
+
+    @field_validator("holding_dollars", "nav_per_share", "shares", mode="before")
+    @classmethod
+    def compare_money(cls, value: Any) -> Any:
+        if isinstance(value, float):
+            return Decimal(str(value))
+        return value
+
+    @model_validator(mode="after")
+    def validate_compare_shape(self) -> CompareRequest:
+        left_ok = bool(self.left and self.left.has_lookup())
+        right_ok = bool(self.right and self.right.has_lookup())
+        shared = bool(self.selectors and self.selectors.has_any())
+        if self.mode == "fund_vs_fund":
+            if not left_ok:
+                raise ValueError("fund_vs_fund requires left.selectors or left.distribution_ids")
+            if not right_ok:
+                raise ValueError("fund_vs_fund requires right.selectors or right.distribution_ids")
+            return self
+        if left_ok and right_ok:
+            return self
+        if shared or left_ok:
+            if len(self.periods) < 2:
+                raise ValueError("yoy with one selectors block requires at least two periods")
+            return self
+        raise ValueError(
+            "yoy requires selectors (or left.selectors) plus two periods, or left and right sides"
+        )
+
+
+class CompareIllustration(IllustrateResponse):
+    """Single-fund illustration plus the chart series label."""
+
+    label: str
+    matched: bool = True
+
+
+class CompareDeltas(BaseModel):
+    """right − left (B − A). Chart Interactive Modules on effective_tax_on_holding."""
+
+    distribution_dollars: Decimal
+    distribution_dollars_min: Decimal | None = None
+    distribution_dollars_max: Decimal | None = None
+    estimated_tax: Decimal
+    estimated_tax_min: Decimal | None = None
+    estimated_tax_max: Decimal | None = None
+    federal_tax: Decimal
+    state_tax: Decimal
+    effective_tax_on_holding: Decimal
+    effective_tax_on_holding_min: Decimal | None = None
+    effective_tax_on_holding_max: Decimal | None = None
+
+
+class ComparePeriodOut(BaseModel):
+    year: int
+    as_of: date | None
+    left: CompareIllustration
+    right: CompareIllustration
+    deltas: CompareDeltas
+
+
+class CompareResponse(BaseModel):
+    mode: Literal["fund_vs_fund", "yoy"]
+    periods: list[ComparePeriodOut]
     notes: list[str]

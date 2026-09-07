@@ -13,6 +13,7 @@ The default demo uses **SQLite** and bundled Capital Group HTML fixtures so the 
 - Search API with filters, text search, and pagination
 - `POST /illustrate` — server-side tax-impact math for a dollar holding (Website Engineering owns the UI)
 - `POST /illustrate/portfolio` — book-level review with coverage % and explicit gaps
+- `POST /illustrate/compare` — Interactive Modules chart contract (`fund_vs_fund` or `yoy`)
 - Top-70 US-advisor fund-family adapters (`GET /fund-families`, `GET /coverage`) plus `POST /coverage/gaps` when a portfolio ticker is missing
 - Partner ingest (`POST /ingest/distributions`) remains the escape hatch for uncovered names
 
@@ -196,6 +197,42 @@ curl -s -X POST http://127.0.0.1:8000/illustrate/portfolio \
 ```
 
 On the American Funds fixtures: $1.25M covered / $150k uncovered → `coverage_pct` ≈ 89.3%. AMCAP uses the latest preliminary (3–5% NAV → $40,000 / $10,000 tax at 20%+5%). CGHM matches paid midyear rows but warns that NAV is missing. `XYZAX` is a gap.
+
+### Compare chart (`POST /illustrate/compare`)
+
+Interactive Modules plots **one series per period**. The primary chart field is `periods[].deltas.effective_tax_on_holding`. Dollar deltas (`distribution_dollars`, `estimated_tax`, `federal_tax`, `state_tax`, plus `_min`/`_max` when a side published a range) stay in the payload.
+
+**Sign convention:** every delta is **right − left** (B − A). A positive `effective_tax_on_holding` means the right series costs more tax as a fraction of the holding.
+
+`tax_rates: {}` is valid — omitted keys use the same defaults as `POST /illustrate`.
+
+**`mode: "fund_vs_fund"`** — two funds, same `holding_dollars` / rates, one illustration pair per `periods[]` entry. Each period’s `as_of` is pinned onto both sides.
+
+```bash
+curl -s -X POST http://127.0.0.1:8000/illustrate/compare \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "mode": "fund_vs_fund",
+    "holding_dollars": 1000000,
+    "tax_rates": {},
+    "combine_state_with_federal": true,
+    "left": { "label": "Fund A", "selectors": { "fund_identifier": "amcap-fund" } },
+    "right": { "label": "Fund B", "selectors": { "ticker": "CGHM" } },
+    "periods": [
+      { "year": 2024, "as_of": "2024-12-15" },
+      { "year": 2025, "as_of": "2025-09-19" }
+    ]
+  }' | jq '{mode, notes, periods: [.periods[] | {year, as_of, left: .left.label, right: .right.label, deltas}]}'
+```
+
+**`mode: "yoy"`** — two vintages of the **same** fund. Either:
+
+- one `selectors` (or `left.selectors`) block plus `periods` of length ≥ 2 — consecutive pairs; the response `year` / `as_of` are the **newer** (right) vintage, or
+- `left` / `right` with the same selectors and different `as_of` (no `periods` required).
+
+A missing side is **not** a 404. That illustration is empty (zeros, `matched: false`) and a note is appended so the chart still has a period row.
+
+Top-level or per-side `nav_per_share` / `shares` apply the same way as single-holding illustrate.
 
 ## Multi-year history and estimate → actual
 
@@ -447,7 +484,7 @@ pip install -r requirements-dev.txt
 pytest -q
 ```
 
-Coverage includes HTML normalization (American Funds plus top-70 family fixtures), multi-year history filters, upsert idempotency, search filters, tax illustration math, portfolio coverage, and coverage-gap logging.
+Coverage includes HTML normalization (American Funds plus top-70 family fixtures), multi-year history filters, upsert idempotency, search filters, tax illustration math, portfolio coverage, compare-chart deltas, and coverage-gap logging.
 
 ## Layout
 
