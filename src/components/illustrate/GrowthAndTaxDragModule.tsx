@@ -86,13 +86,13 @@ export function GrowthAndTaxDragModule({
   editablePrincipal = true,
 }: GrowthAndTaxDragModuleProps) {
   const [selected, setSelected] = useState<GrowthFundInput[]>(() =>
-    funds.length > 0 ? funds : DEFAULT_FUNDS,
+    (funds.length > 0 ? funds : DEFAULT_FUNDS).slice(0, MAX_GROWTH_FUNDS),
   );
   const [principal, setPrincipal] = useState(startDollars);
   const [principalDraft, setPrincipalDraft] = useState(formatPrincipal(startDollars));
   const [addTicker, setAddTicker] = useState("");
   const [adding, setAdding] = useState(false);
-  const [unit, setUnit] = useState<"mixed" | "dollars" | "percent">("mixed");
+  const [unit, setUnit] = useState<"dollars" | "percent">("dollars");
   const [retry, setRetry] = useState(0);
   const [rows, setRows] = useState<LoadedFund[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -290,6 +290,7 @@ export function GrowthAndTaxDragModule({
           >
             <button
               type="button"
+              title="Growth of $X · tax $"
               onClick={() => setUnit("dollars")}
               className={`h-8 rounded px-2.5 ${
                 unit === "dollars" ? "bg-accent text-white" : "text-muted"
@@ -299,6 +300,7 @@ export function GrowthAndTaxDragModule({
             </button>
             <button
               type="button"
+              title="Returns · tax % of value"
               onClick={() => setUnit("percent")}
               className={`h-8 rounded px-2.5 ${
                 unit === "percent" ? "bg-accent text-white" : "text-muted"
@@ -369,13 +371,20 @@ export function GrowthAndTaxDragModule({
                 className="h-9 rounded-md border border-dashed border-line-strong px-3 text-[12px] text-muted hover:border-ink hover:text-ink"
               >
                 + Add Fund
+                <span className="ml-1 text-[10px] text-faint">
+                  {selected.length}/{MAX_GROWTH_FUNDS}
+                </span>
               </button>
             )
+          ) : allowAddFund ? (
+            <p className="h-9 content-center text-[11px] text-faint">
+              {MAX_GROWTH_FUNDS} of {MAX_GROWTH_FUNDS} funds
+            </p>
           ) : null}
         </div>
       </header>
 
-      {selected.length > 2 ? (
+      {selected.length > 0 ? (
         <div className="mt-3 flex flex-wrap gap-2">
           {selected.map((fund, index) => (
             <span

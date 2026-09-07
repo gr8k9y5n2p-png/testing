@@ -8,6 +8,7 @@ export type {
   GrowthAndTaxDragModuleProps,
   GrowthFundInput,
 } from "@/components/illustrate/GrowthAndTaxDragModule";
+export { MAX_GROWTH_FUNDS } from "@/lib/charts/series-colors";
 export { GrowthOfXChart } from "@/components/illustrate/GrowthOfXChart";
 export type { ChartUnit } from "@/components/illustrate/GrowthOfXChart";
 export {
