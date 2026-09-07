@@ -281,7 +281,7 @@ Each side is a full `/illustrate/portfolio` result plus `label` (defaults: `Curr
 | `deltas.coverage_pct` | Coverage-percentage points |
 | `summary` | Dollar fields at **$10,000**. YoY also sets `total_tax_difference`, `annualized_tax_drag_delta`, `distribution_dollars_difference`, `periods_compared`, `common_inception` (same footer idea as `/illustrate/compare`) |
 
-**Sparse history:** Dodge & Cox is still one vintage. Vanguard now has ICI December year-end rows for 2021–2025 (≥$1B Admiral / mega ETFs) plus the 2025 YE HTML fixture for VFIAX / VBIAX / VIGAX. Fidelity has 2025 paid + 2026 estimate (FBGRX). A YoY `periods[]` pin that misses that `as_of` / year is an explicit **gap** on that side, not a silent $0. American Funds (AMCAP 2024–2025) and T. Rowe Price (TRBCX 2022–2025) have multi-year fixture snapshots. Among ranks 11–20, Northern Trust (NOSIX 2022–2025), BNY (DGAGX 2022–2025), and Schwab (SWTSX 2022–2025) now have multi-year paid books; UBS, Nuveen, and Amundi stay single-vintage.
+**Sparse history:** Vanguard has ICI December year-end rows for 2021–2025 (≥$1B Admiral / mega ETFs) plus the 2025 YE HTML fixture for VFIAX / VBIAX / VIGAX. Fidelity has 2025 paid + 2026 estimate (FBGRX). A YoY `periods[]` pin that misses that `as_of` / year is an explicit **gap** on that side, not a silent $0. American Funds (AMCAP 2024–2025) and T. Rowe Price (TRBCX 2022–2025) have multi-year fixture snapshots. Among ranks 11–20, Northern Trust (NOSIX 2022–2025), BNY (DGAGX 2022–2025), and Schwab (SWTSX 2022–2025) have multi-year paid books; UBS and Nuveen stay single-vintage. **Amundi / Pioneer is off the history ladder** (existing 2025 fixture only). History packs prefer **US-domiciled** managers.
 
 ```bash
 curl -s -X POST http://127.0.0.1:8000/illustrate/portfolio/compare \
@@ -430,6 +430,8 @@ If neither side has current-year upcoming data the object is `null` and a note i
 
 ## Multi-year history and estimate → actual
 
+History packs focus on **US-domiciled** fund firms. Prefer US managers when choosing which gaps to fill. **Skip Amundi / Pioneer** on the history ladder — do not add prior years; leave the existing 2025 fixture as-is. Ranks 21–30 in this pass are US managers.
+
 The upsert key includes `as_of` and `ex_date`, so a September preliminary, a December update, and a January final are **separate rows**. Do not collapse them.
 
 `GET /distributions` already supports `as_of_from` / `as_of_to`, `publication_stage`, and `fund_identifier` (exact slug or ticker identity).
@@ -464,7 +466,7 @@ Fixture packs today (ranks 1–30 historical pass):
 | Schwab | 2022–2025 annual (SWTSX / SWPPX income; 2025 also SWLVX) | No public filled ICI. Family annual page is a JS SPA — skip. Product-page HTML history used (2022–2024 CG $0, income stored). |
 | Dimensional | 2024 paid + 2025 estimate (DISVX / DFELX / DFQTX) | No public filled ICI. 2024 December book `2024-distributions.pdf` (DISVX LT $0.184). |
 | Columbia Threadneedle | 2024 YE paid + 2025 midyear estimate | No public filled ICI. 2024 YE PDF (LBSAX LT $1.38581; ELGAX LT $4.05105). IEVAX 2024 $0 CG not stored. 2023 YE PDF 404. |
-| Amundi / Pioneer | 2025 estimate (PIODX) | No public filled ICI. 2024 estimate/final sibling URLs on the Pioneer tax-center path returned 404 after the Victory transfer — skipped. |
+| Amundi / Pioneer | 2025 estimate (PIODX) only | **Off the history ladder** (non-US parent). Existing 2025 fixture left as-is; do not expand. 2024 Pioneer siblings 404 after the Victory transfer. |
 | Allspring | 2022–2025 paid YE (WFMIX / SGRNX) | No public filled ICI. Family estimate PDFs are gated login HTML. Product-page paid history used (WFMIX 2025 LT $4.26857; 2024 $2.93497; 2023 $1.7935; 2022 $3.13277). |
 | Janus Henderson | 2023 final + 2024 prelim + 2025 final estimates (JDCAX) | No public filled ICI. Rackcdn tax PDFs still posted (JDCAX LT $3.87 / $5.42 / $6.92). 2024 Final sibling filename 404. |
 | American Century | 2025 estimate + 2025 paid (TWCGX) | No public filled ICI. 2025 retail estimate PDF (TWCGX LT $10.4978) plus product-page paid Total $9.7631 (no ST/LT split). 2024 sibling PDFs 404. |
@@ -499,7 +501,7 @@ Fixture packs today (ranks 1–30 historical pass):
 | 17 | Schwab | no | SPA family grids; product-page HTML history. |
 | 18 | Dimensional | no | Public chmedia distribution PDFs. |
 | 19 | Columbia Threadneedle | no | Public midyear estimate + YE cap-gains PDFs. |
-| 20 | Amundi / Pioneer | no | Pioneer/Victory tax-center PDFs; 2024 siblings 404. |
+| 20 | Amundi / Pioneer | no | Pioneer/Victory tax-center PDFs. **Off the history ladder** — 2025 fixture only. |
 | 21 | Allspring | no | Product-alert estimate PDFs gated; product-page paid HTML used. |
 | 22 | Janus Henderson | no | Public rackcdn estimate/final PDFs 2023–2025. |
 | 23 | American Century | no | JS hub + 2025 retail PDF; 2024 siblings 404. |
@@ -537,7 +539,7 @@ Re-running the **same** source document updates the existing row. A new `as_of` 
 
 ## Coverage (portfolio review)
 
-Sparse family coverage makes Aftertax-style portfolio analytics wrong: a book that is 40% Vanguard / iShares / Fidelity looks like it has no taxable distributions if those adapters are stubs. The registry is the **top 110 US-advisor-relevant firms** (AUM ranks 1–110). `GET /coverage` returns `implemented_pct` (today 110/110 fixture parsers) so the website can later compute *% of portfolio dollars covered*.
+Sparse family coverage makes Aftertax-style portfolio analytics wrong: a book that is 40% Vanguard / iShares / Fidelity looks like it has no taxable distributions if those adapters are stubs. The registry is the **top 110 US-advisor-relevant firms** (AUM ranks 1–110). Multi-year history packs prefer **US-domiciled** managers; **Amundi / Pioneer is skipped on the history ladder** (parser stays implemented; 2025 fixture unchanged). `GET /coverage` returns `implemented_pct` (today 110/110 fixture parsers) so the website can later compute *% of portfolio dollars covered*.
 
 `GET /fund-families` includes `coverage_tier` (`implemented` | `stub`), `aum_rank` (1 = largest / highest priority), and `priority`.
 
@@ -570,7 +572,7 @@ When a holding’s ticker or family is not in the store, Website Engineering sho
 | 17 | `schwab` (alias `charles_schwab`) | Charles Schwab IM | implemented | JS family page; product HTML | Product pages `swtsx` / `swppx` (2022–2025); 2025 family SPA fallback |
 | 18 | `dimensional` (alias `dfa`) | Dimensional | implemented | PDF | 2025 estimates + 2024 `2024-distributions.pdf` |
 | 19 | `columbia_threadneedle` (aliases `columbia`, `ameriprise`) | Columbia Threadneedle | implemented | PDF | 2025 midyear estimates + 2024 YE `2024-cap-gains---mutual-funds.pdf` |
-| 20 | `amundi` (alias `pioneer`) | Amundi US / Pioneer | implemented | PDF | https://pioneerinvestments.com/content/dam/pioneer/en/documents/resources/tax-center/2025/10152025-mutual-funds-2025-capital-gain-estimates.pdf |
+| 20 | `amundi` (alias `pioneer`) | Amundi US / Pioneer | implemented | PDF | 2025 estimate PDF only. **Off the history ladder** (US-domiciled preference). Existing fixture unchanged. |
 | 21 | `allspring` (aliases `wells_fargo`, `wfam`) | Allspring | implemented | product-page HTML / gated PDF | Paid YE 2022–2025 on `.../special-mid-cap-value/` and `.../growth/i/` (WFMIX / SGRNX). Family estimate PDFs gated. |
 | 22 | `janus_henderson` (alias `janus`) | Janus Henderson | implemented | PDF | Rackcdn `distribution-tax` 2023 Final + 2024 Preliminary + 2025 Final (JDCAX LT $3.87 / $5.42 / $6.92). |
 | 23 | `american_century` | American Century | implemented | JS hub + PDF + product HTML | 2025 retail estimate PDF + TWCGX product-page paid Total $9.7631. 2024 siblings 404. |
@@ -682,7 +684,7 @@ When a holding’s ticker or family is not in the store, Website Engineering sho
 
 **Cohen & Steers:** skipped for this tier. The tax center (`https://www.cohenandsteers.com/tax-center/`) lists “Open-end Funds 2025 Distributions Estimate October 31” (and a September 30 reprint cited at `https://assets-prod.cohenandsteers.com/wp-content/uploads/2025/10/09145741/Open-end-Funds-2025-Distributions-Estimate-September-30.pdf`). Automated GETs receive a Cloudflare challenge, not the table, and no second public HTML grid was found. Use `POST /ingest/distributions` until a scrapeable reprint exists. `touchstone` is the rank-49 replacement; `victory` is rank 50.
 
-**Victory vs Pioneer / Amundi:** Pioneer open-end estimates stay on `amundi` (aliases `pioneer`, `victory_pioneer`). `victory` is Victory Portfolios I/II (Integrity / Sycamore / Multi-Cap). USAA (Portfolios III) and RS books have separate public vcm.com PDFs not yet ingested.
+**Victory vs Pioneer / Amundi:** Pioneer open-end estimates stay on `amundi` (aliases `pioneer`, `victory_pioneer`). `victory` is Victory Portfolios I/II (Integrity / Sycamore / Multi-Cap). USAA (Portfolios III) and RS books have separate public vcm.com PDFs not yet ingested. Amundi / Pioneer is **off the history ladder**; prefer US-domiciled Victory books if those gaps are filled later.
 
 **Clearbridge / Western Asset:** skipped as distinct `FundSource`s. Both are Franklin / Legg Mason brands. Use `franklin_templeton` (aliases `franklin`, `templeton`).
 

@@ -393,7 +393,9 @@ class AmundiSource(HtmlTableSource):
         "https://pioneerinvestments.com/resources/tax-center. Final 2025 PDF: "
         "2025-final-ord-inc-cap-gain-distributions.pdf on the same path. "
         "No public filled ICI file. 2024 estimate/final sibling URLs on that "
-        "path returned 404 (Pioneer site is now Victory-hosted) — skipped."
+        "path returned 404 (Pioneer site is now Victory-hosted) — skipped. "
+        "Off the multi-year history ladder (non-US parent): do not add prior "
+        "years; leave the 2025 fixture as-is."
     )
     live_limitations = "US estimates are PDF on the Pioneer/Victory tax center. Fixture transcribes that table."
 
