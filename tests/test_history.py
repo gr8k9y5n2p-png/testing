@@ -270,8 +270,10 @@ def test_compare_hero_yoy_fixture_bars(client: TestClient) -> None:
     pair = fbgrx_body["periods"][0]
     assert pair["left"]["matched"] is True
     assert pair["right"]["matched"] is True
-    assert Decimal(pair["left"]["totals"]["distribution_dollars"]) == Decimal("5073.00")  # $5.073 * 1000
-    assert Decimal(pair["right"]["totals"]["distribution_dollars"]) == Decimal("21021.00")
+    assert Decimal(pair["left"]["totals"]["distribution_dollars"]) == Decimal("5073.00")  # 2025 paid LT $5.073 * 1000
+    # 2026 estimate snapshot stores % of NAV (7.08), LT $21.021, and total $21.021.
+    # Illustrate sums components on that as_of (contract unchanged).
+    assert Decimal(pair["right"]["totals"]["distribution_dollars"]) == Decimal("49122.00")
 
     amcpx = client.post(
         "/illustrate/compare",
