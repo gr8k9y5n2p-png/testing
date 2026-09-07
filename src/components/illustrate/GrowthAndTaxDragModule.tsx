@@ -42,6 +42,8 @@ export type GrowthFundInput = {
 
 export type GrowthAndTaxDragModuleProps = {
   funds?: GrowthFundInput[];
+  /** Tickers to prepend when search/illustrate selection changes. Does not reset Add Fund extras. */
+  seedFunds?: GrowthFundInput[];
   startDollars?: number;
   benchmark?: string;
   periods?: ComparePeriodIn[];
@@ -78,6 +80,7 @@ type LoadedFund = {
 
 export function GrowthAndTaxDragModule({
   funds = DEFAULT_FUNDS,
+  seedFunds,
   startDollars = DEFAULT_START_DOLLARS,
   benchmark,
   periods,
@@ -107,6 +110,13 @@ export function GrowthAndTaxDragModule({
   });
   const fetchKey = `${requestKey}:${retry}`;
   const loading = settledKey !== fetchKey;
+  const seedKey = JSON.stringify((seedFunds ?? []).map(fundKey));
+
+  useEffect(() => {
+    const seeds = JSON.parse(seedKey) as GrowthFundInput[];
+    if (seeds.length === 0) return;
+    setSelected((current) => mergeSeedFunds(current, seeds));
+  }, [seedKey]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -295,7 +305,6 @@ export function GrowthAndTaxDragModule({
                   onFocus={() => setPrincipalDraft(String(principal))}
                   onBlur={() => {
                     commitPrincipal();
-                    setPrincipalDraft(formatPrincipal(principal));
                   }}
                   onKeyDown={(event) => {
                     if (event.key === "Enter") {
@@ -455,6 +464,16 @@ function fundKey(fund: GrowthFundInput): GrowthFundInput {
     fundIdentifier: fund.fundIdentifier,
     fundFamily: fund.fundFamily,
   };
+}
+
+function mergeSeedFunds(
+  current: GrowthFundInput[],
+  seeds: GrowthFundInput[],
+): GrowthFundInput[] {
+  const seeded = seeds.map(fundKey);
+  const seen = new Set(seeded.map((fund) => fund.ticker));
+  const rest = current.filter((fund) => !seen.has(fundKey(fund).ticker));
+  return [...seeded, ...rest].slice(0, MAX_GROWTH_FUNDS);
 }
 
 function alignYears(

@@ -5,7 +5,7 @@ import { COPY } from "@/lib/copy";
 export const metadata: Metadata = {
   title: "Aftertax — growth of $X and tax drag",
   description:
-    "Stacked cumulative growth and annual tax-drag module. Mount GrowthAndTaxDragModule on the homepage.",
+    "Stacked cumulative growth and annual tax-drag module. The homepage already mounts GrowthAndTaxDragModule as the illustrate hero.",
   robots: { index: false, follow: false },
 };
 
@@ -23,7 +23,7 @@ export default function GrowthTaxDemoPage() {
         <code className="font-mono text-[13px] text-ink">
           GrowthAndTaxDragModule
         </code>{" "}
-        into the homepage. Top chart is{" "}
+        into the homepage (already the illustrate hero). Top chart is{" "}
         <code className="font-mono text-[13px] text-ink">GET /performance</code>{" "}
         (or{" "}
         <code className="font-mono text-[13px] text-ink">
