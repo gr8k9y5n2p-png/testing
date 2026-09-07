@@ -1,3 +1,7 @@
+/**
+ * Locked GTM draft copy for Aftertax. Iterate later; do not paraphrase in the UI.
+ * Canonical host: getaftertax.com
+ */
 export const COPY = {
   hero: "See the taxable impact in dollars — before the meeting ends.",
   sub: "Live fund comparisons for wholesalers. Portfolio import for advisors.",
@@ -14,6 +18,7 @@ export const COPY = {
     "Tax impact figures are estimates for illustration and educational use only. They are not tax advice, do not reflect your or your client’s specific situation, and may omit state, local, AMT, wash-sale, holding-period, and other rules. Consult a qualified tax professional. Aftertax is not a broker-dealer or RIA.",
 } as const;
 
+/** Aftertax website owns Stripe Checkout Sessions against this price. */
 export const STRIPE = {
   productId: "prod_VDXGeprN4QkxsM",
   priceId: "price_1UD6C0RqA7bY5N5qVleZso0d",

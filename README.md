@@ -89,12 +89,17 @@ Uncovered holdings are flagged in the fund picker (Gap vs Live) and the illustra
 
 Highlights and the full estimates table sit below the illustration as the sample universe — not a landing feature grid.
 
-## Freemium / Stripe (not live yet)
+## Freemium / Stripe (website owns Checkout)
 
-- 3 free unique fund searches (client `localStorage` for this demo).
-- Paywall copy is in `src/lib/copy.ts`.
-- Aftertax website will create Checkout Sessions server-side against price `price_1UD6C0RqA7bY5N5qVleZso0d` (product `prod_VDXGeprN4QkxsM`). Placeholders: `success_url` `https://getaftertax.com/?checkout=success`, `cancel_url` `https://getaftertax.com/?checkout=cancel`.
-- `POST /api/checkout` is a stub until `STRIPE_SECRET_KEY` is available.
+The Aftertax **website** creates Stripe Checkout Sessions server-side (`POST /api/checkout` → `src/lib/stripe/checkout.ts`).
+
+- Price `price_1UD6C0RqA7bY5N5qVleZso0d` (product `prod_VDXGeprN4QkxsM`, account `acct_1UD66TRqA7bY5N5q`)
+- `success_url` → `https://getaftertax.com/?checkout=success` (same search/portfolio flow)
+- `cancel_url` → `https://getaftertax.com/?checkout=cancel` (reopens paywall)
+- **Mocked demo does not need live keys.** Without `STRIPE_SECRET_KEY`, Unlock Aftertax is stubbed (501) and the funnel still works.
+- When keys are available: set `STRIPE_SECRET_KEY` and optional `STRIPE_PRICE_ID` / `AFTERTAX_PUBLIC_URL`. The same route creates a live Checkout Session and redirects.
+
+Paywall copy is locked in `src/lib/copy.ts`. 3 free unique fund searches use client `localStorage` for this demo.
 
 ## Code structure
 

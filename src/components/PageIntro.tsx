@@ -1,3 +1,5 @@
+import { COPY } from "@/lib/copy";
+
 export function PageIntro({ fundCount }: { fundCount: number }) {
   return (
     <section className="mt-8 mb-8 max-w-3xl">
@@ -5,11 +7,10 @@ export function PageIntro({ fundCount }: { fundCount: number }) {
         Aftertax
       </p>
       <h1 className="mt-2 font-serif text-3xl tracking-tight text-navy sm:text-[2.15rem]">
-        See the taxable impact in dollars
+        {COPY.hero}
       </h1>
       <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-muted">
-        Search a fund for estimated taxable distributions and dollar tax impact.
-        {fundCount} sample funds are loaded for this template.
+        {COPY.sub} {fundCount} sample funds are loaded for this template.
       </p>
     </section>
   );

@@ -29,7 +29,6 @@ export function AftertaxApp({
 }) {
   const [selected, setSelected] = useState<FundEstimateView | null>(null);
   const [paywallOpen, setPaywallOpen] = useState(checkout === "cancel");
-  const [paywallReason, setPaywallReason] = useState<"import" | "limit">("limit");
   const [unlockMessage, setUnlockMessage] = useState<string | null>(
     checkout === "success" ? CHECKOUT_SUCCESS_MESSAGE : null,
   );
@@ -38,7 +37,6 @@ export function AftertaxApp({
   function selectFund(fund: FundEstimateView) {
     const result = freemium.trySearch(fund.ticker);
     if (!result.allowed) {
-      setPaywallReason("limit");
       setPaywallOpen(true);
       return;
     }
@@ -59,13 +57,6 @@ export function AftertaxApp({
   }
 
   function openImportPaywall() {
-    if (freemium.unlimited) {
-      setUnlockMessage(
-        "Portfolio import is a paid feature. Stripe Checkout is not wired yet, so aggregation is still a placeholder.",
-      );
-      return;
-    }
-    setPaywallReason("import");
     setPaywallOpen(true);
   }
 
@@ -73,9 +64,14 @@ export function AftertaxApp({
     try {
       const response = await fetch("/api/checkout", { method: "POST" });
       const body = (await response.json()) as {
+        url?: string;
         detail?: string;
         price_id?: string;
       };
+      if (body.url) {
+        window.location.assign(body.url);
+        return;
+      }
       setPaywallOpen(false);
       setUnlockMessage(
         `${body.detail ?? "Checkout is stubbed."} Price ${body.price_id ?? STRIPE.priceId}.`,
@@ -128,7 +124,6 @@ export function AftertaxApp({
       <PaywallDialog
         open={paywallOpen}
         remaining={freemium.remaining}
-        reason={paywallReason}
         onClose={() => setPaywallOpen(false)}
         onUnlock={() => {
           void unlock();

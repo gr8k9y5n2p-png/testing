@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { FundEstimateView } from "@/data/types";
 import { searchFunds } from "@/data/queries";
+import { COPY } from "@/lib/copy";
 import { isLiveCoveredFamily } from "@/lib/coverage";
 
 export function FundPicker({
@@ -29,7 +30,7 @@ export function FundPicker({
   return (
     <div className="relative">
       <label htmlFor={inputId} className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.12em] text-faint">
-        Search a fund
+        {COPY.searchCta}
       </label>
       <input
         id={inputId}
