@@ -9,14 +9,15 @@ import { Hero } from "@/components/landing/Hero";
 import { IllustratePanel } from "@/components/illustrate/IllustratePanel";
 import { PaywallDialog } from "@/components/paywall/PaywallDialog";
 import { CoverageProvider, useCoverage } from "@/components/coverage/CoverageProvider";
-import { COPY, STRIPE } from "@/lib/copy";
+import { Disclaimer } from "@/components/Disclaimer";
+import { STRIPE } from "@/lib/copy";
 import type { FundFamilyCoverage } from "@/lib/coverage";
 import { reportCoverageGap } from "@/lib/coverage";
 import { useFreemium } from "@/lib/freemium";
 
 export type CheckoutReturn = "success" | "cancel" | null;
 
-const CHECKOUT_SUCCESS_MESSAGE = `Checkout is not live yet. You’ll return to this same search flow after Stripe is wired (price ${STRIPE.priceId}).`;
+const CHECKOUT_SUCCESS_MESSAGE = `Checkout is not live yet. Test mode comes later (price ${STRIPE.priceId}). You’ll stay in this search flow.`;
 
 export function AftertaxApp({
   funds,
@@ -148,7 +149,7 @@ function AftertaxAppInner({
         </div>
       </section>
 
-      <p className="mt-8 text-xs leading-relaxed text-muted">{COPY.disclaimer}</p>
+      <Disclaimer className="mt-8 text-xs leading-relaxed text-muted" />
       <PaywallDialog
         open={paywallOpen}
         remaining={freemium.remaining}

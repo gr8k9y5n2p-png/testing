@@ -1,7 +1,9 @@
 /**
- * Locked GTM draft copy for Aftertax. Iterate later; do not paraphrase in the UI.
- * Canonical host: getaftertax.com (registered, Cloudflare Registrar).
+ * Locked GTM copy for Aftertax. Do not paraphrase in the UI.
+ * Disclaimer is QA-final unless Eric edits.
  */
+export { HOST, PRODUCTION_HOST, STAGING_HOST } from "@/lib/hosts";
+
 export const COPY = {
   hero: "See the taxable impact in dollars — before the meeting ends.",
   sub: "Live fund comparisons for wholesalers. Portfolio import for advisors.",
@@ -15,17 +17,16 @@ export const COPY = {
   paywallCta: "Unlock Aftertax",
   continueFree: "Continue with free searches",
   disclaimer:
-    "Tax impact figures are estimates for illustration and educational use only. They are not tax advice, do not reflect your or your client’s specific situation, and may omit state, local, AMT, wash-sale, holding-period, and other rules. Consult a qualified tax professional. Aftertax is not a broker-dealer or RIA.",
+    "Illustrative estimates only. Not tax, legal, or investment advice. Figures may omit state, local, AMT, wash-sale, holding-period, and other rules. Consult a qualified tax professional. Aftertax is not a broker-dealer or RIA.",
 } as const;
 
-/** Aftertax website owns Stripe Checkout Sessions against this price. */
+/** Aftertax website owns Stripe Checkout. Test mode later; do not block on live keys. */
 export const STRIPE = {
   productId: "prod_VDXGeprN4QkxsM",
   priceId: "price_1UD6C0RqA7bY5N5qVleZso0d",
   accountId: "acct_1UD66TRqA7bY5N5q",
 } as const;
 
-export const HOST = "getaftertax.com";
 export const FREE_SEARCH_LIMIT = 3;
 
 export function freeSearchLabel(remaining: number): string {

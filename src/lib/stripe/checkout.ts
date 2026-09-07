@@ -25,7 +25,8 @@ export type CheckoutResult = CheckoutStub | CheckoutLive;
 
 /**
  * Aftertax website owns Checkout Session creation (server-side).
- * Without STRIPE_SECRET_KEY the mocked demo still works: this returns a stub.
+ * Test mode comes later — do not block on live keys. Without STRIPE_SECRET_KEY
+ * the funnel still works and this returns a stub.
  */
 export async function createCheckoutSession(): Promise<{
   result: CheckoutResult;
@@ -41,7 +42,7 @@ export async function createCheckoutSession(): Promise<{
       result: {
         stub: true,
         detail:
-          "Stripe Checkout is not configured. Set STRIPE_SECRET_KEY to create a live session.",
+          "Stripe Checkout is not configured. Test mode comes later; the funnel works without live keys.",
         price_id: priceId,
         product_id: STRIPE.productId,
         account_id: STRIPE.accountId,

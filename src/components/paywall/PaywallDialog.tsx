@@ -1,5 +1,6 @@
 "use client";
 
+import { Disclaimer } from "@/components/Disclaimer";
 import { COPY } from "@/lib/copy";
 
 export function PaywallDialog({
@@ -33,7 +34,7 @@ export function PaywallDialog({
           {COPY.paywallBody}
         </p>
         <p className="mt-2 text-sm font-medium text-ink">{COPY.paywallPrice}</p>
-        <p className="mt-4 text-xs leading-relaxed text-muted">{COPY.disclaimer}</p>
+        <Disclaimer className="mt-4 text-xs leading-relaxed text-muted" />
         <div className="mt-5 flex flex-col gap-2 sm:flex-row">
           <button
             type="button"

@@ -4,7 +4,7 @@ import { IBM_Plex_Mono, Source_Sans_3, Source_Serif_4 } from "next/font/google";
 import { AppHeader } from "@/components/AppHeader";
 import { AppFooter } from "@/components/AppFooter";
 import { COPY } from "@/lib/copy";
-import { AFTERTAX_ORIGIN } from "@/lib/data-api/config";
+import { publicOrigin } from "@/lib/hosts";
 import "./globals.css";
 
 const sourceSans = Source_Sans_3({
@@ -26,19 +26,24 @@ const plexMono = IBM_Plex_Mono({
   display: "swap",
 });
 
+const PUBLIC_ORIGIN = publicOrigin();
+
 export const metadata: Metadata = {
-  metadataBase: new URL(AFTERTAX_ORIGIN),
+  metadataBase: new URL(PUBLIC_ORIGIN),
   title: "Aftertax — taxable impact in dollars",
   description: `${COPY.hero} ${COPY.sub}`,
-  alternates: { canonical: AFTERTAX_ORIGIN },
+  alternates: { canonical: PUBLIC_ORIGIN },
   applicationName: "Aftertax",
   openGraph: {
     type: "website",
-    url: AFTERTAX_ORIGIN,
+    url: PUBLIC_ORIGIN,
     siteName: "Aftertax",
     title: "Aftertax — taxable impact in dollars",
     description: `${COPY.hero} ${COPY.sub}`,
   },
+  robots: PUBLIC_ORIGIN.includes("staging.")
+    ? { index: false, follow: false }
+    : { index: true, follow: true },
 };
 
 export default function RootLayout({

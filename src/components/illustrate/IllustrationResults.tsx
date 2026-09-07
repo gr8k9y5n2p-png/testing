@@ -1,5 +1,5 @@
 import type { IllustrateResponse } from "@/lib/illustrate/types";
-import { COPY } from "@/lib/copy";
+import { Disclaimer } from "@/components/Disclaimer";
 import { formatRatePct, formatUsdRange } from "@/lib/format";
 
 const ESTIMATE_LABELS: Record<string, string> = {
@@ -103,7 +103,7 @@ export function IllustrationResults({
         </ul>
       ) : null}
 
-      <p className="text-xs leading-relaxed text-muted">{COPY.disclaimer}</p>
+      <Disclaimer />
     </div>
   );
 }

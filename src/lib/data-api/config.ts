@@ -1,7 +1,7 @@
-import { HOST } from "@/lib/copy";
+import { PRODUCTION_ORIGIN, publicOrigin } from "@/lib/hosts";
 
-/** Canonical public origin. Apex host getaftertax.com (Cloudflare Registrar). */
-export const AFTERTAX_ORIGIN = `https://${HOST}`;
+/** Production apex. Brand chrome and ads-ready canonical. */
+export const AFTERTAX_ORIGIN = PRODUCTION_ORIGIN;
 
 export function getDataApiBaseUrl(): string | null {
   const value = process.env.NEXT_PUBLIC_DATA_API_URL?.trim();
@@ -30,8 +30,9 @@ export function isRemoteDataApi(): boolean {
   return Boolean(getDataApiBaseUrl());
 }
 
+/** Checkout return URLs default to staging until ads are green-lit. */
 export function checkoutUrls() {
-  const origin = process.env.AFTERTAX_PUBLIC_URL?.replace(/\/$/, "") || AFTERTAX_ORIGIN;
+  const origin = publicOrigin();
   return {
     success_url: `${origin}/?checkout=success`,
     cancel_url: `${origin}/?checkout=cancel`,

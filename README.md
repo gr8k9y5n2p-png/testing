@@ -11,11 +11,31 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) for local development.
-
-**Canonical host:** [https://getaftertax.com](https://getaftertax.com) (registered at Cloudflare Registrar; DNS may still be settling). Use the apex host, not `www`. No production deploy is required for this UI slice until DNS and hosting are pointed.
+Open [http://localhost:3000](http://localhost:3000). That is enough for a search + illustrate homepage (Ledger Light, monogram, locked GTM hero copy).
 
 - `npm run build` / `npm run lint` / `npm run typecheck`
+
+## Hosts
+
+Prefer **staging** until ads are green-lit.
+
+| Env | Host |
+| --- | --- |
+| Local | [http://localhost:3000](http://localhost:3000) |
+| Staging | [https://staging.getaftertax.com](https://staging.getaftertax.com) |
+| Production | [https://getaftertax.com](https://getaftertax.com) (apex, not `www`) |
+
+Set `AFTERTAX_PUBLIC_URL` to the host you are deploying. Default (no env) is **staging**. Chrome still shows `getaftertax.com` as the brand host.
+
+## Deploy (Vercel)
+
+Standard Next.js App Router — no special adapter. Import the repo, framework **Next.js**, and for first public staging:
+
+- `AFTERTAX_PUBLIC_URL=https://staging.getaftertax.com`
+- Optional: `NEXT_PUBLIC_DATA_API_URL` to point at the PR #2 Data API
+- **Do not require** `STRIPE_SECRET_KEY` for staging. Search + illustrate is enough.
+
+Staging is `noindex`. Switch `AFTERTAX_PUBLIC_URL` to `https://getaftertax.com` when ads are green-lit.
 
 ## What you will see
 
@@ -24,7 +44,19 @@ Open [http://localhost:3000](http://localhost:3000) for local development.
 - Soft counter (`3 of 3 free searches left` → `2 of 3…` → `0 free searches left`). After 3 unique tickers, the next search opens the paywall.
 - Highlights + estimates table sit below the fold as the sample universe — not a landing feature grid.
 - Sample/demo data banner. Capital Group / American Funds is treated as live ingest; other families show a **coverage gap**.
-- Checkout is stubbed (`POST /api/checkout` → 501). Price id `price_1UD6C0RqA7bY5N5qVleZso0d`. Return URLs: `/?checkout=success` stays in this flow; `/?checkout=cancel` reopens the paywall. No onboarding tour.
+- Checkout is stubbed (`POST /api/checkout` → 501) until Stripe test mode. Price id `price_1UD6C0RqA7bY5N5qVleZso0d`. Return URLs: `/?checkout=success` stays in this flow; `/?checkout=cancel` reopens the paywall. No onboarding tour.
+
+## Disclaimer (QA-final unless Eric edits)
+
+Shown next to every dollar result and on the paywall (do not paraphrase):
+
+> Illustrative estimates only. Not tax, legal, or investment advice. Figures may omit state, local, AMT, wash-sale, holding-period, and other rules. Consult a qualified tax professional. Aftertax is not a broker-dealer or RIA.
+
+Hero / footer keep the short trust line: “Illustrative estimates only. Not tax, legal, or investment advice.”
+
+## Golden tests
+
+**Capital Group live fixtures first** (`src/lib/golden.ts`). Start with **AMCPX** and **AGTHX**; the rest of the American Funds seed rows are the current live set. More hero tickers will be added later — do not treat other families as golden.
 
 ## Mock vs real Data API (PR #2)
 
@@ -102,11 +134,9 @@ Highlights and the full estimates table sit below the illustration as the sample
 The Aftertax **website** creates Stripe Checkout Sessions server-side (`POST /api/checkout` → `src/lib/stripe/checkout.ts`).
 
 - Price `price_1UD6C0RqA7bY5N5qVleZso0d` (product `prod_VDXGeprN4QkxsM`, account `acct_1UD66TRqA7bY5N5q`)
-- `success_url` → `https://getaftertax.com/?checkout=success` (same search/portfolio flow)
-- `cancel_url` → `https://getaftertax.com/?checkout=cancel` (reopens paywall)
-- Override the public origin with `AFTERTAX_PUBLIC_URL` only if you must; default remains `https://getaftertax.com`.
-- **Mocked demo does not need live keys.** Without `STRIPE_SECRET_KEY`, Unlock Aftertax is stubbed (501) and the funnel still works.
-- When keys are available: set `STRIPE_SECRET_KEY` and optional `STRIPE_PRICE_ID` / `AFTERTAX_PUBLIC_URL`. The same route creates a live Checkout Session and redirects.
+- `success_url` / `cancel_url` default to **https://staging.getaftertax.com** until ads are green-lit (`AFTERTAX_PUBLIC_URL` overrides)
+- **Test mode later. Do not block on live keys.** Without `STRIPE_SECRET_KEY`, Unlock Aftertax is stubbed (501) and search + illustrate still work.
+- When test-mode keys exist: set `STRIPE_SECRET_KEY` and optional `STRIPE_PRICE_ID` / `AFTERTAX_PUBLIC_URL`.
 
 Paywall copy is locked in `src/lib/copy.ts`. 3 free unique fund searches use client `localStorage` for this demo.
 

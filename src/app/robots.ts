@@ -1,9 +1,15 @@
 import type { MetadataRoute } from "next";
-import { AFTERTAX_ORIGIN } from "@/lib/data-api/config";
+import { isStagingPublicOrigin, publicOrigin } from "@/lib/hosts";
 
 export default function robots(): MetadataRoute.Robots {
+  const origin = publicOrigin();
+  if (isStagingPublicOrigin(origin)) {
+    return {
+      rules: { userAgent: "*", disallow: "/" },
+    };
+  }
   return {
     rules: { userAgent: "*", allow: "/" },
-    host: AFTERTAX_ORIGIN,
+    host: origin,
   };
 }

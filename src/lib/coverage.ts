@@ -3,6 +3,7 @@
  * (`coverage_tier`, `priority`, `aum_rank`) and POST /coverage/gaps.
  *
  * Live ingest fallback (when the Data API is down): Capital Group / American Funds.
+ * Golden-test priority is Capital Group fixtures first; more hero tickers come later.
  * Other families must be flagged so tax impact is not silently understated.
  */
 

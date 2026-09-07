@@ -49,6 +49,8 @@ function fund(input: SeedInput): FundEstimate {
 /**
  * Illustrative 2026 year-end estimated taxable distributions.
  * Tickers are real; dollar figures, dates, and CUSIPs are sample only.
+ * Golden-test priority: Capital Group / American Funds first (AMCPX, AGTHX, …).
+ * More hero tickers will be added later.
  */
 export const SAMPLE_FUNDS: FundEstimate[] = [
   fund({
