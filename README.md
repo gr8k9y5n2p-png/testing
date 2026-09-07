@@ -2,6 +2,15 @@
 
 See the taxable impact in dollars — before the meeting ends.
 
+**Open the homepage**
+
+```bash
+npm install
+npm run dev
+```
+
+Then open [http://localhost:3000](http://localhost:3000). Search **AMCPX** (Capital Group / AMCAP) to see a dollar illustration. Ledger Light, monogram, and locked GTM hero copy are on that page. No Stripe keys and no Data API are required for this demo.
+
 Aftertax is a search-first workspace for wholesalers and financial advisors. This repo slice is the **website UI**: fund search, highlights, holding size, adjustable tax rates, and results. The Data team owns ingest, `GET /distributions`, and production `POST /illustrate` math (see PR #2).
 
 ## Run locally
@@ -11,7 +20,7 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). That is enough for a search + illustrate homepage (Ledger Light, monogram, locked GTM hero copy).
+Open [http://localhost:3000](http://localhost:3000). That is enough for a search + illustrate homepage.
 
 - `npm run build` / `npm run lint` / `npm run typecheck`
 
@@ -29,11 +38,13 @@ Set `AFTERTAX_PUBLIC_URL` to the host you are deploying. Default (no env) is **s
 
 ## Deploy (Vercel)
 
-Standard Next.js App Router — no special adapter. Import the repo, framework **Next.js**, and for first public staging:
+Standard Next.js App Router at the **repo root** — no adapter, no `vercel.json` required. In Vercel: Import GitHub repo → framework **Next.js** → assign custom domain **`staging.getaftertax.com`**.
+
+For first public staging:
 
 - `AFTERTAX_PUBLIC_URL=https://staging.getaftertax.com`
 - Optional: `NEXT_PUBLIC_DATA_API_URL` to point at the PR #2 Data API
-- **Do not require** `STRIPE_SECRET_KEY` for staging. Search + illustrate is enough.
+- **Do not set** `STRIPE_SECRET_KEY`. Search + illustrate is enough; freemium/Checkout can stay stubbed.
 
 Staging is `noindex`. Switch `AFTERTAX_PUBLIC_URL` to `https://getaftertax.com` when ads are green-lit.
 
