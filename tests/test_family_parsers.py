@@ -75,6 +75,18 @@ from app.sources.sixth_tier import (
     WilliamBlairSource,
     WisdomtreeSource,
 )
+from app.sources.seventh_tier import (
+    BridgewaySource,
+    ChamplainSource,
+    DavisSource,
+    DiamondHillSource,
+    DriehausSource,
+    HotchkisWileySource,
+    JensenSource,
+    MarsicoSource,
+    OsterweisSource,
+    TcwSource,
+)
 from app.sources.parser import parse_distribution_html, split_fund_identity
 
 ROOT = Path(__file__).resolve().parents[1] / "fixtures"
@@ -265,6 +277,16 @@ def test_adapters_fetch_fixture_mode() -> None:
         AlgerSource(),
         HardingLoevnerSource(),
         MatthewsAsiaSource(),
+        TcwSource(),
+        BridgewaySource(),
+        JensenSource(),
+        DiamondHillSource(),
+        ChamplainSource(),
+        DriehausSource(),
+        HotchkisWileySource(),
+        MarsicoSource(),
+        OsterweisSource(),
+        DavisSource(),
     ]
     for source in sources:
         result = source.fetch(mode="fixture")
@@ -954,3 +976,143 @@ def test_sixth_tier_fixtures() -> None:
         if r.ticker == "MEGMX" and r.estimate_type == EstimateType.short_term_capital_gains
     )
     assert megmx.amount == Decimal("0.08706")
+
+
+def test_seventh_tier_fixtures() -> None:
+    tcw = parse_distribution_html(
+        (ROOT / "tcw" / "2025_capital_gains.html").read_text(encoding="utf-8"),
+        source_url="fixture://tcw",
+        fund_family="TCW",
+    )
+    tgdix = next(
+        r
+        for r in tcw
+        if r.ticker == "TGDIX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert tgdix.amount == Decimal("3.4797")
+
+    bridgeway = parse_distribution_html(
+        (ROOT / "bridgeway" / "2025_estimated_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://bridgeway",
+        fund_family="Bridgeway",
+    )
+    bragx = next(
+        r
+        for r in bridgeway
+        if r.ticker == "BRAGX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert bragx.amount == Decimal("17.63983")
+
+    jensen = parse_distribution_html(
+        (ROOT / "jensen" / "2025_year_end_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://jensen",
+        fund_family="Jensen",
+    )
+    jensx = next(
+        r
+        for r in jensen
+        if r.ticker == "JENSX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert jensx.amount == Decimal("16.65")
+
+    diamond = parse_distribution_html(
+        (ROOT / "diamond_hill" / "2025_estimated_capital_gains.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://diamond_hill",
+        fund_family="Diamond Hill",
+    )
+    dhpax = next(
+        r
+        for r in diamond
+        if r.ticker == "DHPAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert dhpax.amount == Decimal("2.698")
+
+    champlain = parse_distribution_html(
+        (ROOT / "champlain" / "2025_final_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://champlain",
+        fund_family="Champlain",
+    )
+    cipix = next(
+        r
+        for r in champlain
+        if r.ticker == "CIPIX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert cipix.amount == Decimal("3.5103")
+
+    driehaus = parse_distribution_html(
+        (ROOT / "driehaus" / "2025_year_end_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://driehaus",
+        fund_family="Driehaus",
+    )
+    dmcrx = next(
+        r
+        for r in driehaus
+        if r.ticker == "DMCRX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert dmcrx.amount == Decimal("2.073159")
+
+    hotchkis = parse_distribution_html(
+        (ROOT / "hotchkis" / "2025_year_end_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://hotchkis",
+        fund_family="Hotchkis & Wiley",
+    )
+    hwlix = next(
+        r
+        for r in hotchkis
+        if r.ticker == "HWLIX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert hwlix.amount == Decimal("2.83442")
+
+    marsico = parse_distribution_html(
+        (ROOT / "marsico" / "2025_year_end_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://marsico",
+        fund_family="Marsico",
+    )
+    mfocx = next(
+        r
+        for r in marsico
+        if r.ticker == "MFOCX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert mfocx.amount == Decimal("4.9890")
+
+    osterweis = parse_distribution_html(
+        (ROOT / "osterweis" / "2025_estimated_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://osterweis",
+        fund_family="Osterweis",
+    )
+    ostfx = next(
+        r
+        for r in osterweis
+        if r.ticker == "OSTFX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert ostfx.amount == Decimal("1.10")
+
+    davis = parse_distribution_html(
+        (ROOT / "davis" / "2025_year_end_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://davis",
+        fund_family="Davis Funds",
+    )
+    nyvtx = next(
+        r
+        for r in davis
+        if r.ticker == "NYVTX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert nyvtx.amount == Decimal("0.89")

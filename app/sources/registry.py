@@ -73,6 +73,18 @@ from app.sources.sixth_tier import (
     WilliamBlairSource,
     WisdomtreeSource,
 )
+from app.sources.seventh_tier import (
+    BridgewaySource,
+    ChamplainSource,
+    DavisSource,
+    DiamondHillSource,
+    DriehausSource,
+    HotchkisWileySource,
+    JensenSource,
+    MarsicoSource,
+    OsterweisSource,
+    TcwSource,
+)
 
 _ALIASES = {
     "american_funds": "american_funds",
@@ -223,6 +235,24 @@ _ALIASES = {
     "hl": "harding_loevner",
     "matthews_asia": "matthews_asia",
     "matthews": "matthews_asia",
+    "tcw": "tcw",
+    "bridgeway": "bridgeway",
+    "jensen": "jensen",
+    "diamond_hill": "diamond_hill",
+    "diamond": "diamond_hill",
+    "champlain": "champlain",
+    "cip": "champlain",
+    "cipvt": "champlain",
+    "driehaus": "driehaus",
+    "hotchkis": "hotchkis",
+    "hw": "hotchkis",
+    "hwcm": "hotchkis",
+    "hotchkis_wiley": "hotchkis",
+    "marsico": "marsico",
+    "osterweis": "osterweis",
+    "ost": "osterweis",
+    "davis": "davis",
+    "davis_funds": "davis",
 }
 
 
@@ -288,6 +318,16 @@ def _sources() -> dict[str, FundSource]:
         AlgerSource(),
         HardingLoevnerSource(),
         MatthewsAsiaSource(),
+        TcwSource(),
+        BridgewaySource(),
+        JensenSource(),
+        DiamondHillSource(),
+        ChamplainSource(),
+        DriehausSource(),
+        HotchkisWileySource(),
+        MarsicoSource(),
+        OsterweisSource(),
+        DavisSource(),
     ]
     return {source.slug: source for source in ordered}
 
