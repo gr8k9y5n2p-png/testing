@@ -9,6 +9,7 @@ export type {
   GrowthFundInput,
 } from "@/components/illustrate/GrowthAndTaxDragModule";
 export { GrowthOfXChart } from "@/components/illustrate/GrowthOfXChart";
+export type { ChartUnit } from "@/components/illustrate/GrowthOfXChart";
 export {
   TaxDragByYearChart,
   TaxYoYChart,

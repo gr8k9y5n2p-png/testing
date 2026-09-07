@@ -1,6 +1,7 @@
 import {
   SHARED_CHART_PAD,
   SHARED_CHART_WIDTH,
+  yearLayout,
   type ChartPad,
 } from "@/lib/charts/shared-axis";
 import {
@@ -126,13 +127,11 @@ export function TaxDragByYearChart({
     ? Math.min(...measured, 0)
     : Math.max(...measured, 0);
   const scale = niceScale(down ? Math.abs(peak) : peak, metric);
-  const innerW = chartW - chartPad.left - chartPad.right;
   const innerH = chartH - chartPad.top - chartPad.bottom;
-  const slot = years.length > 0 ? innerW / years.length : innerW;
-  const groupW = Math.min(slot * 0.72, 56);
-  const barW = Math.max(6, groupW / Math.max(fundSeries.length, 1) - 2);
+  const axis = yearLayout(years, fundSeries.length, chartW, chartPad);
+  const barW = axis.barW;
 
-  const xAt = (index: number) => chartPad.left + slot * index + slot / 2;
+  const xAt = (index: number) => axis.center(index);
   const yAt = (value: number) => {
     if (scale === 0) return down ? chartPad.top : chartPad.top + innerH;
     if (down) {
@@ -194,11 +193,7 @@ export function TaxDragByYearChart({
                 const point = row.points.find((item) => item.year === year);
                 const amount = point?.value ?? null;
                 const gap = amount == null;
-                const offset =
-                  fundSeries.length === 1
-                    ? 0
-                    : (seriesIndex - (fundSeries.length - 1) / 2) * (barW + 2);
-                const x = center + offset - barW / 2;
+                const x = axis.barX(index, seriesIndex);
                 if (gap) {
                   return seriesIndex === 0 ? (
                     <line

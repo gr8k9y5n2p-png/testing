@@ -37,7 +37,12 @@ export default function GrowthTaxDemoPage() {
       </p>
 
       <div className="mt-8">
-        <GrowthAndTaxDragModule />
+        <GrowthAndTaxDragModule
+          funds={[
+            { ticker: "AGTHX", label: "The Growth Fund of America", fundFamily: "American Funds" },
+            { ticker: "VFIAX", label: "Vanguard 500 Index", fundFamily: "Vanguard" },
+          ]}
+        />
       </div>
 
       <pre className="mt-10 overflow-auto rounded-lg border border-line bg-surface p-4 text-[12px] leading-relaxed text-muted">

@@ -3,8 +3,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { GrowthOfXChart, type GrowthLineSeries } from "@/components/illustrate/GrowthOfXChart";
 import { TaxDragByYearChart } from "@/components/illustrate/TaxDragByYearChart";
-import { BENCHMARK_COLOR, fundSeriesColor } from "@/lib/charts/series-colors";
-import { cagr, yearEndGrowth } from "@/lib/charts/shared-axis";
+import {
+  BENCHMARK_COLOR,
+  MAX_GROWTH_FUNDS,
+  fundSeriesColor,
+} from "@/lib/charts/series-colors";
+import { cagr, yearEndGrowth, yearEndReturns } from "@/lib/charts/shared-axis";
 import { formatUsd } from "@/lib/format";
 import { postIllustrateCompare } from "@/lib/illustrate/compare-client";
 import type { ComparePeriodIn, CompareResponse } from "@/lib/illustrate/compare-types";
@@ -53,6 +57,8 @@ const TAX_FOCUS: Record<string, string> = {
   AMCPX: "Active large growth",
   FBGRX: "Focus on capital gains",
   VFIAX: "Index · lower turnover",
+  DODIX: "Ordinary income",
+  VTIAX: "International index",
 };
 
 type LoadedFund = {
@@ -78,6 +84,7 @@ export function GrowthAndTaxDragModule({
   const [principal, setPrincipal] = useState(startDollars);
   const [principalDraft, setPrincipalDraft] = useState(String(startDollars));
   const [addTicker, setAddTicker] = useState("");
+  const [unit, setUnit] = useState<"dollars" | "percent">("dollars");
   const [retry, setRetry] = useState(0);
   const [rows, setRows] = useState<LoadedFund[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -133,7 +140,10 @@ export function GrowthAndTaxDragModule({
       id: row.performance.fund_ticker,
       label: row.input.label || row.performance.fund_name,
       color: row.color,
-      points: yearEndGrowth(row.performance.fund.points),
+      points:
+        unit === "percent"
+          ? yearEndReturns(row.performance.fund.points, principal)
+          : yearEndGrowth(row.performance.fund.points),
     }));
     const bench = rows[0]?.performance.benchmark;
     if (bench) {
@@ -142,11 +152,14 @@ export function GrowthAndTaxDragModule({
         label: rows[0].performance.benchmark_tracks || bench.ticker,
         color: BENCHMARK_COLOR,
         dashed: true,
-        points: yearEndGrowth(bench.points),
+        points:
+          unit === "percent"
+            ? yearEndReturns(bench.points, principal)
+            : yearEndGrowth(bench.points),
       });
     }
     return lines;
-  }, [rows]);
+  }, [principal, rows, unit]);
 
   const taxSeries = useMemo<TaxDragFundSeries[]>(() => {
     if (!rows) return [];
@@ -156,10 +169,18 @@ export function GrowthAndTaxDragModule({
       description: TAX_FOCUS[row.performance.fund_ticker],
       color: row.color,
       points: row.tax
-        ? toNegativeTaxDrag(alignYears(toTaxDragPeriods(row.tax, "effective_tax"), years))
+        ? toNegativeTaxDrag(
+            alignYears(
+              toTaxDragPeriods(
+                row.tax,
+                unit === "percent" ? "effective_tax" : "tax_dollars",
+              ),
+              years,
+            ),
+          )
         : years.map((year) => ({ year, value: null })),
     }));
-  }, [rows, years]);
+  }, [rows, unit, years]);
 
   const annualized = useMemo(() => {
     if (!rows || years.length < 2) return [];
@@ -190,7 +211,7 @@ export function GrowthAndTaxDragModule({
     const ticker = tickerRaw.trim().toUpperCase();
     if (!ticker) return;
     if (selected.some((fund) => fundKey(fund).ticker === ticker)) return;
-    if (selected.length >= 3) return;
+    if (selected.length >= MAX_GROWTH_FUNDS) return;
     const catalog = PERFORMANCE_CATALOG.find((row) => row.ticker === ticker);
     setSelected((current) => [
       ...current,
@@ -230,28 +251,54 @@ export function GrowthAndTaxDragModule({
           </h2>
         </div>
 
-        {editablePrincipal ? (
-          <label className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-faint">
-            Growth of
-            <span className="sr-only">dollars</span>
-            <input
-              type="text"
-              inputMode="decimal"
-              value={principalDraft}
-              onChange={(event) => setPrincipalDraft(event.target.value)}
-              onBlur={commitPrincipal}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  event.currentTarget.blur();
-                }
-              }}
-              className="h-9 w-[7.5rem] rounded-md border border-line bg-paper px-2 text-right font-mono text-sm font-normal normal-case tracking-normal text-ink"
-              aria-label="Starting dollars"
-            />
-          </label>
-        ) : (
-          <p className="text-sm text-muted">{formatUsd(principal, 0)}</p>
-        )}
+        <div className="flex flex-wrap items-center gap-3">
+          <div
+            className="inline-flex rounded-md border border-line bg-paper p-0.5 text-[11px] font-semibold uppercase tracking-[0.12em]"
+            role="group"
+            aria-label="Dollars or percent"
+          >
+            <button
+              type="button"
+              onClick={() => setUnit("dollars")}
+              className={`h-8 rounded px-2.5 ${
+                unit === "dollars" ? "bg-accent text-white" : "text-muted"
+              }`}
+            >
+              $
+            </button>
+            <button
+              type="button"
+              onClick={() => setUnit("percent")}
+              className={`h-8 rounded px-2.5 ${
+                unit === "percent" ? "bg-accent text-white" : "text-muted"
+              }`}
+            >
+              %
+            </button>
+          </div>
+          {editablePrincipal ? (
+            <label className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-faint">
+              Growth of
+              <span className="sr-only">dollars</span>
+              <input
+                type="text"
+                inputMode="decimal"
+                value={principalDraft}
+                onChange={(event) => setPrincipalDraft(event.target.value)}
+                onBlur={commitPrincipal}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.currentTarget.blur();
+                  }
+                }}
+                className="h-9 w-[7.5rem] rounded-md border border-line bg-paper px-2 text-right font-mono text-sm font-normal normal-case tracking-normal text-ink"
+                aria-label="Starting dollars"
+              />
+            </label>
+          ) : (
+            <p className="text-sm text-muted">{formatUsd(principal, 0)}</p>
+          )}
+        </div>
       </header>
 
       <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -278,7 +325,7 @@ export function GrowthAndTaxDragModule({
           </span>
         ))}
 
-        {allowAddFund && selected.length < 3 ? (
+        {allowAddFund && selected.length < MAX_GROWTH_FUNDS ? (
           <form
             className="flex items-center gap-1.5"
             onSubmit={(event) => {
@@ -327,6 +374,7 @@ export function GrowthAndTaxDragModule({
             years={years}
             series={growthSeries}
             startDollars={principal}
+            unit={unit}
             annualized={annualized}
             showAnnualized={showAnnualized}
             loading={loading}
@@ -335,11 +383,15 @@ export function GrowthAndTaxDragModule({
             <TaxDragByYearChart
               series={taxSeries}
               years={years}
-              metric="effective_tax"
+              metric={unit === "percent" ? "effective_tax" : "tax_dollars"}
               orientation="down"
-              showBarLabels
+              showBarLabels={selected.length <= 2}
               layout="flush"
-              title="Estimated annual tax drag"
+              title={
+                unit === "percent"
+                  ? "Estimated annual tax drag (based on hypothetical distributions & tax rates)"
+                  : "Estimated annual tax dollars (based on hypothetical distributions & tax rates)"
+              }
               loading={loading}
               emptyLabel="No overlapping tax-drag years"
             />

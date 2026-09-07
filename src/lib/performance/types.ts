@@ -10,6 +10,8 @@ export const PERFORMANCE_FIXTURE_TICKERS = [
   "AMCPX",
   "FBGRX",
   "VFIAX",
+  "DODIX",
+  "VTIAX",
 ] as const;
 
 export const PERFORMANCE_BENCHMARKS = ["SPY", "AGG", "VXUS"] as const;

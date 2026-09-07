@@ -1,9 +1,12 @@
 import {
   SHARED_CHART_PAD,
   SHARED_CHART_WIDTH,
+  yearLayout,
   type ChartPad,
 } from "@/lib/charts/shared-axis";
 import { formatUsd } from "@/lib/format";
+
+export type ChartUnit = "dollars" | "percent";
 
 export type GrowthLineSeries = {
   id: string;
@@ -24,6 +27,7 @@ export function GrowthOfXChart({
   series,
   startDollars,
   title,
+  unit = "dollars",
   annualized,
   showAnnualized = true,
   loading = false,
@@ -36,6 +40,7 @@ export function GrowthOfXChart({
   series: GrowthLineSeries[];
   startDollars: number;
   title?: string;
+  unit?: ChartUnit;
   annualized?: AnnualizedRow[];
   showAnnualized?: boolean;
   loading?: boolean;
@@ -66,23 +71,25 @@ export function GrowthOfXChart({
     );
   }
 
-  const lo = Math.min(startDollars, ...values);
-  const hi = Math.max(startDollars, ...values);
-  const scale = niceMoneyScale(lo, hi);
-  const innerW = width - pad.left - pad.right;
+  const lo = Math.min(unit === "percent" ? 0 : startDollars, ...values);
+  const hi = Math.max(unit === "percent" ? 0 : startDollars, ...values);
+  const scale = unit === "percent" ? nicePctScale(lo, hi) : niceMoneyScale(lo, hi);
   const innerH = height - pad.top - pad.bottom;
-  const slot = years.length > 0 ? innerW / years.length : innerW;
+  const layout = yearLayout(years, 1, width, pad);
   const xAt = (year: number) => {
     const index = years.indexOf(year);
     const i = index < 0 ? 0 : index;
-    return pad.left + slot * i + slot / 2;
+    return layout.center(i);
   };
   const yAt = (value: number) =>
     pad.top + innerH - ((value - scale.min) / (scale.max - scale.min || 1)) * innerH;
 
   const ticks = [scale.max, (scale.min + scale.max) / 2, scale.min];
   const heading =
-    title ?? `Cumulative growth of ${formatUsd(startDollars, 0)}`;
+    title ??
+    (unit === "percent"
+      ? "Cumulative return"
+      : `Cumulative investment performance (Growth of ${formatUsd(startDollars, 0)})`);
 
   const aria = series
     .map((row) => {
@@ -162,7 +169,7 @@ export function GrowthOfXChart({
                   fontSize={9}
                   fontFamily="ui-monospace, monospace"
                 >
-                  {formatCompactUsd(tick)}
+                  {unit === "percent" ? formatAxisPct(tick) : formatCompactUsd(tick)}
                 </text>
               </g>
             );
@@ -225,6 +232,21 @@ function polyline(
       return `${command}${xAt(point.year).toFixed(1)},${yAt(point.value).toFixed(1)}`;
     })
     .join(" ");
+}
+
+function nicePctScale(min: number, max: number) {
+  const pad = Math.max((max - min) * 0.08, 0.05);
+  const lo = min - pad;
+  const hi = max + pad;
+  const step = hi <= 0.5 ? 0.1 : hi <= 1.5 ? 0.25 : 0.5;
+  return {
+    min: Math.floor(lo / step) * step,
+    max: Math.ceil(hi / step) * step,
+  };
+}
+
+function formatAxisPct(value: number): string {
+  return `${(value * 100).toFixed(0)}%`;
 }
 
 function niceMoneyScale(min: number, max: number) {

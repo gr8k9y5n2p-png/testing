@@ -319,7 +319,7 @@ function resolveBenchmark(
 }
 
 export const PERFORMANCE_CATALOG = FUND_SPECS.filter((spec) =>
-  ["AGTHX", "AMCPX", "FBGRX", "VFIAX"].includes(spec.ticker),
+  ["AGTHX", "AMCPX", "FBGRX", "VFIAX", "DODIX", "VTIAX"].includes(spec.ticker),
 ).map((spec) => ({ ticker: spec.ticker, name: spec.name }));
 
 export function mockPerformanceResponse(
