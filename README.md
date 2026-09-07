@@ -11,6 +11,7 @@ The default demo uses **SQLite** and bundled Capital Group HTML fixtures so the 
 - `POST /ingest/fetch` to run a pluggable `FundSource` adapter (`fixture` or `live`)
 - Idempotent upserts on `(fund_family, fund identifier, share class, estimate type, as_of, ex-date)`
 - Search API with filters, text search, and pagination
+- `POST /illustrate` — server-side tax-impact math for a dollar holding (Website Engineering owns the UI)
 - American Funds / Capital Group HTML parser plus stubs for Vanguard, Fidelity, and T. Rowe Price
 
 ## Quick start
@@ -75,6 +76,85 @@ curl -s -X POST http://127.0.0.1:8000/ingest/fetch \
   -H 'Content-Type: application/json' \
   -d '{"fund_family":"american_funds","mode":"live"}'
 ```
+
+## Tax illustration (`POST /illustrate`)
+
+Website Engineering renders the UI; this API owns the math. Pass a holding value plus either `distribution_ids` or `selectors`. **Every tax rate is request-overridable**; omitted fields use the documented defaults below (illustrative top federal brackets + a sample state rate — not tax advice).
+
+### Defaults (when a field is omitted)
+
+| Field | Default | Meaning |
+| --- | --- | --- |
+| `ordinary_income` | `0.37` | Top federal ordinary |
+| `long_term_capital_gains` | `0.20` | Top federal LTCG |
+| `short_term_capital_gains` | `0.37` | STCG taxed as ordinary; overridable independently |
+| `qualified_dividend` | `0.20` | QDI (same default as LTCG) |
+| `return_of_capital` | `0` | Typically not currently taxable |
+| `state` | `0.05` | Sample state marginal |
+
+`combine_state_with_federal` (default `true`): `applied_rate = federal + state`. When `false`, federal and state tax are computed separately and summed in `estimated_tax`.
+
+### `estimate_type` → rate field
+
+| `estimate_type` | Rate used |
+| --- | --- |
+| `ordinary_income` | `ordinary_income` |
+| `special_dividend` | `ordinary_income` |
+| `other` | `ordinary_income` (conservative) |
+| `total` | `ordinary_income` (unspecified total) |
+| `short_term_capital_gains` | `short_term_capital_gains` |
+| `long_term_capital_gains` | `long_term_capital_gains` |
+| `total_capital_gains` | `long_term_capital_gains` (unsplit CG treated as LTCG) |
+| `qualified_dividend` | `qualified_dividend` |
+| `qualified_short_term_gains` | `qualified_dividend` |
+| `return_of_capital` | `return_of_capital` |
+
+The mapping is also echoed on the response as `rate_mapping`.
+
+### Amount units
+
+| `amount_unit` | Dollar math |
+| --- | --- |
+| `percent_of_nav` | `distribution_dollars = holding_dollars * (amount / 100)`; `amount_min` / `amount_max` produce range fields |
+| `per_share` | `shares = shares` or `holding_dollars / nav_per_share`; `distribution_dollars = shares * amount`. **HTTP 422** if neither `nav_per_share` nor `shares` is provided |
+| `percent` | **Not a dollar distribution** (e.g. QDI % of income on 1099-DIV). Component is returned with `estimated_tax: null`, `included_in_totals: false`, and `skip_reason` |
+
+Selector queries default to `latest_as_of_only=true` so September estimates and January finals are not double-counted. Pass `as_of` or explicit IDs to pin a snapshot.
+
+```bash
+# $1,000,000 AMCAP-style % of NAV estimate with custom rates
+# (run ingest/fetch first so amcap-fund exists)
+curl -s -X POST http://127.0.0.1:8000/illustrate \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "holding_dollars": 1000000,
+    "selectors": {
+      "fund_family": "American Funds",
+      "fund_identifier": "amcap-fund",
+      "as_of": "2025-09-19"
+    },
+    "tax_rates": {
+      "ordinary_income": 0.35,
+      "long_term_capital_gains": 0.15,
+      "short_term_capital_gains": 0.35,
+      "qualified_dividend": 0.15,
+      "state": 0.093
+    },
+    "combine_state_with_federal": true
+  }' | jq '{totals, tax_rates, components: [.components[] | {estimate_type, amount_unit, distribution_dollars, distribution_dollars_min, distribution_dollars_max, applied_rate, estimated_tax}]}'
+
+# Per-share paid amount (needs NAV)
+curl -s -X POST http://127.0.0.1:8000/illustrate \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "holding_dollars": 1000000,
+    "selectors": {"fund_identifier": "amcap-fund", "as_of": "2026-07-08"},
+    "nav_per_share": 80,
+    "tax_rates": {"long_term_capital_gains": 0.20, "state": 0.05}
+  }' | jq .totals
+```
+
+Expected for the $1M / 3–5% AMCAP example at 15% LTCG + 9.3% state: midpoint 4% → `$40,000` distributed, `$9,720` tax; range `$30,000–$50,000` / `$7,290–$12,150`.
 
 ## Data model
 
@@ -173,7 +253,7 @@ pip install -r requirements-dev.txt
 pytest -q
 ```
 
-Coverage includes HTML normalization (live Capital Group markup + estimate ranges), upsert idempotency, and search filters.
+Coverage includes HTML normalization, upsert idempotency, search filters, and tax illustration math (`percent_of_nav`, `per_share`, rate overrides, validation).
 
 ## Layout
 
@@ -184,6 +264,7 @@ app/
   models.py / schemas.py / crud.py
   sources/             FundSource adapters + HTML parser
   services/ingest.py   Fetch + upsert orchestration
+  services/illustrate.py  Tax-impact illustration
   cli.py               seed / fetch / families
 fixtures/american_funds/
 tests/

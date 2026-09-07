@@ -193,3 +193,165 @@ def make_upsert_key(
     as_of_s = as_of.isoformat() if as_of else ""
     ex_s = ex_date.isoformat() if ex_date else ""
     return f"{family}|{ident}|{share}|{estimate_type}|{as_of_s}|{ex_s}"
+
+
+class TaxRates(BaseModel):
+    """Marginal rates as decimals (0.20 = 20%). All fields optional; omitted keys use defaults.
+
+    Defaults are *illustrative* top federal brackets plus a sample state rate, not tax advice.
+    """
+
+    ordinary_income: Decimal = Field(default=Decimal("0.37"), ge=0, le=1)
+    long_term_capital_gains: Decimal = Field(default=Decimal("0.20"), ge=0, le=1)
+    short_term_capital_gains: Decimal = Field(
+        default=Decimal("0.37"),
+        ge=0,
+        le=1,
+        description="STCG is taxed as ordinary income; defaults to the ordinary rate but can be overridden independently.",
+    )
+    qualified_dividend: Decimal = Field(default=Decimal("0.20"), ge=0, le=1)
+    return_of_capital: Decimal = Field(
+        default=Decimal("0"),
+        ge=0,
+        le=1,
+        description="ROC is generally not currently taxable (basis reduction). Default 0.",
+    )
+    state: Decimal = Field(default=Decimal("0.05"), ge=0, le=1)
+
+    model_config = ConfigDict(extra="forbid")
+
+    @field_validator(
+        "ordinary_income",
+        "long_term_capital_gains",
+        "short_term_capital_gains",
+        "qualified_dividend",
+        "return_of_capital",
+        "state",
+        mode="before",
+    )
+    @classmethod
+    def decimal_from_json_float(cls, value: Any) -> Any:
+        if isinstance(value, float):
+            return Decimal(str(value))
+        return value
+
+
+class IllustrateSelectors(BaseModel):
+    fund_family: str | None = None
+    fund_identifier: str | None = None
+    fund_name: str | None = None
+    ticker: str | None = None
+    estimate_type: str | None = None
+    as_of: date | None = Field(default=None, description="Pin to one publication snapshot.")
+    publication_stage: str | None = None
+
+    def has_any(self) -> bool:
+        return any(
+            [
+                self.fund_family,
+                self.fund_identifier,
+                self.fund_name,
+                self.ticker,
+                self.estimate_type,
+                self.as_of,
+                self.publication_stage,
+            ]
+        )
+
+
+class IllustrateRequest(BaseModel):
+    holding_dollars: Decimal = Field(..., gt=0, description="Market value of the holding to illustrate.")
+    distribution_ids: list[str] | None = Field(
+        default=None,
+        description="Explicit estimate row IDs. If set, selectors are ignored.",
+    )
+    selectors: IllustrateSelectors | None = Field(
+        default=None,
+        description="Find estimates by family/fund/as_of when IDs are not provided.",
+    )
+    nav_per_share: Decimal | None = Field(
+        default=None,
+        gt=0,
+        description="Required (unless shares is set) when any selected row uses amount_unit=per_share.",
+    )
+    shares: Decimal | None = Field(
+        default=None,
+        gt=0,
+        description="Share units. If omitted, computed as holding_dollars / nav_per_share.",
+    )
+    tax_rates: TaxRates = Field(default_factory=TaxRates)
+    combine_state_with_federal: bool = True
+    latest_as_of_only: bool = Field(
+        default=True,
+        description="When using selectors, keep only the newest as_of per fund so snapshots are not double-counted.",
+    )
+
+    @field_validator("holding_dollars", "nav_per_share", "shares", mode="before")
+    @classmethod
+    def money_from_json_float(cls, value: Any) -> Any:
+        if isinstance(value, float):
+            return Decimal(str(value))
+        return value
+
+    @model_validator(mode="after")
+    def require_source(self) -> IllustrateRequest:
+        has_ids = bool(self.distribution_ids)
+        has_selectors = bool(self.selectors and self.selectors.has_any())
+        if has_ids and has_selectors:
+            raise ValueError("provide distribution_ids or selectors, not both")
+        if not has_ids and not has_selectors:
+            raise ValueError("provide distribution_ids or selectors")
+        return self
+
+
+class IllustrationComponent(BaseModel):
+    distribution_id: str
+    fund_family: str
+    fund_name: str
+    fund_identifier: str
+    ticker: str | None
+    estimate_type: str
+    amount_unit: str
+    amount: Decimal | None
+    amount_min: Decimal | None
+    amount_max: Decimal | None
+    as_of: date | None
+    ex_date: date | None
+    federal_rate_key: str | None
+    federal_rate: Decimal | None
+    state_rate: Decimal | None
+    applied_rate: Decimal | None
+    distribution_dollars: Decimal | None
+    distribution_dollars_min: Decimal | None
+    distribution_dollars_max: Decimal | None
+    estimated_tax: Decimal | None
+    estimated_tax_min: Decimal | None
+    estimated_tax_max: Decimal | None
+    federal_tax: Decimal | None
+    state_tax: Decimal | None
+    included_in_totals: bool
+    skip_reason: str | None = None
+
+
+class IllustrationTotals(BaseModel):
+    distribution_dollars: Decimal
+    distribution_dollars_min: Decimal | None
+    distribution_dollars_max: Decimal | None
+    estimated_tax: Decimal
+    estimated_tax_min: Decimal | None
+    estimated_tax_max: Decimal | None
+    federal_tax: Decimal
+    state_tax: Decimal
+    effective_tax_on_holding: Decimal
+
+
+class IllustrateResponse(BaseModel):
+    holding_dollars: Decimal
+    shares: Decimal | None
+    nav_per_share: Decimal | None
+    tax_rates: TaxRates
+    combine_state_with_federal: bool
+    rate_mapping: dict[str, str]
+    components: list[IllustrationComponent]
+    totals: IllustrationTotals
+    notes: list[str]

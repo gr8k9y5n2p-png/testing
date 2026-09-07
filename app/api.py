@@ -15,9 +15,12 @@ from app.schemas import (
     FetchRequest,
     FundFamilyOut,
     HealthOut,
+    IllustrateRequest,
+    IllustrateResponse,
     IngestRequest,
     IngestResponse,
 )
+from app.services.illustrate import illustrate
 from app.services.ingest import fetch_and_ingest, ingest_records
 from app.sources.registry import list_sources
 
@@ -123,3 +126,9 @@ def fund_families(session: Session = Depends(get_session)) -> list[FundFamilyOut
             )
         )
     return out
+
+
+@router.post("/illustrate", response_model=IllustrateResponse, tags=["illustrate"])
+def illustrate_tax(body: IllustrateRequest, session: Session = Depends(get_session)) -> IllustrateResponse:
+    """Server-side tax-impact illustration for a dollar holding against stored estimates."""
+    return illustrate(session, body)

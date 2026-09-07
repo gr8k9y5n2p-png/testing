@@ -76,22 +76,33 @@ def get_by_id(session: Session, distribution_id: str) -> DistributionEstimate | 
     return session.get(DistributionEstimate, distribution_id)
 
 
-def search_distributions(
-    session: Session,
+def get_by_ids(session: Session, ids: list[str]) -> tuple[list[DistributionEstimate], list[str]]:
+    if not ids:
+        return [], []
+    found = {
+        row.id: row
+        for row in session.scalars(select(DistributionEstimate).where(DistributionEstimate.id.in_(ids))).all()
+    }
+    missing = [item_id for item_id in ids if item_id not in found]
+    ordered = [found[item_id] for item_id in ids if item_id in found]
+    return ordered, missing
+
+
+def _filter_stmt(
     *,
     q: str | None = None,
     fund_family: str | None = None,
+    fund_identifier: str | None = None,
     ticker: str | None = None,
     fund_name: str | None = None,
     estimate_type: str | None = None,
+    as_of: date | None = None,
     as_of_from: date | None = None,
     as_of_to: date | None = None,
     ex_date_from: date | None = None,
     ex_date_to: date | None = None,
     publication_stage: str | None = None,
-    page: int = 1,
-    page_size: int = 50,
-) -> tuple[list[DistributionEstimate], int]:
+) -> Select[tuple[DistributionEstimate]]:
     stmt: Select[tuple[DistributionEstimate]] = select(DistributionEstimate)
     if q:
         like = f"%{q.strip()}%"
@@ -105,6 +116,8 @@ def search_distributions(
         )
     if fund_family:
         stmt = stmt.where(DistributionEstimate.fund_family.ilike(f"%{fund_family.strip()}%"))
+    if fund_identifier:
+        stmt = stmt.where(DistributionEstimate.fund_identifier.ilike(fund_identifier.strip()))
     if ticker:
         stmt = stmt.where(DistributionEstimate.ticker.ilike(ticker.strip()))
     if fund_name:
@@ -113,6 +126,8 @@ def search_distributions(
         stmt = stmt.where(DistributionEstimate.estimate_type == estimate_type)
     if publication_stage:
         stmt = stmt.where(DistributionEstimate.publication_stage == publication_stage)
+    if as_of:
+        stmt = stmt.where(DistributionEstimate.as_of == as_of)
     if as_of_from:
         stmt = stmt.where(DistributionEstimate.as_of >= as_of_from)
     if as_of_to:
@@ -121,7 +136,41 @@ def search_distributions(
         stmt = stmt.where(DistributionEstimate.ex_date >= ex_date_from)
     if ex_date_to:
         stmt = stmt.where(DistributionEstimate.ex_date <= ex_date_to)
+    return stmt
 
+
+def search_distributions(
+    session: Session,
+    *,
+    q: str | None = None,
+    fund_family: str | None = None,
+    fund_identifier: str | None = None,
+    ticker: str | None = None,
+    fund_name: str | None = None,
+    estimate_type: str | None = None,
+    as_of: date | None = None,
+    as_of_from: date | None = None,
+    as_of_to: date | None = None,
+    ex_date_from: date | None = None,
+    ex_date_to: date | None = None,
+    publication_stage: str | None = None,
+    page: int = 1,
+    page_size: int = 50,
+) -> tuple[list[DistributionEstimate], int]:
+    stmt = _filter_stmt(
+        q=q,
+        fund_family=fund_family,
+        fund_identifier=fund_identifier,
+        ticker=ticker,
+        fund_name=fund_name,
+        estimate_type=estimate_type,
+        as_of=as_of,
+        as_of_from=as_of_from,
+        as_of_to=as_of_to,
+        ex_date_from=ex_date_from,
+        ex_date_to=ex_date_to,
+        publication_stage=publication_stage,
+    )
     total = session.scalar(select(func.count()).select_from(stmt.subquery())) or 0
     page = max(page, 1)
     page_size = min(max(page_size, 1), 200)
@@ -137,6 +186,38 @@ def search_distributions(
         ).all()
     )
     return rows, int(total)
+
+
+def list_matching(
+    session: Session,
+    *,
+    fund_family: str | None = None,
+    fund_identifier: str | None = None,
+    ticker: str | None = None,
+    fund_name: str | None = None,
+    estimate_type: str | None = None,
+    as_of: date | None = None,
+    publication_stage: str | None = None,
+    limit: int = 500,
+) -> list[DistributionEstimate]:
+    stmt = _filter_stmt(
+        fund_family=fund_family,
+        fund_identifier=fund_identifier,
+        ticker=ticker,
+        fund_name=fund_name,
+        estimate_type=estimate_type,
+        as_of=as_of,
+        publication_stage=publication_stage,
+    )
+    return list(
+        session.scalars(
+            stmt.order_by(
+                DistributionEstimate.as_of.desc().nulls_last(),
+                DistributionEstimate.fund_name.asc(),
+                DistributionEstimate.estimate_type.asc(),
+            ).limit(limit)
+        ).all()
+    )
 
 
 def record_ingest_run(session: Session, run: IngestRun) -> IngestRun:

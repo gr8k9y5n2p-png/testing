@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, Request
+from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -35,7 +36,8 @@ app = FastAPI(
     title="Fund Distribution Estimates API",
     description=(
         "Ingest and search taxable distribution estimates published by fund managers "
-        "(American Funds / Capital Group and pluggable families)."
+        "(American Funds / Capital Group and pluggable families). POST /illustrate "
+        "computes a tax-impact illustration from stored estimates and caller-supplied rates."
     ),
     version=__version__,
     lifespan=lifespan,
@@ -52,7 +54,8 @@ app.include_router(router)
 
 @app.exception_handler(RequestValidationError)
 async def validation_handler(_request: Request, exc: RequestValidationError) -> JSONResponse:
+    errors = jsonable_encoder(exc.errors(), custom_encoder={Exception: str})
     return JSONResponse(
         status_code=422,
-        content={"detail": "Validation failed", "errors": exc.errors()},
+        content={"detail": "Validation failed", "errors": errors},
     )
