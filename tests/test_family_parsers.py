@@ -135,6 +135,7 @@ from app.sources.eleventh_tier import (
     TocquevilleSource,
     ValueLineSource,
 )
+from app.sources.ici import parse_ici_primary
 from app.sources.parser import parse_distribution_html, split_fund_identity
 
 ROOT = Path(__file__).resolve().parents[1] / "fixtures"
@@ -1017,6 +1018,14 @@ def test_fourth_tier_fixtures() -> None:
     )
     assert sgenx.amount_min == Decimal("4.12")
     assert sgenx.amount_max == Decimal("4.17")
+    assert len({(r.ticker or "").upper() or r.fund_name for r in first_eagle}) >= 10
+    fevax = next(
+        r
+        for r in first_eagle
+        if r.ticker == "FEVAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert fevax.amount_min == Decimal("1.77")
+    assert fevax.amount_max == Decimal("1.82")
 
     gmo = parse_distribution_html(
         (ROOT / "gmo" / "2026_july_distribution_estimates.html").read_text(encoding="utf-8"),
@@ -1041,6 +1050,27 @@ def test_fourth_tier_fixtures() -> None:
         if r.ticker == "ARTKX" and r.estimate_type == EstimateType.ordinary_income
     )
     assert artkx.amount == Decimal("0.338342")
+    artisan_ici = parse_ici_primary(
+        (ROOT / "artisan" / "ici_primary_2025.csv").read_text(encoding="utf-8"),
+        source_url=(
+            "https://www.artisanpartners.com/content/dam/documents/distributions/"
+            "Year-End-Tax-Reporting-Information-2025.pdf"
+        ),
+        fund_family="Artisan Partners",
+    )
+    artix_lt = next(
+        r
+        for r in artisan_ici
+        if r.ticker == "ARTIX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert artix_lt.amount == Decimal("5.017255")
+    artkx_lt = next(
+        r
+        for r in artisan_ici
+        if r.ticker == "ARTKX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert artkx_lt.amount == Decimal("2.725068")
+    assert len({r.ticker for r in artisan_ici}) >= 50
 
     calamos = parse_distribution_html(
         (ROOT / "calamos" / "2025_estimated_capital_gains.html").read_text(encoding="utf-8"),

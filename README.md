@@ -498,7 +498,7 @@ Goal: for **existing US-domiciled adapters**, ingest every **mutual fund and ETF
 
 **Wave 4 (same MF/ETF filter; keep pushing thin large books):** unique tickers **2,174 → 2,205**; funds **2,519 → 2,630**. BNY ETF $0.00 book, JPM MMKT 19a, MSIM ETF income table, plus ranks 31–35 paying-fund PDFs (JH / Hartford / Macquarie). Tax / illustrate / performance contracts and weekly refresh are unchanged.
 
-**Wave 5 (ranks 1–40 only):** ranks 1–40 unique tickers **1,771 → 1,829**; funds **2,112 → 2,237**. Vanguard 2021–2023 ICI are column-safe full December books (239 → **297** tickers; wrap/DAILY name bleed dropped so `fund_name` stays ≤512). John Hancock cleared 50 funds (45 → **56**). Thrivent / Calamos / Wasatch / GMO Trust paying books expanded. No new work on ranks 41–110. Capital Group / BlackRock OEF / Invesco MF ticker enrichment was not possible — official books are name-only.
+**Wave 5 (ranks 1–40 only):** ranks 1–40 unique tickers **1,771 → 1,878**; funds **2,112 → 2,294**. Vanguard 2021–2023 ICI are column-safe full December books (239 → **297** tickers; wrap/DAILY name bleed dropped so `fund_name` stays ≤512). Artisan cleared 50 tickers via the 2025 Year-End Tax Reporting ICI PDF (2 → **51**). John Hancock cleared 50 funds (45 → **56**). First Eagle open-end estimate book expanded (3 → **11**). Thrivent / Calamos / Wasatch / GMO Trust paying books expanded. No new work on ranks 41–110. Capital Group / BlackRock OEF / Invesco MF ticker enrichment was not possible — official books are name-only. SSGA / GS / PIMCO / UBS / Franklin / Schwab remain SPA or 403.
 
 | Rank | Family | Before (tickers / funds) | After | Book used | Full-book vs flagship history |
 | --- | --- | --- | --- | --- | --- |
@@ -531,7 +531,9 @@ Goal: for **existing US-domiciled adapters**, ingest every **mutual fund and ETF
 | 34 | Hartford | 3 / 3 | 3 / **25** | Full 2025 paying-fund estimate + equity/FI finals | No-pay list omitted. Tickers only for HFMCX / HAIAX / IHGIX. 2024 final still flagship. |
 | 35 | Macquarie | 3 / 3 | **21 / 21** | Full 2025 paying-fund estimate PDF (Class A) | No-pay list omitted. 2024 paid still flagship. |
 | 33 | Thrivent | 3 / 3 | 3 / **13** | Full 2025 paying-fund HTML table | Tickers only for TMSIX / IILGX / THLCX. Unlisted funds paid no CG. |
+| 36 | First Eagle | 3 / 3 | 3 / **11** | Full 2025 open-end estimate PDF | Tickers only SGENX / SGOVX / FEVAX. Interval/CEF omitted. Footnote-b income omitted. |
 | 37 | GMO | 3 / 3 | 3 / **29** | Full GMO Trust July 2026 estimate PDF | Published $0.000 stored. Notes C/D omitted. Australia trusts skipped. |
+| 38 | Artisan | 2 / 2 | **51 / 51** | Column-safe 2025 Year-End Tax Reporting ICI PDF | December income + any-month ST/LT. 2022–2024 ICI not column-safe. YTD HTML keeps ARTKX 2026 income. |
 | 39 | Calamos | 3 / 3 | 3 / **13** | Full 2025 paying-fund estimate PDF | All-dash omitted. Class A tickers only where previously identified. |
 | 40 | Wasatch | 3 / 3 | 3 / **13** | Full 2025 listed-fund estimate PDF | Investor tickers only for WGROX / WAIGX / WMCVX. |
 
@@ -563,11 +565,13 @@ Goal: for **existing US-domiciled adapters**, ingest every **mutual fund and ETF
 | 29 | Virtus | 4 | June 2026 estimate PDF lists 4 funds |
 | 30 | Eaton Vance | 1 | CEF 19(b) sample; open-end on MSIM |
 
-**Cleared the 50-fund bar:** BlackRock / iShares (121), Vanguard (**297**), Fidelity (350), American Funds (84), Invesco (53), T. Rowe (232), DFA (140), Janus (222), American Century (389), John Hancock (**56**). Closest remaining large-family public books: BNY (42), JPM (38).
+**Cleared the 50-fund bar:** BlackRock / iShares (121), Vanguard (**297**), Fidelity (350), American Funds (84), Invesco (53), T. Rowe (232), DFA (140), Janus (222), American Century (389), John Hancock (**56**), Artisan (**51**). Closest remaining large-family public books: BNY (42), JPM (38).
 
 **Large families still under 50 MF/ETF tickers (name-heavy books or gated):** BlackRock 44 (OEF book has no ticker column), American Funds 22, Invesco 11, plus every under-50-fund family above. Official books are fund-level — tickers were not invented.
 
-**Handoff (ranks 1–40 only):** remaining unlocks are gated (SSGA XLSX, JPM broader YE, GS/PIMCO/UBS/Franklin/Schwab HTML, MSIM open-end PDF, Capital Group ticker column). Do not expand ranks 41–110. Do not expand Amundi. SMAs / CEFs stay out of the 50-fund bar.
+**Ranks 31–40 still under 50 (public book lists fewer than 50, or gated):** Principal 2 (GetFile viewer), Thrivent 13 (full paying HTML), Hartford 25 (full paying PDF), Macquarie 21 (full Class A paying PDF), First Eagle **11** (full open-end estimate; interval/CEF omitted), GMO 29 (full Trust PDF), Calamos 13, Wasatch 13.
+
+**Handoff (ranks 1–40 only):** remaining unlocks are gated (SSGA XLSX, JPM broader YE, GS/PIMCO/UBS/Franklin/Schwab HTML, MSIM open-end PDF, Capital Group ticker column). Artisan 2022–2024 ICI PDFs exist but are not column-safe. Do not expand ranks 41–110. Do not expand Amundi. SMAs / CEFs stay out of the 50-fund bar.
 
 ## Multi-year history and estimate → actual
 
@@ -621,9 +625,9 @@ Fixture packs today (ranks 1–40 historical pass):
 | John Hancock | 2022–2025 estimate ranges (TAGRX / JBGAX; USGLX 2024–2025) | No public filled ICI. Press-release PDFs still posted. USGLX 2022–2023 em-dash (no CG — omitted). Manulife parent; US JH Investments book. |
 | Hartford | 2024 final + 2025 estimate + 2025 final (HFMCX) | No public filled ICI. Final equity PDFs (HFMCX LT $1.67 / $5.44). 10/31/2025 estimate LT $5.36 coexists (estimate→actual). |
 | Macquarie / Delaware | 2024 paid + 2025 estimate (WSTAX) | No public filled ICI. US Delaware/Macquarie Funds book only (WSTAX 2024 ST $1.108 / LT $8.135; 2025 estimate LT $10.051). Non-US Macquarie trusts skipped. |
-| First Eagle | 2023–2025 paid YE + 2025 estimate (SGENX) | No public filled ICI. 2024 official paid PDF + product-page history (SGENX 2025 LT $4.654 / 2024 $2.038 / 2023 $1.407). 2025 paid family PDF URL not stable. |
+| First Eagle | 2023–2025 paid YE + 2025 full open-end estimate | No public filled ICI. 2025 estimate PDF is every listed open-end fund (SGENX LT $4.12–$4.17; FEVAX LT $1.77–$1.82). Interval/CEF omitted. 2024 official paid PDF + product-page history (SGENX 2025 LT $4.654 / 2024 $2.038 / 2023 $1.407). |
 | GMO | 2026 July estimate (GQETX) only | No public filled ICI. US Trust July/Dec 2025 sibling filenames 404. **Skip GMO Australia** unit-trust estimates. |
-| Artisan | 2026 YTD paid (ARTKX income) only | No public filled ICI. Year selector is JS (skip SPA). NRA 2024/2025 PDFs are FIRPTA / tax-character — not ingested as full ST/LT. |
+| Artisan | 2025 ICI YE (full share-class book) + 2026 YTD paid (ARTKX) | **ICI-style 2025 Year-End Tax Reporting PDF** is column-safe (30-token; ARTIX LT $5.017255; ARTKX Nov LT $2.725068). 2022–2024 siblings not column-safe. YTD HTML keeps ARTKX 2026 income $0.338342. |
 | Calamos | 2024 + 2025 estimates (CVGRX) | No public filled ICI. 2024 estimate PDF (CVGRX ST $1.24 / LT $1.84). 2023 sibling 404. |
 | Wasatch | 2022 + 2024–2025 paid YE + 2025 estimate (WGROX) | No public filled ICI. 2024 estimate sibling 404. Product-page paid (WGROX 2025 LT $6.345749 / 2024 $8.282696 / 2022 $0.457965). **2023 gap** — no YE row on the product page. |
 | Harbor | 2025 estimate (HACAX) only | No public filled ICI. 2024 sibling PDF 404. Third-party combined dividend totals unused. |
@@ -670,7 +674,7 @@ Fixture packs today (ranks 1–40 historical pass):
 | 35 | Macquarie / Delaware | no | US fulfillment CGE-RET estimate + CGE-RET-ACT-2024 paid. |
 | 36 | First Eagle | no | Estimate PDF + 2024 paid PDF + product-page history. |
 | 37 | GMO | no | US Trust July 2026 estimate PDF; 2025 siblings 404. Skip Australia. |
-| 38 | Artisan | no | Paid HTML year selector is JS; NRA is tax-character only. |
+| 38 | Artisan | **yes (2025 only)** | Year-End Tax Reporting Information 2025.pdf is ICI-style and column-safe. 2022–2024 siblings are not. |
 | 39 | Calamos | no | Public estimate PDFs 2024–2025; 2023 sibling 404. |
 | 40 | Wasatch | no | 2025 estimate PDF + product-page paid history (2023 gap). |
 | 41 | Harbor | no | 2025 estimate PDF; 2024 sibling 404. |
@@ -751,9 +755,9 @@ When a holding’s ticker or family is not in the store, Website Engineering sho
 | 33 | `thrivent` | Thrivent | implemented | yes | https://www.thriventfunds.com/support/tax-resource-center/capital-gains.html |
 | 34 | `hartford` | Hartford Funds | implemented | PDF | 2025 estimate memo + 2024/2025 final equity PDFs under `.../capgainsdistributions/` (HFMCX) |
 | 35 | `macquarie` (aliases `delaware`, `delaware_funds`) | Macquarie / Delaware Funds | implemented | PDF | US CGE-RET 2025 estimate + CGE-RET-ACT-2024 paid (WSTAX). Non-US Macquarie trusts skipped. |
-| 36 | `first_eagle` (alias `fei`) | First Eagle | implemented | PDF + product HTML | 2025 estimate PDF + 2024 paid PDF + global/overseas/US product-page YE (SGENX) |
+| 36 | `first_eagle` (alias `fei`) | First Eagle | implemented | PDF + product HTML | 2025 full open-end estimate PDF + 2024 paid PDF + global/overseas/US product-page YE (SGENX) |
 | 37 | `gmo` | GMO | implemented | PDF | US Trust July 2026 estimate. 2025 siblings 404. Skip GMO Australia. |
-| 38 | `artisan` (alias `artisan_partners`) | Artisan Partners | implemented | paid HTML / no estimate PDF | YTD paid HTML. Year selector is JS. NRA is tax-character — not ingested. |
+| 38 | `artisan` (alias `artisan_partners`) | Artisan Partners | implemented | ICI PDF + YTD HTML | 2025 Year-End Tax Reporting ICI (51 tickers). YTD HTML for 2026 ARTKX income. 2022–2024 ICI not column-safe. |
 | 39 | `calamos` | Calamos | implemented | PDF | 2024 + 2025 estimate PDFs (CVGRX). 2023 sibling 404. |
 | 40 | `wasatch` | Wasatch | implemented | PDF + product HTML | 2025 estimate PDF + WGROX product-page paid 2022/2024/2025 (2023 gap). |
 | 41 | `harbor` | Harbor | implemented | PDF | 2025 estimate PDF (HACAX). 2024 sibling 404. |

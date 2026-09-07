@@ -18,7 +18,13 @@ from app.sources.next_tier import (
     NorthernTrustSource,
 )
 from app.sources.fifth_tier import HarborSource, VoyaSource
-from app.sources.fourth_tier import HartfordSource, JohnHancockSource, MacquarieSource
+from app.sources.fourth_tier import (
+    ArtisanSource,
+    FirstEagleSource,
+    HartfordSource,
+    JohnHancockSource,
+    MacquarieSource,
+)
 from app.sources.third_tier import AmericanCenturySource, JanusHendersonSource
 from app.sources.sixth_tier import AqrSource, AlgerSource, SeiSource
 
@@ -135,3 +141,16 @@ def test_full_book_jh_hartford_macquarie_msim() -> None:
     msim_funds, msim_tickers = _funds_and_tickers(MorganStanleySource())
     assert "CVLC" in msim_tickers
     assert len(msim_tickers) >= 15
+
+
+def test_full_book_artisan_ici_and_first_eagle() -> None:
+    artisan_funds, artisan_tickers = _funds_and_tickers(ArtisanSource())
+    assert {"ARTKX", "ARTIX"} <= artisan_tickers
+    assert len(artisan_tickers) >= 50
+
+    fe_funds, fe_tickers = _funds_and_tickers(FirstEagleSource())
+    assert "SGENX" in fe_tickers
+    assert "FEVAX" in fe_tickers
+    assert len(fe_funds) >= 10
+    assert not any("Credit Opportunities" in name for name in fe_funds)
+    assert not any("Tactical Municipal" in name for name in fe_funds)

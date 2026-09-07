@@ -220,7 +220,11 @@ class FirstEagleSource(HtmlTableSource):
         "Tax hub: https://www.firsteagle.com/tax-information "
         "No public filled ICI. Public 9/30/2025 estimate PDF: "
         "https://www.firsteagle.com/sites/default/files/fei-documents/FEF_Ordinary_Income_Gains_Estimates.pdf "
-        "(SGENX LT $4.12–$4.17). Paid YE from the 2024 official PDF "
+        "is the full open-end book (SGENX LT $4.12–$4.17; FEVAX LT $1.77–$1.82). "
+        "Tickers only for Class A already on product pages (SGENX / SGOVX / FEVAX). "
+        "Footnote-b monthly/quarterly income estimates omitted (not $0). "
+        "Interval / CEF Tactical Municipal Opportunities and Credit Opportunities "
+        "omitted. Paid YE from the 2024 official PDF "
         "https://www.firsteagle.com/sites/default/files/2024-12/2024_Capital_Gains_%20Income_Distributions.pdf "
         "(SGENX ST $0.027 / LT $2.038) and product-page history "
         "https://www.firsteagle.com/funds/global-fund (SGENX 2025 LT $4.654 / "
@@ -303,14 +307,18 @@ class ArtisanSource(HtmlTableSource):
         "Tax-center distributions HTML: "
         "https://www.artisanpartners.com/individual-investors/resources/tax-center/distributions.html "
         "publishes paid year-to-date income/gain tables (e.g. International Value ARTKX "
-        "2026-06-29 income $0.338342). No family-level 2025/2026 capital-gains *estimate* "
-        "PDF was found. Year selector for 2024/2025 YE is JavaScript — skip SPA. "
-        "NRA PDFs (Nonresident-Alien-Reporting-2024/2025.pdf) are FIRPTA / ICI "
-        "tax-character layouts, not full ST/LT $/share — not ingested as CG."
+        "2026-06-29 income $0.338342). 2025 ICI-style Year-End Tax Reporting PDF "
+        "https://www.artisanpartners.com/content/dam/documents/distributions/"
+        "Year-End-Tax-Reporting-Information-2025.pdf is column-safe (30-token "
+        "layout; income / ST / LT at tokens 4 / 5 / 12). December income plus "
+        "any-month ST/LT rows; monthly non-December income omitted so illustration "
+        "does not sum. 2022–2024 sibling PDFs are not column-safe (token counts "
+        "vary / wrap). Year selector for older HTML YE tables is JavaScript — skip SPA. "
+        "NRA / DRD PDFs are tax-character layouts, not ingested as CG."
     )
     live_limitations = (
-        "Live page is public HTML but year-end equity capital-gains sit behind a year selector. "
-        "Fixture transcribes current-year paid rows from the public table."
+        "Live YTD page is public HTML; year-end equity capital-gains sit behind a year selector. "
+        "2025 ICI-style Year-End Tax Reporting PDF is the full-book fixture."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -320,7 +328,18 @@ class ArtisanSource(HtmlTableSource):
                 url="https://www.artisanpartners.com/individual-investors/resources/tax-center/distributions.html",
                 fixture="ytd_paid_distributions.html",
                 live=True,
-            )
+            ),
+            PageSpec(
+                name="ici_primary_2025",
+                url=(
+                    "https://www.artisanpartners.com/content/dam/documents/distributions/"
+                    "Year-End-Tax-Reporting-Information-2025.pdf"
+                ),
+                fixture="ici_primary_2025.csv",
+                live=False,
+                parser="ici",
+                large_aum_only=False,
+            ),
         ]
 
 
