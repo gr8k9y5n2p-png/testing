@@ -35,6 +35,9 @@ class HtmlTableSource(FundSource):
     def pages(self) -> list[PageSpec]:
         raise NotImplementedError
 
+    def supports_live(self) -> bool:
+        return any(page.live for page in self.pages())
+
     def fetch(self, *, mode: str = "fixture") -> FetchResult:
         if mode == "live":
             return self._fetch_live_or_fixture()

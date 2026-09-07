@@ -33,3 +33,7 @@ class FundSource(ABC):
 
     def source_urls(self) -> list[str]:
         return []
+
+    def supports_live(self) -> bool:
+        """True when at least one public HTML page is marked live=True."""
+        return False

@@ -45,6 +45,9 @@ class AmericanFundsSource(FundSource):
     def source_urls(self) -> list[str]:
         return [MIDYEAR_2026_URL, YEAR_END_2025_URL, YEAR_END_2024_URL, TAX_CENTER_URL, CALENDAR_URL, HISTORICAL_TOOL_URL]
 
+    def supports_live(self) -> bool:
+        return True
+
     def fetch(self, *, mode: str = "fixture") -> FetchResult:
         pages = self._pages(mode)
         records = []

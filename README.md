@@ -28,6 +28,7 @@ pip install -r requirements-dev.txt
 
 mkdir -p data
 python -m app.cli seed          # load fixtures and print a search example
+python -m app.cli refresh --mode fixture   # weekly all-family ingest (offline)
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
@@ -87,6 +88,46 @@ curl -s -X POST http://127.0.0.1:8000/ingest/fetch \
   -H 'Content-Type: application/json' \
   -d '{"fund_family":"american_funds","mode":"live"}'
 ```
+
+## Weekly refresh
+
+Most managers publish a capital-gains book once a year, but the ingest job should still run **weekly** so new `as_of` snapshots land and unchanged documents stay current.
+
+```bash
+# Production default (REFRESH_MODE=auto): live HTML where the adapter supports it,
+# fixture fallback on 403 / SPA / empty parse / PDF-only families.
+python -m app.cli refresh
+
+# Offline / CI
+python -m app.cli refresh --mode fixture
+
+# One family
+python -m app.cli refresh --mode auto --family american_funds
+
+# JSON + Markdown summaries (used by GitHub Actions)
+python -m app.cli refresh --output refresh-summary.json --markdown refresh-summary.md
+```
+
+`REFRESH_MODE` (`auto` | `live` | `fixture`, default `auto`) is the env default; `--mode` overrides it.
+
+| Mode | Behavior |
+| --- | --- |
+| `auto` | Try `live` only when the adapter has scrapeable HTML (`supports_live()`). PDF-only families go straight to fixtures. Live HTTP/parse failure → fixture, logged as `fallback`. |
+| `live` | Try live first for every family, then fixture on failure. |
+| `fixture` | Bundled HTML only (no outbound HTTP). |
+
+The command is the `POST /ingest/fetch` `fund_family=all` path with per-family error isolation. Upserts stay **idempotent**: the same document (`as_of` + ex-date + estimate type) updates the existing row; a new `as_of` inserts a new snapshot. Exit code is `0` on partial live fallbacks. Exit `1` only when **every** attempted family hard-fails (live and fixture both error).
+
+Live pages often 403, challenge, or render as a JS/SPA shell and parse 0 rows. That is expected for a large share of the top 110 — fixture fallback is the documented recovery, not a job failure.
+
+### GitHub Actions
+
+`.github/workflows/weekly-ingest.yml`:
+
+- Schedule: Mondays at **14:00 UTC** (about 9am America/Chicago)
+- Manual: **Actions → Weekly ingest refresh → Run workflow** (`workflow_dispatch`), optional `refresh_mode`
+- Installs `requirements-dev.txt`, uses SQLite unless a `DATABASE_URL` repo secret is set (then Postgres + `psycopg2-binary`)
+- Writes `refresh-summary.json` / `refresh-summary.md`, appends the Markdown to the job summary, and uploads both as the `weekly-ingest-summary` artifact
 
 ## Tax illustration (`POST /illustrate`)
 

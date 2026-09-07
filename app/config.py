@@ -17,6 +17,7 @@ class Settings(BaseSettings):
 
     database_url: str = "sqlite:///./data/distributions.db"
     fetch_mode: str = "fixture"
+    refresh_mode: str = "auto"
     fixtures_dir: Path = ROOT_DIR / "fixtures"
     http_timeout_seconds: float = 30.0
     http_user_agent: str = (

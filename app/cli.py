@@ -10,7 +10,8 @@ from app.db import configure_engine, get_engine, init_db
 from app import db as app_db
 from app.schemas import DistributionIn, IngestRequest
 from app.services.ingest import fetch_and_ingest, ingest_records
-from app.sources.registry import list_sources
+from app.services.refresh import REFRESH_MODES, refresh_families
+from app.sources.registry import list_sources, resolve_slug
 
 
 def _ensure_db() -> None:
@@ -68,6 +69,43 @@ def cmd_families(_args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_refresh(args: argparse.Namespace) -> int:
+    _ensure_db()
+    assert app_db.SessionLocal is not None
+    mode = (args.mode or settings.refresh_mode or "auto").strip().lower()
+    if mode not in REFRESH_MODES:
+        print(f"error: refresh mode must be one of {', '.join(REFRESH_MODES)}", file=sys.stderr)
+        return 2
+    slugs = None
+    if args.family and args.family.strip().lower() not in {"all", "*"}:
+        resolved = resolve_slug(args.family) or args.family.strip().lower()
+        slugs = [resolved]
+    with app_db.SessionLocal() as session:
+        try:
+            summary = refresh_families(session, mode=mode, slugs=slugs)
+            session.commit()
+        except ValueError as exc:
+            session.rollback()
+            print(f"error: {exc}", file=sys.stderr)
+            return 2
+        except Exception:
+            session.rollback()
+            raise
+    text = summary.format_text()
+    print(text)
+    if args.output:
+        path = Path(args.output)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(summary.to_dict(), indent=2, default=str) + "\n", encoding="utf-8")
+        print(f"Wrote {path}")
+    if args.markdown:
+        md_path = Path(args.markdown)
+        md_path.parent.mkdir(parents=True, exist_ok=True)
+        md_path.write_text(summary.format_markdown(), encoding="utf-8")
+        print(f"Wrote {md_path}")
+    return 1 if summary.hard_failure else 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Fund distribution estimates CLI")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -82,6 +120,33 @@ def main(argv: list[str] | None = None) -> int:
 
     p_fam = sub.add_parser("families", help="List registered fund-family adapters")
     p_fam.set_defaults(func=cmd_families)
+
+    p_refresh = sub.add_parser(
+        "refresh",
+        help="Weekly all-family ingest: live where supported, fixture fallback",
+    )
+    p_refresh.add_argument(
+        "--mode",
+        default=None,
+        choices=list(REFRESH_MODES),
+        help="Override REFRESH_MODE (default auto: live then fixture)",
+    )
+    p_refresh.add_argument(
+        "--family",
+        default="all",
+        help='Fund-family slug or "all" (default all implemented adapters)',
+    )
+    p_refresh.add_argument(
+        "--output",
+        default=None,
+        help="Write JSON summary to this path",
+    )
+    p_refresh.add_argument(
+        "--markdown",
+        default=None,
+        help="Write Markdown summary to this path (GitHub job summary)",
+    )
+    p_refresh.set_defaults(func=cmd_refresh)
 
     args = parser.parse_args(argv)
     return args.func(args)
