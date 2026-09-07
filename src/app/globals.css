@@ -18,6 +18,11 @@
   --below: #6b5348;
   --below-soft: #f3eeea;
   --notice: #eeefe8;
+  --tax-more: #b42318;
+  --tax-more-soft: #f6e4e0;
+  --tax-less: #0f7a4b;
+  --tax-less-soft: #e4f1ea;
+  --tax-footer: #fbf6f5;
   /* Aliases so leftover navy/teal/gold classes resolve to Ledger Light. */
   --navy: #1a1d1a;
   --navy-deep: #1a1d1a;
@@ -42,6 +47,11 @@
   --color-below: var(--below);
   --color-below-soft: var(--below-soft);
   --color-notice: var(--notice);
+  --color-tax-more: var(--tax-more);
+  --color-tax-more-soft: var(--tax-more-soft);
+  --color-tax-less: var(--tax-less);
+  --color-tax-less-soft: var(--tax-less-soft);
+  --color-tax-footer: var(--tax-footer);
   --color-navy: var(--navy);
   --color-navy-deep: var(--navy-deep);
   --color-teal: var(--teal);
