@@ -15,6 +15,18 @@ from app.sources.families import (
     TRowePriceSource,
     VanguardSource,
 )
+from app.sources.next_tier import (
+    AmundiSource,
+    BnyMellonSource,
+    ColumbiaThreadneedleSource,
+    DimensionalSource,
+    FranklinTempletonSource,
+    MorganStanleySource,
+    NorthernTrustSource,
+    NuveenSource,
+    SchwabSource,
+    UbsSource,
+)
 from app.sources.parser import parse_distribution_html, split_fund_identity
 
 ROOT = Path(__file__).resolve().parents[1] / "fixtures"
@@ -155,8 +167,144 @@ def test_adapters_fetch_fixture_mode() -> None:
         PimcoSource(),
         InvescoSource(),
         TRowePriceSource(),
+        UbsSource(),
+        FranklinTempletonSource(),
+        BnyMellonSource(),
+        NuveenSource(),
+        NorthernTrustSource(),
+        MorganStanleySource(),
+        SchwabSource(),
+        DimensionalSource(),
+        ColumbiaThreadneedleSource(),
+        AmundiSource(),
     ]
     for source in sources:
         result = source.fetch(mode="fixture")
         assert result.records, f"{source.slug} produced 0 records"
         assert all(r.fund_family == source.display_name for r in result.records)
+
+
+def test_next_tier_fixtures() -> None:
+    ubs = parse_distribution_html(
+        (ROOT / "ubs" / "paid_year_end.html").read_text(encoding="utf-8"),
+        source_url="fixture://ubs",
+        fund_family="UBS Asset Management",
+    )
+    pwtax = next(
+        r
+        for r in ubs
+        if r.ticker == "PWTAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert pwtax.amount == Decimal("4.0999")
+
+    ubs_est = parse_distribution_html(
+        (ROOT / "ubs" / "estimated_capital_gains.html").read_text(encoding="utf-8"),
+        source_url="fixture://ubs-est",
+        fund_family="UBS Asset Management",
+    )
+    alloc = next(
+        r
+        for r in ubs_est
+        if r.ticker == "PWTAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert alloc.amount_min == Decimal("2.88")
+    assert alloc.amount_max == Decimal("4.05")
+
+    ft = parse_distribution_html(
+        (ROOT / "franklin_templeton" / "capital_gains_sample.html").read_text(encoding="utf-8"),
+        source_url="fixture://ft",
+        fund_family="Franklin Templeton",
+    )
+    ft_row = next(r for r in ft if r.ticker == "FT" and r.estimate_type == EstimateType.ordinary_income)
+    assert ft_row.amount == Decimal("0.0358")
+
+    bny = parse_distribution_html(
+        (ROOT / "bny_mellon" / "2025_estimated_capital_gains.html").read_text(encoding="utf-8"),
+        source_url="fixture://bny",
+        fund_family="BNY Mellon / Dreyfus",
+    )
+    dgagx = next(
+        r
+        for r in bny
+        if r.ticker == "DGAGX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert dgagx.amount == Decimal("6.29")
+
+    nuveen = parse_distribution_html(
+        (ROOT / "nuveen" / "2025_estimated_taxable_distributions.html").read_text(encoding="utf-8"),
+        source_url="fixture://nuveen",
+        fund_family="Nuveen / TIAA",
+    )
+    tiirx = next(
+        r
+        for r in nuveen
+        if r.ticker == "TIIRX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert tiirx.amount == Decimal("1.97")
+
+    nt = parse_distribution_html(
+        (ROOT / "northern_trust" / "2025_capital_gain_distributions.html").read_text(encoding="utf-8"),
+        source_url="fixture://nt",
+        fund_family="Northern Trust",
+    )
+    nosix = next(
+        r
+        for r in nt
+        if r.ticker == "NOSIX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert nosix.amount == Decimal("1.182288")
+
+    msim = parse_distribution_html(
+        (ROOT / "morgan_stanley" / "2025_etf_year_end_sample.html").read_text(encoding="utf-8"),
+        source_url="fixture://msim",
+        fund_family="Morgan Stanley Investment Management",
+    )
+    cvlc = next(r for r in msim if r.ticker == "CVLC" and r.estimate_type == EstimateType.ordinary_income)
+    assert cvlc.amount == Decimal("0.283927")
+
+    schwab = parse_distribution_html(
+        (ROOT / "schwab" / "2025_annual_distributions.html").read_text(encoding="utf-8"),
+        source_url="fixture://schwab",
+        fund_family="Charles Schwab Investment Management",
+    )
+    swlvx = next(
+        r
+        for r in schwab
+        if r.ticker == "SWLVX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert swlvx.amount == Decimal("0.0049")
+
+    dfa = parse_distribution_html(
+        (ROOT / "dimensional" / "2025_capital_gain_distributions.html").read_text(encoding="utf-8"),
+        source_url="fixture://dfa",
+        fund_family="Dimensional Fund Advisors",
+    )
+    disvx = next(
+        r
+        for r in dfa
+        if r.ticker == "DISVX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert disvx.amount == Decimal("1.060")
+
+    columbia = parse_distribution_html(
+        (ROOT / "columbia_threadneedle" / "2025_midyear_estimates.html").read_text(encoding="utf-8"),
+        source_url="fixture://columbia",
+        fund_family="Columbia Threadneedle",
+    )
+    ievax = next(r for r in columbia if r.ticker == "IEVAX")
+    assert ievax.amount_min == Decimal("0.86")
+    assert ievax.amount_max == Decimal("1.25")
+    assert ievax.amount_unit == AmountUnit.percent_of_nav
+
+    amundi = parse_distribution_html(
+        (ROOT / "amundi" / "2025_capital_gain_estimates.html").read_text(encoding="utf-8"),
+        source_url="fixture://amundi",
+        fund_family="Amundi US / Pioneer",
+    )
+    piodx = next(
+        r
+        for r in amundi
+        if r.ticker == "PIODX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert piodx.amount == Decimal("3.73")
+    assert piodx.cusip == "92648C512"

@@ -13,6 +13,18 @@ from app.sources.families import (
     TRowePriceSource,
     VanguardSource,
 )
+from app.sources.next_tier import (
+    AmundiSource,
+    BnyMellonSource,
+    ColumbiaThreadneedleSource,
+    DimensionalSource,
+    FranklinTempletonSource,
+    MorganStanleySource,
+    NorthernTrustSource,
+    NuveenSource,
+    SchwabSource,
+    UbsSource,
+)
 
 _ALIASES = {
     "american_funds": "american_funds",
@@ -43,6 +55,34 @@ _ALIASES = {
     "troweprice": "t_rowe_price",
     "t_rowe": "t_rowe_price",
     "trp": "t_rowe_price",
+    "ubs": "ubs",
+    "franklin_templeton": "franklin_templeton",
+    "franklin": "franklin_templeton",
+    "templeton": "franklin_templeton",
+    "putnam": "franklin_templeton",
+    "bny_mellon": "bny_mellon",
+    "bny": "bny_mellon",
+    "dreyfus": "bny_mellon",
+    "nuveen": "nuveen",
+    "tiaa": "nuveen",
+    "northern_trust": "northern_trust",
+    "northern": "northern_trust",
+    "nt": "northern_trust",
+    "ntam": "northern_trust",
+    "morgan_stanley": "morgan_stanley",
+    "msim": "morgan_stanley",
+    "ms": "morgan_stanley",
+    "schwab": "schwab",
+    "charles_schwab": "schwab",
+    "csim": "schwab",
+    "dimensional": "dimensional",
+    "dfa": "dimensional",
+    "columbia_threadneedle": "columbia_threadneedle",
+    "columbia": "columbia_threadneedle",
+    "ameriprise": "columbia_threadneedle",
+    "amundi": "amundi",
+    "pioneer": "amundi",
+    "victory_pioneer": "amundi",
 }
 
 
@@ -58,6 +98,16 @@ def _sources() -> dict[str, FundSource]:
         PimcoSource(),
         InvescoSource(),
         TRowePriceSource(),
+        UbsSource(),
+        FranklinTempletonSource(),
+        BnyMellonSource(),
+        NuveenSource(),
+        NorthernTrustSource(),
+        MorganStanleySource(),
+        SchwabSource(),
+        DimensionalSource(),
+        ColumbiaThreadneedleSource(),
+        AmundiSource(),
     ]
     return {source.slug: source for source in ordered}
 

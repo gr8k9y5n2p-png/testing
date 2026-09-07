@@ -265,7 +265,7 @@ def classify_header(text: str, table_title: str) -> ColSpec | None:
     title = table_title.lower()
     if h in {"fund", "fund name", "name"}:
         return ColSpec("fund")
-    if h in {"ticker", "symbol", "ticker symbol"}:
+    if h in {"ticker", "symbol", "ticker symbol", "nasdaq"}:
         return ColSpec("ticker")
     if h in {"cusip"}:
         return ColSpec("cusip")
@@ -294,7 +294,7 @@ def classify_header(text: str, table_title: str) -> ColSpec | None:
     if "return of capital" in h or h in {"roc"}:
         unit = AmountUnit.percent_of_nav if "%" in h or "nav" in h else AmountUnit.per_share
         return ColSpec("amount", EstimateType.return_of_capital, unit)
-    if "income" in h and ("dividend" in h or "ordinary" in h):
+    if "nii" in h or ("income" in h and ("dividend" in h or "ordinary" in h)):
         unit = AmountUnit.percent_of_nav if "%" in h or "nav" in h or "percent" in h else AmountUnit.per_share
         return ColSpec("amount", EstimateType.ordinary_income, unit)
     if h == "income":
@@ -358,7 +358,7 @@ def _is_header_row(texts: list[str]) -> bool:
         return False
     first = _normalize_header(texts[0])
     rest = " ".join(_normalize_header(t) for t in texts[1:])
-    if first in {"fund", "fund name", "name", "ticker", "symbol", "ticker symbol"}:
+    if first in {"fund", "fund name", "name", "ticker", "symbol", "ticker symbol", "nasdaq"}:
         return any(k in rest or k in first for k in _HEADER_HINTS)
     return False
 

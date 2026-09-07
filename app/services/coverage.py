@@ -73,7 +73,7 @@ def record_gap(session: Session, body: CoverageGapIn) -> CoverageGapOut:
     if source is None:
         step = "manual_ingest"
         detail = (
-            "No top-10 adapter matched this ticker/family. "
+            "No registered adapter matched this ticker/family. "
             "POST /ingest/distributions with a partner record (escape hatch), "
             "or retry with fund_family set to a registered slug."
         )

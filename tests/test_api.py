@@ -92,7 +92,10 @@ def test_fixture_fetch_and_search_filters(client: TestClient) -> None:
     assert slugs["vanguard"]["implemented"] is True
     assert slugs["vanguard"]["aum_rank"] == 2
     assert slugs["blackrock"]["aum_rank"] == 1
-    assert len(slugs) == 10
+    assert slugs["ubs"]["aum_rank"] == 11
+    assert slugs["amundi"]["aum_rank"] == 20
+    assert slugs["dimensional"]["implemented"] is True
+    assert len(slugs) == 20
 
 
 def test_manual_ingest_partner_feed(client: TestClient) -> None:

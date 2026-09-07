@@ -3,12 +3,12 @@ from __future__ import annotations
 from fastapi.testclient import TestClient
 
 
-def test_coverage_endpoint_lists_top_10(client: TestClient) -> None:
+def test_coverage_endpoint_lists_top_20(client: TestClient) -> None:
     response = client.get("/coverage")
     assert response.status_code == 200
     body = response.json()
-    assert body["top_n"] == 10
-    assert body["implemented_count"] == 10
+    assert body["top_n"] == 20
+    assert body["implemented_count"] == 20
     assert body["stub_count"] == 0
     assert body["implemented_pct"] == 100.0
     slugs = [row["slug"] for row in body["families"]]
@@ -23,9 +23,21 @@ def test_coverage_endpoint_lists_top_10(client: TestClient) -> None:
         "pimco",
         "invesco",
         "t_rowe_price",
+        "ubs",
+        "franklin_templeton",
+        "bny_mellon",
+        "nuveen",
+        "northern_trust",
+        "morgan_stanley",
+        "schwab",
+        "dimensional",
+        "columbia_threadneedle",
+        "amundi",
     ]
     assert all(row["coverage_tier"] == "implemented" for row in body["families"])
     assert body["families"][0]["priority"] == 1
+    assert body["families"][10]["aum_rank"] == 11
+    assert body["families"][19]["slug"] == "amundi"
 
 
 def test_coverage_gap_implemented_family(client: TestClient) -> None:
@@ -65,6 +77,15 @@ def test_coverage_gap_alias_ishares(client: TestClient) -> None:
     response = client.post("/coverage/gaps", json={"ticker": "BDVL", "fund_family": "ishares"})
     assert response.status_code == 200
     assert response.json()["adapter_slug"] == "blackrock"
+
+
+def test_coverage_gap_alias_pioneer_and_dfa(client: TestClient) -> None:
+    pioneer = client.post("/coverage/gaps", json={"ticker": "PIODX", "fund_family": "pioneer"})
+    assert pioneer.status_code == 200
+    assert pioneer.json()["adapter_slug"] == "amundi"
+    dfa = client.post("/coverage/gaps", json={"ticker": "DFQTX", "fund_family": "dfa"})
+    assert dfa.status_code == 200
+    assert dfa.json()["adapter_slug"] == "dimensional"
 
 
 def test_coverage_gap_requires_ticker_or_name(client: TestClient) -> None:

@@ -132,7 +132,7 @@ def fund_families(session: Session = Depends(get_session)) -> list[FundFamilyOut
 
 @router.get("/coverage", response_model=CoverageOut, tags=["coverage"])
 def coverage(session: Session = Depends(get_session)) -> CoverageOut:
-    """Top-10 adapter coverage for portfolio-review % covered later."""
+    """Registered US-advisor family coverage for portfolio-review % covered later."""
     return CoverageOut.model_validate(coverage_snapshot(session))
 
 
