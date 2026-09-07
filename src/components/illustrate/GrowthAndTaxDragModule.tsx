@@ -9,10 +9,13 @@ import {
   fundSeriesColor,
 } from "@/lib/charts/series-colors";
 import {
+  SHARED_CHART_PAD,
+  SHARED_CHART_WIDTH,
   cagr,
   rebaseWindow,
   sketchYears,
   yearEndGrowth,
+  yearLayout,
 } from "@/lib/charts/shared-axis";
 import { formatUsd } from "@/lib/format";
 import { postIllustrateCompare } from "@/lib/illustrate/compare-client";
@@ -252,6 +255,11 @@ export function GrowthAndTaxDragModule({
     );
   }
 
+  const axis = useMemo(
+    () => yearLayout(years, selected.length, SHARED_CHART_WIDTH, SHARED_CHART_PAD),
+    [selected.length, years],
+  );
+
   const remaining = PERFORMANCE_FIXTURE_TICKERS.filter(
     (ticker) => !selected.some((fund) => fundKey(fund).ticker === ticker),
   );
@@ -415,6 +423,7 @@ export function GrowthAndTaxDragModule({
               annualized={annualized}
               showAnnualized={showAnnualized}
               loading={loading}
+              axis={axis}
             />
           </div>
           <div className="rounded-xl border border-line bg-paper/40 px-3 py-3 sm:px-4">
@@ -427,6 +436,7 @@ export function GrowthAndTaxDragModule({
               layout="flush"
               title="Estimated annual tax drag"
               loading={loading}
+              axis={axis}
               emptyLabel="No overlapping tax-drag years"
             />
           </div>

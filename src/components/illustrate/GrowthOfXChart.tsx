@@ -3,6 +3,7 @@ import {
   SHARED_CHART_WIDTH,
   yearLayout,
   type ChartPad,
+  type YearLayout,
 } from "@/lib/charts/shared-axis";
 import { formatUsd } from "@/lib/format";
 
@@ -36,6 +37,7 @@ export function GrowthOfXChart({
   width = SHARED_CHART_WIDTH,
   height = 236,
   pad = SHARED_CHART_PAD,
+  axis: axisProp,
 }: {
   years: number[];
   series: GrowthLineSeries[];
@@ -49,6 +51,7 @@ export function GrowthOfXChart({
   width?: number;
   height?: number;
   pad?: ChartPad;
+  axis?: YearLayout;
 }) {
   if (loading) {
     return (
@@ -76,7 +79,7 @@ export function GrowthOfXChart({
   const hi = Math.max(unit === "percent" ? 0 : startDollars, ...values);
   const scale = unit === "percent" ? nicePctScale(lo, hi) : niceMoneyScale(lo, hi);
   const innerH = height - pad.top - pad.bottom;
-  const layout = yearLayout(years, 1, width, pad);
+  const layout = axisProp ?? yearLayout(years, 1, width, pad);
   const xAt = (year: number) => {
     const index = years.indexOf(year);
     const i = index < 0 ? 0 : index;
@@ -144,6 +147,21 @@ export function GrowthOfXChart({
 
       <div role="img" aria-label={`${heading}. ${aria}`}>
         <svg viewBox={`0 0 ${width} ${height}`} className="h-auto w-full" aria-hidden>
+          {years.map((_, index) =>
+            index === 0 ? null : (
+              <line
+                key={`year-gutter-${years[index]}`}
+                x1={layout.slotLeft(index)}
+                x2={layout.slotLeft(index)}
+                y1={pad.top}
+                y2={pad.top + innerH}
+                className="stroke-line"
+                strokeWidth={1}
+                strokeDasharray="2 5"
+              />
+            ),
+          )}
+
           {ticks.map((tick) => {
             const y = yAt(tick);
             return (

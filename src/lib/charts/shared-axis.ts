@@ -10,8 +10,9 @@ export const SHARED_CHART_PAD = {
 } as const;
 
 /** Empty share of each year slot — keeps neighboring year groups apart. */
-export const YEAR_GUTTER_RATIO = 0.3;
-export const BAR_GAP_PX = 2;
+export const YEAR_GUTTER_RATIO = 0.4;
+export const MIN_YEAR_GUTTER_PX = 16;
+export const BAR_GAP_PX = 3;
 
 export type ChartPad = {
   top: number;
@@ -27,26 +28,47 @@ export type YearLayout = {
   barW: number;
   gap: number;
   count: number;
+  used: number;
   center: (index: number) => number;
+  slotLeft: (index: number) => number;
   groupLeft: (index: number) => number;
   barX: (yearIndex: number, seriesIndex: number) => number;
+  barRight: (yearIndex: number, seriesIndex: number) => number;
 };
 
+/**
+ * One x-scale for both charts.
+ * Each year owns a slot. Bars are centered in that slot with a gutter on
+ * both sides so year groups never touch. Every fund bar has the same width
+ * and a fixed gap — the group is shrunk to fit, never allowed to overflow.
+ */
 export function yearLayout(
   years: number[],
   seriesCount = 1,
   width = SHARED_CHART_WIDTH,
   pad: ChartPad = SHARED_CHART_PAD,
 ): YearLayout {
-  const inner = width - pad.left - pad.right;
-  const slot = years.length > 0 ? inner / years.length : inner;
-  const gutter = slot * YEAR_GUTTER_RATIO;
-  const groupW = Math.max(4, slot - gutter);
+  const inner = Math.max(1, width - pad.left - pad.right);
+  const nYears = Math.max(years.length, 1);
+  const slot = inner / nYears;
+  const gutter = Math.min(
+    slot * 0.55,
+    Math.max(MIN_YEAR_GUTTER_PX, slot * YEAR_GUTTER_RATIO),
+  );
+  const groupW = Math.max(1, slot - gutter);
   const count = Math.max(seriesCount, 1);
   const gap = count > 1 ? BAR_GAP_PX : 0;
-  const barW = Math.max(3, (groupW - gap * (count - 1)) / count);
-  const center = (index: number) => pad.left + slot * index + slot / 2;
-  const groupLeft = (index: number) => center(index) - (barW * count + gap * (count - 1)) / 2;
+  const rawBar = (groupW - gap * (count - 1)) / count;
+  const barW = Math.max(1, Math.floor(Math.max(0, rawBar) * 10) / 10);
+  const used = barW * count + gap * (count - 1);
+  const inset = Math.max(0, (groupW - used) / 2);
+
+  const slotLeft = (index: number) => pad.left + slot * index;
+  const center = (index: number) => slotLeft(index) + slot / 2;
+  const groupLeft = (index: number) => slotLeft(index) + gutter / 2 + inset;
+  const barX = (yearIndex: number, seriesIndex: number) =>
+    groupLeft(yearIndex) + seriesIndex * (barW + gap);
+
   return {
     slot,
     gutter,
@@ -54,11 +76,29 @@ export function yearLayout(
     barW,
     gap,
     count,
+    used,
     center,
+    slotLeft,
     groupLeft,
-    barX: (yearIndex, seriesIndex) =>
-      groupLeft(yearIndex) + seriesIndex * (barW + gap),
+    barX,
+    barRight: (yearIndex, seriesIndex) => barX(yearIndex, seriesIndex) + barW,
   };
+}
+
+/** True when any bar crosses a year boundary or another bar. */
+export function layoutCollides(axis: YearLayout, yearCount: number): boolean {
+  if (yearCount <= 0) return false;
+  for (let year = 0; year < yearCount; year += 1) {
+    const slotStart = axis.slotLeft(year);
+    const slotEnd = axis.slotLeft(year) + axis.slot;
+    for (let series = 0; series < axis.count; series += 1) {
+      const left = axis.barX(year, series);
+      const right = axis.barRight(year, series);
+      if (left < slotStart + 0.01 || right > slotEnd - 0.01) return true;
+      if (series > 0 && left < axis.barRight(year, series - 1) + 0.01) return true;
+    }
+  }
+  return false;
 }
 
 export function yearSlot(

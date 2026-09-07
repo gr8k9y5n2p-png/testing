@@ -3,6 +3,7 @@ import {
   SHARED_CHART_WIDTH,
   yearLayout,
   type ChartPad,
+  type YearLayout,
 } from "@/lib/charts/shared-axis";
 import {
   formatTaxDragValue,
@@ -38,6 +39,8 @@ export type TaxDragByYearChartProps = {
   height?: number;
   pad?: ChartPad;
   years?: number[];
+  /** Shared x-scale with the growth chart. */
+  axis?: YearLayout;
 };
 
 const CARD_W = 360;
@@ -63,6 +66,7 @@ export function TaxDragByYearChart({
   height,
   pad,
   years: yearsProp,
+  axis: axisProp,
 }: TaxDragByYearChartProps) {
   const flush = layout === "flush";
   const chartW = width ?? (flush ? SHARED_CHART_WIDTH : CARD_W);
@@ -128,8 +132,10 @@ export function TaxDragByYearChart({
     : Math.max(...measured, 0);
   const scale = niceScale(down ? Math.abs(peak) : peak, metric);
   const innerH = chartH - chartPad.top - chartPad.bottom;
-  const axis = yearLayout(years, fundSeries.length, chartW, chartPad);
+  const axis =
+    axisProp ?? yearLayout(years, fundSeries.length, chartW, chartPad);
   const barW = axis.barW;
+  const labelBars = showBarLabels && axis.barW >= 12;
 
   const xAt = (index: number) => axis.center(index);
   const yAt = (value: number) => {
@@ -161,7 +167,22 @@ export function TaxDragByYearChart({
   const plot = (
     <div role="img" aria-label={`${title}. ${aria}`}>
       <svg viewBox={`0 0 ${chartW} ${chartH}`} className="h-auto w-full" aria-hidden>
-        {ticks.map((tick) => {
+          {years.map((_, index) =>
+            index === 0 ? null : (
+              <line
+                key={`year-gutter-${years[index]}`}
+                x1={axis.slotLeft(index)}
+                x2={axis.slotLeft(index)}
+                y1={chartPad.top}
+                y2={chartPad.top + innerH}
+                className="stroke-line"
+                strokeWidth={1}
+                strokeDasharray="2 5"
+              />
+            ),
+          )}
+
+          {ticks.map((tick) => {
           const y = yAt(tick);
           return (
             <g key={tick}>
@@ -225,7 +246,7 @@ export function TaxDragByYearChart({
                       fill={row.color}
                       fillOpacity={0.88}
                     />
-                    {showBarLabels ? (
+                    {labelBars ? (
                       <text
                         x={x + barW / 2}
                         y={labelY}
