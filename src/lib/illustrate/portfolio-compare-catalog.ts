@@ -139,26 +139,20 @@ export const SMOKE_PROPOSED_TICKERS = [
   "FBGRX",
 ] as const;
 
-let draftSeq = 0;
-
-export function nextHoldingId(): string {
-  draftSeq += 1;
-  return `h-${draftSeq}`;
-}
-
 export function draftHolding(
   ticker: string,
   weightPct: number,
   bookDollars: number,
   funds?: PortfolioFundOption[],
+  id?: string,
 ): PortfolioHoldingDraft {
-  const option = funds?.find((fund) => fund.ticker.toUpperCase() === ticker.toUpperCase());
   const rates = ratesForTicker(ticker);
+  const option = funds?.find((fund) => fund.ticker.toUpperCase() === ticker.toUpperCase());
   return {
-    id: nextHoldingId(),
+    id: id ?? `${ticker.toUpperCase()}-${Math.round(weightPct * 100)}`,
     ticker: ticker.toUpperCase(),
-    fundName: option?.fundName || rates.fundName || ticker.toUpperCase(),
-    family: option?.family || rates.family,
+    fundName: rates.fundName || option?.fundName || ticker.toUpperCase(),
+    family: rates.family || option?.family,
     weightPct,
     holdingDollars: (weightPct / 100) * bookDollars,
   };
@@ -169,7 +163,7 @@ export function smokeCurrentHoldings(
   funds?: PortfolioFundOption[],
 ): PortfolioHoldingDraft[] {
   return SMOKE_CURRENT_TICKERS.map((ticker) =>
-    draftHolding(ticker, 25, bookDollars, funds),
+    draftHolding(ticker, 25, bookDollars, funds, `current-${ticker}`),
   );
 }
 
@@ -179,7 +173,7 @@ export function smokeProposedHoldings(
 ): PortfolioHoldingDraft[] {
   const weight = 100 / SMOKE_PROPOSED_TICKERS.length;
   return SMOKE_PROPOSED_TICKERS.map((ticker) =>
-    draftHolding(ticker, weight, bookDollars, funds),
+    draftHolding(ticker, weight, bookDollars, funds, `proposed-${ticker}`),
   );
 }
 
@@ -198,8 +192,9 @@ export function catalogFunds(extra: PortfolioFundOption[] = []): PortfolioFundOp
     const prev = byTicker.get(ticker);
     byTicker.set(ticker, {
       ticker,
-      fundName: fund.fundName || prev?.fundName || ticker,
-      family: fund.family || prev?.family,
+      // Rates/catalog names win so the smoke book matches the locked sketch.
+      fundName: prev?.fundName || fund.fundName || ticker,
+      family: prev?.family || fund.family,
     });
   }
   return [...byTicker.values()].sort((a, b) => a.ticker.localeCompare(b.ticker));

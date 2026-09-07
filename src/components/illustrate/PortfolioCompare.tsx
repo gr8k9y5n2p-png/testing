@@ -42,23 +42,14 @@ function toApiHoldings(holdings: PortfolioHoldingDraft[]) {
     }));
 }
 
-function rescale(
+function rescaleFromWeights(
   holdings: PortfolioHoldingDraft[],
   bookDollars: number,
-  unit: AllocationUnit,
 ): PortfolioHoldingDraft[] {
-  return holdings.map((holding) => {
-    if (unit === "pct") {
-      return {
-        ...holding,
-        holdingDollars: (holding.weightPct / 100) * bookDollars,
-      };
-    }
-    return {
-      ...holding,
-      weightPct: bookDollars > 0 ? (holding.holdingDollars / bookDollars) * 100 : 0,
-    };
-  });
+  return holdings.map((holding) => ({
+    ...holding,
+    holdingDollars: (holding.weightPct / 100) * bookDollars,
+  }));
 }
 
 function formatBookInput(value: number): string {
@@ -97,8 +88,8 @@ export function PortfolioCompare({
     }
     setBookDollars(parsed);
     setBookInput(formatBookInput(parsed));
-    setCurrent((holdings) => rescale(holdings, parsed, currentUnit));
-    setProposed((holdings) => rescale(holdings, parsed, proposedUnit));
+    setCurrent((holdings) => rescaleFromWeights(holdings, parsed));
+    setProposed((holdings) => rescaleFromWeights(holdings, parsed));
   }
 
   const currentApi = toApiHoldings(current);
