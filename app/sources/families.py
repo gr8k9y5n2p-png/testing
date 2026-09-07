@@ -55,10 +55,10 @@ class VanguardSource(HtmlTableSource):
         "2023 https://advisors.vanguard.com/content/dam/fas/pdfs/2023_ICI_Primary_Layout.pdf "
         "2022 https://advisors.vanguard.com/content/dam/fas/pdfs/2022_ICI_Primary_Layout.pdf "
         "2021 https://advisors.vanguard.com/content/dam/fas/pdfs/2021_ICI_Primary_Layout.pdf. "
-        "2025 ICI is a column-safe full December book (31-token layout; "
-        "VFIAX / VBIAX / VIGAX omitted so the YE HTML fixture "
-        "is not double-counted). 2024 ICI is the same full-December extract "
-        "(includes VFIAX / VBIAX / VIGAX). 2021–2023 ICI CSVs remain flagship-only. "
+        "2021–2025 ICI files are column-safe full December books (31-token "
+        "layout: income / ST / LT at tokens 4 / 5 / 12). 2025 omits "
+        "VFIAX / VBIAX / VIGAX so the YE HTML fixture is not double-counted. "
+        "2024 includes those three. Quarterly ICI lines are not stored. "
         "Tax center hub: https://advisors.vanguard.com/tax-center."
     )
     live_limitations = (
@@ -97,7 +97,7 @@ class VanguardSource(HtmlTableSource):
                 fixture="ici_primary_2023.csv",
                 live=False,
                 parser="ici",
-                large_aum_only=True,
+                large_aum_only=False,
             ),
             PageSpec(
                 name="ici_primary_2022",
@@ -105,7 +105,7 @@ class VanguardSource(HtmlTableSource):
                 fixture="ici_primary_2022.csv",
                 live=False,
                 parser="ici",
-                large_aum_only=True,
+                large_aum_only=False,
             ),
             PageSpec(
                 name="ici_primary_2021",
@@ -113,7 +113,7 @@ class VanguardSource(HtmlTableSource):
                 fixture="ici_primary_2021.csv",
                 live=False,
                 parser="ici",
-                large_aum_only=True,
+                large_aum_only=False,
             ),
         ]
 

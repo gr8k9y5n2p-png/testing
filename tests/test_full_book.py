@@ -69,7 +69,7 @@ def test_full_book_american_funds_invesco_dimensional() -> None:
 def test_full_book_vanguard_ici_and_next_wave() -> None:
     vg_funds, vg_tickers = _funds_and_tickers(VanguardSource())
     assert {"VFIAX", "VTSAX", "VOO", "VFINX"} <= vg_tickers
-    assert len(vg_tickers) >= 200
+    assert len(vg_tickers) >= 250
 
     bny_funds, bny_tickers = _funds_and_tickers(BnyMellonSource())
     assert "DGAGX" in bny_tickers
@@ -121,7 +121,7 @@ def test_full_book_harbor_voya_keep_heroes() -> None:
 def test_full_book_jh_hartford_macquarie_msim() -> None:
     jh_funds, jh_tickers = _funds_and_tickers(JohnHancockSource())
     assert "TAGRX" in jh_tickers
-    assert len(jh_funds) >= 40
+    assert len(jh_funds) >= 50
     assert not any("Closed-End" in name or "Premium Dividend" in name for name in jh_funds)
 
     hartford_funds, hartford_tickers = _funds_and_tickers(HartfordSource())

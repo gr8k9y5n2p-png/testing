@@ -128,6 +128,8 @@ def test_parse_ici_primary_2021_and_2025_ongoing() -> None:
     )
     assert vfiax.amount == Decimal("1.535100")
     assert str(vfiax.as_of) == "2021-12-31"
+    assert len({r.ticker for r in y2021}) >= 200
+    assert {"VFIAX", "VBIAX", "VIGAX", "VTSAX", "VOO"} <= {r.ticker for r in y2021}
 
     y2025 = parse_ici_primary(
         (VG / "ici_primary_2025.csv").read_text(encoding="utf-8"),
@@ -147,3 +149,25 @@ def test_parse_ici_primary_2021_and_2025_ongoing() -> None:
     assert voo.amount == Decimal("1.771000")
     assert len({r.ticker for r in y2025}) >= 200
     assert {"VTSAX", "VOO", "VWENX", "VPMAX", "VFINX"} <= {r.ticker for r in y2025}
+
+    y2023 = parse_ici_primary(
+        (VG / "ici_primary_2023.csv").read_text(encoding="utf-8"),
+        source_url="https://advisors.vanguard.com/content/dam/fas/pdfs/2023_ICI_Primary_Layout.pdf",
+        fund_family="Vanguard",
+    )
+    vfiax_23 = next(
+        r for r in y2023 if r.ticker == "VFIAX" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert vfiax_23.amount == Decimal("1.806000")
+    assert len({r.ticker for r in y2023}) >= 200
+
+    y2022 = parse_ici_primary(
+        (VG / "ici_primary_2022.csv").read_text(encoding="utf-8"),
+        source_url="https://advisors.vanguard.com/content/dam/fas/pdfs/2022_ICI_Primary_Layout.pdf",
+        fund_family="Vanguard",
+    )
+    vfiax_22 = next(
+        r for r in y2022 if r.ticker == "VFIAX" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert vfiax_22.amount == Decimal("1.676500")
+    assert len({r.ticker for r in y2022}) >= 200
