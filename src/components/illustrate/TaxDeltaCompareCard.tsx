@@ -48,11 +48,21 @@ export function TaxDeltaCompareCard({
         </p>
 
         <div className="mt-3 grid grid-cols-[1fr_auto_1fr] items-start gap-2">
-          <FundHeading side="Fund A" name={model.leftLabel} align="left" />
+          <FundHeading
+            side="Fund A"
+            name={model.leftLabel}
+            align="left"
+            chip={model.announceChips?.left}
+          />
           <p className="pt-5 text-[11px] uppercase tracking-[0.14em] text-faint">
             vs
           </p>
-          <FundHeading side="Fund B" name={model.rightLabel} align="right" />
+          <FundHeading
+            side="Fund B"
+            name={model.rightLabel}
+            align="right"
+            chip={model.announceChips?.right}
+          />
         </div>
 
         <div className="mt-4 flex flex-wrap items-end justify-between gap-2">
@@ -121,9 +131,20 @@ export function TaxDeltaCompareCard({
             <dt className="text-[10px] font-semibold uppercase tracking-[0.12em] text-faint">
               {metric.label}
             </dt>
-            <dd className={`mt-1 font-serif text-[17px] leading-tight tracking-tight ${POLARITY_TEXT[metric.polarity]}`}>
-              {metric.headline}
-            </dd>
+            {metric.sides ? (
+              <dd className="mt-1 space-y-1">
+                <p className={`font-serif text-[17px] leading-tight tracking-tight ${metric.sides.left.announced ? "text-ink" : "text-muted"}`}>
+                  {metric.sides.left.value}
+                </p>
+                <p className={`text-[11px] leading-snug ${metric.sides.right.announced ? "text-ink" : "text-faint"}`}>
+                  {metric.sides.right.value}
+                </p>
+              </dd>
+            ) : (
+              <dd className={`mt-1 font-serif text-[17px] leading-tight tracking-tight ${POLARITY_TEXT[metric.polarity]}`}>
+                {metric.headline}
+              </dd>
+            )}
             <dd className="mt-1 text-[10px] leading-snug text-faint">{metric.detail}</dd>
           </div>
         ))}
@@ -141,10 +162,12 @@ function FundHeading({
   side,
   name,
   align,
+  chip,
 }: {
   side: string;
   name: string;
   align: "left" | "right";
+  chip?: { announced: boolean; label: string };
 }) {
   return (
     <div className={align === "right" ? "text-right" : "text-left"}>
@@ -154,6 +177,17 @@ function FundHeading({
       <p className="mt-0.5 font-serif text-lg leading-tight tracking-tight text-ink">
         {name}
       </p>
+      {chip ? (
+        <span
+          className={`mt-1.5 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${
+            chip.announced
+              ? "bg-tax-more-soft text-tax-more"
+              : "bg-paper text-muted ring-1 ring-line"
+          }`}
+        >
+          {chip.announced ? chip.label : "Not announced"}
+        </span>
+      ) : null}
     </div>
   );
 }
