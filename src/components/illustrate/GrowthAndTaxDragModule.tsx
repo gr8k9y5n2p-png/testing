@@ -305,7 +305,6 @@ export function GrowthAndTaxDragModule({
                   onFocus={() => setPrincipalDraft(String(principal))}
                   onBlur={() => {
                     commitPrincipal();
-                    setPrincipalDraft(formatPrincipal(principal));
                   }}
                   onKeyDown={(event) => {
                     if (event.key === "Enter") {
