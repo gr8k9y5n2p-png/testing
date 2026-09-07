@@ -1003,10 +1003,14 @@ class PerformanceResponse(BaseModel):
     mode: str
     source: str
     source_urls: list[str] = Field(default_factory=list)
-    benchmark_id: str
-    benchmark_label: str
-    benchmark_tracks: str
-    is_proxy: bool
+    benchmark_id: str = Field(description="ETF or fund ticker actually plotted (SPY, AGG, VXUS, or an override).")
+    benchmark_label: str = Field(
+        description="UI label, e.g. 'Bloomberg US Aggregate (via AGG ETF total return)'.",
+    )
+    benchmark_tracks: str = Field(
+        description="Index the ETF is commonly said to track. The series is still the ETF, not a licensed index.",
+    )
+    is_proxy: bool = Field(description="True when the series is a default ETF proxy (SPY, AGG, VXUS).")
     fund: PerformanceSeriesOut
     benchmark: PerformanceSeriesOut
     disclaimers: list[str] = Field(default_factory=list)
