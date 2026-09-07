@@ -121,6 +121,18 @@ from app.sources.tenth_tier import (
     RiverparkSource,
     WestwoodSource,
 )
+from app.sources.eleventh_tier import (
+    AmgSource,
+    ConestogaSource,
+    GuidestoneSource,
+    HodgesSource,
+    KopernikSource,
+    LocorrSource,
+    PermanentPortfolioSource,
+    TimothyPlanSource,
+    TocquevilleSource,
+    ValueLineSource,
+)
 
 _ALIASES = {
     "american_funds": "american_funds",
@@ -350,6 +362,23 @@ _ALIASES = {
     "oam": "oberweis",
     "riverpark": "riverpark",
     "rp": "riverpark",
+    "amg": "amg",
+    "amg_funds": "amg",
+    "amgfunds": "amg",
+    "guidestone": "guidestone",
+    "guide_stone": "guidestone",
+    "value_line": "value_line",
+    "valueline": "value_line",
+    "vl": "value_line",
+    "permanent_portfolio": "permanent_portfolio",
+    "prpfx": "permanent_portfolio",
+    "conestoga": "conestoga",
+    "kopernik": "kopernik",
+    "locorr": "locorr",
+    "timothy_plan": "timothy_plan",
+    "timothy": "timothy_plan",
+    "hodges": "hodges",
+    "tocqueville": "tocqueville",
 }
 
 
@@ -455,6 +484,16 @@ def _sources() -> dict[str, FundSource]:
         LkcmSource(),
         OberweisSource(),
         RiverparkSource(),
+        AmgSource(),
+        GuidestoneSource(),
+        ValueLineSource(),
+        PermanentPortfolioSource(),
+        ConestogaSource(),
+        KopernikSource(),
+        LocorrSource(),
+        TimothyPlanSource(),
+        HodgesSource(),
+        TocquevilleSource(),
     ]
     return {source.slug: source for source in ordered}
 

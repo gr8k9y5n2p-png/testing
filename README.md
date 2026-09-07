@@ -14,7 +14,7 @@ The default demo uses **SQLite** and bundled Capital Group HTML fixtures so the 
 - `POST /illustrate` — server-side tax-impact math for a dollar holding (Website Engineering owns the UI)
 - `POST /illustrate/portfolio` — book-level review with coverage % and explicit gaps
 - `POST /illustrate/compare` — Interactive Modules chart contract (`fund_vs_fund` or `yoy`)
-- Top-100 US-advisor fund-family adapters (`GET /fund-families`, `GET /coverage`) plus `POST /coverage/gaps` when a portfolio ticker is missing
+- Top-110 US-advisor fund-family adapters (`GET /fund-families`, `GET /coverage`) plus `POST /coverage/gaps` when a portfolio ticker is missing
 - Partner ingest (`POST /ingest/distributions`) remains the escape hatch for uncovered names
 
 ## Quick start
@@ -78,7 +78,7 @@ curl -s -X POST http://127.0.0.1:8000/coverage/gaps \
 curl -s http://127.0.0.1:8000/distributions/<id> | jq
 ```
 
-`POST /ingest/fetch` with `"fund_family":"all"` runs every **implemented** adapter (all 100 registered families in fixture mode).
+`POST /ingest/fetch` with `"fund_family":"all"` runs every **implemented** adapter (all 110 registered families in fixture mode).
 
 Live fetch (hits public Capital Group pages; may change or rate-limit):
 
@@ -327,7 +327,7 @@ Re-running the **same** source document updates the existing row. A new `as_of` 
 
 ## Coverage (portfolio review)
 
-Sparse family coverage makes Aftertax-style portfolio analytics wrong: a book that is 40% Vanguard / iShares / Fidelity looks like it has no taxable distributions if those adapters are stubs. The registry is the **top 100 US-advisor-relevant firms** (AUM ranks 1–100). `GET /coverage` returns `implemented_pct` (today 100/100 fixture parsers) so the website can later compute *% of portfolio dollars covered*.
+Sparse family coverage makes Aftertax-style portfolio analytics wrong: a book that is 40% Vanguard / iShares / Fidelity looks like it has no taxable distributions if those adapters are stubs. The registry is the **top 110 US-advisor-relevant firms** (AUM ranks 1–110). `GET /coverage` returns `implemented_pct` (today 110/110 fixture parsers) so the website can later compute *% of portfolio dollars covered*.
 
 `GET /fund-families` includes `coverage_tier` (`implemented` | `stub`), `aum_rank` (1 = largest / highest priority), and `priority`.
 
@@ -336,7 +336,7 @@ When a holding’s ticker or family is not in the store, Website Engineering sho
 | `suggested_next_step` | Meaning |
 | --- | --- |
 | `fetch_adapter` | A registered parser exists — run `POST /ingest/fetch` for that slug, then search. If the ticker is still missing, partner-ingest the row. |
-| `queued` | Slug is registered but not implemented (none of the top 100 today). |
+| `queued` | Slug is registered but not implemented (none of the top 110 today). |
 | `manual_ingest` | Unknown family — `POST /ingest/distributions` is the escape hatch. |
 
 | Rank | Slug | Display name | Parser | Live HTML | Public source (verified 2026-09-07) |
@@ -441,6 +441,16 @@ When a holding’s ticker or family is not in the store, Website Engineering sho
 | 98 | `lkcm` (alias `luther_king`) | LKCM | implemented | PDF | https://lkcmfunds.com/wp-content/uploads/2025-LKCM-Year-End-Mutual-Fund-Distribution-Estimates-11-3-25.pdf |
 | 99 | `oberweis` (alias `oam`) | Oberweis | implemented | PDF | https://oberweisfunds.com/wp-content/uploads/2026/03/2025-Final-Distributions-Sheet.pdf |
 | 100 | `riverpark` (alias `rp`) | RiverPark | implemented | PDF | https://riverparkfunds.com/assets/pdfs/news/Distribution_Info_2025_Website_RFT_FINAL_CAP_GAINS_FINAL_INCOME.pdf |
+| 101 | `amg` (aliases `amg_funds`, `amgfunds`) | AMG | implemented | PDF | https://wealth.amg.com/pdf-library/amg-funds-2025-year-end-distributions/ |
+| 102 | `guidestone` (alias `guide_stone`) | GuideStone | implemented | yes — fixture fallback | https://www.guidestonefunds.com/Tax-Information/Capital-Gains |
+| 103 | `value_line` (aliases `valueline`, `vl`) | Value Line | implemented | yes — fixture fallback | https://vlfunds.com/gains |
+| 104 | `permanent_portfolio` (alias `prpfx`) | Permanent Portfolio | implemented | PDF | https://www.permanentportfoliofunds.com/pdf/2025%20Supplemental%20Tax%20Information_FINAL.pdf |
+| 105 | `conestoga` | Conestoga | implemented | yes — fixture fallback | https://conestogacapital.com/capital-gains-information/ |
+| 106 | `kopernik` | Kopernik | implemented | PDF | https://www.kopernikglobal.com/wp-content/uploads/2025/12/KGI-CG-MEMO-December-2025-FINAL-1.pdf |
+| 107 | `locorr` | LoCorr | implemented | PDF | https://locorrfunds.com/wp-content/uploads/2021/04/LoCorr-Funds-Annual-CapitalGains-Dividends.pdf |
+| 108 | `timothy_plan` (alias `timothy`) | Timothy Plan | implemented | PDF | https://timothyplan.com/download/Capital_Gains_Distribution.pdf |
+| 109 | `hodges` | Hodges | implemented | PDF | https://www.hodgescapital.com/hubfs/Mutual_Funds/Documents/Year_End_Distribution_Estimates.pdf |
+| 110 | `tocqueville` | Tocqueville | implemented | PDF | https://www.tocquevillefunds.com/wp-content/uploads/2025/12/2025-FINAL-Distributions-December-9-2025.pdf |
 
 **Wellington:** skipped. Wellington Management is primarily a subadvisor / institutional manager and does not publish public US retail distribution-estimate pages that we can register as a `FundSource`. Holdings in Wellington-subadvised sleeves should use the **distributing** family’s slug (or `POST /ingest/distributions`).
 
@@ -488,7 +498,7 @@ When a holding’s ticker or family is not in the store, Website Engineering sho
 
 **Akre:** skipped. No public 2025 family capital-gains book was found.
 
-**Yacktman:** skipped as a distinct `FundSource` this wave. AMG product HTML lists YACKX paid LT $2.8135 on a single-fund page, not a family estimate book.
+**Yacktman:** skipped as a distinct `FundSource`. The AMG family year-end PDF includes YACKX (Class I LT $2.8135). Use the `amg` adapter.
 
 **Weitz:** skipped for this tier. The public indications page (`https://weitzinvestments.com/funds/distributions.fs`) publishes **% of NAV** only (e.g. WVALX LT 17.93%). Do not invent per-share figures. Use `POST /ingest/distributions` if an advisor notice has $ / share.
 
@@ -514,7 +524,31 @@ When a holding’s ticker or family is not in the store, Website Engineering sho
 
 **Insurance variable wrappers (Brighthouse, Lincoln, Pacific Life, Jackson):** skipped. Public materials are variable-annuity / life subaccount performance PDFs, not US open-end mutual-fund or ETF family capital-gains estimate books.
 
-**Live honesty:** Vanguard and State Street pages are still client-rendered as of 2026-09-07 (static GET parses 0 rows → fixture fallback). JPM, Goldman, PIMCO, and Invesco still publish estimates as PDFs or login-walled docs — no new scrapeable HTML grids were found on re-check. Ranks 11–20 are the same pattern: BNY, Nuveen, Northern Trust, Dimensional, Columbia, and Pioneer/Amundi are public PDFs; Franklin’s family estimate tool is a JS SPA (fixture uses a public CEF 19(a)); UBS and Schwab have some public HTML but fund-name/class layout or SPA shells keep live parse unreliable. Ranks 21–30 continue that pattern: Janus, American Century, Dodge & Cox, MFS, AB, and Virtus are public PDFs; Lord Abbett’s only public 2025 estimate document is a no-pay list; Federated’s family tax-center grids are JS (fixture uses a public 19(a)); Allspring’s family estimate PDF is gated/image-based (fixture uses public product-page paid rows); Eaton Vance open-end HTML was not found (fixture uses a public CEF 19(b)). Ranks 31–40: John Hancock, Hartford, Macquarie/Delaware, First Eagle, GMO, Calamos, and Wasatch are public PDFs; Thrivent’s paid capital-gains table is public HTML (live parse works after recognizing the “Thrivent Mutual Fund” header; no ticker column); Principal’s family estimate PDF is a GetFile viewer (fixture uses public product-page paid rows); Artisan’s tax-center HTML is paid YTD income (live page is a year-selector shell — fixture fallback; no family estimate PDF). Ranks 41–50: Harbor, Nationwide, Voya, Tweedy, Gabelli, NYLI/MainStay, Touchstone, and Victory Integrity/Sycamore are public PDFs (Nationwide GET is sometimes Akamai-denied); Oakmark and Royce publish public paid HTML (class-section / header layout still returns 0 live rows → fixture fallback). Ranks 51–60: SEI, Brown Advisory, William Blair, VanEck, WisdomTree, AQR, Causeway, Alger, and Harding Loevner are public PDFs (Harding Loevner fixture uses the AMG year-end reprint that includes tickers); Matthews Asia publishes paid amounts on the mutual-fund product HTML (nested accordion tables still return 0 live rows → fixture fallback). Ranks 61–70: TCW, Bridgeway, Diamond Hill, Champlain, Driehaus, Hotchkis & Wiley, and Osterweis are public PDFs (TCW and Diamond Hill PDFs are fund-level — fixtures attach public Class I / Investor tickers); Jensen, Marsico, and Davis publish public HTML (prose lists / multi-class tables still return 0 live rows → fixture fallback). Ranks 71–80: PRIMECAP, Ariel, Baird, Buffalo, GQG, and FMI are public PDFs (PRIMECAP and Buffalo PDFs are fund/class-level — fixtures attach public Investor tickers); Longleaf, Third Avenue, and Heartland publish public HTML (product-page / tax-center layout still returns 0 live rows → fixture fallback); Impax’s distributions hub is geo/investor-type gated (fixture transcribes the public December 2025 table crawled from that URL). Ranks 81–90: American Beacon, Baillie Gifford, Brandes, Boston Trust Walden, Meridian, and Kinetics are public PDFs (Baillie Gifford and Brandes PDFs are fund-level — fixtures attach public Institutional / Class I / Class K tickers); Mairs & Power, Grandeur Peak, Hennessy, and FAM publish public HTML (fund-name-only / multi-year / expandable tables still return 0 live rows or omit tickers → fixture fallback). Ranks 91–100: Lazard, Manning & Napier, Westwood, Boston Partners, Homestead, LSV, LKCM, Oberweis, and RiverPark are public PDFs (Lazard, Manning & Napier, Westwood, Boston Partners, Homestead, and LSV PDFs are fund- or CUSIP-level — fixtures attach public Institutional / Class I / Class S / no-load tickers); Madison publishes paid HTML (fund-name / ST / LT only, no ticker column → fixture fallback). Do not treat fixture rows as a complete live book. `POST /ingest/distributions` is always valid for an advisor-uploaded notice.
+**Thornburg:** skipped for this tier. Public ETF capital-gain estimates are $0.00 per share. The mutual-fund dividends page is a JS shell with no scrapeable non-zero family $ table. Use `POST /ingest/distributions` until a mutual-fund reprint exists.
+
+**RiverNorth:** skipped. The public annual-gains page states registered funds are not expected to pay capital gains in December 2025 — no non-zero open-end $ book.
+
+**Congress Asset Management:** skipped. No public family-level 2025/2026 estimate or paid per-share table was recovered.
+
+**Segall Bryant & Hamill / CI SBH:** skipped. Public materials are fund product pages and prospectuses, not a family capital-gains $ book.
+
+**Aegis:** skipped as a distinct `FundSource` this wave. Public materials are a single-fund history / annual financials without a family ST/LT $ table.
+
+**Hussman:** skipped. No public family-level 2025 estimate or paid per-share capital-gains table was recovered.
+
+**Olstein:** skipped. No public family estimate or paid ST/LT book; third-party totals only.
+
+**Smead:** skipped. Forms library lists fact sheets and shareholder reports; no family-level 2025 capital-gains PDF or HTML $ table was recovered.
+
+**Payden:** skipped. Public page is a 2025 payment *schedule* (record/ex/pay dates), not per-share amounts.
+
+**Leuthold:** skipped for this wave. The family estimate PDF cited on third-party lists (`latest-news/613/download.pdf`) 404s; remaining materials are per-fund historical-distribution PDFs. Use `POST /ingest/distributions` until a family reprint exists.
+
+**Praxis:** skipped. Tax-resources HTML is geo-gated; no public family $ table was recovered from this environment.
+
+**AMG vs Harding Loevner / Tweedy:** Harding Loevner and Tweedy stay on `harding_loevner` and `tweedy`. `amg` is the AMG Distributors year-end book (GW&K, River Road, TimesSquare, Yacktman, and other AMG-distributed open-end funds).
+
+**Live honesty:** Vanguard and State Street pages are still client-rendered as of 2026-09-07 (static GET parses 0 rows → fixture fallback). JPM, Goldman, PIMCO, and Invesco still publish estimates as PDFs or login-walled docs — no new scrapeable HTML grids were found on re-check. Ranks 11–20 are the same pattern: BNY, Nuveen, Northern Trust, Dimensional, Columbia, and Pioneer/Amundi are public PDFs; Franklin’s family estimate tool is a JS SPA (fixture uses a public CEF 19(a)); UBS and Schwab have some public HTML but fund-name/class layout or SPA shells keep live parse unreliable. Ranks 21–30 continue that pattern: Janus, American Century, Dodge & Cox, MFS, AB, and Virtus are public PDFs; Lord Abbett’s only public 2025 estimate document is a no-pay list; Federated’s family tax-center grids are JS (fixture uses a public 19(a)); Allspring’s family estimate PDF is gated/image-based (fixture uses public product-page paid rows); Eaton Vance open-end HTML was not found (fixture uses a public CEF 19(b)). Ranks 31–40: John Hancock, Hartford, Macquarie/Delaware, First Eagle, GMO, Calamos, and Wasatch are public PDFs; Thrivent’s paid capital-gains table is public HTML (live parse works after recognizing the “Thrivent Mutual Fund” header; no ticker column); Principal’s family estimate PDF is a GetFile viewer (fixture uses public product-page paid rows); Artisan’s tax-center HTML is paid YTD income (live page is a year-selector shell — fixture fallback; no family estimate PDF). Ranks 41–50: Harbor, Nationwide, Voya, Tweedy, Gabelli, NYLI/MainStay, Touchstone, and Victory Integrity/Sycamore are public PDFs (Nationwide GET is sometimes Akamai-denied); Oakmark and Royce publish public paid HTML (class-section / header layout still returns 0 live rows → fixture fallback). Ranks 51–60: SEI, Brown Advisory, William Blair, VanEck, WisdomTree, AQR, Causeway, Alger, and Harding Loevner are public PDFs (Harding Loevner fixture uses the AMG year-end reprint that includes tickers); Matthews Asia publishes paid amounts on the mutual-fund product HTML (nested accordion tables still return 0 live rows → fixture fallback). Ranks 61–70: TCW, Bridgeway, Diamond Hill, Champlain, Driehaus, Hotchkis & Wiley, and Osterweis are public PDFs (TCW and Diamond Hill PDFs are fund-level — fixtures attach public Class I / Investor tickers); Jensen, Marsico, and Davis publish public HTML (prose lists / multi-class tables still return 0 live rows → fixture fallback). Ranks 71–80: PRIMECAP, Ariel, Baird, Buffalo, GQG, and FMI are public PDFs (PRIMECAP and Buffalo PDFs are fund/class-level — fixtures attach public Investor tickers); Longleaf, Third Avenue, and Heartland publish public HTML (product-page / tax-center layout still returns 0 live rows → fixture fallback); Impax’s distributions hub is geo/investor-type gated (fixture transcribes the public December 2025 table crawled from that URL). Ranks 81–90: American Beacon, Baillie Gifford, Brandes, Boston Trust Walden, Meridian, and Kinetics are public PDFs (Baillie Gifford and Brandes PDFs are fund-level — fixtures attach public Institutional / Class I / Class K tickers); Mairs & Power, Grandeur Peak, Hennessy, and FAM publish public HTML (fund-name-only / multi-year / expandable tables still return 0 live rows or omit tickers → fixture fallback). Ranks 91–100: Lazard, Manning & Napier, Westwood, Boston Partners, Homestead, LSV, LKCM, Oberweis, and RiverPark are public PDFs (Lazard, Manning & Napier, Westwood, Boston Partners, Homestead, and LSV PDFs are fund- or CUSIP-level — fixtures attach public Institutional / Class I / Class S / no-load tickers); Madison publishes paid HTML (fund-name / ST / LT only, no ticker column → fixture fallback). Ranks 101–110: AMG, Permanent Portfolio, Kopernik, LoCorr, Timothy Plan, Hodges, and Tocqueville are public PDFs (GuideStone, Conestoga, Timothy Plan, and Hodges pages/PDFs are fund-level — fixtures attach public Investor / Institutional / Class I / Class A / Retail tickers); GuideStone, Value Line, and Conestoga publish public HTML (fund-name-only or mashed headers may still return 0 live rows → fixture fallback). Do not treat fixture rows as a complete live book. `POST /ingest/distributions` is always valid for an advisor-uploaded notice.
 
 ## Source adapters
 
@@ -542,7 +576,7 @@ The parser is built against **real AEM table markup**: multi-row headers, contin
 
 Captured markup used in tests lives under `fixtures/american_funds/`.
 
-### Other registered families (ranks 1–100 except American Funds)
+### Other registered families (ranks 1–110 except American Funds)
 
 Each family has a `HtmlTableSource` (except American Funds, which keeps its original adapter) plus fixtures under `fixtures/<slug>/`. The shared HTML table parser understands Fidelity Symbol/Cusip cells, iShares `(TICKER)` suffixes, Vanguard “distribution type” rows, T. Rowe two-row headers, `% of NAV` vs NAV price, and per-row as-of dates.
 
@@ -591,7 +625,7 @@ pip install -r requirements-dev.txt
 pytest -q
 ```
 
-Coverage includes HTML normalization (American Funds plus top-100 family fixtures), multi-year history filters, upsert idempotency, search filters, tax illustration math, portfolio coverage, compare-chart deltas, and coverage-gap logging.
+Coverage includes HTML normalization (American Funds plus top-110 family fixtures), multi-year history filters, upsert idempotency, search filters, tax illustration math, portfolio coverage, compare-chart deltas, and coverage-gap logging.
 
 ## Layout
 
@@ -605,6 +639,6 @@ app/
   services/illustrate.py  Tax-impact illustration
   services/coverage.py Coverage snapshot + gap logging
   cli.py               seed / fetch / families
-fixtures/<family>/     HTML fixtures (American Funds + top 100)
+fixtures/<family>/     HTML fixtures (American Funds + top 110)
 tests/
 ```

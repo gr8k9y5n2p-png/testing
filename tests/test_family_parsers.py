@@ -123,6 +123,18 @@ from app.sources.tenth_tier import (
     RiverparkSource,
     WestwoodSource,
 )
+from app.sources.eleventh_tier import (
+    AmgSource,
+    ConestogaSource,
+    GuidestoneSource,
+    HodgesSource,
+    KopernikSource,
+    LocorrSource,
+    PermanentPortfolioSource,
+    TimothyPlanSource,
+    TocquevilleSource,
+    ValueLineSource,
+)
 from app.sources.parser import parse_distribution_html, split_fund_identity
 
 ROOT = Path(__file__).resolve().parents[1] / "fixtures"
@@ -353,6 +365,16 @@ def test_adapters_fetch_fixture_mode() -> None:
         LkcmSource(),
         OberweisSource(),
         RiverparkSource(),
+        AmgSource(),
+        GuidestoneSource(),
+        ValueLineSource(),
+        PermanentPortfolioSource(),
+        ConestogaSource(),
+        KopernikSource(),
+        LocorrSource(),
+        TimothyPlanSource(),
+        HodgesSource(),
+        TocquevilleSource(),
     ]
     for source in sources:
         result = source.fetch(mode="fixture")
@@ -1594,3 +1616,139 @@ def test_tenth_tier_fixtures() -> None:
         if r.ticker == "RPXIX" and r.estimate_type == EstimateType.long_term_capital_gains
     )
     assert rpxix.amount == Decimal("2.6688")
+
+
+def test_eleventh_tier_fixtures() -> None:
+    amg = parse_distribution_html(
+        (ROOT / "amg" / "2025_year_end_distributions.html").read_text(encoding="utf-8"),
+        source_url="fixture://amg",
+        fund_family="AMG",
+    )
+    yackx = next(
+        r
+        for r in amg
+        if r.ticker == "YACKX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert yackx.amount == Decimal("2.8135")
+
+    guidestone = parse_distribution_html(
+        (ROOT / "guidestone" / "2025_estimated_capital_gains.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://guidestone",
+        fund_family="GuideStone",
+    )
+    ggezx = next(
+        r
+        for r in guidestone
+        if r.ticker == "GGEZX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert ggezx.amount == Decimal("3.279591")
+
+    value_line = parse_distribution_html(
+        (ROOT / "value_line" / "2025_year_end_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://value_line",
+        fund_family="Value Line",
+    )
+    vleox = next(
+        r
+        for r in value_line
+        if r.ticker == "VLEOX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert vleox.amount == Decimal("3.79637")
+
+    permanent = parse_distribution_html(
+        (ROOT / "permanent_portfolio" / "2025_supplemental_tax_information.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://permanent_portfolio",
+        fund_family="Permanent Portfolio",
+    )
+    prpfx = next(
+        r
+        for r in permanent
+        if r.ticker == "PRPFX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert prpfx.amount == Decimal("1.561510")
+
+    conestoga = parse_distribution_html(
+        (ROOT / "conestoga" / "2026_estimated_capital_gains.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://conestoga",
+        fund_family="Conestoga",
+    )
+    ccalx = next(
+        r
+        for r in conestoga
+        if r.ticker == "CCALX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert ccalx.amount == Decimal("19.71")
+
+    kopernik = parse_distribution_html(
+        (ROOT / "kopernik" / "2025_final_distributions.html").read_text(encoding="utf-8"),
+        source_url="fixture://kopernik",
+        fund_family="Kopernik",
+    )
+    kggix = next(
+        r
+        for r in kopernik
+        if r.ticker == "KGGIX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert kggix.amount == Decimal("1.2488")
+
+    locorr = parse_distribution_html(
+        (ROOT / "locorr" / "2025_annual_distributions.html").read_text(encoding="utf-8"),
+        source_url="fixture://locorr",
+        fund_family="LoCorr",
+    )
+    leqix = next(
+        r
+        for r in locorr
+        if r.ticker == "LEQIX" and r.estimate_type == EstimateType.short_term_capital_gains
+    )
+    assert leqix.amount == Decimal("2.0297")
+
+    timothy = parse_distribution_html(
+        (ROOT / "timothy_plan" / "2025_year_end_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://timothy_plan",
+        fund_family="Timothy Plan",
+    )
+    tmvix = next(
+        r
+        for r in timothy
+        if r.ticker == "TMVIX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert tmvix.amount == Decimal("0.1303")
+
+    hodges = parse_distribution_html(
+        (ROOT / "hodges" / "2025_estimated_capital_gains.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://hodges",
+        fund_family="Hodges",
+    )
+    hdpmx = next(
+        r
+        for r in hodges
+        if r.ticker == "HDPMX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert hdpmx.amount == Decimal("5.82")
+
+    tocqueville = parse_distribution_html(
+        (ROOT / "tocqueville" / "2025_final_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://tocqueville",
+        fund_family="Tocqueville",
+    )
+    tocqx = next(
+        r
+        for r in tocqueville
+        if r.ticker == "TOCQX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert tocqx.amount == Decimal("3.578")
