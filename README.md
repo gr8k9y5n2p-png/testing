@@ -57,7 +57,7 @@ Staging is `noindex`. Switch `AFTERTAX_PUBLIC_URL` to `https://getaftertax.com` 
 - One-screen landing: hero (taxable impact in dollars) + **Search a fund** as the primary action. **Import a portfolio** is secondary and opens the paywall.
 - Instant **dollar illustration** after a fund is selected ($1,000,000 holding default, editable federal/state rates, min/max when present).
 - **Tax-delta compare** mounts next to that panel (selected fund vs a same-category peer; `/compare` is the standalone demo).
-- **Portfolio comparison** (`/portfolio-compare`): Current vs Proposed Allocation, tax drag %, more/less tax Δ, compact upcoming-distributions table under each column. No YoY bars.
+- **Portfolio comparison** (`/portfolio-compare`): Current vs Proposed Allocation, per-column tax-impact bars, compact upcoming-distributions table, tax drag %, more/less tax Δ. No YoY bars.
 - Soft counter (`3 of 3 free searches left` → `2 of 3…` → `0 free searches left`). After 3 unique tickers, the next search opens the paywall.
 - Highlights + estimates table sit below the fold as the sample universe — not a landing feature grid.
 - Sample/demo data banner. Capital Group / American Funds is treated as live ingest; other families show a **coverage gap**.

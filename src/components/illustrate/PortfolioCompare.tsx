@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { AllocationColumn } from "@/components/illustrate/portfolio-compare/AllocationColumn";
 import { SummaryStrip } from "@/components/illustrate/portfolio-compare/SummaryStrip";
+import { TaxImpactChart } from "@/components/illustrate/portfolio-compare/TaxImpactChart";
 import { UpcomingTable } from "@/components/illustrate/portfolio-compare/UpcomingTable";
 import { catalogFunds } from "@/lib/illustrate/portfolio-compare-catalog";
 import {
@@ -10,7 +11,10 @@ import {
   smokeProposedHoldings,
 } from "@/lib/illustrate/portfolio-compare-catalog";
 import { postIllustratePortfolioCompare } from "@/lib/illustrate/portfolio-compare-client";
-import { upcomingRowsForSide } from "@/lib/illustrate/portfolio-compare-map";
+import {
+  taxImpactBarsForSide,
+  upcomingRowsForSide,
+} from "@/lib/illustrate/portfolio-compare-map";
 import type {
   AllocationUnit,
   PortfolioCompareResponse,
@@ -158,6 +162,8 @@ export function PortfolioCompare({
   const proposedUpcoming = result
     ? upcomingRowsForSide(result.proposed, "proposed")
     : [];
+  const currentBars = result ? taxImpactBarsForSide(result.current) : [];
+  const proposedBars = result ? taxImpactBarsForSide(result.proposed) : [];
   const sample = Boolean(
     result &&
       (result.source === "mock" ||
@@ -216,35 +222,55 @@ export function PortfolioCompare({
           inputIdPrefix="proposed"
           onUnitChange={setProposedUnit}
           onChange={setProposed}
-          className="order-3 lg:order-2"
+          className="order-4 lg:order-2"
         />
 
         {!canFetch ? null : loading && !result ? (
           <>
             <div
-              className="order-2 h-48 animate-pulse rounded-2xl border border-line bg-surface lg:order-3"
+              className="order-2 h-44 animate-pulse rounded-2xl border border-line bg-surface lg:order-3"
+              aria-busy
+              aria-label="Loading current tax impact"
+            />
+            <div
+              className="order-5 h-44 animate-pulse rounded-2xl border border-line bg-surface lg:order-4"
+              aria-busy
+              aria-label="Loading proposed tax impact"
+            />
+            <div
+              className="order-3 h-48 animate-pulse rounded-2xl border border-line bg-surface lg:order-5"
               aria-busy
               aria-label="Loading current upcoming distributions"
             />
             <div
-              className="order-4 h-48 animate-pulse rounded-2xl border border-line bg-surface"
+              className="order-6 h-48 animate-pulse rounded-2xl border border-line bg-surface"
               aria-busy
               aria-label="Loading proposed upcoming distributions"
             />
           </>
         ) : result ? (
           <>
+            <TaxImpactChart
+              headingId="tax-impact-current"
+              bars={currentBars}
+              className="order-2 lg:order-3"
+            />
+            <TaxImpactChart
+              headingId="tax-impact-proposed"
+              bars={proposedBars}
+              className="order-5 lg:order-4"
+            />
             <UpcomingTable
               headingId="upcoming-current"
               rows={currentUpcoming}
               sample={sample}
-              className="order-2 lg:order-3"
+              className="order-3 lg:order-5"
             />
             <UpcomingTable
               headingId="upcoming-proposed"
               rows={proposedUpcoming}
               sample={sample}
-              className="order-4"
+              className="order-6"
             />
           </>
         ) : null}
