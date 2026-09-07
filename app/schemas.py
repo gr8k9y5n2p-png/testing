@@ -899,3 +899,114 @@ class PortfolioCompareResponse(BaseModel):
     )
     summary: PortfolioCompareSummary
     notes: list[str]
+
+
+AssetClassHint = Literal["equity", "fixed_income", "international"]
+
+
+class PerformanceGrowthRequest(BaseModel):
+    """Growth of $X chart request. Independent of tax / illustrate contracts."""
+
+    ticker: str | None = Field(default=None, max_length=32)
+    fund_identifier: str | None = Field(
+        default=None,
+        max_length=128,
+        description="Ticker or stored slug (e.g. AGTHX or the-growth-fund-of-america).",
+    )
+    benchmark: str | None = Field(
+        default=None,
+        max_length=32,
+        description="ETF/fund ticker. Omit to use the asset-class default (SPY / AGG / VXUS).",
+    )
+    asset_class: AssetClassHint | None = Field(
+        default=None,
+        description="equity | fixed_income | international. Used to pick the default ETF benchmark.",
+    )
+    benchmark_hint: AssetClassHint | None = Field(
+        default=None,
+        description="Alias of asset_class for Modules that already send a hint.",
+    )
+    start_dollars: Decimal = Field(default=Decimal("10000"), gt=0)
+    start_date: date | None = None
+    end_date: date | None = None
+    mode: str | None = Field(
+        default=None,
+        description='fixture (offline), live (Yahoo chart), or auto (live then fixture).',
+    )
+
+    model_config = ConfigDict(extra="forbid")
+
+    @field_validator("ticker", "fund_identifier", "benchmark", mode="before")
+    @classmethod
+    def blank_perf_fields(cls, value: Any) -> Any:
+        return _empty_to_none(value)
+
+    @field_validator("ticker", "benchmark", mode="after")
+    @classmethod
+    def perf_ticker_upper(cls, value: str | None) -> str | None:
+        return value.upper() if value else value
+
+    @field_validator("start_dollars", mode="before")
+    @classmethod
+    def perf_dollars(cls, value: Any) -> Any:
+        if isinstance(value, float):
+            return Decimal(str(value))
+        return value
+
+    @field_validator("mode")
+    @classmethod
+    def perf_mode_ok(cls, value: str | None) -> str | None:
+        if value is None:
+            return value
+        allowed = {"fixture", "live", "auto"}
+        if value not in allowed:
+            raise ValueError(f"mode must be one of {sorted(allowed)}")
+        return value
+
+    @model_validator(mode="after")
+    def require_fund(self) -> PerformanceGrowthRequest:
+        if not self.ticker and not self.fund_identifier:
+            raise ValueError("ticker or fund_identifier is required")
+        return self
+
+
+class PerformancePoint(BaseModel):
+    date: date
+    adj_close: Decimal = Field(description="Yahoo split/dividend-adjusted close (USD per share).")
+    monthly_return: Decimal | None = Field(
+        default=None,
+        description="Decimal total return vs prior month (0.01 = 1%). Null on the first point.",
+    )
+    growth_of_x: Decimal = Field(description="Cumulative dollars if start_dollars was invested at the first point.")
+
+
+class PerformanceSeriesOut(BaseModel):
+    ticker: str
+    name: str
+    currency: str = "USD"
+    price_unit: str = "usd_per_share_adjusted"
+    return_unit: str = "decimal"
+    growth_unit: str = "usd"
+    points: list[PerformancePoint]
+
+
+class PerformanceResponse(BaseModel):
+    fund_ticker: str
+    fund_identifier: str
+    fund_name: str
+    asset_class: AssetClassHint
+    start_dollars: Decimal
+    start_date: date
+    end_date: date
+    as_of: date
+    frequency: Literal["monthly"] = "monthly"
+    mode: str
+    source: str
+    source_urls: list[str] = Field(default_factory=list)
+    benchmark_id: str
+    benchmark_label: str
+    benchmark_tracks: str
+    is_proxy: bool
+    fund: PerformanceSeriesOut
+    benchmark: PerformanceSeriesOut
+    disclaimers: list[str] = Field(default_factory=list)

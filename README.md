@@ -28,6 +28,7 @@ Vanguard is the first-choice ICI book: official Primary Layout PDFs on the advis
 - `POST /illustrate/portfolio` — book-level review with coverage % and explicit gaps
 - `POST /illustrate/portfolio/compare` — Interactive Modules Current vs Proposed Allocation (single snapshot or YoY `periods[]`)
 - `POST /illustrate/compare` — Interactive Modules chart contract (`fund_vs_fund` or `yoy`)
+- `GET /performance` / `POST /performance/growth` — Growth of $X fund vs ETF-benchmark monthly series (not tax)
 - Top-110 US-advisor fund-family adapters (`GET /fund-families`, `GET /coverage`) plus `POST /coverage/gaps` when a portfolio ticker is missing
 - Partner ingest (`POST /ingest/distributions`) remains the escape hatch for uncovered names
 
@@ -91,6 +92,9 @@ curl -s -X POST http://127.0.0.1:8000/coverage/gaps \
   -H 'Content-Type: application/json' \
   -d '{"ticker":"XYZAX","fund_family":"dimensional","holding_dollars":150000}' | jq
 curl -s http://127.0.0.1:8000/distributions/<id> | jq
+
+# Growth of $X (AGTHX vs S&P 500 via SPY). Does not touch /illustrate.
+curl -s 'http://127.0.0.1:8000/performance?ticker=AGTHX&mode=fixture' | jq '{fund_ticker,benchmark_id,benchmark_label,is_proxy,start_dollars,as_of,points:(.fund.points|length)}'
 ```
 
 `POST /ingest/fetch` with `"fund_family":"all"` runs every **implemented** adapter (all 110 registered families in fixture mode).
@@ -427,6 +431,58 @@ Dollar fields are scaled linearly from the request holding: `value_at_10k = valu
 | `left_publication_stage` / `right_publication_stage` | Stage used |
 
 If neither side has current-year upcoming data the object is `null` and a note is added.
+
+## Growth of $X (`GET /performance`, `POST /performance/growth`)
+
+Interactive Modules can mount a **fund vs benchmark line chart** without calling tax endpoints. Tax YoY bars stay on `POST /illustrate/compare`. Weekly `python -m app.cli refresh` still ingests **distribution estimates only** — it does not refresh performance series.
+
+**Hero seed (fixture + live Yahoo chart):** `AGTHX` vs **S&P 500 via SPY**. Same source also covers `AMCPX`, `FBGRX`, `VFIAX`, `DODIX`, and `VTIAX`. Default benchmarks are **ETFs only** (no licensed S&P / Bloomberg / MSCI index feeds):
+
+| Asset class | Default ETF | Label (`benchmark_label` / `benchmark_tracks`) |
+| --- | --- | --- |
+| `equity` (default) | `SPY` | S&P 500 via SPY ETF total return |
+| `fixed_income` | `AGG` | Bloomberg US Aggregate via AGG ETF total return |
+| `international` | `VXUS` | MSCI ACWI ex USA via VXUS ETF total return |
+
+Pass `benchmark` to override, or send `asset_class` / `benchmark_hint` (`equity` | `fixed_income` | `international`) to pick the default. Response always includes `benchmark_id`, `benchmark_label`, `benchmark_tracks`, and `is_proxy` (`true` for SPY/AGG/VXUS).
+
+**Inputs:** `ticker` and/or `fund_identifier` (aliases: `the-growth-fund-of-america` → AGTHX; `amcap-fund` / `AMCAP` → AMCPX), optional `benchmark`, `start_dollars` (default **10000**), optional `start_date` / `end_date`, `mode` (`fixture` | `live` | `auto`; omit to use `FETCH_MODE`, which is `fixture` in CI).
+
+**Units**
+
+| Field | Unit |
+| --- | --- |
+| `fund.points[].adj_close` / `benchmark.points[].adj_close` | `usd_per_share_adjusted` (Yahoo split- and dividend-adjusted close) |
+| `monthly_return` | `decimal` total return vs prior month (`0.01` = 1%). Null on the first point. |
+| `growth_of_x` | `usd` — cumulative dollars if `start_dollars` was invested at the first overlapping month |
+| `as_of` | Latest source date on the aligned series (ISO date) |
+| `frequency` | `monthly` (aligned by year-month, not exact calendar day) |
+
+Fixtures live in `fixtures/performance/*.json` (recorded Yahoo monthly chart). `mode=live` hits `query1.finance.yahoo.com` and falls back to fixtures when the public chart is unavailable. Returns are **not invented**.
+
+```bash
+# Locked hero: Growth of $10,000 — AGTHX vs S&P 500 (SPY proxy)
+curl -s 'http://127.0.0.1:8000/performance?ticker=AGTHX&mode=fixture' \
+  | jq '{fund_ticker,fund_name,benchmark_id,benchmark_label,is_proxy,start_dollars,start_date,end_date,as_of,disclaimers}'
+
+# Same payload as JSON (date window + custom start)
+curl -s -X POST http://127.0.0.1:8000/performance/growth \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "ticker": "AGTHX",
+    "benchmark": "SPY",
+    "start_dollars": 10000,
+    "start_date": "2020-01-01",
+    "end_date": "2025-12-31",
+    "mode": "fixture"
+  }' | jq '{as_of, fund: (.fund.points[-1]), benchmark: (.benchmark.points[-1])}'
+
+# Asset-class defaults: DODIX → AGG, VTIAX → VXUS
+curl -s 'http://127.0.0.1:8000/performance?ticker=DODIX&mode=fixture' | jq '{benchmark_id,benchmark_label,is_proxy}'
+curl -s 'http://127.0.0.1:8000/performance?fund_identifier=the-growth-fund-of-america&mode=fixture' | jq .fund_ticker
+```
+
+`disclaimers[]` always states that performance is illustrative only, is **not tax advice**, and that default series are ETF total-return proxies rather than official index levels.
 
 ## Multi-year history and estimate → actual
 
@@ -859,7 +915,7 @@ pip install -r requirements-dev.txt
 pytest -q
 ```
 
-Coverage includes HTML normalization (American Funds plus top-110 family fixtures), multi-year history filters, upsert idempotency, search filters, tax illustration math, portfolio coverage, Current vs Proposed allocation compare, compare-chart deltas, and coverage-gap logging.
+Coverage includes HTML normalization (American Funds plus top-110 family fixtures), multi-year history filters, upsert idempotency, search filters, tax illustration math, portfolio coverage, Current vs Proposed allocation compare, compare-chart deltas, Growth of $X performance series, and coverage-gap logging.
 
 ## Layout
 
@@ -871,8 +927,10 @@ app/
   sources/             FundSource adapters + HTML parser
   services/ingest.py   Fetch + upsert orchestration
   services/illustrate.py  Tax-impact illustration
+  services/performance.py Growth of $X (Yahoo adj-close; not weekly refresh)
   services/coverage.py Coverage snapshot + gap logging
   cli.py               seed / fetch / families
 fixtures/<family>/     HTML fixtures (American Funds + top 110)
+fixtures/performance/  Monthly adj-close fixtures (AGTHX, SPY, AGG, VXUS, …)
 tests/
 ```

@@ -39,6 +39,8 @@ app = FastAPI(
         "(top-110 US-advisor families). POST /illustrate computes tax-impact math; "
         "POST /illustrate/compare is the fund chart contract; "
         "POST /illustrate/portfolio/compare is Current vs Proposed Allocation; "
+        "GET /performance and POST /performance/growth are Growth of $X charts "
+        "(independent of tax endpoints); "
         "GET /coverage and POST /coverage/gaps support Aftertax portfolio review."
     ),
     version=__version__,

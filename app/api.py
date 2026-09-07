@@ -28,8 +28,11 @@ from app.schemas import (
     PortfolioIllustrateResponse,
     IngestRequest,
     IngestResponse,
+    PerformanceGrowthRequest,
+    PerformanceResponse,
 )
 from app.services.coverage import coverage_snapshot, family_to_out, record_gap
+from app.services.performance import growth_of_x
 from app.services.illustrate import (
     illustrate,
     illustrate_compare,
@@ -189,3 +192,51 @@ def illustrate_portfolio_compare_tax(
 def illustrate_compare_tax(body: CompareRequest, session: Session = Depends(get_session)) -> CompareResponse:
     """Fund-vs-fund or year-over-year chart contract for Interactive Modules."""
     return illustrate_compare(session, body)
+
+
+@router.get("/performance", response_model=PerformanceResponse, tags=["performance"])
+def get_performance(
+    ticker: str | None = Query(default=None),
+    fund_identifier: str | None = Query(
+        default=None,
+        description="Ticker or stored slug (e.g. AGTHX or the-growth-fund-of-america).",
+    ),
+    benchmark: str | None = Query(
+        default=None,
+        description="ETF/fund ticker. Omit to use the asset-class default (SPY / AGG / VXUS).",
+    ),
+    asset_class: str | None = Query(
+        default=None,
+        description="equity | fixed_income | international. Picks the default ETF benchmark.",
+    ),
+    benchmark_hint: str | None = Query(
+        default=None,
+        description="Alias of asset_class for Modules that already send a hint.",
+    ),
+    start_dollars: float = Query(default=10_000, gt=0),
+    start_date: date | None = Query(default=None),
+    end_date: date | None = Query(default=None),
+    mode: str | None = Query(
+        default=None,
+        description="fixture | live | auto. Omit to use FETCH_MODE (fixture in CI).",
+    ),
+) -> PerformanceResponse:
+    """Growth of $X monthly series. Independent of tax / illustrate contracts."""
+    payload = PerformanceGrowthRequest(
+        ticker=ticker,
+        fund_identifier=fund_identifier,
+        benchmark=benchmark,
+        asset_class=asset_class,  # type: ignore[arg-type]
+        benchmark_hint=benchmark_hint,  # type: ignore[arg-type]
+        start_dollars=start_dollars,
+        start_date=start_date,
+        end_date=end_date,
+        mode=mode,
+    )
+    return PerformanceResponse.model_validate(growth_of_x(payload))
+
+
+@router.post("/performance/growth", response_model=PerformanceResponse, tags=["performance"])
+def post_performance_growth(payload: PerformanceGrowthRequest) -> PerformanceResponse:
+    """Same Growth of $X payload as GET /performance, as a JSON body."""
+    return PerformanceResponse.model_validate(growth_of_x(payload))
