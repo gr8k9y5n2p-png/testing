@@ -44,6 +44,31 @@ export type IllustrateRequest = {
   combine_state_with_federal?: boolean;
 };
 
+/** Locked sample JSON from the Data team contract. Do not rename fields. */
+export const EXAMPLE_ILLUSTRATE_REQUEST: IllustrateRequest = {
+  holding_dollars: 1_000_000,
+  distribution_ids: [
+    "225e599e-371e-47d8-a04e-ff307aff1e37",
+    "336fa51d-692b-495a-8e60-b1a95f2cb076",
+  ],
+  nav_per_share: 45.12,
+  tax_rates: {
+    ordinary_income: 0.37,
+    long_term_capital_gains: 0.2,
+    short_term_capital_gains: 0.37,
+    qualified_dividend: 0.2,
+    state: 0.05,
+  },
+  combine_state_with_federal: true,
+};
+
+/** Alternate selector form: % of NAV needs no nav_per_share. */
+export const EXAMPLE_SELECTOR_REQUEST: IllustrateRequest = {
+  holding_dollars: 1_000_000,
+  selector: { fund_family: "American Funds", fund_identifier: "AMCPX" },
+  nav_per_share: null,
+};
+
 export type IllustrationComponent = {
   distribution_id: string;
   fund_name: string;

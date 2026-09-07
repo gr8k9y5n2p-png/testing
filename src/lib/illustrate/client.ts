@@ -7,6 +7,7 @@ import type {
   IllustrateRequest,
   IllustrateResponse,
   IllustrationComponent,
+  TaxRates,
 } from "@/lib/illustrate/types";
 
 export {
@@ -34,34 +35,12 @@ function requiredNum(value: unknown, fallback = 0): number {
   return num(value) ?? fallback;
 }
 
-/** Data API (PR #2) uses `selectors` and `estimated_tax`; UI contract uses `selector` / `estimated_tax_dollars`. */
-export function toDataApiIllustrateBody(request: IllustrateRequest): Record<string, unknown> {
-  const body: Record<string, unknown> = {
-    holding_dollars: request.holding_dollars,
-    tax_rates: request.tax_rates,
-    combine_state_with_federal: request.combine_state_with_federal ?? true,
-    nav_per_share: request.nav_per_share ?? null,
-  };
-  if (request.distribution_ids?.length) {
-    body.distribution_ids = request.distribution_ids;
-  } else if (request.selector) {
-    body.selectors = {
-      fund_family: request.selector.fund_family,
-      fund_identifier: request.selector.fund_identifier,
-      ticker: request.selector.fund_identifier,
-    };
-  }
-  return body;
-}
-
+/**
+ * POSTs the locked request JSON as-is (`selector`, not `selectors`).
+ * Inbound responses are coerced into the locked response shape if a host
+ * still returns older aliases (`estimated_tax`, `notes`).
+ */
 export function normalizeIllustrateResponse(raw: Record<string, unknown>): IllustrateResponse {
-  if (raw.tax_rates_applied && raw.totals && typeof raw.totals === "object") {
-    const totals = raw.totals as Record<string, unknown>;
-    if (totals.estimated_tax_dollars != null || Array.isArray(raw.components)) {
-      return raw as unknown as IllustrateResponse;
-    }
-  }
-
   const componentsRaw = Array.isArray(raw.components) ? raw.components : [];
   const components: IllustrationComponent[] = componentsRaw.map((item) => {
     const row = item as Record<string, unknown>;
@@ -87,11 +66,11 @@ export function normalizeIllustrateResponse(raw: Record<string, unknown>): Illus
         row.estimated_tax_dollars_max ?? row.estimated_tax_max,
       ),
       notes:
-        row.notes == null
-          ? row.skip_reason == null
+        typeof row.notes === "string"
+          ? row.notes
+          : row.skip_reason == null
             ? null
-            : String(row.skip_reason)
-          : String(row.notes),
+            : String(row.skip_reason),
     };
   });
 
@@ -103,7 +82,8 @@ export function normalizeIllustrateResponse(raw: Record<string, unknown>): Illus
       : [];
 
   return {
-    tax_rates_applied: (raw.tax_rates_applied ?? raw.tax_rates) as IllustrateResponse["tax_rates_applied"],
+    tax_rates_applied: (raw.tax_rates_applied ??
+      raw.tax_rates) as TaxRates,
     components,
     totals: {
       distribution_dollars: requiredNum(totalsRaw.distribution_dollars),
@@ -129,14 +109,13 @@ export async function postIllustrate(
 ): Promise<IllustrateResponse> {
   const endpoint = getIllustrateEndpoint();
   const remote = !isMockIllustrateEndpoint(endpoint);
-  const payload = remote ? toDataApiIllustrateBody(request) : request;
 
   let response: Response;
   try {
     response = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(request),
       signal: init?.signal,
     });
   } catch (error) {

@@ -51,7 +51,7 @@ NEXT_PUBLIC_DATA_API_URL=http://localhost:8000 npm run dev
 
 Optional override for illustrate only: `NEXT_PUBLIC_ILLUSTRATE_URL=http://localhost:8000/illustrate`.
 
-Types live in `src/lib/illustrate/types.ts` (locked field names: `selector`, `tax_rates_applied`, `estimated_tax_dollars`, `warnings`). The client maps PR #2’s `selectors` / `estimated_tax` / `notes` into that shape.
+Types live in `src/lib/illustrate/types.ts` and must not drift. The client POSTs that JSON as-is (`selector`, not `selectors`). Mock `POST /api/illustrate` returns `tax_rates_applied`, `components[]`, `totals`, and `warnings[]`.
 
 Request: `holding_dollars`, `distribution_ids` **or** `selector: { fund_family, fund_identifier }`, optional `nav_per_share`, `tax_rates`, `combine_state_with_federal`.
 
