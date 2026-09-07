@@ -37,6 +37,18 @@ from app.sources.third_tier import (
     MfsSource,
     VirtusSource,
 )
+from app.sources.fourth_tier import (
+    ArtisanSource,
+    CalamosSource,
+    FirstEagleSource,
+    GmoSource,
+    HartfordSource,
+    JohnHancockSource,
+    MacquarieSource,
+    PrincipalSource,
+    ThriventSource,
+    WasatchSource,
+)
 
 _ALIASES = {
     "american_funds": "american_funds",
@@ -119,6 +131,28 @@ _ALIASES = {
     "eaton_vance": "eaton_vance",
     "eatonvance": "eaton_vance",
     "ev": "eaton_vance",
+    "john_hancock": "john_hancock",
+    "johnhancock": "john_hancock",
+    "manulife": "john_hancock",
+    "jh": "john_hancock",
+    "jhi": "john_hancock",
+    "principal": "principal",
+    "principalam": "principal",
+    "thrivent": "thrivent",
+    "hartford": "hartford",
+    "hartford_funds": "hartford",
+    "macquarie": "macquarie",
+    "delaware": "macquarie",
+    "delaware_funds": "macquarie",
+    "delaware_ivy": "macquarie",
+    "first_eagle": "first_eagle",
+    "firsteagle": "first_eagle",
+    "fei": "first_eagle",
+    "gmo": "gmo",
+    "artisan": "artisan",
+    "artisan_partners": "artisan",
+    "calamos": "calamos",
+    "wasatch": "wasatch",
 }
 
 
@@ -154,6 +188,16 @@ def _sources() -> dict[str, FundSource]:
         FederatedHermesSource(),
         VirtusSource(),
         EatonVanceSource(),
+        JohnHancockSource(),
+        PrincipalSource(),
+        ThriventSource(),
+        HartfordSource(),
+        MacquarieSource(),
+        FirstEagleSource(),
+        GmoSource(),
+        ArtisanSource(),
+        CalamosSource(),
+        WasatchSource(),
     ]
     return {source.slug: source for source in ordered}
 

@@ -39,6 +39,18 @@ from app.sources.third_tier import (
     MfsSource,
     VirtusSource,
 )
+from app.sources.fourth_tier import (
+    ArtisanSource,
+    CalamosSource,
+    FirstEagleSource,
+    GmoSource,
+    HartfordSource,
+    JohnHancockSource,
+    MacquarieSource,
+    PrincipalSource,
+    ThriventSource,
+    WasatchSource,
+)
 from app.sources.parser import parse_distribution_html, split_fund_identity
 
 ROOT = Path(__file__).resolve().parents[1] / "fixtures"
@@ -199,6 +211,16 @@ def test_adapters_fetch_fixture_mode() -> None:
         FederatedHermesSource(),
         VirtusSource(),
         EatonVanceSource(),
+        JohnHancockSource(),
+        PrincipalSource(),
+        ThriventSource(),
+        HartfordSource(),
+        MacquarieSource(),
+        FirstEagleSource(),
+        GmoSource(),
+        ArtisanSource(),
+        CalamosSource(),
+        WasatchSource(),
     ]
     for source in sources:
         result = source.fetch(mode="fixture")
@@ -459,3 +481,131 @@ def test_third_tier_fixtures() -> None:
         if r.ticker == "EOI" and r.estimate_type == EstimateType.long_term_capital_gains
     )
     assert eoi.amount == Decimal("0.1338")
+
+
+def test_fourth_tier_fixtures() -> None:
+    jh = parse_distribution_html(
+        (ROOT / "john_hancock" / "2025_estimated_capital_gains.html").read_text(encoding="utf-8"),
+        source_url="fixture://jh",
+        fund_family="John Hancock / Manulife",
+    )
+    tagrx = next(
+        r
+        for r in jh
+        if r.ticker == "TAGRX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert tagrx.amount_min == Decimal("6.85")
+    assert tagrx.amount_max == Decimal("7.60")
+
+    principal = parse_distribution_html(
+        (ROOT / "principal" / "2025_paid_distributions.html").read_text(encoding="utf-8"),
+        source_url="fixture://principal",
+        fund_family="Principal",
+    )
+    pqiax = next(
+        r
+        for r in principal
+        if r.ticker == "PQIAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert pqiax.amount == Decimal("3.3687")
+
+    thrivent = parse_distribution_html(
+        (ROOT / "thrivent" / "2025_paid_capital_gains.html").read_text(encoding="utf-8"),
+        source_url="fixture://thrivent",
+        fund_family="Thrivent",
+    )
+    tmsix = next(
+        r
+        for r in thrivent
+        if r.ticker == "TMSIX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert tmsix.amount == Decimal("4.02")
+
+    hartford = parse_distribution_html(
+        (ROOT / "hartford" / "2025_estimated_capital_gains.html").read_text(encoding="utf-8"),
+        source_url="fixture://hartford",
+        fund_family="Hartford Funds",
+    )
+    hfmcx = next(
+        r
+        for r in hartford
+        if r.ticker == "HFMCX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert hfmcx.amount == Decimal("5.36")
+
+    macquarie = parse_distribution_html(
+        (ROOT / "macquarie" / "2025_estimated_capital_gains.html").read_text(encoding="utf-8"),
+        source_url="fixture://macquarie",
+        fund_family="Macquarie / Delaware Funds",
+    )
+    wstax = next(
+        r
+        for r in macquarie
+        if r.ticker == "WSTAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert wstax.amount == Decimal("10.051")
+
+    first_eagle = parse_distribution_html(
+        (ROOT / "first_eagle" / "2025_estimated_income_and_gains.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://fei",
+        fund_family="First Eagle",
+    )
+    sgenx = next(
+        r
+        for r in first_eagle
+        if r.ticker == "SGENX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert sgenx.amount_min == Decimal("4.12")
+    assert sgenx.amount_max == Decimal("4.17")
+
+    gmo = parse_distribution_html(
+        (ROOT / "gmo" / "2026_july_distribution_estimates.html").read_text(encoding="utf-8"),
+        source_url="fixture://gmo",
+        fund_family="GMO",
+    )
+    gqetx = next(
+        r
+        for r in gmo
+        if r.ticker == "GQETX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert gqetx.amount == Decimal("0.7242")
+
+    artisan = parse_distribution_html(
+        (ROOT / "artisan" / "ytd_paid_distributions.html").read_text(encoding="utf-8"),
+        source_url="fixture://artisan",
+        fund_family="Artisan Partners",
+    )
+    artkx = next(
+        r
+        for r in artisan
+        if r.ticker == "ARTKX" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert artkx.amount == Decimal("0.338342")
+
+    calamos = parse_distribution_html(
+        (ROOT / "calamos" / "2025_estimated_capital_gains.html").read_text(encoding="utf-8"),
+        source_url="fixture://calamos",
+        fund_family="Calamos",
+    )
+    cvgrx = next(
+        r
+        for r in calamos
+        if r.ticker == "CVGRX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert cvgrx.amount == Decimal("4.07")
+
+    wasatch = parse_distribution_html(
+        (ROOT / "wasatch" / "2025_year_end_distribution_estimates.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://wasatch",
+        fund_family="Wasatch",
+    )
+    wgrox = next(
+        r
+        for r in wasatch
+        if r.ticker == "WGROX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert wgrox.amount == Decimal("6.01")
