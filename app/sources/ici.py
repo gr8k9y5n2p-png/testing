@@ -1,5 +1,9 @@
 """ICI Primary Layout ingest (CSV / named-column subset).
 
+Source preference (Eric): when a family publishes filled ICI Primary Layout
+files, those are the first-choice historical + ongoing book. PDF/HTML
+archives are the fallback. Blank ICI templates on ici.org are not a feed.
+
 Official ICI columns used here (see https://www.ici.org/year-end-tax-reporting):
 1 fund name, 2 CUSIP, 3 ticker, 7 record, 8 ex, 9 payable,
 14 income dividends, 15 short-term capital gain, 22 total capital gain (1099 Box 2a / LT).

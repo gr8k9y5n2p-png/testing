@@ -17,7 +17,8 @@ class BlackRockSource(HtmlTableSource):
         "Prior-year archives are 1099-style PDFs in the tax kits "
         "(2024: https://www.ishares.com/us/library/2024-tax-kit ; "
         "2023: https://www.ishares.com/us/literature/tax-information/2023-ishares-distribution-summary-stamped.pdf) "
-        "— not an HTML CG grid, so they are not fixture-transcribed."
+        "— not an HTML CG grid, so they are not fixture-transcribed. "
+        "No public ICI Primary Layout download was found on the iShares tax library."
     )
     live_limitations = "Live HTML on ishares.com/us/capital-gains-distributions is supported. 2023–2024 YE archives are PDF tax kits, not scrapeable HTML."
 
@@ -38,19 +39,16 @@ class VanguardSource(HtmlTableSource):
     aum_rank = 2
     priority = 2
     notes = (
-        "2025 year-end HTML fixture (advisor table columns) plus ICI Primary Layout "
-        "ingest for 2022–2024 December year-end rows. "
-        "Official ICI PDFs (not SPA HTML): "
-        "https://advisors.vanguard.com/content/dam/fas/pdfs/ICI_revised_2024_Primary_layout_spreadsheet.pdf "
-        "https://advisors.vanguard.com/content/dam/fas/pdfs/2023_ICI_Primary_Layout.pdf "
-        "https://advisors.vanguard.com/content/dam/fas/pdfs/2022_ICI_Primary_Layout.pdf "
-        "and 2025 https://advisors.vanguard.com/content/dam/fas/pdfs/ICIprimary_012026.pdf "
-        "(2025 ICI is not double-ingested — the existing YE fixture already has those heroes). "
-        "ICI rows are filtered to the >$1B / hero allowlist "
-        "(VFIAX, VBIAX, VIGAX, VTSAX, VTIAX, VOO). "
-        "December-only so quarterly income lines are not summed on one as_of. "
-        "https://advisors.vanguard.com/tax-center/year-end-distributions is a JS SPA; "
-        "live fetch falls back to fixtures. Tax center hub: https://advisors.vanguard.com/tax-center."
+        "ICI Primary Layout is the preferred source for historical + ongoing "
+        "Vanguard books (not the JS year-end SPA). Official PDFs: "
+        "2025 https://advisors.vanguard.com/content/dam/fas/pdfs/ICIprimary_012026.pdf "
+        "2024 https://advisors.vanguard.com/content/dam/fas/pdfs/ICI_revised_2024_Primary_layout_spreadsheet.pdf "
+        "2023 https://advisors.vanguard.com/content/dam/fas/pdfs/2023_ICI_Primary_Layout.pdf "
+        "2022 https://advisors.vanguard.com/content/dam/fas/pdfs/2022_ICI_Primary_Layout.pdf "
+        "2021 https://advisors.vanguard.com/content/dam/fas/pdfs/2021_ICI_Primary_Layout.pdf. "
+        "December-only ≥$1B Admiral / mega-ETF allowlist. "
+        "2025 ICI skips VFIAX / VBIAX / VIGAX so the existing YE HTML fixture "
+        "is not double-counted. Tax center hub: https://advisors.vanguard.com/tax-center."
     )
     live_limitations = (
         "Advisor year-end page is JavaScript-rendered; ICI archives are PDFs "
@@ -65,6 +63,14 @@ class VanguardSource(HtmlTableSource):
                 url="https://advisors.vanguard.com/tax-center/year-end-distributions",
                 fixture="year_end_distributions.html",
                 live=True,
+            ),
+            PageSpec(
+                name="ici_primary_2025",
+                url=f"{ici}/ICIprimary_012026.pdf",
+                fixture="ici_primary_2025.csv",
+                live=False,
+                parser="ici",
+                large_aum_only=True,
             ),
             PageSpec(
                 name="ici_primary_2024",
@@ -86,6 +92,14 @@ class VanguardSource(HtmlTableSource):
                 name="ici_primary_2022",
                 url=f"{ici}/2022_ICI_Primary_Layout.pdf",
                 fixture="ici_primary_2022.csv",
+                live=False,
+                parser="ici",
+                large_aum_only=True,
+            ),
+            PageSpec(
+                name="ici_primary_2021",
+                url=f"{ici}/2021_ICI_Primary_Layout.pdf",
+                fixture="ici_primary_2021.csv",
                 live=False,
                 parser="ici",
                 large_aum_only=True,
@@ -245,7 +259,12 @@ class InvescoSource(HtmlTableSource):
         "(American Franchise LT $2.89 / 8.55% of NAV). "
         "2024: https://www.invesco.com/us-rest/contentdetail?contentId=29096ee0-8ec4-4199-930f-645be9d07e64 "
         "(as of 2024-09-30; American Franchise LT $0.93 / 3.29% of NAV). "
-        "ETF estimates via press releases. Fixture HTML transcribes those tables; live PDF is not HTML-parsed."
+        "ETF estimates via press releases. Fixture HTML transcribes those tables; live PDF is not HTML-parsed. "
+        "Invesco lists ICI Primary distribution files on "
+        "https://www.invesco.com/us/en/accounts/tax-center/open-end-tax-guide.html "
+        "(2023–2025 most funds / REIT / SteelPath). No stable public file URL "
+        "was fetchable from this environment (JS / 406) — PDF/HTML archives remain "
+        "the supported path until an ICI download URL is confirmed."
     )
     live_limitations = "Estimates are PDF/PR/contentdetail, not an HTML grid. Fixture mode transcribes the public tables."
 

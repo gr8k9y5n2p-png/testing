@@ -219,7 +219,14 @@ def test_search_multi_year_top_families(client: TestClient) -> None:
     vfiax_as_ofs = {item["as_of"][:4] for item in vfiax_years.json()["items"] if item.get("as_of")}
     assert {"2022", "2023", "2024", "2025"} <= vfiax_as_ofs
     vtsax_years = client.get("/distributions", params={"fund_identifier": "VTSAX", "page_size": 50})
-    assert {"2022", "2023", "2024"} <= {item["as_of"][:4] for item in vtsax_years.json()["items"] if item.get("as_of")}
+    assert {"2021", "2022", "2023", "2024", "2025"} <= {
+        item["as_of"][:4] for item in vtsax_years.json()["items"] if item.get("as_of")
+    }
+    vfiax_2021 = client.get(
+        "/distributions",
+        params={"fund_identifier": "VFIAX", "as_of_from": "2021-01-01", "as_of_to": "2021-12-31"},
+    )
+    assert vfiax_2021.json()["total"] >= 1
 
 
 def test_compare_hero_yoy_fixture_bars(client: TestClient) -> None:

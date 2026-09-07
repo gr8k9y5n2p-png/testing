@@ -14,7 +14,22 @@ VG = Path(__file__).resolve().parents[1] / "fixtures" / "vanguard"
 
 
 def test_large_aum_allowlist_covers_heroes() -> None:
-    for ticker in ("VFIAX", "VBIAX", "VIGAX", "VTSAX", "VTIAX", "VOO", "FBGRX", "TRBCX", "AMCPX", "CGHM"):
+    for ticker in (
+        "VFIAX",
+        "VBIAX",
+        "VIGAX",
+        "VTSAX",
+        "VTIAX",
+        "VOO",
+        "VTI",
+        "VXUS",
+        "VWENX",
+        "VPMAX",
+        "FBGRX",
+        "TRBCX",
+        "AMCPX",
+        "CGHM",
+    ):
         assert is_large_aum_ticker(ticker)
     assert not is_large_aum_ticker("ZZTINY")
     assert not is_large_aum_ticker(None)
@@ -84,3 +99,41 @@ def test_parse_ici_primary_2024_december_flagships() -> None:
     assert voo.amount == Decimal("1.738500")
     assert {r.ticker for r in records} <= LARGE_AUM_TICKERS
     assert not any(r.ticker == "VFIAX" and r.estimate_type == EstimateType.long_term_capital_gains for r in records)
+    vwenx_lt = next(
+        r
+        for r in records
+        if r.ticker == "VWENX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert vwenx_lt.amount == Decimal("5.925344")
+    assert {"VTI", "VXUS", "VEA", "VWO", "VWENX", "VPMAX"} <= {r.ticker for r in records}
+
+
+def test_parse_ici_primary_2021_and_2025_ongoing() -> None:
+    y2021 = parse_ici_primary(
+        (VG / "ici_primary_2021.csv").read_text(encoding="utf-8"),
+        source_url="https://advisors.vanguard.com/content/dam/fas/pdfs/2021_ICI_Primary_Layout.pdf",
+        fund_family="Vanguard",
+    )
+    vfiax = next(
+        r for r in y2021 if r.ticker == "VFIAX" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert vfiax.amount == Decimal("1.535100")
+    assert str(vfiax.as_of) == "2021-12-31"
+
+    y2025 = parse_ici_primary(
+        (VG / "ici_primary_2025.csv").read_text(encoding="utf-8"),
+        source_url="https://advisors.vanguard.com/content/dam/fas/pdfs/ICIprimary_012026.pdf",
+        fund_family="Vanguard",
+    )
+    # Heroes already in the 2025 YE HTML fixture stay out of the ICI 2025 pack.
+    assert not any(r.ticker in {"VFIAX", "VBIAX", "VIGAX"} for r in y2025)
+    vtsax = next(
+        r for r in y2025 if r.ticker == "VTSAX" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert vtsax.amount == Decimal("0.459000")
+    assert str(vtsax.ex_date) == "2025-12-22"
+    voo = next(
+        r for r in y2025 if r.ticker == "VOO" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert voo.amount == Decimal("1.771000")
+    assert {r.ticker for r in y2025} <= LARGE_AUM_TICKERS
