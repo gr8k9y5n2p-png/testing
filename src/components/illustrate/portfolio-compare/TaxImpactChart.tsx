@@ -13,7 +13,7 @@ export function TaxImpactChart({
   return (
     <section
       aria-labelledby={headingId}
-      className={`rounded-2xl border border-line bg-surface p-3 shadow-[0_8px_24px_rgba(26,29,26,0.06)] sm:p-4 ${className}`}
+      className={`flex flex-col rounded-2xl border border-line bg-surface p-3 shadow-[0_8px_24px_rgba(26,29,26,0.06)] sm:p-4 ${className}`}
     >
       <header className="mb-3 flex flex-wrap items-end justify-between gap-2">
         <h2

@@ -201,7 +201,7 @@ export function PortfolioCompare({
         </label>
       </header>
 
-      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-2 lg:grid-rows-[auto_auto_auto]">
         <AllocationColumn
           title="Current allocation"
           holdings={current}
@@ -211,8 +211,36 @@ export function PortfolioCompare({
           inputIdPrefix="current"
           onUnitChange={setCurrentUnit}
           onChange={setCurrent}
-          className="order-1"
+          className="h-full lg:col-start-1 lg:row-start-1"
         />
+        {!canFetch ? null : loading && !result ? (
+          <div
+            className="h-44 animate-pulse rounded-2xl border border-line bg-surface lg:col-start-1 lg:row-start-2 lg:h-full"
+            aria-busy
+            aria-label="Loading current tax impact"
+          />
+        ) : result ? (
+          <TaxImpactChart
+            headingId="tax-impact-current"
+            bars={currentBars}
+            className="h-full lg:col-start-1 lg:row-start-2"
+          />
+        ) : null}
+        {!canFetch ? null : loading && !result ? (
+          <div
+            className="h-48 animate-pulse rounded-2xl border border-line bg-surface lg:col-start-1 lg:row-start-3 lg:h-full"
+            aria-busy
+            aria-label="Loading current upcoming distributions"
+          />
+        ) : result ? (
+          <UpcomingTable
+            headingId="upcoming-current"
+            rows={currentUpcoming}
+            sideLabel="Current"
+            className="h-full lg:col-start-1 lg:row-start-3"
+          />
+        ) : null}
+
         <AllocationColumn
           title="Proposed allocation"
           holdings={proposed}
@@ -222,57 +250,34 @@ export function PortfolioCompare({
           inputIdPrefix="proposed"
           onUnitChange={setProposedUnit}
           onChange={setProposed}
-          className="order-4 lg:order-2"
+          className="h-full lg:col-start-2 lg:row-start-1"
         />
-
         {!canFetch ? null : loading && !result ? (
-          <>
-            <div
-              className="order-2 h-44 animate-pulse rounded-2xl border border-line bg-surface lg:order-3"
-              aria-busy
-              aria-label="Loading current tax impact"
-            />
-            <div
-              className="order-5 h-44 animate-pulse rounded-2xl border border-line bg-surface lg:order-4"
-              aria-busy
-              aria-label="Loading proposed tax impact"
-            />
-            <div
-              className="order-3 h-48 animate-pulse rounded-2xl border border-line bg-surface lg:order-5"
-              aria-busy
-              aria-label="Loading current upcoming distributions"
-            />
-            <div
-              className="order-6 h-48 animate-pulse rounded-2xl border border-line bg-surface"
-              aria-busy
-              aria-label="Loading proposed upcoming distributions"
-            />
-          </>
+          <div
+            className="h-44 animate-pulse rounded-2xl border border-line bg-surface lg:col-start-2 lg:row-start-2 lg:h-full"
+            aria-busy
+            aria-label="Loading proposed tax impact"
+          />
         ) : result ? (
-          <>
-            <TaxImpactChart
-              headingId="tax-impact-current"
-              bars={currentBars}
-              className="order-2 lg:order-3"
-            />
-            <TaxImpactChart
-              headingId="tax-impact-proposed"
-              bars={proposedBars}
-              className="order-5 lg:order-4"
-            />
-            <UpcomingTable
-              headingId="upcoming-current"
-              rows={currentUpcoming}
-              sideLabel="Current"
-              className="order-3 lg:order-5"
-            />
-            <UpcomingTable
-              headingId="upcoming-proposed"
-              rows={proposedUpcoming}
-              sideLabel="Proposed"
-              className="order-6"
-            />
-          </>
+          <TaxImpactChart
+            headingId="tax-impact-proposed"
+            bars={proposedBars}
+            className="h-full lg:col-start-2 lg:row-start-2"
+          />
+        ) : null}
+        {!canFetch ? null : loading && !result ? (
+          <div
+            className="h-48 animate-pulse rounded-2xl border border-line bg-surface lg:col-start-2 lg:row-start-3 lg:h-full"
+            aria-busy
+            aria-label="Loading proposed upcoming distributions"
+          />
+        ) : result ? (
+          <UpcomingTable
+            headingId="upcoming-proposed"
+            rows={proposedUpcoming}
+            sideLabel="Proposed"
+            className="h-full lg:col-start-2 lg:row-start-3"
+          />
         ) : null}
       </div>
 
