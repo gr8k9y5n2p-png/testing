@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import ValidationError
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -222,17 +223,22 @@ def get_performance(
     ),
 ) -> PerformanceResponse:
     """Growth of $X monthly series. Independent of tax / illustrate contracts."""
-    payload = PerformanceGrowthRequest(
-        ticker=ticker,
-        fund_identifier=fund_identifier,
-        benchmark=benchmark,
-        asset_class=asset_class,  # type: ignore[arg-type]
-        benchmark_hint=benchmark_hint,  # type: ignore[arg-type]
-        start_dollars=start_dollars,
-        start_date=start_date,
-        end_date=end_date,
-        mode=mode,
-    )
+    if not ticker and not fund_identifier:
+        raise HTTPException(status_code=422, detail="ticker or fund_identifier is required")
+    try:
+        payload = PerformanceGrowthRequest(
+            ticker=ticker,
+            fund_identifier=fund_identifier,
+            benchmark=benchmark,
+            asset_class=asset_class,  # type: ignore[arg-type]
+            benchmark_hint=benchmark_hint,  # type: ignore[arg-type]
+            start_dollars=start_dollars,
+            start_date=start_date,
+            end_date=end_date,
+            mode=mode,
+        )
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     return PerformanceResponse.model_validate(growth_of_x(payload))
 
 
