@@ -51,6 +51,18 @@ from app.sources.fourth_tier import (
     ThriventSource,
     WasatchSource,
 )
+from app.sources.fifth_tier import (
+    GabelliSource,
+    HarborSource,
+    NationwideSource,
+    NylifeSource,
+    OakmarkSource,
+    RoyceSource,
+    TouchstoneSource,
+    TweedySource,
+    VictorySource,
+    VoyaSource,
+)
 from app.sources.parser import parse_distribution_html, split_fund_identity
 
 ROOT = Path(__file__).resolve().parents[1] / "fixtures"
@@ -221,6 +233,16 @@ def test_adapters_fetch_fixture_mode() -> None:
         ArtisanSource(),
         CalamosSource(),
         WasatchSource(),
+        HarborSource(),
+        NationwideSource(),
+        VoyaSource(),
+        OakmarkSource(),
+        TweedySource(),
+        GabelliSource(),
+        RoyceSource(),
+        NylifeSource(),
+        TouchstoneSource(),
+        VictorySource(),
     ]
     for source in sources:
         result = source.fetch(mode="fixture")
@@ -640,3 +662,134 @@ def test_fourth_tier_fixtures() -> None:
         if r.ticker == "WGROX" and r.estimate_type == EstimateType.long_term_capital_gains
     )
     assert wgrox.amount == Decimal("6.01")
+
+
+def test_fifth_tier_fixtures() -> None:
+    harbor = parse_distribution_html(
+        (ROOT / "harbor" / "2025_estimated_year_end_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://harbor",
+        fund_family="Harbor",
+    )
+    hacax = next(
+        r
+        for r in harbor
+        if r.ticker == "HACAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert hacax.amount == Decimal("11.89")
+
+    nationwide = parse_distribution_html(
+        (ROOT / "nationwide" / "2025_capital_gains_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://nationwide",
+        fund_family="Nationwide",
+    )
+    nwhox = next(
+        r
+        for r in nationwide
+        if r.ticker == "NWHOX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert nwhox.amount == Decimal("3.7231")
+
+    voya = parse_distribution_html(
+        (ROOT / "voya" / "2025_estimated_capital_gains.html").read_text(encoding="utf-8"),
+        source_url="fixture://voya",
+        fund_family="Voya",
+    )
+    nlcax = next(
+        r
+        for r in voya
+        if r.ticker == "NLCAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert nlcax.amount == Decimal("7.259")
+
+    oakmark = parse_distribution_html(
+        (ROOT / "oakmark" / "2025_year_end_distributions.html").read_text(encoding="utf-8"),
+        source_url="fixture://oakmark",
+        fund_family="Oakmark / Harris Associates",
+    )
+    oakex = next(
+        r
+        for r in oakmark
+        if r.ticker == "OAKEX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert oakex.amount == Decimal("0.7640")
+
+    tweedy = parse_distribution_html(
+        (ROOT / "tweedy" / "2025_estimated_year_end_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://tweedy",
+        fund_family="Tweedy, Browne",
+    )
+    tbgvx = next(
+        r
+        for r in tweedy
+        if r.ticker == "TBGVX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert tbgvx.amount == Decimal("2.516")
+
+    gabelli = parse_distribution_html(
+        (ROOT / "gabelli" / "2025_year_end_distributions.html").read_text(encoding="utf-8"),
+        source_url="fixture://gabelli",
+        fund_family="Gabelli",
+    )
+    gabgx = next(
+        r
+        for r in gabelli
+        if r.ticker == "GABGX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert gabgx.amount == Decimal("6.8575")
+
+    royce = parse_distribution_html(
+        (ROOT / "royce" / "2025_year_end_distributions.html").read_text(encoding="utf-8"),
+        source_url="fixture://royce",
+        fund_family="Royce",
+    )
+    rytrx = next(
+        r
+        for r in royce
+        if r.ticker == "RYTRX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert rytrx.amount == Decimal("0.7656")
+
+    nylife = parse_distribution_html(
+        (ROOT / "nylife" / "2025_estimated_capital_gains.html").read_text(encoding="utf-8"),
+        source_url="fixture://nylife",
+        fund_family="New York Life Investments / MainStay",
+    )
+    mlaix = next(
+        r
+        for r in nylife
+        if r.ticker == "MLAIX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert mlaix.amount_min == Decimal("1.01")
+    assert mlaix.amount_max == Decimal("3.00")
+
+    touchstone = parse_distribution_html(
+        (ROOT / "touchstone" / "2025_capital_gains.html").read_text(encoding="utf-8"),
+        source_url="fixture://touchstone",
+        fund_family="Touchstone",
+    )
+    tvlax = next(
+        r
+        for r in touchstone
+        if r.ticker == "TVLAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert tvlax.amount == Decimal("1.28631")
+
+    victory = parse_distribution_html(
+        (ROOT / "victory" / "2025_estimated_capital_gains.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://victory",
+        fund_family="Victory Capital",
+    )
+    mmeax = next(
+        r
+        for r in victory
+        if r.ticker == "MMEAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert mmeax.amount == Decimal("3.876127")

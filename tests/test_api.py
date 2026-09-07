@@ -98,10 +98,14 @@ def test_fixture_fetch_and_search_filters(client: TestClient) -> None:
     assert slugs["eaton_vance"]["aum_rank"] == 30
     assert slugs["john_hancock"]["aum_rank"] == 31
     assert slugs["wasatch"]["aum_rank"] == 40
+    assert slugs["harbor"]["aum_rank"] == 41
+    assert slugs["victory"]["aum_rank"] == 50
     assert slugs["dimensional"]["implemented"] is True
     assert slugs["ab"]["implemented"] is True
     assert slugs["calamos"]["implemented"] is True
-    assert len(slugs) == 40
+    assert slugs["oakmark"]["implemented"] is True
+    assert slugs["nylife"]["implemented"] is True
+    assert len(slugs) == 50
 
 
 def test_manual_ingest_partner_feed(client: TestClient) -> None:

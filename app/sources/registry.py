@@ -49,6 +49,18 @@ from app.sources.fourth_tier import (
     ThriventSource,
     WasatchSource,
 )
+from app.sources.fifth_tier import (
+    GabelliSource,
+    HarborSource,
+    NationwideSource,
+    NylifeSource,
+    OakmarkSource,
+    RoyceSource,
+    TouchstoneSource,
+    TweedySource,
+    VictorySource,
+    VoyaSource,
+)
 
 _ALIASES = {
     "american_funds": "american_funds",
@@ -153,6 +165,31 @@ _ALIASES = {
     "artisan_partners": "artisan",
     "calamos": "calamos",
     "wasatch": "wasatch",
+    "harbor": "harbor",
+    "harbor_capital": "harbor",
+    "nationwide": "nationwide",
+    "voya": "voya",
+    "allianzgi": "voya",
+    "allianz_gi": "voya",
+    "oakmark": "oakmark",
+    "harris": "oakmark",
+    "harris_associates": "oakmark",
+    "tweedy": "tweedy",
+    "tweedy_browne": "tweedy",
+    "tweedybrowne": "tweedy",
+    "gabelli": "gabelli",
+    "gamco": "gabelli",
+    "royce": "royce",
+    "royce_funds": "royce",
+    "nylife": "nylife",
+    "nyli": "nylife",
+    "nylim": "nylife",
+    "mainstay": "nylife",
+    "new_york_life": "nylife",
+    "touchstone": "touchstone",
+    "victory": "victory",
+    "vcm": "victory",
+    "victory_capital": "victory",
 }
 
 
@@ -198,6 +235,16 @@ def _sources() -> dict[str, FundSource]:
         ArtisanSource(),
         CalamosSource(),
         WasatchSource(),
+        HarborSource(),
+        NationwideSource(),
+        VoyaSource(),
+        OakmarkSource(),
+        TweedySource(),
+        GabelliSource(),
+        RoyceSource(),
+        NylifeSource(),
+        TouchstoneSource(),
+        VictorySource(),
     ]
     return {source.slug: source for source in ordered}
 
