@@ -3,12 +3,12 @@ from __future__ import annotations
 from fastapi.testclient import TestClient
 
 
-def test_coverage_endpoint_lists_top_90(client: TestClient) -> None:
+def test_coverage_endpoint_lists_top_100(client: TestClient) -> None:
     response = client.get("/coverage")
     assert response.status_code == 200
     body = response.json()
-    assert body["top_n"] == 90
-    assert body["implemented_count"] == 90
+    assert body["top_n"] == 100
+    assert body["implemented_count"] == 100
     assert body["stub_count"] == 0
     assert body["implemented_pct"] == 100.0
     slugs = [row["slug"] for row in body["families"]]
@@ -103,6 +103,16 @@ def test_coverage_endpoint_lists_top_90(client: TestClient) -> None:
         "fam",
         "meridian",
         "kinetics",
+        "lazard",
+        "manning_napier",
+        "westwood",
+        "boston_partners",
+        "homestead",
+        "madison",
+        "lsv",
+        "lkcm",
+        "oberweis",
+        "riverpark",
     ]
     assert all(row["coverage_tier"] == "implemented" for row in body["families"])
     assert body["families"][0]["priority"] == 1
@@ -122,6 +132,8 @@ def test_coverage_endpoint_lists_top_90(client: TestClient) -> None:
     assert body["families"][79]["slug"] == "impax"
     assert body["families"][80]["aum_rank"] == 81
     assert body["families"][89]["slug"] == "kinetics"
+    assert body["families"][90]["aum_rank"] == 91
+    assert body["families"][99]["slug"] == "riverpark"
 
 
 def test_coverage_gap_implemented_family(client: TestClient) -> None:
@@ -271,6 +283,24 @@ def test_coverage_gap_alias_eighth_tier(client: TestClient) -> None:
     fmimgt = client.post("/coverage/gaps", json={"ticker": "FMIUX", "fund_family": "fmimgt"})
     assert fmimgt.status_code == 200
     assert fmimgt.json()["adapter_slug"] == "fmi"
+
+
+def test_coverage_gap_alias_tenth_tier(client: TestClient) -> None:
+    lazard = client.post("/coverage/gaps", json={"ticker": "LZIEX", "fund_family": "lam"})
+    assert lazard.status_code == 200
+    assert lazard.json()["adapter_slug"] == "lazard"
+    manning = client.post("/coverage/gaps", json={"ticker": "MNHIX", "fund_family": "manning"})
+    assert manning.status_code == 200
+    assert manning.json()["adapter_slug"] == "manning_napier"
+    westwood = client.post("/coverage/gaps", json={"ticker": "WHGLX", "fund_family": "whg"})
+    assert westwood.status_code == 200
+    assert westwood.json()["adapter_slug"] == "westwood"
+    homestead = client.post("/coverage/gaps", json={"ticker": "HOVLX", "fund_family": "nreca"})
+    assert homestead.status_code == 200
+    assert homestead.json()["adapter_slug"] == "homestead"
+    riverpark = client.post("/coverage/gaps", json={"ticker": "RPXIX", "fund_family": "rp"})
+    assert riverpark.status_code == 200
+    assert riverpark.json()["adapter_slug"] == "riverpark"
 
 
 def test_coverage_gap_alias_ninth_tier(client: TestClient) -> None:

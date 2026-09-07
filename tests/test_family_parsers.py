@@ -111,6 +111,18 @@ from app.sources.ninth_tier import (
     MairsPowerSource,
     MeridianSource,
 )
+from app.sources.tenth_tier import (
+    BostonPartnersSource,
+    HomesteadSource,
+    LazardSource,
+    LkcmSource,
+    LsvSource,
+    MadisonSource,
+    ManningNapierSource,
+    OberweisSource,
+    RiverparkSource,
+    WestwoodSource,
+)
 from app.sources.parser import parse_distribution_html, split_fund_identity
 
 ROOT = Path(__file__).resolve().parents[1] / "fixtures"
@@ -331,6 +343,16 @@ def test_adapters_fetch_fixture_mode() -> None:
         FamSource(),
         MeridianSource(),
         KineticsSource(),
+        LazardSource(),
+        ManningNapierSource(),
+        WestwoodSource(),
+        BostonPartnersSource(),
+        HomesteadSource(),
+        MadisonSource(),
+        LsvSource(),
+        LkcmSource(),
+        OberweisSource(),
+        RiverparkSource(),
     ]
     for source in sources:
         result = source.fetch(mode="fixture")
@@ -1434,3 +1456,141 @@ def test_ninth_tier_fixtures() -> None:
         if r.ticker == "WWNPX" and r.estimate_type == EstimateType.long_term_capital_gains
     )
     assert wwnpx.amount == Decimal("8.68572")
+
+
+def test_tenth_tier_fixtures() -> None:
+    lazard = parse_distribution_html(
+        (ROOT / "lazard" / "2025_estimated_annual_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://lazard",
+        fund_family="Lazard",
+    )
+    lziex = next(
+        r
+        for r in lazard
+        if r.ticker == "LZIEX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert lziex.amount == Decimal("1.50")
+
+    manning = parse_distribution_html(
+        (ROOT / "manning_napier" / "2025_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://manning_napier",
+        fund_family="Manning & Napier",
+    )
+    mnhix = next(
+        r
+        for r in manning
+        if r.ticker == "MNHIX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert mnhix.amount == Decimal("2.56840")
+
+    westwood = parse_distribution_html(
+        (ROOT / "westwood" / "2025_estimated_capital_gains.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://westwood",
+        fund_family="Westwood",
+    )
+    whglx = next(
+        r
+        for r in westwood
+        if r.ticker == "WHGLX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert whglx.amount == Decimal("2.235")
+
+    boston = parse_distribution_html(
+        (ROOT / "boston_partners" / "2025_estimated_capital_gains.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://boston_partners",
+        fund_family="Boston Partners",
+    )
+    bpaix = next(
+        r
+        for r in boston
+        if r.ticker == "BPAIX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert bpaix.amount == Decimal("2.73")
+
+    homestead = parse_distribution_html(
+        (ROOT / "homestead" / "2025_year_end_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://homestead",
+        fund_family="Homestead",
+    )
+    hovlx = next(
+        r
+        for r in homestead
+        if r.ticker == "HOVLX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert hovlx.amount == Decimal("3.7449")
+
+    madison = parse_distribution_html(
+        (ROOT / "madison" / "2025_capital_gains.html").read_text(encoding="utf-8"),
+        source_url="fixture://madison",
+        fund_family="Madison",
+    )
+    mnvax = next(
+        r
+        for r in madison
+        if r.ticker == "MNVAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert mnvax.amount == Decimal("1.92670046")
+
+    lsv = parse_distribution_html(
+        (ROOT / "lsv" / "2025_year_end_distributions.html").read_text(encoding="utf-8"),
+        source_url="fixture://lsv",
+        fund_family="LSV",
+    )
+    lsvex = next(
+        r
+        for r in lsv
+        if r.ticker == "LSVEX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert lsvex.amount == Decimal("4.4395")
+
+    lkcm = parse_distribution_html(
+        (ROOT / "lkcm" / "2025_estimated_year_end_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://lkcm",
+        fund_family="LKCM",
+    )
+    lkeqx = next(
+        r
+        for r in lkcm
+        if r.ticker == "LKEQX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert lkeqx.amount == Decimal("3.8475")
+
+    oberweis = parse_distribution_html(
+        (ROOT / "oberweis" / "2025_final_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://oberweis",
+        fund_family="Oberweis",
+    )
+    obegx = next(
+        r
+        for r in oberweis
+        if r.ticker == "OBEGX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert obegx.amount == Decimal("3.9791")
+
+    riverpark = parse_distribution_html(
+        (ROOT / "riverpark" / "2025_final_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://riverpark",
+        fund_family="RiverPark",
+    )
+    rpxix = next(
+        r
+        for r in riverpark
+        if r.ticker == "RPXIX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert rpxix.amount == Decimal("2.6688")

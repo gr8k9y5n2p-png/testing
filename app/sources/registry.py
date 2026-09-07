@@ -109,6 +109,18 @@ from app.sources.ninth_tier import (
     MairsPowerSource,
     MeridianSource,
 )
+from app.sources.tenth_tier import (
+    BostonPartnersSource,
+    HomesteadSource,
+    LazardSource,
+    LkcmSource,
+    LsvSource,
+    MadisonSource,
+    ManningNapierSource,
+    OberweisSource,
+    RiverparkSource,
+    WestwoodSource,
+)
 
 _ALIASES = {
     "american_funds": "american_funds",
@@ -316,6 +328,28 @@ _ALIASES = {
     "arrowmark": "meridian",
     "kinetics": "kinetics",
     "horizon_kinetics": "kinetics",
+    "lazard": "lazard",
+    "lam": "lazard",
+    "manning_napier": "manning_napier",
+    "manning": "manning_napier",
+    "manningandnapier": "manning_napier",
+    "westwood": "westwood",
+    "whg": "westwood",
+    "boston_partners": "boston_partners",
+    "bostonpartners": "boston_partners",
+    "robeco": "boston_partners",
+    "homestead": "homestead",
+    "nreca": "homestead",
+    "madison": "madison",
+    "madison_funds": "madison",
+    "lsv": "lsv",
+    "lsvasset": "lsv",
+    "lkcm": "lkcm",
+    "luther_king": "lkcm",
+    "oberweis": "oberweis",
+    "oam": "oberweis",
+    "riverpark": "riverpark",
+    "rp": "riverpark",
 }
 
 
@@ -411,6 +445,16 @@ def _sources() -> dict[str, FundSource]:
         FamSource(),
         MeridianSource(),
         KineticsSource(),
+        LazardSource(),
+        ManningNapierSource(),
+        WestwoodSource(),
+        BostonPartnersSource(),
+        HomesteadSource(),
+        MadisonSource(),
+        LsvSource(),
+        LkcmSource(),
+        OberweisSource(),
+        RiverparkSource(),
     ]
     return {source.slug: source for source in ordered}
 
