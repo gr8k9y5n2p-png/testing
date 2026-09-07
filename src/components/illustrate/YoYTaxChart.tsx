@@ -72,14 +72,16 @@ export function YoYTaxChart({
               aria-hidden
               viewBox="0 0 100 100"
               preserveAspectRatio="none"
-              className="pointer-events-none absolute inset-x-0 top-5 h-28 w-full"
+              className="pointer-events-none absolute inset-x-[6%] top-5 h-28 w-[88%]"
             >
               <polyline
                 fill="none"
                 stroke="currentColor"
-                strokeWidth="1.4"
+                strokeWidth="2"
+                strokeLinejoin="round"
+                strokeLinecap="round"
                 vectorEffect="non-scaling-stroke"
-                className="text-ink/45"
+                className="text-accent"
                 points={linePoints.join(" ")}
               />
             </svg>

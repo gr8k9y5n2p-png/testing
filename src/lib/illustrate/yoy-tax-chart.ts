@@ -24,18 +24,21 @@ export function sortYoYPoints(points: YoYTaxChartPoint[]): YoYTaxChartPoint[] {
 }
 
 /**
- * Descending YoY tax line: change vs the prior calendar year.
- * A year with no value, or no prior value, is null (gap in the line).
+ * Descending YoY tax line: change vs the last announced calendar year.
+ * Unannounced years stay null so the line can skip a gap.
  */
 export function computeYoyLine(bars: YoYTaxChartPoint[]): YoYTaxChartPoint[] {
   const sorted = sortYoYPoints(bars);
-  return sorted.map((point, index) => {
-    if (index === 0) return { year: point.year, value: null };
-    const prior = sorted[index - 1];
-    if (point.value == null || prior.value == null) {
+  let lastAnnounced: number | null = null;
+  return sorted.map((point) => {
+    if (point.value == null) return { year: point.year, value: null };
+    if (lastAnnounced == null) {
+      lastAnnounced = point.value;
       return { year: point.year, value: null };
     }
-    return { year: point.year, value: point.value - prior.value };
+    const delta = point.value - lastAnnounced;
+    lastAnnounced = point.value;
+    return { year: point.year, value: delta };
   });
 }
 
