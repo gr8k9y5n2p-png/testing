@@ -13,6 +13,8 @@ Then open [http://localhost:3000](http://localhost:3000). Search **AMCPX** (Capi
 
 Standalone compare demo: [http://localhost:3000/compare](http://localhost:3000/compare). Import `FundTaxDeltaCompare` from `@/components/illustrate`.
 
+Standalone **portfolio comparison** demo: [http://localhost:3000/portfolio-compare](http://localhost:3000/portfolio-compare). Import `PortfolioCompare` from `@/components/illustrate`.
+
 Aftertax is a search-first workspace for wholesalers and financial advisors. This repo slice is the **website UI**: fund search, highlights, holding size, adjustable tax rates, and results. The Data team owns ingest, `GET /distributions`, and production `POST /illustrate` math (see PR #2).
 
 ## Run locally
@@ -55,6 +57,7 @@ Staging is `noindex`. Switch `AFTERTAX_PUBLIC_URL` to `https://getaftertax.com` 
 - One-screen landing: hero (taxable impact in dollars) + **Search a fund** as the primary action. **Import a portfolio** is secondary and opens the paywall.
 - Instant **dollar illustration** after a fund is selected ($1,000,000 holding default, editable federal/state rates, min/max when present).
 - **Tax-delta compare** mounts next to that panel (selected fund vs a same-category peer; `/compare` is the standalone demo).
+- **Portfolio comparison** (`/portfolio-compare`): Current vs Proposed Allocation, tax drag %, more/less tax Δ, upcoming distributions table. No YoY bars.
 - Soft counter (`3 of 3 free searches left` → `2 of 3…` → `0 free searches left`). After 3 unique tickers, the next search opens the paywall.
 - Highlights + estimates table sit below the fold as the sample universe — not a landing feature grid.
 - Sample/demo data banner. Capital Group / American Funds is treated as live ingest; other families show a **coverage gap**.
@@ -78,14 +81,15 @@ The browser **does not** compute tax. Aftertax calls the Data API when `NEXT_PUB
 
 | Mode | How |
 | --- | --- |
-| Demo (default) | Local mocks: `POST /api/illustrate`, `POST /api/illustrate/compare`, `POST /api/illustrate/portfolio`, `GET /api/coverage`, `GET /api/fund-families` |
+| Demo (default) | Local mocks: `POST /api/illustrate`, `POST /api/illustrate/compare`, `POST /api/illustrate/portfolio`, `POST /api/illustrate/portfolio/compare`, `GET /api/coverage`, `GET /api/fund-families` |
 | Data team FastAPI (PR #2) | `NEXT_PUBLIC_DATA_API_URL=http://localhost:8000` |
 
 Wired endpoints:
 
 - `POST /illustrate` — UI sends locked `selector: { fund_family, fund_identifier }`; the client also sends PR #2’s `selectors` alias. Response is normalized to `tax_rates_applied`, `estimated_tax_dollars`, `warnings`.
 - `POST /illustrate/compare` — `mode: "fund_vs_fund"` with `left` / `right` selectors + `periods[]`. Deltas are **right − left**. The card maps them to Fund A (left) cost-to-holder prose (`costToA = −delta`). Chart field: `periods[].deltas.effective_tax_on_holding`. Footer uses `summary` at $10k. Local mock returns the locked sketch fixture when the Data API is down. Homepage mounts `FundTaxDeltaCompare` next to dollar illustrate; standalone demo: `/compare`.
-- `POST /illustrate/portfolio` — coverage `dollars_covered` / `dollars_uncovered` / `coverage_pct` + `gaps[]` + `warnings` (shown on the illustrate panel).
+- `POST /illustrate/portfolio/compare` — Current vs Proposed Allocation. Body: `current` / `proposed` `{ label?, holdings[], book_dollars }` with `ticker` + `weight_pct` (or `holding_dollars`). Deltas are **proposed − current** (`deltas.estimated_tax`, `effective_tax_on_holding`). v1 is a single snapshot — **do not send `periods[]`**. Upcoming table prefers `holdings[].upcoming`, else `holdings[].illustration` + `publication_stage_used`. If compare is 404/down, the client double-calls `POST /illustrate/portfolio` and synthesizes deltas; localhost falls back to the sketch fixture. Standalone demo: `/portfolio-compare`. Import `PortfolioCompare` from `@/components/illustrate`.
+- `POST /illustrate/portfolio` — coverage `dollars_covered` / `dollars_uncovered` / `coverage_pct` + `gaps[]` + `warnings` (shown on the illustrate panel). Also the fallback for portfolio compare.
 - `GET /distributions` — aggregated into the search table (seed fills tickers the API does not yet return).
 - `GET /coverage`, `GET /fund-families` — `coverage_tier`, `aum_rank`, `priority` (Live vs Gap in picker / results / illustrate).
 - `POST /coverage/gaps` — logged when a gap ticker is selected.
@@ -109,6 +113,7 @@ NEXT_PUBLIC_DATA_API_URL=http://localhost:8000 npm run dev
 
 Optional illustrate-only override: `NEXT_PUBLIC_ILLUSTRATE_URL=http://localhost:8000/illustrate`.
 Optional compare-only override: `NEXT_PUBLIC_COMPARE_URL=http://localhost:8000/illustrate/compare`.
+Optional portfolio-compare override: `NEXT_PUBLIC_PORTFOLIO_COMPARE_URL=http://localhost:8000/illustrate/portfolio/compare`.
 
 Types live in `src/lib/illustrate/types.ts`. Mock `POST /api/illustrate` returns `tax_rates_applied`, `components[]`, `totals`, and `warnings[]`.
 

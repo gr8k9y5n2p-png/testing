@@ -8,3 +8,12 @@ export type {
   CompareResponse,
   CompareSideIn,
 } from "@/lib/illustrate/compare-types";
+export { PortfolioCompare } from "@/components/illustrate/PortfolioCompare";
+export type { PortfolioCompareProps } from "@/components/illustrate/PortfolioCompare";
+export { postIllustratePortfolioCompare } from "@/lib/illustrate/portfolio-compare-client";
+export type {
+  PortfolioCompareRequest,
+  PortfolioCompareResponse,
+  PortfolioFundOption,
+  PortfolioHoldingDraft,
+} from "@/lib/illustrate/portfolio-compare-types";
