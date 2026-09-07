@@ -259,6 +259,61 @@ def test_portfolio_compare_preserves_gaps_on_both_sides(client: TestClient) -> N
     assert any("Uncovered holdings" in note for note in body["notes"])
 
 
+def test_portfolio_compare_eric_beta_current_book(client: TestClient) -> None:
+    """Locked Current AGTHX/DODIX/AMCAP/VIGAX 25% vs Proposed six heroes ~16.67%."""
+    _seed(client, "american_funds", "dodge_cox", "vanguard", "t_rowe_price", "fidelity")
+    response = client.post(
+        "/illustrate/portfolio/compare",
+        json={
+            "current": {
+                "label": "Current Allocation",
+                "book_dollars": 1000000,
+                "holdings": [
+                    {"ticker": "AGTHX", "weight_pct": 25},
+                    {"ticker": "DODIX", "weight_pct": 25, "nav_per_share": 100},
+                    {"ticker": "AMCAP", "weight_pct": 25},
+                    {"ticker": "VIGAX", "weight_pct": 25, "nav_per_share": 100},
+                ],
+            },
+            "proposed": {
+                "label": "Proposed Allocation",
+                "book_dollars": 1000000,
+                "holdings": [
+                    {"ticker": "AMCPX", "weight_pct": 16.67},
+                    {"ticker": "CGHM", "weight_pct": 16.67, "nav_per_share": 25},
+                    {"ticker": "TRBCX", "weight_pct": 16.67, "nav_per_share": 100},
+                    {"ticker": "VFIAX", "weight_pct": 16.67, "nav_per_share": 100},
+                    {"ticker": "VBIAX", "weight_pct": 16.67, "nav_per_share": 100},
+                    {"ticker": "FBGRX", "weight_pct": 16.67, "nav_per_share": 100},
+                ],
+            },
+            "tax_rates": {},
+            "combine_state_with_federal": True,
+            "snapshot": {},
+        },
+    )
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["periods"] == []
+    current_by_ticker = {h["ticker"]: h for h in body["current"]["holdings"]}
+    assert current_by_ticker["AMCAP"]["fund_identifier"] == "amcap-fund"
+    assert current_by_ticker["AGTHX"]["fund_identifier"] == "the-growth-fund-of-america"
+    assert all(h["covered"] for h in body["current"]["holdings"])
+    assert all(h["covered"] for h in body["proposed"]["holdings"])
+    assert body["current"]["gaps"] == []
+    assert body["proposed"]["gaps"] == []
+    assert Decimal(body["current"]["coverage"]["coverage_pct"]) == Decimal("100.000000")
+    assert Decimal(body["proposed"]["coverage"]["coverage_pct"]) == Decimal("100.000000")
+    assert {h["ticker"] for h in body["proposed"]["holdings"]} == {
+        "AMCPX",
+        "CGHM",
+        "TRBCX",
+        "VFIAX",
+        "VBIAX",
+        "FBGRX",
+    }
+
+
 COMPARE_RATES = {
     "ordinary_income": 0.35,
     "long_term_capital_gains": 0.15,

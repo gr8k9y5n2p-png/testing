@@ -199,6 +199,15 @@ def test_vanguard_fixture() -> None:
     assert income.amount == Decimal("0.27800")
     vfiax = next(r for r in records if r.ticker == "VFIAX")
     assert vfiax.amount == Decimal("1.76960")
+    vigax = next(
+        r
+        for r in records
+        if r.ticker == "VIGAX" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert vigax.amount == Decimal("0.251100")
+    assert str(vigax.record_date) == "2025-12-19"
+    assert str(vigax.ex_date) == "2025-12-22"
+    assert str(vigax.payable_date) == "2025-12-23"
 
 
 def test_t_rowe_split_header_fixture() -> None:
@@ -564,6 +573,27 @@ def test_third_tier_fixtures() -> None:
         if r.ticker == "DODGX" and r.estimate_type == EstimateType.long_term_capital_gains
     )
     assert dodgx.amount == Decimal("0.16")
+    assert not any(r.ticker == "DODIX" for r in dodge)
+
+    dodge_paid = parse_distribution_html(
+        (ROOT / "dodge_cox" / "2025_supplemental_tax_letter.html").read_text(encoding="utf-8"),
+        source_url="https://www.dodgeandcox.com/content/dam/dc/us/en/pdf/guides/dc_us_supplemental_tax_letter.pdf",
+        fund_family="Dodge & Cox",
+    )
+    dodix = [
+        r
+        for r in dodge_paid
+        if r.ticker == "DODIX" and r.estimate_type == EstimateType.ordinary_income
+    ]
+    assert len(dodix) == 1
+    assert dodix[0].amount == Decimal("0.1347")
+    assert str(dodix[0].record_date) == "2025-12-17"
+    assert not any(
+        r.ticker == "DODIX"
+        and r.estimate_type
+        in {EstimateType.short_term_capital_gains, EstimateType.long_term_capital_gains}
+        for r in dodge_paid
+    )
 
     mfs = parse_distribution_html(
         (ROOT / "mfs" / "2025_capital_gain_estimates.html").read_text(encoding="utf-8"),

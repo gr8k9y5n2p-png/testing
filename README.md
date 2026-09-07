@@ -253,7 +253,7 @@ Interactive Modules **Current Allocation vs Proposed Allocation**. Same center-z
 
 **Single snapshot** (omit `periods`): one shared `snapshot` + `tax_rates`. **YoY** (send `periods[]`, e.g. `[{year:2024,as_of:…},{year:2025,as_of:…}]`): each period re-runs both books with that `as_of` pinned, or a calendar-year window when `as_of` is omitted (`snapshot.as_of_year`). Top-level `current` / `proposed` / `deltas` **copy the latest period** so the diverging-bar sketch still has one pair. `periods[]` is empty in single-snapshot mode.
 
-Each holding sends `ticker` and/or `fund_identifier`, and **either** `holding_dollars` **or** `weight_pct` plus the side’s `book_dollars`. `weight_pct` is **0–100** (UI %). `AMCPX` resolves to stored `amcap-fund` when the Capital Group HTML has no ticker column.
+Each holding sends `ticker` and/or `fund_identifier`, and **either** `holding_dollars` **or** `weight_pct` plus the side’s `book_dollars`. `weight_pct` is **0–100** (UI %). Capital Group HTML has no ticker column: `AMCPX` / `AMCAP` resolve to stored `amcap-fund`; `AGTHX` resolves to `the-growth-fund-of-america`.
 
 Each side is a full `/illustrate/portfolio` result plus `label` (defaults: `Current Allocation` / `Proposed Allocation`). Gaps stay on that side. Covered holdings include `upcoming` (same convenience field as `/illustrate/portfolio`).
 
@@ -300,7 +300,9 @@ curl -s -X POST http://127.0.0.1:8000/illustrate/portfolio/compare \
   }' | jq '{notes, deltas, summary, current: {label: .current.label, coverage: .current.coverage, gaps: .current.gaps}, proposed: {label: .proposed.label, coverage: .proposed.coverage}}'
 ```
 
-Hero tickers used in tests: `AMCPX` / `amcap-fund`, `CGHM`, `TRBCX`, `VFIAX`, `VBIAX`, `FBGRX`.
+Hero tickers used in tests: `AMCPX` / `AMCAP` / `amcap-fund`, `AGTHX` / `the-growth-fund-of-america`, `CGHM`, `TRBCX`, `VFIAX`, `VBIAX`, `VIGAX`, `FBGRX`, `DODIX`.
+
+Eric’s beta Current book (`AGTHX` / `DODIX` / `AMCAP` / `VIGAX` at 25%): `AMCAP` and `AGTHX` are ticker aliases onto AF name slugs. `DODIX` is paid 2025 ordinary income from the Dodge Supplemental Tax Letter (Q1 2026 estimate PDF does not list Income — no estimated capital gain). `VIGAX` is 2025 year-end income `$0.251100` from the public Vanguard product distribution table (no 2025 capital-gain row).
 
 YoY example (same books, two `as_of` pins):
 
@@ -495,7 +497,7 @@ When a holding’s ticker or family is not in the store, Website Engineering sho
 | 21 | `allspring` (aliases `wells_fargo`, `wfam`) | Allspring | implemented | product-page HTML / gated PDF | https://www.allspringglobal.com/resources/product-alerts/ ; paid history e.g. `.../special-mid-cap-value/` |
 | 22 | `janus_henderson` (alias `janus`) | Janus Henderson | implemented | PDF | https://www.janushenderson.com/en-us/advisor/annual-distributions-supplemental-tax-documents-mutual-funds/ ; 2025 estimates on the rackcdn `distribution-tax` path |
 | 23 | `american_century` | American Century | implemented | JS hub + PDF | https://res.americancentury.com/docs/estimated-distributions-november-retail.pdf |
-| 24 | `dodge_cox` (aliases `dodge`, `dodgx`) | Dodge & Cox | implemented | PDF | https://www.dodgeandcox.com/content/dam/dc/us/en/pdf/dc-us-estimated-distributions-1Q2026.pdf |
+| 24 | `dodge_cox` (aliases `dodge`, `dodgx`) | Dodge & Cox | implemented | PDF | https://www.dodgeandcox.com/content/dam/dc/us/en/pdf/dc-us-estimated-distributions-1Q2026.pdf (DODIX not listed). Paid 2025 DODIX income: `.../dc_us_supplemental_tax_letter.pdf` |
 | 25 | `mfs` | MFS Investment Management | implemented | PDF | https://www.mfs.com/content/dam/mfs-enterprise/mfscom/backlot/mfs_cg_fly.pdf |
 | 26 | `lord_abbett` (alias `lord`) | Lord Abbett | implemented | PDF (no-pay list) | https://www.lordabbett.com/content/dam/lordabbett-captivate/documents/TaxCenter/UnitedStates/Funds-with-Losses.pdf |
 | 27 | `ab` (aliases `alliancebernstein`, `alliance_bernstein`) | AllianceBernstein | implemented | PDF | https://www.alliancebernstein.com/content/dam/alliancebernstein/us-retail/us-retail-pdfs/tax-center/Final_GEN-5796-1025.pdf |

@@ -109,11 +109,13 @@ class DodgeCoxSource(HtmlTableSource):
         "Tax center: https://www.dodgeandcox.com/institutional-investor/us/en/resources/tax-center.html "
         "Current public estimate PDF (Q1 2026, as of 2/23/2026): "
         "https://www.dodgeandcox.com/content/dam/dc/us/en/pdf/dc-us-estimated-distributions-1Q2026.pdf "
-        "(Balanced DODBX / Stock DODGX LT $0.09 / $0.16). Paid 2025 per-share amounts "
+        "(Balanced DODBX / Stock DODGX LT $0.09 / $0.16; Income DODIX is not listed — "
+        "no estimated Q1 2026 capital gain). Paid 2025 per-share amounts "
         "are in the Supplemental Tax Letter "
-        "https://www.dodgeandcox.com/content/dam/dc/us/en/pdf/guides/dc_us_supplemental_tax_letter.pdf."
+        "https://www.dodgeandcox.com/content/dam/dc/us/en/pdf/guides/dc_us_supplemental_tax_letter.pdf "
+        "(Income DODIX ordinary income only, e.g. Dec 2025 $0.1347; no 2025 ST/LT)."
     )
-    live_limitations = "Estimates are PDF. Fixture transcribes the public Q1 2026 table."
+    live_limitations = "Estimates and the tax letter are PDF. Fixtures transcribe those public tables."
 
     def pages(self) -> list[PageSpec]:
         return [
@@ -122,7 +124,13 @@ class DodgeCoxSource(HtmlTableSource):
                 url="https://www.dodgeandcox.com/content/dam/dc/us/en/pdf/dc-us-estimated-distributions-1Q2026.pdf",
                 fixture="1q2026_estimated_capital_gains.html",
                 live=False,
-            )
+            ),
+            PageSpec(
+                name="2025_supplemental_tax_letter",
+                url="https://www.dodgeandcox.com/content/dam/dc/us/en/pdf/guides/dc_us_supplemental_tax_letter.pdf",
+                fixture="2025_supplemental_tax_letter.html",
+                live=False,
+            ),
         ]
 
 

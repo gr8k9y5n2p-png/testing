@@ -48,6 +48,8 @@ SUMMARY_HOLDING = Decimal("10000")
 # Class A ticker → stored fund_identifier when the HTML book has no ticker column.
 TICKER_LOOKUP_ALIASES: dict[str, dict[str, str]] = {
     "AMCPX": {"fund_identifier": "amcap-fund"},
+    "AMCAP": {"fund_identifier": "amcap-fund"},
+    "AGTHX": {"fund_identifier": "the-growth-fund-of-america"},
 }
 
 # estimate_type → TaxRates field. STCG has its own rate (defaults to ordinary).
