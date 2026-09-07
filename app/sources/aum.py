@@ -14,13 +14,15 @@ from app.sources.parser import NormalizedRecord
 # Not an exhaustive AUM file — prefer these when adding ICI/PDF history.
 LARGE_AUM_TICKERS: frozenset[str] = frozenset(
     {
-        # Vanguard flagships (ICI historical packs)
+        # Vanguard flagships (ICI historical packs; Admiral / mega ETF >$1B)
         "VFIAX",
         "VOO",
         "VBIAX",
         "VIGAX",
         "VTSAX",
         "VTIAX",
+        "VTI",
+        "VXUS",
         # Locked compare heroes (in-scope even if a class is smaller)
         "AMCPX",
         "AMCAP",
