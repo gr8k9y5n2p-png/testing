@@ -25,6 +25,18 @@ from app.sources.next_tier import (
     SchwabSource,
     UbsSource,
 )
+from app.sources.third_tier import (
+    AllianceBernsteinSource,
+    AllspringSource,
+    AmericanCenturySource,
+    DodgeCoxSource,
+    EatonVanceSource,
+    FederatedHermesSource,
+    JanusHendersonSource,
+    LordAbbettSource,
+    MfsSource,
+    VirtusSource,
+)
 
 _ALIASES = {
     "american_funds": "american_funds",
@@ -83,6 +95,30 @@ _ALIASES = {
     "amundi": "amundi",
     "pioneer": "amundi",
     "victory_pioneer": "amundi",
+    "allspring": "allspring",
+    "wells_fargo": "allspring",
+    "wfam": "allspring",
+    "wells_fargo_am": "allspring",
+    "janus_henderson": "janus_henderson",
+    "janus": "janus_henderson",
+    "american_century": "american_century",
+    "dodge_cox": "dodge_cox",
+    "dodge": "dodge_cox",
+    "dodgeandcox": "dodge_cox",
+    "dodgx": "dodge_cox",
+    "mfs": "mfs",
+    "lord_abbett": "lord_abbett",
+    "lord": "lord_abbett",
+    "lordabbett": "lord_abbett",
+    "ab": "ab",
+    "alliancebernstein": "ab",
+    "alliance_bernstein": "ab",
+    "federated_hermes": "federated_hermes",
+    "federated": "federated_hermes",
+    "virtus": "virtus",
+    "eaton_vance": "eaton_vance",
+    "eatonvance": "eaton_vance",
+    "ev": "eaton_vance",
 }
 
 
@@ -108,6 +144,16 @@ def _sources() -> dict[str, FundSource]:
         DimensionalSource(),
         ColumbiaThreadneedleSource(),
         AmundiSource(),
+        AllspringSource(),
+        JanusHendersonSource(),
+        AmericanCenturySource(),
+        DodgeCoxSource(),
+        MfsSource(),
+        LordAbbettSource(),
+        AllianceBernsteinSource(),
+        FederatedHermesSource(),
+        VirtusSource(),
+        EatonVanceSource(),
     ]
     return {source.slug: source for source in ordered}
 

@@ -27,6 +27,18 @@ from app.sources.next_tier import (
     SchwabSource,
     UbsSource,
 )
+from app.sources.third_tier import (
+    AllianceBernsteinSource,
+    AllspringSource,
+    AmericanCenturySource,
+    DodgeCoxSource,
+    EatonVanceSource,
+    FederatedHermesSource,
+    JanusHendersonSource,
+    LordAbbettSource,
+    MfsSource,
+    VirtusSource,
+)
 from app.sources.parser import parse_distribution_html, split_fund_identity
 
 ROOT = Path(__file__).resolve().parents[1] / "fixtures"
@@ -177,6 +189,16 @@ def test_adapters_fetch_fixture_mode() -> None:
         DimensionalSource(),
         ColumbiaThreadneedleSource(),
         AmundiSource(),
+        AllspringSource(),
+        JanusHendersonSource(),
+        AmericanCenturySource(),
+        DodgeCoxSource(),
+        MfsSource(),
+        LordAbbettSource(),
+        AllianceBernsteinSource(),
+        FederatedHermesSource(),
+        VirtusSource(),
+        EatonVanceSource(),
     ]
     for source in sources:
         result = source.fetch(mode="fixture")
@@ -308,3 +330,132 @@ def test_next_tier_fixtures() -> None:
     )
     assert piodx.amount == Decimal("3.73")
     assert piodx.cusip == "92648C512"
+
+
+def test_third_tier_fixtures() -> None:
+    allspring = parse_distribution_html(
+        (ROOT / "allspring" / "2025_paid_distributions.html").read_text(encoding="utf-8"),
+        source_url="fixture://allspring",
+        fund_family="Allspring",
+    )
+    wfmix = next(
+        r
+        for r in allspring
+        if r.ticker == "WFMIX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert wfmix.amount == Decimal("4.26857")
+
+    janus = parse_distribution_html(
+        (ROOT / "janus_henderson" / "2025_final_distribution_estimates.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://janus",
+        fund_family="Janus Henderson",
+    )
+    jdcax = next(
+        r
+        for r in janus
+        if r.ticker == "JDCAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert jdcax.amount == Decimal("6.92")
+    assert jdcax.cusip == "47103A674"
+
+    aci = parse_distribution_html(
+        (ROOT / "american_century" / "2025_estimated_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://aci",
+        fund_family="American Century",
+    )
+    twcgx = next(
+        r
+        for r in aci
+        if r.ticker == "TWCGX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert twcgx.amount == Decimal("10.4978")
+
+    dodge = parse_distribution_html(
+        (ROOT / "dodge_cox" / "1q2026_estimated_capital_gains.html").read_text(encoding="utf-8"),
+        source_url="fixture://dodge",
+        fund_family="Dodge & Cox",
+    )
+    dodgx = next(
+        r
+        for r in dodge
+        if r.ticker == "DODGX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert dodgx.amount == Decimal("0.16")
+
+    mfs = parse_distribution_html(
+        (ROOT / "mfs" / "2025_capital_gain_estimates.html").read_text(encoding="utf-8"),
+        source_url="fixture://mfs",
+        fund_family="MFS Investment Management",
+    )
+    mighx = next(
+        r
+        for r in mfs
+        if r.ticker == "MIGHX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert mighx.amount_min == Decimal("8")
+    assert mighx.amount_max == Decimal("9")
+    assert mighx.amount_unit == AmountUnit.percent_of_nav
+
+    lord = parse_distribution_html(
+        (ROOT / "lord_abbett" / "2025_funds_not_expected_to_pay.html").read_text(encoding="utf-8"),
+        source_url="fixture://lord",
+        fund_family="Lord Abbett",
+    )
+    lbndx = next(
+        r
+        for r in lord
+        if r.ticker == "LBNDX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert lbndx.amount == Decimal("0.00")
+
+    ab = parse_distribution_html(
+        (ROOT / "ab" / "2025_estimated_capital_gains.html").read_text(encoding="utf-8"),
+        source_url="fixture://ab",
+        fund_family="AllianceBernstein",
+    )
+    agrfx = next(
+        r
+        for r in ab
+        if r.ticker == "AGRFX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert agrfx.amount == Decimal("16.36")
+
+    federated = parse_distribution_html(
+        (ROOT / "federated_hermes" / "2025_section_19a_sample.html").read_text(encoding="utf-8"),
+        source_url="fixture://federated",
+        fund_family="Federated Hermes",
+    )
+    payr = next(
+        r
+        for r in federated
+        if r.ticker == "PAYR" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert payr.amount == Decimal("0.015178")
+
+    virtus = parse_distribution_html(
+        (ROOT / "virtus" / "2026_june_capital_gain_estimates.html").read_text(encoding="utf-8"),
+        source_url="fixture://virtus",
+        fund_family="Virtus",
+    )
+    unwgx = next(
+        r
+        for r in virtus
+        if r.ticker == "UNWGX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert unwgx.amount == Decimal("2.4917")
+
+    ev = parse_distribution_html(
+        (ROOT / "eaton_vance" / "2025_cef_section_19b_sample.html").read_text(encoding="utf-8"),
+        source_url="fixture://ev",
+        fund_family="Eaton Vance",
+    )
+    eoi = next(
+        r
+        for r in ev
+        if r.ticker == "EOI" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert eoi.amount == Decimal("0.1338")

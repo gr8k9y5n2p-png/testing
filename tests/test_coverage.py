@@ -3,12 +3,12 @@ from __future__ import annotations
 from fastapi.testclient import TestClient
 
 
-def test_coverage_endpoint_lists_top_20(client: TestClient) -> None:
+def test_coverage_endpoint_lists_top_30(client: TestClient) -> None:
     response = client.get("/coverage")
     assert response.status_code == 200
     body = response.json()
-    assert body["top_n"] == 20
-    assert body["implemented_count"] == 20
+    assert body["top_n"] == 30
+    assert body["implemented_count"] == 30
     assert body["stub_count"] == 0
     assert body["implemented_pct"] == 100.0
     slugs = [row["slug"] for row in body["families"]]
@@ -33,11 +33,23 @@ def test_coverage_endpoint_lists_top_20(client: TestClient) -> None:
         "dimensional",
         "columbia_threadneedle",
         "amundi",
+        "allspring",
+        "janus_henderson",
+        "american_century",
+        "dodge_cox",
+        "mfs",
+        "lord_abbett",
+        "ab",
+        "federated_hermes",
+        "virtus",
+        "eaton_vance",
     ]
     assert all(row["coverage_tier"] == "implemented" for row in body["families"])
     assert body["families"][0]["priority"] == 1
     assert body["families"][10]["aum_rank"] == 11
     assert body["families"][19]["slug"] == "amundi"
+    assert body["families"][20]["aum_rank"] == 21
+    assert body["families"][29]["slug"] == "eaton_vance"
 
 
 def test_coverage_gap_implemented_family(client: TestClient) -> None:
@@ -86,6 +98,18 @@ def test_coverage_gap_alias_pioneer_and_dfa(client: TestClient) -> None:
     dfa = client.post("/coverage/gaps", json={"ticker": "DFQTX", "fund_family": "dfa"})
     assert dfa.status_code == 200
     assert dfa.json()["adapter_slug"] == "dimensional"
+
+
+def test_coverage_gap_alias_third_tier(client: TestClient) -> None:
+    wells = client.post("/coverage/gaps", json={"ticker": "WFMIX", "fund_family": "wells_fargo"})
+    assert wells.status_code == 200
+    assert wells.json()["adapter_slug"] == "allspring"
+    janus = client.post("/coverage/gaps", json={"ticker": "JDCAX", "fund_family": "janus"})
+    assert janus.status_code == 200
+    assert janus.json()["adapter_slug"] == "janus_henderson"
+    alliance = client.post("/coverage/gaps", json={"ticker": "AGRFX", "fund_family": "alliancebernstein"})
+    assert alliance.status_code == 200
+    assert alliance.json()["adapter_slug"] == "ab"
 
 
 def test_coverage_gap_requires_ticker_or_name(client: TestClient) -> None:
