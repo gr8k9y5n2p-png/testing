@@ -15,8 +15,7 @@ export async function pingDistributionsApi(): Promise<boolean> {
 
 export async function fetchFundFamilies() {
   const base = getDataApiBaseUrl();
-  const endpoint = base ? `${base}/fund-families` : null;
-  if (!endpoint) return null;
+  const endpoint = base ? `${base}/fund-families` : "/api/fund-families";
   try {
     const response = await fetch(endpoint);
     if (!response.ok) return null;

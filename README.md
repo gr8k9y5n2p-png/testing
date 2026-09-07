@@ -75,9 +75,9 @@ Search and highlights currently use `src/data/seed.ts`. When the Data API is up,
 
 ## Coverage gaps
 
-Live ingest today: Capital Group / American Funds. Upcoming families include BlackRock/iShares, Vanguard, Fidelity, State Street/SPDR, J.P. Morgan AM, Goldman Sachs AM, PIMCO, Invesco, and T. Rowe Price.
+Live ingest today: **Capital Group / American Funds**. Planned top-10 families (with `coverage_tier` / `priority` stubs in `src/lib/coverage.ts` and `GET /api/fund-families`): BlackRock/iShares, Vanguard, Fidelity, State Street/SPDR, J.P. Morgan AM, Goldman Sachs AM, PIMCO, Invesco, and T. Rowe Price.
 
-Uncovered holdings are flagged in the picker and illustrate panel so tax impact is not silently understated. Stub: `POST /api/coverage/gaps`. Replace with Data team `POST /coverage/gaps` when it ships.
+Uncovered holdings are flagged in the fund picker (Gap vs Live) and the illustrate panel so tax impact is not silently understated. Selecting a gap ticker POSTs `POST /api/coverage/gaps` (or Data team `POST /coverage/gaps` when `NEXT_PUBLIC_DATA_API_URL` is set).
 
 ## Freemium / Stripe (not live yet)
 

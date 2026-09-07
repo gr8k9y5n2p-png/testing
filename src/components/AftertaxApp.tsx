@@ -9,6 +9,7 @@ import { Hero } from "@/components/landing/Hero";
 import { IllustratePanel } from "@/components/illustrate/IllustratePanel";
 import { PaywallDialog } from "@/components/paywall/PaywallDialog";
 import { COPY, STRIPE, freeSearchLabel } from "@/lib/copy";
+import { isLiveCoveredFamily, reportCoverageGap } from "@/lib/coverage";
 import { useFreemium } from "@/lib/freemium";
 
 export function AftertaxApp({
@@ -32,6 +33,13 @@ export function AftertaxApp({
       return;
     }
     setSelected(fund);
+    if (!isLiveCoveredFamily(fund.family)) {
+      void reportCoverageGap({
+        ticker: fund.ticker,
+        fund_name: fund.fundName,
+        fund_family: fund.family,
+      });
+    }
     document.getElementById("illustrate")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 

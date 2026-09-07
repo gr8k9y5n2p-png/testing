@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { FundEstimateView } from "@/data/types";
 import { DeltaBadge } from "@/components/DeltaBadge";
+import { isLiveCoveredFamily } from "@/lib/coverage";
 import {
   formatDate,
   formatPct,
@@ -114,7 +115,14 @@ export function ResultsTable({
                       </button>
                       {open ? <ExpandedDetails fund={fund} /> : null}
                     </td>
-                    <td className="px-3 py-3 text-muted">{fund.family}</td>
+                    <td className="px-3 py-3 text-muted">
+                      {fund.family}
+                      {!isLiveCoveredFamily(fund.family) ? (
+                        <span className="mt-1 block text-[10px] font-semibold uppercase tracking-[0.08em] text-gold">
+                          Coverage gap
+                        </span>
+                      ) : null}
+                    </td>
                     <td className="px-3 py-3 text-muted">{fund.category}</td>
                     <td className="px-3 py-3 text-right">
                       <span className="block font-mono text-ink">
