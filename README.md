@@ -38,7 +38,7 @@ Set `AFTERTAX_PUBLIC_URL` to the host you are deploying. Default (no env) is **s
 
 ## Deploy (Vercel)
 
-Standard Next.js App Router at the **repo root** — no adapter, no `vercel.json` required. In Vercel: Import GitHub repo → framework **Next.js** → assign custom domain **`staging.getaftertax.com`**.
+Standard Next.js App Router at the **repo root** — no adapter, no `vercel.json` required. In Vercel: Import GitHub repo → framework **Next.js** → assign custom domain **`staging.getaftertax.com`**. Production follows `main`.
 
 For first public staging:
 
