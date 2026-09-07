@@ -1,0 +1,35 @@
+{
+  "records": [
+    {
+      "fund_family": "American Funds",
+      "fund_name": "The Investment Company of America",
+      "ticker": "AIVSX",
+      "share_class": "A",
+      "estimate_type": "long_term_capital_gains",
+      "amount": "5.4453",
+      "amount_unit": "per_share",
+      "record_date": "2025-12-16",
+      "ex_date": "2025-12-16",
+      "payable_date": "2025-12-17",
+      "as_of": "2026-01-22",
+      "publication_stage": "final",
+      "source_url": "https://www.capitalgroup.com/individual/service-and-support/tax-center/2025-year-end-distributions.html"
+    },
+    {
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard 500 Index Fund",
+      "ticker": "VFIAX",
+      "share_class": "Admiral",
+      "estimate_type": "total_capital_gains",
+      "amount_min": "1.2",
+      "amount_max": "1.8",
+      "amount_unit": "percent_of_nav",
+      "record_date": "2025-12-17",
+      "ex_date": "2025-12-17",
+      "payable_date": "2025-12-18",
+      "as_of": "2025-11-15",
+      "publication_stage": "preliminary_estimate",
+      "source_url": "https://example.invalid/partner/vanguard-estimates"
+    }
+  ]
+}
