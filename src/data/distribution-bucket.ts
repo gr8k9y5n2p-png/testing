@@ -36,18 +36,27 @@ export function isoDate(value: unknown): string | null {
 }
 
 /**
- * Payment/ex-date in the past. `as_of` is announcement for estimates and does
- * not make a preliminary/updated row paid. Past `final` rows fall back to
- * `as_of` when ex/payable are missing (year-end 2025 finals with only as_of).
+ * Best available event date: payable, else ex, else record. Never invents a day.
+ * `as_of` is announcement, not an event date.
+ */
+export function eventDateOf(
+  dates: Pick<DistributionDateFields, "payableDate" | "exDate" | "recordDate">,
+): string | null {
+  return isoDate(dates.payableDate) ?? isoDate(dates.exDate) ?? isoDate(dates.recordDate);
+}
+
+/**
+ * Event date in the past. `as_of` is announcement for estimates and does not
+ * make a preliminary/updated row paid. Past `final` rows fall back to `as_of`
+ * when payable/ex/record are missing (year-end 2025 finals with only as_of).
  */
 export function isPastDistribution(
   dates: DistributionDateFields,
   today = utcTodayIso(),
 ): boolean {
   const stage = normalizePublicationStage(dates.publicationStage);
-  const eventDate = isoDate(dates.payableDate) ?? isoDate(dates.exDate);
   const cutoff =
-    eventDate ?? (stage === "final" ? isoDate(dates.asOfDate) : null);
+    eventDateOf(dates) ?? (stage === "final" ? isoDate(dates.asOfDate) : null);
   return cutoff != null && cutoff < today;
 }
 
@@ -62,8 +71,10 @@ export function normalizePublicationStage(stage: string | null | undefined): str
 /**
  * Upcoming / announced: preliminary_estimate, updated_estimate, or a truly
  * future unpaid announced row (including `final` whose event dates are still
- * ahead). Paid history: `paid`, or past `final` (ex/payable/as_of already
- * past). Past rows must not sit in upcoming.
+ * ahead) — only when payable/ex/record are not already past.
+ * Paid history: `paid`, any stage whose event date is past, or past `final`
+ * (as_of fallback when event dates are missing). Past rows must not sit in
+ * upcoming, even if publication_stage is still preliminary/updated.
  */
 export function distributionBucket(
   dates: DistributionDateFields,

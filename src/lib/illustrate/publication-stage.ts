@@ -85,10 +85,11 @@ export function isPaidHistoryPublicationStage(
 }
 
 /**
- * Locked GTM split:
+ * Locked GTM split (mirrors Sample Estimates `distributionBucket`):
  * - Upcoming / announced: preliminary_estimate / updated_estimate (future-ish)
- * - Paid history: paid / final past rows
- * Past event-dated estimates stay out of Upcoming (Aug 2026 prelim ≠ live upcoming).
+ * - Paid history: paid / final, and any row whose payable/ex/record is already
+ *   past — even if publication_stage is still preliminary/updated.
+ * Past event-dated estimates stay out of Upcoming (2025 prelim ≠ live upcoming).
  */
 export function publicationBucket(
   row: PortfolioDistributionRow,
@@ -98,15 +99,10 @@ export function publicationBucket(
   const event = eventDateOf(row);
   const pastEvent = event != null && event < today;
 
-  if (PAID_HISTORY_STAGES.has(stage)) {
+  if (PAID_HISTORY_STAGES.has(stage) || pastEvent) {
     return "paid_history";
   }
-  if (UPCOMING_STAGES.has(stage)) {
-    if (pastEvent) return null;
-    return "upcoming";
-  }
-  if (!stage) {
-    if (pastEvent) return null;
+  if (UPCOMING_STAGES.has(stage) || !stage) {
     return "upcoming";
   }
   return null;

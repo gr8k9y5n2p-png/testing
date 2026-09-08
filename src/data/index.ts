@@ -14,7 +14,9 @@ export {
 } from "./queries";
 export {
   distributionBucket,
+  eventDateOf,
   isoDate,
+  isPastDistribution,
   publicationStageLabel,
 } from "./distribution-bucket";
 export { SAMPLE_FUNDS } from "./seed";

@@ -70,7 +70,7 @@ export function ResultsTable({
     <div className="space-y-8">
       <FundSection
         title="Upcoming / announced"
-        description="Preliminary and updated estimates. Past paid rows stay in history below."
+        description="Announced distributions that have not paid out yet. Past record/ex/payable dates stay in history below."
         funds={sortFunds(upcoming, sortKey, sortDirection)}
         sortKey={sortKey}
         sortDirection={sortDirection}
@@ -82,7 +82,7 @@ export function ResultsTable({
       />
       <FundSection
         title="Paid history"
-        description="Paid and final-past distributions. These never appear in Upcoming."
+        description="Paid, final-past, and estimates whose record/ex/payable date is already past. These never appear in Upcoming."
         funds={sortFunds(paid, sortKey, sortDirection)}
         sortKey={sortKey}
         sortDirection={sortDirection}

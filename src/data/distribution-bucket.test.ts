@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   distributionBucket,
+  eventDateOf,
   isPastDistribution,
   splitFundsByBucket,
 } from "./distribution-bucket.ts";
@@ -150,6 +151,83 @@ test("past ex-date keeps a preliminary row out of upcoming", () => {
       TODAY,
     ),
     "paid",
+  );
+});
+
+test("2025 record/ex/payable prelim is paid history on a 2026 visit", () => {
+  const stale = {
+    asOfDate: "2025-11-20",
+    recordDate: "2025-12-12",
+    exDate: "2025-12-15",
+    payableDate: "2025-12-17",
+    publicationStage: "preliminary_estimate",
+  };
+  assert.equal(eventDateOf(stale), "2025-12-17");
+  assert.equal(isPastDistribution(stale, TODAY), true);
+  assert.equal(distributionBucket(stale, TODAY), "paid");
+  assert.equal(
+    distributionBucket(
+      {
+        asOfDate: "2025-11-22",
+        recordDate: "2025-12-12",
+        exDate: "2025-12-15",
+        payableDate: "2025-12-17",
+        publicationStage: "updated_estimate",
+      },
+      TODAY,
+    ),
+    "paid",
+  );
+});
+
+test("past record_date alone is enough to keep a prelim out of upcoming", () => {
+  assert.equal(
+    eventDateOf({
+      recordDate: "2025-12-12",
+      exDate: null,
+      payableDate: null,
+    }),
+    "2025-12-12",
+  );
+  assert.equal(
+    distributionBucket(
+      {
+        asOfDate: "2025-11-20",
+        recordDate: "2025-12-12",
+        exDate: null,
+        payableDate: null,
+        publicationStage: "preliminary_estimate",
+      },
+      TODAY,
+    ),
+    "paid",
+  );
+});
+
+test("eventDateOf prefers payable, then ex, then record, and invents nothing", () => {
+  assert.equal(
+    eventDateOf({
+      payableDate: "2026-12-17",
+      exDate: "2026-12-15",
+      recordDate: "2026-12-12",
+    }),
+    "2026-12-17",
+  );
+  assert.equal(
+    eventDateOf({
+      payableDate: null,
+      exDate: "2026-12-15",
+      recordDate: "2026-12-12",
+    }),
+    "2026-12-15",
+  );
+  assert.equal(
+    eventDateOf({
+      payableDate: "",
+      exDate: "",
+      recordDate: "",
+    }),
+    null,
   );
 });
 
