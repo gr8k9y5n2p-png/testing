@@ -50,7 +50,10 @@ export type GrowthAndTaxDragModuleProps = {
   funds?: GrowthFundInput[];
   /** Tickers to prepend when search/illustrate selection changes. Does not reset Add Fund extras. */
   seedFunds?: GrowthFundInput[];
+  /** Single-fund prefill (portfolio drill-in). Used when `funds` is omitted. */
+  ticker?: string;
   startDollars?: number;
+  /** Omit to keep the homepage default (performance picks SPY / AGG / VXUS). */
   benchmark?: string;
   periods?: ComparePeriodIn[];
   className?: string;
@@ -74,6 +77,16 @@ const DEFAULT_FUNDS: GrowthFundInput[] = [
   },
 ];
 
+function mountFunds(
+  funds: GrowthFundInput[] | undefined,
+  ticker: string | undefined,
+): GrowthFundInput[] {
+  if (funds && funds.length > 0) return funds.slice(0, MAX_GROWTH_FUNDS);
+  const key = ticker?.trim().toUpperCase();
+  if (key) return [{ ticker: key, label: key, fundIdentifier: key }];
+  return DEFAULT_FUNDS;
+}
+
 const SKETCH_DISCLAIMER =
   "Hypothetical illustration based on estimated distributions and assumed tax rates. Estimates only — not tax advice. Past performance does not guarantee future results. Up to 6 funds + benchmark.";
 
@@ -85,8 +98,9 @@ type LoadedFund = {
 };
 
 export function GrowthAndTaxDragModule({
-  funds = DEFAULT_FUNDS,
+  funds: fundsProp,
   seedFunds,
+  ticker,
   startDollars = DEFAULT_START_DOLLARS,
   benchmark,
   periods,
@@ -95,9 +109,8 @@ export function GrowthAndTaxDragModule({
   allowAddFund = true,
   editablePrincipal = true,
 }: GrowthAndTaxDragModuleProps) {
-  const [selected, setSelected] = useState<GrowthFundInput[]>(() =>
-    (funds.length > 0 ? funds : DEFAULT_FUNDS).slice(0, MAX_GROWTH_FUNDS),
-  );
+  const funds = mountFunds(fundsProp, ticker);
+  const [selected, setSelected] = useState<GrowthFundInput[]>(() => funds);
   const [principal, setPrincipal] = useState(startDollars);
   const [principalDraft, setPrincipalDraft] = useState(formatPrincipal(startDollars));
   const [addTicker, setAddTicker] = useState("");
