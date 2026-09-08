@@ -1,3 +1,7 @@
+import {
+  END_LABEL_MIN_GAP,
+  staggerEndLabels,
+} from "@/lib/charts/end-labels";
 import { formatCompactUsd, niceMoneyScale } from "@/lib/charts/money-axis";
 import {
   SHARED_CHART_PAD,
@@ -109,6 +113,15 @@ export function GrowthOfXChart({
 
   const fundSeries = series.filter((row) => !row.dashed);
   const lastYear = years[years.length - 1];
+  const endLabels = placeGrowthEndLabels({
+    fundSeries,
+    lastYear,
+    unit,
+    xAt,
+    yAt,
+    minY: pad.top + 8,
+    maxY: pad.top + innerH - 4,
+  });
 
   return (
     <section className={`w-full ${className}`}>
@@ -217,25 +230,31 @@ export function GrowthOfXChart({
             );
           })}
 
-          {fundSeries.map((row, index) => {
-            const last = row.points.find((point) => point.year === lastYear) ??
-              row.points[row.points.length - 1];
-            if (!last || unit === "percent") return null;
-            const offset = index === 0 ? -12 : 12;
+          {endLabels.map((label) => {
+            const leader = Math.abs(label.labelY - label.y) > 6;
             return (
-              <text
-                key={`end-${row.id}`}
-                x={xAt(last.year) + 8}
-                y={yAt(last.value) + offset}
-                className="fill-ink"
-                fontSize={10}
-                fontFamily="ui-monospace, monospace"
-                fontWeight={500}
-              >
-                {last.value >= 100_000
-                  ? formatCompactUsd(last.value)
-                  : formatUsd(last.value, 0)}
-              </text>
+              <g key={`end-${label.id}`} data-end-label={label.id}>
+                {leader ? (
+                  <path
+                    d={`M${label.x.toFixed(1)},${label.y.toFixed(1)} L${(label.x + 5).toFixed(1)},${label.labelY.toFixed(1)}`}
+                    fill="none"
+                    stroke={label.color}
+                    strokeWidth={0.75}
+                    opacity={0.55}
+                  />
+                ) : null}
+                <text
+                  x={label.x + 8}
+                  y={label.labelY + 3}
+                  fill={label.color}
+                  fontSize={10}
+                  fontFamily="ui-monospace, monospace"
+                  fontWeight={500}
+                  data-end-label-y={label.labelY.toFixed(1)}
+                >
+                  {label.text}
+                </text>
+              </g>
             );
           })}
 
@@ -256,6 +275,66 @@ export function GrowthOfXChart({
       </div>
     </section>
   );
+}
+
+type PlacedGrowthEndLabel = {
+  id: string;
+  color: string;
+  text: string;
+  x: number;
+  y: number;
+  labelY: number;
+};
+
+function formatEndValue(value: number): string {
+  return value >= 100_000 ? formatCompactUsd(value) : formatUsd(value, 0);
+}
+
+function placeGrowthEndLabels({
+  fundSeries,
+  lastYear,
+  unit,
+  xAt,
+  yAt,
+  minY,
+  maxY,
+}: {
+  fundSeries: GrowthLineSeries[];
+  lastYear: number | undefined;
+  unit: ChartUnit;
+  xAt: (year: number) => number;
+  yAt: (value: number) => number;
+  minY: number;
+  maxY: number;
+}): PlacedGrowthEndLabel[] {
+  if (unit === "percent") return [];
+  const raw = fundSeries.flatMap((row) => {
+    const last =
+      (lastYear != null
+        ? row.points.find((point) => point.year === lastYear)
+        : undefined) ?? row.points[row.points.length - 1];
+    if (!last) return [];
+    return [
+      {
+        id: row.id,
+        color: row.color,
+        text: formatEndValue(last.value),
+        x: xAt(last.year),
+        y: yAt(last.value),
+      },
+    ];
+  });
+  const placed = staggerEndLabels(
+    raw.map((label) => ({ id: label.id, y: label.y })),
+    { minGap: END_LABEL_MIN_GAP, minY, maxY },
+  );
+  if (!placed) return [];
+  const byId = new Map(raw.map((label) => [label.id, label]));
+  return placed.flatMap((row) => {
+    const source = byId.get(row.id);
+    if (!source) return [];
+    return [{ ...source, labelY: row.labelY }];
+  });
 }
 
 function polyline(
