@@ -28,6 +28,12 @@ export const STRIPE = {
   accountId: "acct_1UD66TRqA7bY5N5q",
 } as const;
 
+/** Sample Estimates Upcoming empty state. Never present a miss as $0. */
+export const UPCOMING_UNAVAILABLE_HEADLINE = "Not available / undisclosed";
+export const UPCOMING_UNAVAILABLE_DETAIL =
+  "No unpaid announced estimates in this sample.";
+export const PAID_HISTORY_EMPTY = "No paid history in this sample.";
+
 export const FREE_SEARCH_LIMIT = 3;
 
 export function freeSearchLabel(remaining: number): string {

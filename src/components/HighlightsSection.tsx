@@ -14,8 +14,9 @@ export function HighlightsSection({ highlights }: { highlights: HighlightSets })
             Highlights
           </h2>
           <p className="mt-1 text-sm text-muted">
-            Snapshot of the sample universe: newest filings, largest estimated
+            Snapshot of unpaid announced estimates: newest filings, largest
             payouts, and peers that sit well away from their category average.
+            Paid history is not mixed in.
           </p>
         </div>
         <p className="text-xs text-faint">

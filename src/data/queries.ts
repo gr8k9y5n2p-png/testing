@@ -148,7 +148,7 @@ export function getHighlights(
   limit = 5,
 ): HighlightSets {
   const { upcoming } = splitFundsByBucket(funds);
-  const pool = upcoming.length ? upcoming : funds;
+  const pool = upcoming;
   const mostRecent = [...pool]
     .sort((a, b) => {
       const byPublished = b.asOfDate.localeCompare(a.asOfDate);

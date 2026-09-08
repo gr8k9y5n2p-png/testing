@@ -13,6 +13,11 @@ import {
   type SortDirection,
   type SortKey,
 } from "@/lib/format";
+import {
+  PAID_HISTORY_EMPTY,
+  UPCOMING_UNAVAILABLE_DETAIL,
+  UPCOMING_UNAVAILABLE_HEADLINE,
+} from "@/lib/copy";
 
 function isNestedControl(target: EventTarget | null) {
   const element =
@@ -67,29 +72,34 @@ export function ResultsTable({
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <FundSection
         title="Upcoming / announced"
         description="Announced distributions that have not paid out yet. Past record/ex/payable dates stay in history below."
+        kicker="unpaid announced · not paid history"
+        wellClassName="bg-surface"
         funds={sortFunds(upcoming, sortKey, sortDirection)}
         sortKey={sortKey}
         sortDirection={sortDirection}
         onSort={toggleSort}
         onIllustrate={onIllustrate ? illustrate : undefined}
         coverage={coverage}
-        empty="No upcoming or announced estimates in this sample."
+        emptyHeadline={UPCOMING_UNAVAILABLE_HEADLINE}
+        empty={UPCOMING_UNAVAILABLE_DETAIL}
         showPayable
       />
       <FundSection
         title="Paid history"
         description="Paid, final-past, and estimates whose record/ex/payable date is already past. These never appear in Upcoming."
+        kicker="past · not upcoming"
+        wellClassName="bg-paper"
         funds={sortFunds(paid, sortKey, sortDirection)}
         sortKey={sortKey}
         sortDirection={sortDirection}
         onSort={toggleSort}
         onIllustrate={onIllustrate ? illustrate : undefined}
         coverage={coverage}
-        empty="No paid history in this sample."
+        empty={PAID_HISTORY_EMPTY}
         showPayable
       />
     </div>
@@ -99,39 +109,57 @@ export function ResultsTable({
 function FundSection({
   title,
   description,
+  kicker,
+  wellClassName,
   funds,
   sortKey,
   sortDirection,
   onSort,
   onIllustrate,
   coverage,
+  emptyHeadline,
   empty,
   showPayable,
 }: {
   title: string;
   description: string;
+  kicker: string;
+  wellClassName: string;
   funds: FundEstimateView[];
   sortKey: SortKey;
   sortDirection: SortDirection;
   onSort: (key: SortKey) => void;
   onIllustrate?: (fund: FundEstimateView) => void;
   coverage: ReturnType<typeof useCoverage>;
+  emptyHeadline?: string;
   empty: string;
   showPayable: boolean;
 }) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   return (
-    <section>
-      <header className="mb-3">
-        <h3 className="font-serif text-lg tracking-tight text-ink">{title}</h3>
-        <p className="mt-0.5 text-sm text-muted">{description}</p>
+    <section className={`rounded-xl border border-line px-4 py-3 ${wellClassName}`}>
+      <header className="mb-3 flex flex-wrap items-end justify-between gap-2">
+        <div>
+          <h3 className="font-serif text-lg tracking-tight text-ink">{title}</h3>
+          <p className="mt-0.5 text-sm text-muted">{description}</p>
+        </div>
+        <p className="text-[10px] text-muted">{kicker}</p>
       </header>
 
       {funds.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-line px-4 py-6 text-sm text-muted">
-          {empty}
-        </p>
+        emptyHeadline ? (
+          <div className="px-1 py-5">
+            <p className="font-serif text-base tracking-tight text-ink">
+              {emptyHeadline}
+            </p>
+            <p className="mt-1 text-sm text-muted">{empty}</p>
+          </div>
+        ) : (
+          <p className="rounded-lg border border-dashed border-line px-4 py-6 text-sm text-muted">
+            {empty}
+          </p>
+        )
       ) : (
         <>
           <div className="hidden overflow-hidden rounded-lg border border-line bg-surface shadow-[0_1px_2px_rgba(26,29,26,0.04)] md:block">

@@ -139,6 +139,26 @@ test("as_of in the past does not make an announced estimate paid", () => {
   );
 });
 
+test("mid-year 2026 already-paid distribution is paid history, not upcoming", () => {
+  const midyear = {
+    asOfDate: "2026-06-12",
+    recordDate: "2026-06-13",
+    exDate: "2026-06-16",
+    payableDate: "2026-06-18",
+  };
+  assert.equal(
+    distributionBucket({ ...midyear, publicationStage: "paid" }, TODAY),
+    "paid",
+  );
+  assert.equal(
+    distributionBucket(
+      { ...midyear, publicationStage: "preliminary_estimate" },
+      TODAY,
+    ),
+    "paid",
+  );
+});
+
 test("past ex-date keeps a preliminary row out of upcoming", () => {
   assert.equal(
     distributionBucket(
