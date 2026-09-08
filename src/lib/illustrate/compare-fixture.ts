@@ -271,6 +271,32 @@ export function mockCompareResponse(request: CompareRequest): CompareResponse {
   };
 }
 
+/** One side announced, the other not — YoY bars still present. */
+export function mockCompareMixedUpcomingResponse(
+  request: CompareRequest,
+): CompareResponse {
+  const base = mockCompareResponse(request);
+  return {
+    ...base,
+    summary: {
+      ...base.summary,
+      upcoming_taxable_distribution: {
+        left_dollars: 185,
+        right_dollars: null,
+        delta_dollars: null,
+        left_as_of: "2026-12-15",
+        right_as_of: null,
+        left_publication_stage: "announced",
+        right_publication_stage: null,
+      },
+    },
+    notes: [
+      ...base.notes,
+      "Mixed upcoming coverage: Fund B is not announced. Historical YoY bars are unchanged.",
+    ],
+  };
+}
+
 function sideHasLookup(side?: CompareSideIn | null): boolean {
   return Boolean(
     side?.distribution_ids?.length ||

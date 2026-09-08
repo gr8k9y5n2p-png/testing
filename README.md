@@ -13,6 +13,8 @@ Then open [http://localhost:3000](http://localhost:3000). The homepage hero is *
 
 Standalone compare demo: [http://localhost:3000/compare](http://localhost:3000/compare). Import `FundTaxDeltaCompare` from `@/components/illustrate`.
 
+Standalone **portfolio comparison** demo: [http://localhost:3000/portfolio-compare](http://localhost:3000/portfolio-compare). Import `PortfolioCompare` from `@/components/illustrate`.
+
 Stacked growth + tax-drag also has a standalone demo at [http://localhost:3000/growth-tax](http://localhost:3000/growth-tax). Import `GrowthAndTaxDragModule` from `@/components/illustrate`.
 
 Aftertax is a search-first workspace for wholesalers and financial advisors. This repo slice is the **website UI**: fund search, highlights, holding size, adjustable tax rates, and results. The Data team owns ingest, `GET /distributions`, and production `POST /illustrate` math (see PR #2).
@@ -57,6 +59,7 @@ Staging is `noindex`. Switch `AFTERTAX_PUBLIC_URL` to `https://getaftertax.com` 
 - One-screen landing: hero (taxable impact in dollars) + **Search a fund** as the primary action. **Import a portfolio** scrolls to the portfolio / multi-fund module (not the paywall).
 - Instant **dollar illustration** after a fund is selected ($1,000,000 holding default, editable federal/state rates, min/max when present).
 - **Tax-delta compare** mounts next to that panel (selected fund vs a same-category peer; `/compare` is the standalone demo).
+- **Portfolio comparison** (`/portfolio-compare`): Current vs Proposed Allocation, per-column tax-impact bars, compact upcoming-distributions table, tax drag %, more/less tax Δ. No YoY bars.
 - **Growth of $X + tax drag** is the homepage hero (`GrowthAndTaxDragModule`): cumulative growth vs one benchmark, then year-centered negative tax-drag bars for up to 6 funds. Tax panel toggles % of value / tax $. Defaults AGTHX + FCNTX at $10,000; searching a fund seeds the list. Standalone demo: `/growth-tax`.
 - Soft counter is **temporarily unlocked for beta** (`NEXT_PUBLIC_FREEMIUM_DISABLED`, default on). Set that env to `false` to restore `3 of 3 free searches left` → paywall after 3 unique tickers.
 - Highlights + estimates table sit below the fold as the sample universe — not a landing feature grid.
@@ -81,15 +84,16 @@ The browser **does not** compute tax. Aftertax calls the Data API when `NEXT_PUB
 
 | Mode | How |
 | --- | --- |
-| Demo (default) | Local mocks: `POST /api/illustrate`, `POST /api/illustrate/compare`, `GET /api/performance`, `POST /api/performance/growth`, `POST /api/illustrate/portfolio`, `GET /api/coverage`, `GET /api/fund-families` |
+| Demo (default) | Local mocks: `POST /api/illustrate`, `POST /api/illustrate/compare`, `GET /api/performance`, `POST /api/performance/growth`, `POST /api/illustrate/portfolio`, `POST /api/illustrate/portfolio/compare`, `GET /api/coverage`, `GET /api/fund-families` |
 | Data team FastAPI (PR #2) | `NEXT_PUBLIC_DATA_API_URL=http://localhost:8000` |
 
 Wired endpoints:
 
 - `POST /illustrate` — UI sends locked `selector: { fund_family, fund_identifier }`; the client also sends PR #2’s `selectors` alias. Response is normalized to `tax_rates_applied`, `estimated_tax_dollars`, `warnings`.
-- `POST /illustrate/compare` — `mode: "fund_vs_fund"` with `left` / `right` selectors + `periods[]`. Deltas are **right − left**. The card maps them to Fund A (left) cost-to-holder prose (`costToA = −delta`). Chart field: `periods[].deltas.effective_tax_on_holding`. Footer uses `summary` at $10k. Local mock returns the locked sketch fixture when the Data API is down. Homepage mounts `FundTaxDeltaCompare` next to dollar illustrate; standalone demo: `/compare`. `mode: "yoy"` feeds calendar-year tax-drag bars in `GrowthAndTaxDragModule`.
+- `POST /illustrate/compare` — `mode: "fund_vs_fund"` with `left` / `right` selectors + `periods[]`. Deltas are **right − left**. The card maps them to Fund A (left) cost-to-holder prose (`costToA = −delta`). Chart field: `periods[].deltas.effective_tax_on_holding`. Footer uses `summary` at $10k. Mixed upcoming coverage still shows YoY bars; the Upcoming tax cell is per side (`$185` or `—` / `Not announced`) and never blanks the card. Local mock returns the locked sketch fixture when the Data API is down. Homepage mounts `FundTaxDeltaCompare` next to dollar illustrate; standalone demo: `/compare`. Reusable historical chart: `YoYTaxChart` (calendar-year bars + optional descending YoY tax line) from `@/components/illustrate`. `mode: "yoy"` feeds calendar-year tax-drag bars in `GrowthAndTaxDragModule`.
+- `POST /illustrate/portfolio/compare` — Current vs Proposed Allocation. Body: `current` / `proposed` `{ label?, holdings[], book_dollars }` with `ticker` + `weight_pct` (or `holding_dollars`). Deltas are **proposed − current** (`deltas.estimated_tax`, `effective_tax_on_holding`). v1 is a single snapshot — **do not send `periods[]`**. Bar charts + heat tables use `holdings[].upcoming` `{ distribution_dollars, estimated_tax, as_of, publication_stage }` (`null` = no upcoming; do not derive). Each column shows **Total tax impact** = Σ `upcoming.estimated_tax` above the chart. Older payloads without the field still fall back to `illustration` + `publication_stage_used`. If compare is 404/down, the client double-calls `POST /illustrate/portfolio` and synthesizes deltas; localhost falls back to the sketch fixture. Print/PDF: `exportToPdf(toPortfolioCompareExportModel(result, bookDollars))` — Website wires the button + freemium gate. Standalone demo: `/portfolio-compare`. Import `PortfolioCompare`, `exportToPdf`, and `toPortfolioCompareExportModel` from `@/components/illustrate`.
 - `GET /performance?ticker=AGTHX&mode=fixture` and `POST /performance/growth` — monthly fund + benchmark `growth_of_x` (default $10,000). Benchmarks SPY / AGG / VXUS by asset class. Fixtures AGTHX, FCNTX, AMCPX, FBGRX, VFIAX, DODIX. Local mock when the Data API is down. Homepage mounts `GrowthAndTaxDragModule`; standalone demo: `/growth-tax`.
-- `POST /illustrate/portfolio` — coverage `dollars_covered` / `dollars_uncovered` / `coverage_pct` + `gaps[]` + `warnings` (shown on the illustrate panel).
+- `POST /illustrate/portfolio` — coverage `dollars_covered` / `dollars_uncovered` / `coverage_pct` + `gaps[]` + `warnings` (shown on the illustrate panel). Also the fallback for portfolio compare.
 - `GET /distributions` — aggregated into the search table (seed fills tickers the API does not yet return).
 - `GET /coverage`, `GET /fund-families` — `coverage_tier`, `aum_rank`, `priority` (Live vs Gap in picker / results / illustrate).
 - `POST /coverage/gaps` — logged when a gap ticker is selected.
@@ -113,6 +117,7 @@ NEXT_PUBLIC_DATA_API_URL=http://localhost:8000 npm run dev
 
 Optional illustrate-only override: `NEXT_PUBLIC_ILLUSTRATE_URL=http://localhost:8000/illustrate`.
 Optional compare-only override: `NEXT_PUBLIC_COMPARE_URL=http://localhost:8000/illustrate/compare`.
+Optional portfolio-compare override: `NEXT_PUBLIC_PORTFOLIO_COMPARE_URL=http://localhost:8000/illustrate/portfolio/compare`.
 
 Types live in `src/lib/illustrate/types.ts`. Mock `POST /api/illustrate` returns `tax_rates_applied`, `components[]`, `totals`, and `warnings[]`.
 

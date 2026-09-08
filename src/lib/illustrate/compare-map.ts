@@ -3,6 +3,7 @@ import type {
   ComparePeriodOut,
   CompareResponse,
   CompareSummary,
+  CompareUpcomingDistribution,
 } from "@/lib/illustrate/compare-types";
 
 /**
@@ -43,12 +44,25 @@ export type TaxDeltaMetric = {
   polarity: TaxPolarity;
 };
 
+export type UpcomingSideStatus = {
+  dollars: number | null;
+  display: string;
+  statusLabel: string;
+  announced: boolean;
+};
+
+export type UpcomingSides = {
+  left: UpcomingSideStatus;
+  right: UpcomingSideStatus;
+};
+
 export type TaxDeltaCardModel = {
   leftLabel: string;
   rightLabel: string;
   sample: boolean;
   bars: TaxDeltaBar[];
   metrics: TaxDeltaMetric[];
+  upcoming: UpcomingSides;
   inceptionLabel: string;
   notes: string[];
 };
@@ -109,6 +123,64 @@ function inceptionLabel(summary: CompareSummary): string {
   return "common inception";
 }
 
+export function upcomingSideStatus(
+  dollars: number | null | undefined,
+  stage?: string | null,
+): UpcomingSideStatus {
+  if (dollars == null) {
+    return {
+      dollars: null,
+      display: "—",
+      statusLabel: "Not announced",
+      announced: false,
+    };
+  }
+  const stageKey = (stage ?? "").trim().toLowerCase();
+  const statusLabel = stageKey
+    ? stageKey.replace(/_/g, " ")
+    : "announced";
+  return {
+    dollars,
+    display: formatUsd(Math.round(dollars), 0),
+    statusLabel,
+    announced: true,
+  };
+}
+
+export function upcomingSidesFromSummary(
+  upcoming: CompareUpcomingDistribution | null | undefined,
+): UpcomingSides {
+  return {
+    left: upcomingSideStatus(upcoming?.left_dollars, upcoming?.left_publication_stage),
+    right: upcomingSideStatus(upcoming?.right_dollars, upcoming?.right_publication_stage),
+  };
+}
+
+function upcomingMetric(
+  sides: UpcomingSides,
+  deltaDollars: number | null | undefined,
+  demo: string,
+): TaxDeltaMetric {
+  const both = sides.left.announced && sides.right.announced;
+  const neither = !sides.left.announced && !sides.right.announced;
+  const upcoming =
+    both && deltaDollars != null
+      ? fundACost(Number(deltaDollars), EVEN_DOLLARS)
+      : null;
+
+  return {
+    key: "upcoming_tax",
+    label: "Upcoming tax",
+    headline: both && upcoming
+      ? moreLessTaxHeadline(upcoming.costToA)
+      : `${sides.left.display} · ${sides.right.display}`,
+    detail: neither
+      ? `Not announced · this year · on $10k${demo}`
+      : `A ${sides.left.statusLabel} · B ${sides.right.statusLabel} · on $10k${demo}`,
+    polarity: upcoming?.polarity ?? "even",
+  };
+}
+
 function pickLabel(
   side: { label?: string } | null | undefined,
   fallback: string,
@@ -149,11 +221,9 @@ export function toTaxDeltaCardModel(
     Number(summary.distribution_dollars_difference ?? 0),
     EVEN_DOLLARS,
   );
-  const upcomingDelta = summary.upcoming_taxable_distribution?.delta_dollars;
-  const upcoming =
-    upcomingDelta == null
-      ? null
-      : fundACost(Number(upcomingDelta), EVEN_DOLLARS);
+  const upcomingSides = upcomingSidesFromSummary(
+    summary.upcoming_taxable_distribution,
+  );
 
   const window = inceptionLabel(summary);
   const demo = sample ? " · demo" : "";
@@ -180,14 +250,11 @@ export function toTaxDeltaCardModel(
       detail: `from distributions · on $10k · window${demo}`,
       polarity: dist.polarity,
     },
-    {
-      key: "upcoming_tax",
-      label: "Upcoming tax",
-      headline:
-        upcoming == null ? "No estimate this year" : moreLessTaxHeadline(upcoming.costToA),
-      detail: `this year · on $10k · vs peer${demo}`,
-      polarity: upcoming?.polarity ?? "even",
-    },
+    upcomingMetric(
+      upcomingSides,
+      summary.upcoming_taxable_distribution?.delta_dollars,
+      demo,
+    ),
   ];
 
   return {
@@ -196,6 +263,7 @@ export function toTaxDeltaCardModel(
     sample,
     bars,
     metrics,
+    upcoming: upcomingSides,
     inceptionLabel: window,
     notes: response.notes,
   };

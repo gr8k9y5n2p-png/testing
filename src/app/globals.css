@@ -88,3 +88,30 @@ body {
 input[type="checkbox"] {
   accent-color: var(--accent);
 }
+
+@media print {
+  @page {
+    size: letter landscape;
+    margin: 0.5in;
+  }
+
+  html,
+  body {
+    background: #fff;
+  }
+
+  header,
+  footer,
+  [data-print-hide] {
+    display: none !important;
+  }
+
+  .portfolio-compare {
+    break-inside: avoid;
+  }
+
+  .portfolio-compare input,
+  .portfolio-compare button {
+    box-shadow: none !important;
+  }
+}

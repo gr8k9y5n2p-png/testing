@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
 import { FundTaxDeltaCompare } from "@/components/illustrate/FundTaxDeltaCompare";
+import { TaxDeltaCompareCard } from "@/components/illustrate/TaxDeltaCompareCard";
+import { YoYTaxChart } from "@/components/illustrate/YoYTaxChart";
+import { mockCompareMixedUpcomingResponse } from "@/lib/illustrate/compare-fixture";
+import { toTaxDeltaCardModel } from "@/lib/illustrate/compare-map";
 import { COPY } from "@/lib/copy";
 
 export const metadata: Metadata = {
@@ -48,16 +52,58 @@ export default function CompareDemoPage() {
         and falls back to the sketch fixture when the Data API is unreachable.
       </p>
 
-      <div className="mt-8 flex justify-center lg:justify-start">
+      <div className="mt-8 flex flex-wrap items-start gap-8">
         <FundTaxDeltaCompare
           left={DEMO_LEFT}
           right={DEMO_RIGHT}
           holdingDollars={10_000}
         />
+        <div>
+          <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-faint">
+            Mixed upcoming (B not announced)
+          </p>
+          <TaxDeltaCompareCard
+            model={toTaxDeltaCardModel(
+              mockCompareMixedUpcomingResponse({
+                holding_dollars: 10_000,
+                left: DEMO_LEFT,
+                right: DEMO_RIGHT,
+                periods: [
+                  { year: 2021 },
+                  { year: 2022 },
+                  { year: 2023 },
+                  { year: 2024 },
+                  { year: 2025 },
+                ],
+              }),
+            )}
+          />
+        </div>
+      </div>
+
+      <div className="mt-10 max-w-xl">
+        <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-faint">
+          YoYTaxChart primitive
+        </p>
+        <YoYTaxChart
+          headingId="yoy-tax-chart-demo"
+          title="Tax by calendar year"
+          line
+          bars={[
+            { year: 2021, value: 210 },
+            { year: 2022, value: 164 },
+            { year: 2023, value: 188 },
+            { year: 2024, value: null },
+            { year: 2025, value: 142 },
+          ]}
+        />
       </div>
 
       <pre className="mt-10 overflow-auto rounded-lg border border-line bg-surface p-4 text-[12px] leading-relaxed text-muted">
-        {`import { FundTaxDeltaCompare } from "@/components/illustrate";
+        {`import {
+  FundTaxDeltaCompare,
+  YoYTaxChart,
+} from "@/components/illustrate";
 
 <FundTaxDeltaCompare
   left={{
@@ -70,6 +116,11 @@ export default function CompareDemoPage() {
   }}
   holdingDollars={10000}
   taxRates={{ state: 0.05 }}
+/>
+
+<YoYTaxChart
+  bars={[{ year: 2023, value: 188 }, { year: 2024, value: null }, { year: 2025, value: 142 }]}
+  line
 />`}
       </pre>
 

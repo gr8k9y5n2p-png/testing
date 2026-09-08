@@ -124,14 +124,14 @@ export function FundTaxDeltaCompare({
     );
   }
 
-  if (!result || result.periods.length === 0) {
+  if (!result) {
     return (
       <div
         className={`flex min-h-[420px] w-full max-w-[420px] flex-col items-start justify-center rounded-2xl border border-dashed border-line-strong bg-surface px-5 py-6 ${className ?? ""}`}
       >
-        <p className="font-serif text-lg text-ink">No overlapping years</p>
+        <p className="font-serif text-lg text-ink">Compare unavailable</p>
         <p className="mt-2 text-sm text-muted">
-          POST /illustrate/compare returned no period rows for these two funds.
+          POST /illustrate/compare returned no payload for these two funds.
         </p>
       </div>
     );

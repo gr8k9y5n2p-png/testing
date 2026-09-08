@@ -1,6 +1,8 @@
 export { FundTaxDeltaCompare } from "@/components/illustrate/FundTaxDeltaCompare";
 export type { FundTaxDeltaCompareProps } from "@/components/illustrate/FundTaxDeltaCompare";
 export { TaxDeltaCompareCard } from "@/components/illustrate/TaxDeltaCompareCard";
+export { YoYTaxChart } from "@/components/illustrate/YoYTaxChart";
+export type { YoYTaxChartProps } from "@/components/illustrate/YoYTaxChart";
 export {
   GrowthAndTaxDragModule,
 } from "@/components/illustrate/GrowthAndTaxDragModule";
@@ -17,6 +19,12 @@ export {
 } from "@/components/illustrate/TaxDragByYearChart";
 export type { TaxDragByYearChartProps } from "@/components/illustrate/TaxDragByYearChart";
 export { toTaxDeltaCardModel } from "@/lib/illustrate/compare-map";
+export {
+  computeYoyLine,
+  toYoYTaxChartModel,
+  yoyBarsFromComparePeriods,
+} from "@/lib/illustrate/yoy-tax-chart";
+export type { YoYTaxChartModel, YoYTaxChartPoint } from "@/lib/illustrate/yoy-tax-chart";
 export {
   taxDragLineFromPeriods,
   toNegativeTaxDrag,
@@ -36,6 +44,24 @@ export type {
   CompareResponse,
   CompareSideIn,
 } from "@/lib/illustrate/compare-types";
+export { PortfolioCompare } from "@/components/illustrate/PortfolioCompare";
+export type { PortfolioCompareProps } from "@/components/illustrate/PortfolioCompare";
+export { postIllustratePortfolioCompare } from "@/lib/illustrate/portfolio-compare-client";
+export {
+  exportToPdf,
+  renderPortfolioComparePrintHtml,
+  toPortfolioCompareExportModel,
+} from "@/lib/illustrate/portfolio-compare-export";
+export type {
+  PortfolioCompareExportModel,
+  PortfolioCompareExportSide,
+} from "@/lib/illustrate/portfolio-compare-export";
+export type {
+  PortfolioCompareRequest,
+  PortfolioCompareResponse,
+  PortfolioFundOption,
+  PortfolioHoldingDraft,
+} from "@/lib/illustrate/portfolio-compare-types";
 export {
   fetchPerformance,
   postPerformanceGrowth,
