@@ -10,7 +10,7 @@ import {
   synthesizePortfolioCompare,
 } from "@/lib/illustrate/portfolio-compare-fixture";
 import { ensurePortfolioComparePeriods } from "@/lib/illustrate/portfolio-year-tax";
-import { seedNavLookup } from "@/lib/illustrate/seed-nav";
+import { seedFundNameLookup, seedNavLookup } from "@/lib/illustrate/seed-nav";
 import { portfolioPeriodTaxIsUnmatched } from "@/lib/illustrate/portfolio-compare-years";
 import type {
   PortfolioAllocationOut,
@@ -174,7 +174,9 @@ function withSideNav(
 ): PortfolioCompareSideIn {
   return {
     ...side,
-    holdings: side.holdings.map((holding) => withPortfolioHoldingNav(holding, lookup)),
+    holdings: side.holdings.map((holding) =>
+      withPortfolioHoldingNav(holding, lookup, seedFundNameLookup),
+    ),
   };
 }
 

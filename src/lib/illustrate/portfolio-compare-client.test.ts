@@ -120,6 +120,7 @@ describe("portfolio compare nav_per_share wiring", () => {
     );
     assert.match(client, /withPortfolioHoldingNav/);
     assert.match(client, /seedNavLookup/);
+    assert.match(client, /seedFundNameLookup/);
     assert.match(client, /positiveNav\(holding\.nav_per_share\)/);
     assert.match(compare, /navFromFundMetadata\(ticker, holding\.nav, seedNavLookup\)/);
     assert.match(seed, /DODIX:\s*12\.8/);

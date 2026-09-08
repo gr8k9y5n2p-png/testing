@@ -221,7 +221,7 @@ describe("calendar-year tax table", () => {
     assert.equal(model.proposed.filter((row) => row.ticker === "AMCPX").length, 1);
   });
 
-  it("treats uncovered holdings as N/A across years, never $0", () => {
+  it("treats unmatched period years as N/A, never $0", () => {
     const book = resultForSmoke();
     book.proposed.holdings = book.proposed.holdings.map((holding) =>
       holding.ticker === "CGHM"
@@ -232,12 +232,36 @@ describe("calendar-year tax table", () => {
       {
         year: 2024,
         current: [tax("AGTHX", 2400, true)],
-        proposed: [tax("CGHM", 0, true)],
+        proposed: [tax("CGHM", 0, false)],
       },
     ];
     const model = calendarYearTaxTable(book);
     const cghm = model.proposed.find((row) => row.ticker === "CGHM");
     assert.deepEqual(cghm?.cells, [null, null, null, null, null]);
     assert.equal(cghm?.cells.includes(0), false);
+  });
+
+  it("densifies AGTHX from matched period tax even when the holding is uncovered", () => {
+    const book = resultForSmoke();
+    book.current.holdings = book.current.holdings.map((row) =>
+      row.ticker === "AGTHX"
+        ? { ...row, covered: false, gap_reason: "no unpaid announce" }
+        : row,
+    );
+    const model = calendarYearTaxTable(book);
+    const agthx = model.current.find((row) => row.ticker === "AGTHX");
+    assert.ok(agthx?.cells.every((cell) => cell != null && cell > 0));
+  });
+
+  it("maps period rows by holding_index when the ticker is a share-class alias", () => {
+    const book = resultForSmoke();
+    book.periods = PORTFOLIO_COMPARE_YEARS.map((year) => ({
+      year,
+      current: [{ ticker: "GFAFX", holding_index: 0, matched: true, estimated_tax: 2100 }],
+      proposed: [tax("AMCPX", 3000, true)],
+    }));
+    const model = calendarYearTaxTable(book);
+    const agthx = model.current.find((row) => row.ticker === "AGTHX");
+    assert.ok(agthx?.cells.every((cell) => cell === 2100));
   });
 });
