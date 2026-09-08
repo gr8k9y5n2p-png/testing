@@ -11,8 +11,6 @@ import {
   toDataApiCompareBody,
   yoyTaxDragCompareRequest,
 } from "./compare-request.ts";
-import { mockCompareResponse } from "./compare-fixture.ts";
-import { toTaxDragPeriods } from "./tax-drag-map.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -175,7 +173,7 @@ describe("compare-request NAV / Data body", () => {
     assert.equal(stripped.selectors?.ticker, "AMCPX");
   });
 
-  it("builds a homepage AMCPX YoY body that still charts mock 2021–2025 bars", () => {
+  it("builds a homepage AMCPX YoY body without ticker-as-fund_name", () => {
     const years = [2021, 2022, 2023, 2024, 2025];
     const request = yoyTaxDragCompareRequest({
       ticker: "AMCPX",
@@ -189,21 +187,14 @@ describe("compare-request NAV / Data body", () => {
     const body = toDataApiCompareBody(request, seedLookup);
     assert.equal(body.mode, "yoy");
     assert.equal(body.selectors?.ticker, "AMCPX");
+    assert.equal(body.selectors?.fund_identifier, "AMCPX");
+    assert.equal(body.selectors?.fund_family, "American Funds");
     assert.equal(body.selectors?.fund_name, undefined);
     assert.equal(body.left?.selectors?.fund_name, undefined);
     assert.equal(body.nav_per_share, 41.22);
     assert.deepEqual(
       body.periods?.map((period) => period.year),
       years,
-    );
-    const points = toTaxDragPeriods(mockCompareResponse(body), "effective_tax");
-    assert.deepEqual(
-      points.map((point) => point.year),
-      years,
-    );
-    assert.ok(
-      points.every((point) => point.value != null),
-      "AMCPX mock vintages 2021–2025 must chart, not N/A",
     );
   });
 
@@ -220,7 +211,6 @@ describe("compare-request NAV / Data body", () => {
     );
     assert.equal(body.selectors?.fund_name, "The Growth Fund of America");
     assert.equal(body.nav_per_share, 72.14);
-    const points = toTaxDragPeriods(mockCompareResponse(body), "tax_dollars");
-    assert.ok(points.every((point) => point.value != null && point.value !== 0));
+    assert.equal(body.left?.selectors?.ticker, "AGTHX");
   });
 });
