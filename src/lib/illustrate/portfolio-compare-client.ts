@@ -9,7 +9,7 @@ import {
   mockPortfolioCompareResponse,
   synthesizePortfolioCompare,
 } from "@/lib/illustrate/portfolio-compare-fixture";
-import { defaultPortfolioComparePeriods } from "@/lib/illustrate/portfolio-year-tax";
+import { ensurePortfolioComparePeriods } from "@/lib/illustrate/portfolio-year-tax";
 import { seedNavLookup } from "@/lib/illustrate/seed-nav";
 import { portfolioPeriodTaxIsUnmatched } from "@/lib/illustrate/portfolio-compare-years";
 import type {
@@ -131,6 +131,8 @@ function periodHoldingTaxFromRaw(raw: unknown, index: number): PortfolioPeriodHo
     holding_index: numOrNull(row.holding_index) ?? index,
     matched: unmatched ? false : true,
     estimated_tax: unmatched ? null : tax,
+    covered: coveredRaw === false || coveredRaw === "false" ? false : coveredRaw == null ? undefined : true,
+    gap_reason: gap == null ? null : String(gap),
   };
 }
 
@@ -190,10 +192,7 @@ export function toPortfolioCompareRequestBody(
     proposed: withSideNav(request.proposed, lookup),
     tax_rates: request.tax_rates ?? {},
     combine_state_with_federal: request.combine_state_with_federal !== false,
-    periods:
-      request.periods && request.periods.length > 0
-        ? request.periods
-        : defaultPortfolioComparePeriods(),
+    periods: ensurePortfolioComparePeriods(request.periods),
   };
   if (request.snapshot) body.snapshot = request.snapshot;
   return body;

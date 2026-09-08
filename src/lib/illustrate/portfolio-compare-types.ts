@@ -203,12 +203,14 @@ export type PortfolioCompareSummary = {
   coverage_pct: number;
 };
 
-/** One holding’s tax $ in a calendar-year period. Unmatched → estimated_tax null. */
+/** One holding’s tax $ in a calendar-year period. Unmatched / uncovered → estimated_tax null. */
 export type PortfolioPeriodHoldingTax = {
   ticker: string;
   holding_index?: number;
   matched: boolean;
   estimated_tax: number | null;
+  covered?: boolean;
+  gap_reason?: string | null;
 };
 
 export type PortfolioComparePeriodOut = {

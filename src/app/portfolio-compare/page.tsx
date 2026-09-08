@@ -36,9 +36,10 @@ export default async function PortfolioCompareDemoPage() {
         and falls back to the sketch fixture when the Data API is unreachable.
         Defaults are GTM’s history-covered smoke books (Current AGTHX / DODIX /
         AMCAP / DODGX, Proposed AMCPX / CGHM / AGTHX / AMCAP, 25% each at $1M).
-        POSTs periods for calendar years 2021 through 2025 for the ticker × year
-        tax $ table (unmatched years = N/A). Upcoming stays unpaid-announced;
-        Paid History is `paid_history[]` only.
+        POSTs periods for calendar years 2021 through 2025. Calendar-year tax
+        is the ticker × year matrix (2025–2021; unmatched / uncovered = N/A,
+        never $0). Upcoming stays unpaid-announced; Paid History is
+        `paid_history[]` only.
       </p>
 
       <div className="mt-8">

@@ -46,7 +46,7 @@ describe("portfolio compare periods wiring", () => {
   it("POSTs periods 2021–2025 on portfolio compare", () => {
     const client = readFileSync(join(here, "portfolio-compare-client.ts"), "utf8");
     assert.match(client, /periods:/);
-    assert.match(client, /defaultPortfolioComparePeriods/);
+    assert.match(client, /ensurePortfolioComparePeriods/);
     assert.match(client, /normalizePortfolioComparePeriods/);
     assert.match(client, /portfolioPeriodTaxIsUnmatched/);
   });

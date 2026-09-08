@@ -25,19 +25,15 @@ export type YearTaxTableModel = {
   proposed: YearTaxRow[];
 };
 
+/**
+ * Always 2025 … 2021 (newest first), even when Data only returns 2021–2024.
+ * Extra period years stay off the grid so the module does not grow a sixth column.
+ */
 export function calendarYearColumns(
-  periods: PortfolioComparePeriodOut[] | null | undefined,
+  _periods?: PortfolioComparePeriodOut[] | null,
   fallback: readonly number[] = PORTFOLIO_COMPARE_YEARS,
 ): number[] {
-  const fromPeriods = [
-    ...new Set((periods ?? []).map((period) => period.year).filter((year) => year > 0)),
-  ].sort((a, b) => a - b);
-  if (fromPeriods.length) {
-    const requested = [...fallback];
-    const extra = fromPeriods.filter((year) => !requested.includes(year));
-    return extra.length ? [...requested, ...extra] : requested.length ? requested : fromPeriods;
-  }
-  return [...fallback];
+  return [...fallback].sort((a, b) => b - a);
 }
 
 function taxLookup(
@@ -60,10 +56,26 @@ function taxLookup(
   return byTicker;
 }
 
-/** Unmatched / missing → null (N/A). Matched $0 stays 0. */
+/** Unmatched / uncovered / null totals → N/A. Published $0 stays 0. */
 export function periodHoldingTax(holding: PortfolioPeriodHoldingTax): YearTaxCell {
   if (holding.matched === false) return null;
+  if (holding.covered === false) return null;
+  if (holding.gap_reason) return null;
   return holding.estimated_tax;
+}
+
+function uniqueHoldings(
+  holdings: PortfolioCompareResponse["current"]["holdings"],
+): PortfolioCompareResponse["current"]["holdings"] {
+  const seen = new Set<string>();
+  const unique: typeof holdings = [];
+  for (const holding of holdings) {
+    const ticker = (holding.ticker || holding.fund_identifier || "—").toUpperCase();
+    if (seen.has(ticker)) continue;
+    seen.add(ticker);
+    unique.push(holding);
+  }
+  return unique;
 }
 
 function rowsForSide(
@@ -74,7 +86,7 @@ function rowsForSide(
 ): YearTaxRow[] {
   const allocation = result[side];
   const sideLabel = side === "current" ? "Current" : "Proposed";
-  return allocation.holdings.map((holding, index) => {
+  return uniqueHoldings(allocation.holdings).map((holding, index) => {
     const ticker = (holding.ticker || holding.fund_identifier || "—").toUpperCase();
     const byYear = lookup.get(ticker);
     return {
@@ -114,4 +126,18 @@ export function hasCalendarYearTax(model: YearTaxTableModel): boolean {
 
 export function defaultPortfolioComparePeriods(): PortfolioComparePeriodIn[] {
   return PORTFOLIO_COMPARE_YEARS.map((year) => ({ year }));
+}
+
+/** Always POST 2021–2025, even if a caller omitted 2025. */
+export function ensurePortfolioComparePeriods(
+  periods?: PortfolioComparePeriodIn[] | null,
+): PortfolioComparePeriodIn[] {
+  const byYear = new Map<number, PortfolioComparePeriodIn>();
+  for (const period of periods ?? []) {
+    if (period.year > 0) byYear.set(period.year, period);
+  }
+  for (const year of PORTFOLIO_COMPARE_YEARS) {
+    if (!byYear.has(year)) byYear.set(year, { year });
+  }
+  return [...byYear.values()].sort((a, b) => a.year - b.year);
 }
