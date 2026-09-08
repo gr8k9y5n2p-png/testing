@@ -324,7 +324,7 @@ def test_search_multi_year_top_families(client: TestClient) -> None:
         assert fetched.status_code == 200, fetched.text
 
     nosix = client.get("/distributions", params={"fund_identifier": "NOSIX", "page_size": 50})
-    assert {"2022", "2023", "2024", "2025"} <= {
+    assert {"2021", "2022", "2023", "2024", "2025"} <= {
         item["as_of"][:4] for item in nosix.json()["items"] if item.get("as_of")
     }
     nosix_2024 = client.get(
@@ -485,7 +485,12 @@ def test_search_multi_year_top_families(client: TestClient) -> None:
     )
 
     wstax = client.get("/distributions", params={"fund_identifier": "WSTAX", "page_size": 20})
-    assert {"2024", "2025"} <= {item["as_of"][:4] for item in wstax.json()["items"] if item.get("as_of")}
+    assert {"2023", "2024", "2025"} <= {item["as_of"][:4] for item in wstax.json()["items"] if item.get("as_of")}
+
+    meiax = client.get("/distributions", params={"fund_identifier": "MEIAX", "page_size": 50})
+    assert {"2021", "2022", "2023", "2024", "2025"} <= {
+        item["as_of"][:4] for item in meiax.json()["items"] if item.get("as_of")
+    }
 
     sgenx = client.get("/distributions", params={"fund_identifier": "SGENX", "page_size": 50})
     assert {"2023", "2024", "2025"} <= {

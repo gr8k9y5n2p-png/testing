@@ -204,7 +204,10 @@ class MacquarieSource(HtmlTableSource):
         "is the full paying-fund book (WSTAX LT $10.051 / 15.05% of Class A NAV; "
         "Class A tickers; no-pay list omitted). 2024 paid book "
         "https://mim.fgsfulfillment.com/download.aspx?sku=CGE-RET-ACT-2024 "
-        "(WSTAX ST $1.108 / LT $8.135). Literature hub: "
+        "(WSTAX ST $1.108 / LT $8.135). 2023 paid book "
+        "https://mim.fgsfulfillment.com/download.aspx?sku=CGE-RET-ACT-2023 "
+        "is the full paying-fund table (WSTAX LT $5.331; 20 Class A tickers; "
+        "no-pay list omitted). Literature hub: "
         "https://www.macquarie.com/mam/literature."
     )
     live_limitations = "US estimate/paid books are fulfillment PDFs, not an HTML grid."
@@ -223,6 +226,12 @@ class MacquarieSource(HtmlTableSource):
                 fixture="2024_paid_capital_gains.html",
                 live=False,
                 large_aum_only=True,
+            ),
+            PageSpec(
+                name="2023_paid_capital_gains",
+                url="https://mim.fgsfulfillment.com/download.aspx?sku=CGE-RET-ACT-2023",
+                fixture="2023_paid_capital_gains.html",
+                live=False,
             ),
         ]
 

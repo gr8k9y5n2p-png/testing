@@ -156,6 +156,7 @@ def test_full_book_artisan_ici_and_first_eagle() -> None:
     assert not any("Tactical Municipal" in name for name in fe_funds)
 
     mfs_funds, mfs_tickers = _funds_and_tickers(MfsSource())
-    assert {"MIGHX", "MITTX"} <= mfs_tickers
+    assert {"MIGHX", "MITTX", "MEIAX", "MFEGX", "MFRFX", "MGIAX"} <= mfs_tickers
+    assert len(mfs_tickers) >= 10
     assert len(mfs_funds) >= 80
     assert any("Value Fund" in name for name in mfs_funds)

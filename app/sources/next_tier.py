@@ -196,7 +196,9 @@ class NorthernTrustSource(HtmlTableSource):
         "LT $1.011150; NSGRX/NSCKX ST $0.189098 / LT $3.454742). "
         "2024 .../estimated-capital-gains-2024.pdf (NOSIX ST $0.088060 / LT $0.699110), "
         "2023 .../capital-gains-2023.pdf (NOSIX LT $1.697952), "
-        "2022 .../capital-gains-2022.pdf (NOSIX LT $1.243605). "
+        "2022 .../capital-gains-2022.pdf (NOSIX LT $1.243605), "
+        "2021 .../capital-gains-2021.pdf (NOSIX ST $0.096491 / LT $0.985777; "
+        "full equity CG book; FI daily/monthly omitted). "
         "Hub: https://ntam.northerntrust.com/united-states/all-investor/account-resources/tax-center"
     )
     live_limitations = "Year-end figures are PDF. Fixture transcribes the public Northern Funds table."
@@ -236,6 +238,12 @@ class NorthernTrustSource(HtmlTableSource):
                 fixture="2022_capital_gain_distributions.html",
                 live=False,
                 large_aum_only=True,
+            ),
+            PageSpec(
+                name="2021_capital_gain_distributions",
+                url=f"{tax}/northerntrust/investment-management/global/en/documents/account-resources/tax-center/capital-gains-2021.pdf",
+                fixture="2021_capital_gain_distributions.html",
+                live=False,
             ),
         ]
 
