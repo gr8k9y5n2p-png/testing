@@ -10,9 +10,11 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.aliases import display_cusip, display_ticker
+from app.categories import category_for_row
 from app.crud import (
     get_by_id,
     list_coverage_gaps,
+    list_fund_category_counts,
     resolve_page_from_limit_offset,
     search_distributions,
     search_funds,
@@ -25,6 +27,8 @@ from app.schemas import (
     DistributionIn,
     DistributionListOut,
     DistributionOut,
+    FundCategoryListOut,
+    FundCategoryOut,
     FundListOut,
     FundOut,
     FetchRequest,
@@ -166,28 +170,60 @@ def list_distributions(
         item = DistributionOut.model_validate(row)
         item.ticker = display_ticker(item.ticker, item.fund_identifier)
         item.cusip = display_cusip(item.cusip, item.fund_identifier)
+        item.category = category_for_row(item)
         if not include_raw:
             item.raw_payload = None
         items.append(item)
     return DistributionListOut(items=items, page=page, page_size=page_size, total=total)
 
 
+@router.get("/funds/categories", response_model=FundCategoryListOut, tags=["search"])
+def list_fund_categories(
+    q: str | None = Query(default=None, description="Optional search narrowing the counted book"),
+    fund_family: str | None = None,
+    session: Session = Depends(get_session),
+) -> FundCategoryListOut:
+    """Distinct Morningstar-style categories with stored-fund counts. For Versus Category UI."""
+    pairs, uncategorized, total = list_fund_category_counts(
+        session, q=q, fund_family=fund_family
+    )
+    categorized = total - uncategorized
+    coverage = round(100.0 * categorized / total, 1) if total else 0.0
+    return FundCategoryListOut(
+        items=[FundCategoryOut(category=name, fund_count=count) for name, count in pairs],
+        uncategorized=uncategorized,
+        total_funds=total,
+        categorized=categorized,
+        coverage_pct=coverage,
+    )
+
+
 @router.get("/funds", response_model=FundListOut, tags=["search"])
 def list_funds(
     q: str | None = Query(default=None, description="Search ticker, fund name, family, or identifier"),
     fund_family: str | None = None,
+    category: str | None = Query(
+        default=None,
+        description=(
+            "Optional Morningstar-style category filter (e.g. Large Growth). "
+            "Case/hyphen insensitive. Unknown category names return an empty list."
+        ),
+    ),
     limit: int = Query(default=50, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
     session: Session = Depends(get_session),
 ) -> FundListOut:
     """Unique funds already in the distribution store. For Website Search / Sample Estimates."""
-    rows, total = search_funds(session, q=q, fund_family=fund_family, limit=limit, offset=offset)
+    rows, total = search_funds(
+        session, q=q, fund_family=fund_family, category=category, limit=limit, offset=offset
+    )
     items = [
         FundOut(
             ticker=display_ticker(row.ticker, row.fund_identifier),
             fund_name=row.fund_name,
             fund_family=row.fund_family,
             fund_identifier=row.fund_identifier,
+            category=row.category,
             latest_as_of=row.latest_as_of,
             has_estimate=row.has_estimate,
         )
@@ -204,6 +240,7 @@ def get_distribution(distribution_id: str, session: Session = Depends(get_sessio
     item = DistributionOut.model_validate(row)
     item.ticker = display_ticker(item.ticker, item.fund_identifier)
     item.cusip = display_cusip(item.cusip, item.fund_identifier)
+    item.category = category_for_row(item)
     return item
 
 

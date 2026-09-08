@@ -79,6 +79,7 @@ def test_illustrate_percent_of_nav_via_selectors(client: TestClient) -> None:
     body = response.json()
     assert len(body["components"]) == 1
     component = body["components"][0]
+    assert component["category"] == "Large Growth"
     assert component["amount_unit"] == "percent_of_nav"
     assert Decimal(component["distribution_dollars"]) == Decimal("40000.00")
     assert Decimal(component["distribution_dollars_min"]) == Decimal("30000.00")

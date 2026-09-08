@@ -7,8 +7,9 @@ from typing import NamedTuple
 from sqlalchemy import Select, case, func, or_, select
 from sqlalchemy.orm import Session
 
-from app.models import CoverageGap, DistributionEstimate, IngestRun, PublicationStage
 from app.aliases import alias_fund_identifier, enrich_class_a_fields
+from app.categories import canonical_category, resolve_category
+from app.models import CoverageGap, DistributionEstimate, IngestRun, PublicationStage
 from app.schemas import DistributionIn, fund_identifier, make_upsert_key
 
 _ESTIMATE_STAGES = (
@@ -26,6 +27,7 @@ class FundSummary(NamedTuple):
     ticker: str | None
     latest_as_of: date | None
     has_estimate: bool
+    category: str | None = None
 
 
 def _midpoint(record: DistributionIn) -> Decimal | None:
@@ -266,20 +268,15 @@ def resolve_page_from_limit_offset(
     return resolved_page, resolved_size
 
 
-def search_funds(
+def _unique_fund_query(
     session: Session,
     *,
     q: str | None = None,
     fund_family: str | None = None,
-    limit: int = 50,
-    offset: int = 0,
-) -> tuple[list[FundSummary], int]:
-    """Unique funds already stored as distribution rows. Never invents funds."""
-    limit = min(max(int(limit), 1), 200)
-    offset = max(int(offset), 0)
+):
+    """Latest stored row per fund_identifier. Never invents funds."""
     filtered = _filter_stmt(q=q, fund_family=fund_family).subquery()
     total = session.scalar(select(func.count(func.distinct(filtered.c.fund_identifier)))) or 0
-
     row_number = func.row_number().over(
         partition_by=filtered.c.fund_identifier,
         order_by=(
@@ -300,7 +297,7 @@ def search_funds(
         .group_by(filtered.c.fund_identifier)
         .subquery()
     )
-    rows = session.execute(
+    stmt = (
         select(ranked, aggregates.c.latest_as_of, aggregates.c.has_estimate)
         .join(aggregates, aggregates.c.fund_identifier == ranked.c.fund_identifier)
         .where(ranked.c.rn == 1)
@@ -309,21 +306,71 @@ def search_funds(
             func.coalesce(ranked.c.ticker, "").asc(),
             ranked.c.fund_identifier.asc(),
         )
-        .offset(offset)
-        .limit(limit)
-    ).all()
-    items = [
-        FundSummary(
+    )
+    return stmt, int(total)
+
+
+def _summary_from_row(row) -> FundSummary:
+    return FundSummary(
+        fund_identifier=row.fund_identifier,
+        fund_name=row.fund_name,
+        fund_family=row.fund_family,
+        ticker=row.ticker,
+        latest_as_of=row.latest_as_of,
+        has_estimate=bool(row.has_estimate),
+        category=resolve_category(
+            ticker=row.ticker,
             fund_identifier=row.fund_identifier,
             fund_name=row.fund_name,
             fund_family=row.fund_family,
-            ticker=row.ticker,
-            latest_as_of=row.latest_as_of,
-            has_estimate=bool(row.has_estimate),
-        )
-        for row in rows
-    ]
-    return items, int(total)
+        ),
+    )
+
+
+def search_funds(
+    session: Session,
+    *,
+    q: str | None = None,
+    fund_family: str | None = None,
+    category: str | None = None,
+    limit: int = 50,
+    offset: int = 0,
+) -> tuple[list[FundSummary], int]:
+    """Unique funds already stored as distribution rows. Never invents funds."""
+    limit = min(max(int(limit), 1), 200)
+    offset = max(int(offset), 0)
+    wanted = canonical_category(category) if category else None
+    if category and category.strip() and wanted is None:
+        return [], 0
+
+    stmt, sql_total = _unique_fund_query(session, q=q, fund_family=fund_family)
+    if wanted is None:
+        rows = session.execute(stmt.offset(offset).limit(limit)).all()
+        return [_summary_from_row(row) for row in rows], sql_total
+
+    items = [_summary_from_row(row) for row in session.execute(stmt).all()]
+    items = [item for item in items if item.category == wanted]
+    return items[offset : offset + limit], len(items)
+
+
+def list_fund_category_counts(
+    session: Session,
+    *,
+    q: str | None = None,
+    fund_family: str | None = None,
+) -> tuple[list[tuple[str, int]], int, int]:
+    """Return (category, count) pairs plus uncategorized and total unique funds."""
+    stmt, total = _unique_fund_query(session, q=q, fund_family=fund_family)
+    counts: dict[str, int] = {}
+    uncategorized = 0
+    for row in session.execute(stmt).all():
+        summary = _summary_from_row(row)
+        if summary.category:
+            counts[summary.category] = counts.get(summary.category, 0) + 1
+        else:
+            uncategorized += 1
+    items = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))
+    return items, uncategorized, total
 
 
 def list_matching(

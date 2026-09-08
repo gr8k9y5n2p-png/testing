@@ -99,6 +99,13 @@ class DistributionOut(BaseModel):
     ticker: str | None
     cusip: str | None
     share_class: str | None
+    category: str | None = Field(
+        default=None,
+        description=(
+            "Morningstar-style broad category (e.g. Large Growth). "
+            "Null when unknown — never invented."
+        ),
+    )
     estimate_type: str
     amount: Decimal | None
     amount_min: Decimal | None
@@ -128,6 +135,14 @@ class FundOut(BaseModel):
     fund_name: str
     fund_family: str
     fund_identifier: str
+    category: str | None = Field(
+        default=None,
+        description=(
+            "Morningstar-style broad category for Versus Category averages "
+            "(e.g. Large Growth, Moderate Allocation, Intermediate Core Bond). "
+            "Null when unknown — never invented."
+        ),
+    )
     latest_as_of: date | None = None
     has_estimate: bool = False
 
@@ -137,6 +152,25 @@ class FundListOut(BaseModel):
     limit: int
     offset: int
     total: int
+
+
+class FundCategoryOut(BaseModel):
+    category: str
+    fund_count: int
+
+
+class FundCategoryListOut(BaseModel):
+    """Distinct categories among stored funds. For Website Versus Category UI."""
+
+    items: list[FundCategoryOut]
+    uncategorized: int = Field(
+        description="Stored unique funds with no trusted category (left null)."
+    )
+    total_funds: int
+    categorized: int
+    coverage_pct: float = Field(
+        description="Percent of stored unique funds with a non-null category."
+    )
 
 
 class IngestItemOut(BaseModel):
@@ -475,6 +509,10 @@ class IllustrationComponent(BaseModel):
     fund_name: str
     fund_identifier: str
     ticker: str | None
+    category: str | None = Field(
+        default=None,
+        description="Morningstar-style category when known; null otherwise.",
+    )
     estimate_type: str
     amount_unit: str
     amount: Decimal | None
@@ -689,6 +727,10 @@ class PortfolioHoldingOut(BaseModel):
     fund_identifier: str | None
     fund_family: str | None
     fund_name: str | None
+    category: str | None = Field(
+        default=None,
+        description="Morningstar-style category when known; null otherwise.",
+    )
     holding_dollars: Decimal
     covered: bool
     publication_stage_used: str | None = None
