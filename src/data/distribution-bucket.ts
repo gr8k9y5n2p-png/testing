@@ -36,16 +36,17 @@ export function isoDate(value: unknown): string | null {
 }
 
 /**
- * Payment/ex-date in the past. `as_of` is announcement for estimates and does
- * not make a preliminary/updated row paid. Past `final` rows fall back to
- * `as_of` when ex/payable are missing (year-end 2025 finals with only as_of).
+ * Record / ex / payable in the past. `as_of` is announcement for estimates and
+ * does not make a preliminary/updated row paid. Past `final` rows fall back to
+ * `as_of` when those event dates are missing (year-end 2025 finals with only as_of).
  */
 export function isPastDistribution(
   dates: DistributionDateFields,
   today = utcTodayIso(),
 ): boolean {
   const stage = normalizePublicationStage(dates.publicationStage);
-  const eventDate = isoDate(dates.payableDate) ?? isoDate(dates.exDate);
+  const eventDate =
+    isoDate(dates.payableDate) ?? isoDate(dates.exDate) ?? isoDate(dates.recordDate);
   const cutoff =
     eventDate ?? (stage === "final" ? isoDate(dates.asOfDate) : null);
   return cutoff != null && cutoff < today;
@@ -60,10 +61,10 @@ export function normalizePublicationStage(stage: string | null | undefined): str
 }
 
 /**
- * Upcoming / announced: preliminary_estimate, updated_estimate, or a truly
- * future unpaid announced row (including `final` whose event dates are still
- * ahead). Paid history: `paid`, or past `final` (ex/payable/as_of already
- * past). Past rows must not sit in upcoming.
+ * Upcoming = announced but not yet paid.
+ * Paid history: `paid`, or any row whose record/ex/payable is already past
+ * (even when publication_stage is still preliminary_estimate / updated_estimate).
+ * Past `final` with only as_of also lands in paid history. Do not invent dates.
  */
 export function distributionBucket(
   dates: DistributionDateFields,

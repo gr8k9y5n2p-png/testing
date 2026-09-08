@@ -81,7 +81,7 @@ describe("publicationBucket", () => {
     );
   });
 
-  it("keeps paid and final out of upcoming", () => {
+  it("keeps paid and past finals in paid history", () => {
     assert.equal(
       publicationBucket(row({ publication_stage: "paid", as_of: "2026-08-12" }), TODAY),
       "paid_history",
@@ -99,7 +99,7 @@ describe("publicationBucket", () => {
     );
   });
 
-  it("excludes Aug 2026 prelims whose event dates are already past", () => {
+  it("sends past record/ex/payable prelims to paid history, not upcoming", () => {
     assert.equal(
       publicationBucket(
         row({
@@ -111,7 +111,34 @@ describe("publicationBucket", () => {
         }),
         TODAY,
       ),
-      null,
+      "paid_history",
+    );
+    assert.equal(
+      publicationBucket(
+        row({
+          publication_stage: "updated_estimate",
+          as_of: "2025-11-02",
+          record_date: "2025-12-12",
+        }),
+        TODAY,
+      ),
+      "paid_history",
+    );
+  });
+
+  it("keeps a future unpaid final in upcoming", () => {
+    assert.equal(
+      publicationBucket(
+        row({
+          publication_stage: "final",
+          as_of: "2026-08-15",
+          record_date: "2026-12-12",
+          ex_date: "2026-12-15",
+          payable_date: "2026-12-17",
+        }),
+        TODAY,
+      ),
+      "upcoming",
     );
   });
 
@@ -186,6 +213,101 @@ describe("PortfolioCompare distribution tables", () => {
     assert.equal(paid[0]?.announcedDate, "2026-08-12");
   });
 
+  it("moves a past-dated preliminary estimate into paid history", () => {
+    const book = allocation([
+      holding({
+        ticker: "AGTHX",
+        distributions: [
+          {
+            publication_stage: "preliminary_estimate",
+            distribution_dollars: 4800,
+            estimated_tax: 1680,
+            as_of: "2025-11-02",
+            record_date: "2025-12-12",
+            ex_date: "2025-12-15",
+            payable_date: "2025-12-17",
+          },
+        ],
+      }),
+    ]);
+    const upcoming = upcomingRowsForSide(book, "current", TODAY);
+    const paid = paidHistoryRowsForSide(book, "current", TODAY);
+    assert.equal(upcoming.length, 0);
+    assert.equal(paid.length, 1);
+    assert.equal(paid[0]?.announcedDate, "2025-11-02");
+    assert.equal(paid[0]?.recordDate, "2025-12-12");
+    assert.equal(paid[0]?.stage, "preliminary_estimate");
+  });
+
+  it("uses live upcoming record/ex/payable dates when distributions omit them", () => {
+    const book = allocation([
+      holding({
+        ticker: "AGTHX",
+        upcoming: {
+          publication_stage: "preliminary_estimate",
+          distribution_dollars: 4800,
+          estimated_tax: 1680,
+          as_of: "2026-09-19",
+          announced_date: "2026-09-19",
+          record_date: "2026-09-22",
+          ex_date: "2026-09-23",
+          payable_date: "2026-09-25",
+        },
+        distributions: [
+          {
+            publication_stage: "preliminary_estimate",
+            distribution_dollars: 4800,
+            estimated_tax: 1680,
+            as_of: "2026-09-19",
+          },
+        ],
+      }),
+    ]);
+    const upcoming = upcomingRowsForSide(book, "current", TODAY);
+    assert.equal(upcoming.length, 1);
+    assert.equal(upcoming[0]?.announcedDate, "2026-09-19");
+    assert.equal(upcoming[0]?.recordDate, "2026-09-22");
+    assert.equal(upcoming[0]?.exDate, "2026-09-23");
+    assert.equal(upcoming[0]?.payableDate, "2026-09-25");
+  });
+
+  it("adds a live upcoming row when distributions are only paid history", () => {
+    const book = allocation([
+      holding({
+        ticker: "AMCPX",
+        upcoming: {
+          publication_stage: "updated_estimate",
+          distribution_dollars: 3200,
+          estimated_tax: 1120,
+          as_of: "2026-09-19",
+          record_date: null,
+          ex_date: "2026-09-23",
+          payable_date: null,
+        },
+        distributions: [
+          {
+            publication_stage: "paid",
+            distribution_dollars: 900,
+            estimated_tax: 315,
+            as_of: "2026-08-12",
+            record_date: "2026-08-14",
+            ex_date: "2026-08-15",
+            payable_date: "2026-08-18",
+          },
+        ],
+      }),
+    ]);
+    const upcoming = upcomingRowsForSide(book, "current", TODAY);
+    const paid = paidHistoryRowsForSide(book, "current", TODAY);
+    assert.equal(upcoming.length, 1);
+    assert.equal(upcoming[0]?.announcedDate, "2026-09-19");
+    assert.equal(upcoming[0]?.recordDate, null);
+    assert.equal(upcoming[0]?.exDate, "2026-09-23");
+    assert.equal(upcoming[0]?.payableDate, null);
+    assert.equal(paid.length, 1);
+    assert.equal(paid[0]?.payableDate, "2026-08-18");
+  });
+
   it("leaves missing dates as null instead of inventing them", () => {
     const book = allocation([
       holding({
@@ -219,6 +341,19 @@ describe("PortfolioCompare distribution tables", () => {
     });
     assert.equal(upcomingFromHolding(paidOnly, TODAY), null);
     assert.equal(totalUpcomingTax(allocation([paidOnly])), 0);
+
+    const pastPrelim = holding({
+      ticker: "AGTHX",
+      upcoming: {
+        publication_stage: "preliminary_estimate",
+        distribution_dollars: 4800,
+        estimated_tax: 1680,
+        as_of: "2025-11-02",
+        record_date: "2025-12-12",
+      },
+    });
+    assert.equal(upcomingFromHolding(pastPrelim, TODAY), null);
+    assert.equal(totalUpcomingTax(allocation([pastPrelim])), 0);
 
     const prelim = holding({
       ticker: "AMCPX",

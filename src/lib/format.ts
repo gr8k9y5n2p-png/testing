@@ -21,11 +21,14 @@ export function formatCompactDate(isoDate: string): string {
   return compactDateFormatter.format(new Date(`${isoDate}T00:00:00Z`));
 }
 
+/** Advisor-facing date. Missing or invalid values stay "—" — never invent a day. */
 export function formatOptionalDate(
   iso: string | null | undefined,
   compact = false,
 ): string {
   if (!iso) return "—";
+  const parsed = new Date(`${iso}T00:00:00Z`);
+  if (Number.isNaN(parsed.getTime())) return "—";
   return compact ? formatCompactDate(iso) : formatDate(iso);
 }
 

@@ -267,6 +267,7 @@ export function PortfolioCompare({
             headingId="tax-impact-current"
             bars={currentBars}
             totalTax={currentTotalTax}
+            hasUpcoming={currentUpcoming.length > 0}
             className="h-full min-h-52 lg:[grid-area:charts-c]"
           />
         ) : null}
@@ -308,6 +309,7 @@ export function PortfolioCompare({
             headingId="tax-impact-proposed"
             bars={proposedBars}
             totalTax={proposedTotalTax}
+            hasUpcoming={proposedUpcoming.length > 0}
             className="h-full min-h-52 lg:[grid-area:charts-p]"
           />
         ) : null}

@@ -85,31 +85,30 @@ export function isPaidHistoryPublicationStage(
 }
 
 /**
- * Locked GTM split:
- * - Upcoming / announced: preliminary_estimate / updated_estimate (future-ish)
- * - Paid history: paid / final past rows
- * Past event-dated estimates stay out of Upcoming (Aug 2026 prelim ≠ live upcoming).
+ * Record / ex / payable already past. as_of is announcement and does not
+ * make a preliminary/updated row paid. Past `final` falls back to as_of.
+ */
+function isPastPaidEvent(row: PortfolioDistributionRow, today = utcToday()): boolean {
+  const stage = normalizePublicationStage(row.publication_stage);
+  const event = eventDateOf(row);
+  const cutoff = event ?? (stage === "final" ? isoDate(row.as_of) : null);
+  return cutoff != null && cutoff < today;
+}
+
+/**
+ * Locked split, same rule as Sample Estimates:
+ * Upcoming = announced but not yet paid.
+ * If record_date / ex_date / payable_date is already past, the row is Paid
+ * history even when publication_stage is still preliminary_estimate / updated_estimate.
+ * as_of is announcement only — never invent a day.
  */
 export function publicationBucket(
   row: PortfolioDistributionRow,
   today = utcToday(),
 ): DistributionBucket | null {
   const stage = normalizePublicationStage(row.publication_stage);
-  const event = eventDateOf(row);
-  const pastEvent = event != null && event < today;
-
-  if (PAID_HISTORY_STAGES.has(stage)) {
-    return "paid_history";
-  }
-  if (UPCOMING_STAGES.has(stage)) {
-    if (pastEvent) return null;
-    return "upcoming";
-  }
-  if (!stage) {
-    if (pastEvent) return null;
-    return "upcoming";
-  }
-  return null;
+  if (stage === "paid" || isPastPaidEvent(row, today)) return "paid_history";
+  return "upcoming";
 }
 
 function asDistributionRows(
@@ -211,6 +210,42 @@ export function upcomingFromHolding(
   return candidate;
 }
 
+function sameUpcomingSnapshot(
+  left: PortfolioDistributionRow,
+  right: PortfolioDistributionRow,
+): boolean {
+  const leftKey = announcedDateOf(left) ?? isoDate(left.as_of);
+  const rightKey = announcedDateOf(right) ?? isoDate(right.as_of);
+  if (leftKey && rightKey) return leftKey === rightKey;
+  const leftDist = num(left.distribution_dollars);
+  const rightDist = num(right.distribution_dollars);
+  return (
+    normalizePublicationStage(left.publication_stage) ===
+      normalizePublicationStage(right.publication_stage) &&
+    leftDist != null &&
+    leftDist === rightDist
+  );
+}
+
+/** Copy live `upcoming` dates onto a row. Never invent a day that Data did not send. */
+function overlayLiveUpcomingDates(
+  event: PortfolioDistributionRow,
+  upcomingRows: PortfolioDistributionRow[],
+): PortfolioDistributionRow {
+  if (!upcomingRows.length) return event;
+  if (publicationBucket(event) === "paid_history") return event;
+  const match = upcomingRows.find((row) => sameUpcomingSnapshot(event, row));
+  if (!match) return event;
+  return {
+    ...event,
+    as_of: isoDate(event.as_of) ?? isoDate(match.as_of),
+    announced_date: isoDate(event.announced_date) ?? isoDate(match.announced_date),
+    record_date: isoDate(event.record_date) ?? isoDate(match.record_date),
+    ex_date: isoDate(event.ex_date) ?? isoDate(match.ex_date),
+    payable_date: isoDate(event.payable_date) ?? isoDate(match.payable_date),
+  };
+}
+
 function tableEventsFromHolding(holding: PortfolioHoldingOut): PortfolioDistributionRow[] {
   const fallback = holding.publication_stage_used ?? null;
   const listed = [
@@ -220,15 +255,24 @@ function tableEventsFromHolding(holding: PortfolioHoldingOut): PortfolioDistribu
     .map((row) => withStage(row, fallback))
     .filter(hasDistributionSignal);
 
-  if (listed.length) return listed;
+  const fromUpcoming =
+    holding.upcoming == null
+      ? []
+      : asDistributionRows(holding.upcoming)
+          .map((row) => withStage(row, fallback))
+          .filter(hasDistributionSignal);
+
+  if (listed.length) {
+    const merged = listed.map((event) => overlayLiveUpcomingDates(event, fromUpcoming));
+    for (const upcoming of fromUpcoming) {
+      if (merged.some((event) => sameUpcomingSnapshot(event, upcoming))) continue;
+      merged.push(upcoming);
+    }
+    return merged;
+  }
 
   if (holding.upcoming === null) return [];
-
-  if (holding.upcoming) {
-    return asDistributionRows(holding.upcoming)
-      .map((row) => withStage(row, fallback))
-      .filter(hasDistributionSignal);
-  }
+  if (fromUpcoming.length) return fromUpcoming;
 
   return (holding.illustration?.components ?? [])
     .map((row) => withStage(row, fallback))
