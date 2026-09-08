@@ -68,8 +68,8 @@ def test_full_book_american_funds_invesco_dimensional() -> None:
     assert not any(re.search(r"\bSMA\b", name, re.I) for name in inv_funds)
 
     dfa_funds, dfa_tickers = _funds_and_tickers(DimensionalSource())
-    assert "DISVX" in dfa_tickers
-    assert len(dfa_tickers) >= 100
+    assert {"DISVX", "DFELX", "DFQTX"} <= dfa_tickers
+    assert len(dfa_tickers) >= 130
 
 
 def test_full_book_vanguard_ici_and_next_wave() -> None:
@@ -133,10 +133,11 @@ def test_full_book_jh_hartford_macquarie_msim() -> None:
 
     hartford_funds, hartford_tickers = _funds_and_tickers(HartfordSource())
     assert "HFMCX" in hartford_tickers
-    assert len(hartford_funds) >= 20
+    assert len(hartford_funds) >= 25
+    assert any("Small Cap Growth" in name for name in hartford_funds)
 
     mac_funds, mac_tickers = _funds_and_tickers(MacquarieSource())
-    assert "WSTAX" in mac_tickers
+    assert {"WSTAX", "WASAX", "DEVLX"} <= mac_tickers
     assert len(mac_tickers) >= 20
 
     msim_funds, msim_tickers = _funds_and_tickers(MorganStanleySource())

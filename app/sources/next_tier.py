@@ -359,9 +359,9 @@ class DimensionalSource(HtmlTableSource):
         "(e.g. DISVX LT $1.060 / 3.42% of NAV; DFELX ST $0.752 / LT $1.234). "
         "2024 paid December book "
         "https://www.dimensional.com/chmedia/332797/source/download/2024-distributions.pdf "
-        "(DISVX income $0.305 / LT $0.184; DFELX income $0.288 / LT $0.012; "
-        "DFQTX income $0.101 / $0 CG). No public filled ICI file. "
-        "Tax center: https://www.dimensional.com/us-en/tax"
+        "is the full MF/ETF table (DISVX income $0.305 / LT $0.184; DFELX income "
+        "$0.288 / LT $0.012; DFQTX income $0.101 / published $0.000 CG stored). "
+        "No public filled ICI file. Tax center: https://www.dimensional.com/us-en/tax"
     )
     live_limitations = "Year-end book is PDF. Fixture transcribes public paid/estimate rows."
 
@@ -378,7 +378,6 @@ class DimensionalSource(HtmlTableSource):
                 url="https://www.dimensional.com/chmedia/332797/source/download/2024-distributions.pdf",
                 fixture="2024_capital_gain_distributions.html",
                 live=False,
-                large_aum_only=True,
             ),
         ]
 

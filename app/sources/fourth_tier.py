@@ -152,7 +152,8 @@ class HartfordSource(HtmlTableSource):
         "no-pay list omitted). Final books under .../capgainsdistributions/: 2025 equity "
         "2025HartfordFundsCapitalGainsDistributions.pdf (HFMCX LT $5.44), 2025 "
         "fixed-income / multi-strategy HartfordFundsCapitalGainsDistributions-12.17.2025.pdf, "
-        "and 2024 2024HartfordFundsCapitalGainsDistributions.pdf (HFMCX LT $1.67). "
+        "and 2024 2024HartfordFundsCapitalGainsDistributions.pdf is the full equity "
+        "paying-fund book (HFMCX LT $1.67 / 5.55% of Class I NAV; no-pay list omitted). "
         "Amounts are fund-level; tickers are public Class A identifiers only where "
         "previously identified."
     )
@@ -186,7 +187,6 @@ class HartfordSource(HtmlTableSource):
                 url=dam + "Tax%20Center/capgainsdistributions/2024HartfordFundsCapitalGainsDistributions.pdf",
                 fixture="2024_final_capital_gains.html",
                 live=False,
-                large_aum_only=True,
             ),
         ]
 
@@ -204,7 +204,8 @@ class MacquarieSource(HtmlTableSource):
         "is the full paying-fund book (WSTAX LT $10.051 / 15.05% of Class A NAV; "
         "Class A tickers; no-pay list omitted). 2024 paid book "
         "https://mim.fgsfulfillment.com/download.aspx?sku=CGE-RET-ACT-2024 "
-        "(WSTAX ST $1.108 / LT $8.135). 2023 paid book "
+        "is the full paying-fund table (WSTAX ST $1.108 / LT $8.135; 16 Class A "
+        "tickers; no-pay list omitted). 2023 paid book "
         "https://mim.fgsfulfillment.com/download.aspx?sku=CGE-RET-ACT-2023 "
         "is the full paying-fund table (WSTAX LT $5.331; 20 Class A tickers; "
         "no-pay list omitted). Literature hub: "
@@ -225,7 +226,6 @@ class MacquarieSource(HtmlTableSource):
                 url="https://mim.fgsfulfillment.com/download.aspx?sku=CGE-RET-ACT-2024",
                 fixture="2024_paid_capital_gains.html",
                 live=False,
-                large_aum_only=True,
             ),
             PageSpec(
                 name="2023_paid_capital_gains",

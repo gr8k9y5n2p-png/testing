@@ -785,6 +785,19 @@ def test_next_tier_fixtures() -> None:
         if r.ticker == "DISVX" and r.estimate_type == EstimateType.long_term_capital_gains
     )
     assert disvx_2024.amount == Decimal("0.184")
+    dfelx_2024 = next(
+        r
+        for r in dfa_2024
+        if r.ticker == "DFELX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert dfelx_2024.amount == Decimal("0.012")
+    dfqtx_2024_inc = next(
+        r
+        for r in dfa_2024
+        if r.ticker == "DFQTX" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert dfqtx_2024_inc.amount == Decimal("0.101")
+    assert len({r.ticker for r in dfa_2024 if r.ticker}) >= 130
 
     columbia_2024 = parse_distribution_html(
         (ROOT / "columbia_threadneedle" / "2024_year_end_distributions.html").read_text(
@@ -1624,6 +1637,13 @@ def test_fourth_tier_fixtures() -> None:
         if r.ticker == "HFMCX" and r.estimate_type == EstimateType.long_term_capital_gains
     )
     assert hfmcx_2024.amount == Decimal("1.67")
+    haiax_2024 = next(
+        r
+        for r in hartford_2024
+        if r.ticker == "HAIAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert haiax_2024.amount == Decimal("4.43")
+    assert len({(r.ticker or "").upper() or r.fund_name for r in hartford_2024}) >= 14
 
     mac_2024 = parse_distribution_html(
         (ROOT / "macquarie" / "2024_paid_capital_gains.html").read_text(encoding="utf-8"),
@@ -1636,6 +1656,19 @@ def test_fourth_tier_fixtures() -> None:
         if r.ticker == "WSTAX" and r.estimate_type == EstimateType.long_term_capital_gains
     )
     assert wstax_2024.amount == Decimal("8.135")
+    wstax_2024_st = next(
+        r
+        for r in mac_2024
+        if r.ticker == "WSTAX" and r.estimate_type == EstimateType.short_term_capital_gains
+    )
+    assert wstax_2024_st.amount == Decimal("1.108")
+    wlgax_2024 = next(
+        r
+        for r in mac_2024
+        if r.ticker == "WLGAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert wlgax_2024.amount == Decimal("0.591")
+    assert len({r.ticker for r in mac_2024 if r.ticker}) >= 15
 
     mac_2023 = parse_distribution_html(
         (ROOT / "macquarie" / "2023_paid_capital_gains.html").read_text(encoding="utf-8"),
