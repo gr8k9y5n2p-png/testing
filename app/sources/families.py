@@ -158,12 +158,16 @@ class FidelitySource(HtmlTableSource):
         "https://institutional.fidelity.com/app/tabbed/products/FIIS_SP10_DPL6.html?navId=324 "
         "(full book: Dividends / ST / LT / Reinvest NAV). "
         "Verified 2026-09-07. FBGRX 2026 estimate LT $21.021 (as of 2026-07-31) "
-        "coexists with 2025 paid LT $5.07300 (ex 2025-09-12). "
+        "coexists with 2025 paid LT $5.07300 (ex 2025-09-12) and 2024 paid "
+        "LT $1.66900 (ex 2024-12-20) / $11.08100 (ex 2024-09-13) from the "
+        "Wayback id_ snapshot of FIIS_SP10_DPL6 captured 2025-03-21. "
+        "2021–2023 prior-year HTML is not in the CDX set (HPDY tool is SPA). "
         "Hub: https://www.fidelity.com/mutual-funds/information/overview"
     )
-    live_limitations = "Live HTML tables on institutional.fidelity.com are supported (current estimates + prior-year paid)."
+    live_limitations = "Live HTML tables on institutional.fidelity.com are supported (current estimates + prior-year paid). The live DPL6 URL rotates to the latest prior year — 2024 is fixture-only."
 
     def pages(self) -> list[PageSpec]:
+        dpl6 = "https://institutional.fidelity.com/app/tabbed/products/FIIS_SP10_DPL6.html?navId=324"
         return [
             PageSpec(
                 name="estimated_capital_gains",
@@ -173,9 +177,15 @@ class FidelitySource(HtmlTableSource):
             ),
             PageSpec(
                 name="prior_year_distributions",
-                url="https://institutional.fidelity.com/app/tabbed/products/FIIS_SP10_DPL6.html?navId=324",
+                url=dpl6,
                 fixture="prior_year_distributions.html",
                 live=True,
+            ),
+            PageSpec(
+                name="prior_year_distributions_2024",
+                url=dpl6,
+                fixture="prior_year_distributions_2024.html",
+                live=False,
             ),
         ]
 

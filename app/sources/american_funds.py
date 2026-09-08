@@ -39,7 +39,10 @@ class AmericanFundsSource(FundSource):
         "Growth Fund of America (2021–2025 tax-year as_of). 2024 advisor HTML now 302s to "
         "login; per-fund history also lives at the Historical Distributions tool and on "
         "each fund’s product page (historicalDistributions JSON). "
-        "CGHM is on the official 2024 YE table with em-dash ST/LT (no capital gain — not stored as $0)."
+        "CGHM (inception 6/25/24) has no 2021–2023 history. Official 2024 and 2025 "
+        "YE tables list CGHM with em-dash ST/LT (no capital gain — not stored as $0). "
+        "The only published CG amounts today are 2026 midyear (LT $0.0030 / ST $0.0169). "
+        "Monthly income lives on the JS historical-distributions tool (SPA — skipped)."
     )
 
     def __init__(self, fixtures_dir: Path | None = None) -> None:

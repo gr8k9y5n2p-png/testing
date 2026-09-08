@@ -83,8 +83,11 @@ This FastAPI service is **not** the Aftertax Next.js app on `main`. The existing
 
 1. [Render → New → Blueprint](https://dashboard.render.com/select-repo?type=blueprint) → this GitHub repo, this branch (`render.yaml`).
 2. Service name `aftertax-data-api`, health path `/health`.
-3. Copy `https://aftertax-data-api.onrender.com` (or the URL Render prints).
-4. Verify `GET /health` 200 as above.
+3. Blueprint attaches a 1 GB disk at `/var/data` (`plan: starter`) and sets
+   `DATABASE_URL=sqlite:////var/data/distributions.db` so the SQLite book
+   survives deploys. Free web services cannot attach a disk.
+4. Copy `https://aftertax-data-api.onrender.com` (or the URL Render prints).
+5. Verify `GET /health` 200 as above.
 
 **Website env** (project that serves `testing-seven-umber-19.vercel.app`):
 
@@ -98,7 +101,7 @@ CORS already allows `https://testing-seven-umber-19.vercel.app`, `http://localho
 
 ### Weekly refresh on the public API
 
-Fixture seed on boot (`SEED_ON_START=true`, also implied on Vercel) runs the **same full fixture ingest** as `POST /ingest/fetch {"fund_family":"all","mode":"fixture"}` — every registered family, including Dodge & Cox (`DODIX` / `DODGX`), Vanguard, Fidelity, MFS, First Eagle. Render free-tier SQLite is ephemeral, so a thin American-Funds-only seed left advisors without the book after each deploy.
+Fixture seed on boot (`SEED_ON_START=true`, also implied on Vercel) runs the **same full fixture ingest** as `POST /ingest/fetch {"fund_family":"all","mode":"fixture"}` — every registered family, including Dodge & Cox (`DODIX` / `DODGX`), Vanguard, Fidelity, MFS, First Eagle. Render Blueprint SQLite lives on `/var/data` (persistent disk); a thin American-Funds-only seed used to leave advisors without the book after each ephemeral-filesystem deploy.
 
 The seed starts in a **background thread** after `init_db()` so `GET /health` stays 200 during ingest (`health.seed` is `running` then `complete`). Families commit one at a time; a mid-book failure does not roll back earlier families. Typical full fixture book is ~11k rows and finishes in tens of seconds. Manual ingest is no longer required after a cold start.
 
@@ -108,7 +111,7 @@ python -m app.cli refresh --mode fixture   # same offline all-family ingest (for
 python -m app.cli refresh                  # REFRESH_MODE=auto: live then fixture
 ```
 
-GitHub Action `.github/workflows/weekly-ingest.yml` (Monday 14:00 UTC + `workflow_dispatch`). For a durable book across restarts, set repo secret `DATABASE_URL` to the **same Postgres** the API uses (`postgresql+psycopg://…`) and install `psycopg[binary]`. Vercel `/tmp` SQLite and Render free-tier local SQLite do **not** persist across deploys — `SEED_ON_START` rebuilds the fixture book on each boot.
+GitHub Action `.github/workflows/weekly-ingest.yml` (Monday 14:00 UTC + `workflow_dispatch`). For a durable book across restarts, set repo secret `DATABASE_URL` to the **same Postgres** the API uses (`postgresql+psycopg://…`) and install `psycopg[binary]`. Vercel `/tmp` SQLite is ephemeral. Render Blueprint uses `sqlite:////var/data/distributions.db` on a persistent disk (`plan: starter`) so the book survives deploys; `SEED_ON_START` still rebuilds from fixtures on boot.
 
 ## Example curl
 
@@ -338,7 +341,7 @@ Each side is a full `/illustrate/portfolio` result plus `label` (defaults: `Curr
 | `deltas.coverage_pct` | Coverage-percentage points |
 | `summary` | Dollar fields at **$10,000**. YoY also sets `total_tax_difference`, `annualized_tax_drag_delta`, `distribution_dollars_difference`, `periods_compared`, `common_inception` (same footer idea as `/illustrate/compare`) |
 
-**Sparse history:** Vanguard has ICI December year-end rows for 2021–2025 (≥$1B Admiral / mega ETFs) plus the 2025 YE HTML fixture for VFIAX / VBIAX / VIGAX. Fidelity has 2025 paid + 2026 estimate (FBGRX). A YoY `periods[]` pin that misses that `as_of` / year is an explicit **gap** on that side, not a silent $0. American Funds (AMCAP 2024–2025) and T. Rowe Price (TRBCX 2022–2025) have multi-year fixture snapshots. Among ranks 11–20, Northern Trust (NOSIX 2022–2025), BNY (DGAGX 2022–2025), and Schwab (SWTSX 2022–2025) have multi-year paid books; UBS and Nuveen stay single-vintage. **Amundi / Pioneer is off the history ladder** (existing 2025 fixture only). History packs prefer **US-domiciled** managers.
+**Sparse history:** Vanguard has ICI December year-end rows for 2021–2025 (≥$1B Admiral / mega ETFs) plus the 2025 YE HTML fixture for VFIAX / VBIAX / VIGAX. Fidelity has 2024–2025 paid + 2026 estimate (FBGRX). A YoY `periods[]` pin that misses that `as_of` / year is an explicit **gap** on that side, not a silent $0. American Funds (AMCAP 2024–2025) and T. Rowe Price (TRBCX 2022–2025) have multi-year fixture snapshots. Among ranks 11–20, Northern Trust (NOSIX 2022–2025), BNY (DGAGX 2022–2025), and Schwab (SWTSX 2022–2025) have multi-year paid books; UBS and Nuveen stay single-vintage. **Amundi / Pioneer is off the history ladder** (existing 2025 fixture only). History packs prefer **US-domiciled** managers.
 
 ```bash
 curl -s -X POST http://127.0.0.1:8000/illustrate/portfolio/compare \
@@ -430,7 +433,8 @@ curl -s -X POST http://127.0.0.1:8000/illustrate/compare \
 **`mode: "yoy"`** — two vintages of the **same** fund. Either:
 
 - one `selectors` (or `left.selectors`) block plus `periods` of length ≥ 2 — consecutive pairs; the response `year` / `as_of` are the **newer** (right) vintage, or
-- `left` / `right` with the same selectors and different `as_of` (no `periods` required).
+- `left` / `right` with the same selectors and different `as_of` (no `periods` required), or
+- `left` / `right` (or `selectors`) **without** `periods[]` and **without** `as_of` pins — the API expands vintages from stored `as_of` / `ex_date` calendar years and then pair-zips them (N years → N−1 bars, `year` = newer). Response shape is unchanged. A missing book still never emits `year: 0` (falls back to the current calendar year).
 
 `mode` may be omitted: the same fund on both sides infers `yoy`; different funds infer `fund_vs_fund`. A single-pair response also copies `left`, `right`, and `deltas` to the **top level** (diverging-bar sketch). Each side may override `holding_dollars` / `nav_per_share` / `shares`.
 
@@ -648,11 +652,11 @@ Fixture packs today (ranks 1–40 historical pass):
 | --- | --- | --- |
 | BlackRock / iShares | 2026 midyear paid + 2025 YE ETF + 2021–2025 open-end MF | Live ETF HTML https://www.ishares.com/us/capital-gains-distributions. Open-end HTML books https://www.blackrock.com/us/individual/resources/tax-information/2025-distributions (2024 / 2023 / 2022 / 2021 siblings). Live OEF pages are per-fund share-class tables — fixtures flatten November–December YE Investor A rows (Equity Dividend LT $1.089256 / $0.740291 / $0.481929 / $0.728360 / $0.999925). iShares 2023–2024 tax kits remain 1099-style PDFs, not an ETF HTML CG grid. |
 | Vanguard | 2021–2025 ICI **full December** + 2025 YE HTML for VFIAX / VBIAX / VIGAX | **ICI first.** Official Primary Layout PDFs. 2021–2025 December rows are column-safe full-book (31-token layout; wrap/DAILY bleed skipped). 2025 ICI skips VFIAX / VBIAX / VIGAX so the YE HTML fixture is not double-counted. |
-| Fidelity | 2025 prior-year paid + 2026 estimate | Live HTML: current estimates `FIIS_SP52_DPL6` and prior-year `FIIS_SP10_DPL6` (FBGRX 2025 paid LT $5.07300 ex 2025-09-12; 2026 estimate LT $21.021 as of 2026-07-31). |
+| Fidelity | 2024–2025 prior-year paid + 2026 estimate | Live HTML: current estimates `FIIS_SP52_DPL6` and prior-year `FIIS_SP10_DPL6` (FBGRX 2025 paid LT $5.07300 ex 2025-09-12; 2026 estimate LT $21.021 as of 2026-07-31). 2024 paid book from Wayback `20250321032441id_` of the same DPL6 URL (FBGRX Dec LT $1.66900 / Sep LT $11.08100). 2021–2023 prior-year HTML not in CDX (HPDY SPA). |
 | State Street / SPDR | 2025 estimate (SPY/SPLG 0% NAV placeholder) | Angular live page. Historical XLSX is linked but not a stable public file URL — 2024 paid ST/LT not transcribed. ZZSSGA is a parser-layout sample, not official. |
 | J.P. Morgan | 2025 Section 19a full Appendix A (open-end + ETF) | Unsplit estimated CG $/share. SEEGX / JLGMX keep Large Cap Growth LT $9.32525. No confirmed official 2024 $/share 19a. |
 | Goldman Sachs | 2025 sample (GLCGX) | Advisor tax center 403-walled; no public historical HTML. |
-| American Funds | 2021–2025 paid tax-year history (AMCAP / Growth Fund of America) + 2024 prelim + 2024 final reprint, 2025 prelim + 2025 final reprint, 2026 midyear paid | 2025 YE + 2026 midyear HTML are public. 2024 advisor YE URL 302s to login (transcribed fixture). Official 2024 YE lists CGHM with em-dash ST/LT (no CG — not stored as $0). Product-page `historicalDistributions` JSON supplies paid as_of in the tax year (AMCAP Dec 2021 LT $1.1710; no Dec 2022 row — June 2022 LT $2.2668; Dec 2023 LT $1.0270; Dec 2024 LT $2.5220; Dec 2025 LT $2.1509). Name-keyed so AMCPX/AGTHX aliases still resolve. |
+| American Funds | 2021–2025 paid tax-year history (AMCAP / Growth Fund of America) + 2024 prelim + 2024 final reprint, 2025 prelim + 2025 final reprint, 2026 midyear paid | 2025 YE + 2026 midyear HTML are public. 2024 advisor YE URL 302s to login (transcribed fixture). **CGHM** inception 6/25/24 — no 2021–2023 rows exist. Official 2024 and 2025 YE tables list CGHM with em-dash ST/LT (no CG — not stored as $0). Only published CG today is 2026 midyear LT $0.0030 / ST $0.0169. Monthly income is on the JS historical-distributions tool (SPA — skipped after one honest GET). Product-page `historicalDistributions` JSON supplies paid as_of in the tax year for AMCAP / Growth Fund of America (AMCAP Dec 2021 LT $1.1710; no Dec 2022 row — June 2022 LT $2.2668; Dec 2023 LT $1.0270; Dec 2024 LT $2.5220; Dec 2025 LT $2.1509). Name-keyed so AMCPX/AGTHX aliases still resolve. |
 | PIMCO | Layout sample only (ZZPIMI / ZZPIMB) | No public HTML estimate grid. No additional years invented. |
 | Invesco | 2024 estimate + 2025 estimate | ICI Primary files are *listed* on the open-end tax guide (2023–2025) but no stable public download URL was fetchable (JS / 406) — PDF/HTML archives used instead. 2025 PDF + 2024 In Focus (American Franchise LT $0.93). |
 | T. Rowe Price | 2021–2025 YE + 2022 prelim | 2023–2025 HTML (same path, year in the filename). 2021–2022 YE PDFs are the full mutual-fund/ETF books (TRBCX LT $16.03 / $6.0394 final; 2022 prelim $5.75). Em-dash / Paid monthly omitted. |
