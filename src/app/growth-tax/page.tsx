@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { GrowthAndTaxDragModule } from "@/components/illustrate/GrowthAndTaxDragModule";
 import { COPY } from "@/lib/copy";
+import { firstSearchParam, growthFundFromTicker } from "@/lib/illustrate/fund-history";
 
 export const metadata: Metadata = {
   title: "Aftertax — growth of $X and tax drag",
@@ -9,7 +10,19 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function GrowthTaxDemoPage() {
+const DEFAULT_FUNDS = [
+  { ticker: "AGTHX", label: "AGTHX", fundFamily: "American Funds" },
+  { ticker: "FCNTX", label: "FCNTX", fundFamily: "Fidelity" },
+];
+
+export default async function GrowthTaxDemoPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ ticker?: string | string[] }>;
+}) {
+  const ticker = firstSearchParam((await searchParams).ticker);
+  const focused = ticker ? growthFundFromTicker(ticker) : undefined;
+
   return (
     <main className="mx-auto w-full max-w-5xl px-4 pb-16 pt-8 sm:px-6 lg:px-8">
       <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
@@ -34,15 +47,17 @@ export default function GrowthTaxDemoPage() {
           POST /illustrate/compare
         </code>{" "}
         periods, drawn negative and side-by-side, with a % / $ toggle. Localhost
-        uses mock fallbacks.
+        uses mock fallbacks. Portfolio review links use{" "}
+        <code className="font-mono text-[13px] text-ink">
+          /?ticker=AMCAP#growth-and-tax
+        </code>
+        ; this demo also accepts{" "}
+        <code className="font-mono text-[13px] text-ink">?ticker=</code>.
       </p>
 
       <div className="mt-8">
         <GrowthAndTaxDragModule
-          funds={[
-            { ticker: "AGTHX", label: "AGTHX", fundFamily: "American Funds" },
-            { ticker: "FCNTX", label: "FCNTX", fundFamily: "Fidelity" },
-          ]}
+          funds={focused ? [focused] : DEFAULT_FUNDS}
         />
       </div>
 

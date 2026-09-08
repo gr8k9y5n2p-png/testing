@@ -1,3 +1,4 @@
+import { TickerHistoryLink } from "@/components/illustrate/TickerHistoryLink";
 import { formatUsd } from "@/lib/format";
 import {
   formatAsOfStage,
@@ -52,7 +53,7 @@ export function UpcomingTable({
               rows.map((row) => (
                 <tr key={row.key} className="border-b border-line last:border-0">
                   <td className="py-2 pr-2 font-mono text-[13px] font-medium text-ink">
-                    {row.ticker}
+                    <TickerHistoryLink ticker={row.ticker} />
                   </td>
                   <td className="px-2 py-2 text-right">
                     <span

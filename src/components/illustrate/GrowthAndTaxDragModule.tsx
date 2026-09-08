@@ -26,6 +26,7 @@ import {
   alignTaxDragYears,
   toNegativeTaxDrag,
   toTaxDragPeriods,
+  toUpcomingSummary,
   type TaxDragFundSeries,
   type TaxDragMetric,
 } from "@/lib/illustrate/tax-drag-chart";
@@ -275,6 +276,14 @@ export function GrowthAndTaxDragModule({
     (ticker) => !selected.some((fund) => fundKey(fund).ticker === ticker),
   );
 
+  const upcomingSummary = useMemo(() => {
+    if (!rows || rows.length !== 1) return null;
+    return toUpcomingSummary(
+      rows[0].tax?.summary.upcoming_taxable_distribution,
+      "left",
+    );
+  }, [rows]);
+
   return (
     <article
       className={`rounded-2xl border border-line bg-surface px-5 py-5 shadow-[0_8px_24px_rgba(26,29,26,0.08)] ${className}`}
@@ -431,6 +440,7 @@ export function GrowthAndTaxDragModule({
               showBarLabels={selected.length <= 2}
               layout="flush"
               title="Estimated annual tax drag"
+              upcomingSummary={upcomingSummary}
               loading={loading}
               axis={axis}
               emptyLabel="No overlapping tax-drag years"

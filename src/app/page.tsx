@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { AftertaxApp, type CheckoutReturn } from "@/components/AftertaxApp";
 import { getDistributionRepository } from "@/data";
 import { loadCoverageSnapshot } from "@/lib/data-api/coverage";
+import { firstSearchParam } from "@/lib/illustrate/fund-history";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +21,11 @@ function checkoutFromSearchParams(
 export default async function Home({
   searchParams,
 }: {
-  searchParams: Promise<{ checkout?: string | string[]; tab?: string | string[] }>;
+  searchParams: Promise<{
+    checkout?: string | string[];
+    tab?: string | string[];
+    ticker?: string | string[];
+  }>;
 }) {
   const params = await searchParams;
   if (firstParam(params.tab) === "portfolio") {
@@ -42,6 +47,7 @@ export default async function Home({
         facets={facets}
         coverageFamilies={coverage.families}
         checkout={checkoutFromSearchParams(params.checkout)}
+        ticker={firstSearchParam(params.ticker)}
       />
     </main>
   );
