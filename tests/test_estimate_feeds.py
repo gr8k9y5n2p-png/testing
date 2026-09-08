@@ -7,13 +7,10 @@ from app.sources.readiness import estimate_feed_status
 from app.sources.registry import list_sources
 
 
-def test_top40_except_amundi_have_live_estimate_feed() -> None:
+def test_top40_have_live_estimate_feed() -> None:
     missing: list[str] = []
     for source in list_sources():
         if source.aum_rank is None or source.aum_rank > 40:
-            continue
-        if source.slug == "amundi":
-            assert estimate_feed_status("amundi") == "skipped"
             continue
         if not source.supports_live():
             missing.append(f"{source.slug}: supports_live=False")
@@ -26,8 +23,6 @@ def test_ranks_41_to_53_have_live_estimate_feed() -> None:
     missing: list[str] = []
     for source in list_sources():
         if source.aum_rank is None or source.aum_rank < 41 or source.aum_rank > 53:
-            continue
-        if source.slug == "amundi":
             continue
         if not source.supports_live():
             missing.append(f"{source.slug}: supports_live=False")
@@ -48,10 +43,17 @@ def test_ranks_56_to_62_have_live_estimate_feed() -> None:
     assert missing == []
 
 
-def test_amundi_stays_off_estimate_ladder() -> None:
+def test_amundi_is_on_estimate_ladder() -> None:
     amundi = next(s for s in list_sources() if s.slug == "amundi")
-    assert estimate_feed_status("amundi") == "skipped"
-    assert amundi.supports_live() is False
+    assert estimate_feed_status("amundi") == "prelim_updated"
+    assert amundi.supports_live() is True
+    urls = amundi.estimate_feed_urls()
+    assert any("pioneerinvestments.com/resources/tax-center" in url for url in urls)
+    assert any("amundi.com/usinvestors/Resources/Tax-Center" in url for url in urls)
+    assert any("investor.vcm.com/tools-resources/tax-center" in url for url in urls)
+    assert any("10152025-mutual-funds-2025-capital-gain-estimates.pdf" in url for url in urls)
+    assert any("2025-final-ord-inc-cap-gain-distributions.pdf" in url for url in urls)
+    assert any("Victory-Portfolios-IV-Mutual-Funds-2025-Final-Capital-Gains.pdf" in url for url in urls)
 
 
 def test_seasonal_empty_estimate_hub_falls_back_without_error() -> None:
@@ -101,8 +103,12 @@ def test_coverage_exposes_estimate_feed_readiness(session) -> None:
     assert "FBGRX" in fidelity.performance_tickers
 
     amundi = by_slug["amundi"]
-    assert amundi.estimate_feed_status == "skipped"
-    assert amundi.estimate_feed_ready is False
+    assert amundi.estimate_feed_status == "prelim_updated"
+    assert amundi.estimate_feed_ready is True
+    assert amundi.history_years == [2023, 2024, 2025]
+    assert "PIODX" in amundi.performance_tickers
+    assert "PIGFX" in amundi.performance_tickers
+    assert any("pioneerinvestments.com" in url for url in amundi.estimate_feed_urls)
 
     pimco = by_slug["pimco"]
     assert pimco.estimate_feed_ready is True

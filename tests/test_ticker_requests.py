@@ -109,12 +109,15 @@ def test_website_queued_first_trust_ticker_picks_up_september_book(client: TestC
     assert found.json()["total"] >= 1
 
 
-def test_submit_amundi_ticker_is_skipped(client: TestClient) -> None:
+def test_submit_amundi_ticker_is_matched_and_covered(client: TestClient) -> None:
+    fetched = client.post("/ingest/fetch", json={"fund_family": "amundi", "mode": "fixture"})
+    assert fetched.status_code == 200, fetched.text
+
     created = client.post(
         "/requests/tickers",
-        json={"ticker": "AOTIX", "fund_family": "pioneer"},
+        json={"ticker": "PIODX", "fund_family": "pioneer"},
     )
     assert created.status_code == 202
     body = created.json()
-    assert body["status"] == "skipped"
+    assert body["status"] == "already_covered"
     assert body["adapter_slug"] == "amundi"

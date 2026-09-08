@@ -1,7 +1,7 @@
 """User-requested ticker intake for Website → Data API ingest.
 
 Records a ticker and resolves it to a registered family when possible.
-Never invents distribution amounts. Amundi / Pioneer stays skipped.
+Never invents distribution amounts. Amundi / Pioneer is included (Victory-hosted Pioneer tax center).
 Unknown tickers remain ``search_issuer`` for a later issuer-source hunt.
 """
 
@@ -19,7 +19,7 @@ from app.schemas import TickerRequestIn, TickerRequestOut
 from app.sources.registry import get_source, resolve_slug
 from app.services.ingest import fetch_and_ingest
 
-SKIPPED_SLUGS = frozenset({"amundi"})
+SKIPPED_SLUGS = frozenset()
 PICKUP_STATUSES = frozenset({"queued", "search_issuer", "matched"})
 WEBSITE_TICKER_RE = re.compile(r"^[A-Z][A-Z0-9]{1,7}$")
 
@@ -113,6 +113,18 @@ KNOWN_TICKER_SLUGS: dict[str, str] = {
     "EXEYX": "manning_napier",
     "MNHIX": "manning_napier",
     "RAIIX": "manning_napier",
+    "PIODX": "amundi",
+    "PIGFX": "amundi",
+    "PEQIX": "amundi",
+    "PIOTX": "amundi",
+    "AOBLX": "amundi",
+    "PINDX": "amundi",
+    "CVFCX": "amundi",
+    "GLOSX": "amundi",
+    "PIIFX": "amundi",
+    "PCGRX": "amundi",
+    "PGOFX": "amundi",
+    "PIALX": "amundi",
 }
 
 
@@ -149,7 +161,7 @@ def _classify(session: Session, body: TickerRequestIn) -> tuple[str, str | None,
         return (
             "skipped",
             slug,
-            "Amundi / Pioneer is skipped. Do not invent amounts or expand this book.",
+            "This family is skipped. Do not invent amounts or expand this book.",
         )
     if existing:
         return (
@@ -230,7 +242,7 @@ def submit_website_ticker_request(
         slug = slug or resolve_slug(existing.fund_family)
     elif slug in SKIPPED_SLUGS:
         status = "skipped"
-        detail = "Amundi / Pioneer is skipped. Do not invent amounts or expand this book."
+        detail = "This family is skipped. Do not invent amounts or expand this book."
         http_status = 201
     else:
         status = "queued"
@@ -293,7 +305,7 @@ def process_ticker_requests(
         if slug in SKIPPED_SLUGS:
             row.status = "skipped"
             row.adapter_slug = slug
-            row.detail = "Amundi / Pioneer is skipped. Do not invent amounts or expand this book."
+            row.detail = "This family is skipped. Do not invent amounts or expand this book."
             row.updated_at = _now()
             out.append(TickerRequestOut.model_validate(row))
             continue

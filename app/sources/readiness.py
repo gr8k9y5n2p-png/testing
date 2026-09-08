@@ -9,7 +9,7 @@ from __future__ import annotations
 # prelim/updated already in fixtures or live HTML that parses estimates.
 # paid_history_only: estimate hub is wired for weekly walk but current book is paid/final.
 # deferred: SPA/403 still walked; no invented zeros.
-# skipped: Amundi — do not expand.
+# skipped: reserved; Amundi / Pioneer is included per Eric 2026-09-08.
 ESTIMATE_STATUS: dict[str, str] = {
     "blackrock": "prelim_updated",
     "vanguard": "paid_history_only",
@@ -30,7 +30,7 @@ ESTIMATE_STATUS: dict[str, str] = {
     "schwab": "paid_history_only",
     "dimensional": "prelim_updated",
     "columbia_threadneedle": "prelim_updated",
-    "amundi": "skipped",
+    "amundi": "prelim_updated",
     "allspring": "paid_history_only",
     "janus_henderson": "prelim_updated",
     "american_century": "prelim_updated",
@@ -145,7 +145,7 @@ HISTORY_YEARS: dict[str, tuple[int, ...]] = {
     "schwab": (2021, 2022, 2023, 2024, 2025),
     "dimensional": (2024, 2025),
     "columbia_threadneedle": (2024, 2025),
-    "amundi": (2025,),
+    "amundi": (2023, 2024, 2025),
     "allspring": (2021, 2022, 2023, 2024, 2025),
     "janus_henderson": (2021, 2022, 2023, 2024, 2025),
     "american_century": (2022, 2023, 2025),
@@ -251,6 +251,7 @@ PERFORMANCE_TICKERS: dict[str, tuple[str, ...]] = {
     "dodge_cox": ("DODIX", "DODGX"),
     "janus_henderson": ("JDCAX",),
     "northern_trust": ("NOSIX",),
+    "amundi": ("PIODX", "PIGFX"),
     "first_eagle": ("SGENX", "FEVAX", "FEGE", "FEOE", "FEFAX"),
     "harbor": ("HACAX", "HAVLX"),
     "nationwide": ("NWHOX",),

@@ -410,7 +410,7 @@ class VictorySource(HtmlTableSource):
     aum_rank = 50
     priority = 50
     notes = (
-        "Distinct from Pioneer / Amundi US: Pioneer open-end estimates stay on `amundi` "
+        "Distinct from Pioneer / Amundi US: Pioneer open-end books stay on `amundi` "
         "(alias `pioneer` / `victory_pioneer`). This adapter is Victory Portfolios I/II "
         "(Integrity / Sycamore / Multi-Cap) — public 10/31/2025 estimate PDF: "
         "https://investor.vcm.com/assets/resources-mutualfunddoc/Victory-Funds-2025-Estimated-Capital-Gains.pdf "
@@ -421,7 +421,7 @@ class VictorySource(HtmlTableSource):
         "2025 final Portfolios I/II + RS + Portfolios III (USAA) official PDFs "
         "are the full printed books (MMEAX LT $3.922505; RSGRX LT $1.817625; "
         "USSPX ST $0.026267 / LT $2.615144). Pioneer / Victory Portfolios IV "
-        "stays on the skipped amundi adapter. "
+        "is covered by the included `amundi` adapter (Eric 2026-09-08). "
         "2024 final Class A book: "
         "https://investor.vcm.com/assets/resources-mutualfunddoc/Victory-Funds-2024-Final-Ordinary-Income-and-Capital-Gains.pdf "
         "(Integrity Discovery MMEAX ST $0.801347 / LT $3.015874 / 8.95% of NAV)."
