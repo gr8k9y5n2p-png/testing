@@ -61,6 +61,58 @@ test("paid and final-past rows are paid history", () => {
   );
 });
 
+test("past final with only as_of (no ex/payable) is paid history, not upcoming", () => {
+  assert.equal(
+    isPastDistribution(
+      {
+        asOfDate: "2025-12-31",
+        publicationStage: "final",
+      },
+      TODAY,
+    ),
+    true,
+  );
+  assert.equal(
+    distributionBucket(
+      {
+        asOfDate: "2025-12-31",
+        recordDate: null,
+        exDate: null,
+        payableDate: null,
+        publicationStage: "final",
+      },
+      TODAY,
+    ),
+    "paid",
+  );
+  assert.equal(
+    distributionBucket(
+      {
+        asOfDate: "2026-01-22",
+        publicationStage: "final",
+      },
+      TODAY,
+    ),
+    "paid",
+  );
+});
+
+test("future unpaid announced final stays upcoming", () => {
+  assert.equal(
+    distributionBucket(
+      {
+        asOfDate: "2026-08-15",
+        recordDate: "2026-12-12",
+        exDate: "2026-12-15",
+        payableDate: "2026-12-17",
+        publicationStage: "final",
+      },
+      TODAY,
+    ),
+    "upcoming",
+  );
+});
+
 test("as_of in the past does not make an announced estimate paid", () => {
   assert.equal(
     isPastDistribution(
