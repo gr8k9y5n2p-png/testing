@@ -148,3 +148,29 @@ export function toDataApiIllustrateBody(
   body.latest_as_of_only = true;
   return body;
 }
+
+/**
+ * Portfolio holding NAV for POST /illustrate/portfolio/compare.
+ * Same rules as fund compare: search/seed metadata, never send 0.
+ */
+export function withPortfolioHoldingNav<T extends {
+  ticker?: string | null;
+  fund_identifier?: string | null;
+  nav_per_share?: number | null;
+  shares?: number | null;
+}>(holding: T, lookup?: NavLookup): T {
+  const nav = navFromFundMetadata(
+    holding.ticker || holding.fund_identifier,
+    holding.nav_per_share,
+    lookup,
+  );
+  const shares = positiveNav(holding.shares);
+  const rest = { ...holding };
+  delete rest.nav_per_share;
+  delete rest.shares;
+  return {
+    ...rest,
+    ...(nav != null ? { nav_per_share: nav } : {}),
+    ...(shares != null ? { shares } : {}),
+  };
+}

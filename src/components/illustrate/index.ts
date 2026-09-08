@@ -53,6 +53,7 @@ export {
   compareSideFromFund,
   navFromFundMetadata,
   toDataApiCompareBody,
+  withPortfolioHoldingNav,
 } from "@/lib/illustrate/compare-request";
 export { seedNavLookup } from "@/lib/illustrate/seed-nav";
 export type {

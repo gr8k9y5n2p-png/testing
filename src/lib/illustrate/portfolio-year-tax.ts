@@ -1,12 +1,12 @@
 import {
   PORTFOLIO_COMPARE_YEARS,
   type PortfolioComparePeriodIn,
-} from "./portfolio-compare-years";
+} from "./portfolio-compare-years.ts";
 import type {
   PortfolioComparePeriodOut,
   PortfolioCompareResponse,
   PortfolioPeriodHoldingTax,
-} from "./portfolio-compare-types";
+} from "./portfolio-compare-types.ts";
 
 export type YearTaxCell = number | null;
 
@@ -84,6 +84,7 @@ function rowsForSide(
       ticker,
       fundName: holding.fund_name || ticker,
       cells: years.map((year) => {
+        if (holding.covered === false || holding.gap_reason) return null;
         if (!byYear || !byYear.has(year)) return null;
         const value = byYear.get(year);
         return value ?? null;

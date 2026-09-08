@@ -48,11 +48,52 @@ describe("portfolio compare periods wiring", () => {
     assert.match(client, /periods:/);
     assert.match(client, /defaultPortfolioComparePeriods/);
     assert.match(client, /normalizePortfolioComparePeriods/);
+    assert.match(client, /portfolioPeriodTaxIsUnmatched/);
+  });
+
+  it("splits Upcoming from Paid History and lists every fund", () => {
+    const compare = readFileSync(
+      join(here, "../../components/illustrate/PortfolioCompare.tsx"),
+      "utf8",
+    );
+    const table = readFileSync(
+      join(here, "../../components/illustrate/portfolio-compare/UpcomingTable.tsx"),
+      "utf8",
+    );
+    assert.match(compare, /upcomingHoldingsForSide/);
+    assert.match(compare, /PaidHistoryTable/);
+    assert.doesNotMatch(compare, /paidRows=/);
+    assert.match(table, /UPCOMING_MODULE_DETAIL/);
+    assert.match(table, /export function PaidHistoryTable/);
+    assert.doesNotMatch(
+      table.split("export function UpcomingTable")[1]?.split("export function PaidHistoryTable")[0] ?? "",
+      /Paid history/,
+    );
   });
 
   it("mocks calendar-year tax per ticker", () => {
     const fixture = readFileSync(join(here, "portfolio-compare-fixture.ts"), "utf8");
     assert.match(fixture, /mockCalendarYearPeriods/);
     assert.match(fixture, /portfolioYearTaxRate/);
+  });
+});
+
+describe("portfolio compare nav_per_share wiring", () => {
+  it("enriches holdings from search/seed NAV and never sends 0", () => {
+    const client = readFileSync(join(here, "portfolio-compare-client.ts"), "utf8");
+    const seed = readFileSync(join(here, "seed-nav.ts"), "utf8");
+    const compare = readFileSync(
+      join(here, "../../components/illustrate/PortfolioCompare.tsx"),
+      "utf8",
+    );
+    assert.match(client, /withPortfolioHoldingNav/);
+    assert.match(client, /seedNavLookup/);
+    assert.match(client, /positiveNav\(holding\.nav_per_share\)/);
+    assert.match(compare, /navFromFundMetadata\(ticker, holding\.nav, seedNavLookup\)/);
+    assert.match(seed, /DODIX:\s*12\.8/);
+    assert.match(seed, /DODGX:\s*273\.16/);
+    assert.match(seed, /CGHM:\s*25\.18/);
+    assert.match(seed, /AMCAP:\s*"AMCPX"/);
+    assert.doesNotMatch(seed, /DODIX:\s*0\b/);
   });
 });

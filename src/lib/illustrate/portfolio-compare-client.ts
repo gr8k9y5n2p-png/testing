@@ -1,10 +1,17 @@
 import { dataApiUrl, isRemoteDataApi } from "@/lib/data-api/config";
 import { IllustrateRequestError } from "@/lib/illustrate/client";
 import {
+  positiveNav,
+  withPortfolioHoldingNav,
+  type NavLookup,
+} from "@/lib/illustrate/compare-request";
+import {
   mockPortfolioCompareResponse,
   synthesizePortfolioCompare,
 } from "@/lib/illustrate/portfolio-compare-fixture";
 import { defaultPortfolioComparePeriods } from "@/lib/illustrate/portfolio-year-tax";
+import { seedNavLookup } from "@/lib/illustrate/seed-nav";
+import { portfolioPeriodTaxIsUnmatched } from "@/lib/illustrate/portfolio-compare-years";
 import type {
   PortfolioAllocationOut,
   PortfolioComparePeriodOut,
@@ -99,23 +106,30 @@ function periodHoldingTaxFromRaw(raw: unknown, index: number): PortfolioPeriodHo
   const row = asRecord(raw);
   const illustration = row.illustration ? asRecord(row.illustration) : null;
   const totals = illustration ? asRecord(illustration.totals) : asRecord(row.totals);
-  const matchedRaw = row.matched ?? illustration?.matched;
-  const matched = matchedRaw !== false && matchedRaw !== "false";
-  const unmatched = matchedRaw === false || matchedRaw === "false";
   const ticker = String(row.ticker ?? row.fund_identifier ?? "").trim().toUpperCase();
   if (!ticker) return null;
-  const tax = unmatched
-    ? null
-    : numOrNull(
-        row.estimated_tax ??
-          row.estimated_tax_dollars ??
-          totals.estimated_tax ??
-          totals.estimated_tax_dollars,
-      );
+
+  const matchedRaw = row.matched ?? illustration?.matched;
+  const coveredRaw = row.covered ?? illustration?.covered;
+  const gap = row.gap_reason ?? illustration?.gap_reason;
+  const tax = numOrNull(
+    row.estimated_tax ??
+      row.estimated_tax_dollars ??
+      totals.estimated_tax ??
+      totals.estimated_tax_dollars,
+  );
+
+  const unmatched = portfolioPeriodTaxIsUnmatched({
+    matched: matchedRaw,
+    covered: coveredRaw,
+    gapReason: gap,
+    estimatedTax: tax,
+  });
+
   return {
     ticker,
     holding_index: numOrNull(row.holding_index) ?? index,
-    matched: unmatched ? false : matched,
+    matched: unmatched ? false : true,
     estimated_tax: unmatched ? null : tax,
   };
 }
@@ -152,13 +166,28 @@ export function normalizePortfolioComparePeriods(raw: unknown): PortfolioCompare
   });
 }
 
-/** Calendar-year tax $ — send `periods: [{year:2021}…{year:2025}]`. */
+function withSideNav(
+  side: PortfolioCompareSideIn,
+  lookup: NavLookup,
+): PortfolioCompareSideIn {
+  return {
+    ...side,
+    holdings: side.holdings.map((holding) => withPortfolioHoldingNav(holding, lookup)),
+  };
+}
+
+/**
+ * Calendar-year tax $ — send `periods: [{year:2021}…{year:2025}]`.
+ * Attach search/seed `nav_per_share` (> 0 only) so per_share paid_history
+ * rows are not dropped. Same pattern as fund compare #19.
+ */
 export function toPortfolioCompareRequestBody(
   request: PortfolioCompareRequest,
+  lookup: NavLookup = seedNavLookup,
 ): Record<string, unknown> {
   const body: Record<string, unknown> = {
-    current: request.current,
-    proposed: request.proposed,
+    current: withSideNav(request.current, lookup),
+    proposed: withSideNav(request.proposed, lookup),
     tax_rates: request.tax_rates ?? {},
     combine_state_with_federal: request.combine_state_with_federal !== false,
     periods:
@@ -414,8 +443,12 @@ function toPortfolioIllustrateBody(side: PortfolioCompareSideIn) {
         holding_dollars: dollars,
         weight_pct: dollars ? undefined : weight,
         book_dollars: book,
-        nav_per_share: holding.nav_per_share,
-        shares: holding.shares,
+        ...(positiveNav(holding.nav_per_share) != null
+          ? { nav_per_share: positiveNav(holding.nav_per_share) }
+          : {}),
+        ...(positiveNav(holding.shares) != null
+          ? { shares: positiveNav(holding.shares) }
+          : {}),
         distribution_ids: holding.distribution_ids,
       };
     }),

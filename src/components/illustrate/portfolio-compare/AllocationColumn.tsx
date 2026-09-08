@@ -106,6 +106,7 @@ export function AllocationColumn({
                     ticker: fund.ticker,
                     fundName: fund.fundName,
                     family: fund.family,
+                    nav: fund.nav ?? null,
                   });
                 }}
               />
@@ -181,6 +182,7 @@ export function AllocationColumn({
                 ticker: "",
                 fundName: "",
                 family: option?.family,
+                nav: null,
                 weightPct: 0,
                 holdingDollars: 0,
               },

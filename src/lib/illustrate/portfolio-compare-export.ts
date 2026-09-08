@@ -14,7 +14,7 @@ import {
   formatTaxDragPct,
   paidHistoryRowsForSide,
   totalUpcomingTax,
-  upcomingRowsForSide,
+  upcomingHoldingsForSide,
   type TaxPolarity,
 } from "@/lib/illustrate/portfolio-compare-map";
 import type { PortfolioCompareResponse } from "@/lib/illustrate/portfolio-compare-types";
@@ -34,8 +34,9 @@ export type PortfolioCompareExportHolding = {
 
 export type PortfolioCompareExportUpcoming = {
   ticker: string;
-  distributionDollars: number;
+  distributionDollars: number | null;
   estimatedTax: number | null;
+  available: boolean;
   stageLabel: string;
   announcedDate: string | null;
   recordDate: string | null;
@@ -84,10 +85,11 @@ function sideModel(
       weightPct: holding.weight_pct ?? null,
       holdingDollars: holding.holding_dollars,
     })),
-    upcoming: upcomingRowsForSide(allocation, side).map((row) => ({
+    upcoming: upcomingHoldingsForSide(allocation, side).map((row) => ({
       ticker: row.ticker,
       distributionDollars: row.distributionDollars,
       estimatedTax: row.estimatedTax,
+      available: row.available,
       stageLabel: formatStageLabel(row.stage),
       announcedDate: row.announcedDate,
       recordDate: row.recordDate,
@@ -98,6 +100,7 @@ function sideModel(
       ticker: row.ticker,
       distributionDollars: row.distributionDollars,
       estimatedTax: row.estimatedTax,
+      available: row.available,
       stageLabel: formatStageLabel(row.stage),
       announcedDate: row.announcedDate,
       recordDate: row.recordDate,
@@ -137,7 +140,14 @@ function escapeHtml(value: string): string {
 }
 
 function money(value: number | null): string {
-  return value == null ? "—" : formatUsd(value, 0);
+  return value == null ? TAX_DRAG_NA_LABEL : formatUsd(value, 0);
+}
+
+function distMoney(row: PortfolioCompareExportUpcoming): string {
+  if (!row.available || row.distributionDollars == null) {
+    return UPCOMING_UNAVAILABLE_HEADLINE;
+  }
+  return formatUsd(row.distributionDollars, 0);
 }
 
 function weight(value: number | null): string {
@@ -166,7 +176,7 @@ function sideHtml(side: PortfolioCompareExportSide): string {
       <h2>${escapeHtml(side.label)}</h2>
       <p class="metric">Tax drag <strong>${escapeHtml(side.taxDragLabel)}</strong> <span class="muted">${escapeHtml(TAX_DRAG_CARD_DETAIL)}</span></p>
       <p class="metric">Total tax impact <strong>${escapeHtml(
-        side.upcoming.length
+        side.upcoming.some((row) => row.available)
           ? money(side.totalUpcomingTax)
           : UPCOMING_UNAVAILABLE_HEADLINE,
       )}</strong></p>
@@ -232,8 +242,12 @@ function distributionRowsHtml(rows: PortfolioCompareExportUpcoming[]): string {
       (row) => `
         <tr>
           <td class="mono">${escapeHtml(row.ticker)}</td>
-          <td class="num">${escapeHtml(money(row.distributionDollars))}</td>
-          <td class="num">${escapeHtml(money(row.estimatedTax))}</td>
+          <td class="num">${escapeHtml(distMoney(row))}</td>
+          <td class="num">${escapeHtml(
+            !row.available || row.estimatedTax == null
+              ? TAX_DRAG_NA_LABEL
+              : money(row.estimatedTax),
+          )}</td>
           <td class="muted">${dateCell(row.announcedDate)}</td>
           <td class="muted">${dateCell(row.recordDate)}</td>
           <td class="muted">${dateCell(row.exDate)}</td>

@@ -13,7 +13,8 @@ export type UpcomingRow = {
   fundName: string;
   side: "current" | "proposed";
   sideLabel: string;
-  distributionDollars: number;
+  /** Null when upcoming is undisclosed — never coerce to $0. */
+  distributionDollars: number | null;
   estimatedTax: number | null;
   asOf: string | null;
   announcedDate: string | null;
@@ -23,6 +24,9 @@ export type UpcomingRow = {
   stage: string | null;
   bucket: DistributionBucket;
   heat: number;
+  /** False = empty/null upcoming for this fund (undisclosed, not $0). */
+  available: boolean;
+  covered: boolean;
 };
 
 function num(value: unknown): number | null {
@@ -384,6 +388,10 @@ export function formatAsOfStage(asOf: string | null, stage: string | null): stri
   return "—";
 }
 
+function holdingTicker(holding: PortfolioHoldingOut): string {
+  return (holding.ticker || holding.fund_identifier || "—").toUpperCase();
+}
+
 function toTableRow(
   holding: PortfolioHoldingOut,
   side: "current" | "proposed",
@@ -394,7 +402,7 @@ function toTableRow(
 ): UpcomingRow | null {
   const dist = num(event.distribution_dollars);
   if (dist == null) return null;
-  const ticker = (holding.ticker || holding.fund_identifier || "—").toUpperCase();
+  const ticker = holdingTicker(holding);
   return {
     key: `${side}-${holding.holding_index}-${ticker}-${index}-${bucket}-${eventIndex}`,
     ticker,
@@ -411,6 +419,35 @@ function toTableRow(
     stage: event.publication_stage ?? holding.publication_stage_used ?? null,
     bucket,
     heat: 0,
+    available: true,
+    covered: holding.covered !== false && !holding.gap_reason,
+  };
+}
+
+function undisclosedUpcomingRow(
+  holding: PortfolioHoldingOut,
+  side: "current" | "proposed",
+  index: number,
+): UpcomingRow {
+  const ticker = holdingTicker(holding);
+  return {
+    key: `${side}-${holding.holding_index}-${ticker}-${index}-upcoming-undisclosed`,
+    ticker,
+    fundName: holding.fund_name || ticker,
+    side,
+    sideLabel: side === "current" ? "Current" : "Proposed",
+    distributionDollars: null,
+    estimatedTax: null,
+    asOf: null,
+    announcedDate: null,
+    recordDate: null,
+    exDate: null,
+    payableDate: null,
+    stage: null,
+    bucket: "upcoming",
+    heat: 0,
+    available: false,
+    covered: holding.covered !== false && !holding.gap_reason,
   };
 }
 
@@ -441,20 +478,29 @@ function sortDistributionRows(rows: UpcomingRow[], bucket: DistributionBucket): 
     if (bucket === "paid_history") {
       const aDate = paidHistorySortDate(a);
       const bDate = paidHistorySortDate(b);
-      if (!aDate && !bDate) return b.distributionDollars - a.distributionDollars;
+      if (!aDate && !bDate) {
+        return (b.distributionDollars ?? 0) - (a.distributionDollars ?? 0);
+      }
       if (!aDate) return 1;
       if (!bDate) return -1;
       if (aDate !== bDate) return bDate.localeCompare(aDate);
     }
-    return b.distributionDollars - a.distributionDollars;
+    return (b.distributionDollars ?? 0) - (a.distributionDollars ?? 0);
   });
 }
 
 function withHeat(rows: UpcomingRow[]): UpcomingRow[] {
-  const max = rows.reduce((peak, row) => Math.max(peak, row.distributionDollars), 0);
+  const max = rows.reduce(
+    (peak, row) =>
+      row.available ? Math.max(peak, row.distributionDollars ?? 0) : peak,
+    0,
+  );
   return rows.map((row) => ({
     ...row,
-    heat: max > 0 ? row.distributionDollars / max : 0,
+    heat:
+      row.available && max > 0 && row.distributionDollars != null
+        ? row.distributionDollars / max
+        : 0,
   }));
 }
 
@@ -467,6 +513,27 @@ export function upcomingRowsForSide(
   return withHeat(
     sortDistributionRows(rowsForSide(allocation, side, "upcoming", today), "upcoming"),
   );
+}
+
+/**
+ * One row per Current/Proposed holding for the Upcoming module.
+ * Empty/null upcoming stays undisclosed — never $0.
+ */
+export function upcomingHoldingsForSide(
+  allocation: PortfolioAllocationOut,
+  side: "current" | "proposed",
+  today = utcToday(),
+): UpcomingRow[] {
+  const rows = allocation.holdings.flatMap((holding, index) => {
+    const events = upcomingEventsFromHolding(holding, today);
+    const eventRows = events.flatMap((event, eventIndex) => {
+      const row = toTableRow(holding, side, index, event, eventIndex, "upcoming");
+      return row ? [row] : [];
+    });
+    if (eventRows.length) return eventRows;
+    return [undisclosedUpcomingRow(holding, side, index)];
+  });
+  return withHeat(rows);
 }
 
 /** Paid / final past rows. Kept off the upcoming path. */
@@ -487,12 +554,18 @@ export function distributionHasPayable(rows: UpcomingRow[]): boolean {
   return rows.some((row) => row.payableDate != null);
 }
 
+/**
+ * Sum of unpaid announced tax. Null estimated_tax is skipped (not $0).
+ * No upcoming rows → 0; the UI uses `hasUpcoming` so a miss is undisclosed.
+ */
 export function totalUpcomingTax(
   allocation: PortfolioAllocationOut,
   today = utcToday(),
 ): number {
-  return allocation.holdings.reduce(
-    (sum, holding) => sum + (num(upcomingFromHolding(holding, today)?.estimated_tax) ?? 0),
-    0,
-  );
+  return allocation.holdings.reduce((sum, holding) => {
+    const upcoming = upcomingFromHolding(holding, today);
+    if (!upcoming) return sum;
+    const tax = num(upcoming.estimated_tax);
+    return tax == null ? sum : sum + tax;
+  }, 0);
 }

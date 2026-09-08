@@ -21,6 +21,7 @@ export {
   publicationBucket,
   totalUpcomingTax,
   upcomingFromHolding,
+  upcomingHoldingsForSide,
   upcomingRowsForSide,
   utcToday,
 } from "@/lib/illustrate/publication-stage";
@@ -101,9 +102,10 @@ export function colorForTicker(ticker: string, used = new Set<string>()): string
 }
 
 function taxImpactDollars(holding: PortfolioHoldingOut): number | null {
+  if (holding.covered === false || holding.gap_reason) return null;
   const upcoming = upcomingFromHolding(holding);
   if (!upcoming) return null;
-  return num(upcoming.estimated_tax) ?? 0;
+  return num(upcoming.estimated_tax);
 }
 
 /** One bar per holding with unpaid announced tax. Skip paid-only so $0 is not a miss. */

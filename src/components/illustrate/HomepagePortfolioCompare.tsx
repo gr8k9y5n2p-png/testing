@@ -23,6 +23,7 @@ export function HomepagePortfolioCompare({
         ticker: fund.ticker,
         fundName: fund.fundName,
         family: fund.family,
+        nav: fund.nav > 0 ? fund.nav : null,
       })),
     [funds],
   );

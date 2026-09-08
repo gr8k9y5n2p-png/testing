@@ -8,6 +8,7 @@ import {
   SMOKE_PROPOSED_TICKERS,
   SMOKE_WEIGHT_PCT,
 } from "@/lib/illustrate/portfolio-compare-smoke";
+import { seedNavLookup } from "@/lib/illustrate/seed-nav";
 
 export { SMOKE_CURRENT_TICKERS, SMOKE_PROPOSED_TICKERS, SMOKE_WEIGHT_PCT };
 
@@ -161,6 +162,7 @@ export function draftHolding(
     ticker: ticker.toUpperCase(),
     fundName: rates.fundName || option?.fundName || ticker.toUpperCase(),
     family: rates.family || option?.family,
+    nav: option?.nav ?? seedNavLookup(ticker) ?? null,
     weightPct,
     holdingDollars: (weightPct / 100) * bookDollars,
   };
@@ -190,6 +192,7 @@ export function catalogFunds(extra: PortfolioFundOption[] = []): PortfolioFundOp
       ticker,
       fundName: rates.fundName,
       family: rates.family,
+      nav: seedNavLookup(ticker) ?? null,
     }),
   );
   const byTicker = new Map<string, PortfolioFundOption>();
@@ -202,6 +205,7 @@ export function catalogFunds(extra: PortfolioFundOption[] = []): PortfolioFundOp
       // Rates/catalog names win so the smoke book matches the locked sketch.
       fundName: prev?.fundName || fund.fundName || ticker,
       family: prev?.family || fund.family,
+      nav: prev?.nav ?? fund.nav ?? seedNavLookup(ticker) ?? null,
     });
   }
   return [...byTicker.values()].sort((a, b) => a.ticker.localeCompare(b.ticker));
