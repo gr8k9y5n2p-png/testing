@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import type { Facets, FundEstimateView, HighlightSets } from "@/data/types";
 import { Dashboard } from "@/components/Dashboard";
 import { DemoBanner } from "@/components/DemoBanner";
 import { HighlightsSection } from "@/components/HighlightsSection";
 import { Hero } from "@/components/landing/Hero";
 import { FundCompareRail } from "@/components/illustrate/FundCompareRail";
-import { HomepagePortfolioCompare } from "@/components/illustrate/HomepagePortfolioCompare";
 import {
   GrowthAndTaxDragModule,
   type GrowthFundInput,
@@ -76,6 +76,7 @@ function AftertaxAppInner({
   facets: Facets;
   checkout?: CheckoutReturn;
 }) {
+  const router = useRouter();
   const [selected, setSelected] = useState<FundEstimateView | null>(null);
   const [paywallOpen, setPaywallOpen] = useState(
     checkout === "cancel" && !isFreemiumDisabled(),
@@ -88,15 +89,14 @@ function AftertaxAppInner({
 
   useEffect(() => {
     const id = window.location.hash.replace(/^#/, "");
-    if (
-      id === "portfolio-compare" ||
-      id === "fund-compare" ||
-      id === "illustrate" ||
-      id === "growth-and-tax"
-    ) {
+    if (id === "portfolio-compare") {
+      router.replace("/portfolio");
+      return;
+    }
+    if (id === "fund-compare" || id === "illustrate" || id === "growth-and-tax") {
       scrollToId(id);
     }
-  }, []);
+  }, [router]);
 
   const seedFunds = useMemo(
     () => (selected ? [toGrowthFund(selected)] : undefined),
@@ -126,15 +126,6 @@ function AftertaxAppInner({
       return;
     }
     document.getElementById("fund-search")?.focus();
-  }
-
-  function openPortfolio() {
-    // Prefer PortfolioCompare when mounted; otherwise the homepage
-    // multi-fund growth + tax stack. Never open the paywall.
-    const target =
-      document.getElementById("portfolio-compare") ??
-      document.getElementById("growth-and-tax");
-    target?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   async function unlock() {
@@ -167,7 +158,6 @@ function AftertaxAppInner({
         unlimited={freemium.unlimited}
         onSelect={selectFund}
         onCompare={openFundCompare}
-        onImport={openPortfolio}
       />
 
       <section
@@ -188,8 +178,6 @@ function AftertaxAppInner({
           <FundCompareRail funds={funds} selected={selected} />
         </div>
       ) : null}
-
-      <HomepagePortfolioCompare funds={funds} />
 
       <section
         className="mt-4 border-t border-line pt-10"

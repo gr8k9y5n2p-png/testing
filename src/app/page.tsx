@@ -1,13 +1,18 @@
+import { redirect } from "next/navigation";
 import { AftertaxApp, type CheckoutReturn } from "@/components/AftertaxApp";
 import { getDistributionRepository } from "@/data";
 import { loadCoverageSnapshot } from "@/lib/data-api/coverage";
 
 export const dynamic = "force-dynamic";
 
+function firstParam(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
+}
+
 function checkoutFromSearchParams(
   value: string | string[] | undefined,
 ): CheckoutReturn {
-  const raw = Array.isArray(value) ? value[0] : value;
+  const raw = firstParam(value);
   if (raw === "success" || raw === "cancel") return raw;
   return null;
 }
@@ -15,9 +20,12 @@ function checkoutFromSearchParams(
 export default async function Home({
   searchParams,
 }: {
-  searchParams: Promise<{ checkout?: string | string[] }>;
+  searchParams: Promise<{ checkout?: string | string[]; tab?: string | string[] }>;
 }) {
   const params = await searchParams;
+  if (firstParam(params.tab) === "portfolio") {
+    redirect("/portfolio");
+  }
   const repository = await getDistributionRepository();
   const [funds, highlights, facets, coverage] = await Promise.all([
     repository.search(),

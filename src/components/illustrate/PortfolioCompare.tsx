@@ -36,7 +36,7 @@ export type PortfolioCompareProps = {
   funds?: PortfolioFundOption[];
   taxRates?: Partial<TaxRates>;
   className?: string;
-  /** Standalone demo keeps h1; homepage mount uses h2 under the hero. */
+  /** Dedicated Portfolio tab / standalone demo use h1; nested mounts can use h2. */
   headingAs?: "h1" | "h2";
   /** Website wires Export + freemium. Omit to hide the button. */
   onExport?: (result: PortfolioCompareResponse, bookDollars: number) => void;

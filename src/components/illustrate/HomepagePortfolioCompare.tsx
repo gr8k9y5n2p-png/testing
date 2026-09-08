@@ -28,17 +28,13 @@ export function HomepagePortfolioCompare({
   );
 
   return (
-    <section
-      id="portfolio-compare"
-      aria-label="Portfolio comparison"
-      className="mt-4 scroll-mt-6 border-t border-line pt-10"
-    >
+    <section id="portfolio-compare" aria-label="Portfolio comparison">
       <PortfolioCompare
         funds={catalog}
         bookDollars={PORTFOLIO_COMPARE_BOOK_DOLLARS}
         taxRates={HOMEPAGE_TAX_RATES}
         // current/proposed omitted — GTM history-covered smoke books.
-        headingAs="h2"
+        headingAs="h1"
         onExport={(result, bookDollars) => {
           // Freemium gate stays stubbed on beta — export is available.
           exportToPdf(toPortfolioCompareExportModel(result, bookDollars));
