@@ -71,6 +71,20 @@ describe("portfolio compare periods wiring", () => {
     assert.doesNotMatch(table, /Website owns converting/);
   });
 
+  it("does not mount the duplicate Total tax impact / upcoming-tax-to-holder cards", () => {
+    const compare = readFileSync(
+      join(here, "../../components/illustrate/PortfolioCompare.tsx"),
+      "utf8",
+    );
+    assert.match(compare, /<UpcomingTable/);
+    assert.match(compare, /<CalendarYearTaxTable/);
+    assert.doesNotMatch(compare, /TaxImpactChart/);
+    assert.doesNotMatch(compare, /taxImpactBarsForSide/);
+    assert.doesNotMatch(compare, /Upcoming tax to holder/);
+    assert.doesNotMatch(compare, /tax-impact-current/);
+    assert.doesNotMatch(compare, /tax-impact-proposed/);
+  });
+
   it("keeps CalendarYearTaxTable as the existing matrix, not a Paid History rebuild", () => {
     const compare = readFileSync(
       join(here, "../../components/illustrate/PortfolioCompare.tsx"),

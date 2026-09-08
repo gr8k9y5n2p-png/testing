@@ -1,9 +1,5 @@
 import { formatUsd } from "@/lib/format";
-import type {
-  PortfolioAllocationOut,
-  PortfolioHoldingOut,
-} from "@/lib/illustrate/portfolio-compare-types";
-import { upcomingFromHolding } from "@/lib/illustrate/publication-stage";
+import type { PortfolioAllocationOut } from "@/lib/illustrate/portfolio-compare-types";
 
 export type { DistributionBucket, UpcomingRow } from "@/lib/illustrate/publication-stage";
 export {
@@ -52,84 +48,6 @@ export function formatMoreLessTax(delta: number): {
   }
   const dollars = formatUsd(Math.abs(Math.round(delta)), 0);
   return { headline: `${dollars} ${polarity} tax`, polarity };
-}
-
-function num(value: unknown): number | null {
-  if (value == null || value === "") return null;
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
-export type TaxImpactBar = {
-  ticker: string;
-  fundName: string;
-  taxDollars: number;
-  color: string;
-  /** 0–1 vs the largest tax in this book. */
-  share: number;
-};
-
-/** Distinct, Ledger-adjacent fills. Same ticker hashes to the same preferred slot. */
-const TICKER_PALETTE = [
-  "#1a4d3a",
-  "#3d5a80",
-  "#b4532a",
-  "#6b5348",
-  "#2a6f6f",
-  "#8b6914",
-  "#4a5568",
-  "#7c3a2d",
-  "#0f7a4b",
-  "#5c6b5e",
-  "#1a1d1a",
-  "#8a4f6b",
-] as const;
-
-export function colorForTicker(ticker: string, used = new Set<string>()): string {
-  const key = ticker.trim().toUpperCase();
-  let hash = 0;
-  for (let i = 0; i < key.length; i += 1) {
-    hash = (hash * 33 + key.charCodeAt(i)) >>> 0;
-  }
-  for (let offset = 0; offset < TICKER_PALETTE.length; offset += 1) {
-    const color = TICKER_PALETTE[(hash + offset) % TICKER_PALETTE.length];
-    if (!used.has(color)) {
-      used.add(color);
-      return color;
-    }
-  }
-  return TICKER_PALETTE[hash % TICKER_PALETTE.length];
-}
-
-function taxImpactDollars(holding: PortfolioHoldingOut): number | null {
-  if (holding.covered === false || holding.gap_reason) return null;
-  const upcoming = upcomingFromHolding(holding);
-  if (!upcoming) return null;
-  return num(upcoming.estimated_tax);
-}
-
-/** One bar per holding with unpaid announced tax. Skip paid-only so $0 is not a miss. */
-export function taxImpactBarsForSide(allocation: PortfolioAllocationOut): TaxImpactBar[] {
-  const used = new Set<string>();
-  const items = allocation.holdings
-    .map((holding) => {
-      const ticker = (holding.ticker || holding.fund_identifier || "").trim().toUpperCase();
-      const taxDollars = taxImpactDollars(holding);
-      if (!ticker || taxDollars == null) return null;
-      return {
-        ticker,
-        fundName: holding.fund_name || ticker,
-        taxDollars,
-        color: colorForTicker(ticker, used),
-      };
-    })
-    .filter((item): item is NonNullable<typeof item> => item != null);
-
-  const max = items.reduce((peak, item) => Math.max(peak, item.taxDollars), 0);
-  return items.map((item) => ({
-    ...item,
-    share: max > 0 ? item.taxDollars / max : 0,
-  }));
 }
 
 export function heatBackground(heat: number): string {
