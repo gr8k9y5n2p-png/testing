@@ -40,10 +40,16 @@ describe("Portfolio / Compare slot ticker miss wiring", () => {
     const rail = read("../../components/illustrate/FundCompareRail.tsx");
     const hook = read("../data-api/use-portfolio-miss.ts");
     assert.match(picker, /usePortfolioMissRequest/);
+    assert.match(picker, /notifyPortfolioTickerMiss/);
     assert.match(picker, /reportPortfolioMiss/);
     assert.match(homepage, /reportPortfolioMiss/);
     assert.match(homepage, /compareSideFromFund\(\{ ticker: leftPending \}\)/);
+    assert.match(
+      homepage,
+      /left && right && !leftPending && !rightPending/,
+    );
     assert.match(rail, /reportPortfolioMiss/);
+    assert.match(rail, /pendingPeer \?/);
     assert.match(hook, /requestTickerOnPortfolioMiss/);
     assert.match(hook, /source=portfolio/);
     assert.doesNotMatch(hook, /source=search_miss/);

@@ -4,7 +4,10 @@ import { useMemo, useState } from "react";
 import type { FundEstimateView } from "@/data/types";
 import { searchFunds, splitFundsByBucket } from "@/data/queries";
 import { COPY } from "@/lib/copy";
-import { looksLikeExactTicker } from "@/lib/data-api/request-ticker";
+import {
+  looksLikeExactTicker,
+  notifyPortfolioTickerMiss,
+} from "@/lib/data-api/request-ticker";
 import { usePortfolioMissRequest } from "@/lib/data-api/use-portfolio-miss";
 import { useSearchMissRequest } from "@/lib/data-api/use-search-miss";
 import { DistributionDateStrip } from "@/components/DistributionDateStrip";
@@ -114,6 +117,7 @@ export function FundPicker({
             const typed = query.trim().toUpperCase();
             if (!looksLikeExactTicker(typed) || matches.length > 0) return;
             event.preventDefault();
+            notifyPortfolioTickerMiss(typed, tickerInUniverse, onNotice);
             onUnknownTicker?.(typed);
             setOpen(false);
           }

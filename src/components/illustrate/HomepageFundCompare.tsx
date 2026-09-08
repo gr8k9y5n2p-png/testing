@@ -169,7 +169,7 @@ export function HomepageFundCompare({
         />
       </div>
 
-      {left && right ? (
+      {left && right && !leftPending && !rightPending ? (
         <div className="mt-8">
           <FundTaxDeltaCompare
             left={left}
@@ -180,7 +180,9 @@ export function HomepageFundCompare({
         </div>
       ) : (
         <p className="mt-8 text-sm text-muted">
-          Choose two different funds to see the tax-delta compare.
+          {leftPending || rightPending
+            ? "Not available / undisclosed. Compare stays empty until this ticker is ingested."
+            : "Choose two different funds to see the tax-delta compare."}
         </p>
       )}
       <NoticeToast message={notice} onDismiss={dismissNotice} />

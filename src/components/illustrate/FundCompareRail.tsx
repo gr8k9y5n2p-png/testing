@@ -93,12 +93,19 @@ export function FundCompareRail({
         label="Compare with"
       />
       <div className="mt-5 flex justify-center xl:justify-start">
-        <FundTaxDeltaCompare
-          left={left}
-          right={right}
-          holdingDollars={COMPARE_SUMMARY_HOLDING_DOLLARS}
-          taxRates={COMPARE_TAX_RATES}
-        />
+        {pendingPeer ? (
+          <p className="text-sm text-muted">
+            Not available / undisclosed. Compare stays empty until this ticker is
+            ingested.
+          </p>
+        ) : (
+          <FundTaxDeltaCompare
+            left={left}
+            right={right}
+            holdingDollars={COMPARE_SUMMARY_HOLDING_DOLLARS}
+            taxRates={COMPARE_TAX_RATES}
+          />
+        )}
       </div>
       <NoticeToast message={notice} onDismiss={dismissNotice} />
     </aside>
