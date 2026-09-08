@@ -56,7 +56,7 @@ Staging is `noindex`. Switch `AFTERTAX_PUBLIC_URL` to `https://getaftertax.com` 
 
 ## What you will see
 
-- One-screen landing: **Search a fund** as the primary action, then Fund Manager announced estimates + data tables. Header tabs: **Search** (`/`), **Portfolio** (`/portfolio`), and **Compare** (`/compare`). CTA order when present: **Search a fund** → **Fund Comparison** → **Import a portfolio**. Fund Comparison opens the Compare tab; Import opens the Portfolio tab — neither is a homepage scroll target and neither opens the paywall.
+- One-screen landing: **Search a fund** as the primary action, then Fund Manager announced estimates + data tables. Header tabs: **Search** (`/`), **Portfolio** (`/portfolio`), and **Compare** (`/compare`). Search does not show Fund Comparison / Import a portfolio shortcuts — those tabs are AppNav only.
 - Instant **dollar illustration** after a fund is selected ($1,000,000 holding default, editable federal/state rates, min/max when present), including that fund’s **Paid history** table and **Upcoming / announced** (unpaid only; empty = Not available / undisclosed).
 - **Tax-delta compare** on `/compare` (and `/fund-compare`): Fund A / Fund B pickers plus `FundTaxDeltaCompare` (YoY tax drag + tax-impact delta). Defaults AMCPX vs VIGAX. `?left=` / `?right=` seed the pickers; the homepage CTA passes `?left=` when a fund is selected. The Compare tab does not show Growth of $X, fund-search hero, dollar illustration, portfolio books, or highlights.
 - **Portfolio comparison** on `/portfolio` (and `/portfolio-compare`): Current vs Proposed Allocation, GTM history-covered smoke books (Current AGTHX / DODIX / AMCAP / DODGX and Proposed AMCPX / CGHM / AGTHX / AMCAP at 25% each) + $1M + state 0.05, Upcoming / announced (every fund; empty = undisclosed, not $0), ticker × calendar-year tax $ (2021–2025; unmatched / uncovered = N/A), tax drag %, more/less tax Δ. The Portfolio tab does not show Growth of $X, fund-search hero, dollar illustration, FundCompareRail, or highlights. Export calls `exportToPdf` (freemium gate stubbed).
@@ -147,7 +147,7 @@ When `NEXT_PUBLIC_DATA_API_URL` is set and PR #2 is running, search/highlights l
 
 ## Funnel (this UI)
 
-1. Land → search a fund (primary). Fund Comparison opens the Compare tab (`/compare`). Import a portfolio opens the Portfolio tab (`/portfolio`).
+1. Land → search a fund (primary). Compare and Portfolio are AppNav tabs (`/compare`, `/portfolio`) — not Search-page shortcut buttons.
 2. Instant dollar illustration. Beta: searches are unlimited (soft-wall off).
 3. After 3 unique fund searches → paywall (`$39 / user / month`) **only when** `NEXT_PUBLIC_FREEMIUM_DISABLED=false`.
 4. Checkout stub returns to the same flow (`?checkout=success`) or paywall (`?checkout=cancel`). No onboarding tour. Beta unlock also suppresses the cancel paywall.
