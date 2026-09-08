@@ -217,7 +217,7 @@ export function PaidHistoryTable({
         )}
       </div>
       <p className="mt-2 text-[10px] text-faint">
-        list from Data paid_history · ticker×year matrix is Website · {sideLabel}
+        list from Data paid_history · {sideLabel}
       </p>
     </section>
   );

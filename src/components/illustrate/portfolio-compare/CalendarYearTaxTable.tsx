@@ -1,3 +1,8 @@
+/**
+ * Existing ticker × calendar-year tax $ matrix from #34.
+ * Website keeps/enhances this module (2025 column, denser cells).
+ * Do not replace or rebuild it here.
+ */
 import { TickerHistoryLink } from "@/components/illustrate/TickerHistoryLink";
 import { formatUsd } from "@/lib/format";
 import {

@@ -69,6 +69,22 @@ describe("portfolio compare periods wiring", () => {
       table.split("export function UpcomingTable")[1]?.split("export function PaidHistoryTable")[0] ?? "",
       /Paid history/,
     );
+    assert.doesNotMatch(table, /ticker×year matrix is Website/);
+    assert.doesNotMatch(table, /Website owns converting/);
+  });
+
+  it("keeps CalendarYearTaxTable as the existing matrix, not a Paid History rebuild", () => {
+    const compare = readFileSync(
+      join(here, "../../components/illustrate/PortfolioCompare.tsx"),
+      "utf8",
+    );
+    const yearTable = readFileSync(
+      join(here, "../../components/illustrate/portfolio-compare/CalendarYearTaxTable.tsx"),
+      "utf8",
+    );
+    assert.match(compare, /<CalendarYearTaxTable/);
+    assert.match(yearTable, /YEAR_TAX_HEADING/);
+    assert.match(yearTable, /Website keeps\/enhances/);
   });
 
   it("mocks calendar-year tax per ticker", () => {
