@@ -28,6 +28,7 @@ export function AllocationColumn({
   inputIdPrefix,
   onUnitChange,
   onChange,
+  onNotice,
   className = "",
 }: {
   title: string;
@@ -38,6 +39,7 @@ export function AllocationColumn({
   inputIdPrefix: string;
   onUnitChange: (unit: AllocationUnit) => void;
   onChange: (holdings: PortfolioHoldingDraft[]) => void;
+  onNotice?: (message: string) => void;
   className?: string;
 }) {
   const totalDollars = holdings.reduce((sum, holding) => sum + holding.holdingDollars, 0);
@@ -101,6 +103,7 @@ export function AllocationColumn({
                 fundName={holding.fundName}
                 funds={funds}
                 inputId={`${inputIdPrefix}-ticker-${holding.id}`}
+                onNotice={onNotice}
                 onSelect={(fund) => {
                   updateAt(index, {
                     ticker: fund.ticker,

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { FundEstimateView } from "@/data/types";
+import { NoticeToast, useNoticeToast } from "@/components/NoticeToast";
 import { FundPicker } from "@/components/illustrate/FundPicker";
 import { FundTaxDeltaCompare } from "@/components/illustrate/FundTaxDeltaCompare";
 import { compareSideFromFund } from "@/lib/illustrate/compare-request";
@@ -30,6 +31,8 @@ export function FundCompareRail({
   const [overridePeer, setOverridePeer] = useState<FundEstimateView | null>(
     null,
   );
+  const [pendingPeer, setPendingPeer] = useState<string | null>(null);
+  const { notice, onNotice, dismissNotice } = useNoticeToast();
   const peer =
     overridePeer && overridePeer.ticker !== selected.ticker
       ? overridePeer
@@ -37,11 +40,16 @@ export function FundCompareRail({
 
   const left = useMemo(() => sideFromFund(selected), [selected]);
   const right = useMemo(
-    () => (peer ? sideFromFund(peer) : null),
-    [peer],
+    () =>
+      pendingPeer
+        ? compareSideFromFund({ ticker: pendingPeer })
+        : peer
+          ? sideFromFund(peer)
+          : null,
+    [peer, pendingPeer],
   );
 
-  if (!peer || !right) return null;
+  if (!right) return null;
 
   return (
     <aside
@@ -67,10 +75,19 @@ export function FundCompareRail({
       </div>
       <FundPicker
         funds={funds}
-        selected={peer}
+        selected={pendingPeer ? null : peer}
+        pendingTicker={pendingPeer}
+        reportPortfolioMiss
+        onNotice={onNotice}
         onSelect={(fund) => {
           if (fund.ticker === selected.ticker) return;
+          setPendingPeer(null);
           setOverridePeer(fund);
+        }}
+        onUnknownTicker={(ticker) => {
+          if (ticker === selected.ticker.toUpperCase()) return;
+          setOverridePeer(null);
+          setPendingPeer(ticker);
         }}
         inputId="compare-peer-search"
         label="Compare with"
@@ -83,6 +100,7 @@ export function FundCompareRail({
           taxRates={COMPARE_TAX_RATES}
         />
       </div>
+      <NoticeToast message={notice} onDismiss={dismissNotice} />
     </aside>
   );
 }

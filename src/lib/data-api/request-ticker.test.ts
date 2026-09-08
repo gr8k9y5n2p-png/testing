@@ -6,9 +6,12 @@ import {
   normalizeTickerRequestResponse,
   normalizeTickerSymbol,
   noticeForTickerRequest,
+  notifyPortfolioTickerMiss,
   requestTicker,
+  requestTickerOnPortfolioMiss,
   requestTickerOnSearchMiss,
   resetTickerRequestDedupe,
+  shouldReportPortfolioMiss,
   shouldReportSearchMiss,
   TICKER_REQUEST,
   TICKER_REQUEST_SOURCES,
@@ -52,6 +55,28 @@ describe("ticker request normalize", () => {
     assert.equal(isValidTickerSymbol("AB1"), false);
     assert.equal(isValidTickerSymbol("AB-CD"), false);
     assert.equal(isValidTickerSymbol("AMCPX extra"), false);
+  });
+
+  it("reports a portfolio miss only for an exact ticker outside the universe", () => {
+    assert.equal(
+      shouldReportPortfolioMiss({ ticker: "ZZZZY", tickerInUniverse: false }),
+      true,
+    );
+    assert.equal(
+      shouldReportPortfolioMiss({ ticker: "AMCPX", tickerInUniverse: true }),
+      false,
+    );
+    assert.equal(
+      shouldReportPortfolioMiss({
+        ticker: "growth fund",
+        tickerInUniverse: false,
+      }),
+      false,
+    );
+    assert.equal(
+      shouldReportPortfolioMiss({ ticker: "", tickerInUniverse: false }),
+      false,
+    );
   });
 
   it("reports a miss only for an exact ticker with no local row", () => {
@@ -228,6 +253,27 @@ describe("ticker request response normalize", () => {
       noticeForTickerRequest({ kind: "error", message: "down" }, "search_miss"),
       null,
     );
+    assert.equal(
+      noticeForTickerRequest(
+        {
+          kind: "queued",
+          id: "1",
+          ticker: "ABCDX",
+          status: "queued",
+          message: TICKER_REQUEST.issuerSearch,
+        },
+        "portfolio",
+      ),
+      TICKER_REQUEST.searchMissQueued,
+    );
+    assert.equal(
+      noticeForTickerRequest({ kind: "invalid", ticker: "BAD" }, "portfolio"),
+      null,
+    );
+    assert.equal(
+      noticeForTickerRequest({ kind: "error", message: "down" }, "portfolio"),
+      null,
+    );
   });
 });
 
@@ -360,6 +406,51 @@ describe("requestTicker POST", () => {
         urls.map((url) => url.endsWith("/request/ticker")),
         [true, true],
       );
+    } finally {
+      globalThis.fetch = prev;
+    }
+  });
+
+  it("POSTs source portfolio once per unknown ticker and uses Search miss toast", async () => {
+    const seen: { body?: string }[] = [];
+    const notices: string[] = [];
+    const prev = globalThis.fetch;
+    globalThis.fetch = (async (_input: RequestInfo | URL, init?: RequestInit) => {
+      seen.push({
+        body: typeof init?.body === "string" ? init.body : undefined,
+      });
+      return new Response(
+        JSON.stringify({
+          id: "req_abcdx",
+          ticker: "ABCDX",
+          status: "queued",
+          message: TICKER_REQUEST.issuerSearch,
+        }),
+        { status: 201 },
+      );
+    }) as typeof fetch;
+    try {
+      const first = await requestTickerOnPortfolioMiss(" abcdx ");
+      assert.equal(first?.kind, "queued");
+      assert.deepEqual(JSON.parse(seen[0].body ?? "{}"), {
+        ticker: "ABCDX",
+        source: "portfolio",
+      });
+
+      const second = await requestTickerOnPortfolioMiss("ABCDX");
+      assert.equal(second, null);
+      assert.equal(seen.length, 1);
+
+      resetTickerRequestDedupe();
+      notifyPortfolioTickerMiss("ABCDX", false, (message) => notices.push(message));
+      notifyPortfolioTickerMiss("ABCDX", true, (message) => notices.push(message));
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      assert.deepEqual(notices, [TICKER_REQUEST.searchMissQueued]);
+      assert.equal(seen.length, 2);
+      assert.deepEqual(JSON.parse(seen[1].body ?? "{}"), {
+        ticker: "ABCDX",
+        source: "portfolio",
+      });
     } finally {
       globalThis.fetch = prev;
     }

@@ -72,6 +72,7 @@ export type TickerRequestResult =
   | { kind: "error"; message: string };
 
 const searchMissSent = new Set<string>();
+const portfolioMissSent = new Set<string>();
 
 export function tickerRequestUrl(): string {
   const value = process.env.NEXT_PUBLIC_DATA_API_URL?.trim();
@@ -188,15 +189,21 @@ export function noticeForTickerRequest(
 ): string | null {
   switch (result.kind) {
     case "queued":
-      if (intent === "search_miss") return TICKER_REQUEST.searchMissQueued;
+      if (intent === "search_miss" || intent === "portfolio") {
+        return TICKER_REQUEST.searchMissQueued;
+      }
       if (intent === "web") return TICKER_REQUEST.requestQueued;
       return result.message || TICKER_REQUEST.issuerSearch;
     case "already_covered":
       return TICKER_REQUEST.alreadyCovered(result.ticker);
     case "invalid":
-      return intent === "search_miss" ? null : TICKER_REQUEST.invalid;
+      return intent === "search_miss" || intent === "portfolio"
+        ? null
+        : TICKER_REQUEST.invalid;
     case "error":
-      return intent === "search_miss" ? null : result.message || TICKER_REQUEST.error;
+      return intent === "search_miss" || intent === "portfolio"
+        ? null
+        : result.message || TICKER_REQUEST.error;
     default:
       return null;
   }
@@ -251,24 +258,68 @@ export async function requestTicker(
   }
 }
 
-/** Session-deduped search miss. Retries after a transport error. */
-export async function requestTickerOnSearchMiss(
+/** Exact ticker token that is not already in the local catalog / universe. */
+export function shouldReportPortfolioMiss(input: {
+  ticker: string;
+  tickerInUniverse: boolean;
+}): boolean {
+  return looksLikeExactTicker(input.ticker) && !input.tickerInUniverse;
+}
+
+async function requestDedupedTicker(
   ticker: string,
+  source: Extract<TickerRequestSource, "search_miss" | "portfolio">,
+  sent: Set<string>,
 ): Promise<TickerRequestResult | null> {
   const key = normalizeTickerSymbol(ticker);
   if (!TICKER_SYMBOL.test(key)) {
     return { kind: "invalid", ticker: key };
   }
-  if (searchMissSent.has(key)) return null;
-  searchMissSent.add(key);
-  const result = await requestTicker({ ticker: key, source: "search_miss" });
+  if (sent.has(key)) return null;
+  sent.add(key);
+  const result = await requestTicker({ ticker: key, source });
   if (result.kind === "error") {
-    searchMissSent.delete(key);
+    sent.delete(key);
   }
   return result;
+}
+
+/** Session-deduped search miss. Retries after a transport error. */
+export async function requestTickerOnSearchMiss(
+  ticker: string,
+): Promise<TickerRequestResult | null> {
+  return requestDedupedTicker(ticker, "search_miss", searchMissSent);
+}
+
+/**
+ * Session-deduped Portfolio import / Compare slot miss.
+ * Always POSTs `source: "portfolio"` — do not invent fund data while queued.
+ */
+export async function requestTickerOnPortfolioMiss(
+  ticker: string,
+): Promise<TickerRequestResult | null> {
+  return requestDedupedTicker(ticker, "portfolio", portfolioMissSent);
+}
+
+/**
+ * Fire-and-forget slot miss. Deduped; toast uses Search miss copy.
+ * Call once per committed unknown ticker — never a second fetch implementation.
+ */
+export function notifyPortfolioTickerMiss(
+  ticker: string,
+  tickerInUniverse: boolean,
+  onNotice?: (message: string) => void,
+): void {
+  if (!shouldReportPortfolioMiss({ ticker, tickerInUniverse })) return;
+  void requestTickerOnPortfolioMiss(ticker).then((result) => {
+    if (!result) return;
+    const message = noticeForTickerRequest(result, "portfolio");
+    if (message) onNotice?.(message);
+  });
 }
 
 /** Test helper. */
 export function resetTickerRequestDedupe(): void {
   searchMissSent.clear();
+  portfolioMissSent.clear();
 }

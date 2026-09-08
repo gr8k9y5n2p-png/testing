@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { FundEstimateView } from "@/data/types";
+import { NoticeToast, useNoticeToast } from "@/components/NoticeToast";
 import { FundPicker } from "@/components/illustrate/FundPicker";
 import { FundTaxDeltaCompare } from "@/components/illustrate/FundTaxDeltaCompare";
 import {
@@ -68,15 +69,42 @@ export function HomepageFundCompare({
       ? defaultComparePeer(seededLeft, funds)
       : seededRight,
   );
+  const [leftPending, setLeftPending] = useState<string | null>(null);
+  const [rightPending, setRightPending] = useState<string | null>(null);
+  const { notice, onNotice, dismissNotice } = useNoticeToast();
 
   const left = useMemo(
-    () => (leftFund ? sideFromFund(leftFund) : null),
-    [leftFund],
+    () =>
+      leftPending
+        ? compareSideFromFund({ ticker: leftPending })
+        : leftFund
+          ? sideFromFund(leftFund)
+          : null,
+    [leftFund, leftPending],
   );
   const right = useMemo(
-    () => (rightFund ? sideFromFund(rightFund) : null),
-    [rightFund],
+    () =>
+      rightPending
+        ? compareSideFromFund({ ticker: rightPending })
+        : rightFund
+          ? sideFromFund(rightFund)
+          : null,
+    [rightFund, rightPending],
   );
+
+  function occupyLeft(ticker: string) {
+    return (
+      leftPending === ticker ||
+      leftFund?.ticker.toUpperCase() === ticker
+    );
+  }
+
+  function occupyRight(ticker: string) {
+    return (
+      rightPending === ticker ||
+      rightFund?.ticker.toUpperCase() === ticker
+    );
+  }
 
   return (
     <section id="fund-compare" aria-label="Fund-to-fund comparison" className="w-full">
@@ -97,22 +125,44 @@ export function HomepageFundCompare({
       <div className="grid max-w-3xl items-start gap-4 sm:grid-cols-2">
         <FundPicker
           funds={funds}
-          selected={leftFund}
+          selected={leftPending ? null : leftFund}
+          pendingTicker={leftPending}
+          reportPortfolioMiss
+          onNotice={onNotice}
           onSelect={(fund) => {
+            setLeftPending(null);
             setLeftFund(fund);
-            if (rightFund && fund.ticker === rightFund.ticker) {
+            if (
+              (rightFund && fund.ticker === rightFund.ticker) ||
+              rightPending === fund.ticker
+            ) {
+              setRightPending(null);
               setRightFund(defaultComparePeer(fund, funds));
             }
+          }}
+          onUnknownTicker={(ticker) => {
+            if (occupyRight(ticker)) return;
+            setLeftFund(null);
+            setLeftPending(ticker);
           }}
           inputId="compare-left-search"
           label="Fund A"
         />
         <FundPicker
           funds={funds}
-          selected={rightFund}
+          selected={rightPending ? null : rightFund}
+          pendingTicker={rightPending}
+          reportPortfolioMiss
+          onNotice={onNotice}
           onSelect={(fund) => {
-            if (leftFund && fund.ticker === leftFund.ticker) return;
+            if (occupyLeft(fund.ticker.toUpperCase())) return;
+            setRightPending(null);
             setRightFund(fund);
+          }}
+          onUnknownTicker={(ticker) => {
+            if (occupyLeft(ticker)) return;
+            setRightFund(null);
+            setRightPending(ticker);
           }}
           inputId="compare-right-search"
           label="Fund B"
@@ -133,6 +183,7 @@ export function HomepageFundCompare({
           Choose two different funds to see the tax-delta compare.
         </p>
       )}
+      <NoticeToast message={notice} onDismiss={dismissNotice} />
     </section>
   );
 }

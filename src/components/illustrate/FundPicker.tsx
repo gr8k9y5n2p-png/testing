@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import type { FundEstimateView } from "@/data/types";
 import { searchFunds, splitFundsByBucket } from "@/data/queries";
 import { COPY } from "@/lib/copy";
+import { looksLikeExactTicker } from "@/lib/data-api/request-ticker";
+import { usePortfolioMissRequest } from "@/lib/data-api/use-portfolio-miss";
 import { useSearchMissRequest } from "@/lib/data-api/use-search-miss";
 import { DistributionDateStrip } from "@/components/DistributionDateStrip";
 import { useCoverage } from "@/components/coverage/CoverageProvider";
@@ -16,6 +18,9 @@ export function FundPicker({
   autoFocus = false,
   label = COPY.searchCta,
   reportSearchMiss = false,
+  reportPortfolioMiss = false,
+  pendingTicker = null,
+  onUnknownTicker,
   onNotice,
 }: {
   funds: FundEstimateView[];
@@ -26,6 +31,11 @@ export function FundPicker({
   label?: string;
   /** Search tab only — Compare / Portfolio leave this off. */
   reportSearchMiss?: boolean;
+  /** Compare / Portfolio slots — POST source=portfolio, not search_miss. */
+  reportPortfolioMiss?: boolean;
+  /** Unknown slot ticker kept without inventing fund data. */
+  pendingTicker?: string | null;
+  onUnknownTicker?: (ticker: string) => void;
   onNotice?: (message: string) => void;
 }) {
   const [query, setQuery] = useState("");
@@ -38,10 +48,23 @@ export function FundPicker({
     return [...upcoming, ...paid].slice(0, 8);
   }, [funds, query]);
 
+  const tickerInUniverse = useMemo(() => {
+    const key = query.trim().toUpperCase();
+    if (!key) return false;
+    return funds.some((fund) => fund.ticker.toUpperCase() === key);
+  }, [funds, query]);
+
   useSearchMissRequest(
     reportSearchMiss ? query : "",
     matches.length,
     false,
+    onNotice,
+  );
+
+  usePortfolioMissRequest(
+    reportPortfolioMiss && !reportSearchMiss ? query : "",
+    matches.length,
+    tickerInUniverse,
     onNotice,
   );
 
@@ -57,14 +80,22 @@ export function FundPicker({
       <input
         id={inputId}
         type="search"
-        value={selected && !open ? `${selected.ticker} · ${selected.fundName}` : query}
+        value={
+          open
+            ? query
+            : pendingTicker
+              ? pendingTicker
+              : selected
+                ? `${selected.ticker} · ${selected.fundName}`
+                : query
+        }
         onChange={(event) => {
           const next = event.target.value;
           setQuery(next);
           showSuggestions(next);
         }}
         onFocus={() => {
-          if (selected) {
+          if (selected || pendingTicker) {
             setQuery("");
             setOpen(false);
             return;
@@ -77,6 +108,13 @@ export function FundPicker({
         onKeyDown={(event) => {
           if (event.key === "Escape") {
             event.preventDefault();
+            setOpen(false);
+          }
+          if (event.key === "Enter" && reportPortfolioMiss) {
+            const typed = query.trim().toUpperCase();
+            if (!looksLikeExactTicker(typed) || matches.length > 0) return;
+            event.preventDefault();
+            onUnknownTicker?.(typed);
             setOpen(false);
           }
         }}
