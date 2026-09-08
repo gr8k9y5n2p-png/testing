@@ -19,6 +19,7 @@ export function TickerField({
   inputId,
   onSelect,
   onNotice,
+  autoFocus = false,
 }: {
   ticker: string;
   fundName: string;
@@ -31,6 +32,7 @@ export function TickerField({
     nav?: number | null;
   }) => void;
   onNotice?: (message: string) => void;
+  autoFocus?: boolean;
 }) {
   const [query, setQuery] = useState(ticker);
   const [open, setOpen] = useState(false);
@@ -64,6 +66,7 @@ export function TickerField({
         autoComplete="off"
         spellCheck={false}
         placeholder="Ticker"
+        autoFocus={autoFocus}
         aria-autocomplete="list"
         aria-expanded={open}
         aria-controls={`${inputId}-list`}
