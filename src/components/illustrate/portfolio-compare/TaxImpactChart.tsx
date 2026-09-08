@@ -41,59 +41,47 @@ export function TaxImpactChart({
           No holdings to chart.
         </p>
       ) : (
-        <>
-          <div
-            className="flex h-40 items-end gap-1.5 sm:gap-2"
-            role="img"
-            aria-label={bars
-              .map(
-                (bar) =>
-                  `${bar.ticker}: ${formatUsd(bar.taxDollars, 0)} estimated tax on upcoming`,
-              )
-              .join(". ")}
-          >
-            {bars.map((bar) => {
-              const heightPct =
-                bar.taxDollars <= 0 ? 2 : Math.max(8, bar.share * 100);
-              return (
-                <div
-                  key={bar.ticker}
-                  className="flex min-w-0 flex-1 flex-col items-center gap-1"
-                >
-                  <span className="font-mono text-[10px] tabular-nums text-muted">
-                    {formatUsd(bar.taxDollars, 0)}
-                  </span>
-                  <div className="flex h-28 w-full items-end justify-center">
-                    <div
-                      title={`${bar.ticker}: ${formatUsd(bar.taxDollars, 0)}`}
-                      className="w-[68%] max-w-9 rounded-t-sm"
-                      style={{
-                        height: `${heightPct}%`,
-                        backgroundColor: bar.color,
-                      }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          <ul className="mt-3 flex flex-wrap gap-x-3 gap-y-1.5">
-            {bars.map((bar) => (
-              <li
+        <div
+          className="flex items-end gap-1.5 sm:gap-2"
+          role="img"
+          aria-label={bars
+            .map(
+              (bar) =>
+                `${bar.ticker}: ${formatUsd(bar.taxDollars, 0)} estimated tax on upcoming`,
+            )
+            .join(". ")}
+        >
+          {bars.map((bar) => {
+            const heightPct =
+              bar.taxDollars <= 0 ? 2 : Math.max(8, bar.share * 100);
+            return (
+              <div
                 key={bar.ticker}
-                className="flex items-center gap-1.5 font-mono text-[10px] text-ink"
+                className="flex min-w-0 flex-1 flex-col items-center gap-1"
               >
+                <span className="font-mono text-[10px] tabular-nums text-muted">
+                  {formatUsd(bar.taxDollars, 0)}
+                </span>
+                <div className="flex h-28 w-full items-end justify-center border-b border-line">
+                  <div
+                    title={`${bar.ticker}: ${formatUsd(bar.taxDollars, 0)}`}
+                    className="w-[68%] max-w-9 rounded-t-sm"
+                    style={{
+                      height: `${heightPct}%`,
+                      backgroundColor: bar.color,
+                    }}
+                  />
+                </div>
                 <span
-                  aria-hidden
-                  className="size-2 shrink-0 rounded-[2px]"
-                  style={{ backgroundColor: bar.color }}
-                />
-                {bar.ticker}
-              </li>
-            ))}
-          </ul>
-        </>
+                  className="w-full truncate text-center font-mono text-[10px] leading-none text-ink"
+                  title={bar.ticker}
+                >
+                  {bar.ticker}
+                </span>
+              </div>
+            );
+          })}
+        </div>
       )}
     </section>
   );
