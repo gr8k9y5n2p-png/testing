@@ -9,7 +9,7 @@ npm install
 npm run dev
 ```
 
-Then open [http://localhost:3000](http://localhost:3000). The homepage hero is **Growth of $X** stacked over year-aligned negative tax-drag bars (`GrowthAndTaxDragModule`, no preloaded funds — search or Add Fund to plot a series at $10,000). Search **AMCPX** (Capital Group / AMCAP) to seed that ticker into the stack and open the dollar illustration. Ledger Light, monogram, and locked GTM hero copy are on that page. No Stripe keys and no Data API are required for this demo.
+Then open [http://localhost:3000](http://localhost:3000). The homepage hero is **Growth of $X** stacked over year-aligned negative tax-drag bars (`GrowthAndTaxDragModule`, no preloaded funds — search or Add Fund to plot a series at $10,000). Search **AMCPX** (Capital Group / AMCAP) when `GET /distributions` has that ticker to seed the stack and open the dollar illustration. Ledger Light, monogram, and locked GTM hero copy are on that page. No Stripe keys are required. Search / Sample Estimates need `NEXT_PUBLIC_DATA_API_URL` (empty, N/A, or Undisclosed if the API is down).
 
 **Fund-to-fund comparison** is a dedicated **Compare** tab at [http://localhost:3000/compare](http://localhost:3000/compare) (`/?tab=compare` and `/#fund-compare` redirect there). **Fund Comparison** opens that view — two fund pickers plus the existing `FundTaxDeltaCompare` card. Standalone module demo: [http://localhost:3000/fund-compare](http://localhost:3000/fund-compare). Import `FundTaxDeltaCompare` from `@/components/illustrate`.
 
@@ -62,8 +62,8 @@ Staging is `noindex`. Switch `AFTERTAX_PUBLIC_URL` to `https://getaftertax.com` 
 - **Portfolio comparison** on `/portfolio` (and `/portfolio-compare`): Current vs Proposed Allocation, GTM history-covered smoke books (Current AGTHX / DODIX / AMCAP / DODGX and Proposed AMCPX / CGHM / AGTHX / AMCAP at 25% each) + $1M + state 0.05, Upcoming / announced (every fund; empty = undisclosed, not $0), ticker × calendar-year tax $ (2021–2025; unmatched / uncovered = N/A), tax drag %, more/less tax Δ. The Portfolio tab does not show Growth of $X, fund-search hero, dollar illustration, FundCompareRail, or highlights. Export calls `exportToPdf` (freemium gate stubbed).
 - **Growth of $X + tax drag** is the homepage hero (`GrowthAndTaxDragModule`): cumulative growth vs one benchmark, then year-centered negative tax-drag bars for up to 6 funds. Tax panel toggles % of value / tax $. Starts empty; searching a fund or Add Fund seeds the list at $10,000. Standalone demo: `/growth-tax`.
 - Soft counter is **temporarily unlocked for beta** (`NEXT_PUBLIC_FREEMIUM_DISABLED`, default on). Set that env to `false` to restore `3 of 3 free searches left` → paywall after 3 unique tickers.
-- Highlights + estimates table sit below the fold as the sample universe — not a landing feature grid.
-- Sample/demo data banner. Capital Group / American Funds is treated as live ingest; other families show a **coverage gap**.
+- Highlights + estimates table sit below the fold as the live Data API universe — not a landing feature grid.
+- Live Data API banner. Search / Sample Estimates never merge `seed.ts`. Uncovered or missing values stay empty, N/A, or Undisclosed. Capital Group / American Funds is treated as live ingest; other families show a **coverage gap**.
 - Checkout is stubbed (`POST /api/checkout` → 501) until Stripe test mode. Price id `price_1UD6C0RqA7bY5N5qVleZso0d`. Return URLs: `/?checkout=success` stays in this flow; `/?checkout=cancel` reopens the paywall. No onboarding tour.
 
 ## Disclaimer (QA-final unless Eric edits)
@@ -94,7 +94,7 @@ Wired endpoints:
 - `POST /illustrate/portfolio/compare` — Current vs Proposed Allocation. Body: `current` / `proposed` `{ label?, holdings[], book_dollars }` with `ticker` + `weight_pct` (or `holding_dollars`), plus `periods: [{year:2021}…{year:2025}]` for the ticker × calendar-year tax $ table. Clients send per-holding `nav_per_share` when search/seed metadata has a NAV (`per_share` `paid_history` rows otherwise drop out) and never send `nav=0`. Deltas are **proposed − current** (`deltas.estimated_tax`, `effective_tax_on_holding`). Upcoming lists every Current/Proposed fund (est. dist $, tax to holder, record, ex-div with year); empty/null upcoming is **Not available / undisclosed**, not $0. Paid History is a list from additive `holdings[].paid_history[]` only (same row shape; newest-first; cap 12). Do not derive from `illustration.components`, `distributions`, or `upcoming`. Do not invent dates. Calendar-year tax is the existing `CalendarYearTaxTable` module — Website keeps it and will add 2025 / denser cells; do not replace or rebuild that matrix. Calendar-year cells read `periods[]` per ticker (`matched: false` / `covered: false` / `gap_reason` / null totals / missing → **N/A**, never $0). Search/seed `nav_per_share` also fills thin year cells (AGTHX/DODIX). Each column shows **Total tax impact** = Σ `upcoming.estimated_tax` above the chart. Current/Proposed tax drag cards read `totals.effective_tax_on_holding` / `totals.estimated_tax` and Δ is `deltas.estimated_tax` (proposed − current) — independent of empty Upcoming. Older payloads without `upcoming` still fall back to `illustration` + `publication_stage_used`. If compare is 404/down, the client double-calls `POST /illustrate/portfolio` and synthesizes deltas; localhost falls back to the sketch fixture. Print/PDF: `exportToPdf(toPortfolioCompareExportModel(result, bookDollars))` — Website wires the button + freemium gate. Product view: `/portfolio`. Standalone demo: `/portfolio-compare`. Import `PortfolioCompare`, `exportToPdf`, and `toPortfolioCompareExportModel` from `@/components/illustrate`.
 - `GET /performance?ticker=AGTHX&mode=fixture` and `POST /performance/growth` — monthly fund + benchmark `growth_of_x` (default $10,000). Benchmarks SPY / AGG / VXUS by asset class. Fixtures AGTHX, FCNTX, AMCPX, FBGRX, VFIAX, DODIX. Local mock when the Data API is down. Homepage mounts `GrowthAndTaxDragModule`; standalone demo: `/growth-tax`.
 - `POST /illustrate/portfolio` — coverage `dollars_covered` / `dollars_uncovered` / `coverage_pct` + `gaps[]` + `warnings` (shown on the illustrate panel). Also the fallback for portfolio compare.
-- `GET /distributions` — aggregated into the search table (seed fills tickers the API does not yet return).
+- `GET /distributions` — aggregated into Search / Sample Estimates / highlights. Empty or missing tickers stay empty — `seed.ts` is not merged in.
 - `GET /coverage`, `GET /fund-families` — `coverage_tier`, `aum_rank`, `priority` (Live vs Gap in picker / results / illustrate).
 - `POST /coverage/gaps` — logged when a gap ticker is selected.
 
@@ -139,7 +139,7 @@ Prefer one `publication_stage` / `as_of` snapshot in the panel so midyear paid +
 
 ## Search data vs `GET /distributions`
 
-When `NEXT_PUBLIC_DATA_API_URL` is set and PR #2 is running, search/highlights load `GET /distributions` (aggregated to one row per ticker) and keep seed funds for tickers the API does not return yet. If the Data API is down, the seed table is used alone.
+Search, Sample Estimates, and homepage highlights load `GET /distributions` only (aggregated to one row per ticker). If the Data API is down or returns no rows, those UI paths stay empty (N/A / Undisclosed) — they do not fall back to `seed.ts` sample math. `seed.ts` remains for tests and illustrate mocks only.
 
 ## Coverage gaps
 
@@ -152,7 +152,7 @@ When `NEXT_PUBLIC_DATA_API_URL` is set and PR #2 is running, search/highlights l
 3. After 3 unique fund searches → paywall (`$39 / user / month`) **only when** `NEXT_PUBLIC_FREEMIUM_DISABLED=false`.
 4. Checkout stub returns to the same flow (`?checkout=success`) or paywall (`?checkout=cancel`). No onboarding tour. Beta unlock also suppresses the cancel paywall.
 
-Highlights and the full estimates table sit below the illustration as the sample universe — not a landing feature grid.
+Highlights and the full estimates table sit below the illustration as the live Data API universe — not a landing feature grid.
 
 ## Freemium / Stripe (website owns Checkout)
 
@@ -182,7 +182,7 @@ Revert this default (or delete the bypass) before the freemium sprint / public l
 src/
   app/                 App Router + mock API routes
   components/          Search, highlights, illustrate, landing, paywall
-  data/                Seed + query helpers for the estimates table
+  data/                Data API repository + query helpers (seed.ts is test/mock only)
   lib/illustrate/      Typed client, locked contract, mock engine (server)
 ```
 

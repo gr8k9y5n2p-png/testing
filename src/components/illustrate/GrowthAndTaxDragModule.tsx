@@ -26,7 +26,6 @@ import {
   trailingCalendarPeriods,
   yoyTaxDragCompareRequest,
 } from "@/lib/illustrate/compare-request";
-import { seedNavLookup } from "@/lib/illustrate/seed-nav";
 import type { ComparePeriodIn, CompareResponse } from "@/lib/illustrate/compare-types";
 import {
   alignTaxDragYears,
@@ -548,7 +547,7 @@ async function loadModule(
       const lastClose =
         performance.fund.points[performance.fund.points.length - 1]?.adj_close;
       const nav =
-        navFromFundMetadata(ticker, input.navPerShare, seedNavLookup) ??
+        navFromFundMetadata(ticker, input.navPerShare) ??
         positiveNav(lastClose);
       return { input, index, ticker, performance, nav };
     }),

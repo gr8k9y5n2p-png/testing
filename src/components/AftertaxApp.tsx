@@ -208,7 +208,7 @@ function AftertaxAppInner({
         aria-labelledby="universe-heading"
       >
         <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-faint">
-          Sample universe
+          Live estimates
         </p>
         <h2
           id="universe-heading"
@@ -217,9 +217,9 @@ function AftertaxAppInner({
           Estimates behind the search
         </h2>
         <p className="mt-2 max-w-2xl text-sm text-muted">
-          The dollar illustration is the product. This table is the sample
-          dataset search reads from — upcoming / announced estimates stay
-          separate from paid history.
+          Search and Sample Estimates read GET /distributions only. Upcoming /
+          announced stay separate from paid history. Missing or uncovered
+          values stay empty, N/A, or Undisclosed.
         </p>
         <div className="mt-5">
           <DemoBanner />

@@ -1,5 +1,4 @@
-import { getFacets, getHighlights, searchFunds, withPeerContext } from "./queries";
-import { SAMPLE_FUNDS } from "./seed";
+import { getFacets, getHighlights, searchFunds } from "./queries";
 import type {
   DistributionRepository,
   Facets,
@@ -10,9 +9,8 @@ import type {
 import { loadFundsFromDataApi } from "@/lib/data-api/distributions";
 
 /**
- * In-memory repository. Prefers GET /distributions from the Data API
- * (NEXT_PUBLIC_DATA_API_URL) when that host is up; seed fills tickers the
- * API does not yet return.
+ * In-memory repository over a fund list. Live Search / Sample Estimates /
+ * highlights load this from GET /distributions only — never from seed.ts.
  */
 export class SeedDistributionRepository implements DistributionRepository {
   private readonly views: FundEstimateView[];
@@ -38,38 +36,19 @@ export class SeedDistributionRepository implements DistributionRepository {
   }
 }
 
-function mergeFunds(
-  apiFunds: FundEstimateView[],
-  seedFunds: FundEstimateView[],
-): FundEstimateView[] {
-  const seedByTicker = new Map(
-    seedFunds.map((fund) => [fund.ticker.toUpperCase(), fund]),
-  );
-  const mergedApi = apiFunds.map((fund) => {
-    const seed = seedByTicker.get(fund.ticker.toUpperCase());
-    if (!seed) return fund;
-    return {
-      ...fund,
-      nav: fund.nav > 0 ? fund.nav : seed.nav,
-      category: fund.category !== "—" ? fund.category : seed.category,
-      recordDate: fund.recordDate ?? seed.recordDate,
-      exDate: fund.exDate ?? seed.exDate,
-      payableDate: fund.payableDate ?? seed.payableDate,
-      paidHistory: fund.paidHistory.length ? fund.paidHistory : seed.paidHistory,
-    };
-  });
-  const tickers = new Set(mergedApi.map((fund) => fund.ticker.toUpperCase()));
-  return [
-    ...mergedApi,
-    ...seedFunds.filter((fund) => !tickers.has(fund.ticker.toUpperCase())),
-  ];
+/** Build the live Search repo. Null / empty API → empty list, never seed. */
+export function repositoryFromApiFunds(
+  apiFunds: FundEstimateView[] | null | undefined,
+): DistributionRepository {
+  return new SeedDistributionRepository(apiFunds ?? []);
 }
 
+/**
+ * Live Search / Sample Estimates / homepage highlights.
+ * Uses GET /distributions (`NEXT_PUBLIC_DATA_API_URL`) only.
+ * Down, empty, or uncovered → empty list. Never merge or fall back to seed.ts.
+ */
 export async function getDistributionRepository(): Promise<DistributionRepository> {
-  const seed = withPeerContext(SAMPLE_FUNDS);
   const apiFunds = await loadFundsFromDataApi();
-  if (apiFunds?.length) {
-    return new SeedDistributionRepository(mergeFunds(apiFunds, seed));
-  }
-  return new SeedDistributionRepository(seed);
+  return repositoryFromApiFunds(apiFunds);
 }

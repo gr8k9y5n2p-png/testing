@@ -1,7 +1,6 @@
 import { dataApiUrl } from "@/lib/data-api/config";
 import { mockCompareResponse } from "@/lib/illustrate/compare-fixture";
 import { toDataApiCompareBody } from "@/lib/illustrate/compare-request";
-import { seedNavLookup } from "@/lib/illustrate/seed-nav";
 import type {
   CompareRequest,
   CompareResponse,
@@ -219,7 +218,7 @@ export async function postIllustrateCompare(
 ): Promise<CompareResponse> {
   const endpoint = getCompareEndpoint();
   const remote = !isMockCompareEndpoint(endpoint);
-  const payload = toDataApiCompareBody(request, seedNavLookup);
+  const payload = toDataApiCompareBody(request);
 
   async function post(url: string) {
     return fetch(url, {
