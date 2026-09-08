@@ -1,5 +1,5 @@
 import { TickerHistoryLink } from "@/components/illustrate/TickerHistoryLink";
-import { formatCompactDate, formatUsd } from "@/lib/format";
+import { formatOptionalDate, formatUsd } from "@/lib/format";
 import {
   distributionHasPayable,
   formatStageLabel,
@@ -8,10 +8,7 @@ import {
 } from "@/lib/illustrate/portfolio-compare-map";
 
 function dateCell(value: string | null): string {
-  if (!value) return "—";
-  const parsed = new Date(`${value}T00:00:00Z`);
-  if (Number.isNaN(parsed.getTime())) return "—";
-  return formatCompactDate(value);
+  return formatOptionalDate(value);
 }
 
 function DistributionGrid({

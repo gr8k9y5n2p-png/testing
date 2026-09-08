@@ -1,4 +1,4 @@
-import { formatUsd } from "@/lib/format";
+import { formatOptionalDate, formatUsd } from "@/lib/format";
 import {
   formatMoreLessTax,
   formatStageLabel,
@@ -168,7 +168,7 @@ function sideHtml(side: PortfolioCompareExportSide): string {
 }
 
 function dateCell(value: string | null): string {
-  return value ? escapeHtml(value) : "—";
+  return escapeHtml(formatOptionalDate(value));
 }
 
 function distributionRowsHtml(rows: PortfolioCompareExportUpcoming[]): string {
