@@ -99,7 +99,7 @@ describe("publicationBucket", () => {
     );
   });
 
-  it("sends past record/ex/payable prelims to paid history, not upcoming", () => {
+  it("puts past event-dated prelims in paid history, not upcoming", () => {
     assert.equal(
       publicationBucket(
         row({
@@ -118,6 +118,17 @@ describe("publicationBucket", () => {
         row({
           publication_stage: "updated_estimate",
           as_of: "2025-11-02",
+          record_date: "2025-12-12",
+        }),
+        TODAY,
+      ),
+      "paid_history",
+    );
+    assert.equal(
+      publicationBucket(
+        row({
+          publication_stage: "preliminary_estimate",
+          as_of: "2025-11-20",
           record_date: "2025-12-12",
         }),
         TODAY,
@@ -168,6 +179,46 @@ describe("announcedDateOf", () => {
 });
 
 describe("PortfolioCompare distribution tables", () => {
+  it("keeps a 2025 prelim out of Upcoming on a 2026 visit", () => {
+    const book = allocation([
+      holding({
+        ticker: "FIGFX",
+        distributions: [
+          {
+            publication_stage: "preliminary_estimate",
+            distribution_dollars: 2100,
+            estimated_tax: 735,
+            as_of: "2025-11-20",
+            record_date: "2025-12-12",
+            ex_date: "2025-12-15",
+            payable_date: "2025-12-17",
+          },
+          {
+            publication_stage: "preliminary_estimate",
+            distribution_dollars: 4800,
+            estimated_tax: 1680,
+            as_of: "2026-08-15",
+            record_date: "2026-12-12",
+            ex_date: "2026-12-15",
+            payable_date: "2026-12-17",
+          },
+        ],
+      }),
+    ]);
+
+    const upcoming = upcomingRowsForSide(book, "current", TODAY);
+    const paid = paidHistoryRowsForSide(book, "current", TODAY);
+
+    assert.deepEqual(
+      upcoming.map((item) => item.announcedDate),
+      ["2026-08-15"],
+    );
+    assert.deepEqual(
+      paid.map((item) => item.announcedDate),
+      ["2025-11-20"],
+    );
+  });
+
   it("does not dump paid/final rows into the upcoming table", () => {
     const book = allocation([
       holding({

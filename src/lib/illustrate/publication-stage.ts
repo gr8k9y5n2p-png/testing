@@ -96,10 +96,10 @@ function isPastPaidEvent(row: PortfolioDistributionRow, today = utcToday()): boo
 }
 
 /**
- * Locked split, same rule as Sample Estimates:
+ * Locked split, same rule as Sample Estimates `distributionBucket`:
  * Upcoming = announced but not yet paid.
- * If record_date / ex_date / payable_date is already past, the row is Paid
- * history even when publication_stage is still preliminary_estimate / updated_estimate.
+ * If payable/ex/record is already past, the row is Paid history even when
+ * publication_stage is still preliminary_estimate / updated_estimate.
  * as_of is announcement only — never invent a day.
  */
 export function publicationBucket(

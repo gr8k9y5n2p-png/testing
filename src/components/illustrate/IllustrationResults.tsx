@@ -1,8 +1,13 @@
+import type { ReactNode } from "react";
 import type { FundEstimate } from "@/data/types";
 import { distributionBucket, publicationStageLabel } from "@/data/distribution-bucket";
 import type { IllustrationComponent, IllustrateResponse } from "@/lib/illustrate/types";
 import { DistributionDateStrip } from "@/components/DistributionDateStrip";
 import { Disclaimer } from "@/components/Disclaimer";
+import {
+  UPCOMING_UNAVAILABLE_DETAIL,
+  UPCOMING_UNAVAILABLE_HEADLINE,
+} from "@/lib/copy";
 import { formatRatePct, formatUsd, formatUsdRange } from "@/lib/format";
 
 const ESTIMATE_LABELS: Record<string, string> = {
@@ -30,55 +35,70 @@ export function IllustrationResults({
   const paidComponents = components.filter(
     (component) => componentBucket(component) === "paid",
   );
-  const split = upcomingComponents.length > 0 && paidComponents.length > 0;
+  const hasUpcoming = upcomingComponents.length > 0;
 
   return (
     <div className="space-y-4">
       <div className="grid gap-3 sm:grid-cols-2">
         <StatCard
           label="Estimated distribution"
-          value={formatUsdRange(
-            totals.distribution_dollars,
-            totals.distribution_dollars_min,
-            totals.distribution_dollars_max,
-          )}
+          value={
+            hasUpcoming
+              ? formatUsdRange(
+                  totals.distribution_dollars,
+                  totals.distribution_dollars_min,
+                  totals.distribution_dollars_max,
+                )
+              : UPCOMING_UNAVAILABLE_HEADLINE
+          }
         />
         <StatCard
           label="Estimated tax"
-          value={formatUsdRange(
-            totals.estimated_tax_dollars,
-            totals.estimated_tax_dollars_min,
-            totals.estimated_tax_dollars_max,
-          )}
+          value={
+            hasUpcoming
+              ? formatUsdRange(
+                  totals.estimated_tax_dollars,
+                  totals.estimated_tax_dollars_min,
+                  totals.estimated_tax_dollars_max,
+                )
+              : UPCOMING_UNAVAILABLE_HEADLINE
+          }
           emphasize
         />
       </div>
 
-      {split ? (
-        <>
-          <ComponentTable
-            heading="Upcoming / announced"
-            components={upcomingComponents}
-          />
-          <ComponentTable heading="Paid history" components={paidComponents} />
-        </>
-      ) : (
+      <ComponentTable
+        heading="Upcoming / announced"
+        kicker="unpaid announced · not paid history"
+        wellClassName="bg-surface"
+        components={upcomingComponents}
+        empty={
+          <div className="px-3 py-5">
+            <p className="font-serif text-base tracking-tight text-ink">
+              {UPCOMING_UNAVAILABLE_HEADLINE}
+            </p>
+            <p className="mt-1 text-sm text-muted">{UPCOMING_UNAVAILABLE_DETAIL}</p>
+          </div>
+        }
+      />
+      {paidComponents.length > 0 ? (
         <ComponentTable
-          heading={
-            paidComponents.length && !upcomingComponents.length
-              ? "Paid history"
-              : "Upcoming / announced"
-          }
-          components={components}
+          heading="Paid history"
+          kicker="past · not upcoming"
+          wellClassName="bg-paper"
+          components={paidComponents}
         />
-      )}
+      ) : null}
 
       {fund && fund.paidHistory.length > 0 && paidComponents.length === 0 ? (
-        <section>
-          <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-faint">
-            Paid history
-          </h3>
-          <ul className="divide-y divide-line overflow-hidden rounded-md border border-line">
+        <section className="rounded-xl border border-line bg-paper px-3 py-2">
+          <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
+            <h3 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-ink">
+              Paid history
+            </h3>
+            <p className="text-[10px] text-muted">past · not upcoming</p>
+          </div>
+          <ul className="divide-y divide-line overflow-hidden rounded-md border border-line bg-surface">
             {fund.paidHistory.map((event) => (
               <li
                 key={`${event.asOfDate}-${event.exDate ?? ""}-${event.distributionYear}`}
@@ -130,16 +150,28 @@ function componentBucket(component: IllustrationComponent) {
 
 function ComponentTable({
   heading,
+  kicker,
+  wellClassName,
   components,
+  empty,
 }: {
   heading: string;
+  kicker: string;
+  wellClassName: string;
   components: IllustrationComponent[];
+  empty?: ReactNode;
 }) {
   return (
-    <div className="overflow-hidden rounded-md border border-line">
-      <p className="border-b border-line bg-paper px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-faint">
-        {heading}
-      </p>
+    <div className={`overflow-hidden rounded-xl border border-line ${wellClassName}`}>
+      <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-line px-3 py-2">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-ink">
+          {heading}
+        </p>
+        <p className="text-[10px] text-muted">{kicker}</p>
+      </div>
+      {components.length === 0 && empty ? (
+        empty
+      ) : (
       <table className="min-w-full text-sm">
         <thead className="bg-paper text-[11px] font-semibold uppercase tracking-[0.1em] text-faint">
           <tr>
@@ -205,6 +237,7 @@ function ComponentTable({
           ))}
         </tbody>
       </table>
+      )}
     </div>
   );
 }

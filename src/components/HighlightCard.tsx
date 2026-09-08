@@ -1,6 +1,7 @@
 import type { FundEstimateView } from "@/data/types";
 import { DeltaBadge } from "@/components/DeltaBadge";
 import { DistributionDateStrip } from "@/components/DistributionDateStrip";
+import { UPCOMING_UNAVAILABLE_HEADLINE } from "@/lib/copy";
 import { formatCompactDate, formatPct, formatUsd } from "@/lib/format";
 
 type Variant = "recent" | "largest" | "outliers";
@@ -45,7 +46,9 @@ export function HighlightCard({
           />
         </div>
       ) : funds.length === 0 ? (
-        <p className="px-4 py-6 text-sm text-muted">No highlights available.</p>
+        <p className="px-4 py-6 text-sm text-muted">
+          {UPCOMING_UNAVAILABLE_HEADLINE}
+        </p>
       ) : (
         <ul className="divide-y divide-line">
           {funds.map((fund) => (
