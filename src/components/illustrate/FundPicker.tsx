@@ -99,7 +99,7 @@ export function FundPicker({
                     <DistributionDateStrip
                       fund={fund}
                       compact
-                      showPayable={false}
+                      showPayable
                       className="mt-1"
                     />
                   </span>
