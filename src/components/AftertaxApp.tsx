@@ -18,8 +18,17 @@ import { Disclaimer } from "@/components/Disclaimer";
 import { STRIPE } from "@/lib/copy";
 import type { FundFamilyCoverage } from "@/lib/coverage";
 import { reportCoverageGap } from "@/lib/coverage";
-import { useFreemium } from "@/lib/freemium";
+import { isFreemiumDisabled, useFreemium } from "@/lib/freemium";
 import { DEFAULT_START_DOLLARS } from "@/lib/performance/types";
+
+function scrollToId(id: string) {
+  requestAnimationFrame(() => {
+    document.getElementById(id)?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  });
+}
 
 const HOMEPAGE_GROWTH_FUNDS: GrowthFundInput[] = [
   { ticker: "AGTHX", label: "AGTHX", fundFamily: "American Funds" },
@@ -67,7 +76,9 @@ function AftertaxAppInner({
   checkout?: CheckoutReturn;
 }) {
   const [selected, setSelected] = useState<FundEstimateView | null>(null);
-  const [paywallOpen, setPaywallOpen] = useState(checkout === "cancel");
+  const [paywallOpen, setPaywallOpen] = useState(
+    checkout === "cancel" && !isFreemiumDisabled(),
+  );
   const [unlockMessage, setUnlockMessage] = useState<string | null>(
     checkout === "success" ? CHECKOUT_SUCCESS_MESSAGE : null,
   );
@@ -88,12 +99,7 @@ function AftertaxAppInner({
         fund_family: fund.family,
       });
     }
-    requestAnimationFrame(() => {
-      document.getElementById("growth-and-tax")?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    });
+    scrollToId("growth-and-tax");
   }
 
   const seedFunds = useMemo(
@@ -101,8 +107,13 @@ function AftertaxAppInner({
     [selected],
   );
 
-  function openImportPaywall() {
-    setPaywallOpen(true);
+  function openPortfolio() {
+    // Prefer PortfolioCompare when mounted (other PRs); otherwise the
+    // homepage multi-fund growth + tax stack. Never open the paywall.
+    const target =
+      document.getElementById("portfolio-compare") ??
+      document.getElementById("growth-and-tax");
+    target?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   async function unlock() {
@@ -134,7 +145,7 @@ function AftertaxAppInner({
         remaining={freemium.remaining}
         unlimited={freemium.unlimited}
         onSelect={selectFund}
-        onImport={openImportPaywall}
+        onImport={openPortfolio}
       />
 
       <section
@@ -184,7 +195,7 @@ function AftertaxAppInner({
 
       <Disclaimer className="mt-8 text-xs leading-relaxed text-muted" />
       <PaywallDialog
-        open={paywallOpen}
+        open={paywallOpen && !freemium.bypass}
         remaining={freemium.remaining}
         onClose={() => setPaywallOpen(false)}
         onUnlock={() => {

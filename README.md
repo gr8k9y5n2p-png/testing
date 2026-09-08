@@ -54,11 +54,11 @@ Staging is `noindex`. Switch `AFTERTAX_PUBLIC_URL` to `https://getaftertax.com` 
 
 ## What you will see
 
-- One-screen landing: hero (taxable impact in dollars) + **Search a fund** as the primary action. **Import a portfolio** is secondary and opens the paywall.
+- One-screen landing: hero (taxable impact in dollars) + **Search a fund** as the primary action. **Import a portfolio** scrolls to the portfolio / multi-fund module (not the paywall).
 - Instant **dollar illustration** after a fund is selected ($1,000,000 holding default, editable federal/state rates, min/max when present).
 - **Tax-delta compare** mounts next to that panel (selected fund vs a same-category peer; `/compare` is the standalone demo).
 - **Growth of $X + tax drag** is the homepage hero (`GrowthAndTaxDragModule`): cumulative growth vs one benchmark, then year-centered negative tax-drag bars for up to 6 funds. Tax panel toggles % of value / tax $. Defaults AGTHX + FCNTX at $10,000; searching a fund seeds the list. Standalone demo: `/growth-tax`.
-- Soft counter (`3 of 3 free searches left` → `2 of 3…` → `0 free searches left`). After 3 unique tickers, the next search opens the paywall.
+- Soft counter is **temporarily unlocked for beta** (`NEXT_PUBLIC_FREEMIUM_DISABLED`, default on). Set that env to `false` to restore `3 of 3 free searches left` → paywall after 3 unique tickers.
 - Highlights + estimates table sit below the fold as the sample universe — not a landing feature grid.
 - Sample/demo data banner. Capital Group / American Funds is treated as live ingest; other families show a **coverage gap**.
 - Checkout is stubbed (`POST /api/checkout` → 501) until Stripe test mode. Price id `price_1UD6C0RqA7bY5N5qVleZso0d`. Return URLs: `/?checkout=success` stays in this flow; `/?checkout=cancel` reopens the paywall. No onboarding tour.
@@ -142,10 +142,10 @@ When `NEXT_PUBLIC_DATA_API_URL` is set and PR #2 is running, search/highlights l
 
 ## Funnel (this UI)
 
-1. Land → search a fund (primary). Import a portfolio is a paywall tease.
-2. Instant dollar illustration. Counter: `2 of 3 free searches left`.
-3. After 3 unique fund searches → paywall (`$39 / user / month`).
-4. Checkout stub returns to the same flow (`?checkout=success`) or paywall (`?checkout=cancel`). No onboarding tour.
+1. Land → search a fund (primary). Import a portfolio opens the module (growth + tax stack, or `#portfolio-compare` when that mount exists).
+2. Instant dollar illustration. Beta: searches are unlimited (soft-wall off).
+3. After 3 unique fund searches → paywall (`$39 / user / month`) **only when** `NEXT_PUBLIC_FREEMIUM_DISABLED=false`.
+4. Checkout stub returns to the same flow (`?checkout=success`) or paywall (`?checkout=cancel`). No onboarding tour. Beta unlock also suppresses the cancel paywall.
 
 Highlights and the full estimates table sit below the illustration as the sample universe — not a landing feature grid.
 
@@ -159,6 +159,17 @@ The Aftertax **website** creates Stripe Checkout Sessions server-side (`POST /ap
 - When test-mode keys exist: set `STRIPE_SECRET_KEY` and optional `STRIPE_PRICE_ID` / `AFTERTAX_PUBLIC_URL`.
 
 Paywall copy is locked in `src/lib/copy.ts`. 3 free unique fund searches use client `localStorage` for this demo.
+
+### Temporary beta unlock (revert before launch)
+
+`NEXT_PUBLIC_FREEMIUM_DISABLED` short-circuits every free-tier check and the soft-wall overlay (`src/lib/freemium.ts`). **Default is on** when the env var is unset so production/staging do not need a Vercel setting for Eric’s beta. Stored `aftertax.freemium.v1` counters are ignored while unlocked.
+
+| Value | Behavior |
+| --- | --- |
+| unset / `true` / `1` | Unlimited searches; Import never opens the paywall |
+| `false` / `0` / `off` | Restore 3-search counter + Upgrade overlay |
+
+Revert this default (or delete the bypass) before the freemium sprint / public launch. Do not treat this as the long-term billing path. Stripe Checkout is still stubbed.
 
 ## Code structure
 
