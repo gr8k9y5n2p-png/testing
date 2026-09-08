@@ -138,10 +138,13 @@ def test_funds_unique_total_and_pagination_math(client: TestClient) -> None:
     assert by_id["VFIAX"]["ticker"] == "VFIAX"
     assert by_id["VFIAX"]["fund_name"] == "Vanguard 500 Index Fund"
     assert by_id["VFIAX"]["fund_family"] == "Vanguard"
+    assert by_id["VFIAX"]["category"] == "Large Blend"
     assert by_id["VFIAX"]["latest_as_of"] == "2025-12-01"
     assert by_id["VFIAX"]["has_estimate"] is True
+    assert by_id["VBIAX"]["category"] == "Moderate Allocation"
     assert by_id["DODIX"]["latest_as_of"] == "2025-12-15"
     assert by_id["DODIX"]["has_estimate"] is False
+    assert by_id["DODIX"]["category"] == "Intermediate Core Bond"
 
     page1 = client.get("/funds", params={"limit": 2, "offset": 0})
     page2 = client.get("/funds", params={"limit": 2, "offset": 2})
@@ -183,6 +186,66 @@ def test_funds_q_and_family_filters(client: TestClient) -> None:
     assert missing.json()["items"] == []
 
 
+def test_funds_category_filter_and_catalog(client: TestClient) -> None:
+    _seed_unique_funds(client)
+
+    growth = client.get("/funds", params={"category": "Large Blend"})
+    assert growth.status_code == 200
+    assert growth.json()["total"] == 1
+    assert growth.json()["items"][0]["ticker"] == "VFIAX"
+    assert growth.json()["items"][0]["category"] == "Large Blend"
+
+    alias = client.get("/funds", params={"category": "large-blend"})
+    assert alias.json()["total"] == 1
+    assert alias.json()["items"][0]["fund_identifier"] == "VFIAX"
+
+    empty = client.get("/funds", params={"category": "Not A Real Category"})
+    assert empty.json()["total"] == 0
+    assert empty.json()["items"] == []
+
+    cats = client.get("/funds/categories")
+    assert cats.status_code == 200
+    body = cats.json()
+    assert body["total_funds"] == 3
+    assert body["categorized"] == 3
+    assert body["uncategorized"] == 0
+    names = {item["category"]: item["fund_count"] for item in body["items"]}
+    assert names["Large Blend"] == 1
+    assert names["Moderate Allocation"] == 1
+    assert names["Intermediate Core Bond"] == 1
+
+
+def test_funds_unknown_category_stays_null(client: TestClient) -> None:
+    response = client.post(
+        "/ingest/distributions",
+        json={
+            "records": [
+                _record(
+                    fund_family="Example",
+                    fund_name="Strategic Opportunities Fund",
+                    ticker="ZZCAT",
+                    estimate_type="ordinary_income",
+                    amount="0.10",
+                    as_of="2025-12-15",
+                    publication_stage="paid",
+                )
+            ]
+        },
+    )
+    assert response.status_code == 200
+    funds = client.get("/funds", params={"q": "ZZCAT"})
+    assert funds.json()["total"] == 1
+    assert funds.json()["items"][0]["category"] is None
+    assert funds.json()["items"][0]["ticker"] == "ZZCAT"
+
+    rows = client.get("/distributions", params={"ticker": "ZZCAT"})
+    assert rows.json()["items"][0]["category"] is None
+
+    cats = client.get("/funds/categories")
+    assert cats.json()["uncategorized"] == 1
+    assert cats.json()["categorized"] == 0
+
+
 def test_funds_limit_bounds(client: TestClient) -> None:
     too_big = client.get("/funds", params={"limit": 201})
     assert too_big.status_code == 422
@@ -203,6 +266,7 @@ def test_funds_from_fixture_are_stored_only(client: TestClient) -> None:
     assert all(item["fund_identifier"] == "amcap-fund" for item in body["items"])
     assert all(item["ticker"] == "AMCPX" for item in body["items"])
     assert all(item["fund_name"] == "AMCAP Fund" for item in body["items"])
+    assert all(item["category"] == "Large Growth" for item in body["items"])
 
     rows = client.get("/distributions", params={"q": "AMCAP", "page_size": 50})
     assert rows.json()["total"] >= body["total"]

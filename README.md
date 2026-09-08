@@ -24,7 +24,8 @@ Vanguard is the first-choice ICI book: official Primary Layout PDFs on the advis
 - `python -m app.cli refresh` for weekly all-family ingest (`REFRESH_MODE=auto`: live then fixture)
 - Idempotent upserts on `(fund_family, fund identifier, share class, estimate type, as_of, ex-date)`
 - Search API with filters, text search, and pagination
-- `GET /funds` — paginated **unique funds** from the stored book (`limit`/`offset`/`total`) for Website Search / Sample Estimates. Does not invent funds.
+- `GET /funds` — paginated **unique funds** from the stored book (`limit`/`offset`/`total`/`category`) for Website Search / Sample Estimates / Versus Category. Does not invent funds or categories.
+- `GET /funds/categories` — distinct Morningstar-style categories with stored-fund counts (plus `uncategorized` / `coverage_pct`)
 - `POST /illustrate` — server-side tax-impact math for a dollar holding (Website Engineering owns the UI)
 - `POST /illustrate/portfolio` — book-level review with coverage % and explicit gaps
 - `POST /illustrate/portfolio/compare` — Interactive Modules Current vs Proposed Allocation (single snapshot or YoY `periods[]`)
@@ -139,6 +140,8 @@ curl -s -X POST http://127.0.0.1:8000/ingest/distributions \
 curl -s 'http://127.0.0.1:8000/funds?limit=50&offset=0' | jq
 curl -s 'http://127.0.0.1:8000/funds?q=AMCAP&limit=50&offset=0' | jq
 curl -s 'http://127.0.0.1:8000/funds?fund_family=Vanguard&limit=50&offset=0' | jq
+curl -s 'http://127.0.0.1:8000/funds?category=Large+Growth&limit=50&offset=0' | jq
+curl -s 'http://127.0.0.1:8000/funds/categories' | jq '{coverage_pct,uncategorized,total_funds,items:[.items[:5]]}'
 
 # Search — distribution rows (limit/offset aliases map to page_size/page)
 curl -s 'http://127.0.0.1:8000/distributions?q=AMCAP&estimate_type=long_term_capital_gains' | jq
@@ -796,6 +799,7 @@ GET /funds?fund_family=Vanguard&limit=50&offset=0
 | `offset` | 0 | Server-side skip |
 | `q` | — | Ticker / name / family / identifier (same alias rules as `/distributions`) |
 | `fund_family` | — | Optional family filter |
+| `category` | — | Optional Morningstar-style category (e.g. `Large Growth`). Case/hyphen insensitive. Unknown names return an empty list — never invent. |
 
 Response: `{ "items", "limit", "offset", "total" }`. Each item is a stored fund only (never invented):
 
@@ -805,12 +809,32 @@ Response: `{ "items", "limit", "offset", "total" }`. Each item is a stored fund 
   "fund_name": "AMCAP Fund",
   "fund_family": "American Funds",
   "fund_identifier": "amcap-fund",
+  "category": "Large Growth",
   "latest_as_of": "2025-12-15",
   "has_estimate": true
 }
 ```
 
-`ticker` is null when the stored book is name-keyed and no Class A / Investor A alias exists. `has_estimate` is true when any stored row is `preliminary_estimate` or `updated_estimate`. `total` is the unique-fund count, not the distribution-row count.
+`ticker` is null when the stored book is name-keyed and no Class A / Investor A alias exists. `category` is null when no trusted Morningstar-style category is known — **null > wrong**. `has_estimate` is true when any stored row is `preliminary_estimate` or `updated_estimate`. `total` is the unique-fund count, not the distribution-row count.
+
+`GET /funds/categories` returns `{ items: [{ category, fund_count }], uncategorized, total_funds, categorized, coverage_pct }` so Website can populate a Versus Category picker and compute averages / +/- vs category from `GET /funds?category=…` (average the illustrated tax fields of funds that share `category`).
+
+`category` is also attached on `GET /distributions` items and on illustrate / portfolio-illustrate responses wherever fund metadata already appears (`IllustrationComponent.category`, `PortfolioHoldingOut.category`). It is identity-level metadata, not a distribution amount, and is never invented.
+
+See **Fund category (Versus Category)** below for coverage and how unknowns stay null.
+
+### Fund category (Versus Category)
+
+Website can average illustrated tax / distribution fields by `category` and show +/- vs that category. This API persists category on **fund identity** (ticker / `fund_identifier`), not on each distribution amount.
+
+| Source | When used |
+| --- | --- |
+| Curated issuer identities | Flagship / Class A maps (Capital Group, Vanguard, Dodge & Cox, iShares cores, performance heroes) from public fact-sheet Morningstar US Category |
+| Conservative name rules | Unambiguous names only: S&P 500 / Russell / EAFE / target-date / explicit Large-Cap Growth / Total Bond Market / etc. |
+| Yahoo `fundProfile.categoryName` | Remaining tickers, only when the published name canonicalizes to the Morningstar-style taxonomy |
+| **Null** | Anything left — opaque active names, name-only remainder rows, parser samples, Yahoo miss / unpublished category |
+
+Rebuild the catalog with `python3 scripts/build_fund_categories.py` (add `--yahoo` to refresh ticker lookups). Catalog file: `app/fund_categories.json`. This pass: **4,145 / 4,716 unique fixture funds (87.9%)** have a category; **571 stay null** (name-only remainder rows, unpublished Yahoo `fundProfile`, alt/buffer names that still do not canonicalize, parser samples). Do **not** invent a category to raise the percentage. Versus Category UI should skip nulls when averaging.
 
 `GET /distributions` still uses `page` / `page_size` / `total`. Website may send `limit` / `offset` as aliases (`limit` → `page_size`, `offset` → `page = floor(offset / page_size) + 1`). The response keeps `page` / `page_size`.
 

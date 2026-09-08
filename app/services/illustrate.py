@@ -8,6 +8,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app.aliases import TICKER_LOOKUP_ALIASES, display_ticker
+from app.categories import category_for_row, resolve_category
 from app.crud import get_by_ids, list_matching
 from app.models import AmountUnit, DistributionEstimate, EstimateType, PublicationStage
 from app.schemas import (
@@ -193,6 +194,7 @@ def _illustrate_row(
             fund_name=row.fund_name,
             fund_identifier=row.fund_identifier,
             ticker=display_ticker(row.ticker, row.fund_identifier),
+            category=category_for_row(row),
             estimate_type=row.estimate_type,
             amount_unit=unit,
             amount=point,
@@ -225,6 +227,7 @@ def _illustrate_row(
             fund_name=row.fund_name,
             fund_identifier=row.fund_identifier,
             ticker=display_ticker(row.ticker, row.fund_identifier),
+            category=category_for_row(row),
             estimate_type=row.estimate_type,
             amount_unit=unit,
             amount=point,
@@ -275,6 +278,7 @@ def _illustrate_row(
         fund_name=row.fund_name,
         fund_identifier=row.fund_identifier,
         ticker=display_ticker(row.ticker, row.fund_identifier),
+        category=category_for_row(row),
         estimate_type=row.estimate_type,
         amount_unit=unit,
         amount=point,
@@ -725,6 +729,19 @@ def _holding_paid_history(
     return items[:PAID_HISTORY_MAX_ITEMS]
 
 
+def _holding_category(
+    holding: PortfolioHoldingIn, rows: list[DistributionEstimate] | None = None
+) -> str | None:
+    row = rows[0] if rows else None
+    return resolve_category(
+        ticker=holding.ticker or (getattr(row, "ticker", None) if row else None),
+        fund_identifier=holding.fund_identifier
+        or (getattr(row, "fund_identifier", None) if row else None),
+        fund_name=holding.fund_name or (getattr(row, "fund_name", None) if row else None),
+        fund_family=holding.fund_family or (getattr(row, "fund_family", None) if row else None),
+    )
+
+
 def illustrate_portfolio(session: Session, body: PortfolioIllustrateRequest) -> PortfolioIllustrateResponse:
     holding_outs: list[PortfolioHoldingOut] = []
     gaps: list[PortfolioHoldingGap] = []
@@ -774,6 +791,7 @@ def illustrate_portfolio(session: Session, body: PortfolioIllustrateRequest) -> 
                     fund_identifier=holding.fund_identifier,
                     fund_family=holding.fund_family,
                     fund_name=holding.fund_name,
+                    category=_holding_category(holding),
                     holding_dollars=_money(dollars),
                     covered=False,
                     paid_history=paid_history,
@@ -803,6 +821,7 @@ def illustrate_portfolio(session: Session, body: PortfolioIllustrateRequest) -> 
                     fund_identifier=holding.fund_identifier,
                     fund_family=holding.fund_family,
                     fund_name=holding.fund_name,
+                    category=_holding_category(holding),
                     holding_dollars=_money(dollars),
                     covered=False,
                     warnings=warnings,
@@ -838,6 +857,7 @@ def illustrate_portfolio(session: Session, body: PortfolioIllustrateRequest) -> 
                 fund_identifier=ident,
                 fund_family=family,
                 fund_name=holding.fund_name or rows[0].fund_name,
+                category=_holding_category(holding, rows),
                 holding_dollars=_money(dollars),
                 covered=True,
                 publication_stage_used=stage_used,
