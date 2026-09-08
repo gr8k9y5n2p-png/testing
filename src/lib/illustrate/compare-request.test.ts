@@ -8,6 +8,7 @@ import {
   navFromFundMetadata,
   positiveNav,
   toDataApiCompareBody,
+  withPortfolioHoldingNav,
 } from "./compare-request.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -128,5 +129,32 @@ describe("compare-request NAV / Data body", () => {
     );
     assert.equal(body.nav_per_share, 72.14);
     assert.equal(body.left?.nav_per_share, 72.14);
+  });
+
+  it("attaches portfolio holding NAV from search/seed and omits 0", () => {
+    const lookup = (ticker: string) =>
+      ({ AGTHX: 72.14, DODIX: 12.8, AMCAP: 41.22, DODGX: 273.16, CGHM: 25.18 }[
+        ticker.toUpperCase()
+      ]);
+    assert.equal(
+      withPortfolioHoldingNav({ ticker: "AGTHX", nav_per_share: 0 }, lookup).nav_per_share,
+      72.14,
+    );
+    assert.equal(
+      withPortfolioHoldingNav({ ticker: "DODIX" }, lookup).nav_per_share,
+      12.8,
+    );
+    assert.equal(
+      withPortfolioHoldingNav({ ticker: "AMCAP" }, lookup).nav_per_share,
+      41.22,
+    );
+    assert.equal(
+      withPortfolioHoldingNav({ ticker: "CGHM", nav_per_share: 0 }, lookup).nav_per_share,
+      25.18,
+    );
+    assert.equal(
+      withPortfolioHoldingNav({ ticker: "ZZNOPE", nav_per_share: 0 }, lookup).nav_per_share,
+      undefined,
+    );
   });
 });

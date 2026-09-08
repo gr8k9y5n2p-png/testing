@@ -182,4 +182,24 @@ describe("calendar-year tax table", () => {
     assert.deepEqual(agthx?.cells, [null, null, null, 2400, null]);
     assert.equal(agthx?.cells.includes(0), false);
   });
+
+  it("treats uncovered holdings as N/A across years, never $0", () => {
+    const book = resultForSmoke();
+    book.proposed.holdings = book.proposed.holdings.map((holding) =>
+      holding.ticker === "CGHM"
+        ? { ...holding, covered: false, gap_reason: "no history" }
+        : holding,
+    );
+    book.periods = [
+      {
+        year: 2024,
+        current: [tax("AGTHX", 2400, true)],
+        proposed: [tax("CGHM", 0, true)],
+      },
+    ];
+    const model = calendarYearTaxTable(book);
+    const cghm = model.proposed.find((row) => row.ticker === "CGHM");
+    assert.deepEqual(cghm?.cells, [null, null, null, null, null]);
+    assert.equal(cghm?.cells.includes(0), false);
+  });
 });

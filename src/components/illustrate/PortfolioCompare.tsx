@@ -5,7 +5,7 @@ import { AllocationColumn } from "@/components/illustrate/portfolio-compare/Allo
 import { CalendarYearTaxTable } from "@/components/illustrate/portfolio-compare/CalendarYearTaxTable";
 import { SummaryStrip } from "@/components/illustrate/portfolio-compare/SummaryStrip";
 import { TaxImpactChart } from "@/components/illustrate/portfolio-compare/TaxImpactChart";
-import { UpcomingTable } from "@/components/illustrate/portfolio-compare/UpcomingTable";
+import { UpcomingTable, PaidHistoryTable } from "@/components/illustrate/portfolio-compare/UpcomingTable";
 import { navFromFundMetadata } from "@/lib/illustrate/compare-request";
 import { seedNavLookup } from "@/lib/illustrate/seed-nav";
 import { catalogFunds } from "@/lib/illustrate/portfolio-compare-catalog";
@@ -18,6 +18,7 @@ import {
   paidHistoryRowsForSide,
   taxImpactBarsForSide,
   totalUpcomingTax,
+  upcomingHoldingsForSide,
   upcomingRowsForSide,
 } from "@/lib/illustrate/portfolio-compare-map";
 import type {
@@ -53,7 +54,7 @@ function toApiHoldings(holdings: PortfolioHoldingDraft[]) {
     .filter((holding) => holding.ticker.trim() && holding.weightPct > 0)
     .map((holding) => {
       const ticker = holding.ticker.trim().toUpperCase();
-      const nav = navFromFundMetadata(ticker, undefined, seedNavLookup);
+      const nav = navFromFundMetadata(ticker, holding.nav, seedNavLookup);
       return {
         ticker,
         fund_identifier: ticker,
@@ -187,6 +188,12 @@ export function PortfolioCompare({
   const proposedUpcoming = result
     ? upcomingRowsForSide(result.proposed, "proposed")
     : [];
+  const currentUpcomingHoldings = result
+    ? upcomingHoldingsForSide(result.current, "current")
+    : [];
+  const proposedUpcomingHoldings = result
+    ? upcomingHoldingsForSide(result.proposed, "proposed")
+    : [];
   const currentPaid = result
     ? paidHistoryRowsForSide(result.current, "current")
     : [];
@@ -250,7 +257,7 @@ export function PortfolioCompare({
         </div>
       </header>
 
-      <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-2 lg:grid-rows-[auto_auto_auto] lg:[grid-template-areas:'holdings-c_holdings-p'_'charts-c_charts-p'_'tables-c_tables-p']">
+      <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-2 lg:grid-rows-[auto_auto_auto_auto] lg:[grid-template-areas:'holdings-c_holdings-p'_'upcoming-c_upcoming-p'_'charts-c_charts-p'_'tables-c_tables-p']">
         <AllocationColumn
           title="Current allocation"
           holdings={current}
@@ -279,15 +286,28 @@ export function PortfolioCompare({
         ) : null}
         {!canFetch ? null : loading && !result ? (
           <div
-            className="h-48 min-h-48 animate-pulse rounded-2xl border border-line bg-surface lg:h-full lg:[grid-area:tables-c]"
+            className="h-48 min-h-48 animate-pulse rounded-2xl border border-line bg-surface lg:h-full lg:[grid-area:upcoming-c]"
             aria-busy
-            aria-label="Loading current distributions"
+            aria-label="Loading current upcoming distributions"
           />
         ) : result ? (
           <UpcomingTable
             headingId="upcoming-current"
-            rows={currentUpcoming}
-            paidRows={currentPaid}
+            rows={currentUpcomingHoldings}
+            sideLabel="Current"
+            className="h-full lg:[grid-area:upcoming-c]"
+          />
+        ) : null}
+        {!canFetch ? null : loading && !result ? (
+          <div
+            className="h-48 min-h-48 animate-pulse rounded-2xl border border-line bg-surface lg:h-full lg:[grid-area:tables-c]"
+            aria-busy
+            aria-label="Loading current paid history"
+          />
+        ) : result ? (
+          <PaidHistoryTable
+            headingId="paid-history-current"
+            rows={currentPaid}
             sideLabel="Current"
             className="h-full lg:[grid-area:tables-c]"
           />
@@ -321,15 +341,28 @@ export function PortfolioCompare({
         ) : null}
         {!canFetch ? null : loading && !result ? (
           <div
-            className="h-48 min-h-48 animate-pulse rounded-2xl border border-line bg-surface lg:h-full lg:[grid-area:tables-p]"
+            className="h-48 min-h-48 animate-pulse rounded-2xl border border-line bg-surface lg:h-full lg:[grid-area:upcoming-p]"
             aria-busy
-            aria-label="Loading proposed distributions"
+            aria-label="Loading proposed upcoming distributions"
           />
         ) : result ? (
           <UpcomingTable
             headingId="upcoming-proposed"
-            rows={proposedUpcoming}
-            paidRows={proposedPaid}
+            rows={proposedUpcomingHoldings}
+            sideLabel="Proposed"
+            className="h-full lg:[grid-area:upcoming-p]"
+          />
+        ) : null}
+        {!canFetch ? null : loading && !result ? (
+          <div
+            className="h-48 min-h-48 animate-pulse rounded-2xl border border-line bg-surface lg:h-full lg:[grid-area:tables-p]"
+            aria-busy
+            aria-label="Loading proposed paid history"
+          />
+        ) : result ? (
+          <PaidHistoryTable
+            headingId="paid-history-proposed"
+            rows={proposedPaid}
             sideLabel="Proposed"
             className="h-full lg:[grid-area:tables-p]"
           />

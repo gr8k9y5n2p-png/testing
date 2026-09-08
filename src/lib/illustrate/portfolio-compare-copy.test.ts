@@ -1,9 +1,13 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  PAID_HISTORY_DETAIL,
   PAID_HISTORY_EMPTY,
+  PAID_HISTORY_HEADING,
   TAX_DRAG_CARD_DETAIL,
   TAX_IMPACT_DELTA_DETAIL,
+  UPCOMING_MODULE_DETAIL,
+  UPCOMING_MODULE_HEADING,
   UPCOMING_UNAVAILABLE_DETAIL,
   UPCOMING_UNAVAILABLE_HEADLINE,
   YEAR_TAX_DETAIL,
@@ -22,8 +26,19 @@ describe("PortfolioCompare empty upcoming copy", () => {
 
   it("keeps paid-history empty copy distinct from upcoming", () => {
     assert.match(PAID_HISTORY_EMPTY, /paid/i);
+    assert.match(PAID_HISTORY_HEADING, /paid history/i);
+    assert.match(PAID_HISTORY_DETAIL, /not upcoming/i);
     assert.notEqual(PAID_HISTORY_EMPTY, UPCOMING_UNAVAILABLE_HEADLINE);
     assert.notEqual(PAID_HISTORY_EMPTY, UPCOMING_UNAVAILABLE_DETAIL);
+  });
+});
+
+describe("PortfolioCompare upcoming module copy", () => {
+  it("labels sell-before-record Upcoming without looking like $0", () => {
+    assert.match(UPCOMING_MODULE_HEADING, /upcoming/i);
+    assert.match(UPCOMING_MODULE_DETAIL, /sell before record/i);
+    assert.doesNotMatch(UPCOMING_MODULE_DETAIL, /\$0|0\.00/);
+    assert.notEqual(UPCOMING_MODULE_HEADING, PAID_HISTORY_HEADING);
   });
 });
 

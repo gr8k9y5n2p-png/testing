@@ -16,6 +16,8 @@ export type PortfolioFundOption = {
   ticker: string;
   fundName: string;
   family?: string;
+  /** Search / seed NAV. Omit or null when unknown — never send 0. */
+  nav?: number | null;
 };
 
 export type PortfolioHoldingIn = {
@@ -235,6 +237,8 @@ export type PortfolioHoldingDraft = {
   ticker: string;
   fundName: string;
   family?: string;
+  /** Search / seed NAV when known. Omit rather than 0. */
+  nav?: number | null;
   /** UI percent 0–100. */
   weightPct: number;
   holdingDollars: number;

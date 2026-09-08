@@ -14,7 +14,12 @@ export function TickerField({
   fundName: string;
   funds: PortfolioFundOption[];
   inputId: string;
-  onSelect: (fund: { ticker: string; fundName: string; family?: string }) => void;
+  onSelect: (fund: {
+    ticker: string;
+    fundName: string;
+    family?: string;
+    nav?: number | null;
+  }) => void;
 }) {
   const [query, setQuery] = useState(ticker);
   const [open, setOpen] = useState(false);
@@ -65,6 +70,7 @@ export function TickerField({
                 ticker: typed,
                 fundName: match?.fundName || "",
                 family: match?.family,
+                nav: match?.nav,
               });
             } else {
               setQuery(ticker);
@@ -82,7 +88,7 @@ export function TickerField({
               setQuery(match.ticker);
               setOpen(false);
             } else {
-              onSelect({ ticker: typed, fundName: "" });
+              onSelect({ ticker: typed, fundName: "", nav: null });
               setOpen(false);
             }
           }

@@ -40,3 +40,23 @@ export function portfolioYearTaxRate(ticker: string, year: number): number | nul
   if (!table || !(year in table)) return null;
   return table[year];
 }
+
+function isExplicitFalse(value: unknown): boolean {
+  return value === false || value === "false";
+}
+
+/**
+ * Portfolio period illustrations may omit `matched`.
+ * Miss = covered:false / gap_reason / unmatched / null totals. Never $0.
+ */
+export function portfolioPeriodTaxIsUnmatched(input: {
+  matched?: unknown;
+  covered?: unknown;
+  gapReason?: unknown;
+  estimatedTax?: number | null;
+}): boolean {
+  if (isExplicitFalse(input.matched) || isExplicitFalse(input.covered) || input.gapReason) {
+    return true;
+  }
+  return input.matched == null && input.estimatedTax == null;
+}
