@@ -2,8 +2,13 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   PAID_HISTORY_EMPTY,
+  TAX_DRAG_CARD_DETAIL,
+  TAX_IMPACT_DELTA_DETAIL,
   UPCOMING_UNAVAILABLE_DETAIL,
   UPCOMING_UNAVAILABLE_HEADLINE,
+  YEAR_TAX_DETAIL,
+  YEAR_TAX_EMPTY,
+  YEAR_TAX_HEADING,
 } from "./portfolio-compare-copy.ts";
 
 describe("PortfolioCompare empty upcoming copy", () => {
@@ -19,5 +24,28 @@ describe("PortfolioCompare empty upcoming copy", () => {
     assert.match(PAID_HISTORY_EMPTY, /paid/i);
     assert.notEqual(PAID_HISTORY_EMPTY, UPCOMING_UNAVAILABLE_HEADLINE);
     assert.notEqual(PAID_HISTORY_EMPTY, UPCOMING_UNAVAILABLE_DETAIL);
+  });
+});
+
+describe("PortfolioCompare tax drag copy", () => {
+  it("keeps tax drag cards independent of empty Upcoming", () => {
+    assert.match(TAX_DRAG_CARD_DETAIL, /compare totals/i);
+    assert.match(TAX_DRAG_CARD_DETAIL, /not Upcoming/i);
+    assert.match(TAX_IMPACT_DELTA_DETAIL, /proposed/i);
+    assert.match(TAX_IMPACT_DELTA_DETAIL, /current/i);
+    assert.match(TAX_IMPACT_DELTA_DETAIL, /not Upcoming/i);
+    assert.notEqual(TAX_DRAG_CARD_DETAIL, UPCOMING_UNAVAILABLE_HEADLINE);
+    assert.notEqual(TAX_IMPACT_DELTA_DETAIL, PAID_HISTORY_EMPTY);
+  });
+});
+
+describe("PortfolioCompare calendar-year tax copy", () => {
+  it("stays visually and verbally distinct from Upcoming and Paid history", () => {
+    assert.match(YEAR_TAX_HEADING, /calendar-year tax/i);
+    assert.match(YEAR_TAX_DETAIL, /not Upcoming/);
+    assert.match(YEAR_TAX_DETAIL, /not Paid history/);
+    assert.notEqual(YEAR_TAX_HEADING, UPCOMING_UNAVAILABLE_HEADLINE);
+    assert.notEqual(YEAR_TAX_EMPTY, PAID_HISTORY_EMPTY);
+    assert.notEqual(YEAR_TAX_DETAIL, TAX_DRAG_CARD_DETAIL);
   });
 });

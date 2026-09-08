@@ -1,7 +1,12 @@
 import { formatOptionalDate, formatUsd } from "@/lib/format";
 import {
   PAID_HISTORY_EMPTY,
+  TAX_DRAG_CARD_DETAIL,
+  TAX_IMPACT_DELTA_DETAIL,
   UPCOMING_UNAVAILABLE_HEADLINE,
+  YEAR_TAX_DETAIL,
+  YEAR_TAX_EMPTY,
+  YEAR_TAX_HEADING,
 } from "@/lib/illustrate/portfolio-compare-copy";
 import {
   formatMoreLessTax,
@@ -13,6 +18,12 @@ import {
   type TaxPolarity,
 } from "@/lib/illustrate/portfolio-compare-map";
 import type { PortfolioCompareResponse } from "@/lib/illustrate/portfolio-compare-types";
+import { TAX_DRAG_NA_LABEL } from "@/lib/illustrate/tax-drag-chart";
+import {
+  calendarYearTaxTable,
+  hasCalendarYearTax,
+  type YearTaxTableModel,
+} from "@/lib/illustrate/portfolio-year-tax";
 
 export type PortfolioCompareExportHolding = {
   ticker: string;
@@ -49,6 +60,7 @@ export type PortfolioCompareExportModel = {
   source: "mock" | "live" | "unknown";
   current: PortfolioCompareExportSide;
   proposed: PortfolioCompareExportSide;
+  yearTax: YearTaxTableModel;
   delta: {
     estimatedTax: number;
     headline: string;
@@ -107,6 +119,7 @@ export function toPortfolioCompareExportModel(
     source: result.source ?? "unknown",
     current: sideModel(result, "current"),
     proposed: sideModel(result, "proposed"),
+    yearTax: calendarYearTaxTable(result),
     delta: {
       estimatedTax: result.deltas.estimated_tax,
       headline: impact.headline,
@@ -151,7 +164,7 @@ function sideHtml(side: PortfolioCompareExportSide): string {
   return `
     <section class="col">
       <h2>${escapeHtml(side.label)}</h2>
-      <p class="metric">Tax drag <strong>${escapeHtml(side.taxDragLabel)}</strong></p>
+      <p class="metric">Tax drag <strong>${escapeHtml(side.taxDragLabel)}</strong> <span class="muted">${escapeHtml(TAX_DRAG_CARD_DETAIL)}</span></p>
       <p class="metric">Total tax impact <strong>${escapeHtml(
         side.upcoming.length
           ? money(side.totalUpcomingTax)
@@ -173,6 +186,40 @@ function sideHtml(side: PortfolioCompareExportSide): string {
         <tbody>${paid || `<tr><td colspan="8" class="muted">${PAID_HISTORY_EMPTY}</td></tr>`}</tbody>
       </table>
     </section>`;
+}
+
+function yearTaxHtml(model: YearTaxTableModel): string {
+  if (!hasCalendarYearTax(model)) {
+    return `<p class="muted">${escapeHtml(YEAR_TAX_EMPTY)}</p>`;
+  }
+  const header = model.years
+    .map((year) => `<th class="num">${year}</th>`)
+    .join("");
+  const group = (label: string, rows: YearTaxTableModel["current"]) => {
+    if (!rows.length) return "";
+    const body = rows
+      .map((row) => {
+        const cells = row.cells
+          .map(
+            (cell) =>
+              `<td class="num ${cell == null ? "muted" : ""}">${escapeHtml(
+                cell == null ? TAX_DRAG_NA_LABEL : money(cell),
+              )}</td>`,
+          )
+          .join("");
+        return `<tr><td class="mono">${escapeHtml(row.ticker)}</td>${cells}</tr>`;
+      })
+      .join("");
+    return `<tr><th colspan="${model.years.length + 1}">${escapeHtml(label)}</th></tr>${body}`;
+  };
+  return `
+    <table>
+      <thead><tr><th>Ticker</th>${header}</tr></thead>
+      <tbody>
+        ${group("Current", model.current)}
+        ${group("Proposed", model.proposed)}
+      </tbody>
+    </table>`;
 }
 
 function dateCell(value: string | null): string {
@@ -230,6 +277,7 @@ export function renderPortfolioComparePrintHtml(
     h3 { font: 600 12px/1.2 ui-sans-serif, system-ui, sans-serif; margin: 14px 0 6px; }
     .meta { color: #5c6b5e; font-size: 11px; margin: 0 0 16px; }
     .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .years { margin-top: 18px; }
     .col { break-inside: avoid; }
     table { width: 100%; border-collapse: collapse; }
     th, td { padding: 4px 6px; border-bottom: 1px solid #e6e9e4; text-align: left; vertical-align: top; }
@@ -253,18 +301,26 @@ export function renderPortfolioComparePrintHtml(
     ${sideHtml(model.current)}
     ${sideHtml(model.proposed)}
   </div>
+  <section class="years">
+    <h2>${escapeHtml(YEAR_TAX_HEADING)}</h2>
+    <p class="muted">${escapeHtml(YEAR_TAX_DETAIL)}</p>
+    ${yearTaxHtml(model.yearTax)}
+  </section>
   <section class="summary" aria-label="Portfolio tax summary">
     <div>
       <span>Current tax drag</span>
       <strong>${escapeHtml(model.current.taxDragLabel)}</strong>
+      <span class="muted">${escapeHtml(TAX_DRAG_CARD_DETAIL)}</span>
     </div>
     <div>
       <span>Proposed tax drag</span>
       <strong>${escapeHtml(model.proposed.taxDragLabel)}</strong>
+      <span class="muted">${escapeHtml(TAX_DRAG_CARD_DETAIL)}</span>
     </div>
     <div class="delta">
       <span>Tax impact Δ</span>
       <strong>${escapeHtml(model.delta.headline)}</strong>
+      <span class="muted">${escapeHtml(TAX_IMPACT_DELTA_DETAIL)}</span>
     </div>
   </section>
   <p class="foot">Aftertax · estimates / illustrative only · not tax advice · weights × portfolio value → dollars</p>

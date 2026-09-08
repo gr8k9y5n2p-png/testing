@@ -4,8 +4,10 @@ import {
   mockPortfolioCompareResponse,
   synthesizePortfolioCompare,
 } from "@/lib/illustrate/portfolio-compare-fixture";
+import { defaultPortfolioComparePeriods } from "@/lib/illustrate/portfolio-year-tax";
 import type {
   PortfolioAllocationOut,
+  PortfolioComparePeriodOut,
   PortfolioCompareRequest,
   PortfolioCompareResponse,
   PortfolioCompareSideIn,
@@ -13,6 +15,7 @@ import type {
   PortfolioDistributionRow,
   PortfolioGapOut,
   PortfolioHoldingOut,
+  PortfolioPeriodHoldingTax,
   PortfolioTotalsOut,
   PortfolioUpcoming,
 } from "@/lib/illustrate/portfolio-compare-types";
@@ -91,7 +94,65 @@ function normalizeDistributionList(raw: unknown): PortfolioDistributionRow[] | u
     .filter((item): item is PortfolioDistributionRow => item != null);
 }
 
-/** v1 single snapshot — never send Data API `periods[]`. */
+function periodHoldingTaxFromRaw(raw: unknown, index: number): PortfolioPeriodHoldingTax | null {
+  if (raw == null || typeof raw !== "object") return null;
+  const row = asRecord(raw);
+  const illustration = row.illustration ? asRecord(row.illustration) : null;
+  const totals = illustration ? asRecord(illustration.totals) : asRecord(row.totals);
+  const matchedRaw = row.matched ?? illustration?.matched;
+  const matched = matchedRaw !== false && matchedRaw !== "false";
+  const unmatched = matchedRaw === false || matchedRaw === "false";
+  const ticker = String(row.ticker ?? row.fund_identifier ?? "").trim().toUpperCase();
+  if (!ticker) return null;
+  const tax = unmatched
+    ? null
+    : numOrNull(
+        row.estimated_tax ??
+          row.estimated_tax_dollars ??
+          totals.estimated_tax ??
+          totals.estimated_tax_dollars,
+      );
+  return {
+    ticker,
+    holding_index: numOrNull(row.holding_index) ?? index,
+    matched: unmatched ? false : matched,
+    estimated_tax: unmatched ? null : tax,
+  };
+}
+
+function normalizePeriodSide(raw: unknown): PortfolioPeriodHoldingTax[] {
+  if (raw == null) return [];
+  if (Array.isArray(raw)) {
+    return raw
+      .map((item, index) => periodHoldingTaxFromRaw(item, index))
+      .filter((item): item is PortfolioPeriodHoldingTax => item != null);
+  }
+  const row = asRecord(raw);
+  const list = Array.isArray(row.holdings) ? row.holdings : [];
+  return list
+    .map((item, index) => periodHoldingTaxFromRaw(item, index))
+    .filter((item): item is PortfolioPeriodHoldingTax => item != null);
+}
+
+export function normalizePortfolioComparePeriods(raw: unknown): PortfolioComparePeriodOut[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.flatMap((item) => {
+    if (item == null || typeof item !== "object") return [];
+    const row = asRecord(item);
+    const year = num(row.year, 0);
+    if (!(year > 0)) return [];
+    return [
+      {
+        year,
+        as_of: isoOrNull(row.as_of),
+        current: normalizePeriodSide(row.current ?? row.left),
+        proposed: normalizePeriodSide(row.proposed ?? row.right),
+      },
+    ];
+  });
+}
+
+/** Calendar-year tax $ — send `periods: [{year:2021}…{year:2025}]`. */
 export function toPortfolioCompareRequestBody(
   request: PortfolioCompareRequest,
 ): Record<string, unknown> {
@@ -100,6 +161,10 @@ export function toPortfolioCompareRequestBody(
     proposed: request.proposed,
     tax_rates: request.tax_rates ?? {},
     combine_state_with_federal: request.combine_state_with_federal !== false,
+    periods:
+      request.periods && request.periods.length > 0
+        ? request.periods
+        : defaultPortfolioComparePeriods(),
   };
   if (request.snapshot) body.snapshot = request.snapshot;
   return body;
@@ -148,6 +213,9 @@ function normalizeHolding(raw: unknown, index: number): PortfolioHoldingOut {
     upcoming: normalizeUpcoming(
       Object.prototype.hasOwnProperty.call(row, "upcoming") ? row.upcoming : undefined,
     ),
+    paid_history: Object.prototype.hasOwnProperty.call(row, "paid_history")
+      ? normalizeUpcoming(row.paid_history) ?? []
+      : undefined,
     distributions: normalizeDistributionList(row.distributions),
     history: normalizeDistributionList(row.history),
     gap_reason: row.gap_reason == null ? null : String(row.gap_reason),
@@ -315,6 +383,7 @@ export function normalizePortfolioCompareResponse(
       coverage_pct: num(summaryRaw.coverage_pct, coverage),
     },
     notes,
+    periods: normalizePortfolioComparePeriods(raw.periods),
   };
 }
 

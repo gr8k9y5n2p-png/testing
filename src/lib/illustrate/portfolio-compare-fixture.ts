@@ -3,8 +3,13 @@ import {
   PORTFOLIO_TICKER_RATES,
   ratesForTicker,
 } from "@/lib/illustrate/portfolio-compare-catalog";
+import {
+  PORTFOLIO_COMPARE_YEARS,
+  portfolioYearTaxRate,
+} from "@/lib/illustrate/portfolio-compare-years";
 import type {
   PortfolioAllocationOut,
+  PortfolioComparePeriodOut,
   PortfolioCompareRequest,
   PortfolioCompareResponse,
   PortfolioCompareSideIn,
@@ -13,6 +18,7 @@ import type {
   PortfolioGapOut,
   PortfolioHoldingIn,
   PortfolioHoldingOut,
+  PortfolioPeriodHoldingTax,
 } from "@/lib/illustrate/portfolio-compare-types";
 import { PORTFOLIO_COMPARE_BOOK_DOLLARS } from "@/lib/illustrate/portfolio-compare-types";
 
@@ -24,6 +30,47 @@ function money(value: number): number {
 
 function rate(value: number): number {
   return Math.round(value * 1_000_000) / 1_000_000;
+}
+
+function mockPeriodHoldings(
+  allocation: PortfolioAllocationOut,
+  year: number,
+): PortfolioPeriodHoldingTax[] {
+  return allocation.holdings.map((holding, index) => {
+    const ticker = (holding.ticker || holding.fund_identifier || "").trim().toUpperCase();
+    const taxRate = ticker ? portfolioYearTaxRate(ticker, year) : null;
+    if (!ticker || !holding.covered || taxRate == null) {
+      return {
+        ticker: ticker || "—",
+        holding_index: holding.holding_index ?? index,
+        matched: false,
+        estimated_tax: null,
+      };
+    }
+    return {
+      ticker,
+      holding_index: holding.holding_index ?? index,
+      matched: true,
+      estimated_tax: money(holding.holding_dollars * taxRate),
+    };
+  });
+}
+
+export function mockCalendarYearPeriods(
+  current: PortfolioAllocationOut,
+  proposed: PortfolioAllocationOut,
+  request?: PortfolioCompareRequest,
+): PortfolioComparePeriodOut[] {
+  const years =
+    request?.periods && request.periods.length > 0
+      ? request.periods.map((period) => period.year).filter((year) => year > 0)
+      : [...PORTFOLIO_COMPARE_YEARS];
+  return years.map((year) => ({
+    year,
+    as_of: `${year}-12-15`,
+    current: mockPeriodHoldings(current, year),
+    proposed: mockPeriodHoldings(proposed, year),
+  }));
 }
 
 export function resolveHoldingDollars(
@@ -119,6 +166,10 @@ function mockHoldingOut(
     };
   }
 
+  const events = mockDistributionEvents(dist, upcomingTax, rates.asOf, stage, yearEndDates);
+  const paidHistory = events.filter((event) => event.publication_stage === "paid");
+  const upcomingRow = events.find((event) => event.publication_stage !== "paid") ?? events[0];
+
   return {
     holding_index: index,
     ticker,
@@ -130,17 +181,20 @@ function mockHoldingOut(
     covered: true,
     publication_stage_used: stage,
     warnings: [],
-    upcoming: {
-      distribution_dollars: dist,
-      estimated_tax: upcomingTax,
-      as_of: rates.asOf,
-      announced_date: rates.asOf,
-      record_date: yearEndDates.record_date,
-      ex_date: yearEndDates.ex_date,
-      payable_date: yearEndDates.payable_date,
-      publication_stage: stage,
-    },
-    distributions: mockDistributionEvents(dist, upcomingTax, rates.asOf, stage, yearEndDates),
+    upcoming: upcomingRow
+      ? {
+          distribution_dollars: upcomingRow.distribution_dollars,
+          estimated_tax: upcomingRow.estimated_tax,
+          as_of: upcomingRow.as_of,
+          announced_date: upcomingRow.announced_date,
+          record_date: upcomingRow.record_date,
+          ex_date: upcomingRow.ex_date,
+          payable_date: upcomingRow.payable_date,
+          publication_stage: upcomingRow.publication_stage,
+        }
+      : null,
+    paid_history: paidHistory,
+    distributions: events,
     illustration: {
       totals: {
         distribution_dollars: dist,
@@ -334,8 +388,10 @@ export function mockPortfolioCompareResponse(
       effective_tax_on_holding: dragDelta,
       coverage_pct: coverageDelta,
     },
+    periods: mockCalendarYearPeriods(current, proposed, request),
     notes: [
-      "Deltas are proposed − current on one shared snapshot. v1 has no periods[].",
+      "Deltas are proposed − current on one shared snapshot.",
+      "periods[] are calendar-year tax $ per ticker. Unmatched years are N/A, never $0.",
       "Each side is a full POST /illustrate/portfolio result. Gaps stay on that side.",
       "MOCK /illustrate/portfolio/compare — sketch fixture so localhost still demos when the Data API is down.",
     ],
@@ -376,9 +432,10 @@ export function synthesizePortfolioCompare(
       effective_tax_on_holding: dragDelta,
       coverage_pct: coverageDelta,
     },
+    periods: mockCalendarYearPeriods(current, proposed),
     notes: [
       "Synthesized from two POST /illustrate/portfolio calls (compare endpoint unavailable).",
-      "Deltas are proposed − current. v1 has no periods[].",
+      "Deltas are proposed − current. periods[] are calendar-year tax $; unmatched years are N/A.",
     ],
   };
 }

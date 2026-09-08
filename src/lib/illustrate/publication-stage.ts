@@ -57,6 +57,16 @@ export function eventDateOf(
   return isoDate(row.payable_date) ?? isoDate(row.ex_date) ?? isoDate(row.record_date);
 }
 
+/**
+ * Data paid_history cutoff: record, else ex, else payable.
+ * Null dates stay null — never invent a day.
+ */
+export function paidHistoryDateOf(
+  row: Pick<PortfolioDistributionRow, "record_date" | "ex_date" | "payable_date">,
+): string | null {
+  return isoDate(row.record_date) ?? isoDate(row.ex_date) ?? isoDate(row.payable_date);
+}
+
 export function normalizePublicationStage(
   stage: string | null | undefined,
 ): string {
@@ -85,21 +95,21 @@ export function isPaidHistoryPublicationStage(
 }
 
 /**
- * Record / ex / payable already past. as_of is announcement and does not
- * make a preliminary/updated row paid. Past `final` falls back to as_of.
+ * Record (else ex, else payable) already past. as_of is announcement and
+ * does not make a preliminary/updated row paid. Past `final` falls back to as_of.
  */
 function isPastPaidEvent(row: PortfolioDistributionRow, today = utcToday()): boolean {
   const stage = normalizePublicationStage(row.publication_stage);
-  const event = eventDateOf(row);
+  const event = paidHistoryDateOf(row);
   const cutoff = event ?? (stage === "final" ? isoDate(row.as_of) : null);
   return cutoff != null && cutoff < today;
 }
 
 /**
- * Locked split, same rule as Sample Estimates `distributionBucket`:
+ * Locked split vs Data `paid_history[]` / unpaid `upcoming`:
  * Upcoming = announced but not yet paid.
- * If payable/ex/record is already past, the row is Paid history even when
- * publication_stage is still preliminary_estimate / updated_estimate.
+ * If record (else ex, else payable) is already past, the row is Paid history
+ * even when publication_stage is still preliminary_estimate / updated_estimate.
  * as_of is announcement only — never invent a day.
  */
 export function publicationBucket(
@@ -271,12 +281,67 @@ function tableEventsFromHolding(holding: PortfolioHoldingOut): PortfolioDistribu
     return merged;
   }
 
-  if (holding.upcoming === null) return [];
   if (fromUpcoming.length) return fromUpcoming;
 
   return (holding.illustration?.components ?? [])
+    .map((row) =>
+      withStage(
+        {
+          ...row,
+          estimated_tax: row.estimated_tax ?? row.estimated_tax_dollars,
+        },
+        fallback,
+      ),
+    )
+    .filter(hasDistributionSignal);
+}
+
+/**
+ * Unpaid announced rows only. Explicit `upcoming: null` is undisclosed —
+ * do not derive from illustration or paid history.
+ */
+function upcomingEventsFromHolding(
+  holding: PortfolioHoldingOut,
+  today = utcToday(),
+): PortfolioDistributionRow[] {
+  if (holding.upcoming === null) return [];
+  return tableEventsFromHolding(holding).filter(
+    (event) => publicationBucket(event, today) === "upcoming",
+  );
+}
+
+/** Data `paid_history[]` cap. Newest-first after that is dropped. */
+export const PAID_HISTORY_CAP = 12;
+
+function paidHistorySortKey(row: PortfolioDistributionRow): string | null {
+  return paidHistoryDateOf(row) ?? announcedDateOf(row);
+}
+
+/**
+ * Paid History is `holdings[].paid_history[]` only. Same fields as upcoming.
+ * Data sends newest-first, cap 12. Never derive from illustration, distributions,
+ * history, or `upcoming` (including `upcoming: null`).
+ */
+function paidHistoryEventsFromHolding(
+  holding: PortfolioHoldingOut,
+): PortfolioDistributionRow[] {
+  const fallback = holding.publication_stage_used ?? null;
+  const rows = asDistributionRows(holding.paid_history)
     .map((row) => withStage(row, fallback))
     .filter(hasDistributionSignal);
+  return [...rows]
+    .sort((a, b) => {
+      const aDate = paidHistorySortKey(a);
+      const bDate = paidHistorySortKey(b);
+      if (!aDate && !bDate) {
+        return (num(b.distribution_dollars) ?? 0) - (num(a.distribution_dollars) ?? 0);
+      }
+      if (!aDate) return 1;
+      if (!bDate) return -1;
+      if (aDate !== bDate) return bDate.localeCompare(aDate);
+      return (num(b.distribution_dollars) ?? 0) - (num(a.distribution_dollars) ?? 0);
+    })
+    .slice(0, PAID_HISTORY_CAP);
 }
 
 const STAGE_LABELS: Record<string, string> = {
@@ -319,6 +384,36 @@ export function formatAsOfStage(asOf: string | null, stage: string | null): stri
   return "—";
 }
 
+function toTableRow(
+  holding: PortfolioHoldingOut,
+  side: "current" | "proposed",
+  index: number,
+  event: PortfolioDistributionRow,
+  eventIndex: number,
+  bucket: DistributionBucket,
+): UpcomingRow | null {
+  const dist = num(event.distribution_dollars);
+  if (dist == null) return null;
+  const ticker = (holding.ticker || holding.fund_identifier || "—").toUpperCase();
+  return {
+    key: `${side}-${holding.holding_index}-${ticker}-${index}-${bucket}-${eventIndex}`,
+    ticker,
+    fundName: holding.fund_name || ticker,
+    side,
+    sideLabel: side === "current" ? "Current" : "Proposed",
+    distributionDollars: dist,
+    estimatedTax: num(event.estimated_tax),
+    asOf: isoDate(event.as_of),
+    announcedDate: announcedDateOf(event),
+    recordDate: isoDate(event.record_date),
+    exDate: isoDate(event.ex_date),
+    payableDate: isoDate(event.payable_date),
+    stage: event.publication_stage ?? holding.publication_stage_used ?? null,
+    bucket,
+    heat: 0,
+  };
+}
+
 function rowsForSide(
   allocation: PortfolioAllocationOut,
   side: "current" | "proposed",
@@ -326,39 +421,29 @@ function rowsForSide(
   today = utcToday(),
 ): UpcomingRow[] {
   return allocation.holdings.flatMap((holding, index) => {
-    const ticker = (holding.ticker || holding.fund_identifier || "—").toUpperCase();
-    return tableEventsFromHolding(holding).flatMap((event, eventIndex) => {
-      if (publicationBucket(event, today) !== bucket) return [];
-      const dist = num(event.distribution_dollars);
-      if (dist == null) return [];
-      return [
-        {
-          key: `${side}-${holding.holding_index}-${ticker}-${index}-${bucket}-${eventIndex}`,
-          ticker,
-          fundName: holding.fund_name || ticker,
-          side,
-          sideLabel: side === "current" ? "Current" : "Proposed",
-          distributionDollars: dist,
-          estimatedTax: num(event.estimated_tax),
-          asOf: isoDate(event.as_of),
-          announcedDate: announcedDateOf(event),
-          recordDate: isoDate(event.record_date),
-          exDate: isoDate(event.ex_date),
-          payableDate: isoDate(event.payable_date),
-          stage: event.publication_stage ?? holding.publication_stage_used ?? null,
-          bucket,
-          heat: 0,
-        },
-      ];
+    const events =
+      bucket === "paid_history"
+        ? paidHistoryEventsFromHolding(holding)
+        : upcomingEventsFromHolding(holding, today);
+    return events.flatMap((event, eventIndex) => {
+      const row = toTableRow(holding, side, index, event, eventIndex, bucket);
+      return row ? [row] : [];
     });
   });
+}
+
+function paidHistorySortDate(row: UpcomingRow): string | null {
+  return row.recordDate ?? row.exDate ?? row.payableDate ?? row.asOf ?? row.announcedDate;
 }
 
 function sortDistributionRows(rows: UpcomingRow[], bucket: DistributionBucket): UpcomingRow[] {
   return [...rows].sort((a, b) => {
     if (bucket === "paid_history") {
-      const aDate = a.payableDate ?? a.exDate ?? a.recordDate ?? a.announcedDate ?? "";
-      const bDate = b.payableDate ?? b.exDate ?? b.recordDate ?? b.announcedDate ?? "";
+      const aDate = paidHistorySortDate(a);
+      const bDate = paidHistorySortDate(b);
+      if (!aDate && !bDate) return b.distributionDollars - a.distributionDollars;
+      if (!aDate) return 1;
+      if (!bDate) return -1;
       if (aDate !== bDate) return bDate.localeCompare(aDate);
     }
     return b.distributionDollars - a.distributionDollars;
