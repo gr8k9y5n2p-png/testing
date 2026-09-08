@@ -297,6 +297,19 @@ export function GrowthAndTaxDragModule({
           <h2 className="mt-1 font-serif text-xl tracking-tight text-ink">
             Growth & tax drag
           </h2>
+          {upcomingSummary ? (
+            <p className="mt-2">
+              <span
+                className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-medium ${
+                  upcomingSummary.announced
+                    ? "bg-tax-more-soft text-tax-more"
+                    : "bg-paper text-muted ring-1 ring-line"
+                }`}
+              >
+                {upcomingSummary.label}
+              </span>
+            </p>
+          ) : null}
         </div>
 
         <div className="flex flex-wrap items-end gap-2">
