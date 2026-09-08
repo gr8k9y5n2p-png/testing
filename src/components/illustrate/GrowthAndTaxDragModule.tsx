@@ -23,6 +23,7 @@ import { navFromFundMetadata, positiveNav } from "@/lib/illustrate/compare-reque
 import { seedNavLookup } from "@/lib/illustrate/seed-nav";
 import type { ComparePeriodIn, CompareResponse } from "@/lib/illustrate/compare-types";
 import {
+  alignTaxDragYears,
   toNegativeTaxDrag,
   toTaxDragPeriods,
   type TaxDragFundSeries,
@@ -188,10 +189,7 @@ export function GrowthAndTaxDragModule({
       color: row.color,
       points: row.tax
         ? toNegativeTaxDrag(
-            alignYears(
-              toTaxDragPeriods(row.tax, taxMetric),
-              years,
-            ),
+            alignTaxDragYears(toTaxDragPeriods(row.tax, taxMetric), years),
           )
         : years.map((year) => ({ year, value: null })),
     }));
@@ -481,16 +479,6 @@ function mergeSeedFunds(
   const seen = new Set(seeded.map((fund) => fund.ticker));
   const rest = current.filter((fund) => !seen.has(fundKey(fund).ticker));
   return [...seeded, ...rest].slice(0, MAX_GROWTH_FUNDS);
-}
-
-function alignYears(
-  points: { year: number; value: number | null }[],
-  years: number[],
-) {
-  return years.map((year) => {
-    const match = points.find((point) => point.year === year);
-    return { year, value: match?.value ?? null };
-  });
 }
 
 async function loadModule(

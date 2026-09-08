@@ -1,4 +1,5 @@
 import type { ComparePeriodOut } from "@/lib/illustrate/compare-types";
+import { illustrationIsMatched } from "@/lib/illustrate/tax-drag-chart";
 
 export type YoYTaxChartPoint = {
   year: number;
@@ -55,11 +56,12 @@ export function yoyBarsFromComparePeriods(
   return sortYoYPoints(
     periods.map((period) => {
       const totals = period[side]?.totals;
-      const matched = period[side]?.matched !== false;
+      const matched = illustrationIsMatched(period[side]);
       const tax = numOrNull(totals?.estimated_tax ?? totals?.estimated_tax_dollars);
       return {
         year: period.year,
-        value: matched ? tax : null,
+        // matched + 0.00 is a real zero; unmatched is N/A even when totals are 0.
+        value: matched ? (tax ?? 0) : null,
       };
     }),
   );

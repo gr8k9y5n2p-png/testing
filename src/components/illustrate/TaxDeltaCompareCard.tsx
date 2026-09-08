@@ -1,9 +1,11 @@
+import { TaxDragByYearChart } from "@/components/illustrate/TaxDragByYearChart";
 import {
   chartScalePct,
   type TaxDeltaBar,
   type TaxDeltaCardModel,
   type TaxPolarity,
 } from "@/lib/illustrate/compare-map";
+import { TAX_DRAG_NA_LABEL } from "@/lib/illustrate/tax-drag-chart";
 
 const POLARITY_TEXT: Record<TaxPolarity, string> = {
   more: "text-tax-more",
@@ -19,6 +21,9 @@ function formatBarPct(value: number): string {
 }
 
 function barAriaLabel(bar: TaxDeltaBar): string {
+  if (bar.missing || bar.displayPct == null) {
+    return `${bar.year}: ${TAX_DRAG_NA_LABEL}`;
+  }
   if (bar.polarity === "even") return `${bar.year}: about even tax drag`;
   const side = bar.polarity === "more" ? "more tax" : "less tax";
   return `${bar.year}: ${formatBarPct(bar.displayPct)} ${side} for Fund A`;
@@ -54,8 +59,20 @@ export function TaxDeltaCompareCard({
           </p>
           <FundHeading side="Fund B" name={model.rightLabel} align="right" />
         </div>
+      </header>
 
-        <div className="mt-4 flex flex-wrap items-end justify-between gap-2">
+      <TaxDragByYearChart
+        series={model.taxSeries}
+        metric="effective_tax"
+        title="Tax drag by year"
+        showBarLabels={model.taxSeries.length <= 2}
+        layout="flush"
+        className="mt-4"
+        sample={model.sample}
+        emptyLabel="No overlapping tax-drag years"
+      />
+
+      <div className="mt-4 flex flex-wrap items-end justify-between gap-2">
           <p className="text-sm text-muted">Tax impact delta (YoY)</p>
           <ul className="flex items-center gap-3 text-[11px] text-muted">
             <li className="flex items-center gap-1.5">
@@ -68,7 +85,6 @@ export function TaxDeltaCompareCard({
             </li>
           </ul>
         </div>
-      </header>
 
       <div
         className="mt-4 flex-1"
@@ -204,6 +220,26 @@ function BarTrack({
   scale: number;
   ticks: number[];
 }) {
+  if (bar.missing || bar.displayPct == null) {
+    return (
+      <div className="relative h-7">
+        {ticks.map((tick) => (
+          <span
+            key={tick}
+            aria-hidden
+            className={`absolute top-0 h-full w-px ${
+              tick === 0 ? "bg-ink/35" : "bg-line"
+            }`}
+            style={{ left: `${((tick + scale) / (scale * 2)) * 100}%` }}
+          />
+        ))}
+        <span className="absolute left-1/2 top-1.5 -translate-x-1/2 rounded-full bg-paper px-1.5 py-0.5 font-mono text-[10px] text-faint">
+          {TAX_DRAG_NA_LABEL}
+        </span>
+      </div>
+    );
+  }
+
   const widthPct = Math.min(50, (Math.abs(bar.displayPct) / (scale * 2)) * 100);
   const more = bar.polarity === "more" || bar.displayPct < 0;
   const showBar = bar.polarity !== "even";

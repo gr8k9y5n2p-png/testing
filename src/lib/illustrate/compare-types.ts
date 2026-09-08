@@ -50,6 +50,14 @@ export type CompareRequest = {
 
 export type CompareIllustration = {
   label: string;
+  /**
+   * Data contract (Engineering | Data): unmatched years still return
+   * `totals.estimated_tax` / `effective_tax_on_holding` as `"0.00"` /
+   * `"0.000000"` — those fields are **not** null on a miss.
+   *
+   * - `matched: false` → N/A (do not chart as 0%)
+   * - `matched: true` + estimated_tax `0.00` → real zero tax drag
+   */
   matched: boolean;
   holding_dollars?: number;
   components?: unknown[];

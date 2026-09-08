@@ -83,6 +83,11 @@ const TAX_DRAG_BY_TICKER: Record<string, Record<number, number>> = {
     2016: 0.008, 2017: 0.007, 2018: 0.01, 2019: 0.006, 2020: 0.009,
     2021: 0.007, 2022: 0.005, 2023: 0.006, 2024: 0.008, 2025: 0.007,
   },
+  // 2022 is a genuine no-distribution zero; 2023 is omitted → matched:false / N/A.
+  VTSAX: {
+    2016: 0.01, 2017: 0.009, 2018: 0.012, 2019: 0.008, 2020: 0.011,
+    2021: 0.012, 2022: 0, 2024: 0.011, 2025: 0.0085,
+  },
 };
 
 function tickerFromSide(side?: CompareSideIn | null, selectorsTicker?: string | null): string {
@@ -210,6 +215,12 @@ export function mockCompareResponse(request: CompareRequest): CompareResponse {
   }
   const leftLabel = request.left?.label?.trim() || SKETCH_COMPARE_DEFAULTS.leftLabel;
   const rightLabel = request.right?.label?.trim() || SKETCH_COMPARE_DEFAULTS.rightLabel;
+  const leftTicker = tickerFromSide(request.left);
+  const rightTicker = tickerFromSide(request.right);
+  const holding =
+    request.holding_dollars > 0
+      ? request.holding_dollars
+      : COMPARE_SUMMARY_HOLDING_DOLLARS;
   const years =
     request.periods && request.periods.length > 0
       ? request.periods.map((period) => period.year)
@@ -220,17 +231,28 @@ export function mockCompareResponse(request: CompareRequest): CompareResponse {
     return { year, apiDelta: sketch?.apiDelta ?? 0 };
   });
 
-  const periods: ComparePeriodOut[] = bars.map(({ year, apiDelta }) => ({
-    year,
-    as_of: `${year}-12-15`,
-    left: emptyIllustration(leftLabel, true),
-    right: emptyIllustration(rightLabel, true),
-    deltas: {
-      distribution_dollars: 0,
-      estimated_tax: 0,
-      effective_tax_on_holding: apiDelta,
-    },
-  }));
+  const periods: ComparePeriodOut[] = bars.map(({ year, apiDelta }) => {
+    const left = taxIllustration(leftLabel, taxRateFor(leftTicker, year), holding);
+    const right = taxIllustration(rightLabel, taxRateFor(rightTicker, year), holding);
+    const bothMatched = left.matched && right.matched;
+    return {
+      year,
+      as_of: `${year}-12-15`,
+      left,
+      right,
+      deltas: {
+        distribution_dollars: bothMatched
+          ? (right.totals?.distribution_dollars ?? 0) -
+            (left.totals?.distribution_dollars ?? 0)
+          : 0,
+        estimated_tax: bothMatched
+          ? (right.totals?.estimated_tax ?? 0) - (left.totals?.estimated_tax ?? 0)
+          : 0,
+        // Keep sketch signs when both sides matched so the delta card still demos.
+        effective_tax_on_holding: bothMatched ? apiDelta : 0,
+      },
+    };
+  });
 
   const fromYear = periods[0]?.year ?? 2021;
   const toYear = periods[periods.length - 1]?.year ?? 2025;

@@ -26,7 +26,13 @@ export {
 } from "@/lib/illustrate/yoy-tax-chart";
 export type { YoYTaxChartModel, YoYTaxChartPoint } from "@/lib/illustrate/yoy-tax-chart";
 export {
+  TAX_DRAG_NA_LABEL,
+  alignTaxDragYears,
+  comparePeriodIsCovered,
+  formatTaxDragPoint,
+  illustrationIsMatched,
   taxDragLineFromPeriods,
+  toCompareTaxDragSeries,
   toNegativeTaxDrag,
   toTaxDragPeriods,
   toUpcomingSummary,

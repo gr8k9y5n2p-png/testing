@@ -1,35 +1,28 @@
 import { formatCompactUsd } from "@/lib/charts/money-axis";
 import { formatUsd } from "@/lib/format";
-import type {
-  CompareIllustration,
-  CompareResponse,
-  CompareUpcomingDistribution,
-} from "@/lib/illustrate/compare-types";
+import type { CompareUpcomingDistribution } from "@/lib/illustrate/compare-types";
+import {
+  TAX_DRAG_NA_LABEL,
+  type TaxDragMetric,
+} from "@/lib/illustrate/tax-drag-map";
 
-/** Bar / line metric for `TaxDragByYearChart`. */
-export type TaxDragMetric = "tax_dollars" | "effective_tax";
-
-/**
- * One calendar year. `value` is tax $ or a decimal effective-tax rate
- * (`0.008` = 0.8%) depending on `metric`. `null` is a gap — never invent.
- */
-export type TaxDragYearPoint = {
-  year: number;
-  value: number | null;
-};
-
-export type TaxDragLinePoint = {
-  year: number;
-  value: number | null;
-};
-
-export type TaxDragFundSeries = {
-  id: string;
-  label: string;
-  color: string;
-  description?: string;
-  points: TaxDragYearPoint[];
-};
+export {
+  TAX_DRAG_NA_LABEL,
+  alignTaxDragYears,
+  comparePeriodIsCovered,
+  illustrationIsMatched,
+  taxDragLineFromPeriods,
+  toCompareTaxDragSeries,
+  toNegativeTaxDrag,
+  toTaxDragPeriods,
+  unionTaxDragYears,
+} from "@/lib/illustrate/tax-drag-map";
+export type {
+  TaxDragFundSeries,
+  TaxDragLinePoint,
+  TaxDragMetric,
+  TaxDragYearPoint,
+} from "@/lib/illustrate/tax-drag-map";
 
 /** Announced / upcoming chip payload. `null` hides the slot. */
 export type UpcomingSummary = {
@@ -59,103 +52,6 @@ export function sideIsAnnounced(
 ): boolean {
   if (dollars != null) return true;
   return isAnnouncedStage(stage);
-}
-
-function pickMetric(
-  illustration: CompareIllustration | null | undefined,
-  metric: TaxDragMetric,
-): number | null {
-  if (!illustration || illustration.matched === false) return null;
-  const totals = illustration.totals;
-  if (!totals) return null;
-  if (metric === "tax_dollars") {
-    // Request-holding dollars. Never summary.total_tax_difference
-    // (that footer field is always normalized to $10,000).
-    const tax = totals.estimated_tax ?? totals.estimated_tax_dollars;
-    return tax == null ? null : Number(tax);
-  }
-  // Rate — fraction of holding. Does not scale with $.
-  const rate = totals.effective_tax_on_holding;
-  return rate == null ? null : Number(rate);
-}
-
-function yearFromLabel(label: string | undefined, fallback: number): number {
-  const match = label?.trim().match(/\b(19|20)\d{2}\b/);
-  if (!match) return fallback;
-  return Number(match[0]);
-}
-
-/**
- * Map `POST /illustrate/compare` periods onto calendar-year points.
- *
- * `mode: "yoy"` pairs consecutive vintages (period.year is the newer year;
- * `right` is that vintage, `left` is the prior). Gaps stay `null` when a
- * side is unmatched — years not present in `periods` are not invented.
- *
- * `$` reads `left`/`right` `totals.estimated_tax` at the request
- * `holding_dollars`. Do not chart `summary.total_tax_difference` or
- * `summary.distribution_dollars_difference`.
- */
-export function toTaxDragPeriods(
-  response: CompareResponse,
-  metric: TaxDragMetric = "tax_dollars",
-  side: "left" | "right" | "auto" = "auto",
-): TaxDragYearPoint[] {
-  const byYear = new Map<number, TaxDragYearPoint>();
-
-  const write = (year: number, illustration: CompareIllustration | null | undefined) => {
-    if (!Number.isFinite(year) || year <= 0) return;
-    const value = pickMetric(illustration, metric);
-    const prior = byYear.get(year);
-    if (prior && prior.value != null && value == null) return;
-    byYear.set(year, { year, value });
-  };
-
-  for (const period of response.periods) {
-    if (response.mode === "yoy") {
-      const newerYear = period.year;
-      const olderYear = yearFromLabel(period.left?.label, newerYear - 1);
-      write(olderYear, period.left);
-      write(newerYear, period.right);
-      continue;
-    }
-    if (side === "right") {
-      write(period.year, period.right);
-    } else if (side === "left") {
-      write(period.year, period.left);
-    } else {
-      write(period.year, period.left);
-      if (period.right?.matched !== false && pickMetric(period.right, metric) != null) {
-        write(period.year, period.left);
-      }
-    }
-  }
-
-  return [...byYear.values()].sort((a, b) => a.year - b.year);
-}
-
-export function taxDragLineFromPeriods(
-  periods: TaxDragYearPoint[],
-): TaxDragLinePoint[] {
-  return periods.map((point) => ({ year: point.year, value: point.value }));
-}
-
-/** Flip rates to negative so bars drop from a 0% baseline. */
-export function toNegativeTaxDrag(
-  periods: TaxDragYearPoint[],
-): TaxDragYearPoint[] {
-  return periods.map((point) => ({
-    year: point.year,
-    value: point.value == null ? null : -Math.abs(point.value),
-  }));
-}
-
-export function unionTaxDragYears(series: TaxDragFundSeries[]): number[] {
-  const years = new Set<number>();
-  for (const row of series) {
-    for (const point of row.points) years.add(point.year);
-  }
-  return [...years].sort((a, b) => a - b);
 }
 
 export function toUpcomingSummary(
@@ -211,6 +107,14 @@ export function toUpcomingSummary(
         : "Upcoming"
       : "Not announced",
   };
+}
+
+export function formatTaxDragPoint(
+  value: number | null | undefined,
+  metric: TaxDragMetric,
+): string {
+  if (value == null) return TAX_DRAG_NA_LABEL;
+  return formatTaxDragValue(value, metric);
 }
 
 export function formatTaxDragValue(

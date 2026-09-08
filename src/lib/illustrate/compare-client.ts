@@ -35,12 +35,17 @@ function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" ? (value as Record<string, unknown>) : {};
 }
 
+function asMatched(value: unknown): boolean {
+  return value === true || value === "true";
+}
+
 function normalizeIllustration(raw: unknown, fallbackLabel: string) {
   const row = asRecord(raw);
   const totals = asRecord(row.totals);
   return {
     label: String(row.label ?? fallbackLabel),
-    matched: row.matched !== false,
+    // Data: unmatched years still send totals as 0.00 — only `matched` is the miss.
+    matched: asMatched(row.matched),
     holding_dollars: numOrNull(row.holding_dollars) ?? undefined,
     components: Array.isArray(row.components) ? row.components : [],
     totals: {

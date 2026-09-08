@@ -7,6 +7,8 @@ import {
   type YearLayout,
 } from "@/lib/charts/shared-axis";
 import {
+  TAX_DRAG_NA_LABEL,
+  formatTaxDragPoint,
   formatTaxDragValue,
   unionTaxDragYears,
   type TaxDragFundSeries,
@@ -113,7 +115,9 @@ export function TaxDragByYearChart({
     ...(overlay ?? []).map((point) => point.value),
   ].filter((value): value is number => value != null && Number.isFinite(value));
 
-  if (years.length === 0 || measured.length === 0) {
+  // Years on a shared axis (or any period slots) still plot — unmatched
+  // years are N/A gaps, not an empty “no overlapping years” card.
+  if (years.length === 0) {
     return (
       <div
         className={
@@ -124,7 +128,7 @@ export function TaxDragByYearChart({
       >
         <p className="font-serif text-lg text-ink">{emptyLabel}</p>
         <p className="mt-2 text-sm text-muted">
-          Missing years are skipped — Aftertax does not invent tax-drag rows.
+          Missing years stay {TAX_DRAG_NA_LABEL} — Aftertax does not invent tax-drag rows.
         </p>
       </div>
     );
@@ -160,9 +164,7 @@ export function TaxDragByYearChart({
     .map((year) => {
       const bits = fundSeries.map((row) => {
         const point = row.points.find((item) => item.year === year);
-        return point?.value == null
-          ? `${row.label}: no data`
-          : `${row.label}: ${formatTaxDragValue(point.value, metric)}`;
+        return `${row.label}: ${formatTaxDragPoint(point?.value, metric)}`;
       });
       return `${year}: ${bits.join(", ")}`;
     })
@@ -222,22 +224,27 @@ export function TaxDragByYearChart({
                 const gap = amount == null;
                 const x = axis.barX(index, seriesIndex);
                 if (gap) {
-                  return seriesIndex === 0 ? (
-                    <line
-                      key={`${row.id}-gap`}
-                      x1={center}
-                      x2={center}
-                      y1={chartPad.top + 8}
-                      y2={chartPad.top + innerH}
-                      className="stroke-line-strong"
-                      strokeWidth={1}
-                      strokeDasharray="3 3"
-                    />
-                  ) : null;
+                  const naX = fundSeries.length > 1 ? x + barW / 2 : center;
+                  const naY = down ? chartPad.top + 12 : chartPad.top + innerH - 6;
+                  return (
+                    <text
+                      key={`${row.id}-na-${year}`}
+                      x={naX}
+                      y={naY}
+                      textAnchor="middle"
+                      className="fill-faint"
+                      fontSize={barW < 10 ? 7 : 8}
+                      fontFamily="ui-monospace, monospace"
+                    >
+                      {TAX_DRAG_NA_LABEL}
+                    </text>
+                  );
                 }
                 const endY = yAt(amount);
                 const barY = down ? Math.min(zeroY, endY) : endY;
-                const barH = Math.max(2, Math.abs(endY - zeroY));
+                const magnitude = Math.abs(endY - zeroY);
+                // Genuine 0 still occupies the slot (hairline at baseline).
+                const barH = amount === 0 ? 2 : Math.max(2, magnitude);
                 const labelY = down ? endY + 11 : endY - 5;
                 return (
                   <g key={`${row.id}-${year}`}>
@@ -331,6 +338,8 @@ export function TaxDragByYearChart({
                 ))}
                 <li className="text-faint">
                   {metric === "effective_tax" ? "% of portfolio value" : "tax $"}
+                  {" · "}
+                  {TAX_DRAG_NA_LABEL} = unmatched
                 </li>
               </ul>
               {onUnitChange ? (
@@ -385,8 +394,8 @@ export function TaxDragByYearChart({
       </header>
       <div className="mt-3">{plot}</div>
       <p className="mt-2 text-[10px] leading-relaxed text-faint">
-        Calendar years · {metric === "tax_dollars" ? "tax $" : "effective tax %"} ·
-        gaps stay empty
+        Calendar years · {metric === "tax_dollars" ? "tax $" : "effective tax %"} ·{" "}
+        {TAX_DRAG_NA_LABEL} = unmatched year · 0 = no tax drag
         {sample ? " · demo" : ""}
       </p>
     </article>
