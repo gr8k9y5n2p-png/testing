@@ -567,9 +567,9 @@ Goal: for **existing US-domiciled adapters**, ingest every **mutual fund and ETF
 
 | Family | Before (tickers / year) | After |
 | --- | --- | --- |
-| MFS | 2021–2024:2 / 2025:175 / 2026:2 | **2021:13** / **2022:12** / **2023:11** / **2024:12** / 2025:175+12 paid / **2026:3** |
-| Northern Trust | 2022–2024:3 / 2025:22 | **2021:19** / 2022–2024:3 / 2025:22 |
-| Macquarie | 2024:3 / 2025:21 | **2023:20** / 2024:3 / 2025:21 |
+| MFS | 2021–2024:2 / 2025:175 / 2026:2 | **2021:13** / **2022:12** / **2023:11** / **2024:12** / **2025:180** / **2026:3** |
+| Northern Trust | 2022–2024:3 / 2025:22 | **2021:19** / 2022–2024:3 / 2025:22 (24 unique tickers) |
+| Macquarie | 2024:3 / 2025:21 | **2023:20** / 2024:3 / 2025:21 (26 unique tickers) |
 | Fidelity | 2024:350 / 2025:349 / 2026:15 | unchanged (2021–2023 HPDY SPA) |
 | American Century | 2022:266 / 2023:350 / 2025:389 | unchanged (2021/2024 siblings 404) |
 | Artisan | 2024:46 / 2025:51 / 2026:2 | unchanged (2021–2023 ICI not column-safe) |
@@ -653,7 +653,7 @@ Goal: for **existing US-domiciled adapters**, ingest every **mutual fund and ETF
 
 **Large families still under 50 MF/ETF tickers (name-heavy books or gated):** BlackRock 44 (OEF book has no ticker column), American Funds 22, Invesco 11, plus every under-50-fund family above. Official books are fund-level — tickers were not invented.
 
-**Ranks 31–40 still under 50 (public book lists fewer than 50, or gated):** Principal 2 (GetFile cover only; 2023–2025 product-page paid YE), Thrivent 13 (full paying HTML), Hartford 25 (full paying PDF), Macquarie **~25** (2025 Class A paying PDF + 2023 CGE-RET-ACT full paying book), First Eagle **40** (full 2024 share-class paid + 2025 estimate; book lists ~13 strategies / 40 classes, not 50+), GMO 29 (full Trust PDF), Calamos 13, Wasatch 13.
+**Ranks 31–40 still under 50 (public book lists fewer than 50, or gated):** Principal 2 (GetFile cover only; 2023–2025 product-page paid YE), Thrivent 13 (full paying HTML), Hartford 25 (full paying PDF), Macquarie **26** (2025 Class A paying PDF + 2023 CGE-RET-ACT full paying book), First Eagle **40** (full 2024 share-class paid + 2025 estimate; book lists ~13 strategies / 40 classes, not 50+), GMO 29 (full Trust PDF), Calamos 13, Wasatch 13.
 
 **Handoff (ranks 1–40 only):** remaining unlocks are gated (SSGA XLSX, JPM broader YE, GS/PIMCO/UBS/Franklin/Schwab HTML, MSIM open-end PDF, Capital Group ticker column, Fidelity 2021–2023 HPDY SPA, ACI 2021/2024 PDFs). Artisan 2021–2023 ICI PDFs exist but token order / Box 1a breakdown is not column-safe. MFS fly PDFs remain current-year only (10-year Excel now covers additional official Class A pages). Do not expand ranks 41–110. Do not expand Amundi. SMAs / CEFs stay out of the 50-fund bar.
 
