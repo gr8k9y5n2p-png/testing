@@ -190,6 +190,27 @@ def test_coverage_exposes_estimate_feed_readiness(session) -> None:
     diamond = by_slug["diamond_hill"]
     assert diamond.estimate_feed_ready is True
     assert diamond.history_years == [2024, 2025]
+    assert "DHLAX" in diamond.performance_tickers
+
+    guidestone = by_slug["guidestone"]
+    assert guidestone.estimate_feed_ready is True
+    assert "GGEZX" in guidestone.performance_tickers
+
+    baillie = by_slug["baillie_gifford"]
+    assert baillie.estimate_feed_ready is True
+    assert "BGAKX" in baillie.performance_tickers
+
+    brandes = by_slug["brandes"]
+    assert brandes.estimate_feed_ready is True
+    assert "BGVIX" in brandes.performance_tickers
+
+    fam = by_slug["fam"]
+    assert fam.estimate_feed_ready is True
+    assert "FAMVX" in fam.performance_tickers
+
+    driehaus = by_slug["driehaus"]
+    assert driehaus.estimate_feed_ready is True
+    assert "DMCRX" in driehaus.performance_tickers
 
     first_trust = by_slug["first_trust"]
     assert first_trust.estimate_feed_ready is True

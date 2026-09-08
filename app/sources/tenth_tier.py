@@ -63,8 +63,12 @@ class ManningNapierSource(HtmlTableSource):
         "Pro-Blend Maximum Term Class I MNHIX LT $2.56840). "
         "Year-end record 12/15/2025; ex/reinvest 12/16/2025; pay 12/17/2025. "
         "December YE capital-gain rows only (monthly / quarterly income-only omitted). "
-        "Tickers attached only where previously identified (CEIIX / MNDFX / EXEYX / MNHIX); "
-        "remaining rows keep official CUSIP / class from the PDF."
+        "Tickers from official am.manning-napier.com/products/mutual-funds "
+        "(CEIIX / CEISX / CEIZX / MNDFX / MDFSX / MDVWX / MDVZX / EXEYX / MEYWX / "
+        "MNHAX / MNHYX / MHYWX / MHYZX / MNBIX / MNECX / MNBRX / MNBAX / MNBWX / "
+        "MNHIX / MNHCX / MNHRX / EXHAX / MNHWX / MNMIX / MNMCX / MNMRX / EXBAX / "
+        "MNMWX / RAIIX / RISAX / RAIWX / RAIRX / MSHIX / MSYSX / MSHWX / MSYZX). "
+        "Amounts and CUSIPs unchanged."
     )
     live_limitations = (
         "Paid book is PDF. Fixture transcribes December CG-paying CUSIP/class rows."

@@ -168,7 +168,8 @@ def test_full_book_harbor_voya_keep_heroes() -> None:
     assert len(nylife_tickers) >= 20
 
     touchstone_funds, touchstone_tickers = _funds_and_tickers(TouchstoneSource())
-    assert {"TVLAX", "TSEC", "SIO", "TUSI"} <= touchstone_tickers
+    assert {"TVLAX", "TSEC", "SIO", "TUSI", "TGVFX", "TEGAX", "TSNAX", "SAGWX"} <= touchstone_tickers
+    assert len(touchstone_tickers) >= 14
     assert len(touchstone_funds) >= 15
 
     victory_funds, victory_tickers = _funds_and_tickers(VictorySource())
@@ -295,11 +296,13 @@ def test_full_book_ranks_41_plus_thin_family_harvest() -> None:
     assert len(boston_tickers) >= 12
 
     manning_funds, manning_tickers = _funds_and_tickers(ManningNapierSource())
-    assert {"CEIIX", "MNDFX", "EXEYX", "MNHIX"} <= manning_tickers
+    assert {"CEIIX", "MNDFX", "EXEYX", "MNHIX", "RAIIX", "MNHAX", "MNBIX", "MNMIX"} <= manning_tickers
+    assert len(manning_tickers) >= 30
     assert len(manning_funds) >= 30
 
     buffalo_funds, buffalo_tickers = _funds_and_tickers(BuffaloSource())
-    assert {"BUFEX", "BUFGX", "BUFTX"} <= buffalo_tickers
+    assert {"BUFEX", "BUFGX", "BUFTX", "BUFOX", "BUFBX", "BUFDX", "BUFIX", "BUFMX"} <= buffalo_tickers
+    assert len(buffalo_tickers) >= 8
     assert len(buffalo_funds) >= 8
 
 
@@ -340,27 +343,32 @@ def test_full_book_wave20_thin_family_harvest() -> None:
     assert {"LLPFX", "LLSCX", "LLGLX"} <= longleaf_tickers
 
     guidestone_funds, guidestone_tickers = _funds_and_tickers(GuidestoneSource())
-    assert {"GGEZX", "GVEZX", "GSCZX"} <= guidestone_tickers
+    assert {"GGEZX", "GVEZX", "GSCZX", "GMZXX", "GVIZX", "GEIZX", "GFSZX", "GMGZX"} <= guidestone_tickers
+    assert len(guidestone_tickers) >= 20
     assert len(guidestone_funds) >= 15
 
     diamond_funds, diamond_tickers = _funds_and_tickers(DiamondHillSource())
-    assert {"DHLAX", "DHSCX", "DHPAX"} <= diamond_tickers
+    assert {"DHLAX", "DHSCX", "DHPAX", "DHMAX", "DHTAX", "DIAMX", "DHIAX"} <= diamond_tickers
+    assert len(diamond_tickers) >= 7
     assert len(diamond_funds) >= 7
 
     baillie_funds, baillie_tickers = _funds_and_tickers(BaillieGiffordSource())
-    assert {"BSGPX", "BGAKX", "BGESX"} <= baillie_tickers
+    assert {"BSGPX", "BGAKX", "BGESX", "BGCSX", "BINSX"} <= baillie_tickers
+    assert len(baillie_tickers) >= 5
     assert len(baillie_funds) >= 5
 
     brandes_funds, brandes_tickers = _funds_and_tickers(BrandesSource())
-    assert {"BGVIX", "BIIEX", "BSCMX"} <= brandes_tickers
+    assert {"BGVIX", "BIIEX", "BSCMX", "BISMX", "BEMIX"} <= brandes_tickers
+    assert len(brandes_tickers) >= 5
     assert len(brandes_funds) >= 5
 
     fam_funds, fam_tickers = _funds_and_tickers(FamSource())
-    assert {"FAMVX", "FAMWX", "FAMEX"} <= fam_tickers
+    assert {"FAMVX", "FAMWX", "FAMEX", "FAMFX", "FAMDX"} <= fam_tickers
 
     madison_funds, madison_tickers = _funds_and_tickers(MadisonSource())
     assert {"MAGG", "MSTI", "MNVAX"} <= madison_tickers
 
     driehaus_funds, driehaus_tickers = _funds_and_tickers(DriehausSource())
-    assert {"DMCRX", "DMAGX"} <= driehaus_tickers
+    assert {"DMCRX", "DMAGX", "DVSMX", "DNSMX", "DSMDX", "DIDEX", "DREGX"} <= driehaus_tickers
+    assert len(driehaus_tickers) >= 11
     assert len(driehaus_funds) >= 8

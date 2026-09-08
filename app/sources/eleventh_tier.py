@@ -59,14 +59,16 @@ class GuidestoneSource(HtmlTableSource):
         "Value Equity Investor GVEZX ST $0.056041 / LT $1.602626; "
         "Small Cap Equity Investor GSCZX ST $0.284974 / LT $1.191699). "
         "Estimates as of 9/30/2025; record 12/4/2025; pay 12/5/2025. "
-        "Live table is fund-level; Investor tickers attached only where previously "
-        "identified (GDMZX / GEQZX / GVEZX / GGEZX / GSCZX / GIEZX / GEMZX). "
-        "Remaining paying funds are name-only. All-dash Low-Duration / Medium-Duration / "
+        "Live table is fund-level; Investor tickers from official GuideStone Funds "
+        "product pages / SAI (GDMZX / GEQZX / GVEZX / GGEZX / GSCZX / GIEZX / GEMZX / "
+        "GMZXX / GVIZX / GEIZX / GIIZX / GFSZX / GFIZX / GGIZX / GCOZX / GGBZX / "
+        "GMTZX / GMWZX / GMHZX / GMFZX / GMGZX). Amounts unchanged. "
+        "All-dash Low-Duration / Medium-Duration / "
         "Global Bond / Global Real Estate / Impact Bond omitted."
     )
     live_limitations = (
         "Public HTML has fund-name ST/LT columns and no ticker column. "
-        "Fixture attaches public Investor tickers only where previously identified."
+        "Fixture attaches public Investor tickers from official product pages / SAI."
     )
 
     def pages(self) -> list[PageSpec]:

@@ -2778,6 +2778,12 @@ def test_seventh_tier_fixtures() -> None:
         if r.ticker == "DHPAX" and r.estimate_type == EstimateType.long_term_capital_gains
     )
     assert dhpax.amount == Decimal("2.698")
+    dhmax = next(
+        r
+        for r in diamond
+        if r.ticker == "DHMAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert dhmax.amount == Decimal("1.590")
 
     diamond_2024 = parse_distribution_html(
         (ROOT / "diamond_hill" / "2024_estimated_capital_gains.html").read_text(
@@ -2826,6 +2832,12 @@ def test_seventh_tier_fixtures() -> None:
         if r.ticker == "DMCRX" and r.estimate_type == EstimateType.long_term_capital_gains
     )
     assert dmcrx.amount == Decimal("2.073159")
+    dregx = next(
+        r
+        for r in driehaus
+        if r.ticker == "DREGX" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert dregx.amount == Decimal("0.796054")
 
     hotchkis = parse_distribution_html(
         (ROOT / "hotchkis" / "2025_year_end_distributions.html").read_text(
@@ -3068,6 +3080,12 @@ def test_ninth_tier_fixtures() -> None:
         if r.ticker == "BGAKX" and r.estimate_type == EstimateType.long_term_capital_gains
     )
     assert bgakx.amount == Decimal("4.8350")
+    bgcsx = next(
+        r
+        for r in bg
+        if r.ticker == "BGCSX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert bgcsx.amount == Decimal("1.6704")
 
     brandes = parse_distribution_html(
         (ROOT / "brandes" / "2025_estimated_capital_gains.html").read_text(
@@ -3082,6 +3100,12 @@ def test_ninth_tier_fixtures() -> None:
         if r.ticker == "BGVIX" and r.estimate_type == EstimateType.long_term_capital_gains
     )
     assert bgvix.amount == Decimal("3.88")
+    bismx = next(
+        r
+        for r in brandes
+        if r.ticker == "BISMX" and r.estimate_type == EstimateType.short_term_capital_gains
+    )
+    assert bismx.amount == Decimal("0.16")
 
     mairs = parse_distribution_html(
         (ROOT / "mairs_power" / "2025_capital_gains_and_dividends.html").read_text(
@@ -3150,6 +3174,18 @@ def test_ninth_tier_fixtures() -> None:
         if r.ticker == "FAMVX" and r.estimate_type == EstimateType.long_term_capital_gains
     )
     assert famvx.amount == Decimal("4.8682")
+    famfx = next(
+        r
+        for r in fam
+        if r.ticker == "FAMFX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert famfx.amount == Decimal("0.773")
+    famdx = next(
+        r
+        for r in fam
+        if r.ticker == "FAMDX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert famdx.amount == Decimal("0.773")
 
     meridian = parse_distribution_html(
         (ROOT / "meridian" / "2025_final_distributions.html").read_text(
@@ -3209,6 +3245,12 @@ def test_tenth_tier_fixtures() -> None:
         if r.ticker == "MNHIX" and r.estimate_type == EstimateType.long_term_capital_gains
     )
     assert mnhix.amount == Decimal("2.56840")
+    raiix = next(
+        r
+        for r in manning
+        if r.ticker == "RAIIX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert raiix.amount == Decimal("0.10760")
 
     westwood = parse_distribution_html(
         (ROOT / "westwood" / "2025_estimated_capital_gains.html").read_text(
@@ -3346,6 +3388,22 @@ def test_eleventh_tier_fixtures() -> None:
         if r.ticker == "GGEZX" and r.estimate_type == EstimateType.long_term_capital_gains
     )
     assert ggezx.amount == Decimal("3.279591")
+    gmzxx = next(
+        r
+        for r in guidestone
+        if r.ticker == "GMZXX" and r.estimate_type == EstimateType.short_term_capital_gains
+    )
+    assert gmzxx.amount == Decimal("0.000031")
+    assert {r.ticker for r in guidestone if r.ticker} >= {
+        "GGEZX",
+        "GVEZX",
+        "GSCZX",
+        "GMZXX",
+        "GVIZX",
+        "GEIZX",
+        "GFSZX",
+        "GMGZX",
+    }
 
     value_line = parse_distribution_html(
         (ROOT / "value_line" / "2025_year_end_distributions.html").read_text(

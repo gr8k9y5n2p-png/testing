@@ -65,14 +65,14 @@ class BaillieGiffordSource(HtmlTableSource):
         "Global Alpha Equities BGAKX LT $4.8350; "
         "International Growth BGESX LT $0.7461). "
         "Record 12/26/2025; ex/pay 12/29/2025. The PDF is fund-level; Institutional / "
-        "Class K tickers attached only where previously identified "
-        "(BSGPX / BGAKX / BGESX). EAFE Plus All Cap LT $1.6704 and International Alpha "
-        "LT $1.3236 are name-only. All-dash China / Emerging Markets / Concentrated "
+        "Class K tickers from official Baillie Gifford Funds prospectus "
+        "(BSGPX / BGCSX / BGAKX / BINSX / BGESX). Amounts unchanged. "
+        "All-dash China / Emerging Markets / Concentrated "
         "Growth / Long Term Global Growth / U.S. Equity Growth omitted."
     )
     live_limitations = (
         "Estimate book is PDF. Fixture transcribes public Institutional / Class K "
-        "identifiers only where previously identified; remaining payers are name-only."
+        "identifiers from the official prospectus."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -105,13 +105,12 @@ class BrandesSource(HtmlTableSource):
         "International Equity BIIEX ST $0.04 / LT $0.95; "
         "Small Cap Value BSCMX ST $0.32 / LT $0.49). "
         "Record 12/09/2025; ex/pay 12/10/2025. The PDF is fund-level; Class I tickers "
-        "attached only where previously identified. International Small Cap "
-        "(name-only ST $0.16 / income $0.28) and Emerging Markets Value income-only "
-        "(name-only $0.06) added. Tax-loss Core Plus / SMART omitted."
+        "from official brandes.com fund pages (BISMX / BGVIX / BIIEX / BEMIX / BSCMX). "
+        "Amounts unchanged. Tax-loss Core Plus / SMART omitted."
     )
     live_limitations = (
         "Estimate book is PDF. Fixture transcribes public Class I identifiers "
-        "only where previously identified; remaining payers are name-only."
+        "from official brandes.com fund pages."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -270,10 +269,11 @@ class FamSource(HtmlTableSource):
         "Public 2025 paid HTML: https://fenimoreasset.com/resources/fam-funds-tax-center/ "
         "(Value Investor FAMVX / Institutional FAMWX LT $4.8682; "
         "Dividend Focus Investor FAMEX LT $1.9884 / income $0.017; "
-        "Small Cap Investor FAMDX LT $0.773). "
+        "Small Cap Investor FAMFX / Institutional FAMDX LT $0.773). "
         "Record 12/29/2025; ex/pay 12/30/2025. Published $0.00 stored. "
-        "The HTML is class-level without tickers; tickers are public Investor / "
-        "Institutional identifiers. Institutional Small Cap ticker was not printed — name-only."
+        "The HTML is class-level without tickers; tickers from official "
+        "fenimoreasset.com product pages. Prior FAMDX-on-Investor assignment "
+        "corrected to official Investor FAMFX / Institutional FAMDX."
     )
     live_limitations = (
         "Live HTML is public but class-name rows have no ticker column. Fixture fallback."

@@ -168,8 +168,8 @@ class DiamondHillSource(HtmlTableSource):
         "(e.g. Small Cap DHSCX LT $1.393 / 5.46% of NAV; Mid Cap DHPAX LT $2.698 / "
         "14.46%; Large Cap DHLAX ST $0.001 / LT $1.829 / 5.45%). "
         "Record 12/11/2025; ex 12/12/2025; pay 12/15/2025. "
-        "The PDF is fund-level; Investor tickers attached only where previously "
-        "identified (DHSCX / DHPAX / DHLAX); remaining paying funds are name-only. "
+        "The PDF is fund-level; Investor tickers from official diamond-hill.com "
+        "product pages (DHSCX / DHMAX / DHPAX / DHLAX / DHTAX / DIAMX / DHIAX). "
         "Loss-carryforward bond funds omitted. "
         "Official 2024 estimate sibling "
         "https://www.diamond-hill.com/sitefiles/live/documents/distributions/"
@@ -257,12 +257,13 @@ class DriehausSource(HtmlTableSource):
         "(e.g. Micro Cap Growth DMCRX ST $0.079978 / LT $2.073159; "
         "Global DMAGX ST $0.776804 / LT $1.422216). "
         "Record 12/17/2025; ex/pay 12/18/2025. Published $0.00 stored. "
-        "Tickers attached only where previously identified (DMCRX / DMAGX); "
-        "remaining printed funds are name-only."
+        "Tickers from official driehaus.com fund pages / SEC series list "
+        "(DMCRX / DVSMX / DNSMX / DSMDX / DRIOX / DIDEX / DREGX / DIEMX / DRESX / "
+        "DEVDX / DMAGX). Amounts unchanged."
     )
     live_limitations = (
         "Year-end book is PDF. Fixture transcribes the official full book; "
-        "tickers only where previously identified."
+        "tickers from official product pages / SEC series list."
     )
 
     def pages(self) -> list[PageSpec]:

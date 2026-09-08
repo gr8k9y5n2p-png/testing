@@ -282,6 +282,12 @@ PERFORMANCE_TICKERS: dict[str, tuple[str, ...]] = {
     "kinetics": ("WWNPX",),
     "meridian": ("MERDX",),
     "marsico": ("MFOCX",),
+    "guidestone": ("GGEZX",),
+    "diamond_hill": ("DHLAX",),
+    "baillie_gifford": ("BGAKX",),
+    "brandes": ("BGVIX",),
+    "fam": ("FAMVX",),
+    "driehaus": ("DMCRX",),
 }
 
 

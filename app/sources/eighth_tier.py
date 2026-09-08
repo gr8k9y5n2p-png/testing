@@ -161,7 +161,8 @@ class BuffaloSource(HtmlTableSource):
         "Growth Investor BUFGX ST $0.04585 / LT $2.22250; "
         "Mid Cap Discovery Investor BUFTX LT $3.74685). "
         "CG record/pay 12/04–12/05/2025. The PDF is class-level without tickers; "
-        "Investor tickers attached only where previously identified (BUFEX / BUFGX / BUFTX). "
+        "Investor tickers from official buffalofunds.com product pages / SAI "
+        "(BUFEX / BUFOX / BUFBX / BUFGX / BUFDX / BUFIX / BUFTX / BUFMX). "
         "High Yield income-only / Small Cap Growth all-dash omitted."
     )
     live_limitations = (
