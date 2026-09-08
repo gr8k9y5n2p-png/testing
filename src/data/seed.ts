@@ -1,4 +1,10 @@
-import type { FundCategory, FundEstimate, FundFamily } from "./types";
+import { distributionBucket } from "./distribution-bucket";
+import type {
+  FundCategory,
+  FundEstimate,
+  FundFamily,
+  PaidDistributionEvent,
+} from "./types";
 import { roundTo } from "./queries";
 
 type SeedInput = {
@@ -13,8 +19,40 @@ type SeedInput = {
   estimatedDistributionPctNav: number;
   publishedAt: string;
   asOfDate: string;
+  recordDate?: string | null;
+  exDate?: string | null;
+  payableDate?: string | null;
+  publicationStage?: string | null;
   distributionYear?: number;
+  paidHistory?: PaidDistributionEvent[];
 };
+
+function yearEndCalendar(year: number): {
+  recordDate: string;
+  exDate: string;
+  payableDate: string;
+} {
+  return {
+    recordDate: `${year}-12-12`,
+    exDate: `${year}-12-15`,
+    payableDate: `${year}-12-17`,
+  };
+}
+
+function midyearCalendar(asOfDate: string): {
+  recordDate: string;
+  exDate: string;
+  payableDate: string;
+} {
+  const [year, month] = asOfDate.split("-");
+  const y = Number(year) || 2026;
+  const m = month ?? "06";
+  return {
+    recordDate: `${y}-${m}-13`,
+    exDate: `${y}-${m}-16`,
+    payableDate: `${y}-${m}-18`,
+  };
+}
 
 function incomeWeight(category: FundCategory): number {
   switch (category) {
@@ -36,6 +74,32 @@ function fund(input: SeedInput): FundEstimate {
   const ordinaryWeight = incomeWeight(input.category);
   const estimatedOrdinaryIncome = roundTo(amount * ordinaryWeight, 4);
   const estimatedCapitalGains = roundTo(amount - estimatedOrdinaryIncome, 4);
+  const midyear = /-\d{2}-/.test(input.asOfDate) && input.asOfDate.slice(5, 7) === "06";
+  const calendar = midyear
+    ? midyearCalendar(input.asOfDate)
+    : yearEndCalendar(distributionYear);
+  const publicationStage =
+    input.publicationStage ?? (midyear ? "paid" : "preliminary_estimate");
+  const recordDate = input.recordDate ?? calendar.recordDate;
+  const exDate = input.exDate ?? calendar.exDate;
+  const payableDate = input.payableDate ?? calendar.payableDate;
+  const prior = yearEndCalendar(distributionYear - 1);
+  const priorAmount = roundTo(amount * 0.88, 4);
+  const priorOrdinary = roundTo(priorAmount * ordinaryWeight, 4);
+  const paidHistory = input.paidHistory ?? [
+    {
+      asOfDate: `${distributionYear - 1}-12-15`,
+      recordDate: prior.recordDate,
+      exDate: prior.exDate,
+      payableDate: prior.payableDate,
+      publicationStage: "paid",
+      estimatedDistributionAmount: priorAmount,
+      estimatedOrdinaryIncome: priorOrdinary,
+      estimatedCapitalGains: roundTo(priorAmount - priorOrdinary, 4),
+      estimatedDistributionPctNav: roundTo(input.estimatedDistributionPctNav * 0.88, 2),
+      distributionYear: distributionYear - 1,
+    },
+  ];
 
   return {
     ...input,
@@ -43,6 +107,18 @@ function fund(input: SeedInput): FundEstimate {
     estimatedDistributionAmount: amount,
     estimatedOrdinaryIncome,
     estimatedCapitalGains,
+    recordDate,
+    exDate,
+    payableDate,
+    publicationStage,
+    bucket: distributionBucket({
+      asOfDate: input.asOfDate,
+      recordDate,
+      exDate,
+      payableDate,
+      publicationStage,
+    }),
+    paidHistory,
   };
 }
 

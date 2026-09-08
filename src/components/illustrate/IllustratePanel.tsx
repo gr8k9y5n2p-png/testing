@@ -20,6 +20,7 @@ import {
   type IllustrateResponse,
   type TaxRates,
 } from "@/lib/illustrate/types";
+import { DistributionDateStrip } from "@/components/DistributionDateStrip";
 import { IllustrationResults } from "@/components/illustrate/IllustrationResults";
 import { PortfolioCoverageCard } from "@/components/illustrate/PortfolioCoverageCard";
 import { TaxRateFields } from "@/components/illustrate/TaxRateFields";
@@ -71,6 +72,20 @@ export function IllustratePanel({
           </p>
         ) : null}
       </div>
+
+      {selected ? (
+        <div className="mb-5 rounded-md border border-line bg-paper px-4 py-3">
+          <p className="text-sm font-medium text-ink">
+            {selected.ticker} · {selected.fundName}
+          </p>
+          <DistributionDateStrip
+            fund={selected}
+            showPayable
+            showStage
+            className="mt-1.5"
+          />
+        </div>
+      ) : null}
 
       {selected ? (
         <IllustrationWorkspace key={selected.id} fund={selected} />
@@ -260,7 +275,7 @@ function IllustrationWorkspace({ fund }: { fund: FundEstimateView }) {
         ) : result ? (
           <div className="space-y-4">
             {portfolio ? <PortfolioCoverageCard result={portfolio} /> : null}
-            <IllustrationResults result={result} />
+            <IllustrationResults result={result} fund={fund} />
           </div>
         ) : null}
       </div>

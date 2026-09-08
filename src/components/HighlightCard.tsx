@@ -1,10 +1,7 @@
 import type { FundEstimateView } from "@/data/types";
 import { DeltaBadge } from "@/components/DeltaBadge";
-import {
-  formatCompactDate,
-  formatPct,
-  formatUsd,
-} from "@/lib/format";
+import { DistributionDateStrip } from "@/components/DistributionDateStrip";
+import { formatCompactDate, formatPct, formatUsd } from "@/lib/format";
 
 type Variant = "recent" | "largest" | "outliers";
 
@@ -66,10 +63,16 @@ export function HighlightCard({
                 </div>
                 <p className="shrink-0 text-right font-mono text-sm text-ink">
                   {variant === "recent"
-                    ? formatCompactDate(fund.publishedAt)
+                    ? formatCompactDate(fund.asOfDate)
                     : formatPct(fund.estimatedDistributionPctNav)}
                 </p>
               </div>
+              <DistributionDateStrip
+                fund={fund}
+                compact
+                showPayable={false}
+                className="mt-1.5"
+              />
               {variant === "largest" ? (
                 <p className="mt-1 text-xs text-muted">
                   {formatUsd(fund.estimatedDistributionAmount, 4)} / share
@@ -125,6 +128,12 @@ function OutlierGroup({
                 </div>
                 <DeltaBadge fund={fund} compact />
               </div>
+              <DistributionDateStrip
+                fund={fund}
+                compact
+                showPayable={false}
+                className="mt-1.5"
+              />
             </li>
           ))}
         </ul>

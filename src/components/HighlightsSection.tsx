@@ -26,8 +26,8 @@ export function HighlightsSection({ highlights }: { highlights: HighlightSets })
       <div className="grid gap-4 lg:grid-cols-3">
         <HighlightCard
           title="Most recent"
-          metricLabel="Published date"
-          description="Newest manager estimate publication dates."
+          metricLabel="Announced"
+          description="Newest announced (as_of) upcoming estimates — record and ex-div on each row."
           funds={highlights.mostRecent}
           variant="recent"
         />
