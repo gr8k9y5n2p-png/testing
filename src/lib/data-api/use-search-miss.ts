@@ -2,9 +2,9 @@
 
 import { useEffect, useRef } from "react";
 import {
-  looksLikeExactTicker,
   noticeForTickerRequest,
   requestTickerOnSearchMiss,
+  shouldReportSearchMiss,
 } from "@/lib/data-api/request-ticker";
 
 const SEARCH_MISS_DEBOUNCE_MS = 650;
@@ -15,21 +15,26 @@ const SEARCH_MISS_DEBOUNCE_MS = 650;
  */
 export function useSearchMissRequest(
   query: string,
-  hasMatch: boolean,
-  enabled: boolean,
+  resultCount: number,
+  tickerInUniverse: boolean,
   onNotice?: (message: string) => void,
 ): void {
   const onNoticeRef = useRef(onNotice);
-
-  const shouldRequest =
-    enabled && looksLikeExactTicker(query) && !hasMatch;
 
   useEffect(() => {
     onNoticeRef.current = onNotice;
   }, [onNotice]);
 
   useEffect(() => {
-    if (!shouldRequest) return;
+    if (
+      !shouldReportSearchMiss({
+        query,
+        resultCount,
+        tickerInUniverse,
+      })
+    ) {
+      return;
+    }
     const handle = window.setTimeout(() => {
       void requestTickerOnSearchMiss(query).then((result) => {
         if (!result) return;
@@ -38,5 +43,5 @@ export function useSearchMissRequest(
       });
     }, SEARCH_MISS_DEBOUNCE_MS);
     return () => window.clearTimeout(handle);
-  }, [query, shouldRequest]);
+  }, [query, resultCount, tickerInUniverse]);
 }

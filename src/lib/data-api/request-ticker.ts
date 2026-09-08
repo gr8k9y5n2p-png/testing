@@ -81,6 +81,19 @@ export function looksLikeExactTicker(query: string | null | undefined): boolean 
   return TICKER_SYMBOL.test(trimmed.toUpperCase());
 }
 
+/** Exact ticker, empty result set, and not already in the local universe. */
+export function shouldReportSearchMiss(input: {
+  query: string;
+  resultCount: number;
+  tickerInUniverse: boolean;
+}): boolean {
+  return (
+    looksLikeExactTicker(input.query) &&
+    input.resultCount === 0 &&
+    !input.tickerInUniverse
+  );
+}
+
 export function toRequestTickerBody(
   input: TickerRequestInput,
 ): { ok: true; body: TickerRequestBody } | { ok: false; error: "invalid_ticker" } {

@@ -39,9 +39,9 @@ export function FundPicker({
   }, [funds, query]);
 
   useSearchMissRequest(
-    query,
-    matches.length > 0,
-    reportSearchMiss && query.trim().length > 0,
+    reportSearchMiss ? query : "",
+    matches.length,
+    false,
     onNotice,
   );
 

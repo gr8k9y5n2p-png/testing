@@ -9,6 +9,7 @@ import {
   requestTicker,
   requestTickerOnSearchMiss,
   resetTickerRequestDedupe,
+  shouldReportSearchMiss,
   TICKER_REQUEST,
   tickerRequestFetchInit,
   tickerRequestUrl,
@@ -36,6 +37,41 @@ describe("ticker request normalize", () => {
     assert.equal(isValidTickerSymbol("AB1"), false);
     assert.equal(isValidTickerSymbol("AB-CD"), false);
     assert.equal(isValidTickerSymbol("AMCPX extra"), false);
+  });
+
+  it("reports a miss only for an exact ticker with no local row", () => {
+    assert.equal(
+      shouldReportSearchMiss({
+        query: "ZZZZY",
+        resultCount: 0,
+        tickerInUniverse: false,
+      }),
+      true,
+    );
+    assert.equal(
+      shouldReportSearchMiss({
+        query: "AMCPX",
+        resultCount: 0,
+        tickerInUniverse: true,
+      }),
+      false,
+    );
+    assert.equal(
+      shouldReportSearchMiss({
+        query: "growth fund",
+        resultCount: 0,
+        tickerInUniverse: false,
+      }),
+      false,
+    );
+    assert.equal(
+      shouldReportSearchMiss({
+        query: "ZZZZY",
+        resultCount: 3,
+        tickerInUniverse: false,
+      }),
+      false,
+    );
   });
 
   it("treats only a single ticker token as an exact ticker", () => {

@@ -32,20 +32,14 @@ export function Dashboard({
   );
 
   const isPending = filters !== deferredFilters;
-  const query = filters.query ?? "";
-  const exactTicker = looksLikeExactTicker(query);
+  const settledQuery = deferredFilters.query ?? "";
   const inUniverse = useMemo(() => {
-    if (!exactTicker) return false;
-    const key = normalizeTickerSymbol(query);
+    if (!looksLikeExactTicker(settledQuery)) return false;
+    const key = normalizeTickerSymbol(settledQuery);
     return funds.some((fund) => fund.ticker.toUpperCase() === key);
-  }, [exactTicker, funds, query]);
+  }, [funds, settledQuery]);
 
-  useSearchMissRequest(
-    query,
-    results.length > 0 || inUniverse,
-    !isPending,
-    onNotice,
-  );
+  useSearchMissRequest(settledQuery, results.length, inUniverse, onNotice);
 
   const hasActiveFilters = Boolean(
     filters.query?.trim() || filters.family || filters.category || filters.year,
