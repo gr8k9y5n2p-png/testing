@@ -1090,6 +1090,23 @@ def test_third_tier_fixtures() -> None:
     assert twcgx_2023_st.amount == Decimal("0.0349")
     assert len({r.ticker for r in aci_2023 if r.ticker}) >= 300
 
+    aci_2022 = parse_distribution_html(
+        (ROOT / "american_century" / "2022_estimated_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://aci-2022",
+        fund_family="American Century",
+    )
+    twcgx_2022 = next(
+        r
+        for r in aci_2022
+        if r.ticker == "TWCGX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert twcgx_2022.amount == Decimal("0.7247")
+    assert twcgx_2022.publication_stage == PublicationStage.preliminary_estimate
+    assert str(twcgx_2022.as_of) == "2022-09-30"
+    assert len({r.ticker for r in aci_2022 if r.ticker}) >= 250
+
     twcgx_paid = next(
         r
         for r in aci_paid
@@ -1128,6 +1145,27 @@ def test_third_tier_fixtures() -> None:
         if r.ticker == "MIGHX" and r.estimate_type == EstimateType.long_term_capital_gains
     )
     assert mighx_paid.amount == Decimal("4.20618")
+
+    mighx_years = {}
+    for year, fname, expected in (
+        (2024, "2024_paid_year_end.html", Decimal("3.30240")),
+        (2023, "2023_paid_year_end.html", Decimal("1.38597")),
+        (2022, "2022_paid_year_end.html", Decimal("1.28192")),
+        (2021, "2021_paid_year_end.html", Decimal("3.35892")),
+    ):
+        rows = parse_distribution_html(
+            (ROOT / "mfs" / fname).read_text(encoding="utf-8"),
+            source_url=f"fixture://mfs-{year}",
+            fund_family="MFS Investment Management",
+        )
+        lt = next(
+            r
+            for r in rows
+            if r.ticker == "MIGHX" and r.estimate_type == EstimateType.long_term_capital_gains
+        )
+        assert lt.amount == expected
+        mighx_years[year] = str(lt.as_of)[:4]
+    assert mighx_years == {2024: "2024", 2023: "2023", 2022: "2022", 2021: "2021"}
 
     ab_2023 = parse_distribution_html(
         (ROOT / "ab" / "2023_estimated_capital_gains.html").read_text(encoding="utf-8"),
@@ -1223,6 +1261,36 @@ def test_fourth_tier_fixtures() -> None:
         if r.ticker == "PQIAX" and r.estimate_type == EstimateType.long_term_capital_gains
     )
     assert pqiax.amount == Decimal("3.3687")
+
+    principal_2024 = parse_distribution_html(
+        (ROOT / "principal" / "2024_paid_distributions.html").read_text(encoding="utf-8"),
+        source_url="fixture://principal-2024",
+        fund_family="Principal",
+    )
+    pqiax_2024 = next(
+        r
+        for r in principal_2024
+        if r.ticker == "PQIAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert pqiax_2024.amount == Decimal("3.6805")
+    pemgx_2024 = next(
+        r
+        for r in principal_2024
+        if r.ticker == "PEMGX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert pemgx_2024.amount == Decimal("1.3963")
+
+    principal_2023 = parse_distribution_html(
+        (ROOT / "principal" / "2023_paid_distributions.html").read_text(encoding="utf-8"),
+        source_url="fixture://principal-2023",
+        fund_family="Principal",
+    )
+    pqiax_2023 = next(
+        r
+        for r in principal_2023
+        if r.ticker == "PQIAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert pqiax_2023.amount == Decimal("0.2649")
 
     thrivent = parse_distribution_html(
         (ROOT / "thrivent" / "2025_paid_capital_gains.html").read_text(encoding="utf-8"),

@@ -158,9 +158,10 @@ class FidelitySource(HtmlTableSource):
         "https://institutional.fidelity.com/app/tabbed/products/FIIS_SP10_DPL6.html?navId=324 "
         "(full book: Dividends / ST / LT / Reinvest NAV). "
         "Verified 2026-09-07. FBGRX 2026 estimate LT $21.021 (as of 2026-07-31) "
-        "coexists with 2025 paid LT $5.07300 (ex 2025-09-12) and 2024 paid "
-        "LT $1.66900 (ex 2024-12-20) / $11.08100 (ex 2024-09-13) from the "
-        "Wayback id_ snapshot of FIIS_SP10_DPL6 captured 2025-03-21. "
+        "coexists with 2025 paid LT $5.07300 (ex 2025-09-12) and the full 2024 "
+        "paid DPL6 book from the Wayback id_ snapshot captured 2025-03-21 "
+        "(FBGRX Dec LT $1.66900 / Sep LT $11.08100; FCNTX Dec LT $0.85500; "
+        "FDGRX Dec LT $3.57500; 350 tickers). "
         "2021–2023 prior-year HTML is not in the CDX set (HPDY tool is SPA). "
         "Hub: https://www.fidelity.com/mutual-funds/information/overview"
     )

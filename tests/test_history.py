@@ -232,6 +232,15 @@ def test_fidelity_2024_prior_year_fbgrx() -> None:
     assert st_sep.amount == Decimal("0.00000")
     assert all(r.amount != Decimal("230.68") for r in fbgrx)
     assert all(r.amount != Decimal("204.17") for r in fbgrx)
+    fcntx_lt = next(
+        r
+        for r in paid
+        if r.ticker == "FCNTX"
+        and r.estimate_type == EstimateType.long_term_capital_gains
+        and str(r.ex_date) == "2024-12-06"
+    )
+    assert fcntx_lt.amount == Decimal("0.85500")
+    assert len({r.ticker for r in paid if r.ticker}) >= 300
 
 
 def test_invesco_2024_estimate_fixture() -> None:
@@ -410,7 +419,9 @@ def test_search_multi_year_top_families(client: TestClient) -> None:
     twcgx_types = {item["estimate_type"] for item in twcgx.json()["items"]}
     assert "long_term_capital_gains" in twcgx_types
     assert "total_capital_gains" in twcgx_types
-    assert {"2023", "2025"} <= {item["as_of"][:4] for item in twcgx.json()["items"] if item.get("as_of")}
+    assert {"2022", "2023", "2025"} <= {
+        item["as_of"][:4] for item in twcgx.json()["items"] if item.get("as_of")
+    }
 
     dodgx = client.get("/distributions", params={"fund_identifier": "DODGX", "page_size": 50})
     assert {"2021", "2022", "2023", "2024", "2025", "2026"} <= {
@@ -418,7 +429,9 @@ def test_search_multi_year_top_families(client: TestClient) -> None:
     }
 
     mighx = client.get("/distributions", params={"fund_identifier": "MIGHX", "page_size": 50})
-    assert {"2025", "2026"} <= {item["as_of"][:4] for item in mighx.json()["items"] if item.get("as_of")}
+    assert {"2021", "2022", "2023", "2024", "2025", "2026"} <= {
+        item["as_of"][:4] for item in mighx.json()["items"] if item.get("as_of")
+    }
 
     agrfx = client.get("/distributions", params={"fund_identifier": "AGRFX", "page_size": 20})
     assert {"2023", "2025"} <= {item["as_of"][:4] for item in agrfx.json()["items"] if item.get("as_of")}
@@ -430,6 +443,7 @@ def test_search_multi_year_top_families(client: TestClient) -> None:
 
     for family in (
         "john_hancock",
+        "principal",
         "hartford",
         "macquarie",
         "first_eagle",
@@ -442,6 +456,11 @@ def test_search_multi_year_top_families(client: TestClient) -> None:
     ):
         fetched = client.post("/ingest/fetch", json={"fund_family": family, "mode": "fixture"})
         assert fetched.status_code == 200, fetched.text
+
+    pqiax = client.get("/distributions", params={"fund_identifier": "PQIAX", "page_size": 50})
+    assert {"2023", "2024", "2025"} <= {
+        item["as_of"][:4] for item in pqiax.json()["items"] if item.get("as_of")
+    }
 
     tagrx = client.get("/distributions", params={"fund_identifier": "TAGRX", "page_size": 50})
     assert {"2022", "2023", "2024", "2025"} <= {

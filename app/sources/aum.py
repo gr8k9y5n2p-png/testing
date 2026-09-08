@@ -118,6 +118,8 @@ LARGE_AUM_TICKERS: frozenset[str] = frozenset(
         "WGROX",
         "HACAX",
         "NWHOX",
+        "PQIAX",
+        "PEMGX",
     }
 )
 

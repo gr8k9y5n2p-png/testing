@@ -195,8 +195,11 @@ class AmericanCenturySource(HtmlTableSource):
         "2023 full retail estimate book recovered from Wayback "
         "https://web.archive.org/web/20240807220342/https://res.americancentury.com/docs/estimated-distributions-september-aci-retail.pdf "
         "(title 2023 Estimated Distributions as of October 31, 2023; TWCGX ST $0.0349 / LT $2.4201 / 5.58% of NAV). "
+        "2022 official book is still live at "
+        "https://res.americancentury.com/2022-Estimated-Distributions_ACI-MFs-and-ETFs_final "
+        "(title 2022 Estimated Distributions as of September 30, 2022; TWCGX income $0.0037 / LT $0.7247 / 2.00% of NAV). "
         "Daily bond income lines skipped. 2024 unversioned retail PDF is the 2025 book; "
-        "2022/2021 sibling PDFs were not fetchable. Historical-distribution CSV is not public."
+        "2021 sibling PDF was not fetchable. Historical-distribution CSV is not public."
     )
     live_limitations = "Family HTML grid is JavaScript-rendered; the retail PDF is the parseable book."
 
@@ -215,6 +218,13 @@ class AmericanCenturySource(HtmlTableSource):
                     "https://res.americancentury.com/docs/estimated-distributions-september-aci-retail.pdf"
                 ),
                 fixture="2023_estimated_distributions.html",
+                live=False,
+                large_aum_only=False,
+            ),
+            PageSpec(
+                name="2022_estimated_distributions",
+                url="https://res.americancentury.com/2022-Estimated-Distributions_ACI-MFs-and-ETFs_final",
+                fixture="2022_estimated_distributions.html",
                 live=False,
                 large_aum_only=False,
             ),
@@ -307,8 +317,10 @@ class MfsSource(HtmlTableSource):
         "all-classes rows; MIGHX LT 8%–9%; published 0% stored). Tickers only "
         "MIGHX / MITTX — the PDF has no ticker column. Paid YE / midyear from "
         "product pages MIGHX / MITTX (2025 YE MIGHX LT $4.20618; 2026 midyear "
-        "LT $0.54043). 2024 mfs_cg_fly_2024.pdf 404. Earlier years are behind "
-        "a download control, not static HTML — skipped, not invented."
+        "LT $0.54043). Official 10-year Excel on those product pages "
+        "(.../10YearsDistribution/download) supplies December YE 2021–2024 "
+        "(MIGHX LT $3.35892 / $1.28192 / $1.38597 / $3.30240). "
+        "2024 mfs_cg_fly_2024.pdf 404. Fly PDFs remain current-year only."
     )
     live_limitations = "Estimates are PDF percent-of-NAV ranges. Fixture transcribes public rows."
 
@@ -337,6 +349,50 @@ class MfsSource(HtmlTableSource):
                     "mutual-funds/MIGHX-massachusetts-investors-growth-stock-fund.html"
                 ),
                 fixture="2026_midyear_paid.html",
+                live=False,
+                large_aum_only=True,
+            ),
+            PageSpec(
+                name="2024_paid_year_end",
+                url=(
+                    "https://www.mfs.com/MFSServices/products/v1/product/MIGHX/"
+                    "10YearsDistribution/download?shareCode=A&productLineCode=WEB_FAMILYFUNDS"
+                    "&roleCode=usinv&locationCode=us&locale=en_US"
+                ),
+                fixture="2024_paid_year_end.html",
+                live=False,
+                large_aum_only=True,
+            ),
+            PageSpec(
+                name="2023_paid_year_end",
+                url=(
+                    "https://www.mfs.com/MFSServices/products/v1/product/MIGHX/"
+                    "10YearsDistribution/download?shareCode=A&productLineCode=WEB_FAMILYFUNDS"
+                    "&roleCode=usinv&locationCode=us&locale=en_US"
+                ),
+                fixture="2023_paid_year_end.html",
+                live=False,
+                large_aum_only=True,
+            ),
+            PageSpec(
+                name="2022_paid_year_end",
+                url=(
+                    "https://www.mfs.com/MFSServices/products/v1/product/MIGHX/"
+                    "10YearsDistribution/download?shareCode=A&productLineCode=WEB_FAMILYFUNDS"
+                    "&roleCode=usinv&locationCode=us&locale=en_US"
+                ),
+                fixture="2022_paid_year_end.html",
+                live=False,
+                large_aum_only=True,
+            ),
+            PageSpec(
+                name="2021_paid_year_end",
+                url=(
+                    "https://www.mfs.com/MFSServices/products/v1/product/MIGHX/"
+                    "10YearsDistribution/download?shareCode=A&productLineCode=WEB_FAMILYFUNDS"
+                    "&roleCode=usinv&locationCode=us&locale=en_US"
+                ),
+                fixture="2021_paid_year_end.html",
                 live=False,
                 large_aum_only=True,
             ),

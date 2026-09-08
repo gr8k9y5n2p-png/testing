@@ -73,9 +73,11 @@ class PrincipalSource(HtmlTableSource):
         "that does not expose a scrapeable table. Public product pages publish HTML paid "
         "distribution history, e.g. Equity Income "
         "https://www.principalam.com/us/fund/pqiax "
-        "(2025-12-11 ST $0.1254 / LT $3.3687) and MidCap "
+        "(2025-12-11 ST $0.1254 / LT $3.3687; 2024-12-12 ST $0.0425 / LT $3.6805; "
+        "2023-12-13 LT $0.2649) and MidCap "
         "https://www.principalam.com/us/fund/pemgx "
-        "(2025-12-11 LT $2.4892). Fixture transcribes those public rows."
+        "(2025-12-11 LT $2.4892; 2024-12-12 LT $1.3963; 2023-12-13 LT $0.9475). "
+        "Fixture transcribes those public December YE rows."
     )
     live_limitations = (
         "Family estimate PDF is a GetFile/viewer shell. Product-page tables may put the date "
@@ -89,7 +91,21 @@ class PrincipalSource(HtmlTableSource):
                 url="https://www.principalam.com/us/fund/pqiax",
                 fixture="2025_paid_distributions.html",
                 live=True,
-            )
+            ),
+            PageSpec(
+                name="2024_paid_product_pages",
+                url="https://www.principalam.com/us/fund/pqiax",
+                fixture="2024_paid_distributions.html",
+                live=False,
+                large_aum_only=True,
+            ),
+            PageSpec(
+                name="2023_paid_product_pages",
+                url="https://www.principalam.com/us/fund/pqiax",
+                fixture="2023_paid_distributions.html",
+                live=False,
+                large_aum_only=True,
+            ),
         ]
 
 
@@ -314,7 +330,8 @@ class ArtisanSource(HtmlTableSource):
         "any-month ST/LT rows; monthly non-December income omitted so illustration "
         "does not sum. 2024 sibling Year-End-Tax-Reporting-Information-2024.pdf "
         "is column-safe with LT at token 11 (one Box 1b column omitted vs 31-token; "
-        "ARTIX ST $0.456695 / LT $2.067175). 2022–2023 sibling PDFs still vary / wrap. "
+        "ARTIX ST $0.456695 / LT $2.067175). 2021–2023 sibling PDFs are public but "
+        "transposed ICI (funds as columns; token order varies) — not column-safe. "
         "Year selector for older HTML YE tables is JavaScript — skip SPA. "
         "NRA / DRD PDFs are tax-character layouts, not ingested as CG."
     )
