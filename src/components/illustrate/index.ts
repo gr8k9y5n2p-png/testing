@@ -61,6 +61,14 @@ export type {
 export { PortfolioCompare } from "@/components/illustrate/PortfolioCompare";
 export type { PortfolioCompareProps } from "@/components/illustrate/PortfolioCompare";
 export { HomepagePortfolioCompare } from "@/components/illustrate/HomepagePortfolioCompare";
+export { TickerHistoryLink } from "@/components/illustrate/TickerHistoryLink";
+export {
+  FUND_HISTORY_HASH,
+  firstSearchParam,
+  fundHistoryPath,
+  growthFundFromTicker,
+  resolveFundView,
+} from "@/lib/illustrate/fund-history";
 export { postIllustratePortfolioCompare } from "@/lib/illustrate/portfolio-compare-client";
 export {
   exportToPdf,

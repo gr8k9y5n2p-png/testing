@@ -324,8 +324,9 @@ export function TaxDragByYearChart({
           <h3 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-faint">
             {title}
           </h3>
-          {fundSeries.length > 0 ? (
+          {fundSeries.length > 0 || upcomingSummary ? (
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <UpcomingChip summary={upcomingSummary} />
               <ul className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-muted">
                 {fundSeries.map((row) => (
                   <li key={row.id} className="flex items-center gap-1.5">

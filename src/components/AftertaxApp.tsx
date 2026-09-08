@@ -20,6 +20,11 @@ import { STRIPE } from "@/lib/copy";
 import type { FundFamilyCoverage } from "@/lib/coverage";
 import { reportCoverageGap } from "@/lib/coverage";
 import { isFreemiumDisabled, useFreemium } from "@/lib/freemium";
+import {
+  FUND_HISTORY_HASH,
+  growthFundFromTicker,
+  resolveFundView,
+} from "@/lib/illustrate/fund-history";
 import { DEFAULT_START_DOLLARS } from "@/lib/performance/types";
 
 function scrollToId(id: string) {
@@ -46,12 +51,15 @@ export function AftertaxApp({
   facets,
   coverageFamilies,
   checkout = null,
+  ticker = null,
 }: {
   funds: FundEstimateView[];
   highlights: HighlightSets;
   facets: Facets;
   coverageFamilies: FundFamilyCoverage[];
   checkout?: CheckoutReturn;
+  /** Portfolio review drill-in. Preselects Growth + tax-drag for this ticker. */
+  ticker?: string | null;
 }) {
   return (
     <CoverageProvider families={coverageFamilies}>
@@ -60,6 +68,7 @@ export function AftertaxApp({
         highlights={highlights}
         facets={facets}
         checkout={checkout}
+        ticker={ticker}
       />
     </CoverageProvider>
   );
@@ -70,14 +79,21 @@ function AftertaxAppInner({
   highlights,
   facets,
   checkout = null,
+  ticker = null,
 }: {
   funds: FundEstimateView[];
   highlights: HighlightSets;
   facets: Facets;
   checkout?: CheckoutReturn;
+  ticker?: string | null;
 }) {
   const router = useRouter();
-  const [selected, setSelected] = useState<FundEstimateView | null>(null);
+  const focusedFund = useMemo(
+    () => (ticker ? resolveFundView(funds, ticker) ?? null : null),
+    [funds, ticker],
+  );
+  const [picked, setPicked] = useState<FundEstimateView | null>(null);
+  const selected = picked ?? focusedFund;
   const [paywallOpen, setPaywallOpen] = useState(
     checkout === "cancel" && !isFreemiumDisabled(),
   );
@@ -93,15 +109,33 @@ function AftertaxAppInner({
       router.replace("/portfolio");
       return;
     }
-    if (id === "fund-compare" || id === "illustrate" || id === "growth-and-tax") {
+    if (id === "fund-compare" || id === "illustrate" || id === FUND_HISTORY_HASH) {
       scrollToId(id);
     }
   }, [router]);
 
-  const seedFunds = useMemo(
-    () => (selected ? [toGrowthFund(selected)] : undefined),
-    [selected],
+  useEffect(() => {
+    if (!ticker) return;
+    if (focusedFund && !coverage.isLive(focusedFund.family)) {
+      void reportCoverageGap({
+        ticker: focusedFund.ticker,
+        fund_name: focusedFund.fundName,
+        fund_family: focusedFund.family,
+      });
+    }
+    scrollToId(FUND_HISTORY_HASH);
+  }, [coverage, focusedFund, ticker]);
+
+  const drillInFund = useMemo(
+    () => (ticker ? growthFundFromTicker(ticker, funds) : undefined),
+    [funds, ticker],
   );
+
+  const seedFunds = useMemo(() => {
+    if (picked) return [toGrowthFund(picked)];
+    if (drillInFund) return [drillInFund];
+    return selected ? [toGrowthFund(selected)] : undefined;
+  }, [drillInFund, picked, selected]);
 
   function selectFund(fund: FundEstimateView) {
     const result = freemium.trySearch(fund.ticker);
@@ -109,7 +143,7 @@ function AftertaxAppInner({
       setPaywallOpen(true);
       return;
     }
-    setSelected(fund);
+    setPicked(fund);
     if (!coverage.isLive(fund.family)) {
       void reportCoverageGap({
         ticker: fund.ticker,
@@ -163,10 +197,11 @@ function AftertaxAppInner({
       <section
         id="growth-and-tax"
         aria-label="Growth of dollars and tax drag"
-        className="mb-10"
+        className="mb-10 scroll-mt-20"
       >
         <GrowthAndTaxDragModule
-          funds={HOMEPAGE_GROWTH_FUNDS}
+          key={drillInFund?.ticker ?? "homepage"}
+          funds={drillInFund ? [drillInFund] : HOMEPAGE_GROWTH_FUNDS}
           seedFunds={seedFunds}
           startDollars={DEFAULT_START_DOLLARS}
         />

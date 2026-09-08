@@ -1,3 +1,4 @@
+import { TickerHistoryLink } from "@/components/illustrate/TickerHistoryLink";
 import { formatUsd } from "@/lib/format";
 import type { TaxImpactBar } from "@/lib/illustrate/portfolio-compare-map";
 
@@ -41,16 +42,7 @@ export function TaxImpactChart({
           No holdings to chart.
         </p>
       ) : (
-        <div
-          className="flex items-end gap-1.5 sm:gap-2"
-          role="img"
-          aria-label={bars
-            .map(
-              (bar) =>
-                `${bar.ticker}: ${formatUsd(bar.taxDollars, 0)} estimated tax on upcoming`,
-            )
-            .join(". ")}
-        >
+        <div className="flex items-end gap-1.5 sm:gap-2">
           {bars.map((bar) => {
             const heightPct =
               bar.taxDollars <= 0 ? 2 : Math.max(8, bar.share * 100);
@@ -59,25 +51,29 @@ export function TaxImpactChart({
                 key={bar.ticker}
                 className="flex min-w-0 flex-1 flex-col items-center gap-1"
               >
-                <span className="font-mono text-[10px] tabular-nums text-muted">
-                  {formatUsd(bar.taxDollars, 0)}
-                </span>
-                <div className="flex h-28 w-full items-end justify-center border-b border-line">
-                  <div
-                    title={`${bar.ticker}: ${formatUsd(bar.taxDollars, 0)}`}
-                    className="w-[68%] max-w-9 rounded-t-sm"
-                    style={{
-                      height: `${heightPct}%`,
-                      backgroundColor: bar.color,
-                    }}
-                  />
-                </div>
-                <span
-                  className="w-full truncate text-center font-mono text-[10px] leading-none text-ink"
-                  title={bar.ticker}
+                <div
+                  className="flex w-full flex-col items-center gap-1"
+                  role="img"
+                  aria-label={`${bar.ticker}: ${formatUsd(bar.taxDollars, 0)} estimated tax on upcoming`}
                 >
-                  {bar.ticker}
-                </span>
+                  <span className="font-mono text-[10px] tabular-nums text-muted">
+                    {formatUsd(bar.taxDollars, 0)}
+                  </span>
+                  <div className="flex h-28 w-full items-end justify-center border-b border-line">
+                    <div
+                      title={`${bar.ticker}: ${formatUsd(bar.taxDollars, 0)}`}
+                      className="w-[68%] max-w-9 rounded-t-sm"
+                      style={{
+                        height: `${heightPct}%`,
+                        backgroundColor: bar.color,
+                      }}
+                    />
+                  </div>
+                </div>
+                <TickerHistoryLink
+                  ticker={bar.ticker}
+                  className="w-full truncate text-center font-mono text-[10px] leading-none"
+                />
               </div>
             );
           })}
