@@ -64,7 +64,7 @@ describe("staggerEndLabels", () => {
         { id: "b", y: 11 },
         { id: "c", y: 12 },
       ],
-      { minY: 10, maxY: 20, minGap: 14 },
+      { minY: 10, maxY: 20, minGap: 18 },
     );
     assert.equal(placed, null);
   });

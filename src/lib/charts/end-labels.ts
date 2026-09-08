@@ -1,6 +1,7 @@
 /** Vertical collision-avoidance for growth-chart terminal labels. */
 
-export const END_LABEL_MIN_GAP = 14;
+/** 10px label + air. Tight enough for 6 funds, loose enough to stay readable. */
+export const END_LABEL_MIN_GAP = 18;
 
 export type EndLabelInput = {
   id: string;
