@@ -99,8 +99,13 @@ function tickerFromSide(side?: CompareSideIn | null, selectorsTicker?: string | 
   return raw.trim().toUpperCase();
 }
 
+const TAX_DRAG_TICKER_ALIASES: Record<string, string> = {
+  AMCAP: "AMCPX",
+};
+
 function taxRateFor(ticker: string, year: number): number | null {
-  const table = TAX_DRAG_BY_TICKER[ticker];
+  const key = TAX_DRAG_TICKER_ALIASES[ticker] ?? ticker;
+  const table = TAX_DRAG_BY_TICKER[key];
   if (table && year in table) return table[year];
   const sketch = YOY_SKETCH_YEARS.find((row) => row.year === year);
   if (!sketch) return null;
@@ -172,7 +177,9 @@ function mockYoyResponse(request: CompareRequest): CompareResponse {
 
   const fromYear = years[0] ?? 2021;
   const toYear = years[years.length - 1] ?? 2025;
-  const latestRate = taxRateFor(ticker, toYear);
+  const upcomingYear =
+    [...years].reverse().find((year) => taxRateFor(ticker, year) != null) ?? toYear;
+  const latestRate = taxRateFor(ticker, upcomingYear);
   const latestTax = latestRate == null ? null : latestRate * holding;
 
   return {
