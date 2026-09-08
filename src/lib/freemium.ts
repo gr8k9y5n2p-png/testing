@@ -5,6 +5,20 @@ import { FREE_SEARCH_LIMIT } from "@/lib/copy";
 
 const STORAGE_KEY = "aftertax.freemium.v1";
 
+/**
+ * Temporary beta unlock — revert before launch / freemium sprint.
+ *
+ * Soft-wall is off unless NEXT_PUBLIC_FREEMIUM_DISABLED is explicitly
+ * "false", "0", or "off". Unset, "true", and "1" all unlock so Eric can
+ * test without a Vercel env change. Bypass ignores stored counters too.
+ */
+export function isFreemiumDisabled(): boolean {
+  const raw = process.env.NEXT_PUBLIC_FREEMIUM_DISABLED;
+  if (raw == null || raw.trim() === "") return true;
+  const normalized = raw.trim().toLowerCase();
+  return normalized !== "false" && normalized !== "0" && normalized !== "off";
+}
+
 type FreemiumState = {
   tickers: string[];
   unlocked: boolean;
@@ -55,14 +69,19 @@ function getServerSnapshot(): FreemiumState {
 }
 
 export function useFreemium() {
+  const bypass = isFreemiumDisabled();
   const state = useSyncExternalStore(subscribe, read, getServerSnapshot);
-  const used = state.unlocked ? 0 : state.tickers.length;
-  const remaining = state.unlocked
-    ? Number.POSITIVE_INFINITY
-    : Math.max(0, FREE_SEARCH_LIMIT - used);
+  const used = bypass || state.unlocked ? 0 : state.tickers.length;
+  const remaining =
+    bypass || state.unlocked
+      ? Number.POSITIVE_INFINITY
+      : Math.max(0, FREE_SEARCH_LIMIT - used);
 
   const trySearch = useCallback(
     (ticker: string): { allowed: boolean; remaining: number; isNew: boolean } => {
+      if (isFreemiumDisabled()) {
+        return { allowed: true, remaining: Number.POSITIVE_INFINITY, isNew: false };
+      }
       const current = read();
       const normalized = ticker.toUpperCase();
       if (current.unlocked) {
@@ -95,9 +114,10 @@ export function useFreemium() {
 
   return {
     remaining: Number.isFinite(remaining) ? remaining : FREE_SEARCH_LIMIT,
-    unlimited: state.unlocked,
-    searchedTickers: state.tickers,
+    unlimited: bypass || state.unlocked,
+    searchedTickers: bypass ? [] : state.tickers,
     trySearch,
     unlockStub,
+    bypass,
   };
 }

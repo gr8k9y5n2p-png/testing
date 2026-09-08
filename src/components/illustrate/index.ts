@@ -3,6 +3,21 @@ export type { FundTaxDeltaCompareProps } from "@/components/illustrate/FundTaxDe
 export { TaxDeltaCompareCard } from "@/components/illustrate/TaxDeltaCompareCard";
 export { YoYTaxChart } from "@/components/illustrate/YoYTaxChart";
 export type { YoYTaxChartProps } from "@/components/illustrate/YoYTaxChart";
+export {
+  GrowthAndTaxDragModule,
+} from "@/components/illustrate/GrowthAndTaxDragModule";
+export type {
+  GrowthAndTaxDragModuleProps,
+  GrowthFundInput,
+} from "@/components/illustrate/GrowthAndTaxDragModule";
+export { MAX_GROWTH_FUNDS } from "@/lib/charts/series-colors";
+export { GrowthOfXChart } from "@/components/illustrate/GrowthOfXChart";
+export type { ChartUnit } from "@/components/illustrate/GrowthOfXChart";
+export {
+  TaxDragByYearChart,
+  TaxYoYChart,
+} from "@/components/illustrate/TaxDragByYearChart";
+export type { TaxDragByYearChartProps } from "@/components/illustrate/TaxDragByYearChart";
 export { toTaxDeltaCardModel } from "@/lib/illustrate/compare-map";
 export {
   computeYoyLine,
@@ -10,6 +25,19 @@ export {
   yoyBarsFromComparePeriods,
 } from "@/lib/illustrate/yoy-tax-chart";
 export type { YoYTaxChartModel, YoYTaxChartPoint } from "@/lib/illustrate/yoy-tax-chart";
+export {
+  taxDragLineFromPeriods,
+  toNegativeTaxDrag,
+  toTaxDragPeriods,
+  toUpcomingSummary,
+} from "@/lib/illustrate/tax-drag-chart";
+export type {
+  TaxDragFundSeries,
+  TaxDragLinePoint,
+  TaxDragMetric,
+  TaxDragYearPoint,
+  UpcomingSummary,
+} from "@/lib/illustrate/tax-drag-chart";
 export { postIllustrateCompare } from "@/lib/illustrate/compare-client";
 export type {
   CompareRequest,
@@ -35,3 +63,11 @@ export type {
   PortfolioFundOption,
   PortfolioHoldingDraft,
 } from "@/lib/illustrate/portfolio-compare-types";
+export {
+  fetchPerformance,
+  postPerformanceGrowth,
+} from "@/lib/performance/client";
+export type {
+  PerformanceGrowthRequest,
+  PerformanceResponse,
+} from "@/lib/performance/types";

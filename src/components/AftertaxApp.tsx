@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Facets, FundEstimateView, HighlightSets } from "@/data/types";
 import { Dashboard } from "@/components/Dashboard";
 import { DemoBanner } from "@/components/DemoBanner";
@@ -8,6 +8,10 @@ import { HighlightsSection } from "@/components/HighlightsSection";
 import { Hero } from "@/components/landing/Hero";
 import { FundCompareRail } from "@/components/illustrate/FundCompareRail";
 import { HomepagePortfolioCompare } from "@/components/illustrate/HomepagePortfolioCompare";
+import {
+  GrowthAndTaxDragModule,
+  type GrowthFundInput,
+} from "@/components/illustrate/GrowthAndTaxDragModule";
 import { IllustratePanel } from "@/components/illustrate/IllustratePanel";
 import { PaywallDialog } from "@/components/paywall/PaywallDialog";
 import { CoverageProvider, useCoverage } from "@/components/coverage/CoverageProvider";
@@ -15,7 +19,8 @@ import { Disclaimer } from "@/components/Disclaimer";
 import { STRIPE } from "@/lib/copy";
 import type { FundFamilyCoverage } from "@/lib/coverage";
 import { reportCoverageGap } from "@/lib/coverage";
-import { useFreemium } from "@/lib/freemium";
+import { isFreemiumDisabled, useFreemium } from "@/lib/freemium";
+import { DEFAULT_START_DOLLARS } from "@/lib/performance/types";
 
 function scrollToId(id: string) {
   requestAnimationFrame(() => {
@@ -25,6 +30,11 @@ function scrollToId(id: string) {
     });
   });
 }
+
+const HOMEPAGE_GROWTH_FUNDS: GrowthFundInput[] = [
+  { ticker: "AGTHX", label: "AGTHX", fundFamily: "American Funds" },
+  { ticker: "FCNTX", label: "FCNTX", fundFamily: "Fidelity" },
+];
 
 export type CheckoutReturn = "success" | "cancel" | null;
 
@@ -67,7 +77,9 @@ function AftertaxAppInner({
   checkout?: CheckoutReturn;
 }) {
   const [selected, setSelected] = useState<FundEstimateView | null>(null);
-  const [paywallOpen, setPaywallOpen] = useState(checkout === "cancel");
+  const [paywallOpen, setPaywallOpen] = useState(
+    checkout === "cancel" && !isFreemiumDisabled(),
+  );
   const [unlockMessage, setUnlockMessage] = useState<string | null>(
     checkout === "success" ? CHECKOUT_SUCCESS_MESSAGE : null,
   );
@@ -79,11 +91,17 @@ function AftertaxAppInner({
     if (
       id === "portfolio-compare" ||
       id === "fund-compare" ||
-      id === "illustrate"
+      id === "illustrate" ||
+      id === "growth-and-tax"
     ) {
       scrollToId(id);
     }
   }, []);
+
+  const seedFunds = useMemo(
+    () => (selected ? [toGrowthFund(selected)] : undefined),
+    [selected],
+  );
 
   function selectFund(fund: FundEstimateView) {
     const result = freemium.trySearch(fund.ticker);
@@ -99,7 +117,7 @@ function AftertaxAppInner({
         fund_family: fund.family,
       });
     }
-    scrollToId("illustrate");
+    scrollToId("growth-and-tax");
   }
 
   function openFundCompare() {
@@ -110,8 +128,13 @@ function AftertaxAppInner({
     document.getElementById("fund-search")?.focus();
   }
 
-  function openPortfolioCompare() {
-    scrollToId("portfolio-compare");
+  function openPortfolio() {
+    // Prefer PortfolioCompare when mounted; otherwise the homepage
+    // multi-fund growth + tax stack. Never open the paywall.
+    const target =
+      document.getElementById("portfolio-compare") ??
+      document.getElementById("growth-and-tax");
+    target?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   async function unlock() {
@@ -144,8 +167,20 @@ function AftertaxAppInner({
         unlimited={freemium.unlimited}
         onSelect={selectFund}
         onCompare={openFundCompare}
-        onImport={openPortfolioCompare}
+        onImport={openPortfolio}
       />
+
+      <section
+        id="growth-and-tax"
+        aria-label="Growth of dollars and tax drag"
+        className="mb-10"
+      >
+        <GrowthAndTaxDragModule
+          funds={HOMEPAGE_GROWTH_FUNDS}
+          seedFunds={seedFunds}
+          startDollars={DEFAULT_START_DOLLARS}
+        />
+      </section>
 
       {selected ? (
         <div className="mb-10 grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(20rem,26.25rem)]">
@@ -184,7 +219,7 @@ function AftertaxAppInner({
 
       <Disclaimer className="mt-8 text-xs leading-relaxed text-muted" />
       <PaywallDialog
-        open={paywallOpen}
+        open={paywallOpen && !freemium.bypass}
         remaining={freemium.remaining}
         onClose={() => setPaywallOpen(false)}
         onUnlock={() => {
@@ -205,4 +240,13 @@ function AftertaxAppInner({
       ) : null}
     </>
   );
+}
+
+function toGrowthFund(fund: FundEstimateView): GrowthFundInput {
+  return {
+    ticker: fund.ticker,
+    label: fund.ticker,
+    fundIdentifier: fund.ticker,
+    fundFamily: fund.family,
+  };
 }
