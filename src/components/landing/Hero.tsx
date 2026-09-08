@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { COPY, freeSearchLabel } from "@/lib/copy";
 import type { FundEstimateView } from "@/data/types";
 import { FundPicker } from "@/components/illustrate/FundPicker";
@@ -7,7 +8,6 @@ export function Hero({
   selected,
   onSelect,
   onCompare,
-  onImport,
   remaining,
   unlimited,
 }: {
@@ -15,7 +15,6 @@ export function Hero({
   selected: FundEstimateView | null;
   onSelect: (fund: FundEstimateView) => void;
   onCompare?: () => void;
-  onImport: () => void;
   remaining: number;
   unlimited: boolean;
 }) {
@@ -47,13 +46,12 @@ export function Hero({
               {COPY.compareCta}
             </button>
           ) : null}
-          <button
-            type="button"
-            onClick={onImport}
+          <Link
+            href="/portfolio"
             className="inline-flex h-10 items-center rounded-md border border-line px-4 text-sm text-ink hover:border-line-strong"
           >
             {COPY.importCta}
-          </button>
+          </Link>
         </div>
         <p className="font-mono text-xs text-faint" aria-live="polite">
           {unlimited ? "Unlimited searches" : freeSearchLabel(remaining)}
