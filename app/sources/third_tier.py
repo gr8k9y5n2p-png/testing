@@ -450,8 +450,9 @@ class AllianceBernsteinSource(HtmlTableSource):
         "is the full paying-fund book (AGRFX LT $16.36; Class A tickers only "
         "where previously identified). The unversioned FINAL_GEN-5796.pdf path now serves "
         "2025; 2024 was overwritten (not invented). 2023 book GEN–5796–1023 is "
-        "still in the public Wayback snapshot of that path "
-        "(AGRFX LT $6.95; APGAX LT $1.50)."
+        "the full paying-fund table from the public Wayback snapshot "
+        "20240422225619 of that path (AGRFX LT $6.95; APGAX LT $1.50; "
+        "ABASX Discovery Value ST $0.13 / LT $1.32)."
     )
     live_limitations = "Estimates are PDF. Fixture transcribes public Class A rows."
 
@@ -469,13 +470,12 @@ class AllianceBernsteinSource(HtmlTableSource):
             PageSpec(
                 name="2023_estimated_capital_gains",
                 url=(
-                    "https://web.archive.org/web/20241115000000/"
+                    "https://web.archive.org/web/20240422225619/"
                     "https://www.alliancebernstein.com/content/dam/alliancebernstein/"
                     "us-retail/us-retail-pdfs/tax-center/FINAL_GEN-5796.pdf"
                 ),
                 fixture="2023_estimated_capital_gains.html",
                 live=False,
-                large_aum_only=True,
             ),
         ]
 

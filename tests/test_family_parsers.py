@@ -1318,6 +1318,19 @@ def test_third_tier_fixtures() -> None:
     )
     assert agrfx_2023.amount == Decimal("6.95")
     assert str(agrfx_2023.as_of) == "2023-10-31"
+    apgax_2023 = next(
+        r
+        for r in ab_2023
+        if r.ticker == "APGAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert apgax_2023.amount == Decimal("1.50")
+    abasx_2023 = next(
+        r
+        for r in ab_2023
+        if r.ticker == "ABASX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert abasx_2023.amount == Decimal("1.32")
+    assert len({(r.ticker or "").upper() or r.fund_name for r in ab_2023}) >= 14
 
     virtus_2025 = parse_distribution_html(
         (ROOT / "virtus" / "2025_paid_year_end.html").read_text(encoding="utf-8"),
