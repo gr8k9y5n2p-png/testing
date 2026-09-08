@@ -5,6 +5,11 @@ import type {
 } from "@/lib/illustrate/portfolio-compare-types";
 import { upcomingFromHolding } from "@/lib/illustrate/publication-stage";
 
+export {
+  upcomingDistributionLine,
+  upcomingEstimatedTaxLine,
+} from "@/lib/illustrate/portfolio-compare-copy";
+
 export type { DistributionBucket, UpcomingRow } from "@/lib/illustrate/publication-stage";
 export {
   announcedDateOf,

@@ -1,6 +1,5 @@
-import type { ReactNode } from "react";
 import { TickerHistoryLink } from "@/components/illustrate/TickerHistoryLink";
-import { formatOptionalDate, formatUsd } from "@/lib/format";
+import { formatOptionalDate } from "@/lib/format";
 import {
   UPCOMING_MODULE_DETAIL,
   UPCOMING_MODULE_HEADING,
@@ -8,42 +7,13 @@ import {
   UPCOMING_UNAVAILABLE_HEADLINE,
 } from "@/lib/illustrate/portfolio-compare-copy";
 import {
-  heatBackground,
+  upcomingDistributionLine,
+  upcomingEstimatedTaxLine,
   type UpcomingRow,
 } from "@/lib/illustrate/portfolio-compare-map";
-import { TAX_DRAG_NA_LABEL } from "@/lib/illustrate/tax-drag-chart";
 
 function dateCell(value: string | null): string {
   return formatOptionalDate(value);
-}
-
-function taxCell(row: UpcomingRow): ReactNode {
-  if (!row.available || !row.covered || row.estimatedTax == null) {
-    return <span className="text-faint">{TAX_DRAG_NA_LABEL}</span>;
-  }
-  if (Math.abs(row.estimatedTax) < 0.5) {
-    return <span className="text-tax-less">{formatUsd(0, 0)}</span>;
-  }
-  return formatUsd(row.estimatedTax, 0);
-}
-
-function distCell(row: UpcomingRow, showHeat: boolean): ReactNode {
-  if (!row.available || row.distributionDollars == null) {
-    return (
-      <span className="text-[11px] font-sans font-medium normal-case tracking-normal text-muted">
-        {UPCOMING_UNAVAILABLE_HEADLINE}
-      </span>
-    );
-  }
-  return (
-    <span
-      className={`inline-block min-w-[4.25rem] rounded-md px-1.5 py-0.5 text-center font-mono text-[12px] tabular-nums ${
-        showHeat ? heatBackground(row.heat) : "text-ink"
-      }`}
-    >
-      {formatUsd(row.distributionDollars, 0)}
-    </span>
-  );
 }
 
 function SectionHeader({
@@ -62,6 +32,22 @@ function SectionHeader({
       </h2>
       <p className="text-[10px] text-muted">{legend}</p>
     </header>
+  );
+}
+
+function TickerCell({ row }: { row: UpcomingRow }) {
+  return (
+    <div className="min-w-[11rem]">
+      <div className="font-mono text-[13px] font-medium text-ink">
+        <TickerHistoryLink ticker={row.ticker} />
+      </div>
+      <p className="mt-1 text-[11px] leading-snug text-muted">
+        {upcomingDistributionLine(row)}
+      </p>
+      <p className="text-[11px] leading-snug text-muted">
+        {upcomingEstimatedTaxLine(row)}
+      </p>
+    </div>
   );
 }
 
@@ -105,8 +91,6 @@ export function UpcomingTable({
             <thead className="text-[10px] font-semibold uppercase tracking-[0.12em] text-faint">
               <tr className="border-b border-line">
                 <th className="py-1.5 pr-2 text-left">Ticker</th>
-                <th className="px-2 py-1.5 text-right">Est. dist $</th>
-                <th className="px-2 py-1.5 text-right">Est. tax</th>
                 <th className="px-2 py-1.5 text-right">Record</th>
                 <th className="py-1.5 pl-2 text-right">Ex-div</th>
               </tr>
@@ -114,17 +98,13 @@ export function UpcomingTable({
             <tbody>
               {rows.map((row) => (
                 <tr key={row.key} className="border-b border-line last:border-0">
-                  <td className="py-2 pr-2 font-mono text-[13px] font-medium text-ink">
-                    <TickerHistoryLink ticker={row.ticker} />
+                  <td className="py-2 pr-3 align-top">
+                    <TickerCell row={row} />
                   </td>
-                  <td className="px-2 py-2 text-right">{distCell(row, true)}</td>
-                  <td className="px-2 py-2 text-right font-mono text-[12px] tabular-nums">
-                    {taxCell(row)}
-                  </td>
-                  <td className="px-2 py-2 text-right font-mono text-[11px] tabular-nums text-muted">
+                  <td className="px-2 py-2 align-top text-right font-mono text-[11px] tabular-nums text-muted">
                     {dateCell(row.recordDate)}
                   </td>
-                  <td className="py-2 pl-2 text-right font-mono text-[11px] tabular-nums text-muted">
+                  <td className="py-2 pl-2 align-top text-right font-mono text-[11px] tabular-nums text-muted">
                     {dateCell(row.exDate)}
                   </td>
                 </tr>

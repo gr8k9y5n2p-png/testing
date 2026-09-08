@@ -517,6 +517,7 @@ export function upcomingRowsForSide(
 
 /**
  * One row per Current/Proposed holding for the Upcoming module.
+ * Extra unpaid events on the same fund collapse to the first row.
  * Empty/null upcoming stays undisclosed — never $0.
  */
 export function upcomingHoldingsForSide(
@@ -530,7 +531,7 @@ export function upcomingHoldingsForSide(
       const row = toTableRow(holding, side, index, event, eventIndex, "upcoming");
       return row ? [row] : [];
     });
-    if (eventRows.length) return eventRows;
+    if (eventRows.length) return [eventRows[0]];
     return [undisclosedUpcomingRow(holding, side, index)];
   });
   return withHeat(rows);
