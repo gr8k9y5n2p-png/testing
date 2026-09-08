@@ -1,6 +1,11 @@
 import { formatUsd } from "@/lib/format";
 import type { PortfolioAllocationOut } from "@/lib/illustrate/portfolio-compare-types";
 
+export {
+  upcomingDistributionLine,
+  upcomingEstimatedTaxLine,
+} from "@/lib/illustrate/portfolio-compare-copy";
+
 export type { DistributionBucket, UpcomingRow } from "@/lib/illustrate/publication-stage";
 export {
   announcedDateOf,

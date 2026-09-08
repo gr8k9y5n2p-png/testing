@@ -6,6 +6,10 @@ import type {
   PortfolioHoldingOut,
 } from "./portfolio-compare-types.ts";
 import {
+  upcomingDistributionLine,
+  upcomingEstimatedTaxLine,
+} from "./portfolio-compare-copy.ts";
+import {
   announcedDateOf,
   PAID_HISTORY_CAP,
   paidHistoryDateOf,
@@ -748,5 +752,72 @@ describe("PortfolioCompare distribution tables", () => {
     assert.equal(rows[3]?.available, false);
     assert.equal(rows[3]?.covered, false);
     assert.equal(upcomingRowsForSide(book, "current", TODAY).length, 1);
+  });
+
+  it("keeps one Upcoming row per holding when a fund has two unpaid events", () => {
+    const book = allocation([
+      holding({
+        ticker: "AGTHX",
+        upcoming: [
+          {
+            publication_stage: "preliminary_estimate",
+            distribution_dollars: 4800,
+            estimated_tax: 1680,
+            record_date: "2026-12-16",
+            ex_date: "2026-12-17",
+          },
+          {
+            publication_stage: "updated_estimate",
+            distribution_dollars: 500,
+            estimated_tax: 175,
+            record_date: "2026-11-16",
+            ex_date: "2026-11-17",
+          },
+        ],
+      }),
+    ]);
+    const rows = upcomingHoldingsForSide(book, "current", TODAY);
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0]?.ticker, "AGTHX");
+    assert.equal(rows[0]?.available, true);
+  });
+
+  it("formats stacked ticker lines as undisclosed / N/A instead of $0", () => {
+    assert.equal(
+      upcomingDistributionLine({ available: false, distributionDollars: null }),
+      "Est. Distribution: Not available / undisclosed",
+    );
+    assert.equal(
+      upcomingEstimatedTaxLine({
+        available: false,
+        covered: true,
+        estimatedTax: null,
+      }),
+      "Estimated Tax: N/A",
+    );
+    assert.doesNotMatch(
+      upcomingDistributionLine({ available: false, distributionDollars: null }),
+      /\$0/,
+    );
+    assert.equal(
+      upcomingDistributionLine({ available: true, distributionDollars: 3200 }),
+      "Est. Distribution: $3,200",
+    );
+    assert.equal(
+      upcomingEstimatedTaxLine({
+        available: true,
+        covered: true,
+        estimatedTax: 1120,
+      }),
+      "Estimated Tax: $1,120",
+    );
+    assert.equal(
+      upcomingEstimatedTaxLine({
+        available: true,
+        covered: false,
+        estimatedTax: 0,
+      }),
+      "Estimated Tax: N/A",
+    );
   });
 });

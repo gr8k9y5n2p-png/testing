@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  EST_DISTRIBUTION_LINE_LABEL,
+  ESTIMATED_TAX_LINE_LABEL,
+  upcomingDistributionLine,
+  upcomingEstimatedTaxLine,
   PAID_HISTORY_DETAIL,
   PAID_HISTORY_EMPTY,
   PAID_HISTORY_HEADING,
@@ -39,6 +43,22 @@ describe("PortfolioCompare upcoming module copy", () => {
     assert.match(UPCOMING_MODULE_DETAIL, /sell before record/i);
     assert.doesNotMatch(UPCOMING_MODULE_DETAIL, /\$0|0\.00/);
     assert.notEqual(UPCOMING_MODULE_HEADING, PAID_HISTORY_HEADING);
+    assert.equal(EST_DISTRIBUTION_LINE_LABEL, "Est. Distribution");
+    assert.equal(ESTIMATED_TAX_LINE_LABEL, "Estimated Tax");
+    assert.doesNotMatch(EST_DISTRIBUTION_LINE_LABEL, /\$0|0\.00/);
+    assert.doesNotMatch(ESTIMATED_TAX_LINE_LABEL, /\$0|0\.00/);
+    assert.equal(
+      upcomingDistributionLine({ available: false, distributionDollars: null }),
+      "Est. Distribution: Not available / undisclosed",
+    );
+    assert.equal(
+      upcomingEstimatedTaxLine({
+        available: false,
+        covered: true,
+        estimatedTax: null,
+      }),
+      "Estimated Tax: N/A",
+    );
   });
 });
 

@@ -65,6 +65,9 @@ describe("portfolio compare periods wiring", () => {
     assert.doesNotMatch(compare, /PaidHistoryTable/);
     assert.doesNotMatch(compare, /paidHistoryRowsForSide/);
     assert.match(table, /UPCOMING_MODULE_DETAIL/);
+    assert.match(table, /upcomingDistributionLine/);
+    assert.match(table, /upcomingEstimatedTaxLine/);
+    assert.doesNotMatch(table, /Est\. dist \$/);
     assert.doesNotMatch(table, /export function PaidHistoryTable/);
     assert.doesNotMatch(table, /Paid history/);
     assert.doesNotMatch(table, /ticker×year matrix is Website/);

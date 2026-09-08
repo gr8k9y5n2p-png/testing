@@ -12,6 +12,8 @@ import {
   formatStageLabel,
   formatTaxDragPct,
   totalUpcomingTax,
+  upcomingDistributionLine,
+  upcomingEstimatedTaxLine,
   upcomingHoldingsForSide,
   type TaxPolarity,
 } from "@/lib/illustrate/portfolio-compare-map";
@@ -35,6 +37,7 @@ export type PortfolioCompareExportUpcoming = {
   distributionDollars: number | null;
   estimatedTax: number | null;
   available: boolean;
+  covered: boolean;
   stageLabel: string;
   announcedDate: string | null;
   recordDate: string | null;
@@ -87,6 +90,7 @@ function sideModel(
       distributionDollars: row.distributionDollars,
       estimatedTax: row.estimatedTax,
       available: row.available,
+      covered: row.covered,
       stageLabel: formatStageLabel(row.stage),
       announcedDate: row.announcedDate,
       recordDate: row.recordDate,
@@ -129,13 +133,6 @@ function money(value: number | null): string {
   return value == null ? TAX_DRAG_NA_LABEL : formatUsd(value, 0);
 }
 
-function distMoney(row: PortfolioCompareExportUpcoming): string {
-  if (!row.available || row.distributionDollars == null) {
-    return UPCOMING_UNAVAILABLE_HEADLINE;
-  }
-  return formatUsd(row.distributionDollars, 0);
-}
-
 function weight(value: number | null): string {
   if (value == null || !Number.isFinite(value)) return "—";
   const rounded = Math.round(value * 100) / 100;
@@ -172,8 +169,8 @@ function sideHtml(side: PortfolioCompareExportSide): string {
       </table>
       <h3>Upcoming / announced</h3>
       <table>
-        <thead><tr><th>Ticker</th><th>Est. dist $</th><th>Est. tax</th><th>Announced</th><th>Record</th><th>Ex-div</th><th>Payable</th><th>Stage</th></tr></thead>
-        <tbody>${upcoming || `<tr><td colspan="8" class="muted">${UPCOMING_UNAVAILABLE_HEADLINE}</td></tr>`}</tbody>
+        <thead><tr><th>Ticker</th><th>Record</th><th>Ex-div</th></tr></thead>
+        <tbody>${upcoming || `<tr><td colspan="3" class="muted">${UPCOMING_UNAVAILABLE_HEADLINE}</td></tr>`}</tbody>
       </table>
     </section>`;
 }
@@ -221,18 +218,13 @@ function distributionRowsHtml(rows: PortfolioCompareExportUpcoming[]): string {
     .map(
       (row) => `
         <tr>
-          <td class="mono">${escapeHtml(row.ticker)}</td>
-          <td class="num">${escapeHtml(distMoney(row))}</td>
-          <td class="num">${escapeHtml(
-            !row.available || row.estimatedTax == null
-              ? TAX_DRAG_NA_LABEL
-              : money(row.estimatedTax),
-          )}</td>
-          <td class="muted">${dateCell(row.announcedDate)}</td>
+          <td>
+            <div class="mono">${escapeHtml(row.ticker)}</div>
+            <div class="muted">${escapeHtml(upcomingDistributionLine(row))}</div>
+            <div class="muted">${escapeHtml(upcomingEstimatedTaxLine(row))}</div>
+          </td>
           <td class="muted">${dateCell(row.recordDate)}</td>
           <td class="muted">${dateCell(row.exDate)}</td>
-          <td class="muted">${dateCell(row.payableDate)}</td>
-          <td class="muted">${escapeHtml(row.stageLabel)}</td>
         </tr>`,
     )
     .join("");
