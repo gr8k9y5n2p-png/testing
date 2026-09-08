@@ -30,6 +30,23 @@ describe("paid_history contract wiring", () => {
     assert.doesNotMatch(types, /Temporary Paid History fallback/);
   });
 
+  it("does not fall back to illustration for Upcoming dollars", () => {
+    const stage = readFileSync(join(here, "publication-stage.ts"), "utf8");
+    const fromHolding = stage.split("export function upcomingFromHolding")[1]?.split(
+      "function upcomingEventsFromHolding",
+    )[0];
+    const events = stage.split("function upcomingEventsFromHolding")[1]?.split(
+      "export const PAID_HISTORY_CAP",
+    )[0];
+    assert.ok(fromHolding);
+    assert.ok(events);
+    assert.match(fromHolding, /holding\.upcoming == null/);
+    assert.doesNotMatch(fromHolding, /holding\.illustration/);
+    assert.match(events, /holding\.upcoming == null/);
+    assert.doesNotMatch(events, /holding\.illustration/);
+    assert.doesNotMatch(events, /tableEventsFromHolding/);
+  });
+
   it("does not fall back to illustration.components for Paid History", () => {
     const stage = readFileSync(join(here, "publication-stage.ts"), "utf8");
     const fn = stage.split("function paidHistoryEventsFromHolding")[1]?.split(
@@ -48,7 +65,10 @@ describe("portfolio compare periods wiring", () => {
     assert.match(client, /periods:/);
     assert.match(client, /ensurePortfolioComparePeriods/);
     assert.match(client, /normalizePortfolioComparePeriods/);
-    assert.match(client, /portfolioPeriodTaxIsUnmatched/);
+    const periodMap = readFileSync(join(here, "portfolio-period-map.ts"), "utf8");
+    assert.match(periodMap, /portfolioPeriodTaxIsUnmatched/);
+    assert.match(periodMap, /periodHoldingTicker/);
+    assert.match(periodMap, /calendarYearFromPeriod/);
   });
 
   it("keeps Upcoming as its own module and does not mount Paid History", () => {

@@ -32,7 +32,6 @@ import {
   alignTaxDragYears,
   toNegativeTaxDrag,
   toTaxDragPeriods,
-  toUpcomingSummary,
   type TaxDragFundSeries,
   type TaxDragMetric,
 } from "@/lib/illustrate/tax-drag-chart";
@@ -284,16 +283,6 @@ export function GrowthAndTaxDragModule({
     (ticker) => !selected.some((fund) => fundKey(fund).ticker === ticker),
   );
 
-  const upcomingSummary = useMemo(() => {
-    const row = rows?.find((item) => item.tax?.summary.upcoming_taxable_distribution);
-    if (!row?.tax) return null;
-    return toUpcomingSummary(
-      row.tax.summary.upcoming_taxable_distribution,
-      row.taxSide === "auto" ? "left" : row.taxSide,
-      row.tax.periods,
-    );
-  }, [rows]);
-
   return (
     <article
       className={`rounded-2xl border border-line bg-surface px-5 py-5 shadow-[0_8px_24px_rgba(26,29,26,0.08)] ${className}`}
@@ -307,19 +296,6 @@ export function GrowthAndTaxDragModule({
           <h2 className="mt-1 font-serif text-xl tracking-tight text-ink">
             Growth & tax drag
           </h2>
-          {upcomingSummary ? (
-            <p className="mt-2">
-              <span
-                className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-medium ${
-                  upcomingSummary.announced
-                    ? "bg-tax-more-soft text-tax-more"
-                    : "bg-paper text-muted ring-1 ring-line"
-                }`}
-              >
-                {upcomingSummary.label}
-              </span>
-            </p>
-          ) : null}
         </div>
 
         <div className="flex flex-wrap items-end gap-2">
@@ -471,7 +447,6 @@ export function GrowthAndTaxDragModule({
               showBarLabels={selected.length <= 2}
               layout="flush"
               title="Estimated annual tax drag"
-              upcomingSummary={upcomingSummary}
               loading={loading}
               axis={axis}
               emptyLabel={

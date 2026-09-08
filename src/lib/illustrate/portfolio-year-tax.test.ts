@@ -122,7 +122,7 @@ describe("periodHoldingTax", () => {
     assert.equal(periodHoldingTax(tax("DODIX", 0, true)), 0);
   });
 
-  it("treats covered:false as N/A even when a zero is present", () => {
+  it("treats uncovered $0 as N/A (CGHM) but keeps published tax", () => {
     assert.equal(
       periodHoldingTax({
         ticker: "CGHM",
@@ -131,6 +131,16 @@ describe("periodHoldingTax", () => {
         covered: false,
       }),
       null,
+    );
+    assert.equal(
+      periodHoldingTax({
+        ticker: "AGTHX",
+        matched: true,
+        estimated_tax: 2140,
+        covered: false,
+        gap_reason: "no unpaid announce",
+      }),
+      2140,
     );
   });
 });
@@ -263,5 +273,41 @@ describe("calendar-year tax table", () => {
     const model = calendarYearTaxTable(book);
     const agthx = model.current.find((row) => row.ticker === "AGTHX");
     assert.ok(agthx?.cells.every((cell) => cell === 2100));
+  });
+
+  it("prefers holding_index when the ticker map is all N/A", () => {
+    const book = resultForSmoke();
+    book.periods = PORTFOLIO_COMPARE_YEARS.map((year) => ({
+      year,
+      current: [
+        tax("AGTHX", null, false),
+        { ticker: "", holding_index: 0, matched: true, estimated_tax: 1880 },
+      ],
+      proposed: [tax("AMCPX", 3000, true)],
+    }));
+    const model = calendarYearTaxTable(book);
+    const agthx = model.current.find((row) => row.ticker === "AGTHX");
+    assert.ok(agthx?.cells.every((cell) => cell === 1880));
+  });
+
+  it("densifies AGTHX from period tax flagged uncovered for Upcoming", () => {
+    const book = resultForSmoke();
+    book.periods = PORTFOLIO_COMPARE_YEARS.map((year) => ({
+      year,
+      current: [
+        {
+          ticker: "AGTHX",
+          holding_index: 0,
+          matched: true,
+          estimated_tax: 1900 + (year - 2021),
+          covered: false,
+          gap_reason: "no unpaid announce",
+        },
+      ],
+      proposed: [tax("AMCPX", 3000, true)],
+    }));
+    const model = calendarYearTaxTable(book);
+    const agthx = model.current.find((row) => row.ticker === "AGTHX");
+    assert.ok(agthx?.cells.every((cell) => cell != null && cell > 0));
   });
 });

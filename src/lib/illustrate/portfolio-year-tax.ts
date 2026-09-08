@@ -88,6 +88,13 @@ function taxLookup(
   return { byTicker, byIndex };
 }
 
+function cellsHavePublishedTax(
+  map: Map<number, YearTaxCell> | undefined,
+  years: number[],
+): boolean {
+  return Boolean(map && years.some((year) => map.get(year) != null));
+}
+
 function yearCellsForHolding(
   holding: PortfolioHoldingOut,
   years: number[],
@@ -95,24 +102,26 @@ function yearCellsForHolding(
 ): YearTaxCell[] {
   const ticker = (holding.ticker || holding.fund_identifier || "—").toUpperCase();
   const aliases = tickerAliases(ticker);
-  const byTicker = aliases
+  const tickerMaps = aliases
     .map((key) => lookup.byTicker.get(key))
-    .find((map) => map != null);
+    .filter((map): map is Map<number, YearTaxCell> => map != null);
+  const tickerWithValues = tickerMaps.find((map) => cellsHavePublishedTax(map, years));
   const byIndex =
     holding.holding_index != null ? lookup.byIndex.get(holding.holding_index) : undefined;
-  const byYear = byTicker ?? byIndex;
-  return years.map((year) => {
-    if (!byYear || !byYear.has(year)) return null;
-    return byYear.get(year) ?? null;
-  });
+  const byYear =
+    tickerWithValues ??
+    (cellsHavePublishedTax(byIndex, years) ? byIndex : tickerMaps[0] ?? byIndex);
+  return years.map((year) => byYear?.get(year) ?? null);
 }
 
-/** Unmatched / uncovered / null totals → N/A. Published $0 stays 0. */
+/** Unmatched / uncovered $0 / null totals → N/A. Published tax (incl. $0) stays. */
 export function periodHoldingTax(holding: PortfolioPeriodHoldingTax): YearTaxCell {
   if (holding.matched === false) return null;
-  if (holding.covered === false) return null;
-  if (holding.gap_reason) return null;
-  return holding.estimated_tax;
+  const tax = holding.estimated_tax;
+  const uncovered = holding.covered === false || Boolean(holding.gap_reason);
+  if (tax != null && Number.isFinite(tax) && !(tax === 0 && uncovered)) return tax;
+  if (uncovered) return null;
+  return tax ?? null;
 }
 
 function uniqueHoldings(
