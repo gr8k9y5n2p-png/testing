@@ -53,10 +53,13 @@ def health(session: Session = Depends(get_session)) -> HealthOut:
         session.execute(text("SELECT 1"))
     except Exception as exc:  # pragma: no cover - connection failures
         db_status = f"error: {exc}"
+    from app.main import seed_status
+
     return HealthOut(
         status="ok" if db_status == "ok" else "degraded",
         db=db_status,
         registered_families=[s.slug for s in list_sources()],
+        seed=seed_status(),
     )
 
 

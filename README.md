@@ -98,15 +98,17 @@ CORS already allows `https://testing-seven-umber-19.vercel.app`, `http://localho
 
 ### Weekly refresh on the public API
 
-Fixture seed on boot (`SEED_ON_START=true`) loads American Funds only so `/health` and demo illustrate paths work. Full-book ingest is the existing CLI / Action:
+Fixture seed on boot (`SEED_ON_START=true`, also implied on Vercel) runs the **same full fixture ingest** as `POST /ingest/fetch {"fund_family":"all","mode":"fixture"}` — every registered family, including Dodge & Cox (`DODIX` / `DODGX`), Vanguard, Fidelity, MFS, First Eagle. Render free-tier SQLite is ephemeral, so a thin American-Funds-only seed left advisors without the book after each deploy.
+
+The seed starts in a **background thread** after `init_db()` so `GET /health` stays 200 during ingest (`health.seed` is `running` then `complete`). Families commit one at a time; a mid-book failure does not roll back earlier families. Typical full fixture book is ~11k rows and finishes in tens of seconds. Manual ingest is no longer required after a cold start.
 
 ```bash
-python -m app.cli refresh --mode fixture   # offline, all registered families
+python -m app.cli refresh --mode fixture   # same offline all-family ingest (foreground)
 # or
 python -m app.cli refresh                  # REFRESH_MODE=auto: live then fixture
 ```
 
-GitHub Action `.github/workflows/weekly-ingest.yml` (Monday 14:00 UTC + `workflow_dispatch`). For a durable book, set repo secret `DATABASE_URL` to the **same Postgres** the API uses (`postgresql+psycopg://…`) and install `psycopg[binary]`. Vercel `/tmp` SQLite does **not** persist across deploys or the weekly job — use Render disk or Postgres if Website needs the full 1–40 book.
+GitHub Action `.github/workflows/weekly-ingest.yml` (Monday 14:00 UTC + `workflow_dispatch`). For a durable book across restarts, set repo secret `DATABASE_URL` to the **same Postgres** the API uses (`postgresql+psycopg://…`) and install `psycopg[binary]`. Vercel `/tmp` SQLite and Render free-tier local SQLite do **not** persist across deploys — `SEED_ON_START` rebuilds the fixture book on each boot.
 
 ## Example curl
 

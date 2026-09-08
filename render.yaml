@@ -11,6 +11,7 @@ services:
         value: fixture
       - key: SEED_ON_START
         value: "true"
+        # Background full fixture ingest (all families). /health stays up; see health.seed.
       - key: DATABASE_URL
         value: sqlite:///./data/distributions.db
       - key: CORS_ORIGINS

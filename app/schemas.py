@@ -147,6 +147,7 @@ class HealthOut(BaseModel):
     status: str
     db: str
     registered_families: list[str]
+    seed: str = "idle"
 
 
 class FundFamilyOut(BaseModel):

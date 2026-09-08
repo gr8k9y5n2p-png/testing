@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import logging
 import os
+import threading
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -9,13 +11,21 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from sqlalchemy import func, select
 
 from app import __version__
 from app.api import router
 from app import db as app_db
 from app.config import settings
 from app.db import init_db
+
+logger = logging.getLogger(__name__)
+
+_seed_lock = threading.Lock()
+_seed_state = {"status": "idle", "created": 0, "error": None}
+
+
+def seed_status() -> str:
+    return str(_seed_state["status"])
 
 
 def _ensure_sqlite_dir() -> None:
@@ -37,17 +47,50 @@ def _should_seed_on_start() -> bool:
 
 
 def _seed_fixture_if_empty() -> None:
-    from app.models import DistributionEstimate
+    """Ingest every registered family from fixtures (same as POST /ingest/fetch all).
+
+    Used on SEED_ON_START / Vercel boot and by tests. Commits per family so a
+    mid-book failure still leaves a thick DB. Does not invent amounts.
+    """
     from app.services.ingest import fetch_and_ingest
+    from app.sources.registry import list_sources
 
     if app_db.SessionLocal is None:
         return
-    with app_db.SessionLocal() as session:
-        count = session.scalar(select(func.count()).select_from(DistributionEstimate)) or 0
-        if count:
+    with _seed_lock:
+        if _seed_state["status"] == "running":
             return
-        fetch_and_ingest(session, "american_funds", settings.fetch_mode or "fixture")
-        session.commit()
+        _seed_state["status"] = "running"
+        _seed_state["error"] = None
+    created_total = 0
+    mode = settings.fetch_mode or "fixture"
+    try:
+        for source in list_sources():
+            if not source.implemented:
+                continue
+            try:
+                with app_db.SessionLocal() as session:
+                    result = fetch_and_ingest(session, source.slug, mode)
+                    session.commit()
+                    created_total += int(result.created or 0)
+            except Exception:
+                logger.exception("Fixture seed failed for %s; continuing", source.slug)
+        _seed_state["created"] = created_total
+        _seed_state["status"] = "complete"
+        logger.info("Fixture seed complete created=%s", created_total)
+    except Exception as exc:
+        _seed_state["status"] = "error"
+        _seed_state["error"] = str(exc)
+        logger.exception("Fixture seed aborted")
+
+
+def _start_background_seed() -> None:
+    thread = threading.Thread(
+        target=_seed_fixture_if_empty,
+        name="fixture-seed",
+        daemon=True,
+    )
+    thread.start()
 
 
 @asynccontextmanager
@@ -55,7 +98,8 @@ async def lifespan(_app: FastAPI):
     _ensure_sqlite_dir()
     init_db()
     if _should_seed_on_start():
-        _seed_fixture_if_empty()
+        # /health must come up before the full book finishes (~11k fixture rows).
+        _start_background_seed()
     yield
 
 
