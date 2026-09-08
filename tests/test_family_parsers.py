@@ -496,6 +496,12 @@ def test_next_tier_fixtures() -> None:
         if r.ticker == "NOSIX" and r.estimate_type == EstimateType.long_term_capital_gains
     )
     assert nosix.amount == Decimal("1.182288")
+    nomix = next(
+        r
+        for r in nt
+        if r.ticker == "NOMIX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert nomix.amount == Decimal("1.011150")
 
     msim = parse_distribution_html(
         (ROOT / "morgan_stanley" / "2025_etf_year_end_sample.html").read_text(encoding="utf-8"),
@@ -728,6 +734,14 @@ def test_third_tier_fixtures() -> None:
     assert mighx.amount_min == Decimal("8")
     assert mighx.amount_max == Decimal("9")
     assert mighx.amount_unit == AmountUnit.percent_of_nav
+    assert len({(r.ticker or "").upper() or r.fund_name for r in mfs}) >= 80
+    mfs_value = next(
+        r
+        for r in mfs
+        if "Value Fund" in r.fund_name and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert mfs_value.amount_min == Decimal("6")
+    assert mfs_value.amount_max == Decimal("7")
 
     lord = parse_distribution_html(
         (ROOT / "lord_abbett" / "2025_funds_not_expected_to_pay.html").read_text(encoding="utf-8"),

@@ -186,12 +186,14 @@ class NorthernTrustSource(HtmlTableSource):
     priority = 15
     notes = (
         "Filled ICI Primary Reports are public (2022–2025) on the tax center "
-        "(e.g. .../nf-ici-primary-reports-2025.pdf, .../nf-ici-primary-2024.pdf) "
-        "but PDF text extraction merges income/CG into one column and includes "
-        "quarterly lines — not ingested (illustration would sum). December YE "
-        "ST/LT come from the companion capital-gains PDFs. 2025 "
-        ".../estimated-capital-gains-2025.pdf is the full equity book "
-        "(NOSIX ST $0.041654 / LT $1.182288; NOMIX/NSGRX/NSCKX LT skipped — not column-safe). "
+        "(e.g. .../nf-ici-primary-reports-2025.pdf, .../nf-ici-primary-2024.pdf). "
+        "The ICI first amount is Total Distribution (income+CG); CG-paying "
+        "tickers are not ingested from ICI (would double-count). December ICI "
+        "totals are stored as ordinary income only for equity funds whose "
+        "companion CG PDF lists ST/LT as em-dashes. Daily/monthly FI lines "
+        "omitted. 2025 .../estimated-capital-gains-2025.pdf is the full equity "
+        "CG book (NOSIX ST $0.041654 / LT $1.182288; NOMIX ST $0.136686 / "
+        "LT $1.011150; NSGRX/NSCKX ST $0.189098 / LT $3.454742). "
         "2024 .../estimated-capital-gains-2024.pdf (NOSIX ST $0.088060 / LT $0.699110), "
         "2023 .../capital-gains-2023.pdf (NOSIX LT $1.697952), "
         "2022 .../capital-gains-2022.pdf (NOSIX LT $1.243605). "
@@ -206,6 +208,12 @@ class NorthernTrustSource(HtmlTableSource):
                 name="2025_capital_gain_distributions",
                 url=f"{tax}/ntam/us/en/documents/account-resources/tax-center/all-investor/estimated-capital-gains-2025.pdf",
                 fixture="2025_capital_gain_distributions.html",
+                live=False,
+            ),
+            PageSpec(
+                name="2025_ici_december_income",
+                url=f"{tax}/ntam/us/en/documents/account-resources/tax-center/all-investor/nf-ici-primary-reports-2025.pdf",
+                fixture="2025_ici_december_income.html",
                 live=False,
             ),
             PageSpec(

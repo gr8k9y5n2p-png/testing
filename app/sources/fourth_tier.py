@@ -221,12 +221,13 @@ class FirstEagleSource(HtmlTableSource):
         "No public filled ICI. Public 9/30/2025 estimate PDF: "
         "https://www.firsteagle.com/sites/default/files/fei-documents/FEF_Ordinary_Income_Gains_Estimates.pdf "
         "is the full open-end book (SGENX LT $4.12–$4.17; FEVAX LT $1.77–$1.82). "
-        "Tickers only for Class A already on product pages (SGENX / SGOVX / FEVAX). "
-        "Footnote-b monthly/quarterly income estimates omitted (not $0). "
-        "Interval / CEF Tactical Municipal Opportunities and Credit Opportunities "
-        "omitted. Paid YE from the 2024 official PDF "
+        "Class A tickers on the 2025 estimate come from the official 2024 paid PDF "
+        "share-class map. Footnote-b monthly/quarterly income estimates omitted "
+        "(not $0). Interval / CEF Tactical Municipal Opportunities and Credit "
+        "Opportunities omitted. 2024 official paid PDF "
         "https://www.firsteagle.com/sites/default/files/2024-12/2024_Capital_Gains_%20Income_Distributions.pdf "
-        "(SGENX ST $0.027 / LT $2.038) and product-page history "
+        "is the full share-class book (SGENX ST $0.027 / LT $2.038; 40 tickers). "
+        "Product-page history "
         "https://www.firsteagle.com/funds/global-fund (SGENX 2025 LT $4.654 / "
         "2023 LT $1.407), overseas-fund (SGOVX), and us-fund (FEVAX). "
         "2025 family paid PDF URL was not a stable public file in this environment."
@@ -253,7 +254,6 @@ class FirstEagleSource(HtmlTableSource):
                 url="https://www.firsteagle.com/sites/default/files/2024-12/2024_Capital_Gains_%20Income_Distributions.pdf",
                 fixture="2024_paid_year_end.html",
                 live=False,
-                large_aum_only=True,
             ),
             PageSpec(
                 name="2023_paid_year_end",

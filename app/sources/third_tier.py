@@ -206,10 +206,12 @@ class MfsSource(HtmlTableSource):
         "Tax center: https://www.mfs.com/en-us/individual-investor/resources/service-support/tax-center.html "
         "No public filled ICI. 2025 estimate PDF "
         "https://www.mfs.com/content/dam/mfs-enterprise/mfscom/backlot/mfs_cg_fly.pdf "
-        "(MIGHX LT 8%–9% of average NAV). Paid YE / midyear from product pages "
-        "MIGHX / MITTX (2025 YE MIGHX LT $4.20618; 2026 midyear LT $0.54043). "
-        "2024 mfs_cg_fly_2024.pdf 404. Earlier years are behind a download control, "
-        "not static HTML — skipped, not invented."
+        "is the full % of average NAV book (175 published share-class / "
+        "all-classes rows; MIGHX LT 8%–9%; published 0% stored). Tickers only "
+        "MIGHX / MITTX — the PDF has no ticker column. Paid YE / midyear from "
+        "product pages MIGHX / MITTX (2025 YE MIGHX LT $4.20618; 2026 midyear "
+        "LT $0.54043). 2024 mfs_cg_fly_2024.pdf 404. Earlier years are behind "
+        "a download control, not static HTML — skipped, not invented."
     )
     live_limitations = "Estimates are PDF percent-of-NAV ranges. Fixture transcribes public rows."
 

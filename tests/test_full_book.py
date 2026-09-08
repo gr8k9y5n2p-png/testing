@@ -25,7 +25,7 @@ from app.sources.fourth_tier import (
     JohnHancockSource,
     MacquarieSource,
 )
-from app.sources.third_tier import AmericanCenturySource, JanusHendersonSource
+from app.sources.third_tier import AmericanCenturySource, JanusHendersonSource, MfsSource
 from app.sources.sixth_tier import AqrSource, AlgerSource, SeiSource
 
 
@@ -83,8 +83,8 @@ def test_full_book_vanguard_ici_and_next_wave() -> None:
     assert any("Concentrated Growth ETF" in name for name in bny_funds)
 
     nt_funds, nt_tickers = _funds_and_tickers(NorthernTrustSource())
-    assert "NOSIX" in nt_tickers
-    assert len(nt_tickers) >= 10
+    assert {"NOSIX", "NOMIX", "NSGRX", "NMMEX"} <= nt_tickers
+    assert len(nt_tickers) >= 20
 
     janus_funds, janus_tickers = _funds_and_tickers(JanusHendersonSource())
     assert "JDCAX" in janus_tickers
@@ -149,8 +149,13 @@ def test_full_book_artisan_ici_and_first_eagle() -> None:
     assert len(artisan_tickers) >= 50
 
     fe_funds, fe_tickers = _funds_and_tickers(FirstEagleSource())
-    assert "SGENX" in fe_tickers
-    assert "FEVAX" in fe_tickers
-    assert len(fe_funds) >= 10
+    assert {"SGENX", "FEVAX", "SGGDX", "FEGRX"} <= fe_tickers
+    assert len(fe_tickers) >= 35
+    assert len(fe_funds) >= 35
     assert not any("Credit Opportunities" in name for name in fe_funds)
     assert not any("Tactical Municipal" in name for name in fe_funds)
+
+    mfs_funds, mfs_tickers = _funds_and_tickers(MfsSource())
+    assert {"MIGHX", "MITTX"} <= mfs_tickers
+    assert len(mfs_funds) >= 80
+    assert any("Value Fund" in name for name in mfs_funds)
