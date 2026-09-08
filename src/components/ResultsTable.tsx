@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type KeyboardEvent, type MouseEvent } from "react";
 import type { FundEstimateView } from "@/data/types";
 import { paidHistoryViews, splitFundsByBucket } from "@/data/queries";
 import { DistributionDateStrip } from "@/components/DistributionDateStrip";
@@ -13,6 +13,20 @@ import {
   type SortDirection,
   type SortKey,
 } from "@/lib/format";
+
+function isNestedControl(target: EventTarget | null) {
+  const element =
+    target instanceof Element
+      ? target
+      : target instanceof Node
+        ? target.parentElement
+        : null;
+  return Boolean(element?.closest("button, a, input, select, textarea, label"));
+}
+
+function toggleExpandedId(current: string | null, fundId: string) {
+  return current === fundId ? null : fundId;
+}
 
 export function ResultsTable({
   funds,
@@ -173,75 +187,21 @@ function FundSection({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-line">
-                  {funds.map((fund) => {
-                    const open = expandedId === fund.id;
-                    return (
-                      <tr key={fund.id} className="align-top hover:bg-paper/80">
-                        <td className="px-3 py-3">
-                          <button
-                            type="button"
-                            className="text-left"
-                            onClick={() => setExpandedId(open ? null : fund.id)}
-                            aria-expanded={open}
-                          >
-                            <span className="block font-medium text-ink">
-                              {fund.fundName}
-                            </span>
-                            <span className="mt-0.5 block font-mono text-[11px] text-faint">
-                              {fund.ticker}
-                              <span className="mx-1.5">·</span>
-                              {fund.shareClass}
-                            </span>
-                          </button>
-                          {open ? <ExpandedDetails fund={fund} /> : null}
-                        </td>
-                        <td className="px-3 py-3 text-muted">
-                          {fund.family}
-                          {!coverage.isLive(fund.family) ? (
-                            <span className="mt-1 block text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">
-                              Coverage gap
-                            </span>
-                          ) : null}
-                        </td>
-                        <td className="px-3 py-3 text-muted">{fund.category}</td>
-                        <td className="px-3 py-3 text-right">
-                          <span className="block font-mono text-ink">
-                            {formatPct(fund.estimatedDistributionPctNav)}
-                          </span>
-                          <span className="mt-0.5 block font-mono text-[11px] text-faint">
-                            {formatUsd(fund.estimatedDistributionAmount, 4)} / sh
-                          </span>
-                        </td>
-                        <td className="px-3 py-3">
-                          <DistributionDateStrip
-                            fund={fund}
-                            compact
-                            showPayable={showPayable}
-                            showStage
-                          />
-                        </td>
-                        <td className="px-3 py-3 text-right">
-                          <div className="flex flex-col items-end gap-1">
-                            <DeltaBadge fund={fund} compact />
-                            <span className="font-mono text-[11px] text-faint">
-                              Cat. {formatPct(fund.categoryAveragePctNav)}
-                            </span>
-                          </div>
-                        </td>
-                        {onIllustrate ? (
-                          <td className="px-3 py-3 text-right">
-                            <button
-                              type="button"
-                              onClick={() => onIllustrate(fund)}
-                              className="rounded-md border border-line px-2 py-1 text-xs text-ink hover:border-accent"
-                            >
-                              Illustrate
-                            </button>
-                          </td>
-                        ) : null}
-                      </tr>
-                    );
-                  })}
+                  {funds.map((fund) => (
+                    <EstimateRow
+                      key={fund.id}
+                      fund={fund}
+                      open={expandedId === fund.id}
+                      coverageGap={!coverage.isLive(fund.family)}
+                      showPayable={showPayable}
+                      onToggle={() =>
+                        setExpandedId((current) =>
+                          toggleExpandedId(current, fund.id),
+                        )
+                      }
+                      onIllustrate={onIllustrate}
+                    />
+                  ))}
                 </tbody>
               </table>
             </div>
@@ -304,6 +264,101 @@ function FundSection({
         </>
       )}
     </section>
+  );
+}
+
+function EstimateRow({
+  fund,
+  open,
+  coverageGap,
+  showPayable,
+  onToggle,
+  onIllustrate,
+}: {
+  fund: FundEstimateView;
+  open: boolean;
+  coverageGap: boolean;
+  showPayable: boolean;
+  onToggle: () => void;
+  onIllustrate?: (fund: FundEstimateView) => void;
+}) {
+  function onRowClick(event: MouseEvent<HTMLTableRowElement>) {
+    if (isNestedControl(event.target)) return;
+    onToggle();
+  }
+
+  function onRowKeyDown(event: KeyboardEvent<HTMLTableRowElement>) {
+    if (event.target !== event.currentTarget) return;
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    onToggle();
+  }
+
+  return (
+    <tr
+      className="cursor-pointer align-top hover:bg-paper/80"
+      tabIndex={0}
+      aria-expanded={open}
+      onClick={onRowClick}
+      onKeyDown={onRowKeyDown}
+    >
+      <td className="px-3 py-3">
+        <span className="block font-medium text-ink">{fund.fundName}</span>
+        <span className="mt-0.5 block font-mono text-[11px] text-faint">
+          {fund.ticker}
+          <span className="mx-1.5">·</span>
+          {fund.shareClass}
+        </span>
+        {open ? <ExpandedDetails fund={fund} /> : null}
+      </td>
+      <td className="px-3 py-3 text-muted">
+        {fund.family}
+        {coverageGap ? (
+          <span className="mt-1 block text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">
+            Coverage gap
+          </span>
+        ) : null}
+      </td>
+      <td className="px-3 py-3 text-muted">{fund.category}</td>
+      <td className="px-3 py-3 text-right">
+        <span className="block font-mono text-ink">
+          {formatPct(fund.estimatedDistributionPctNav)}
+        </span>
+        <span className="mt-0.5 block font-mono text-[11px] text-faint">
+          {formatUsd(fund.estimatedDistributionAmount, 4)} / sh
+        </span>
+      </td>
+      <td className="px-3 py-3">
+        <DistributionDateStrip
+          fund={fund}
+          compact
+          showPayable={showPayable}
+          showStage
+        />
+      </td>
+      <td className="px-3 py-3 text-right">
+        <div className="flex flex-col items-end gap-1">
+          <DeltaBadge fund={fund} compact />
+          <span className="font-mono text-[11px] text-faint">
+            Cat. {formatPct(fund.categoryAveragePctNav)}
+          </span>
+        </div>
+      </td>
+      {onIllustrate ? (
+        <td className="px-3 py-3 text-right">
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              onIllustrate(fund);
+            }}
+            className="rounded-md border border-line px-2 py-1 text-xs text-ink hover:border-accent"
+          >
+            Illustrate
+          </button>
+        </td>
+      ) : null}
+    </tr>
   );
 }
 
