@@ -104,6 +104,11 @@ export {
   fetchPerformance,
   postPerformanceGrowth,
 } from "@/lib/performance/client";
+export {
+  isPerformanceUnavailable,
+  performanceHasFundSeries,
+  usablePerformance,
+} from "@/lib/performance/series";
 export type {
   PerformanceGrowthRequest,
   PerformanceResponse,

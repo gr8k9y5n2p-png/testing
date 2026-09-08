@@ -38,6 +38,10 @@ import {
 } from "@/lib/illustrate/tax-drag-chart";
 import { fetchPerformance, postPerformanceGrowth } from "@/lib/performance/client";
 import {
+  performanceHasFundSeries,
+  usablePerformance,
+} from "@/lib/performance/series";
+import {
   DEFAULT_START_DOLLARS,
   PERFORMANCE_FIXTURE_TICKERS,
   type PerformanceResponse,
@@ -76,7 +80,8 @@ const SKETCH_DISCLAIMER =
 type LoadedFund = {
   input: GrowthFundInput;
   color: string;
-  performance: PerformanceResponse;
+  /** Null when /performance is 404 or empty — never invent a series. */
+  performance: PerformanceResponse | null;
   tax: CompareResponse | null;
   /** fund_vs_fund: this fund is `left` or `right`. YoY uses `auto`. */
   taxSide: "left" | "right" | "auto";
@@ -168,8 +173,10 @@ export function GrowthAndTaxDragModule({
     if (!rows) return [];
     const set = new Set<number>();
     for (const row of rows) {
-      for (const point of yearEndGrowth(row.performance.fund.points)) {
-        set.add(point.year);
+      if (row.performance && performanceHasFundSeries(row.performance)) {
+        for (const point of yearEndGrowth(row.performance.fund.points)) {
+          set.add(point.year);
+        }
       }
       if (row.tax) {
         for (const point of toTaxDragPeriods(row.tax, taxMetric, row.taxSide)) {
@@ -182,66 +189,63 @@ export function GrowthAndTaxDragModule({
 
   const growthSeries = useMemo<GrowthLineSeries[]>(() => {
     if (!rows) return [];
-    const lines: GrowthLineSeries[] = rows.map((row) => ({
-      id: row.performance.fund_ticker,
-      label: row.performance.fund_ticker,
-      color: row.color,
-      points: windowedGrowth(row.performance.fund.points, years, principal),
-    }));
-    const bench = rows[0]?.performance.benchmark;
-    if (bench) {
-      lines.push({
-        id: `bench-${bench.ticker}`,
-        label: rows[0].performance.benchmark_tracks || bench.ticker,
-        color: BENCHMARK_COLOR,
-        dashed: true,
-        points: windowedGrowth(bench.points, years, principal),
-      });
+    const packed = rows.filter(
+      (row): row is LoadedFund & { performance: PerformanceResponse } =>
+        Boolean(row.performance && performanceHasFundSeries(row.performance)),
+    );
+    const lines: GrowthLineSeries[] = packed
+      .map((row) => ({
+        id: row.input.ticker,
+        label: row.input.ticker,
+        color: row.color,
+        points: windowedGrowth(row.performance.fund.points, years, principal),
+      }))
+      .filter((line) => line.points.length > 0);
+    const packedFirst = packed[0];
+    const bench = packedFirst?.performance.benchmark;
+    if (bench && bench.points.some((point) => point.date)) {
+      const benchPoints = windowedGrowth(bench.points, years, principal);
+      if (benchPoints.length > 0) {
+        lines.push({
+          id: `bench-${bench.ticker}`,
+          label: packedFirst.performance.benchmark_tracks || bench.ticker,
+          color: BENCHMARK_COLOR,
+          dashed: true,
+          points: benchPoints,
+        });
+      }
     }
     return lines;
   }, [principal, rows, years]);
 
   const taxSeries = useMemo<TaxDragFundSeries[]>(() => {
     if (!rows) return [];
-    return rows.map((row) => ({
-      id: row.performance.fund_ticker,
-      label: row.performance.fund_ticker,
-      color: row.color,
-      points: row.tax
-        ? toNegativeTaxDrag(
-            alignTaxDragYears(
-              toTaxDragPeriods(row.tax, taxMetric, row.taxSide),
-              years,
-            ),
-          )
-        : years.map((year) => ({ year, value: null })),
-    }));
+    return rows.flatMap((row) => {
+      if (!row.tax) return [];
+      return [
+        {
+          id: row.input.ticker,
+          label: row.input.ticker,
+          color: row.color,
+          points: toNegativeTaxDrag(
+            alignTaxDragYears(toTaxDragPeriods(row.tax, taxMetric, row.taxSide), years),
+          ),
+        },
+      ];
+    });
   }, [rows, taxMetric, years]);
+
+  const missingPerformance = useMemo(() => {
+    if (!rows) return [];
+    return rows
+      .filter((row) => !row.performance || !performanceHasFundSeries(row.performance))
+      .map((row) => row.input.ticker);
+  }, [rows]);
 
   const annualized = useMemo(() => {
     if (!rows || years.length < 2) return [];
     const span = years[years.length - 1] - years[0];
-    const dollarSeries: {
-      id: string;
-      label: string;
-      color?: string;
-      points: { year: number; value: number }[];
-    }[] =
-      rows.map((row) => ({
-        id: row.performance.fund_ticker,
-        label: row.performance.fund_ticker,
-        color: row.color,
-        points: windowedGrowth(row.performance.fund.points, years, principal),
-      }));
-    const bench = rows[0]?.performance.benchmark;
-    if (bench) {
-      dollarSeries.push({
-        id: `bench-${bench.ticker}`,
-        label: rows[0].performance.benchmark_tracks || bench.ticker,
-        points: windowedGrowth(bench.points, years, principal),
-      });
-    }
-    return dollarSeries.map((row) => {
+    return growthSeries.map((row) => {
       const first = row.points[0];
       const last = row.points[row.points.length - 1];
       return {
@@ -252,7 +256,7 @@ export function GrowthAndTaxDragModule({
           first && last ? cagr(first.value, last.value, Math.max(span, 1)) : null,
       };
     });
-  }, [principal, rows, years]);
+  }, [growthSeries, rows, years]);
 
   function commitPrincipal() {
     const parsed = Number(principalDraft.replace(/[$,\s]/g, ""));
@@ -442,6 +446,13 @@ export function GrowthAndTaxDragModule({
         </div>
       ) : null}
 
+      {missingPerformance.length > 0 && selected.length > 0 && !error ? (
+        <p className="mt-3 text-[11px] text-muted">
+          No performance series for {missingPerformance.join(", ")} — N/A, not
+          $0.
+        </p>
+      ) : null}
+
       {error ? (
         <div className="mt-5 rounded-md border border-tax-more/20 bg-tax-more-soft px-4 py-4">
           <p className="font-serif text-lg text-tax-more">Module unavailable</p>
@@ -472,7 +483,9 @@ export function GrowthAndTaxDragModule({
               emptyHint={
                 selected.length === 0
                   ? ""
-                  : "GET /performance returned no overlapping monthly points."
+                  : missingPerformance.length === selected.length
+                    ? "GET /performance returned 404 or no monthly points for these tickers."
+                    : "GET /performance returned no overlapping monthly points."
               }
             />
           </div>
@@ -553,6 +566,11 @@ async function loadModule(
   const prepared = await Promise.all(
     funds.map(async (input, index) => {
       const ticker = input.ticker.trim().toUpperCase();
+      const navFromMeta = navFromFundMetadata(
+        ticker,
+        input.navPerShare,
+        seedNavLookup,
+      );
       const usePost = principal !== DEFAULT_START_DOLLARS;
       const request = {
         ticker,
@@ -561,20 +579,28 @@ async function loadModule(
         start_dollars: principal,
         mode: "fixture" as const,
       };
-      const performance = usePost
-        ? await postPerformanceGrowth(request, { signal })
-        : await fetchPerformance(request, { signal });
-      const lastClose =
-        performance.fund.points[performance.fund.points.length - 1]?.adj_close;
-      const nav =
-        navFromFundMetadata(ticker, input.navPerShare, seedNavLookup) ??
-        positiveNav(lastClose);
-      return { input, index, ticker, performance, nav };
+      try {
+        const raw = usePost
+          ? await postPerformanceGrowth(request, { signal })
+          : await fetchPerformance(request, { signal });
+        const performance = usablePerformance(raw);
+        const lastClose = performance
+          ? performance.fund.points[performance.fund.points.length - 1]?.adj_close
+          : undefined;
+        const nav = navFromMeta ?? positiveNav(lastClose);
+        return { input, index, ticker, performance, nav };
+      } catch (caught) {
+        if (caught instanceof DOMException && caught.name === "AbortError") {
+          throw caught;
+        }
+        return { input, index, ticker, performance: null, nav: navFromMeta };
+      }
     }),
   );
 
   const yearSet = new Set<number>();
   for (const row of prepared) {
+    if (!row.performance) continue;
     for (const point of yearEndGrowth(row.performance.fund.points)) {
       yearSet.add(point.year);
     }
