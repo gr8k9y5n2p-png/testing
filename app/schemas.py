@@ -235,9 +235,10 @@ def fund_identifier(
 ) -> str:
     """Stable identity: ticker when the book is ticker-keyed, else name slug.
 
-    American Funds Class A HTML is name-keyed. Attaching ABALX/AMCPX must keep
-    the slug (``american-balanced-fund``, ``amcap-fund``) so re-ingest does not
-    fork upsert keys.
+    American Funds, BlackRock open-end, and J.P. Morgan name-keyed books keep
+    the slug (``american-balanced-fund``, ``blackrock-equity-dividend-fund``)
+    when a Class A / Investor A ticker is attached so re-ingest does not fork
+    upsert keys. SEEGX / JLGMX stay ticker-keyed.
     """
     from app.aliases import class_a_identifier_for_name
 

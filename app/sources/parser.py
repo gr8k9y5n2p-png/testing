@@ -562,7 +562,23 @@ def parse_distribution_html(
                         },
                     )
                 )
-    return records
+    return _enrich_name_keyed_tickers(records)
+
+
+def _enrich_name_keyed_tickers(records: list[NormalizedRecord]) -> list[NormalizedRecord]:
+    """Attach Class A / Investor A tickers without changing parsed amounts."""
+    enriched: list[NormalizedRecord] = []
+    for record in records:
+        ticker, cusip = enrich_class_a_fields(
+            ticker=record.ticker,
+            cusip=record.cusip,
+            fund_name=record.fund_name,
+            fund_family=record.fund_family,
+        )
+        if ticker != record.ticker or cusip != record.cusip:
+            record = replace(record, ticker=ticker, cusip=cusip)
+        enriched.append(record)
+    return enriched
 
 
 def parse_capital_group_html(

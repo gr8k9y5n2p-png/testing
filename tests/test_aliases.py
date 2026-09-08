@@ -3,7 +3,9 @@ from __future__ import annotations
 from pathlib import Path
 
 from app.aliases import (
+    BLACKROCK_FUNDS,
     CLASS_A_FUNDS,
+    JPMORGAN_FUNDS,
     class_a_for_name,
     class_a_identifier_for_name,
     display_cusip,
@@ -11,7 +13,7 @@ from app.aliases import (
     enrich_class_a_fields,
 )
 from app.schemas import fund_identifier
-from app.sources.parser import parse_capital_group_html
+from app.sources.parser import parse_capital_group_html, parse_distribution_html
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "american_funds"
 
@@ -48,6 +50,108 @@ def test_display_backfill_from_slug() -> None:
     assert display_ticker(None, "american-balanced-fund") == "ABALX"
     assert display_cusip(None, "american-balanced-fund") == "024071102"
     assert display_ticker("CGHM", "capital-group-municipal-high-income-etf") == "CGHM"
+
+
+def test_blackrock_investor_a_identity() -> None:
+    identity = class_a_for_name("BlackRock Equity Dividend Fund", fund_family="BlackRock / iShares")
+    assert identity is not None
+    assert identity.ticker == "MDDVX"
+    assert identity.cusip == "09251M108"
+    assert identity.fund_identifier == "blackrock-equity-dividend-fund"
+    ticker, cusip = enrich_class_a_fields(
+        ticker=None,
+        cusip=None,
+        fund_name="BlackRock Equity Dividend Fund",
+        fund_family="BlackRock / iShares",
+    )
+    assert ticker == "MDDVX"
+    assert cusip == "09251M108"
+    assert {fund.ticker for fund in BLACKROCK_FUNDS} >= {
+        "MDDVX",
+        "LIRAX",
+        "BSPAX",
+        "BAGPX",
+        "BMSAX",
+        "LPYAX",
+        "LEVAX",
+        "MDGCX",
+        "BACAX",
+        "BARDX",
+    }
+
+
+def test_jpmorgan_class_a_identity() -> None:
+    identity = class_a_for_name("JPMorgan Equity Income Fund", fund_family="J.P. Morgan Asset Management")
+    assert identity is not None
+    assert identity.ticker == "OIEIX"
+    assert identity.fund_identifier == "jpmorgan-equity-income-fund"
+    ticker, _cusip = enrich_class_a_fields(
+        ticker=None,
+        cusip=None,
+        fund_name="Undiscovered Managers Behavioral Value Fund",
+        fund_family="J.P. Morgan Asset Management",
+    )
+    assert ticker == "UBVAX"
+    assert {fund.ticker for fund in JPMORGAN_FUNDS} >= {"OIEIX", "BBEM", "JFLI", "VCAXX", "SEEGX"}
+
+
+def test_blackrock_attach_keeps_name_slug_identifier() -> None:
+    ident = fund_identifier("MDDVX", "BlackRock Equity Dividend Fund", "BlackRock / iShares")
+    assert ident == "blackrock-equity-dividend-fund"
+    ident = fund_identifier(None, "BlackRock LifePath Index Retirement Fund", "BlackRock / iShares")
+    assert ident == "blackrock-lifepath-index-retirement-fund"
+    # Existing ticker-keyed Large Cap Growth rows stay ticker-keyed.
+    ident = fund_identifier("SEEGX", "JPMorgan Large Cap Growth Fund", "J.P. Morgan Asset Management")
+    assert ident == "SEEGX"
+
+
+def test_blackrock_oef_fixture_name_keyed_rows_have_investor_a_tickers() -> None:
+    html = (Path(__file__).resolve().parents[1] / "fixtures" / "blackrock" / "2025_open_end_distributions.html").read_text(
+        encoding="utf-8"
+    )
+    records = parse_distribution_html(
+        html,
+        source_url="fixture://blackrock-oef",
+        fund_family="BlackRock / iShares",
+    )
+    equity = next(r for r in records if "Equity Dividend" in r.fund_name)
+    assert equity.ticker == "MDDVX"
+    unmapped = sorted(
+        {
+            r.fund_name
+            for r in records
+            if r.ticker is None and class_a_for_name(r.fund_name, fund_family="BlackRock / iShares") is None
+        }
+    )
+    # Composite / Institutional-only / interval / unverified names may remain unmapped.
+    assert "BlackRock Equity Dividend Fund" not in unmapped
+    assert "BlackRock LifePath Index Retirement Fund" not in unmapped
+    assert "BlackRock Income Fund" not in unmapped
+    assert "BlackRock Credit Relative Value Fund" not in unmapped
+    assert "BlackRock HPS Credit Strategies Fund" in unmapped
+
+
+def test_jpmorgan_fixture_name_keyed_rows_have_class_a_tickers() -> None:
+    html = (Path(__file__).resolve().parents[1] / "fixtures" / "jpmorgan" / "section_19a_sample.html").read_text(
+        encoding="utf-8"
+    )
+    records = parse_distribution_html(
+        html,
+        source_url="fixture://jpm",
+        fund_family="J.P. Morgan Asset Management",
+    )
+    income = next(r for r in records if r.fund_name == "JPMorgan Equity Income Fund")
+    assert income.ticker == "OIEIX"
+    assert next(r for r in records if r.fund_name.startswith("Undiscovered Managers")).ticker == "UBVAX"
+    assert next(r for r in records if "BetaBuilders Emerging" in r.fund_name).ticker == "BBEM"
+    unmapped = sorted(
+        {
+            r.fund_name
+            for r in records
+            if r.ticker is None and class_a_for_name(r.fund_name, fund_family="J.P. Morgan Asset Management") is None
+        }
+    )
+    assert unmapped == [], unmapped
 
 
 def test_year_end_fixture_name_keyed_rows_have_class_a_tickers() -> None:

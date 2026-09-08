@@ -1,24 +1,28 @@
-"""Shared Class A ticker ↔ stored fund_identifier aliases.
+"""Shared Class A / Investor A ticker ↔ stored fund_identifier aliases.
 
-American Funds (and similar) official books are name-keyed: HTML tables have a
-fund-name column and no ticker/CUSIP. Rows store ``ticker=null`` and
-``fund_identifier`` like ``amcap-fund`` / ``american-balanced-fund``.
+Official books for American Funds, BlackRock open-end mutual funds, and
+J.P. Morgan Section 19a notices are name-keyed: HTML tables have a fund-name
+column and no ticker/CUSIP. Rows store ``ticker=null`` and a name slug
+(``american-balanced-fund``, ``blackrock-equity-dividend-fund``).
 
-List, search, and illustrate resolve Class A tickers (AMCPX, ABALX, AGTHX, …)
-through this map. Display ticker is the official Class A symbol (AMCPX, not the
-AMCAP nickname). Attaching a Class A ticker must **not** change the name-slug
-identity, or re-ingest would fork upsert keys.
+List, search, and illustrate resolve Class A / Investor A tickers (ABALX,
+MDDVX, OIEIX, …) through this map. Attaching a ticker must **not** change the
+name-slug identity, or re-ingest would fork upsert keys.
 
-Class A tickers: Capital Group participant Class A prices page (Aug 2026) plus
-product-page / SEC Class A symbols for municipal, interval, and Class M names
-that appear on the tax-center HTML. CUSIPs are included only when confirmed on
-an official Capital Group or SEC source.
+SEEGX / JLGMX were already ticker-keyed in the JPM fixture and keep those
+identifiers. iShares ETF HTML already has tickers — this map does not
+override parsed values.
+
+CUSIPs are included only when confirmed on an official issuer or SEC source.
 """
 
 from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+
+from app.aliases_blackrock import BLACKROCK_FUND_ROWS
+from app.aliases_jpmorgan import JPMORGAN_FUND_ROWS
 
 _SLUG_RE = re.compile(r"[^a-z0-9]+")
 
@@ -28,9 +32,32 @@ def _slugify(name: str) -> str:
     return slug or "unknown-fund"
 
 
+FAMILY_AMERICAN_FUNDS = "american_funds"
+FAMILY_BLACKROCK = "blackrock"
+FAMILY_JPMORGAN = "jpmorgan"
+
+
 def is_american_funds_family(fund_family: str | None) -> bool:
+    return family_key(fund_family) == FAMILY_AMERICAN_FUNDS
+
+
+def is_blackrock_family(fund_family: str | None) -> bool:
+    return family_key(fund_family) == FAMILY_BLACKROCK
+
+
+def is_jpmorgan_family(fund_family: str | None) -> bool:
+    return family_key(fund_family) == FAMILY_JPMORGAN
+
+
+def family_key(fund_family: str | None) -> str | None:
     blob = (fund_family or "").lower()
-    return "american funds" in blob or "capital group" in blob
+    if "american funds" in blob or "capital group" in blob:
+        return FAMILY_AMERICAN_FUNDS
+    if "blackrock" in blob or "ishares" in blob:
+        return FAMILY_BLACKROCK
+    if "j.p. morgan" in blob or "jpmorgan" in blob or "jp morgan" in blob:
+        return FAMILY_JPMORGAN
+    return None
 
 
 @dataclass(frozen=True, slots=True)
@@ -367,26 +394,62 @@ TICKER_LOOKUP_ALIASES: dict[str, dict[str, str]] = {}
 IDENTIFIER_DISPLAY_TICKER: dict[str, str] = {}
 IDENTIFIER_DISPLAY_CUSIP: dict[str, str] = {}
 _BY_SLUG: dict[str, ClassAIdentity] = {}
+_BY_FAMILY_SLUG: dict[str, dict[str, ClassAIdentity]] = {
+    FAMILY_AMERICAN_FUNDS: {},
+    FAMILY_BLACKROCK: {},
+    FAMILY_JPMORGAN: {},
+}
+
+
+def _register_identity(family: str, identity: ClassAIdentity) -> None:
+    row = _payload(identity)
+    TICKER_LOOKUP_ALIASES[identity.ticker] = row
+    for nick in identity.nicknames:
+        TICKER_LOOKUP_ALIASES[nick] = row
+    IDENTIFIER_DISPLAY_TICKER[identity.fund_identifier] = identity.ticker
+    if identity.cusip:
+        IDENTIFIER_DISPLAY_CUSIP[identity.fund_identifier] = identity.cusip
+    family_slugs = _BY_FAMILY_SLUG.setdefault(family, {})
+    family_slugs[identity.fund_identifier] = identity
+    _BY_SLUG[identity.fund_identifier] = identity
+    for name in identity.names:
+        slug = _slugify(name)
+        family_slugs[slug] = identity
+        _BY_SLUG[slug] = identity
+
+
+def _identities_from_rows(
+    rows: tuple[tuple[str, str | None, tuple[str, ...], str | None], ...],
+) -> tuple[ClassAIdentity, ...]:
+    out: list[ClassAIdentity] = []
+    for ticker, ident, names, cusip in rows:
+        fund_identifier = ident or _slugify(names[0])
+        out.append(_ca(ticker, fund_identifier, *names, cusip=cusip))
+    return tuple(out)
+
 
 for _identity in CLASS_A_FUNDS:
-    _row = _payload(_identity)
-    TICKER_LOOKUP_ALIASES[_identity.ticker] = _row
-    for _nick in _identity.nicknames:
-        TICKER_LOOKUP_ALIASES[_nick] = _row
-    IDENTIFIER_DISPLAY_TICKER[_identity.fund_identifier] = _identity.ticker
-    if _identity.cusip:
-        IDENTIFIER_DISPLAY_CUSIP[_identity.fund_identifier] = _identity.cusip
-    _BY_SLUG[_identity.fund_identifier] = _identity
-    for _name in _identity.names:
-        _BY_SLUG[_slugify(_name)] = _identity
+    _register_identity(FAMILY_AMERICAN_FUNDS, _identity)
+
+BLACKROCK_FUNDS: tuple[ClassAIdentity, ...] = _identities_from_rows(BLACKROCK_FUND_ROWS)
+JPMORGAN_FUNDS: tuple[ClassAIdentity, ...] = _identities_from_rows(JPMORGAN_FUND_ROWS)
+
+for _identity in BLACKROCK_FUNDS:
+    _register_identity(FAMILY_BLACKROCK, _identity)
+for _identity in JPMORGAN_FUNDS:
+    _register_identity(FAMILY_JPMORGAN, _identity)
 
 
 def class_a_for_name(fund_name: str | None, *, fund_family: str | None = None) -> ClassAIdentity | None:
     if not fund_name:
         return None
-    if fund_family is not None and not is_american_funds_family(fund_family):
-        return None
-    return _BY_SLUG.get(_slugify(fund_name))
+    slug = _slugify(fund_name)
+    if fund_family is not None:
+        family = family_key(fund_family)
+        if family is None:
+            return None
+        return _BY_FAMILY_SLUG.get(family, {}).get(slug)
+    return _BY_SLUG.get(slug)
 
 
 def class_a_identifier_for_name(fund_name: str | None, *, fund_family: str | None = None) -> str | None:

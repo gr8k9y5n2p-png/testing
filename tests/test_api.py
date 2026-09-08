@@ -137,6 +137,33 @@ def test_distributions_alias_search_agthx_amcap_amcpx(client: TestClient) -> Non
     }
 
 
+def test_distributions_alias_search_blackrock_jpmorgan(client: TestClient) -> None:
+    """Name-keyed BR / JPM books resolve newly mapped Investor A / Class A tickers."""
+    br = client.post("/ingest/fetch", json={"fund_family": "blackrock", "mode": "fixture"})
+    assert br.status_code == 200, br.text
+    jpm = client.post("/ingest/fetch", json={"fund_family": "jpmorgan", "mode": "fixture"})
+    assert jpm.status_code == 200, jpm.text
+
+    for ticker, ident, family in (
+        ("MDDVX", "blackrock-equity-dividend-fund", "BlackRock"),
+        ("LIRAX", "blackrock-lifepath-index-retirement-fund", "BlackRock"),
+        ("BSPAX", "ishares-s-p-500-index-fund", "BlackRock"),
+        ("BMSAX", "blackrock-income-fund", "BlackRock"),
+        ("BACAX", "blackrock-energy-opportunities-fund", "BlackRock"),
+        ("OIEIX", "jpmorgan-equity-income-fund", "J.P. Morgan"),
+        ("UBVAX", "undiscovered-managers-behavioral-value-fund", "J.P. Morgan"),
+        ("BBEM", "jpmorgan-betabuilders-emerging-markets-equity-etf", "J.P. Morgan"),
+        ("VCAXX", "jpmorgan-california-municipal-money-market-fund", "J.P. Morgan"),
+    ):
+        response = client.get("/distributions", params={"ticker": ticker, "page_size": 20})
+        assert response.status_code == 200, response.text
+        body = response.json()
+        assert body["total"] >= 1, ticker
+        assert {item["ticker"] for item in body["items"]} == {ticker}
+        assert {item["fund_identifier"] for item in body["items"]} == {ident}
+        assert all(family in item["fund_family"] for item in body["items"])
+
+
 def test_distributions_alias_search_abalx_class_a(client: TestClient) -> None:
     """Live Cap Group HTML is name-keyed; ABALX must resolve to American Balanced Fund."""
     fetched = client.post("/ingest/fetch", json={"fund_family": "american_funds", "mode": "fixture"})
