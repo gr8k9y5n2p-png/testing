@@ -29,6 +29,7 @@ export {
   TAX_DRAG_NA_LABEL,
   alignTaxDragYears,
   comparePeriodIsCovered,
+  comparePeriodCalendarYear,
   formatTaxDragPoint,
   illustrationIsMatched,
   illustrationIsUnmatched,

@@ -1,5 +1,8 @@
 import type { ComparePeriodOut } from "@/lib/illustrate/compare-types";
-import { taxDragValueFromPeriodSide } from "@/lib/illustrate/tax-drag-chart";
+import {
+  comparePeriodCalendarYear,
+  taxDragValueFromPeriodSide,
+} from "@/lib/illustrate/tax-drag-chart";
 
 export type YoYTaxChartPoint = {
   year: number;
@@ -49,7 +52,7 @@ export function yoyBarsFromComparePeriods(
 ): YoYTaxChartPoint[] {
   return sortYoYPoints(
     periods.map((period) => ({
-      year: period.year,
+      year: comparePeriodCalendarYear(period),
       value: taxDragValueFromPeriodSide(period, side, "tax_dollars"),
     })),
   );

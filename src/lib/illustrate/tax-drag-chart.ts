@@ -9,7 +9,9 @@ import {
 export {
   TAX_DRAG_NA_LABEL,
   alignTaxDragYears,
+  calendarYearFromUnknown,
   comparePeriodIsCovered,
+  comparePeriodCalendarYear,
   illustrationIsMatched,
   illustrationIsUnmatched,
   taxDragLineFromPeriods,

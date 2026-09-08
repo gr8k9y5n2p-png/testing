@@ -55,10 +55,13 @@ export type CompareIllustration = {
    * - Unmatched: `matched: false` + money totals **null** (N/A, never $0)
    * - Published $0 / 0% NAV: `matched: true` + `"0.00"` → chart 0
    *
-   * Live compare can also send `matched: true` with **null**
+   * Live compare can send `matched: true` with **null**
    * `totals.estimated_tax` while tax lives on the period `deltas.*`.
    * Chart that via `taxDragValueFromIllustration`’s delta fallback —
    * do not treat matched+null-totals as N/A when deltas have a number.
+   *
+   * Side-level `estimated_tax` is null/absent by design. Real tax is
+   * `totals.estimated_tax` / `totals.effective_tax_on_holding`.
    */
   matched: boolean;
   holding_dollars?: number;
@@ -74,10 +77,6 @@ export type CompareIllustration = {
     effective_tax_on_holding?: number | null;
   };
   notes?: string[];
-  /** Some live payloads flatten tax onto the illustration root instead of totals. */
-  estimated_tax?: number | null;
-  estimated_tax_dollars?: number | null;
-  effective_tax_on_holding?: number | null;
 };
 
 /** Optional per-side tax when Data omits illustration totals. */
