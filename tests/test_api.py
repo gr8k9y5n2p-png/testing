@@ -136,6 +136,63 @@ def test_distributions_alias_search_agthx_amcap_amcpx(client: TestClient) -> Non
         "the-growth-fund-of-america"
     }
 
+
+def test_distributions_alias_search_abalx_class_a(client: TestClient) -> None:
+    """Live Cap Group HTML is name-keyed; ABALX must resolve to American Balanced Fund."""
+    fetched = client.post("/ingest/fetch", json={"fund_family": "american_funds", "mode": "fixture"})
+    assert fetched.status_code == 200, fetched.text
+
+    for params in (
+        {"q": "ABALX"},
+        {"ticker": "ABALX"},
+        {"fund_identifier": "ABALX"},
+        {"ticker": "AMBAL"},
+    ):
+        response = client.get("/distributions", params={**params, "page_size": 50})
+        assert response.status_code == 200, response.text
+        body = response.json()
+        assert body["total"] >= 1, params
+        assert {item["fund_identifier"] for item in body["items"]} == {"american-balanced-fund"}
+        assert {item["ticker"] for item in body["items"]} == {"ABALX"}
+        assert {item["cusip"] for item in body["items"] if item.get("cusip")} <= {"024071102"}
+
+    ltcg = client.get(
+        "/distributions",
+        params={
+            "ticker": "ABALX",
+            "estimate_type": "long_term_capital_gains",
+            "publication_stage": "final",
+            "page_size": 50,
+        },
+    )
+    assert ltcg.status_code == 200, ltcg.text
+    amounts = {Decimal(item["amount"]) for item in ltcg.json()["items"] if item["amount"] is not None}
+    assert Decimal("2.1250") in amounts
+    assert all(item["ticker"] == "ABALX" for item in ltcg.json()["items"])
+    assert all(item["cusip"] == "024071102" for item in ltcg.json()["items"])
+
+    illustrated = client.post(
+        "/illustrate",
+        json={
+            "holding_dollars": 100000,
+            "nav_per_share": 40,
+            "selectors": {"ticker": "ABALX"},
+        },
+    )
+    assert illustrated.status_code == 200, illustrated.text
+    body = illustrated.json()
+    assert body["components"]
+    assert {c["fund_identifier"] for c in body["components"]} == {"american-balanced-fund"}
+    assert {c["ticker"] for c in body["components"]} == {"ABALX"}
+    assert any(
+        c["estimate_type"] == "long_term_capital_gains" and Decimal(c["amount"]) == Decimal("2.1250")
+        for c in body["components"]
+    )
+
+
+def test_fund_families_coverage_ranks(client: TestClient) -> None:
+    fetched = client.post("/ingest/fetch", json={"fund_family": "american_funds", "mode": "fixture"})
+    assert fetched.status_code == 200, fetched.text
     families = client.get("/fund-families")
     assert families.status_code == 200
     slugs = {row["slug"]: row for row in families.json()}

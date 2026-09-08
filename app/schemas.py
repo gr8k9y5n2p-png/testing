@@ -230,7 +230,20 @@ def slugify_fund_name(name: str) -> str:
     return slug or "unknown-fund"
 
 
-def fund_identifier(ticker: str | None, fund_name: str) -> str:
+def fund_identifier(
+    ticker: str | None, fund_name: str, fund_family: str | None = None
+) -> str:
+    """Stable identity: ticker when the book is ticker-keyed, else name slug.
+
+    American Funds Class A HTML is name-keyed. Attaching ABALX/AMCPX must keep
+    the slug (``american-balanced-fund``, ``amcap-fund``) so re-ingest does not
+    fork upsert keys.
+    """
+    from app.aliases import class_a_identifier_for_name
+
+    mapped = class_a_identifier_for_name(fund_name, fund_family=fund_family)
+    if mapped:
+        return mapped
     if ticker:
         return ticker.upper()
     return slugify_fund_name(fund_name)

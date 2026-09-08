@@ -59,7 +59,7 @@ def test_full_book_ishares_fidelity_trp() -> None:
 
 def test_full_book_american_funds_invesco_dimensional() -> None:
     af_funds, af_tickers = _funds_and_tickers(AmericanFundsSource())
-    assert any("AMCAP" in name.upper() for name in af_funds)
+    assert {"AMCPX", "ABALX", "AGTHX"} <= af_tickers
     assert len(af_funds) >= 70
 
     inv_funds, _inv_tickers = _funds_and_tickers(InvescoSource())

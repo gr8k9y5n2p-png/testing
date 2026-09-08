@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
 from html import unescape
@@ -10,6 +10,7 @@ from typing import Any
 from bs4 import BeautifulSoup, Tag
 from dateutil.parser import parse as parse_datetime
 
+from app.aliases import enrich_class_a_fields
 from app.models import AmountUnit, EstimateType, PublicationStage
 
 
@@ -570,4 +571,16 @@ def parse_capital_group_html(
     source_url: str,
     fund_family: str = "American Funds",
 ) -> list[NormalizedRecord]:
-    return parse_distribution_html(html, source_url=source_url, fund_family=fund_family)
+    records = parse_distribution_html(html, source_url=source_url, fund_family=fund_family)
+    enriched: list[NormalizedRecord] = []
+    for record in records:
+        ticker, cusip = enrich_class_a_fields(
+            ticker=record.ticker,
+            cusip=record.cusip,
+            fund_name=record.fund_name,
+            fund_family=record.fund_family,
+        )
+        if ticker != record.ticker or cusip != record.cusip:
+            record = replace(record, ticker=ticker, cusip=cusip)
+        enriched.append(record)
+    return enriched

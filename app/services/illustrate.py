@@ -7,7 +7,7 @@ from decimal import ROUND_HALF_UP, Decimal
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from app.aliases import TICKER_LOOKUP_ALIASES
+from app.aliases import TICKER_LOOKUP_ALIASES, display_ticker
 from app.crud import get_by_ids, list_matching
 from app.models import AmountUnit, DistributionEstimate, EstimateType, PublicationStage
 from app.schemas import (
@@ -192,7 +192,7 @@ def _illustrate_row(
             fund_family=row.fund_family,
             fund_name=row.fund_name,
             fund_identifier=row.fund_identifier,
-            ticker=row.ticker,
+            ticker=display_ticker(row.ticker, row.fund_identifier),
             estimate_type=row.estimate_type,
             amount_unit=unit,
             amount=point,
@@ -224,7 +224,7 @@ def _illustrate_row(
             fund_family=row.fund_family,
             fund_name=row.fund_name,
             fund_identifier=row.fund_identifier,
-            ticker=row.ticker,
+            ticker=display_ticker(row.ticker, row.fund_identifier),
             estimate_type=row.estimate_type,
             amount_unit=unit,
             amount=point,
@@ -274,7 +274,7 @@ def _illustrate_row(
         fund_family=row.fund_family,
         fund_name=row.fund_name,
         fund_identifier=row.fund_identifier,
-        ticker=row.ticker,
+        ticker=display_ticker(row.ticker, row.fund_identifier),
         estimate_type=row.estimate_type,
         amount_unit=unit,
         amount=point,

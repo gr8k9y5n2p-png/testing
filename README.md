@@ -360,7 +360,7 @@ Interactive Modules **Current Allocation vs Proposed Allocation**. Same center-z
 
 **Single snapshot** (omit `periods`): one shared `snapshot` + `tax_rates`. **YoY** (send `periods[]`, e.g. `[{year:2024,as_of:…},{year:2025,as_of:…}]`): each period re-runs both books with that `as_of` pinned, or a calendar-year window when `as_of` is omitted (`snapshot.as_of_year`). Top-level `current` / `proposed` / `deltas` **copy the latest period** so the diverging-bar sketch still has one pair. `periods[]` is empty in single-snapshot mode.
 
-Each holding sends `ticker` and/or `fund_identifier`, and **either** `holding_dollars` **or** `weight_pct` plus the side’s `book_dollars`. `weight_pct` is **0–100** (UI %). Capital Group HTML has no ticker column: `AMCPX` / `AMCAP` resolve to stored `amcap-fund`; `AGTHX` resolves to `the-growth-fund-of-america`.
+Each holding sends `ticker` and/or `fund_identifier`, and **either** `holding_dollars` **or** `weight_pct` plus the side’s `book_dollars`. `weight_pct` is **0–100** (UI %). Capital Group HTML has no ticker column: Class A symbols in `app/aliases.py` resolve onto name slugs (`AMCPX` / `AMCAP` → `amcap-fund`, `AGTHX` → `the-growth-fund-of-america`, `ABALX` / CUSIP `024071102` → `american-balanced-fund`). Live ingest attaches those tickers/CUSIPs without changing the slug identity.
 
 Each side is a full `/illustrate/portfolio` result plus `label` (defaults: `Current Allocation` / `Proposed Allocation`). Gaps stay on that side. Covered holdings include `upcoming` and `paid_history` (same convenience fields as `/illustrate/portfolio`).
 

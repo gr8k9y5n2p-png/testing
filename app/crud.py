@@ -7,7 +7,7 @@ from sqlalchemy import Select, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.models import CoverageGap, DistributionEstimate, IngestRun
-from app.aliases import alias_fund_identifier
+from app.aliases import alias_fund_identifier, enrich_class_a_fields
 from app.schemas import DistributionIn, fund_identifier, make_upsert_key
 
 
@@ -29,7 +29,7 @@ def upsert_records(
     collapsed: dict[str, DistributionIn] = {}
     order: list[str] = []
     for record in records:
-        ident = fund_identifier(record.ticker, record.fund_name)
+        ident = fund_identifier(record.ticker, record.fund_name, record.fund_family)
         key = make_upsert_key(
             fund_family=record.fund_family,
             fund_identifier_value=ident,
@@ -43,14 +43,20 @@ def upsert_records(
         collapsed[key] = record
     for key in order:
         record = collapsed[key]
-        ident = fund_identifier(record.ticker, record.fund_name)
+        ident = fund_identifier(record.ticker, record.fund_name, record.fund_family)
+        ticker, cusip = enrich_class_a_fields(
+            ticker=record.ticker,
+            cusip=record.cusip,
+            fund_name=record.fund_name,
+            fund_family=record.fund_family,
+        )
         existing = session.scalar(select(DistributionEstimate).where(DistributionEstimate.upsert_key == key))
         payload = {
             "fund_family": record.fund_family,
             "fund_name": record.fund_name,
             "fund_identifier": ident,
-            "ticker": record.ticker,
-            "cusip": record.cusip,
+            "ticker": ticker,
+            "cusip": cusip,
             "share_class": record.share_class,
             "estimate_type": record.estimate_type.value,
             "amount": _midpoint(record),

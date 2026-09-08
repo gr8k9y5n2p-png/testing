@@ -66,8 +66,18 @@ def test_year_end_fixture_dates_without_year_and_extra_tables() -> None:
     )
     amcap = next(r for r in records if r.fund_name == "AMCAP Fund" and r.estimate_type == EstimateType.long_term_capital_gains)
     assert amcap.amount == Decimal("2.1509")
+    assert amcap.ticker == "AMCPX"
     assert str(amcap.ex_date) == "2025-12-12"
     assert str(amcap.as_of) == "2026-01-22"
+
+    abalx = next(
+        r
+        for r in records
+        if r.fund_name == "American Balanced Fund" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert abalx.amount == Decimal("2.1250")
+    assert abalx.ticker == "ABALX"
+    assert abalx.cusip == "024071102"
 
     special = next(
         r for r in records if r.fund_name == "American Balanced Fund" and r.estimate_type == EstimateType.special_dividend
@@ -118,7 +128,7 @@ def test_estimate_fixture_percent_of_nav_ranges() -> None:
     )
     assert fund_inv.amount_min == Decimal("4.80")
     assert fund_inv.amount_max == Decimal("5.50")
-    assert fund_inv.ticker is None
+    assert fund_inv.ticker == "ANCFX"
 
     cgdv = next(r for r in records if r.ticker == "CGDV")
     assert "Dividend Value" in cgdv.fund_name
