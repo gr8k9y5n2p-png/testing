@@ -57,12 +57,16 @@ export default async function GrowthTaxDemoPage({
 
       <div className="mt-8">
         <GrowthAndTaxDragModule
-          funds={focused ? [focused] : DEFAULT_FUNDS}
+          ticker={focused?.ticker ?? ticker}
+          funds={focused ? undefined : DEFAULT_FUNDS}
+          seedFunds={focused ? [focused] : undefined}
         />
       </div>
 
       <pre className="mt-10 overflow-auto rounded-lg border border-line bg-surface p-4 text-[12px] leading-relaxed text-muted">
         {`import { GrowthAndTaxDragModule } from "@/components/illustrate";
+
+<GrowthAndTaxDragModule ticker="AMCAP" startDollars={10000} />
 
 <GrowthAndTaxDragModule
   funds={[

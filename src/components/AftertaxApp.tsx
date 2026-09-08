@@ -201,7 +201,8 @@ function AftertaxAppInner({
       >
         <GrowthAndTaxDragModule
           key={drillInFund?.ticker ?? "homepage"}
-          funds={drillInFund ? [drillInFund] : HOMEPAGE_GROWTH_FUNDS}
+          ticker={drillInFund?.ticker}
+          funds={drillInFund ? undefined : HOMEPAGE_GROWTH_FUNDS}
           seedFunds={seedFunds}
           startDollars={DEFAULT_START_DOLLARS}
         />
