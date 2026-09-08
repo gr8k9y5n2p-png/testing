@@ -35,8 +35,10 @@ class AmericanFundsSource(FundSource):
         "special dividends, qualified-dividend percentages, and estimate % of NAV). "
         "Live year-end *preliminary* estimate pages are seasonal and often advisor-gated; "
         "fixture mode includes estimate + final snapshots for 2024 and 2025 so time-series "
-        "(as_of + publication_stage) coexist. 2024 advisor HTML now 302s to login; "
-        "per-fund history also lives at the Historical Distributions tool. "
+        "(as_of + publication_stage) coexist, plus product-page paid history for AMCAP / "
+        "Growth Fund of America (2021–2025 tax-year as_of). 2024 advisor HTML now 302s to "
+        "login; per-fund history also lives at the Historical Distributions tool and on "
+        "each fund’s product page (historicalDistributions JSON). "
         "CGHM is on the official 2024 YE table with em-dash ST/LT (no capital gain — not stored as $0)."
     )
 
@@ -44,7 +46,16 @@ class AmericanFundsSource(FundSource):
         self.fixtures_dir = Path(fixtures_dir or settings.fixtures_dir) / "american_funds"
 
     def source_urls(self) -> list[str]:
-        return [MIDYEAR_2026_URL, YEAR_END_2025_URL, YEAR_END_2024_URL, TAX_CENTER_URL, CALENDAR_URL, HISTORICAL_TOOL_URL]
+        return [
+            MIDYEAR_2026_URL,
+            YEAR_END_2025_URL,
+            YEAR_END_2024_URL,
+            TAX_CENTER_URL,
+            CALENDAR_URL,
+            HISTORICAL_TOOL_URL,
+            "https://www.capitalgroup.com/individual/investments/mutual-funds/details/amcap-a",
+            "https://www.capitalgroup.com/individual/investments/mutual-funds/details/gfa-a",
+        ]
 
     def supports_live(self) -> bool:
         return True
@@ -93,6 +104,12 @@ class AmericanFundsSource(FundSource):
                 "name": "year_end_2024_estimates",
                 "url": "fixture://american_funds/year_end_2024_estimates_sample.html",
                 "fixture": "year_end_2024_estimates_sample.html",
+                "live": False,
+            },
+            {
+                "name": "paid_history_2021_2025",
+                "url": "https://www.capitalgroup.com/individual/investments/mutual-funds/details/amcap-a",
+                "fixture": "paid_history_2021_2025.html",
                 "live": False,
             },
         ]

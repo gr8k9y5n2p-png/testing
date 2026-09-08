@@ -168,8 +168,11 @@ class DodgeCoxSource(HtmlTableSource):
         "Tax Letters: 2025 "
         "https://www.dodgeandcox.com/content/dam/dc/us/en/pdf/guides/dc_us_supplemental_tax_letter.pdf "
         "(DODGX LT $1.1999; DODIX income $0.1347) and 2024 "
-        ".../dc_us_supplemental_tax_letter_2024.pdf (DODGX LT $12.036). 2023 letter "
-        "siblings 404. March/June/September rows omitted so one as_of is not summed."
+        ".../dc_us_supplemental_tax_letter_2024.pdf (DODGX LT $12.036). 2023–2021 letter "
+        "PDF siblings 404; Dec YE 2021–2023 transcribed from the public product-page "
+        "API https://api-v1.dodgeandcox.com/api/funds-distribution (DODIX Dec income "
+        "$0.0570 / $0.1010 / $0.1290; DODGX Dec LT $3.3800 / $7.2500 / $3.9800). "
+        "March/June/September rows omitted so one as_of is not summed."
     )
     live_limitations = "Estimates and the tax letter are PDF. Fixtures transcribe those public tables."
 
@@ -191,6 +194,27 @@ class DodgeCoxSource(HtmlTableSource):
                 name="2024_supplemental_tax_letter",
                 url="https://www.dodgeandcox.com/content/dam/dc/us/en/pdf/guides/dc_us_supplemental_tax_letter_2024.pdf",
                 fixture="2024_supplemental_tax_letter.html",
+                live=False,
+                large_aum_only=True,
+            ),
+            PageSpec(
+                name="2023_supplemental_tax_letter",
+                url="https://api-v1.dodgeandcox.com/api/funds-distribution",
+                fixture="2023_supplemental_tax_letter.html",
+                live=False,
+                large_aum_only=True,
+            ),
+            PageSpec(
+                name="2022_supplemental_tax_letter",
+                url="https://api-v1.dodgeandcox.com/api/funds-distribution",
+                fixture="2022_supplemental_tax_letter.html",
+                live=False,
+                large_aum_only=True,
+            ),
+            PageSpec(
+                name="2021_supplemental_tax_letter",
+                url="https://api-v1.dodgeandcox.com/api/funds-distribution",
+                fixture="2021_supplemental_tax_letter.html",
                 live=False,
                 large_aum_only=True,
             ),

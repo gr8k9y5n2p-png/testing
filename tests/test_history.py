@@ -39,6 +39,37 @@ def test_american_funds_2024_preliminary_coexists() -> None:
     assert str(amcap.as_of) == "2024-09-18"
 
 
+def test_american_funds_paid_history_2021_2025() -> None:
+    html = (AF / "paid_history_2021_2025.html").read_text(encoding="utf-8")
+    records = parse_capital_group_html(
+        html,
+        source_url="https://www.capitalgroup.com/individual/investments/mutual-funds/details/amcap-a",
+    )
+    amcap_lt = {
+        str(r.as_of): r
+        for r in records
+        if r.fund_name == "AMCAP Fund" and r.estimate_type == EstimateType.long_term_capital_gains
+    }
+    assert amcap_lt["2021-12-15"].amount == Decimal("1.1710")
+    assert amcap_lt["2021-12-15"].publication_stage == PublicationStage.final
+    assert amcap_lt["2022-06-15"].amount == Decimal("2.2668")
+    assert amcap_lt["2022-06-15"].publication_stage == PublicationStage.paid
+    assert amcap_lt["2023-12-13"].amount == Decimal("1.0270")
+    assert amcap_lt["2024-12-17"].amount == Decimal("2.5220")
+    assert amcap_lt["2025-12-12"].amount == Decimal("2.1509")
+    gfa_lt = {
+        str(r.as_of): r
+        for r in records
+        if r.fund_name == "The Growth Fund of America"
+        and r.estimate_type == EstimateType.long_term_capital_gains
+    }
+    assert gfa_lt["2021-12-17"].amount == Decimal("6.0140")
+    assert gfa_lt["2022-12-16"].amount == Decimal("1.8410")
+    assert gfa_lt["2023-12-15"].amount == Decimal("4.3010")
+    assert gfa_lt["2024-12-18"].amount == Decimal("6.3810")
+    assert gfa_lt["2025-12-17"].amount == Decimal("8.3640")
+
+
 def test_t_rowe_prior_years() -> None:
     y2024 = parse_distribution_html(
         (TRP / "2024_year_end_distributions.html").read_text(encoding="utf-8"),
@@ -330,7 +361,7 @@ def test_search_multi_year_top_families(client: TestClient) -> None:
     assert "total_capital_gains" in twcgx_types
 
     dodgx = client.get("/distributions", params={"fund_identifier": "DODGX", "page_size": 50})
-    assert {"2024", "2025", "2026"} <= {
+    assert {"2021", "2022", "2023", "2024", "2025", "2026"} <= {
         item["as_of"][:4] for item in dodgx.json()["items"] if item.get("as_of")
     }
 
@@ -535,3 +566,52 @@ def test_compare_hero_yoy_fixture_bars(client: TestClient) -> None:
     assert len(vbiax.json()["periods"]) == 3
     assert all(p["left"]["matched"] and p["right"]["matched"] for p in vbiax.json()["periods"])
     assert len({p["right"]["totals"]["distribution_dollars"] for p in vbiax.json()["periods"]}) >= 2
+
+
+def _final_paid_years(items: list[dict]) -> set[str]:
+    return {
+        item["as_of"][:4]
+        for item in items
+        if item.get("as_of")
+        and item.get("publication_stage") in {"final", "paid"}
+        and item["as_of"][:4] in {"2021", "2022", "2023", "2024", "2025"}
+    }
+
+
+def test_amcpx_dodix_tax_drag_years_overlap(client: TestClient) -> None:
+    """Growth-window tax-drag needs multiple shared as_of years in 2021–2025."""
+    assert client.post("/ingest/fetch", json={"fund_family": "american_funds", "mode": "fixture"}).status_code == 200
+    assert client.post("/ingest/fetch", json={"fund_family": "dodge_cox", "mode": "fixture"}).status_code == 200
+
+    amcap = client.get("/distributions", params={"fund_identifier": "amcap-fund", "page_size": 100})
+    dodix = client.get("/distributions", params={"ticker": "DODIX", "page_size": 50})
+    amcap_years = _final_paid_years(amcap.json()["items"])
+    dodix_years = _final_paid_years(dodix.json()["items"])
+    assert amcap_years == {"2021", "2022", "2023", "2024", "2025"}
+    assert dodix_years == {"2021", "2022", "2023", "2024", "2025"}
+    assert amcap_years & dodix_years == {"2021", "2022", "2023", "2024", "2025"}
+
+    compare = client.post(
+        "/illustrate/compare",
+        json={
+            "mode": "yoy",
+            "holding_dollars": 100000,
+            "nav_per_share": 100,
+            "tax_rates": {},
+            "left": {"selectors": {"ticker": "AMCPX"}},
+            "right": {"selectors": {"ticker": "DODIX"}},
+            "periods": [
+                {"year": 2021},
+                {"year": 2022},
+                {"year": 2023},
+                {"year": 2024},
+                {"year": 2025},
+            ],
+        },
+    )
+    assert compare.status_code == 200, compare.text
+    periods = compare.json()["periods"]
+    assert len(periods) == 4
+    assert all(p["left"]["matched"] and p["right"]["matched"] for p in periods)
+    assert all(Decimal(p["left"]["totals"]["distribution_dollars"]) > 0 for p in periods)
+    assert all(Decimal(p["right"]["totals"]["distribution_dollars"]) > 0 for p in periods)

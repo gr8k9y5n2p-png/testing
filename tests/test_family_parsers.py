@@ -721,6 +721,53 @@ def test_third_tier_fixtures() -> None:
         for r in dodge_paid
     )
 
+    dodge_2021 = parse_distribution_html(
+        (ROOT / "dodge_cox" / "2021_supplemental_tax_letter.html").read_text(encoding="utf-8"),
+        source_url="https://api-v1.dodgeandcox.com/api/funds-distribution",
+        fund_family="Dodge & Cox",
+    )
+    dodix_2021 = next(
+        r
+        for r in dodge_2021
+        if r.ticker == "DODIX" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert dodix_2021.amount == Decimal("0.0570")
+    assert str(dodix_2021.as_of) == "2021-12-20"
+    dodgx_2021 = next(
+        r
+        for r in dodge_2021
+        if r.ticker == "DODGX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert dodgx_2021.amount == Decimal("3.3800")
+
+    dodge_2022 = parse_distribution_html(
+        (ROOT / "dodge_cox" / "2022_supplemental_tax_letter.html").read_text(encoding="utf-8"),
+        source_url="https://api-v1.dodgeandcox.com/api/funds-distribution",
+        fund_family="Dodge & Cox",
+    )
+    assert next(
+        r
+        for r in dodge_2022
+        if r.ticker == "DODIX" and r.estimate_type == EstimateType.ordinary_income
+    ).amount == Decimal("0.1010")
+
+    dodge_2023 = parse_distribution_html(
+        (ROOT / "dodge_cox" / "2023_supplemental_tax_letter.html").read_text(encoding="utf-8"),
+        source_url="https://api-v1.dodgeandcox.com/api/funds-distribution",
+        fund_family="Dodge & Cox",
+    )
+    assert next(
+        r
+        for r in dodge_2023
+        if r.ticker == "DODIX" and r.estimate_type == EstimateType.ordinary_income
+    ).amount == Decimal("0.1290")
+    assert not any(
+        r.ticker == "DODIX"
+        and r.estimate_type
+        in {EstimateType.short_term_capital_gains, EstimateType.long_term_capital_gains}
+        for r in dodge_2023
+    )
+
     mfs = parse_distribution_html(
         (ROOT / "mfs" / "2025_capital_gain_estimates.html").read_text(encoding="utf-8"),
         source_url="fixture://mfs",
