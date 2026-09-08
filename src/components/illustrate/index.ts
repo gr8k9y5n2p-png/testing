@@ -65,6 +65,7 @@ export { PortfolioCompare } from "@/components/illustrate/PortfolioCompare";
 export type { PortfolioCompareProps } from "@/components/illustrate/PortfolioCompare";
 export { HomepagePortfolioCompare } from "@/components/illustrate/HomepagePortfolioCompare";
 export { TickerHistoryLink } from "@/components/illustrate/TickerHistoryLink";
+export { CompareTickerLink } from "@/components/illustrate/CompareTickerLink";
 export {
   FUND_HISTORY_HASH,
   firstSearchParam,
@@ -73,6 +74,10 @@ export {
   resolveFundView,
 } from "@/lib/illustrate/fund-history";
 export { CompareWorkspace } from "@/components/illustrate/CompareWorkspace";
+export {
+  compareTickersPath,
+  parseCompareQueryTickers,
+} from "@/lib/illustrate/compare-workspace";
 export { CompareDeltaStrip } from "@/components/illustrate/CompareDeltaStrip";
 export { HomepageFundCompare } from "@/components/illustrate/HomepageFundCompare";
 export {

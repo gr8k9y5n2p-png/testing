@@ -67,6 +67,52 @@ export function emptyCompareSlots(): string[] {
   return Array.from({ length: COMPARE_SLOT_COUNT }, () => "");
 }
 
+export type CompareQueryParams = {
+  tickers?: string | string[];
+  ticker?: string | string[];
+  left?: string | string[];
+  right?: string | string[];
+};
+
+/** Split `AGTHX,AMCPX` or repeated query values into tickers. */
+export function splitCompareTickerList(
+  value: string | string[] | undefined | null,
+): string[] {
+  const parts = Array.isArray(value) ? value : value != null ? [value] : [];
+  const tickers: string[] = [];
+  for (const part of parts) {
+    for (const raw of String(part).split(/[,\s]+/)) {
+      const ticker = normalizeTicker(raw);
+      if (ticker) tickers.push(ticker);
+    }
+  }
+  return tickers;
+}
+
+/**
+ * Deep-link tickers for Compare slots.
+ * Prefers `tickers` / `ticker`, then legacy `left` / `right`. Unique, max 6.
+ */
+export function parseCompareQueryTickers(params: CompareQueryParams = {}): string[] {
+  return filledCompareTickers([
+    ...splitCompareTickerList(params.tickers),
+    ...splitCompareTickerList(params.ticker),
+    ...splitCompareTickerList(params.left),
+    ...splitCompareTickerList(params.right),
+  ]).slice(0, COMPARE_SLOT_COUNT);
+}
+
+/** `/compare?tickers=AGTHX` or `/compare` when empty. */
+export function compareTickersPath(
+  tickers: Array<string | undefined | null> = [],
+): string {
+  const filled = parseCompareQueryTickers({
+    tickers: tickers.filter((ticker): ticker is string => Boolean(ticker)),
+  });
+  if (filled.length === 0) return "/compare";
+  return `/compare?tickers=${filled.map(encodeURIComponent).join(",")}`;
+}
+
 /** Query params may prefill the first slots. A plain /compare visit stays empty. */
 export function padCompareSlots(tickers: Array<string | undefined | null> = []): string[] {
   const slots = emptyCompareSlots();

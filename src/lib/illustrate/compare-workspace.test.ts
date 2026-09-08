@@ -4,12 +4,14 @@ import type { FundEstimateView } from "../../data/types.ts";
 import type { CompareIllustration, ComparePeriodOut, CompareResponse } from "./compare-types.ts";
 import {
   COMPARE_DEFAULT_HOLDING_DOLLARS,
+  compareTickersPath,
   buildCompareAnnualTable,
   emptyCompareSlots,
   filledCompareTickers,
   growthFundsFromSlots,
   padCompareSlots,
   parseCompareHoldingDollars,
+  parseCompareQueryTickers,
   setCompareSlot,
   upcomingRowForCompareTicker,
   upcomingRowsFromCompareTickers,
@@ -119,6 +121,35 @@ describe("compare workspace slots", () => {
     const slots = padCompareSlots(["AMCPX"]);
     assert.deepEqual(setCompareSlot(slots, 1, "amcpx"), slots);
     assert.deepEqual(setCompareSlot(slots, 1, "AGTHX")[1], "AGTHX");
+  });
+
+  it("reads tickers from compare query params and builds deep-links", () => {
+    assert.deepEqual(parseCompareQueryTickers({ tickers: "agthx" }), ["AGTHX"]);
+    assert.deepEqual(parseCompareQueryTickers({ tickers: "AGTHX,amcpx dodix" }), [
+      "AGTHX",
+      "AMCPX",
+      "DODIX",
+    ]);
+    assert.deepEqual(parseCompareQueryTickers({ tickers: ["AMCPX", "AGTHX"] }), [
+      "AMCPX",
+      "AGTHX",
+    ]);
+    assert.deepEqual(parseCompareQueryTickers({ ticker: "agthx", left: "AMCPX" }), [
+      "AGTHX",
+      "AMCPX",
+    ]);
+    assert.deepEqual(parseCompareQueryTickers({ left: "AMCPX", right: "AGTHX" }), [
+      "AMCPX",
+      "AGTHX",
+    ]);
+    assert.deepEqual(parseCompareQueryTickers({ tickers: "AGTHX,AGTHX,AMCPX" }), [
+      "AGTHX",
+      "AMCPX",
+    ]);
+    assert.deepEqual(parseCompareQueryTickers({}), []);
+    assert.equal(compareTickersPath(["agthx"]), "/compare?tickers=AGTHX");
+    assert.equal(compareTickersPath(["AGTHX", "AMCPX"]), "/compare?tickers=AGTHX,AMCPX");
+    assert.equal(compareTickersPath([]), "/compare");
   });
 });
 

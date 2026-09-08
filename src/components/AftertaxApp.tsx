@@ -25,6 +25,10 @@ import {
   growthFundFromTicker,
   resolveFundView,
 } from "@/lib/illustrate/fund-history";
+import {
+  compareTickersPath,
+  parseCompareQueryTickers,
+} from "@/lib/illustrate/compare-workspace";
 import { DEFAULT_START_DOLLARS } from "@/lib/performance/types";
 
 function scrollToId(id: string) {
@@ -105,7 +109,17 @@ function AftertaxAppInner({
       return;
     }
     if (id === "fund-compare") {
-      router.replace("/compare");
+      const search = new URLSearchParams(window.location.search);
+      router.replace(
+        compareTickersPath(
+          parseCompareQueryTickers({
+            tickers: search.getAll("tickers"),
+            ticker: search.get("ticker") ?? undefined,
+            left: search.get("left") ?? undefined,
+            right: search.get("right") ?? undefined,
+          }),
+        ),
+      );
       return;
     }
     if (id === "illustrate" || id === FUND_HISTORY_HASH) {
