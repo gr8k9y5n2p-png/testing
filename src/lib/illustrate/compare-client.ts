@@ -39,6 +39,25 @@ function asMatched(value: unknown): boolean {
   return value === true || value === "true";
 }
 
+function calendarYear(value: unknown): number {
+  if (value == null || value === "") return 0;
+  if (typeof value === "number" && Number.isFinite(value)) {
+    const year = Math.trunc(value);
+    return year >= 1900 && year <= 2100 ? year : 0;
+  }
+  const text = String(value).trim();
+  const iso = text.match(/^((?:19|20)\d{2})(?:[-T/]|$)/);
+  if (iso) return Number(iso[1]);
+  const labeled = text.match(/\b((?:19|20)\d{2})\b/);
+  if (labeled) return Number(labeled[1]);
+  const parsed = Number(text);
+  if (Number.isFinite(parsed)) {
+    const year = Math.trunc(parsed);
+    return year >= 1900 && year <= 2100 ? year : 0;
+  }
+  return 0;
+}
+
 function normalizeIllustration(raw: unknown, fallbackLabel: string) {
   const row = asRecord(raw);
   const totals = asRecord(row.totals);
@@ -48,20 +67,29 @@ function normalizeIllustration(raw: unknown, fallbackLabel: string) {
     holding_dollars: numOrNull(row.holding_dollars) ?? undefined,
     components: Array.isArray(row.components) ? row.components : [],
     totals: {
-      // Data PR #2 (`5d02120`): unmatched money fields are null. Keep them.
-      // `"0.00"` / 0 still normalize to 0 (published $0 / 0% NAV).
-      distribution_dollars: numOrNull(totals.distribution_dollars),
+      // Totals only — side-level estimated_tax is null/absent by design.
+      distribution_dollars: numOrNull(totals.distribution_dollars ?? row.distribution_dollars),
       estimated_tax: numOrNull(totals.estimated_tax ?? totals.estimated_tax_dollars),
       estimated_tax_dollars: numOrNull(
         totals.estimated_tax_dollars ?? totals.estimated_tax,
       ),
       estimated_tax_min: numOrNull(totals.estimated_tax_min),
       estimated_tax_max: numOrNull(totals.estimated_tax_max),
-      federal_tax: numOrNull(totals.federal_tax),
-      state_tax: numOrNull(totals.state_tax),
+      federal_tax: numOrNull(totals.federal_tax ?? row.federal_tax),
+      state_tax: numOrNull(totals.state_tax ?? row.state_tax),
       effective_tax_on_holding: numOrNull(totals.effective_tax_on_holding),
     },
     notes: Array.isArray(row.notes) ? row.notes.map(String) : [],
+  };
+}
+
+function normalizeDeltaSide(raw: unknown) {
+  if (!raw || typeof raw !== "object") return undefined;
+  const row = asRecord(raw);
+  return {
+    estimated_tax: numOrNull(row.estimated_tax ?? row.estimated_tax_dollars),
+    estimated_tax_dollars: numOrNull(row.estimated_tax_dollars ?? row.estimated_tax),
+    effective_tax_on_holding: numOrNull(row.effective_tax_on_holding),
   };
 }
 
@@ -73,6 +101,7 @@ function normalizeDeltas(raw: unknown) {
     distribution_dollars_min: numOrNull(row.distribution_dollars_min),
     distribution_dollars_max: numOrNull(row.distribution_dollars_max),
     estimated_tax: numOrNull(row.estimated_tax ?? row.estimated_tax_dollars),
+    estimated_tax_dollars: numOrNull(row.estimated_tax_dollars ?? row.estimated_tax),
     estimated_tax_min: numOrNull(row.estimated_tax_min),
     estimated_tax_max: numOrNull(row.estimated_tax_max),
     federal_tax: numOrNull(row.federal_tax),
@@ -80,6 +109,14 @@ function normalizeDeltas(raw: unknown) {
     effective_tax_on_holding: numOrNull(row.effective_tax_on_holding),
     effective_tax_on_holding_min: numOrNull(row.effective_tax_on_holding_min),
     effective_tax_on_holding_max: numOrNull(row.effective_tax_on_holding_max),
+    left: row.left ? normalizeDeltaSide(row.left) : undefined,
+    right: row.right ? normalizeDeltaSide(row.right) : undefined,
+    left_estimated_tax: numOrNull(row.left_estimated_tax),
+    right_estimated_tax: numOrNull(row.right_estimated_tax),
+    left_estimated_tax_dollars: numOrNull(row.left_estimated_tax_dollars),
+    right_estimated_tax_dollars: numOrNull(row.right_estimated_tax_dollars),
+    left_effective_tax_on_holding: numOrNull(row.left_effective_tax_on_holding),
+    right_effective_tax_on_holding: numOrNull(row.right_effective_tax_on_holding),
   };
 }
 
@@ -106,7 +143,7 @@ export function normalizeCompareResponse(
     periods: periodsRaw.map((item) => {
       const row = asRecord(item);
       return {
-        year: num(row.year),
+        year: calendarYear(row.year) || calendarYear(row.as_of) || 0,
         as_of: row.as_of == null ? null : String(row.as_of),
         left: normalizeIllustration(row.left, "Fund A"),
         right: normalizeIllustration(row.right, "Fund B"),
