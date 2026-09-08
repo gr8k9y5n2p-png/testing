@@ -12,6 +12,7 @@ import {
   toCompareTaxDragSeries,
   toTaxDragPeriods,
 } from "./tax-drag-map.ts";
+import { sketchYears } from "../charts/shared-axis.ts";
 
 function side(
   label: string,
@@ -615,6 +616,97 @@ describe("matched:true + null totals falls back to period deltas", () => {
     assert.deepEqual(points, [
       { year: 2023, value: 0.0082 },
       { year: 2024, value: 0.0071 },
+    ]);
+  });
+
+  it("charts live AMCPX vs AGTHX 2022–2026 from left/right.matched + totals", () => {
+    const years = [2022, 2023, 2024, 2025, 2026];
+    const amcpx: Record<number, number> = {
+      2022: 0.009, 2023: 0.014, 2024: 0.017, 2025: 0.012, 2026: 0.011,
+    };
+    const agthx: Record<number, number> = {
+      2022: 0.0071, 2023: 0.0118, 2024: 0.0096, 2025: 0.0088, 2026: 0.008,
+    };
+    const response = fundCompare(
+      years.map((year) =>
+        period(
+          year,
+          side("AMCPX", true, amcpx[year] * 10_000, amcpx[year]),
+          side("AGTHX", true, agthx[year] * 10_000, agthx[year]),
+        ),
+      ),
+    );
+    assert.ok(
+      response.periods.every((row) => !("matched" in row)),
+      "live periods have no root matched — only left/right.matched",
+    );
+    assert.ok(response.periods.every((row) => row.left.matched === true));
+    assert.ok(response.periods.every((row) => row.right.matched === true));
+    const series = toCompareTaxDragSeries(response, "effective_tax");
+    assert.equal(series[0].label, "AMCPX");
+    assert.equal(series[1].label, "AGTHX");
+    assert.deepEqual(
+      series[0].points.map((point) => point.value),
+      years.map((year) => amcpx[year]),
+    );
+    assert.deepEqual(
+      series[1].points.map((point) => point.value),
+      years.map((year) => agthx[year]),
+    );
+    const aligned = alignTaxDragYears(series[0].points, years);
+    assert.ok(
+      aligned.every((point) => point.value != null),
+      "matched totals must not chart as N/A for 2022–2026",
+    );
+  });
+
+  it("charts omitted matched as bars when totals.estimated_tax is present", () => {
+    const left: CompareIllustration = {
+      label: "AMCPX",
+      matched: undefined as unknown as boolean,
+      holding_dollars: 10_000,
+      totals: {
+        distribution_dollars: 160,
+        estimated_tax: "160.00" as unknown as number,
+        estimated_tax_dollars: "160.00" as unknown as number,
+        effective_tax_on_holding: "0.016" as unknown as number,
+      },
+    };
+    assert.equal(illustrationIsUnmatched(left), false);
+    assert.equal(taxDragValueFromIllustration(left, "tax_dollars"), 160);
+    assert.equal(taxDragValueFromIllustration(left, "effective_tax"), 0.016);
+    const response = fundCompare([
+      period(2024, left, { ...matchedNullTotals("AGTHX"), matched: false }),
+    ]);
+    assert.deepEqual(toTaxDragPeriods(response, "tax_dollars", "left"), [
+      { year: 2024, value: 160 },
+    ]);
+  });
+
+  it("maps fund_vs_fund ticker-labeled yoy rows onto period.year per side", () => {
+    const years = [2022, 2023, 2024, 2025, 2026];
+    const response = yoyCompare(
+      years.map((year) =>
+        period(
+          year,
+          side("AMCPX", true, 160, 0.016),
+          side("AGTHX", true, 82, 0.0082),
+        ),
+      ),
+    );
+    assert.deepEqual(
+      toTaxDragPeriods(response, "effective_tax", "left").map((point) => point.value),
+      years.map(() => 0.016),
+    );
+    assert.deepEqual(
+      toTaxDragPeriods(response, "effective_tax", "right").map((point) => point.year),
+      years,
+    );
+  });
+
+  it("keeps 2022–2026 on the sketch axis in 2026", () => {
+    assert.deepEqual(sketchYears([2021, 2022, 2023, 2024, 2025, 2026], 2026), [
+      2022, 2023, 2024, 2025, 2026,
     ]);
   });
 });

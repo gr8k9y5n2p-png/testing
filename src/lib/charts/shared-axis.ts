@@ -150,10 +150,13 @@ export function yearEndReturns(
   }));
 }
 
-/** Sketch window: last complete five calendar years (2021–2025 in current fixtures). */
-export function sketchYears(years: number[]): number[] {
-  const complete = years.filter((year) => year <= 2025);
-  const windowed = complete.filter((year) => year >= 2021);
+/** Sketch window: last five calendar years through the current year. */
+export function sketchYears(
+  years: number[],
+  nowYear = new Date().getUTCFullYear(),
+): number[] {
+  const complete = years.filter((year) => year <= nowYear);
+  const windowed = complete.filter((year) => year >= nowYear - 4);
   if (windowed.length >= 2) return windowed;
   return complete.slice(-5);
 }

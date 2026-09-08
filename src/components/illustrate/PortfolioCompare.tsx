@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import { AllocationColumn } from "@/components/illustrate/portfolio-compare/AllocationColumn";
 import { CalendarYearTaxTable } from "@/components/illustrate/portfolio-compare/CalendarYearTaxTable";
 import { SummaryStrip } from "@/components/illustrate/portfolio-compare/SummaryStrip";
-import { TaxImpactChart } from "@/components/illustrate/portfolio-compare/TaxImpactChart";
 import { UpcomingTable } from "@/components/illustrate/portfolio-compare/UpcomingTable";
 import { navFromFundMetadata } from "@/lib/illustrate/compare-request";
 import { seedNavLookup } from "@/lib/illustrate/seed-nav";
@@ -14,12 +13,7 @@ import {
   smokeProposedHoldings,
 } from "@/lib/illustrate/portfolio-compare-catalog";
 import { postIllustratePortfolioCompare } from "@/lib/illustrate/portfolio-compare-client";
-import {
-  taxImpactBarsForSide,
-  totalUpcomingTax,
-  upcomingHoldingsForSide,
-  upcomingRowsForSide,
-} from "@/lib/illustrate/portfolio-compare-map";
+import { upcomingHoldingsForSide } from "@/lib/illustrate/portfolio-compare-map";
 import type {
   AllocationUnit,
   PortfolioCompareResponse,
@@ -181,22 +175,12 @@ export function PortfolioCompare({
     };
   }, [canFetch, requestKey]);
 
-  const currentUpcoming = result
-    ? upcomingRowsForSide(result.current, "current")
-    : [];
-  const proposedUpcoming = result
-    ? upcomingRowsForSide(result.proposed, "proposed")
-    : [];
   const currentUpcomingHoldings = result
     ? upcomingHoldingsForSide(result.current, "current")
     : [];
   const proposedUpcomingHoldings = result
     ? upcomingHoldingsForSide(result.proposed, "proposed")
     : [];
-  const currentBars = result ? taxImpactBarsForSide(result.current) : [];
-  const proposedBars = result ? taxImpactBarsForSide(result.proposed) : [];
-  const currentTotalTax = result ? totalUpcomingTax(result.current) : 0;
-  const proposedTotalTax = result ? totalUpcomingTax(result.proposed) : 0;
   const sample = Boolean(
     result &&
       (result.source === "mock" ||
@@ -250,7 +234,7 @@ export function PortfolioCompare({
         </div>
       </header>
 
-      <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-2 lg:grid-rows-[auto_auto_auto] lg:[grid-template-areas:'holdings-c_holdings-p'_'upcoming-c_upcoming-p'_'charts-c_charts-p']">
+      <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-2 lg:grid-rows-[auto_auto] lg:[grid-template-areas:'holdings-c_holdings-p'_'upcoming-c_upcoming-p']">
         <AllocationColumn
           title="Current allocation"
           holdings={current}
@@ -262,21 +246,6 @@ export function PortfolioCompare({
           onChange={setCurrent}
           className="h-full lg:[grid-area:holdings-c]"
         />
-        {!canFetch ? null : loading && !result ? (
-          <div
-            className="h-52 min-h-52 animate-pulse rounded-2xl border border-line bg-surface lg:h-full lg:[grid-area:charts-c]"
-            aria-busy
-            aria-label="Loading current tax impact"
-          />
-        ) : result ? (
-          <TaxImpactChart
-            headingId="tax-impact-current"
-            bars={currentBars}
-            totalTax={currentTotalTax}
-            hasUpcoming={currentUpcoming.length > 0}
-            className="h-full min-h-52 lg:[grid-area:charts-c]"
-          />
-        ) : null}
         {!canFetch ? null : loading && !result ? (
           <div
             className="h-48 min-h-48 animate-pulse rounded-2xl border border-line bg-surface lg:h-full lg:[grid-area:upcoming-c]"
@@ -303,21 +272,6 @@ export function PortfolioCompare({
           onChange={setProposed}
           className="h-full lg:[grid-area:holdings-p]"
         />
-        {!canFetch ? null : loading && !result ? (
-          <div
-            className="h-52 min-h-52 animate-pulse rounded-2xl border border-line bg-surface lg:h-full lg:[grid-area:charts-p]"
-            aria-busy
-            aria-label="Loading proposed tax impact"
-          />
-        ) : result ? (
-          <TaxImpactChart
-            headingId="tax-impact-proposed"
-            bars={proposedBars}
-            totalTax={proposedTotalTax}
-            hasUpcoming={proposedUpcoming.length > 0}
-            className="h-full min-h-52 lg:[grid-area:charts-p]"
-          />
-        ) : null}
         {!canFetch ? null : loading && !result ? (
           <div
             className="h-48 min-h-48 animate-pulse rounded-2xl border border-line bg-surface lg:h-full lg:[grid-area:upcoming-p]"

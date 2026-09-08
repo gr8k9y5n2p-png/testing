@@ -36,7 +36,9 @@ const DEFAULT_LEFT_COLOR = "#1b7a72";
 const DEFAULT_RIGHT_COLOR = "#3a4348";
 
 /**
- * Explicit `matched: true`. Omitted is not a match.
+ * Explicit `matched: true`. Omitted is not a match for **delta fallback**.
+ * Totals still chart unless `illustrationIsUnmatched` (explicit false).
+ * Periods have no root `matched` — read `left` / `right` only.
  */
 export function illustrationIsMatched(
   illustration: { matched?: boolean | string | null } | null | undefined,
@@ -249,10 +251,15 @@ function illustrationCalendarYear(
     year?: unknown;
     as_of?: unknown;
   };
+  const first = Array.isArray(illustration.components)
+    ? (illustration.components[0] as { as_of?: unknown; ex_date?: unknown } | undefined)
+    : undefined;
   return (
     calendarYearFromUnknown(extra.year) ||
     calendarYearFromUnknown(extra.as_of) ||
-    calendarYearFromUnknown(illustration.label)
+    calendarYearFromUnknown(illustration.label) ||
+    calendarYearFromUnknown(first?.as_of) ||
+    calendarYearFromUnknown(first?.ex_date)
   );
 }
 
@@ -335,11 +342,30 @@ export function toTaxDragPeriods(
     const periodYear = comparePeriodCalendarYear(period);
 
     if (yoy) {
-      // Data `illustrate_compare`: zip(periods, periods[1:]) and year=newer.
-      // Ticker labels are not vintages — still plot left on newer-1.
-      const olderYear =
-        illustrationCalendarYear(period.left) || (periodYear > 1 ? periodYear - 1 : 0);
-      const newerYear = illustrationCalendarYear(period.right) || periodYear;
+      const olderFromLabel = illustrationCalendarYear(period.left);
+      const newerFromLabel = illustrationCalendarYear(period.right);
+      // Zip pairs: Data sets period.year to the newer vintage; left is prior.
+      // Calendar-year rows (both sides tickers, or both already that year)
+      // must not shift a matched left onto year-1 when the caller asks for
+      // a specific side — live AMCPX vs AGTHX is period.year × left/right.
+      const calendarRow =
+        periodYear > 0 &&
+        ((olderFromLabel === 0 && newerFromLabel === 0) ||
+          (olderFromLabel === periodYear && newerFromLabel === periodYear));
+      if (calendarRow && side !== "auto") {
+        write(periodYear, side === "right" ? rightValue : leftValue);
+        continue;
+      }
+      if (
+        calendarRow &&
+        olderFromLabel === periodYear &&
+        newerFromLabel === periodYear
+      ) {
+        write(periodYear, rightValue ?? leftValue);
+        continue;
+      }
+      const olderYear = olderFromLabel || (periodYear > 1 ? periodYear - 1 : 0);
+      const newerYear = newerFromLabel || periodYear;
       if (olderYear > 0) write(olderYear, leftValue);
       if (newerYear > 0) write(newerYear, rightValue);
       continue;

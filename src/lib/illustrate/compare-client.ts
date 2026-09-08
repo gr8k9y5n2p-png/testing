@@ -35,8 +35,16 @@ function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" ? (value as Record<string, unknown>) : {};
 }
 
+/**
+ * Data `CompareIllustration.matched` defaults to true. Periods have no root
+ * `matched` — only `left.matched` / `right.matched`.
+ *
+ * Coercing omitted / unknown to `false` made live AMCPX/AGTHX rows with real
+ * `totals.estimated_tax` chart as N/A. Explicit `false` is the miss signal.
+ */
 function asMatched(value: unknown): boolean {
-  return value === true || value === "true";
+  if (value === false || value === "false") return false;
+  return true;
 }
 
 function calendarYear(value: unknown): number {
@@ -61,25 +69,39 @@ function calendarYear(value: unknown): number {
 function normalizeIllustration(raw: unknown, fallbackLabel: string) {
   const row = asRecord(raw);
   const totals = asRecord(row.totals);
+  const components = Array.isArray(row.components) ? row.components : [];
+  const first = asRecord(components[0]);
+  const estimatedTax = numOrNull(totals.estimated_tax ?? totals.estimated_tax_dollars);
+  const estimatedTaxDollars = numOrNull(
+    totals.estimated_tax_dollars ?? totals.estimated_tax,
+  );
+  const rate = numOrNull(totals.effective_tax_on_holding);
   return {
     label: String(row.label ?? fallbackLabel),
+    // Periods have no root `matched`. Explicit false is the miss; omitted
+    // defaults to true (Data schema) so totals.estimated_tax still charts.
+    // Do not OR totals onto matched: unmatched + 0.00 must stay N/A.
     matched: asMatched(row.matched),
     holding_dollars: numOrNull(row.holding_dollars) ?? undefined,
-    components: Array.isArray(row.components) ? row.components : [],
+    components,
     totals: {
       // Totals only — side-level estimated_tax is null/absent by design.
       distribution_dollars: numOrNull(totals.distribution_dollars ?? row.distribution_dollars),
-      estimated_tax: numOrNull(totals.estimated_tax ?? totals.estimated_tax_dollars),
-      estimated_tax_dollars: numOrNull(
-        totals.estimated_tax_dollars ?? totals.estimated_tax,
-      ),
+      estimated_tax: estimatedTax,
+      estimated_tax_dollars: estimatedTaxDollars,
       estimated_tax_min: numOrNull(totals.estimated_tax_min),
       estimated_tax_max: numOrNull(totals.estimated_tax_max),
       federal_tax: numOrNull(totals.federal_tax ?? row.federal_tax),
       state_tax: numOrNull(totals.state_tax ?? row.state_tax),
-      effective_tax_on_holding: numOrNull(totals.effective_tax_on_holding),
+      effective_tax_on_holding: rate,
     },
     notes: Array.isArray(row.notes) ? row.notes.map(String) : [],
+    ...(row.year != null ? { year: row.year } : {}),
+    ...(row.as_of != null
+      ? { as_of: String(row.as_of) }
+      : first.as_of != null
+        ? { as_of: String(first.as_of) }
+        : {}),
   };
 }
 
