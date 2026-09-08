@@ -86,6 +86,11 @@ def test_t_rowe_prior_years() -> None:
         source_url="fixture://trp-2022",
         fund_family="T. Rowe Price",
     )
+    y2021 = parse_distribution_html(
+        (TRP / "2021_year_end_distributions.html").read_text(encoding="utf-8"),
+        source_url="fixture://trp-2021",
+        fund_family="T. Rowe Price",
+    )
     prelim_2022 = parse_distribution_html(
         (TRP / "2022_preliminary_estimated_distributions.html").read_text(encoding="utf-8"),
         source_url="fixture://trp-2022-prelim",
@@ -103,6 +108,12 @@ def test_t_rowe_prior_years() -> None:
     trbcx_22_st = next(
         r for r in y2022 if r.ticker == "TRBCX" and r.estimate_type == EstimateType.short_term_capital_gains
     )
+    trbcx_21 = next(
+        r for r in y2021 if r.ticker == "TRBCX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    trbcx_21_st = next(
+        r for r in y2021 if r.ticker == "TRBCX" and r.estimate_type == EstimateType.short_term_capital_gains
+    )
     trbcx_22_prelim = next(
         r
         for r in prelim_2022
@@ -113,11 +124,18 @@ def test_t_rowe_prior_years() -> None:
     assert trbcx_22.amount == Decimal("6.0394")
     assert trbcx_22_st.amount == Decimal("0.0325")
     assert trbcx_22.publication_stage == PublicationStage.final
+    assert trbcx_21.amount == Decimal("16.03")
+    assert trbcx_21_st.amount == Decimal("0.65")
+    assert trbcx_21.publication_stage == PublicationStage.final
+    assert {r.ticker for r in y2022 if r.ticker} >= {"TRBCX", "PRDGX", "PREIX", "PRGFX", "TBCIX"}
+    assert len({r.ticker for r in y2022 if r.ticker}) >= 300
+    assert len({r.ticker for r in y2021 if r.ticker}) >= 300
     assert trbcx_22_prelim.amount == Decimal("5.75")
     assert trbcx_22_prelim.publication_stage == PublicationStage.preliminary_estimate
     assert str(trbcx_24.as_of) == "2024-12-31"
     assert str(trbcx_23.as_of) == "2023-12-31"
     assert str(trbcx_22.as_of) == "2022-12-31"
+    assert str(trbcx_21.as_of) == "2021-12-31"
     assert str(trbcx_22_prelim.as_of) == "2022-10-31"
 
 

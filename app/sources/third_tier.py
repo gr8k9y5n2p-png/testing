@@ -79,27 +79,32 @@ class JanusHendersonSource(HtmlTableSource):
         "2025-Janus-Henderson-Final-Distribution-Estimates.pdf (JDCAX LT $6.92). "
         "2024 Preliminary Distribution Estimates 2024.pdf (JDCAX LT $5.42; "
         "2024 Final sibling 404). 2023 Final Distribution Estimates 2023.pdf "
-        "(JDCAX LT $3.87)."
+        "(JDCAX LT $3.87). 2021–2022 FINAL paid PDFs are full share-class books "
+        "(JDCAX 2022 LT $0.02107 / published $0 income and ST; Forty Fund is "
+        "not on the 2021 final list — JDBAX 2021 LT $1.50790)."
     )
-    live_limitations = "Year-end book is PDF. Fixture transcribes public A-share estimate rows."
+    live_limitations = (
+        "Year-end book is PDF. Fixtures transcribe public final/estimate rows "
+        "(2025 and 2021–2022 finals are full share-class; 2023–2024 estimates "
+        "are large-AUM flagships)."
+    )
 
     def pages(self) -> list[PageSpec]:
+        cdn = (
+            "https://2deaa804a6dc693855a0-eba658c6bc03668a61900f643427d64d.ssl.cf1.rackcdn.com/"
+            "Documents/product/distribution-tax"
+        )
         return [
             PageSpec(
                 name="2025_final_distribution_estimates",
-                url=(
-                    "https://2deaa804a6dc693855a0-eba658c6bc03668a61900f643427d64d.ssl.cf1.rackcdn.com/"
-                    "Documents/product/distribution-tax/2025-Janus-Henderson-Final-Distribution-Estimates.pdf"
-                ),
+                url=f"{cdn}/2025-Janus-Henderson-Final-Distribution-Estimates.pdf",
                 fixture="2025_final_distribution_estimates.html",
                 live=False,
             ),
             PageSpec(
                 name="2024_distribution_estimates",
                 url=(
-                    "https://2deaa804a6dc693855a0-eba658c6bc03668a61900f643427d64d.ssl.cf1.rackcdn.com/"
-                    "Documents/product/distribution-tax/"
-                    "Janus%20Henderson%20Preliminary%20Distribution%20Estimates%202024.pdf"
+                    f"{cdn}/Janus%20Henderson%20Preliminary%20Distribution%20Estimates%202024.pdf"
                 ),
                 fixture="2024_distribution_estimates.html",
                 live=False,
@@ -107,14 +112,22 @@ class JanusHendersonSource(HtmlTableSource):
             ),
             PageSpec(
                 name="2023_final_distribution_estimates",
-                url=(
-                    "https://2deaa804a6dc693855a0-eba658c6bc03668a61900f643427d64d.ssl.cf1.rackcdn.com/"
-                    "Documents/product/distribution-tax/"
-                    "Janus%20Henderson%20Final%20Distribution%20Estimates%202023.pdf"
-                ),
+                url=f"{cdn}/Janus%20Henderson%20Final%20Distribution%20Estimates%202023.pdf",
                 fixture="2023_final_distribution_estimates.html",
                 live=False,
                 large_aum_only=True,
+            ),
+            PageSpec(
+                name="2022_final_distributions",
+                url=f"{cdn}/Janus%20Henderson%20Funds%20Final%20Distribution%2012.20.22.pdf",
+                fixture="2022_final_distributions.html",
+                live=False,
+            ),
+            PageSpec(
+                name="2021_final_distributions",
+                url=f"{cdn}/Janus%20Henderson%20Funds%20Final%20Distribution%2012.22.21.pdf",
+                fixture="2021_final_distributions.html",
+                live=False,
             ),
         ]
 

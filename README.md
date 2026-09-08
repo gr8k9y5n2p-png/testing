@@ -646,7 +646,7 @@ Fixture packs today (ranks 1–40 historical pass):
 
 | Family | Years in fixtures | Live archive notes |
 | --- | --- | --- |
-| BlackRock / iShares | 2026 midyear paid + 2025 YE ETF + 2025 open-end MF | Live ETF HTML https://www.ishares.com/us/capital-gains-distributions. Open-end book https://www.blackrock.com/us/individual/resources/tax-information/2025-distributions. 2023–2024 archives are 1099-style PDF tax kits (not an HTML CG grid) — skipped, not invented. |
+| BlackRock / iShares | 2026 midyear paid + 2025 YE ETF + 2023–2025 open-end MF | Live ETF HTML https://www.ishares.com/us/capital-gains-distributions. Open-end HTML books https://www.blackrock.com/us/individual/resources/tax-information/2025-distributions (2024 / 2023 siblings). Live OEF pages are per-fund share-class tables — fixtures flatten December YE Investor A rows (Equity Dividend LT $0.481929 / $0.728360 / $0.999925). iShares 2023–2024 tax kits remain 1099-style PDFs, not an ETF HTML CG grid. |
 | Vanguard | 2021–2025 ICI **full December** + 2025 YE HTML for VFIAX / VBIAX / VIGAX | **ICI first.** Official Primary Layout PDFs. 2021–2025 December rows are column-safe full-book (31-token layout; wrap/DAILY bleed skipped). 2025 ICI skips VFIAX / VBIAX / VIGAX so the YE HTML fixture is not double-counted. |
 | Fidelity | 2025 prior-year paid + 2026 estimate | Live HTML: current estimates `FIIS_SP52_DPL6` and prior-year `FIIS_SP10_DPL6` (FBGRX 2025 paid LT $5.07300 ex 2025-09-12; 2026 estimate LT $21.021 as of 2026-07-31). |
 | State Street / SPDR | 2025 estimate (SPY/SPLG 0% NAV placeholder) | Angular live page. Historical XLSX is linked but not a stable public file URL — 2024 paid ST/LT not transcribed. ZZSSGA is a parser-layout sample, not official. |
@@ -655,7 +655,7 @@ Fixture packs today (ranks 1–40 historical pass):
 | American Funds | 2021–2025 paid tax-year history (AMCAP / Growth Fund of America) + 2024 prelim + 2024 final reprint, 2025 prelim + 2025 final reprint, 2026 midyear paid | 2025 YE + 2026 midyear HTML are public. 2024 advisor YE URL 302s to login (transcribed fixture). Official 2024 YE lists CGHM with em-dash ST/LT (no CG — not stored as $0). Product-page `historicalDistributions` JSON supplies paid as_of in the tax year (AMCAP Dec 2021 LT $1.1710; no Dec 2022 row — June 2022 LT $2.2668; Dec 2023 LT $1.0270; Dec 2024 LT $2.5220; Dec 2025 LT $2.1509). Name-keyed so AMCPX/AGTHX aliases still resolve. |
 | PIMCO | Layout sample only (ZZPIMI / ZZPIMB) | No public HTML estimate grid. No additional years invented. |
 | Invesco | 2024 estimate + 2025 estimate | ICI Primary files are *listed* on the open-end tax guide (2023–2025) but no stable public download URL was fetchable (JS / 406) — PDF/HTML archives used instead. 2025 PDF + 2024 In Focus (American Franchise LT $0.93). |
-| T. Rowe Price | 2022 prelim + 2022–2025 YE | 2023–2025 HTML (same path, year in the filename). 2022 YE + 2022 prelim are official PDFs (TRBCX LT $6.0394 final / $5.75 prelim). |
+| T. Rowe Price | 2021–2025 YE + 2022 prelim | 2023–2025 HTML (same path, year in the filename). 2021–2022 YE PDFs are the full mutual-fund/ETF books (TRBCX LT $16.03 / $6.0394 final; 2022 prelim $5.75). Em-dash / Paid monthly omitted. |
 | UBS | 2025 estimate + 2025 paid (PWTAX) | No public filled ICI. Estimate PDF is rotating AEM/JCR and often 403. 2023–2024 paid archives not fetchable — skipped. |
 | Franklin Templeton | 2024 + 2025 CEF 19(a) (FT) | ICI hub is a JS SPA (no filled Primary download). Open-end estimate tool is SPA. ≥$1B open-end (FKINX) not on a scrapeable grid — skipped. |
 | BNY Mellon | 2022–2025 paid YE (DGAGX) + 2025 full estimate book | No public filled ICI. 2024 family estimate PDF URL was empty. 2025 estimate is every paying fund (tickers only DGAGX / PEOPX). Paid YE from the public Appreciation product page (2025 LT $6.4552 coexists with 10/31 estimate LT $6.29). |
@@ -667,7 +667,7 @@ Fixture packs today (ranks 1–40 historical pass):
 | Columbia Threadneedle | 2024 YE paid + 2025 midyear sample | No public filled ICI. 2025 mid-year all-funds PDF is wrap-unsafe (not a column-safe full extract). 2024 YE PDF (LBSAX LT $1.38581; ELGAX LT $4.05105). IEVAX 2024 $0 CG not stored. 2023 YE PDF 404. |
 | Amundi / Pioneer | 2025 estimate (PIODX) only | **Off the history ladder** (non-US parent). Existing 2025 fixture left as-is; do not expand. 2024 Pioneer siblings 404 after the Victory transfer. |
 | Allspring | 2022–2025 paid YE (WFMIX / SGRNX) | No public filled ICI. Family estimate PDFs are gated login HTML. Product-page paid history used (WFMIX 2025 LT $4.26857; 2024 $2.93497; 2023 $1.7935; 2022 $3.13277). |
-| Janus Henderson | 2023–2024 A-share flagships + 2025 full share-class final | No public filled ICI. Rackcdn tax PDFs still posted (JDCAX LT $3.87 / $5.42 / $6.92). 2025 final is every share class. 2024 Final sibling filename 404. |
+| Janus Henderson | 2021–2022 FINAL paid full share-class + 2023–2024 A-share estimates + 2025 full share-class final estimate | No public filled ICI. Rackcdn tax PDFs still posted (JDCAX 2022 LT $0.02107 paid; 2023–2025 estimates $3.87 / $5.42 / $6.92). Forty Fund is not on the 2021 final list (JDBAX 2021 LT $1.50790). 2024 Final sibling filename 404. |
 | American Century | 2025 full retail estimate + 2025 paid (TWCGX) | No public filled ICI. 2025 retail estimate PDF is every share class (TWCGX LT $10.4978) plus product-page paid Total $9.7631 (no ST/LT split). 2024 sibling PDFs 404. |
 | Dodge & Cox | 2021–2025 Dec YE paid + Q1 2026 estimate | No public filled ICI. Supplemental tax letters (DODGX Dec 2025 LT $1.1999 / 2024 LT $12.036). 2023–2021 letter PDF siblings 404; Dec YE transcribed from the public product-page API `https://api-v1.dodgeandcox.com/api/funds-distribution` (DODIX Dec income $0.0570 / $0.1010 / $0.1290 / $0.1300 / $0.1347). Quarters omitted so one as_of is not summed. |
 | MFS | 2025 full %NAV estimate + 2025 YE paid + 2026 midyear paid | No public filled ICI. 2025 fly PDF is every published share-class / all-classes row (MIGHX LT 8%–9%; published 0% stored). Tickers only MIGHX / MITTX. Product-page paid (2025 YE LT $4.20618; 2026 midyear LT $0.54043). 2024 fly PDF 404. |
@@ -691,7 +691,7 @@ Fixture packs today (ranks 1–40 historical pass):
 
 | Rank | Family | Public filled ICI file? | Notes |
 | --- | --- | --- | --- |
-| 1 | BlackRock / iShares | no | Tax kits are 1099-style PDFs, not ICI Primary Layout. |
+| 1 | BlackRock / iShares | no | Open-end 2023–2025 tax-information HTML. iShares tax kits are 1099-style PDFs, not ICI Primary Layout. |
 | 2 | Vanguard | **yes** | Advisor tax center PDFs 2021–2025 (and earlier). Preferred source. |
 | 3 | Fidelity | no | Institutional HTML estimates + prior-year paid table. |
 | 4 | State Street / SPDR | no | Angular estimate page; historical XLSX has no stable URL. |
@@ -700,7 +700,7 @@ Fixture packs today (ranks 1–40 historical pass):
 | 7 | American Funds | no | Public HTML YE + historical-distributions tool. |
 | 8 | PIMCO | no | Notices / PDF hub; no ICI download. |
 | 9 | Invesco | listed, not fetchable | Open-end tax guide names ICI Primary files; no stable public URL (JS / 406). |
-| 10 | T. Rowe Price | no | Public YE HTML (2023–2025) + 2022 PDFs. |
+| 10 | T. Rowe Price | no | Public YE HTML (2023–2025) + 2021–2022 YE PDFs. |
 | 11 | UBS | no | Estimate PDF is rotating AEM/JCR; price-page HTML for 2025 paid. |
 | 12 | Franklin Templeton | listed, not fetchable | Tax-center ICI reports page is a JS SPA; no stable filled-file URL. |
 | 13 | BNY Mellon | no | Estimate PDFs + product-page paid history. |
@@ -712,7 +712,7 @@ Fixture packs today (ranks 1–40 historical pass):
 | 19 | Columbia Threadneedle | no | Public midyear estimate + YE cap-gains PDFs. |
 | 20 | Amundi / Pioneer | no | Pioneer/Victory tax-center PDFs. **Off the history ladder** — 2025 fixture only. |
 | 21 | Allspring | no | Product-alert estimate PDFs gated; product-page paid HTML used. |
-| 22 | Janus Henderson | no | Public rackcdn estimate/final PDFs 2023–2025. |
+| 22 | Janus Henderson | no | Public rackcdn estimate/final PDFs 2021–2025. |
 | 23 | American Century | no | JS hub + 2025 retail PDF; 2024 siblings 404. |
 | 24 | Dodge & Cox | no | Supplemental tax letters + Q1 estimate PDFs. |
 | 25 | MFS | no | 2025 full %NAV fly PDF (175 rows) + product-page paid history. |

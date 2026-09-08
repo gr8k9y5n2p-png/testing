@@ -12,20 +12,23 @@ class BlackRockSource(HtmlTableSource):
         "iShares US ETF capital-gains HTML "
         "https://www.ishares.com/us/capital-gains-distributions "
         "(every fund on the mid-year and year-end tables; $/share, % of NAV, ex/pay) plus the "
-        "BlackRock open-end mutual-fund 2025 distribution book "
+        "BlackRock open-end mutual-fund distribution books "
         "https://www.blackrock.com/us/individual/resources/tax-information/2025-distributions "
-        "(Investor A when listed). Mutual funds + ETFs only; SMAs skipped. Table captions "
-        "set publication_stage: mid-year paid vs year-end final. Verified 2026-09-07. "
-        "Do not use BlackRock Canada PDFs as the US source. "
-        "Prior-year archives are 1099-style PDFs in the tax kits "
-        "(2024: https://www.ishares.com/us/library/2024-tax-kit ; "
-        "2023: https://www.ishares.com/us/literature/tax-information/2023-ishares-distribution-summary-stamped.pdf) "
-        "— not an HTML CG grid, so they are not fixture-transcribed. "
+        "(and the 2024 / 2023 HTML siblings). Investor A when listed. Mutual funds + ETFs "
+        "only; SMAs skipped. Live 2023–2024 pages are per-fund share-class tables "
+        "(no ticker column) — fixtures flatten December YE Investor A rows. "
+        "Equity Dividend Investor A LT $0.481929 (2023) / $0.728360 (2024) / $0.999925 (2025). "
+        "iShares 2023–2024 tax kits remain 1099-style PDFs, not an ETF HTML CG grid. "
         "No public ICI Primary Layout download was found on the iShares tax library."
     )
-    live_limitations = "Live HTML on ishares.com/us/capital-gains-distributions is supported. 2023–2024 YE archives are PDF tax kits, not scrapeable HTML."
+    live_limitations = (
+        "Live HTML on ishares.com/us/capital-gains-distributions is supported. "
+        "Open-end 2023–2025 tax-information HTML is public but not column-safe "
+        "(h3 + share-class tables); fixtures are flattened December YE books."
+    )
 
     def pages(self) -> list[PageSpec]:
+        tax = "https://www.blackrock.com/us/individual/resources/tax-information"
         return [
             PageSpec(
                 name="ishares_us_capital_gains",
@@ -35,8 +38,20 @@ class BlackRockSource(HtmlTableSource):
             ),
             PageSpec(
                 name="2025_open_end_distributions",
-                url="https://www.blackrock.com/us/individual/resources/tax-information/2025-distributions",
+                url=f"{tax}/2025-distributions",
                 fixture="2025_open_end_distributions.html",
+                live=False,
+            ),
+            PageSpec(
+                name="2024_open_end_distributions",
+                url=f"{tax}/2024-distributions",
+                fixture="2024_open_end_distributions.html",
+                live=False,
+            ),
+            PageSpec(
+                name="2023_open_end_distributions",
+                url=f"{tax}/2023-distributions",
+                fixture="2023_open_end_distributions.html",
                 live=False,
             ),
         ]
@@ -316,16 +331,24 @@ class TRowePriceSource(HtmlTableSource):
         "https://www.troweprice.com/content/dam/fai/Funds/Tax_Center/2022-Year-End-Tax-Distributions.pdf "
         "and .../T.%20Rowe%20Price%202022%20Preliminary%20Estimated%20Distributions%20as%20of%2010.31.2022.pdf. "
         "2023–2025 fixtures are the full public YE HTML books. "
+        "2021–2022 YE PDFs are the full mutual-fund/ETF books "
+        "(no public HTML siblings): "
+        "https://www.troweprice.com/content/dam/fai/Funds/Tax_Center/2021-Year-End-Tax-Distributions.pdf "
+        "and .../2022-Year-End-Tax-Distributions.pdf. "
         "Verified 2026-09-07; e.g. TRBCX LT $10.9575 (2025), $16.1515 (2024), $5.2095 (2023), "
-        "$6.0394 final / $5.75 prelim (2022). 2022 remains PDF flagship transcription."
+        "$6.0394 final / $5.75 prelim (2022), $16.03 (2021). Em-dash / Paid monthly omitted."
     )
-    live_limitations = "Live year-end HTML is supported for 2023–2025. 2022 packs are PDF transcriptions (live=False)."
+    live_limitations = (
+        "Live year-end HTML is supported for 2023–2025. "
+        "2021–2022 YE and 2022 prelim are PDF transcriptions (live=False)."
+    )
 
     def pages(self) -> list[PageSpec]:
         base = (
             "https://www.troweprice.com/personal-investing/resources/planning/tax/"
             "dividend-distributions/mutual-funds"
         )
+        tax_pdf = "https://www.troweprice.com/content/dam/fai/Funds/Tax_Center"
         return [
             PageSpec(
                 name="year_end_2025",
@@ -347,8 +370,14 @@ class TRowePriceSource(HtmlTableSource):
             ),
             PageSpec(
                 name="year_end_2022",
-                url="https://www.troweprice.com/content/dam/fai/Funds/Tax_Center/2022-Year-End-Tax-Distributions.pdf",
+                url=f"{tax_pdf}/2022-Year-End-Tax-Distributions.pdf",
                 fixture="2022_year_end_distributions.html",
+                live=False,
+            ),
+            PageSpec(
+                name="year_end_2021",
+                url=f"{tax_pdf}/2021-Year-End-Tax-Distributions.pdf",
+                fixture="2021_year_end_distributions.html",
                 live=False,
             ),
             PageSpec(
