@@ -310,43 +310,38 @@ function upcomingEventsFromHolding(
   );
 }
 
+/** Data `paid_history[]` cap. Newest-first after that is dropped. */
+export const PAID_HISTORY_CAP = 12;
+
+function paidHistorySortKey(row: PortfolioDistributionRow): string | null {
+  return paidHistoryDateOf(row) ?? announcedDateOf(row);
+}
+
 /**
- * Prefer Data `paid_history[]`. Until that field is live, fall back to
- * illustration.components (else distributions) that are paid/final or whose
- * record/ex/payable is already past. Never sourced from `upcoming`.
+ * Paid History is `holdings[].paid_history[]` only. Same fields as upcoming.
+ * Data sends newest-first, cap 12. Never derive from illustration, distributions,
+ * history, or `upcoming` (including `upcoming: null`).
  */
 function paidHistoryEventsFromHolding(
   holding: PortfolioHoldingOut,
-  today = utcToday(),
 ): PortfolioDistributionRow[] {
   const fallback = holding.publication_stage_used ?? null;
-  if (holding.paid_history !== undefined) {
-    return asDistributionRows(holding.paid_history)
-      .map((row) => withStage(row, fallback))
-      .filter(hasDistributionSignal);
-  }
-
-  const fromComponents = (holding.illustration?.components ?? [])
-    .map((row) =>
-      withStage(
-        {
-          ...row,
-          estimated_tax: row.estimated_tax ?? row.estimated_tax_dollars,
-        },
-        fallback,
-      ),
-    )
-    .filter(hasDistributionSignal)
-    .filter((row) => publicationBucket(row, today) === "paid_history");
-  if (fromComponents.length) return fromComponents;
-
-  return [
-    ...asDistributionRows(holding.distributions),
-    ...asDistributionRows(holding.history),
-  ]
+  const rows = asDistributionRows(holding.paid_history)
     .map((row) => withStage(row, fallback))
-    .filter(hasDistributionSignal)
-    .filter((row) => publicationBucket(row, today) === "paid_history");
+    .filter(hasDistributionSignal);
+  return [...rows]
+    .sort((a, b) => {
+      const aDate = paidHistorySortKey(a);
+      const bDate = paidHistorySortKey(b);
+      if (!aDate && !bDate) {
+        return (num(b.distribution_dollars) ?? 0) - (num(a.distribution_dollars) ?? 0);
+      }
+      if (!aDate) return 1;
+      if (!bDate) return -1;
+      if (aDate !== bDate) return bDate.localeCompare(aDate);
+      return (num(b.distribution_dollars) ?? 0) - (num(a.distribution_dollars) ?? 0);
+    })
+    .slice(0, PAID_HISTORY_CAP);
 }
 
 const STAGE_LABELS: Record<string, string> = {
@@ -428,7 +423,7 @@ function rowsForSide(
   return allocation.holdings.flatMap((holding, index) => {
     const events =
       bucket === "paid_history"
-        ? paidHistoryEventsFromHolding(holding, today)
+        ? paidHistoryEventsFromHolding(holding)
         : upcomingEventsFromHolding(holding, today);
     return events.flatMap((event, eventIndex) => {
       const row = toTableRow(holding, side, index, event, eventIndex, bucket);

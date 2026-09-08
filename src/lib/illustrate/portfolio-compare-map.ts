@@ -15,6 +15,7 @@ export {
   isPaidHistoryPublicationStage,
   isUpcomingPublicationStage,
   normalizePublicationStage,
+  PAID_HISTORY_CAP,
   paidHistoryDateOf,
   paidHistoryRowsForSide,
   publicationBucket,

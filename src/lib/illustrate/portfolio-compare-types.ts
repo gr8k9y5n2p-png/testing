@@ -2,11 +2,13 @@
  * Locked POST /illustrate/portfolio/compare contract from PR #2
  * (`cursor/fund-distribution-ingest-api-85ed`). Field names must not drift.
  *
- * v1 is a single snapshot: Current vs Proposed Allocation. Do not send periods[].
+ * Snapshot Current vs Proposed Allocation plus optional calendar-year
+ * `periods[]` (2021–2025) for the ticker × year tax $ table.
  * Deltas are **proposed − current**. Format more/less tax client-side.
  */
 
 import type { TaxRates } from "@/lib/illustrate/types";
+import type { PortfolioComparePeriodIn } from "@/lib/illustrate/portfolio-compare-years";
 
 export const PORTFOLIO_COMPARE_BOOK_DOLLARS = 1_000_000;
 
@@ -48,6 +50,8 @@ export type PortfolioCompareRequest = {
   tax_rates?: Partial<TaxRates> | Record<string, never>;
   combine_state_with_federal?: boolean;
   snapshot?: IllustrationSnapshot;
+  /** Calendar-year tax $ window. Default 2021–2025. */
+  periods?: PortfolioComparePeriodIn[];
 };
 
 /**
@@ -121,14 +125,14 @@ export type PortfolioHoldingOut = {
    */
   upcoming?: PortfolioUpcoming | PortfolioUpcoming[] | null;
   /**
-   * Prefer this for Paid History. Additive vs `upcoming`.
-   * Present (including `[]`) = Data-classified paid rows; do not derive.
-   * Omitted = older payload; fall back to illustration.components / distributions.
+   * Paid History source. Additive vs `upcoming`. Same row shape.
+   * Data sends newest-first, cap 12. Omitted / null / [] = empty.
+   * Do not derive from illustration, distributions, or upcoming.
    */
   paid_history?: PortfolioPaidHistory | PortfolioPaidHistory[] | null;
   /**
    * Full distribution events for the holding (GET /distributions shape).
-   * Temporary Paid History fallback until `paid_history[]` is live.
+   * Not a Paid History source.
    */
   distributions?: PortfolioDistributionRow[];
   history?: PortfolioDistributionRow[];
@@ -197,12 +201,29 @@ export type PortfolioCompareSummary = {
   coverage_pct: number;
 };
 
+/** One holding’s tax $ in a calendar-year period. Unmatched → estimated_tax null. */
+export type PortfolioPeriodHoldingTax = {
+  ticker: string;
+  holding_index?: number;
+  matched: boolean;
+  estimated_tax: number | null;
+};
+
+export type PortfolioComparePeriodOut = {
+  year: number;
+  as_of?: string | null;
+  current: PortfolioPeriodHoldingTax[];
+  proposed: PortfolioPeriodHoldingTax[];
+};
+
 export type PortfolioCompareResponse = {
   current: PortfolioAllocationOut;
   proposed: PortfolioAllocationOut;
   deltas: PortfolioCompareDeltas;
   summary: PortfolioCompareSummary;
   notes: string[];
+  /** Calendar-year tax $ per ticker. Omit / [] when Data did not send periods. */
+  periods?: PortfolioComparePeriodOut[];
   /** Present on the local mock only — not part of the Data API. */
   source?: "mock" | "live";
 };

@@ -7,6 +7,7 @@ import type {
 } from "./portfolio-compare-types.ts";
 import {
   announcedDateOf,
+  PAID_HISTORY_CAP,
   paidHistoryDateOf,
   paidHistoryRowsForSide,
   publicationBucket,
@@ -200,7 +201,16 @@ describe("PortfolioCompare distribution tables", () => {
     const book = allocation([
       holding({
         ticker: "FIGFX",
-        distributions: [
+        upcoming: {
+          publication_stage: "preliminary_estimate",
+          distribution_dollars: 4800,
+          estimated_tax: 1680,
+          as_of: "2026-08-15",
+          record_date: "2026-12-12",
+          ex_date: "2026-12-15",
+          payable_date: "2026-12-17",
+        },
+        paid_history: [
           {
             publication_stage: "preliminary_estimate",
             distribution_dollars: 2100,
@@ -209,15 +219,6 @@ describe("PortfolioCompare distribution tables", () => {
             record_date: "2025-12-12",
             ex_date: "2025-12-15",
             payable_date: "2025-12-17",
-          },
-          {
-            publication_stage: "preliminary_estimate",
-            distribution_dollars: 4800,
-            estimated_tax: 1680,
-            as_of: "2026-08-15",
-            record_date: "2026-12-12",
-            ex_date: "2026-12-15",
-            payable_date: "2026-12-17",
           },
         ],
       }),
@@ -240,16 +241,16 @@ describe("PortfolioCompare distribution tables", () => {
     const book = allocation([
       holding({
         ticker: "AGTHX",
-        distributions: [
-          {
-            publication_stage: "preliminary_estimate",
-            distribution_dollars: 4800,
-            estimated_tax: 1680,
-            as_of: "2026-12-15",
-            record_date: "2026-12-16",
-            ex_date: "2026-12-17",
-            payable_date: "2026-12-18",
-          },
+        upcoming: {
+          publication_stage: "preliminary_estimate",
+          distribution_dollars: 4800,
+          estimated_tax: 1680,
+          as_of: "2026-12-15",
+          record_date: "2026-12-16",
+          ex_date: "2026-12-17",
+          payable_date: "2026-12-18",
+        },
+        paid_history: [
           {
             publication_stage: "paid",
             distribution_dollars: 900,
@@ -281,11 +282,12 @@ describe("PortfolioCompare distribution tables", () => {
     assert.equal(paid[0]?.announcedDate, "2026-08-12");
   });
 
-  it("moves a past-dated preliminary estimate into paid history", () => {
+  it("lists a past-dated preliminary estimate from paid_history, not distributions", () => {
     const book = allocation([
       holding({
         ticker: "AGTHX",
-        distributions: [
+        upcoming: null,
+        paid_history: [
           {
             publication_stage: "preliminary_estimate",
             distribution_dollars: 4800,
@@ -352,6 +354,17 @@ describe("PortfolioCompare distribution tables", () => {
           ex_date: "2026-09-23",
           payable_date: null,
         },
+        paid_history: [
+          {
+            publication_stage: "paid",
+            distribution_dollars: 900,
+            estimated_tax: 315,
+            as_of: "2026-08-12",
+            record_date: "2026-08-14",
+            ex_date: "2026-08-15",
+            payable_date: "2026-08-18",
+          },
+        ],
         distributions: [
           {
             publication_stage: "paid",
@@ -503,7 +516,7 @@ describe("PortfolioCompare distribution tables", () => {
     assert.equal(book.totals.estimated_tax, 4200);
   });
 
-  it("prefers paid_history over illustration.components", () => {
+  it("ignores illustration.components when paid_history is present", () => {
     const book = allocation([
       holding({
         ticker: "AGTHX",
@@ -538,7 +551,7 @@ describe("PortfolioCompare distribution tables", () => {
     assert.equal(paid[0]?.stage, "final");
   });
 
-  it("falls back to past illustration.components when paid_history is omitted", () => {
+  it("does not derive Paid History from illustration.components", () => {
     const book = allocation([
       holding({
         ticker: "DODGX",
@@ -568,12 +581,10 @@ describe("PortfolioCompare distribution tables", () => {
     const upcoming = upcomingRowsForSide(book, "current", TODAY);
     const paid = paidHistoryRowsForSide(book, "current", TODAY);
     assert.equal(upcoming.length, 0);
-    assert.equal(paid.length, 1);
-    assert.equal(paid[0]?.distributionDollars, 2100);
-    assert.equal(paid[0]?.payableDate, "2026-08-18");
+    assert.equal(paid.length, 0);
   });
 
-  it("falls back to past distributions when components are not paid history", () => {
+  it("does not derive Paid History from distributions when paid_history is omitted", () => {
     const book = allocation([
       holding({
         ticker: "AMCPX",
@@ -592,9 +603,7 @@ describe("PortfolioCompare distribution tables", () => {
       }),
     ]);
     assert.equal(upcomingRowsForSide(book, "current", TODAY).length, 0);
-    const paid = paidHistoryRowsForSide(book, "current", TODAY);
-    assert.equal(paid.length, 1);
-    assert.equal(paid[0]?.ticker, "AMCPX");
+    assert.equal(paidHistoryRowsForSide(book, "current", TODAY).length, 0);
   });
 
   it("sorts paid history newest first and leaves missing dates null", () => {
@@ -651,5 +660,56 @@ describe("PortfolioCompare distribution tables", () => {
       }),
       "2025-12-12",
     );
+  });
+
+  it("lists six AMCPX/AGTHX paid_history rows when upcoming is null", () => {
+    const six = () =>
+      Array.from({ length: 6 }, (_, index) => ({
+        publication_stage: "paid" as const,
+        distribution_dollars: 100 * (index + 1),
+        estimated_tax: 35 * (index + 1),
+        as_of: `202${index}-12-15`,
+        record_date: `202${index}-12-12`,
+        ex_date: `202${index}-12-15`,
+        payable_date: `202${index}-12-17`,
+      }));
+
+    const book = allocation([
+      holding({ ticker: "AMCPX", upcoming: null, paid_history: six() }),
+      holding({
+        ticker: "AGTHX",
+        holding_index: 1,
+        upcoming: null,
+        paid_history: six(),
+      }),
+    ]);
+    const paid = paidHistoryRowsForSide(book, "current", TODAY);
+    assert.equal(upcomingRowsForSide(book, "current", TODAY).length, 0);
+    assert.equal(paid.filter((row) => row.ticker === "AMCPX").length, 6);
+    assert.equal(paid.filter((row) => row.ticker === "AGTHX").length, 6);
+    for (const row of paid) {
+      assert.ok(row.recordDate);
+      assert.ok(row.exDate);
+      assert.ok(row.payableDate);
+      assert.ok(row.estimatedTax != null && row.estimatedTax > 0);
+    }
+  });
+
+  it("caps paid_history at Data's 12-row newest-first window", () => {
+    const paid_history = Array.from({ length: 15 }, (_, index) => ({
+      publication_stage: "paid" as const,
+      distribution_dollars: index + 1,
+      estimated_tax: (index + 1) * 10,
+      as_of: `2020-01-${String(index + 1).padStart(2, "0")}`,
+      record_date: `2020-01-${String(index + 1).padStart(2, "0")}`,
+    }));
+    const book = allocation([
+      holding({ ticker: "AGTHX", upcoming: null, paid_history }),
+    ]);
+    const paid = paidHistoryRowsForSide(book, "current", TODAY);
+    assert.equal(PAID_HISTORY_CAP, 12);
+    assert.equal(paid.length, 12);
+    assert.equal(paid[0]?.recordDate, "2020-01-15");
+    assert.equal(paid[11]?.recordDate, "2020-01-04");
   });
 });

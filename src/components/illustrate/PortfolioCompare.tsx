@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { AllocationColumn } from "@/components/illustrate/portfolio-compare/AllocationColumn";
+import { CalendarYearTaxTable } from "@/components/illustrate/portfolio-compare/CalendarYearTaxTable";
 import { SummaryStrip } from "@/components/illustrate/portfolio-compare/SummaryStrip";
 import { TaxImpactChart } from "@/components/illustrate/portfolio-compare/TaxImpactChart";
 import { UpcomingTable } from "@/components/illustrate/portfolio-compare/UpcomingTable";
@@ -26,6 +27,7 @@ import type {
   PortfolioHoldingDraft,
 } from "@/lib/illustrate/portfolio-compare-types";
 import { PORTFOLIO_COMPARE_BOOK_DOLLARS } from "@/lib/illustrate/portfolio-compare-types";
+import { calendarYearTaxTable, defaultPortfolioComparePeriods } from "@/lib/illustrate/portfolio-year-tax";
 import type { TaxRates } from "@/lib/illustrate/types";
 import { UI_DEFAULT_TAX_RATES } from "@/lib/illustrate/types";
 
@@ -124,6 +126,7 @@ export function PortfolioCompare({
     current: currentApi,
     proposed: proposedApi,
     taxRates: taxRates ?? { state: UI_DEFAULT_TAX_RATES.state },
+    periods: defaultPortfolioComparePeriods(),
     retry,
   });
 
@@ -135,6 +138,7 @@ export function PortfolioCompare({
       current: ReturnType<typeof toApiHoldings>;
       proposed: ReturnType<typeof toApiHoldings>;
       taxRates: Partial<TaxRates>;
+      periods: ReturnType<typeof defaultPortfolioComparePeriods>;
     };
 
     const controller = new AbortController();
@@ -154,6 +158,7 @@ export function PortfolioCompare({
           },
           tax_rates: payload.taxRates,
           combine_state_with_federal: true,
+          periods: payload.periods,
         },
         { signal: controller.signal },
       )
@@ -197,6 +202,7 @@ export function PortfolioCompare({
       (result.source === "mock" ||
         result.notes.some((note) => /mock|demo|illustrative/i.test(note))),
   );
+  const yearTax = result ? calendarYearTaxTable(result) : null;
 
   return (
     <article className={`portfolio-compare w-full ${className}`}>
@@ -327,6 +333,18 @@ export function PortfolioCompare({
             sideLabel="Proposed"
             className="h-full lg:[grid-area:tables-p]"
           />
+        ) : null}
+      </div>
+
+      <div className="mt-4">
+        {!canFetch ? null : loading && !result ? (
+          <div
+            className="h-56 animate-pulse rounded-2xl border border-line bg-surface"
+            aria-busy
+            aria-label="Loading calendar-year tax"
+          />
+        ) : result && yearTax ? (
+          <CalendarYearTaxTable model={yearTax} />
         ) : null}
       </div>
 
