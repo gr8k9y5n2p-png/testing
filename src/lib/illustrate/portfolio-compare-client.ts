@@ -10,6 +10,7 @@ import type {
   PortfolioCompareResponse,
   PortfolioCompareSideIn,
   PortfolioCoverageOut,
+  PortfolioDistributionRow,
   PortfolioGapOut,
   PortfolioHoldingOut,
   PortfolioTotalsOut,
@@ -45,8 +46,13 @@ function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" ? (value as Record<string, unknown>) : {};
 }
 
-function normalizeUpcoming(raw: unknown): PortfolioUpcoming | null | undefined {
-  if (raw === undefined) return undefined;
+function isoOrNull(value: unknown): string | null {
+  if (value == null || value === "") return null;
+  const day = String(value).trim().slice(0, 10);
+  return /^\d{4}-\d{2}-\d{2}$/.test(day) ? day : String(value);
+}
+
+function normalizeDistributionRow(raw: unknown): PortfolioDistributionRow | null {
   if (raw == null || typeof raw !== "object") return null;
   const row = asRecord(raw);
   return {
@@ -54,12 +60,35 @@ function normalizeUpcoming(raw: unknown): PortfolioUpcoming | null | undefined {
       row.distribution_dollars ?? row.distributionDollars,
     ),
     estimated_tax: numOrNull(row.estimated_tax ?? row.estimated_tax_dollars),
-    as_of: row.as_of == null ? null : String(row.as_of),
+    as_of: isoOrNull(row.as_of),
+    announced_date: isoOrNull(row.announced_date ?? row.announcedDate),
+    record_date: isoOrNull(row.record_date ?? row.recordDate),
+    ex_date: isoOrNull(row.ex_date ?? row.exDate),
+    payable_date: isoOrNull(row.payable_date ?? row.payableDate),
     publication_stage:
       row.publication_stage == null && row.stage == null
         ? null
         : String(row.publication_stage ?? row.stage),
   };
+}
+
+function normalizeUpcoming(raw: unknown): PortfolioUpcoming | PortfolioUpcoming[] | null | undefined {
+  if (raw === undefined) return undefined;
+  if (raw == null) return null;
+  if (Array.isArray(raw)) {
+    return raw
+      .map((item) => normalizeDistributionRow(item))
+      .filter((item): item is PortfolioDistributionRow => item != null);
+  }
+  return normalizeDistributionRow(raw);
+}
+
+function normalizeDistributionList(raw: unknown): PortfolioDistributionRow[] | undefined {
+  if (raw == null) return undefined;
+  if (!Array.isArray(raw)) return undefined;
+  return raw
+    .map((item) => normalizeDistributionRow(item))
+    .filter((item): item is PortfolioDistributionRow => item != null);
 }
 
 /** v1 single snapshot — never send Data API `periods[]`. */
@@ -91,12 +120,15 @@ function normalizeHolding(raw: unknown, index: number): PortfolioHoldingOut {
           estimated_tax_dollars: numOrNull(
             component.estimated_tax_dollars ?? component.estimated_tax,
           ),
-          as_of: component.as_of == null ? null : String(component.as_of),
+          as_of: isoOrNull(component.as_of),
+          announced_date: isoOrNull(component.announced_date ?? component.announcedDate),
+          record_date: isoOrNull(component.record_date ?? component.recordDate),
+          ex_date: isoOrNull(component.ex_date ?? component.exDate),
+          payable_date: isoOrNull(component.payable_date ?? component.payableDate),
           publication_stage:
             component.publication_stage == null
               ? null
               : String(component.publication_stage),
-          ex_date: component.ex_date == null ? null : String(component.ex_date),
         };
       })
     : [];
@@ -116,6 +148,8 @@ function normalizeHolding(raw: unknown, index: number): PortfolioHoldingOut {
     upcoming: normalizeUpcoming(
       Object.prototype.hasOwnProperty.call(row, "upcoming") ? row.upcoming : undefined,
     ),
+    distributions: normalizeDistributionList(row.distributions),
+    history: normalizeDistributionList(row.history),
     gap_reason: row.gap_reason == null ? null : String(row.gap_reason),
     illustration: illustrationRaw
       ? {
@@ -163,7 +197,16 @@ function normalizeTotals(raw: unknown, holdings: PortfolioHoldingOut[]): Portfol
     holdings
       .filter((holding) => holding.covered)
       .reduce((sum, holding) => {
-        const upcoming = holding.upcoming?.distribution_dollars;
+        const upcomingRows = Array.isArray(holding.upcoming)
+          ? holding.upcoming
+          : holding.upcoming
+            ? [holding.upcoming]
+            : [];
+        const upcoming = upcomingRows.reduce<number | null>((total, item) => {
+          const value = numOrNull(item.distribution_dollars);
+          if (value == null) return total;
+          return (total ?? 0) + value;
+        }, null);
         const fromIllustration = holding.illustration?.totals?.distribution_dollars;
         return sum + (upcoming ?? fromIllustration ?? 0);
       }, 0),

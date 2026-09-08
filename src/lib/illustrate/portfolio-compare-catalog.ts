@@ -38,7 +38,7 @@ export const PORTFOLIO_TICKER_RATES: Record<string, PortfolioTickerRates> = {
     distRate: 0.0194,
     upcomingTaxRate: 0.35,
     asOf: "2026-12-15",
-    stage: "announced",
+    stage: "preliminary_estimate",
   },
   DODIX: {
     fundName: "Dodge & Cox Income Fund",
@@ -56,7 +56,7 @@ export const PORTFOLIO_TICKER_RATES: Record<string, PortfolioTickerRates> = {
     distRate: 0.0128,
     upcomingTaxRate: 0.35,
     asOf: "2026-12-15",
-    stage: "announced",
+    stage: "preliminary_estimate",
   },
   DODGX: {
     fundName: "Dodge & Cox Stock Fund",
@@ -65,7 +65,7 @@ export const PORTFOLIO_TICKER_RATES: Record<string, PortfolioTickerRates> = {
     distRate: 0.0162,
     upcomingTaxRate: 0.35,
     asOf: "2026-12-15",
-    stage: "announced",
+    stage: "preliminary_estimate",
   },
   VIGAX: {
     fundName: "Vanguard Growth Index Fund",
@@ -74,7 +74,7 @@ export const PORTFOLIO_TICKER_RATES: Record<string, PortfolioTickerRates> = {
     distRate: 0.0032,
     upcomingTaxRate: 0.2,
     asOf: "2026-12-15",
-    stage: "announced",
+    stage: "preliminary_estimate",
   },
   AMCPX: {
     fundName: "AMCAP Fund",
@@ -83,7 +83,7 @@ export const PORTFOLIO_TICKER_RATES: Record<string, PortfolioTickerRates> = {
     distRate: 0.0128,
     upcomingTaxRate: 0.35,
     asOf: "2026-12-15",
-    stage: "announced",
+    stage: "preliminary_estimate",
   },
   CGHM: {
     fundName: "Capital Group Municipal High-Income ETF",
@@ -101,7 +101,7 @@ export const PORTFOLIO_TICKER_RATES: Record<string, PortfolioTickerRates> = {
     distRate: 0.0111,
     upcomingTaxRate: 0.35,
     asOf: "2026-12-12",
-    stage: "announced",
+    stage: "updated_estimate",
   },
   VFIAX: {
     fundName: "Vanguard 500 Index Fund",
@@ -110,7 +110,7 @@ export const PORTFOLIO_TICKER_RATES: Record<string, PortfolioTickerRates> = {
     distRate: 0.0024,
     upcomingTaxRate: 0.2,
     asOf: "2026-12-20",
-    stage: "announced",
+    stage: "preliminary_estimate",
   },
   VBIAX: {
     fundName: "Vanguard Balanced Index Fund",
@@ -119,7 +119,7 @@ export const PORTFOLIO_TICKER_RATES: Record<string, PortfolioTickerRates> = {
     distRate: 0.0021,
     upcomingTaxRate: 0.2,
     asOf: "2026-12-20",
-    stage: "announced",
+    stage: "preliminary_estimate",
   },
   FBGRX: {
     fundName: "Fidelity Blue Chip Growth Fund",
@@ -128,7 +128,7 @@ export const PORTFOLIO_TICKER_RATES: Record<string, PortfolioTickerRates> = {
     distRate: 0.0192,
     upcomingTaxRate: 0.35,
     asOf: "2026-12-12",
-    stage: "announced",
+    stage: "updated_estimate",
   },
 };
 
@@ -139,7 +139,7 @@ const DEFAULT_RATES: PortfolioTickerRates = {
   distRate: 0.01,
   upcomingTaxRate: 0.3,
   asOf: "2026-12-15",
-  stage: "announced",
+  stage: "preliminary_estimate",
 };
 
 export function ratesForTicker(ticker: string): PortfolioTickerRates {

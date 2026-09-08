@@ -2,23 +2,28 @@ import { formatUsd } from "@/lib/format";
 import type {
   PortfolioAllocationOut,
   PortfolioHoldingOut,
-  PortfolioUpcoming,
 } from "@/lib/illustrate/portfolio-compare-types";
+import { upcomingFromHolding } from "@/lib/illustrate/publication-stage";
+
+export type { DistributionBucket, UpcomingRow } from "@/lib/illustrate/publication-stage";
+export {
+  announcedDateOf,
+  distributionHasPayable,
+  eventDateOf,
+  formatAsOfStage,
+  formatStageLabel,
+  isPaidHistoryPublicationStage,
+  isUpcomingPublicationStage,
+  normalizePublicationStage,
+  paidHistoryRowsForSide,
+  publicationBucket,
+  totalUpcomingTax,
+  upcomingFromHolding,
+  upcomingRowsForSide,
+  utcToday,
+} from "@/lib/illustrate/publication-stage";
 
 export type TaxPolarity = "more" | "less" | "even";
-
-export type UpcomingRow = {
-  key: string;
-  ticker: string;
-  fundName: string;
-  side: "current" | "proposed";
-  sideLabel: string;
-  distributionDollars: number;
-  estimatedTax: number | null;
-  asOf: string | null;
-  stage: string | null;
-  heat: number;
-};
 
 const EVEN_DOLLARS = 0.5;
 
@@ -50,129 +55,6 @@ function num(value: unknown): number | null {
   if (value == null || value === "") return null;
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
-}
-
-export function upcomingFromHolding(holding: PortfolioHoldingOut): PortfolioUpcoming | null {
-  if (holding.upcoming === null) return null;
-
-  if (holding.upcoming) {
-    const dist = num(holding.upcoming.distribution_dollars);
-    const tax = num(holding.upcoming.estimated_tax);
-    const stage =
-      holding.upcoming.publication_stage ?? holding.publication_stage_used ?? null;
-    if (dist != null || tax != null || holding.upcoming.as_of || stage) {
-      return {
-        distribution_dollars: dist,
-        estimated_tax: tax,
-        as_of: holding.upcoming.as_of ?? null,
-        publication_stage: stage,
-      };
-    }
-    return null;
-  }
-
-  const illustration = holding.illustration;
-  if (!illustration) return null;
-
-  const totals = illustration.totals;
-  const components = illustration.components ?? [];
-  const first = components[0];
-  const dist =
-    num(first?.distribution_dollars) ??
-    num(totals?.distribution_dollars) ??
-    components.reduce((sum, row) => sum + (num(row.distribution_dollars) ?? 0), 0);
-  const tax =
-    num(first?.estimated_tax) ??
-    num(first?.estimated_tax_dollars) ??
-    num(totals?.estimated_tax) ??
-    num(totals?.estimated_tax_dollars);
-
-  const asOf = first?.as_of ?? first?.ex_date ?? null;
-  const stage =
-    first?.publication_stage ?? holding.publication_stage_used ?? null;
-
-  if (dist == null && tax == null && !asOf && !stage) return null;
-  return {
-    distribution_dollars: dist,
-    estimated_tax: tax,
-    as_of: asOf,
-    publication_stage: stage,
-  };
-}
-
-const STAGE_LABELS: Record<string, string> = {
-  announced: "announced",
-  monthly: "next",
-  preliminary: "announced",
-  preliminary_estimate: "announced",
-  updated_estimate: "updated",
-  updated: "updated",
-  final: "final",
-  paid: "paid",
-};
-
-export function formatAsOfStage(asOf: string | null, stage: string | null): string {
-  const stageKey = (stage ?? "").trim().toLowerCase();
-  const stageLabel = STAGE_LABELS[stageKey] ?? (stageKey ? stageKey.replace(/_/g, " ") : "");
-
-  if (stageKey === "monthly") {
-    return "Est. monthly · next";
-  }
-
-  let month = "";
-  if (asOf) {
-    const date = new Date(`${asOf}T00:00:00Z`);
-    if (!Number.isNaN(date.getTime())) {
-      month = date.toLocaleString("en-US", { month: "short", timeZone: "UTC" });
-    }
-  }
-
-  if (month && stageLabel) return `Est. ${month} · ${stageLabel}`;
-  if (month) return `Est. ${month}`;
-  if (stageLabel) return stageLabel;
-  return "—";
-}
-
-function rowsForSide(
-  allocation: PortfolioAllocationOut,
-  side: "current" | "proposed",
-): UpcomingRow[] {
-  return allocation.holdings.flatMap((holding, index) => {
-    const upcoming = upcomingFromHolding(holding);
-    if (!upcoming) return [];
-    const dist = num(upcoming.distribution_dollars);
-    if (dist == null) return [];
-    const ticker = (holding.ticker || holding.fund_identifier || "—").toUpperCase();
-    return [
-      {
-        key: `${side}-${holding.holding_index}-${ticker}-${index}`,
-        ticker,
-        fundName: holding.fund_name || ticker,
-        side,
-        sideLabel: side === "current" ? "Current" : "Proposed",
-        distributionDollars: dist,
-        estimatedTax: num(upcoming.estimated_tax),
-        asOf: upcoming.as_of ?? null,
-        stage: upcoming.publication_stage ?? holding.publication_stage_used ?? null,
-        heat: 0,
-      },
-    ];
-  });
-}
-
-/** Sort + heat within one allocation so Current and Proposed tables stay independent. */
-export function upcomingRowsForSide(
-  allocation: PortfolioAllocationOut,
-  side: "current" | "proposed",
-): UpcomingRow[] {
-  const rows = rowsForSide(allocation, side).sort(
-    (a, b) => b.distributionDollars - a.distributionDollars,
-  );
-  const max = rows[0]?.distributionDollars ?? 0;
-  return rows.map((row) => ({
-    ...row,
-    heat: max > 0 ? row.distributionDollars / max : 0,
-  }));
 }
 
 export type TaxImpactBar = {
@@ -218,13 +100,6 @@ export function colorForTicker(ticker: string, used = new Set<string>()): string
 
 function taxImpactDollars(holding: PortfolioHoldingOut): number {
   return num(upcomingFromHolding(holding)?.estimated_tax) ?? 0;
-}
-
-export function totalUpcomingTax(allocation: PortfolioAllocationOut): number {
-  return allocation.holdings.reduce(
-    (sum, holding) => sum + (num(upcomingFromHolding(holding)?.estimated_tax) ?? 0),
-    0,
-  );
 }
 
 /** One bar per holding; scale is relative to peers in this allocation only. */

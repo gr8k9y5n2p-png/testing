@@ -8,6 +8,7 @@ import type {
   PortfolioCompareRequest,
   PortfolioCompareResponse,
   PortfolioCompareSideIn,
+  PortfolioDistributionRow,
   PortfolioFundOption,
   PortfolioGapOut,
   PortfolioHoldingIn,
@@ -88,6 +89,18 @@ function mockHoldingOut(
   const tax = money(dollars * rates.taxDrag);
   const weightPct = sideBook > 0 ? (dollars / sideBook) * 100 : 0;
   const stage = rates.stage === "monthly" ? "monthly" : rates.stage;
+  const yearEndDates =
+    stage !== "monthly" && rates.asOf
+      ? {
+          record_date: addUtcDays(rates.asOf, 1),
+          ex_date: addUtcDays(rates.asOf, 2),
+          payable_date: addUtcDays(rates.asOf, 3),
+        }
+      : {
+          record_date: null,
+          ex_date: null,
+          payable_date: null,
+        };
 
   if (!covered) {
     return {
@@ -121,8 +134,13 @@ function mockHoldingOut(
       distribution_dollars: dist,
       estimated_tax: upcomingTax,
       as_of: rates.asOf,
+      announced_date: rates.asOf,
+      record_date: yearEndDates.record_date,
+      ex_date: yearEndDates.ex_date,
+      payable_date: yearEndDates.payable_date,
       publication_stage: stage,
     },
+    distributions: mockDistributionEvents(dist, upcomingTax, rates.asOf, stage, yearEndDates),
     illustration: {
       totals: {
         distribution_dollars: dist,
@@ -136,11 +154,58 @@ function mockHoldingOut(
           estimated_tax: upcomingTax,
           estimated_tax_dollars: upcomingTax,
           as_of: rates.asOf,
+          announced_date: rates.asOf,
+          record_date: yearEndDates.record_date,
+          ex_date: yearEndDates.ex_date,
+          payable_date: yearEndDates.payable_date,
           publication_stage: stage,
         },
       ],
     },
   };
+}
+
+function addUtcDays(iso: string, days: number): string {
+  const date = new Date(`${iso}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
+function mockDistributionEvents(
+  dist: number,
+  upcomingTax: number,
+  asOf: string | null,
+  stage: string,
+  yearEndDates: {
+    record_date: string | null;
+    ex_date: string | null;
+    payable_date: string | null;
+  },
+): PortfolioDistributionRow[] {
+  const upcoming: PortfolioDistributionRow = {
+    distribution_dollars: dist,
+    estimated_tax: upcomingTax,
+    as_of: asOf,
+    announced_date: asOf,
+    record_date: yearEndDates.record_date,
+    ex_date: yearEndDates.ex_date,
+    payable_date: yearEndDates.payable_date,
+    publication_stage: stage,
+  };
+  if (stage === "monthly") return [upcoming];
+  return [
+    upcoming,
+    {
+      distribution_dollars: money(dist * 0.18),
+      estimated_tax: money(upcomingTax * 0.18),
+      as_of: "2026-08-12",
+      announced_date: "2026-08-12",
+      record_date: "2026-08-14",
+      ex_date: "2026-08-15",
+      payable_date: "2026-08-18",
+      publication_stage: "paid",
+    },
+  ];
 }
 
 export function mockIllustratePortfolioSide(
@@ -170,7 +235,8 @@ export function mockIllustratePortfolioSide(
       dollarsCovered += out.holding_dollars;
       holdingsCovered += 1;
       coveredTax += out.illustration?.totals?.estimated_tax ?? 0;
-      coveredDist += out.upcoming?.distribution_dollars ?? 0;
+      coveredDist += (Array.isArray(out.upcoming) ? out.upcoming[0] : out.upcoming)
+        ?.distribution_dollars ?? 0;
     } else {
       dollarsUncovered += out.holding_dollars;
       holdingsUncovered += 1;

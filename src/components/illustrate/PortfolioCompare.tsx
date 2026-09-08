@@ -14,6 +14,7 @@ import {
 } from "@/lib/illustrate/portfolio-compare-catalog";
 import { postIllustratePortfolioCompare } from "@/lib/illustrate/portfolio-compare-client";
 import {
+  paidHistoryRowsForSide,
   taxImpactBarsForSide,
   totalUpcomingTax,
   upcomingRowsForSide,
@@ -181,6 +182,12 @@ export function PortfolioCompare({
   const proposedUpcoming = result
     ? upcomingRowsForSide(result.proposed, "proposed")
     : [];
+  const currentPaid = result
+    ? paidHistoryRowsForSide(result.current, "current")
+    : [];
+  const proposedPaid = result
+    ? paidHistoryRowsForSide(result.proposed, "proposed")
+    : [];
   const currentBars = result ? taxImpactBarsForSide(result.current) : [];
   const proposedBars = result ? taxImpactBarsForSide(result.proposed) : [];
   const currentTotalTax = result ? totalUpcomingTax(result.current) : 0;
@@ -267,12 +274,13 @@ export function PortfolioCompare({
           <div
             className="h-48 min-h-48 animate-pulse rounded-2xl border border-line bg-surface lg:h-full lg:[grid-area:tables-c]"
             aria-busy
-            aria-label="Loading current upcoming distributions"
+            aria-label="Loading current distributions"
           />
         ) : result ? (
           <UpcomingTable
             headingId="upcoming-current"
             rows={currentUpcoming}
+            paidRows={currentPaid}
             sideLabel="Current"
             className="h-full lg:[grid-area:tables-c]"
           />
@@ -307,12 +315,13 @@ export function PortfolioCompare({
           <div
             className="h-48 min-h-48 animate-pulse rounded-2xl border border-line bg-surface lg:h-full lg:[grid-area:tables-p]"
             aria-busy
-            aria-label="Loading proposed upcoming distributions"
+            aria-label="Loading proposed distributions"
           />
         ) : result ? (
           <UpcomingTable
             headingId="upcoming-proposed"
             rows={proposedUpcoming}
+            paidRows={proposedPaid}
             sideLabel="Proposed"
             className="h-full lg:[grid-area:tables-p]"
           />
