@@ -24,7 +24,9 @@ class HarborSource(HtmlTableSource):
                 name="2025_estimated_year_end_distributions",
                 url="https://assets.harborcapital.com/docs/Distribution_Estimates_Mutual_Funds_2025.pdf",
                 fixture="2025_estimated_year_end_distributions.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
 
@@ -54,7 +56,9 @@ class NationwideSource(HtmlTableSource):
                 name="2025_capital_gains_distributions",
                 url="https://nationwidefinancial.com/media/pdf/MFN-0435AO.pdf",
                 fixture="2025_capital_gains_distributions.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
 
@@ -83,7 +87,9 @@ class VoyaSource(HtmlTableSource):
                 name="2025_estimated_capital_gains",
                 url="https://individuals.voya.com/document/tax-center/2025-estimated-capital-gains.pdf",
                 fixture="2025_estimated_capital_gains.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
 
@@ -113,6 +119,8 @@ class OakmarkSource(HtmlTableSource):
                 url="https://oakmark.com/news-insights/2025-oakmark-year-end-fund-distributions/",
                 fixture="2025_year_end_distributions.html",
                 live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
 

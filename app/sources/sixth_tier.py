@@ -120,9 +120,17 @@ class VaneckSource(HtmlTableSource):
         "International Investors Gold A INIVX income $1.56 / no CG). "
         "Printed None for capital gains is omitted. CM Commodity ‡ estimates-to-come omitted. "
         "Most funds record 12/17/2025, ex/pay 12/18/2025. "
-        "ETF estimate reprint: https://www.vaneck.com/us/en/vaneck-etfs-yearend-distributions-2025.pdf"
+        "ETF estimate reprint: https://www.vaneck.com/us/en/vaneck-etfs-yearend-distributions-2025.pdf "
+        "(CLOB ST $0.064; CLOI ST $0.007 / LT $0.029; EINC LT $1.016; printed None omitted). "
+        "2024 paid ETF YE: https://www.vaneck.com/us/en/vaneck-etfs-yearend-distributions-2024.pdf "
+        "(GDX income $0.4025; SMH income $1.0713; MOAT income $1.2675; "
+        "IBOT ST $0.9104 / LT $0.0112; MOTG LT $1.3793; all-None AFK/DGIN/VNM omitted). "
+        "Hub: https://www.vaneck.com/us/en/resources/etf-distributions/"
     )
-    live_limitations = "Family estimate book is PDF. Fixture transcribes public mutual-fund rows."
+    live_limitations = (
+        "Family estimate books are PDF. Weekly walk uses the MF estimate PDF, "
+        "ETF estimate PDF, and ETF distributions hub."
+    )
 
     def pages(self) -> list[PageSpec]:
         return [
@@ -130,8 +138,32 @@ class VaneckSource(HtmlTableSource):
                 name="2025_estimated_year_end_distributions",
                 url="https://www.vaneck.com/us/en/vaneck-funds-estimated-yearend-distributions-2025.pdf",
                 fixture="2025_estimated_year_end_distributions.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
+            PageSpec(
+                name="2025_etf_year_end_estimates",
+                url="https://www.vaneck.com/us/en/vaneck-etfs-yearend-distributions-2025.pdf",
+                fixture="2025_etf_year_end_estimates.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
+            PageSpec(
+                name="etf_distributions_hub",
+                url="https://www.vaneck.com/us/en/resources/etf-distributions/",
+                fixture="etf_distributions_hub.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
+            PageSpec(
+                name="2024_etf_year_end_distributions",
+                url="https://www.vaneck.com/us/en/vaneck-etfs-yearend-distributions-2024.pdf",
+                fixture="2024_etf_year_end_distributions.html",
                 live=False,
-            )
+            ),
         ]
 
 
@@ -150,21 +182,80 @@ class WisdomtreeSource(HtmlTableSource):
         "(e.g. Target Range GTR ST $0.84657 / 3.23% of NAV; "
         "True Emerging Markets XC ST $0.72040 / LT $2.49286 / 9.13% of NAV; "
         "Equity Premium Income WTPI LT $0.72183 / 2.14% of NAV). "
-        "Dashed (no 2025 CG) rows are omitted. Ex/record 12/10/2025; pay 12/12/2025."
+        "Dashed (no 2025 CG) rows are omitted. Ex/record 12/10/2025; pay 12/12/2025. "
+        "Official 2024 sibling "
+        "https://www.wisdomtree.com/investments/-/media/us-media-files/documents/about/pdf/2024/"
+        "wisdomtree-etfs-declare-final-capital-gains-distributions-2024.pdf "
+        "is the full family list; payers ingested "
+        "(GTR ST $0.51992; INDH LT $0.12765; QSML ST $0.00236; USIN ST $0.02859; "
+        "USSH ST $0.02407; WTBN ST $0.02168). Dashed no-CG rows omitted."
     )
-    live_limitations = "Family book is PDF. Fixture transcribes public ETFs that paid 2025 CG."
+    live_limitations = "Family books are PDF. Weekly walk uses the 2025 final CG PDF."
+
+    def pages(self) -> list[PageSpec]:
+        media = "https://www.wisdomtree.com/investments/-/media/us-media-files/documents/about/pdf"
+        return [
+            PageSpec(
+                name="2025_estimated_capital_gains_hub",
+                url=(
+                    "https://www.wisdomtree.com/investments/resource-library/"
+                    "2025-estimated-capital-gains-distributions"
+                ),
+                fixture="2025_estimated_capital_gains_hub.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
+            PageSpec(
+                name="2025_final_capital_gains",
+                url=f"{media}/2025/wisdomtree-etfs-declare-final-capital-gains-distributions-2025.pdf",
+                fixture="2025_final_capital_gains.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
+            PageSpec(
+                name="2024_final_capital_gains",
+                url=f"{media}/2024/wisdomtree-etfs-declare-final-capital-gains-distributions-2024.pdf",
+                fixture="2024_final_capital_gains.html",
+                live=False,
+            ),
+        ]
+
+
+class FirstTrustSource(HtmlTableSource):
+    slug = "first_trust"
+    display_name = "First Trust"
+    aum_rank = 111
+    priority = 111
+    notes = (
+        "Official Section 19(a) source-of-distribution notice "
+        "https://www.ftportfolios.com/Common/ContentFileLoader.aspx?"
+        "ContentGUID=ad59e9bb-c8bb-4696-bf2d-42b9fa64b17e "
+        "(declaration 12/26/2025; ex/record 12/29/2025; pay 12/31/2025) "
+        "lists current NII / STCG / LTCG / ROC for BFAP / BFJL / BGLD / IGLD "
+        "(BFAP LT $3.1933 / ROC $0.2500; BGLD NII $0.5074 / ST $2.7353 / ROC $4.3407; "
+        "IGLD NII $0.1042 / ST $0.1401 / ROC $0.3525). Fiscal YTD cumulative table "
+        "omitted so illustration does not double-count. Printed dashes omitted. "
+        "Monthly income-sleeve 19(a) notices (FTHI, FMB) are not this family book."
+    )
+    live_limitations = (
+        "Family 19(a) is PDF. Weekly walk uses the ContentGUID notice; "
+        "empty/PDF-bytes pages are no-op success."
+    )
 
     def pages(self) -> list[PageSpec]:
         return [
             PageSpec(
-                name="2025_final_capital_gains",
+                name="2025_section_19a_notice",
                 url=(
-                    "https://www.wisdomtree.com/investments/-/media/us-media-files/"
-                    "documents/about/pdf/2025/"
-                    "wisdomtree-etfs-declare-final-capital-gains-distributions-2025.pdf"
+                    "https://www.ftportfolios.com/Common/ContentFileLoader.aspx?"
+                    "ContentGUID=ad59e9bb-c8bb-4696-bf2d-42b9fa64b17e"
                 ),
-                fixture="2025_final_capital_gains.html",
-                live=False,
+                fixture="2025_section_19a_notice.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
 

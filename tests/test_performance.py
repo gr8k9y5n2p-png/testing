@@ -134,6 +134,9 @@ def test_performance_new_top40_distribution_tickers(client: TestClient) -> None:
         ("ALLW", "equity", "SPY"),
         ("JDCAX", "equity", "SPY"),
         ("MDDVX", "equity", "SPY"),
+        ("SGENX", "equity", "SPY"),
+        ("GDX", "equity", "SPY"),
+        ("GTR", "equity", "SPY"),
     ):
         response = client.get("/performance", params={"ticker": ticker, "mode": "fixture"})
         assert response.status_code == 200, f"{ticker}: {response.text}"

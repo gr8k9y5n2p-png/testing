@@ -71,6 +71,7 @@ from app.sources.sixth_tier import (
     HardingLoevnerSource,
     MatthewsAsiaSource,
     SeiSource,
+    FirstTrustSource,
     VaneckSource,
     WilliamBlairSource,
     WisdomtreeSource,
@@ -368,6 +369,18 @@ def test_state_street_invesco_jpm_gs_pimco_fixtures() -> None:
     seegx = next(r for r in jpm if r.ticker == "SEEGX" and r.estimate_type == EstimateType.long_term_capital_gains)
     assert seegx.amount == Decimal("9.32525")
 
+    jpm_2024 = parse_distribution_html(
+        (ROOT / "jpmorgan" / "2024_section_19a.html").read_text(encoding="utf-8"),
+        source_url="fixture://jpm-2024",
+        fund_family="J.P. Morgan Asset Management",
+    )
+    seegx_2024 = next(
+        r
+        for r in jpm_2024
+        if r.ticker == "SEEGX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert seegx_2024.amount == Decimal("0.79868")
+
     gs = parse_distribution_html(
         (ROOT / "goldman_sachs" / "year_end_distributions_sample.html").read_text(encoding="utf-8"),
         source_url="fixture://gs",
@@ -441,6 +454,7 @@ def test_adapters_fetch_fixture_mode() -> None:
         WilliamBlairSource(),
         VaneckSource(),
         WisdomtreeSource(),
+        FirstTrustSource(),
         AqrSource(),
         CausewaySource(),
         AlgerSource(),
@@ -1037,6 +1051,22 @@ def test_third_tier_fixtures() -> None:
     )
     assert payr.amount == Decimal("0.015178")
 
+    federated_prelim = parse_distribution_html(
+        (ROOT / "federated_hermes" / "2025_preliminary_estimated_capital_gains.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://federated-prelim",
+        fund_family="Federated Hermes",
+    )
+    kauax = next(
+        r
+        for r in federated_prelim
+        if r.ticker == "KAUAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert kauax.amount == Decimal("0.638052")
+    assert kauax.publication_stage == PublicationStage.preliminary_estimate
+    assert len({r.ticker for r in federated_prelim if r.ticker}) >= 80
+
     virtus = parse_distribution_html(
         (ROOT / "virtus" / "2026_june_capital_gain_estimates.html").read_text(encoding="utf-8"),
         source_url="fixture://virtus",
@@ -1516,6 +1546,18 @@ def test_fourth_tier_fixtures() -> None:
     )
     assert tmsix.amount == Decimal("4.02")
 
+    thrivent_2024 = parse_distribution_html(
+        (ROOT / "thrivent" / "2024_paid_capital_gains.html").read_text(encoding="utf-8"),
+        source_url="fixture://thrivent-2024",
+        fund_family="Thrivent",
+    )
+    tmsix_2024 = next(
+        r
+        for r in thrivent_2024
+        if r.ticker == "TMSIX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert tmsix_2024.amount == Decimal("1.33794")
+
     hartford = parse_distribution_html(
         (ROOT / "hartford" / "2025_estimated_capital_gains.html").read_text(encoding="utf-8"),
         source_url="fixture://hartford",
@@ -1574,6 +1616,24 @@ def test_fourth_tier_fixtures() -> None:
         if r.ticker == "GQETX" and r.estimate_type == EstimateType.long_term_capital_gains
     )
     assert gqetx.amount == Decimal("0.7242")
+
+    gmo_etf = parse_distribution_html(
+        (ROOT / "gmo" / "2025_etf_year_end_tax.html").read_text(encoding="utf-8"),
+        source_url="fixture://gmo-etf-2025",
+        fund_family="GMO",
+    )
+    bchi = next(
+        r
+        for r in gmo_etf
+        if r.ticker == "BCHI" and r.estimate_type == EstimateType.short_term_capital_gains
+    )
+    assert bchi.amount == Decimal("0.290000")
+    invg = next(
+        r
+        for r in gmo_etf
+        if r.ticker == "INVG" and r.estimate_type == EstimateType.short_term_capital_gains
+    )
+    assert invg.amount == Decimal("0.065400")
 
     artisan = parse_distribution_html(
         (ROOT / "artisan" / "ytd_paid_distributions.html").read_text(encoding="utf-8"),
@@ -1986,6 +2046,37 @@ def test_sixth_tier_fixtures() -> None:
     )
     assert mwmix.amount == Decimal("1.68")
 
+    vaneck_etf_2025 = parse_distribution_html(
+        (ROOT / "vaneck" / "2025_etf_year_end_estimates.html").read_text(encoding="utf-8"),
+        source_url="fixture://vaneck-etf-2025",
+        fund_family="VanEck",
+    )
+    cloi_2025 = next(
+        r
+        for r in vaneck_etf_2025
+        if r.ticker == "CLOI" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert cloi_2025.amount == Decimal("0.029")
+
+    vaneck_etf_2024 = parse_distribution_html(
+        (ROOT / "vaneck" / "2024_etf_year_end_distributions.html").read_text(encoding="utf-8"),
+        source_url="fixture://vaneck-etf-2024",
+        fund_family="VanEck",
+    )
+    gdx = next(
+        r
+        for r in vaneck_etf_2024
+        if r.ticker == "GDX" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert gdx.amount == Decimal("0.4025")
+    ibot = next(
+        r
+        for r in vaneck_etf_2024
+        if r.ticker == "IBOT" and r.estimate_type == EstimateType.short_term_capital_gains
+    )
+    assert ibot.amount == Decimal("0.9104")
+    assert len({r.ticker for r in vaneck_etf_2024 if r.ticker}) >= 40
+
     wisdomtree = parse_distribution_html(
         (ROOT / "wisdomtree" / "2025_final_capital_gains.html").read_text(
             encoding="utf-8"
@@ -1999,6 +2090,42 @@ def test_sixth_tier_fixtures() -> None:
         if r.ticker == "XC" and r.estimate_type == EstimateType.long_term_capital_gains
     )
     assert xc.amount == Decimal("2.49286")
+
+    wisdomtree_2024 = parse_distribution_html(
+        (ROOT / "wisdomtree" / "2024_final_capital_gains.html").read_text(encoding="utf-8"),
+        source_url="fixture://wisdomtree-2024",
+        fund_family="WisdomTree",
+    )
+    gtr_2024 = next(
+        r
+        for r in wisdomtree_2024
+        if r.ticker == "GTR" and r.estimate_type == EstimateType.short_term_capital_gains
+    )
+    assert gtr_2024.amount == Decimal("0.51992")
+
+    first_trust = parse_distribution_html(
+        (ROOT / "first_trust" / "2025_section_19a_notice.html").read_text(encoding="utf-8"),
+        source_url="fixture://first-trust",
+        fund_family="First Trust",
+    )
+    bfap = next(
+        r
+        for r in first_trust
+        if r.ticker == "BFAP" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert bfap.amount == Decimal("3.1933")
+    bgld_st = next(
+        r
+        for r in first_trust
+        if r.ticker == "BGLD" and r.estimate_type == EstimateType.short_term_capital_gains
+    )
+    assert bgld_st.amount == Decimal("2.7353")
+    igld_roc = next(
+        r
+        for r in first_trust
+        if r.ticker == "IGLD" and r.estimate_type == EstimateType.return_of_capital
+    )
+    assert igld_roc.amount == Decimal("0.3525")
 
     aqr = parse_distribution_html(
         (ROOT / "aqr" / "2025_estimated_distributions.html").read_text(encoding="utf-8"),

@@ -229,6 +229,48 @@ class CoverageGapOut(BaseModel):
     created_at: datetime
 
 
+class TickerRequestIn(BaseModel):
+    ticker: str = Field(..., min_length=1, max_length=32)
+    fund_name: str | None = Field(default=None, max_length=512)
+    fund_family: str | None = Field(default=None, max_length=128)
+    source: str = Field(default="website_ui", max_length=64)
+
+    @field_validator("ticker", "fund_name", "fund_family", "source", mode="before")
+    @classmethod
+    def blank_request_fields(cls, value: Any) -> Any:
+        return _empty_to_none(value)
+
+    @field_validator("ticker", mode="after")
+    @classmethod
+    def request_ticker_upper(cls, value: str) -> str:
+        return value.upper()
+
+
+class TickerRequestOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    ticker: str
+    fund_name: str | None
+    fund_family: str | None
+    source: str
+    status: str
+    adapter_slug: str | None
+    detail: str | None
+    created_at: datetime
+    updated_at: datetime
+
+
+class TickerRequestListOut(BaseModel):
+    items: list[TickerRequestOut]
+    total: int
+
+
+class TickerRequestIngestOut(BaseModel):
+    processed: int
+    items: list[TickerRequestOut]
+
+
 _SLUG_RE = re.compile(r"[^a-z0-9]+")
 
 

@@ -32,9 +32,18 @@ from app.schemas import (
     IngestResponse,
     PerformanceGrowthRequest,
     PerformanceResponse,
+    TickerRequestIn,
+    TickerRequestIngestOut,
+    TickerRequestListOut,
+    TickerRequestOut,
 )
 from app.services.coverage import coverage_snapshot, family_to_out, record_gap
 from app.services.performance import growth_of_x
+from app.services.ticker_requests import (
+    list_ticker_requests,
+    process_ticker_requests,
+    submit_ticker_request,
+)
 from app.services.illustrate import (
     illustrate,
     illustrate_compare,
@@ -170,6 +179,46 @@ def coverage_gaps(
     session: Session = Depends(get_session),
 ) -> list[CoverageGapOut]:
     return [CoverageGapOut.model_validate(row) for row in list_coverage_gaps(session, limit=limit)]
+
+
+@router.post(
+    "/requests/tickers",
+    response_model=TickerRequestOut,
+    status_code=202,
+    tags=["requests"],
+)
+def create_ticker_request(
+    body: TickerRequestIn, session: Session = Depends(get_session)
+) -> TickerRequestOut:
+    """Record a Website-submitted ticker for issuer-source ingest. Never invents amounts."""
+    return submit_ticker_request(session, body)
+
+
+@router.get("/requests/tickers", response_model=TickerRequestListOut, tags=["requests"])
+def get_ticker_requests(
+    status: str | None = Query(
+        default=None,
+        description="queued | search_issuer | matched | already_covered | skipped",
+    ),
+    limit: int = Query(default=100, ge=1, le=500),
+    session: Session = Depends(get_session),
+) -> TickerRequestListOut:
+    rows = list_ticker_requests(session, status=status, limit=limit)
+    return TickerRequestListOut(
+        items=[TickerRequestOut.model_validate(row) for row in rows],
+        total=len(rows),
+    )
+
+
+@router.post("/ingest/ticker-requests", response_model=TickerRequestIngestOut, tags=["ingest"])
+def ingest_ticker_requests(
+    mode: str | None = Query(default=None, description="fixture | live | omit for FETCH_MODE"),
+    limit: int = Query(default=50, ge=1, le=200),
+    session: Session = Depends(get_session),
+) -> TickerRequestIngestOut:
+    """Pick up queued ticker requests and fetch the matched family adapter when known."""
+    items = process_ticker_requests(session, mode=mode, limit=limit)
+    return TickerRequestIngestOut(processed=len(items), items=items)
 
 
 @router.post("/illustrate", response_model=IllustrateResponse, tags=["illustrate"])

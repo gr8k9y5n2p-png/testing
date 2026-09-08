@@ -530,13 +530,24 @@ class FederatedHermesSource(HtmlTableSource):
         "and .../final.do are JavaScript (API-backed; verified 2026-09-07). "
         "ICI Primary/Secondary tax-info PDFs are listed on services.federatedhermes.com "
         "token URLs (not a stable public download; some books are monthly muni "
-        "lines). Public Section 19(a) notices publish per-share amounts, e.g. "
+        "lines). Official Preliminary Estimated Capital Gains 2025 PDF "
+        "(document 50135 12/25) "
+        "https://services.federatedinvestors.com/teamsite-file-server/content/"
+        "Preliminary+Capital+Gains+2025 is the full paying share-class book "
+        "(e.g. Kaufmann KAUAX LT $0.638052; Kaufmann Large Cap KLCAX LT $4.839269; "
+        "Kaufmann Small Cap FKASX LT $9.289204; International Equity PMIEX LT $20.854470; "
+        "PAYR prelim ST $0.013694 / LT $0.020535 — distinct vintage from the later 19(a)). "
+        "Funds not listed are estimated in a capital-loss position (omitted). "
+        "Public Section 19(a) notices publish per-share amounts, e.g. "
         "Enhanced Income ETF (PAYR) "
         "https://www.federatedhermes.com/siteassets/documents/regulatory/19a-notices/g85307-06.pdf "
         "(12/31/2025 income $0.184310 / ST $0.010122 / LT $0.015178). Kaufmann "
         "product pages do not expose a scrapeable ST/LT history grid."
     )
-    live_limitations = "Family tax-center tables are JavaScript. Fixture transcribes a public 19(a) notice."
+    live_limitations = (
+        "Family tax-center tables are JavaScript. Weekly walk uses preliminary.do; "
+        "full prelim book is the official 50135 PDF fixture."
+    )
 
     def pages(self) -> list[PageSpec]:
         return [
@@ -547,6 +558,15 @@ class FederatedHermesSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
+            ),
+            PageSpec(
+                name="2025_preliminary_estimated_capital_gains",
+                url=(
+                    "https://services.federatedinvestors.com/teamsite-file-server/content/"
+                    "Preliminary+Capital+Gains+2025"
+                ),
+                fixture="2025_preliminary_estimated_capital_gains.html",
+                live=False,
             ),
             PageSpec(
                 name="2025_payr_section_19a",

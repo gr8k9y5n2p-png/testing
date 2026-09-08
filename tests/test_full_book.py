@@ -32,7 +32,7 @@ from app.sources.fourth_tier import (
     WasatchSource,
 )
 from app.sources.third_tier import AmericanCenturySource, JanusHendersonSource, MfsSource
-from app.sources.sixth_tier import AqrSource, AlgerSource, SeiSource
+from app.sources.sixth_tier import AqrSource, AlgerSource, FirstTrustSource, SeiSource, VaneckSource, WisdomtreeSource
 
 
 def _funds_and_tickers(source) -> tuple[set[str], set[str]]:
@@ -193,3 +193,15 @@ def test_full_book_artisan_ici_and_first_eagle() -> None:
     assert len(mfs_tickers) >= 80
     assert len(mfs_funds) >= 80
     assert any("Value Fund" in name for name in mfs_funds)
+
+    vaneck_funds, vaneck_tickers = _funds_and_tickers(VaneckSource())
+    assert {"MWMIX", "INIVX", "GDX", "SMH", "CLOI"} <= vaneck_tickers
+    assert len(vaneck_tickers) >= 50
+
+    wt_funds, wt_tickers = _funds_and_tickers(WisdomtreeSource())
+    assert {"GTR", "XC", "WTPI", "INDH"} <= wt_tickers
+    assert len(wt_tickers) >= 9
+
+    first_trust_funds, first_trust_tickers = _funds_and_tickers(FirstTrustSource())
+    assert {"BFAP", "BGLD", "IGLD", "BFJL"} <= first_trust_tickers
+    assert len(first_trust_tickers) >= 4

@@ -82,3 +82,21 @@ def test_coverage_exposes_estimate_feed_readiness(session) -> None:
     assert pimco.estimate_feed_ready is True
     assert pimco.estimate_feed_status == "deferred"
     assert pimco.estimate_feed_urls
+
+    federated = by_slug["federated_hermes"]
+    assert federated.estimate_feed_status == "prelim_updated"
+    assert federated.history_years == [2025]
+
+    vaneck = by_slug["vaneck"]
+    assert vaneck.estimate_feed_ready is True
+    assert vaneck.estimate_feed_status == "prelim_updated"
+    assert vaneck.history_years == [2024, 2025]
+
+    wisdomtree = by_slug["wisdomtree"]
+    assert wisdomtree.estimate_feed_ready is True
+    assert wisdomtree.history_years == [2024, 2025]
+
+    first_trust = by_slug["first_trust"]
+    assert first_trust.estimate_feed_ready is True
+    assert first_trust.estimate_feed_status == "prelim_updated"
+    assert any("ftportfolios.com" in url for url in first_trust.estimate_feed_urls)

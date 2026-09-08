@@ -68,6 +68,12 @@ FUND_ALIASES: dict[str, str] = {
     "SPY": "SPY",
     "AGG": "AGG",
     "VXUS": "VXUS",
+    "SGENX": "SGENX",
+    "FEVAX": "FEVAX",
+    "GDX": "GDX",
+    "SMH": "SMH",
+    "GTR": "GTR",
+    "WTPI": "WTPI",
 }
 
 FUND_META: dict[str, dict[str, str]] = {
@@ -91,6 +97,12 @@ FUND_META: dict[str, dict[str, str]] = {
     "SPY": {"name": "SPDR S&P 500 ETF Trust", "asset_class": "equity"},
     "AGG": {"name": "iShares Core U.S. Aggregate Bond ETF", "asset_class": "fixed_income"},
     "VXUS": {"name": "Vanguard Total International Stock ETF", "asset_class": "international"},
+    "SGENX": {"name": "First Eagle Global Fund A", "asset_class": "equity"},
+    "FEVAX": {"name": "First Eagle U.S. Fund A", "asset_class": "equity"},
+    "GDX": {"name": "VanEck Gold Miners ETF", "asset_class": "equity"},
+    "SMH": {"name": "VanEck Semiconductor ETF", "asset_class": "equity"},
+    "GTR": {"name": "WisdomTree Target Range Fund", "asset_class": "equity"},
+    "WTPI": {"name": "WisdomTree Equity Premium Income Fund", "asset_class": "equity"},
 }
 
 DEFAULT_BENCHMARKS: dict[AssetClass, dict[str, str]] = {

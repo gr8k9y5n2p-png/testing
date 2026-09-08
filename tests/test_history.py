@@ -480,6 +480,7 @@ def test_search_multi_year_top_families(client: TestClient) -> None:
     for family in (
         "john_hancock",
         "principal",
+        "thrivent",
         "hartford",
         "macquarie",
         "first_eagle",
@@ -489,6 +490,11 @@ def test_search_multi_year_top_families(client: TestClient) -> None:
         "wasatch",
         "harbor",
         "nationwide",
+        "vaneck",
+        "wisdomtree",
+        "first_trust",
+        "federated_hermes",
+        "jpmorgan",
     ):
         fetched = client.post("/ingest/fetch", json={"fund_family": family, "mode": "fixture"})
         assert fetched.status_code == 200, fetched.text
@@ -532,6 +538,43 @@ def test_search_multi_year_top_families(client: TestClient) -> None:
     assert {"2023", "2024", "2025"} <= {
         item["as_of"][:4] for item in sgenx.json()["items"] if item.get("as_of")
     }
+
+    seegx = client.get("/distributions", params={"fund_identifier": "SEEGX", "page_size": 50})
+    assert {"2024", "2025"} <= {item["as_of"][:4] for item in seegx.json()["items"] if item.get("as_of")}
+
+    tmsix = client.get("/distributions", params={"ticker": "TMSIX", "page_size": 50})
+    assert tmsix.json()["total"] >= 1, tmsix.json()
+    assert {"2024", "2025"} <= {item["as_of"][:4] for item in tmsix.json()["items"] if item.get("as_of")}
+
+    kauax = client.get("/distributions", params={"fund_identifier": "KAUAX", "page_size": 20})
+    assert any(
+        item["estimate_type"] == "long_term_capital_gains"
+        and Decimal(item["amount"]) == Decimal("0.638052")
+        for item in kauax.json()["items"]
+    )
+
+    gdx = client.get("/distributions", params={"ticker": "GDX", "page_size": 20})
+    assert any(
+        item["estimate_type"] == "ordinary_income" and Decimal(item["amount"]) == Decimal("0.4025")
+        for item in gdx.json()["items"]
+    )
+
+    gtr = client.get("/distributions", params={"ticker": "GTR", "page_size": 20})
+    assert {"2024", "2025"} <= {item["as_of"][:4] for item in gtr.json()["items"] if item.get("as_of")}
+
+    bfap = client.get("/distributions", params={"ticker": "BFAP", "page_size": 20})
+    assert any(
+        item["estimate_type"] == "long_term_capital_gains"
+        and Decimal(item["amount"]) == Decimal("3.1933")
+        for item in bfap.json()["items"]
+    )
+
+    bchi = client.get("/distributions", params={"ticker": "BCHI", "page_size": 20})
+    assert any(
+        item["estimate_type"] == "short_term_capital_gains"
+        and Decimal(item["amount"]) == Decimal("0.290000")
+        for item in bchi.json()["items"]
+    )
 
     cvgrx = client.get("/distributions", params={"fund_identifier": "CVGRX", "page_size": 20})
     assert {"2024", "2025"} <= {item["as_of"][:4] for item in cvgrx.json()["items"] if item.get("as_of")}

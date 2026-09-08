@@ -100,6 +100,36 @@ class CoverageGap(Base):
     )
 
 
+class TickerRequest(Base):
+    """Website-submitted ticker for issuer-source ingest (never invents amounts)."""
+
+    __tablename__ = "ticker_requests"
+    __table_args__ = (
+        Index("ix_ticker_request_status", "status"),
+        Index("ix_ticker_request_ticker", "ticker"),
+        Index("ix_ticker_request_created", "created_at"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    ticker: Mapped[str] = mapped_column(String(32), nullable=False)
+    fund_name: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    fund_family: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    source: Mapped[str] = mapped_column(String(64), nullable=False, default="website_ui")
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
+    adapter_slug: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    detail: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+
+
 class IngestRun(Base):
     __tablename__ = "ingest_runs"
     __table_args__ = (Index("ix_ingest_family_started", "fund_family", "started_at"),)

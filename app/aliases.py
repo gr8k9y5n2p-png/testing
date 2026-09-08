@@ -572,6 +572,20 @@ def alias_fund_identifier(value: str | None) -> str | None:
     return ident.strip().lower() if ident else None
 
 
+def alias_family_slug(value: str | None) -> str | None:
+    """Return the Class A map family slug for a ticker, if registered."""
+    alias = alias_for_ticker(value)
+    if not alias:
+        return None
+    ident = (alias.get("fund_identifier") or "").strip().lower()
+    if not ident:
+        return None
+    for family, slugs in _BY_FAMILY_SLUG.items():
+        if ident in slugs:
+            return family
+    return None
+
+
 def display_ticker(ticker: str | None, fund_identifier: str | None) -> str | None:
     """Return a UI ticker, backfilling from aliases when the row is name-keyed."""
     if ticker and ticker.strip() and ticker.strip() not in {"—", "-", "–"}:

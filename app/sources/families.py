@@ -300,21 +300,33 @@ class JPMorganSource(HtmlTableSource):
         "mapping ($9.32525). Other Appendix A names stay slug-keyed; Class A / ETF / "
         "Morgan money-market tickers are backfilled from ``app/aliases_jpmorgan.py`` "
         "(Equity Income Class A OIEIX; BetaBuilders EM BBEM). Mutual funds + ETFs only. "
-        "No official 2024 (or earlier) $/share 19a HTML/PDF with SEEGX amounts was "
-        "confirmed on this pass — third-party histories are not used."
+        "Official 2024 Section 19a Appendix A PDFs "
+        "section-19a-notice-mutual-funds-dec-13-2024.pdf and "
+        "section-19a-etf-notice-12-2024.pdf publish unsplit estimated CG $/share "
+        "(SEEGX / JLGMX 2024 LT mapping $0.79868). 2023 sibling 19a URLs 404."
     )
-    live_limitations = "No scrapeable HTML grid; 2024+ archives not confirmed as public $/share PDFs. Fixture / partner ingest only."
+    live_limitations = "No scrapeable HTML grid; 19a books are PDF. Fixture / partner ingest only."
 
     def pages(self) -> list[PageSpec]:
+        notices = (
+            "https://am.jpmorgan.com/content/dam/jpm-am-aem/americas/us/en/"
+            "supplemental/section-19-notices"
+        )
         return [
             PageSpec(
                 name="section_19a_sample",
-                url="https://am.jpmorgan.com/content/dam/jpm-am-aem/americas/us/en/supplemental/section-19-notices/section-19a-notice-aa-funds-12-2025.pdf",
+                url=f"{notices}/section-19a-notice-aa-funds-12-2025.pdf",
                 fixture="section_19a_sample.html",
                 live=True,
                 role="estimate",
                 empty_ok=True,
-            )
+            ),
+            PageSpec(
+                name="2024_section_19a",
+                url=f"{notices}/section-19a-notice-mutual-funds-dec-13-2024.pdf",
+                fixture="2024_section_19a.html",
+                live=False,
+            ),
         ]
 
 

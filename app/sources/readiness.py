@@ -38,7 +38,7 @@ ESTIMATE_STATUS: dict[str, str] = {
     "mfs": "prelim_updated",
     "lord_abbett": "prelim_updated",
     "ab": "prelim_updated",
-    "federated_hermes": "deferred",
+    "federated_hermes": "prelim_updated",
     "virtus": "prelim_updated",
     "eaton_vance": "deferred",
     "john_hancock": "prelim_updated",
@@ -51,6 +51,13 @@ ESTIMATE_STATUS: dict[str, str] = {
     "artisan": "paid_history_only",
     "calamos": "prelim_updated",
     "wasatch": "prelim_updated",
+    "harbor": "prelim_updated",
+    "nationwide": "paid_history_only",
+    "voya": "prelim_updated",
+    "oakmark": "paid_history_only",
+    "vaneck": "prelim_updated",
+    "wisdomtree": "prelim_updated",
+    "first_trust": "prelim_updated",
 }
 
 # Calendar years with official YE/paid/estimate fixtures (not invented).
@@ -59,7 +66,7 @@ HISTORY_YEARS: dict[str, tuple[int, ...]] = {
     "vanguard": (2021, 2022, 2023, 2024, 2025),
     "fidelity": (2024, 2025, 2026),
     "state_street": (2021, 2022, 2023, 2024, 2025),
-    "jpmorgan": (2025,),
+    "jpmorgan": (2024, 2025),
     "goldman_sachs": (2025,),
     "american_funds": (2021, 2022, 2023, 2024, 2025, 2026),
     "pimco": (),
@@ -87,14 +94,21 @@ HISTORY_YEARS: dict[str, tuple[int, ...]] = {
     "eaton_vance": (2025,),
     "john_hancock": (2022, 2023, 2024, 2025),
     "principal": (2023, 2024, 2025),
-    "thrivent": (2025,),
+    "thrivent": (2024, 2025),
     "hartford": (2024, 2025),
     "macquarie": (2023, 2024, 2025),
     "first_eagle": (2023, 2024, 2025),
-    "gmo": (2026,),
+    "gmo": (2025, 2026),
     "artisan": (2024, 2025, 2026),
     "calamos": (2024, 2025),
     "wasatch": (2022, 2024, 2025),
+    "harbor": (2025,),
+    "nationwide": (2025,),
+    "voya": (2025,),
+    "oakmark": (2025,),
+    "vaneck": (2024, 2025),
+    "wisdomtree": (2024, 2025),
+    "first_trust": (2025,),
 }
 
 # Tickers with Growth of $X fixtures (Yahoo monthly adj close).
@@ -109,6 +123,9 @@ PERFORMANCE_TICKERS: dict[str, tuple[str, ...]] = {
     "dodge_cox": ("DODIX", "DODGX"),
     "janus_henderson": ("JDCAX",),
     "northern_trust": ("NOSIX",),
+    "first_eagle": ("SGENX", "FEVAX"),
+    "vaneck": ("GDX", "SMH"),
+    "wisdomtree": ("GTR", "WTPI"),
 }
 
 

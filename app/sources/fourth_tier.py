@@ -76,9 +76,13 @@ class PrincipalSource(HtmlTableSource):
         "distribution history, e.g. Equity Income "
         "https://www.principalam.com/us/fund/pqiax "
         "(2025-12-11 ST $0.1254 / LT $3.3687; 2024-12-12 ST $0.0425 / LT $3.6805; "
-        "2023-12-13 LT $0.2649) and MidCap "
+        "2023-12-13 LT $0.2649), MidCap "
         "https://www.principalam.com/us/fund/pemgx "
-        "(2025-12-11 LT $2.4892; 2024-12-12 LT $1.3963; 2023-12-13 LT $0.9475). "
+        "(2025-12-11 LT $2.4892; 2024-12-12 LT $1.3963; 2023-12-13 LT $0.9475), "
+        "LargeCap S&amp;P 500 Index Inst PLFPX "
+        "(2025-12-18 ST $0.0190 / LT $0.6384; 2024-12-19 ST $0.0584 / LT $0.3748; "
+        "2023-12-20 LT $0.6387), and Blue Chip A PBLCX "
+        "(2025-12-11 LT $8.3248; 2024-12-12 ST $0.0055 / LT $2.0527; no 2023 row). "
         "Fixture transcribes those public December YE rows."
     )
     live_limitations = (
@@ -130,11 +134,16 @@ class ThriventSource(HtmlTableSource):
         "is the full paying-fund 2025 table (Mid Cap Stock Fund LT $4.02; Global Stock "
         "ST $0.35 / LT $2.42; Large Cap Growth LT $0.76). Advisor reprint: "
         "https://fp.thriventfunds.com/resources/tax-resource-center.html. "
-        "Tickers are the public Class S identifiers; the HTML table is fund-level."
+        "Tickers are the public Class S identifiers; the HTML table is fund-level. "
+        "Official 2024 paying-fund table from Wayback "
+        "https://web.archive.org/web/20250218073256/https://www.thriventfunds.com/"
+        "support/tax-resource-center/capital-gains.html "
+        "(TMSIX 2024 LT $1.33794; THLCX ST $0.27399 / LT $1.03670; "
+        "IILGX ST $0.67534 / LT $2.17064)."
     )
     live_limitations = (
         "Family page is public HTML with a 'Thrivent Mutual Fund' header (no ticker column). "
-        "Layout can change. Fixture fallback if 0 rows."
+        "Layout can change. Fixture fallback if 0 rows. Live page is the current-year book."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -146,7 +155,16 @@ class ThriventSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
-            )
+            ),
+            PageSpec(
+                name="2024_paid_capital_gains",
+                url=(
+                    "https://web.archive.org/web/20250218073256/"
+                    "https://www.thriventfunds.com/support/tax-resource-center/capital-gains.html"
+                ),
+                fixture="2024_paid_capital_gains.html",
+                live=False,
+            ),
         ]
 
 
@@ -271,12 +289,24 @@ class FirstEagleSource(HtmlTableSource):
         "Product-page history "
         "https://www.firsteagle.com/funds/global-fund (SGENX 2025 LT $4.654 / "
         "2023 LT $1.407), overseas-fund (SGOVX), and us-fund (FEVAX). "
-        "2025 family paid PDF URL was not a stable public file in this environment."
+        "2025 family paid PDF sibling URLs 404 (2025-12 and fei-documents paths); "
+        "product-page history remains the official 2025 paid source for SGENX / "
+        "SGOVX / FEVAX. Gold / Global Income Builder / Small Cap Opportunity "
+        "product pages are Drupal SPAs (no scrapeable 2025 paid grid). 2021–2022 "
+        "paid PDFs were not a stable public file."
     )
     live_limitations = "Family estimate book is PDF. Paid history is on public product pages."
 
     def pages(self) -> list[PageSpec]:
         return [
+            PageSpec(
+                name="tax_information_hub",
+                url="https://www.firsteagle.com/tax-information",
+                fixture="tax_information_hub.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
             PageSpec(
                 name="2025_estimated_income_and_gains",
                 url="https://www.firsteagle.com/sites/default/files/fei-documents/FEF_Ordinary_Income_Gains_Estimates.pdf",
@@ -323,23 +353,35 @@ class GmoSource(HtmlTableSource):
         "distribution-estimates-and-dates/gmo-trust-funds---july-2026-distribution-estimate.pdf "
         "is the full GMO Trust book (Quality Fund GQETX ST $0.2331 / LT $0.7242; "
         "published $0.000 stored; notes C/D omitted). July/December 2025 "
-        "sibling filenames 404 — single-vintage, not invented."
+        "Trust sibling filenames 404. Official GMO ETF Trust 2025 prior-year "
+        "1099-DIV summary "
+        "https://www.gmo.com/globalassets/documents---manually-loaded/documents/"
+        "distribution-estimates-and-dates/GMO-Trust-Summary-Distribution_Prior-Year/ "
+        "is December income plus any-month ST (BCHI Sep/Dec ST; INVG Dec ST). "
+        "Box 2a LT $0 omitted, not stored as $0."
     )
-    live_limitations = "Estimate book is PDF. Fixture transcribes public Trust-class rows."
+    live_limitations = "Estimate book is PDF. Fixture transcribes public Trust-class and ETF YE rows."
 
     def pages(self) -> list[PageSpec]:
+        docs = (
+            "https://www.gmo.com/globalassets/documents---manually-loaded/documents/"
+            "distribution-estimates-and-dates"
+        )
         return [
             PageSpec(
                 name="2026_july_distribution_estimates",
-                url=(
-                    "https://www.gmo.com/globalassets/documents---manually-loaded/documents/"
-                    "distribution-estimates-and-dates/gmo-trust-funds---july-2026-distribution-estimate.pdf"
-                ),
+                url=f"{docs}/gmo-trust-funds---july-2026-distribution-estimate.pdf",
                 fixture="2026_july_distribution_estimates.html",
                 live=True,
                 role="estimate",
                 empty_ok=True,
-            )
+            ),
+            PageSpec(
+                name="2025_etf_year_end_tax",
+                url=f"{docs}/GMO-Trust-Summary-Distribution_Prior-Year/",
+                fixture="2025_etf_year_end_tax.html",
+                live=False,
+            ),
         ]
 
 

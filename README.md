@@ -606,13 +606,15 @@ Goal: for **existing US-domiciled adapters**, ingest every **mutual fund and ETF
 
 **Wave 12 (estimate-feed readiness):** Every top-40 family except **Amundi** now has a `live=True` estimate hub/PDF in adapter config so `python -m app.cli refresh` and `POST /ingest/fetch` walk the real issuer URL weekly. Seasonal empty / 403 / SPA / PDF-bytes pages are **no-op success** (fixture fallback; no invented zeros). `GET /coverage` exposes `estimate_feed_ready`, `estimate_feed_status` (`prelim_updated` | `paid_history_only` | `deferred` | `skipped`), `history_years`, and `performance_tickers`. Growth of $X fixtures added for mapped distribution tickers: ABALX, VIGAX, VBIAX, TRBCX, DODGX, SWTSX, SWANX, NOSIX, MDDVX, JDCAX, ALLW.
 
+**Wave 13 (10k bar + distribution-space families + ticker intake):** Fixture unique tickers **~3,400 → 3,561** (35.6% of the 10,000 aspiration; already above the 1,000+ launch bar). First Eagle keeps the full 2025 estimate + 2024 40-ticker paid book; 2025 family paid PDF sibling URLs 404 (product-page heroes stay SGENX / SGOVX / FEVAX). VanEck unlocked official 2025 ETF estimate payers (CLOB / CLOI / EINC) plus the full 2024 ETF YE book (13 → **56** tickers; GDX / SMH / MOAT / IBOT / MOTG; printed None omitted). WisdomTree added the official 2024 final CG payer book (7 → **9**). **First Trust** is now a registered adapter (rank 111) from the official 19(a) ContentGUID notice (BFAP / BFJL / BGLD / IGLD). Federated 2025 prelim PDF is the full **87**-class book (was PAYR 19(a) only). JPM 2024 19a Appendix A and Thrivent 2024 Wayback paid table add year depth. GMO ETF Trust 2025 prior-year 1099-DIV is December income + any-month ST. Harbor / Nationwide / Voya / Oakmark estimate hubs are on the weekly walk. `POST /requests/tickers` records a Website-submitted ticker; `POST /ingest/ticker-requests` picks it up. Never invents amounts. Amundi skipped. SPA/403 still deferred. Growth of $X fixtures added from Yahoo monthly adj close for SGENX / FEVAX / GDX / SMH / GTR / WTPI.
+
 | Family | Estimate feed? | Status | Multi-year history? | Performance? |
 | --- | --- | --- | --- | --- |
 | BlackRock / iShares | Yes (live iShares CG HTML) | prelim_updated | 2021–2026 | MDDVX, AGG |
 | Vanguard | Yes (tax-center + YE SPA) | paid_history_only | 2021–2025 | VFIAX, VTIAX, VIGAX, VBIAX, VXUS |
 | Fidelity | Yes (live FIIS_SP52_DPL6) | prelim_updated | 2024–2026 | FBGRX |
 | State Street / SPDR | Yes (Angular ETF + MF hubs) | deferred | 2021–2025 | SPY, ALLW |
-| J.P. Morgan | Yes (19a PDF walked) | prelim_updated | 2025 | — |
+| J.P. Morgan | Yes (19a PDF walked) | prelim_updated | 2024–2025 | — |
 | Goldman Sachs | Yes (advisor tax-center, 403) | deferred | 2025 sample | — |
 | American Funds | Yes (tax-center + midyear/YE) | prelim_updated | 2021–2026 | AGTHX, AMCPX, ABALX |
 | PIMCO | Yes (tax-center walked) | deferred | sample only | — |
@@ -635,16 +637,16 @@ Goal: for **existing US-domiciled adapters**, ingest every **mutual fund and ETF
 | MFS | Yes (mfs_cg_fly PDF) | prelim_updated | 2021–2026 | — |
 | Lord Abbett | Yes (HTML hub + no-pay PDF) | prelim_updated | 2025 | — |
 | AllianceBernstein | Yes (2025 GEN-5796 PDF) | prelim_updated | 2023, 2025 | — |
-| Federated Hermes | Yes (preliminary.do SPA) | deferred | 2025 19(a) | — |
+| Federated Hermes | Yes (preliminary.do SPA) | prelim_updated | 2025 full prelim PDF | — |
 | Virtus | Yes (June 2026 estimate PDF) | prelim_updated | 2024–2026 | — |
 | Eaton Vance | Yes (tax-center + 19b) | deferred | 2025 | — |
 | John Hancock | Yes (2025 estimate PDF) | prelim_updated | 2022–2025 | — |
 | Principal | Yes (tax-center hub) | paid_history_only | 2023–2025 | — |
-| Thrivent | Yes (capital-gains HTML) | paid_history_only | 2025 | — |
+| Thrivent | Yes (capital-gains HTML) | paid_history_only | 2024–2025 | — |
 | Hartford | Yes (2025 estimate PDF) | prelim_updated | 2024–2025 | — |
 | Macquarie | Yes (CGE-RET PDF) | prelim_updated | 2023–2025 | — |
 | First Eagle | Yes (2025 estimate PDF) | prelim_updated | 2023–2025 | — |
-| GMO | Yes (July 2026 Trust PDF) | prelim_updated | 2026 | — |
+| GMO | Yes (July 2026 Trust PDF) | prelim_updated | 2025–2026 | — |
 | Artisan | Yes (tax-center YTD HTML) | paid_history_only | 2024–2026 | — |
 | Calamos | Yes (2025 estimate PDF) | prelim_updated | 2024–2025 | — |
 | Wasatch | Yes (2025 estimate PDF) | prelim_updated | 2022, 2024–2025 | — |
@@ -679,7 +681,7 @@ Goal: for **existing US-domiciled adapters**, ingest every **mutual fund and ETF
 | 1 | BlackRock / iShares | 12 / 12 | **44 / 121** | iShares ETF CG HTML + BlackRock 2025 open-end MF book | 44 ETF payers + 77 OEF funds (Investor A when listed). SMAs skipped. |
 | 2 | Vanguard | 26 / 26 | **297 / 297** | Column-safe full ICI December 2021–2025 (31-token layout) | **2021–2025 full December.** Wrap/DAILY rows omitted. 2025 omits VFIAX/VBIAX/VIGAX (YE HTML). YE page is SPA. |
 | 3 | Fidelity | 15 / 15 | **350 / 350** | Live prior-year paid table `FIIS_SP10_DPL6` + estimate `FIIS_SP52_DPL6` | Estimate table is still “funds expecting CG” (15). Prior-year paid is the full book. |
-| 5 | J.P. Morgan | 2 / 2 | 2 / **38** | Full 2025 Section 19a Appendix A (open-end + ETF + 4 MMKT LT) | Notices are unsplit CG $/share except MMKT LT. SEEGX / JLGMX keep the Large Cap Growth LT mapping. No 2024 19a. |
+| 5 | J.P. Morgan | 2 / 2 | 2 / **38** | Full 2025 + official 2024 Section 19a Appendix A | Notices are unsplit CG $/share except MMKT LT. SEEGX / JLGMX keep the Large Cap Growth LT mapping ($9.32525 / $0.79868). |
 | 7 | American Funds | 3 / 46 | **22 / 84** | Live 2025 YE HTML | 2025 YE is the public table. 2024 YE + estimate samples unchanged (name-heavy). |
 | 9 | Invesco | 2 / 5 | **11 / 53** | Full 2025 MF estimate PDF + full 20 Nov 2025 ETF press-release table | SMA High Yield Bond skipped. PDF has no MF tickers. 2024 estimate still thin. |
 | 10 | T. Rowe Price | 18 / 18 | **232 / 232** | Live 2023–2025 YE HTML | **2023–2025 full-book.** 2022 YE + prelim remain PDF flagship transcriptions. |
@@ -695,8 +697,9 @@ Goal: for **existing US-domiciled adapters**, ingest every **mutual fund and ETF
 | 43 | Voya | 3 / 3 | 3 / **17** | 2025 estimate PDF paying funds | Class A tickers only for NLCAX / VYCAX / NMCAX; other rows are PDF names. |
 | 51 | SEI | 0 / 3 | 1 / **51** | Full 2025 paying-fund estimate PDF | Fund-level (QALT ticker when printed). All-dash rows omitted. |
 | 52 | Brown Advisory | 4 / 4 | 4 / **17** | Full 2025 Inst/Inv/Adv estimate PDF | Tickers only for BAFFX / BAFGX / BAFWX / BVALX. All-dash funds omitted. |
-| 54 | VanEck | 3 / 3 | **13 / 13** | Full 2025 mutual-fund estimate PDF | Printed `None` CG omitted. CM Commodity ‡ estimates-to-come omitted. |
-| 55 | WisdomTree | 4 / 4 | **7 / 7** | Full 2025 final CG PDF (payers only) | Dashed no-CG rows omitted, not stored as $0. |
+| 54 | VanEck | 3 / 3 | **56 / 56** | 2025 MF estimate + 2025 ETF estimate payers + **2024 full ETF YE** | Printed `None` omitted. GDX 2024 income $0.4025; SMH $1.0713; IBOT ST $0.9104 / LT $0.0112. |
+| 55 | WisdomTree | 4 / 4 | **9 / 9** | 2025 + **2024** final CG PDFs (payers only) | Dashed no-CG rows omitted. GTR 2024 ST $0.51992. |
+| 111 | First Trust | 0 / 0 | **4 / 4** | Official 19(a) ContentGUID notice | Current NII/ST/LT/ROC only. BFAP LT $3.1933 / ROC $0.2500. |
 | 56 | AQR | 4 / 4 | **75 / 75** | Full 2025 I/N/R6 estimate PDF | Diversifying Strategies uses the later 12/19–12/23 dates. |
 | 57 | Causeway | 3 / 3 | **10 / 10** | Full 2025 Institutional + Investor final PDF | — |
 | 58 | Alger | 3 / 3 | **84 / 84** | Full 2025 share-class PDF | International Small Cap ALCZX collision omitted. Published $0.00 stored. |
@@ -704,9 +707,9 @@ Goal: for **existing US-domiciled adapters**, ingest every **mutual fund and ETF
 | 31 | John Hancock | 3 / 3 | 3 / **56** | Full 2025 CG + income-only MF/ETF rows from the same PDF | Closed-end rows skipped. All-dash omitted. 2022–2024 still A-share flagships. |
 | 34 | Hartford | 3 / 3 | 3 / **25** | Full 2025 paying-fund estimate + equity/FI finals + **2024 full equity final** | No-pay list omitted. Tickers only for HFMCX / HAIAX / IHGIX. HFMCX 2024 LT $1.67. |
 | 35 | Macquarie | 3 / 3 | **21 / 21** | Full 2025 paying-fund estimate + **2023–2024 full paid Class A books** | No-pay list omitted. 2024 WSTAX ST $1.108 / LT $8.135 (16 Class A). |
-| 33 | Thrivent | 3 / 3 | 3 / **13** | Full 2025 paying-fund HTML table | Tickers only for TMSIX / IILGX / THLCX. Unlisted funds paid no CG. |
+| 33 | Thrivent | 3 / 3 | 3 / **13** | 2025 + **2024 Wayback** paying-fund HTML | Tickers only for TMSIX / IILGX / THLCX. TMSIX 2024 LT $1.33794. |
 | 36 | First Eagle | 3 / 3 | **40 / 40** | 2025 open-end estimate + full 2024 share-class paid PDF | Class A tickers from official 2024 PDF. Interval/CEF omitted. Footnote-b income omitted. |
-| 37 | GMO | 3 / 3 | 3 / **29** | Full GMO Trust July 2026 estimate PDF | Published $0.000 stored. Notes C/D omitted. Australia trusts skipped. |
+| 37 | GMO | 3 / 3 | 3 / **29** + **9 ETF tickers** | July 2026 Trust estimate + **2025 ETF Trust YE 1099-DIV** | Published $0.000 stored. BCHI/INVG ST stored; Box 2a LT $0 omitted. |
 | 38 | Artisan | 2 / 2 | **51 / 51** | Column-safe 2024–2025 Year-End Tax Reporting ICI PDFs | December income + any-month ST/LT. 2024 LT at token 11. 2021–2023 ICI public but transposed (not column-safe). YTD HTML keeps ARTKX 2026 income. |
 | 39 | Calamos | 3 / 3 | 3 / **13** | Full 2025 paying-fund estimate PDF | All-dash omitted. Class A tickers only where previously identified. |
 | 40 | Wasatch | 3 / 3 | 3 / **13** | Full 2025 listed-fund estimate PDF | Investor tickers only for WGROX / WAIGX / WMCVX. |
@@ -734,7 +737,7 @@ Goal: for **existing US-domiciled adapters**, ingest every **mutual fund and ETF
 | 24 | Dodge & Cox | 4 | Public Q1/tax-letter books are small; no full YE CG grid |
 | 26 | Lord Abbett | 3 | Public PDF is $0 no-pay list only |
 | 27 | AllianceBernstein | 19 | Full 2025 paying-fund PDF exhausted (19 listed) |
-| 28 | Federated Hermes | 1 | Family tax-center JS; 19a sample |
+| 28 | Federated Hermes | 87 | Official 2025 prelim PDF (50135); tax-center JS |
 | 29 | Virtus | 4 | June 2026 estimate PDF lists 4 funds |
 | 30 | Eaton Vance | 1 | CEF 19(b) sample; open-end on MSIM |
 
@@ -792,7 +795,7 @@ Fixture packs today (ranks 1–40 historical pass):
 | MFS | **2021–2025 YE paid** (13 / 12 / 11 / 12 Class A tickers) + 2025 full %NAV estimate + 2026 midyear paid | No public filled ICI. 2025 fly PDF is every published share-class / all-classes row (MIGHX LT 8%–9%; published 0% stored). Official Class A tickers on product-page identifiers (MIGHX / MITTX / MFEGX / MGIAX / OTCAX / MFRFX / MTCAX). Official 10-year Excel on additional Class A pages supplies December YE 2021–2025 (MEIAX LT $1.01429 / $2.67110 / $3.13988 / $3.57266 / $3.86919; MFEGX LT $4.65025 / $1.39190 / $7.90687 / $25.50349 / $25.35332). OTCAX has no 2022–2023 YE row; MNDAX has no 2023–2025 YE row. 2024 fly PDF 404. |
 | Lord Abbett | 2025 $0 no-pay list | No public filled ICI. Public PDF lists funds not expected to pay 2025 CG. 2024 sibling 404. No paying-fund ST/LT grid. |
 | AllianceBernstein | **2023 full paying-fund estimate** + 2025 full paying-fund estimate | No public filled ICI. 2025 Final_GEN-5796-1025.pdf is every listed payer (AGRFX LT $16.36; Class A tickers only AGRFX / APGAX / ABASX). Unversioned FINAL_GEN-5796.pdf now serves 2025; 2024 overwritten. **2023** GEN–5796–1023 from Wayback `20240422225619` is every listed payer (AGRFX LT $6.95; APGAX LT $1.50; ABASX ST $0.13 / LT $1.32). |
-| Federated Hermes | 2025 PAYR 19(a) | ICI Primary/Secondary listed on token URLs (not a stable public download; some books are monthly muni lines). Family tax-center grids are JS. Kaufmann pages have no scrapeable ST/LT history. |
+| Federated Hermes | 2025 full prelim PDF (87 classes) + PAYR 19(a) | ICI Primary/Secondary listed on token URLs (not a stable public download; some books are monthly muni lines). Family tax-center grids are JS. Kaufmann pages have no scrapeable ST/LT history. |
 | Virtus | 2024 19(a) + 2025 paid + 2026 June full listed estimate | No public filled ICI. 2026 June PDF lists 4 funds (STVTX LT $0.1767); 2025 calyr paid Dec (STVTX LT $0.427834); 2024 19(a) income + combined CG $1.907616. |
 | Eaton Vance | 2025 CEF 19(b) (EOI) | No public filled ICI. March 2025 19(b) (EOI $0.1338 LT). 2024 sibling PDFs 403. Open-end YE stays on `morgan_stanley`. |
 | John Hancock | 2022–2025 estimate ranges (TAGRX / JBGAX; USGLX 2024–2025) | No public filled ICI. Press-release PDFs still posted. USGLX 2022–2023 em-dash (no CG — omitted). Manulife parent; US JH Investments book. |
@@ -880,7 +883,7 @@ Re-running the **same** source document updates the existing row. A new `as_of` 
 
 ## Coverage (portfolio review)
 
-Sparse family coverage makes Aftertax-style portfolio analytics wrong: a book that is 40% Vanguard / iShares / Fidelity looks like it has no taxable distributions if those adapters are stubs. The registry is the **top 110 US-advisor-relevant firms** (AUM ranks 1–110). Multi-year history packs prefer **US-domiciled** managers; **Amundi / Pioneer is skipped on the history ladder** (parser stays implemented; 2025 fixture unchanged). `GET /coverage` returns `implemented_pct` (today 110/110 fixture parsers) so the website can later compute *% of portfolio dollars covered*.
+Sparse family coverage makes Aftertax-style portfolio analytics wrong: a book that is 40% Vanguard / iShares / Fidelity looks like it has no taxable distributions if those adapters are stubs. The registry is the **top 110 US-advisor-relevant firms** (AUM ranks 1–110) plus **First Trust** (rank 111). Multi-year history packs prefer **US-domiciled** managers; **Amundi / Pioneer is skipped on the history ladder** (parser stays implemented; 2025 fixture unchanged). `GET /coverage` returns `implemented_pct` (today 111/111 fixture parsers) so the website can later compute *% of portfolio dollars covered*.
 
 `GET /fund-families` includes `coverage_tier` (`implemented` | `stub`), `aum_rank` (1 = largest / highest priority), and `priority`.
 
@@ -891,6 +894,36 @@ When a holding’s ticker or family is not in the store, Website Engineering sho
 | `fetch_adapter` | A registered parser exists — run `POST /ingest/fetch` for that slug, then search. If the ticker is still missing, partner-ingest the row. |
 | `queued` | Slug is registered but not implemented (none of the top 110 today). |
 | `manual_ingest` | Unknown family — `POST /ingest/distributions` is the escape hatch. |
+
+### Website contract: submit a ticker
+
+Coverage gaps log an uncovered holding. They do **not** queue issuer-source ingest. Website Engineering should put a “Request this ticker” box on the uncovered-holding state and call this intake. **Do not block illustrate** on a pending request, and **never invent amounts** while the row is queued.
+
+`POST /requests/tickers` — **202 Accepted**
+
+```json
+{
+  "ticker": "SGENX",
+  "fund_name": "First Eagle Global Fund",
+  "fund_family": "first_eagle",
+  "source": "website_ui"
+}
+```
+
+`ticker` is required (uppercased). `fund_name` / `fund_family` / `source` are optional (`source` defaults to `website_ui`).
+
+Response:
+
+| Field | Meaning |
+| --- | --- |
+| `id` | Request id (poll with `GET /requests/tickers`) |
+| `status` | `already_covered` — ticker is already in the store. `matched` — a registered adapter can fetch it. `search_issuer` — no adapter yet; queued for an issuer-source hunt. `queued` — adapter registered but not implemented. `skipped` — Amundi / Pioneer. |
+| `adapter_slug` | Family slug when known |
+| `detail` | Human-readable next step. Always says not to invent amounts for `search_issuer` / `skipped`. |
+
+`GET /requests/tickers?status=queued` lists recent requests (`status` filter optional).
+
+`POST /ingest/ticker-requests?mode=fixture` (weekly job / operator) picks up `queued` / `search_issuer` / `matched` rows, runs `POST /ingest/fetch` for the matched family when known, then sets `already_covered` if the ticker is now in the store. Unknown tickers stay `search_issuer`. Amundi stays `skipped`. Empty/403/SPA live hubs remain no-op success.
 
 | Rank | Slug | Display name | Parser | Live HTML | Public source (verified 2026-09-07) |
 | --- | --- | --- | --- | --- | --- |
@@ -921,7 +954,7 @@ When a holding’s ticker or family is not in the store, Website Engineering sho
 | 25 | `mfs` | MFS Investment Management | implemented | PDF + product HTML + 10-year Excel | 2025 full %NAV fly PDF (175 rows; official Class A tickers) + 10-year Excel YE 2021–2025 on additional Class A pages + paid YE 2025 / midyear 2026. 2024 fly 404. |
 | 26 | `lord_abbett` (alias `lord`) | Lord Abbett | implemented | PDF (no-pay list) | 2025 Funds-with-Losses.pdf. 2024 sibling 404. No paying-fund ST/LT grid. |
 | 27 | `ab` (aliases `alliancebernstein`, `alliance_bernstein`) | AllianceBernstein | implemented | PDF | 2025 Final_GEN-5796-1025.pdf; **2023** Wayback `20240422225619` GEN–5796–1023 full paying book. 2024 overwritten. |
-| 28 | `federated_hermes` (alias `federated`) | Federated Hermes | implemented | JS tax center + 19(a) PDF | PAYR 19(a) 2025. ICI token-walled. Kaufmann pages have no ST/LT grid. |
+| 28 | `federated_hermes` (alias `federated`) | Federated Hermes | implemented | JS tax center + prelim PDF + 19(a) | Official 2025 prelim 50135 (KAUAX LT $0.638052) + PAYR 19(a). ICI token-walled. |
 | 29 | `virtus` | Virtus | implemented | PDF | 2026 June estimate + 2025 calyr paid + 2024 19(a) (STVTX). |
 | 30 | `eaton_vance` (alias `ev`) | Eaton Vance | implemented | CEF 19(b) PDF | March 2025 combined 19(b) (EOI). 2024 siblings 403. |
 | 31 | `john_hancock` (aliases `manulife`, `jh`) | John Hancock / Manulife | implemented | PDF | Press-release estimate PDFs 2022–2025 (TAGRX). US JH Investments book. |
@@ -1004,6 +1037,7 @@ When a holding’s ticker or family is not in the store, Website Engineering sho
 | 108 | `timothy_plan` (alias `timothy`) | Timothy Plan | implemented | PDF | https://timothyplan.com/download/Capital_Gains_Distribution.pdf |
 | 109 | `hodges` | Hodges | implemented | PDF | https://www.hodgescapital.com/hubfs/Mutual_Funds/Documents/Year_End_Distribution_Estimates.pdf |
 | 110 | `tocqueville` | Tocqueville | implemented | PDF | https://www.tocquevillefunds.com/wp-content/uploads/2025/12/2025-FINAL-Distributions-December-9-2025.pdf |
+| 111 | `first_trust` (aliases `ft`, `ftportfolios`) | First Trust | implemented | PDF 19(a) | https://www.ftportfolios.com/Common/ContentFileLoader.aspx?ContentGUID=ad59e9bb-c8bb-4696-bf2d-42b9fa64b17e |
 
 **Wellington:** skipped. Wellington Management is primarily a subadvisor / institutional manager and does not publish public US retail distribution-estimate pages that we can register as a `FundSource`. Holdings in Wellington-subadvised sleeves should use the **distributing** family’s slug (or `POST /ingest/distributions`).
 
@@ -1035,7 +1069,7 @@ When a holding’s ticker or family is not in the store, Website Engineering sho
 
 **Guggenheim:** skipped. Public materials are CEF monthly distributions / Section 19(a) notices, not an open-end family capital-gains estimate book.
 
-**First Trust:** skipped. Paid ETF press PDFs exist on `ftportfolios.com`, but there is no clean family-level open-end/ETF estimate HTML or PDF to register as a `FundSource`.
+**First Trust:** implemented (rank 111, aliases `ft`, `ftportfolios`). Official Section 19(a) notice `ContentGUID=ad59e9bb-c8bb-4696-bf2d-42b9fa64b17e` is the current NII/ST/LT/ROC book for BFAP / BFJL / BGLD / IGLD. Monthly income-sleeve 19(a) notices are not this family book.
 
 **Pacer / Innovator / Global X:** skipped for this wave. Public 2025 family-level MF/ETF capital-gains estimate tables with scrapeable per-share amounts were not verified.
 
