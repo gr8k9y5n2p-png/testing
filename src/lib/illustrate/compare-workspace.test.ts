@@ -6,9 +6,11 @@ import {
   buildCompareAnnualTable,
   emptyCompareSlots,
   filledCompareTickers,
+  growthFundsFromSlots,
   padCompareSlots,
   setCompareSlot,
   upcomingRowForCompareTicker,
+  upcomingRowsFromCompareTickers,
 } from "./compare-workspace.ts";
 
 function view(
@@ -120,6 +122,35 @@ describe("compare workspace slots", () => {
   it("clears a slot and drops it from the filled list", () => {
     const slots = setCompareSlot(padCompareSlots(["AMCPX", "AGTHX"]), 0, "");
     assert.deepEqual(filledCompareTickers(slots), ["AGTHX"]);
+  });
+
+  it("one filled slot is enough; empty slots are ignored", () => {
+    const slots = padCompareSlots(["amcpx"]);
+    assert.deepEqual(filledCompareTickers(slots), ["AMCPX"]);
+    assert.equal(slots.filter((slot) => slot === "").length, 5);
+
+    const growth = growthFundsFromSlots(slots, [view("AMCPX")]);
+    assert.equal(growth.length, 1);
+    assert.equal(growth[0]?.ticker, "AMCPX");
+
+    const tax = yoy([
+      period(2025, side("AMCPX", true, 88, 210), side("AMCPX", true, 88, 210)),
+    ]);
+    const model = buildCompareAnnualTable([{ ticker: "AMCPX", tax }], [2025]);
+    assert.equal(model.groups.length, 1);
+    assert.equal(model.groups[0]?.ticker, "AMCPX");
+    assert.equal(model.groups[0]?.rows.length, 2);
+
+    const upcoming = upcomingRowsFromCompareTickers([
+      {
+        ticker: "AMCPX",
+        fund: view("AMCPX"),
+        upcoming: { dollars: 185, announced: true, asOf: "2026-08-29" },
+      },
+    ]);
+    assert.equal(upcoming.length, 1);
+    assert.equal(upcoming[0]?.ticker, "AMCPX");
+    assert.equal(upcoming[0]?.available, true);
   });
 });
 

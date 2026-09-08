@@ -155,9 +155,10 @@ export function CompareWorkspace({
           Compare funds
         </Heading>
         <p className="mt-2 max-w-2xl text-sm text-muted">
-          Add up to {COMPARE_SLOT_COUNT} tickers. Growth & tax drag, calendar-year
-          history, and upcoming stay on this page — Upcoming is never filled from
-          paid history.
+          Start with one ticker — growth, calendar-year history, and upcoming all
+          populate for that fund. Each additional filled slot (up to{" "}
+          {COMPARE_SLOT_COUNT}) joins every module. Empty slots are ignored.
+          Upcoming is never filled from paid history.
         </p>
       </header>
 
