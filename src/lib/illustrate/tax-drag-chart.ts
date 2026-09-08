@@ -14,6 +14,7 @@ export {
   illustrationIsUnmatched,
   taxDragLineFromPeriods,
   taxDragValueFromIllustration,
+  taxDragValueFromPeriodSide,
   toCompareTaxDragSeries,
   toNegativeTaxDrag,
   toTaxDragPeriods,

@@ -55,7 +55,10 @@ export type CompareIllustration = {
    * - Unmatched: `matched: false` + money totals **null** (N/A, never $0)
    * - Published $0 / 0% NAV: `matched: true` + `"0.00"` → chart 0
    *
-   * Website treats **either** `matched === false` **or** null tax totals as N/A.
+   * Live compare can also send `matched: true` with **null**
+   * `totals.estimated_tax` while tax lives on the period `deltas.*`.
+   * Chart that via `taxDragValueFromIllustration`’s delta fallback —
+   * do not treat matched+null-totals as N/A when deltas have a number.
    */
   matched: boolean;
   holding_dollars?: number;
@@ -71,6 +74,17 @@ export type CompareIllustration = {
     effective_tax_on_holding?: number | null;
   };
   notes?: string[];
+  /** Some live payloads flatten tax onto the illustration root instead of totals. */
+  estimated_tax?: number | null;
+  estimated_tax_dollars?: number | null;
+  effective_tax_on_holding?: number | null;
+};
+
+/** Optional per-side tax when Data omits illustration totals. */
+export type CompareDeltaSide = {
+  estimated_tax?: number | null;
+  estimated_tax_dollars?: number | null;
+  effective_tax_on_holding?: number | null;
 };
 
 export type CompareDeltas = {
@@ -79,6 +93,7 @@ export type CompareDeltas = {
   distribution_dollars_min?: number | null;
   distribution_dollars_max?: number | null;
   estimated_tax: number | null;
+  estimated_tax_dollars?: number | null;
   estimated_tax_min?: number | null;
   estimated_tax_max?: number | null;
   federal_tax?: number | null;
@@ -87,11 +102,21 @@ export type CompareDeltas = {
   effective_tax_on_holding: number | null;
   effective_tax_on_holding_min?: number | null;
   effective_tax_on_holding_max?: number | null;
+  /** Live payloads sometimes nest per-side tax under deltas.left / deltas.right. */
+  left?: CompareDeltaSide | null;
+  right?: CompareDeltaSide | null;
+  left_estimated_tax?: number | null;
+  right_estimated_tax?: number | null;
+  left_estimated_tax_dollars?: number | null;
+  right_estimated_tax_dollars?: number | null;
+  left_effective_tax_on_holding?: number | null;
+  right_effective_tax_on_holding?: number | null;
 };
 
 export type ComparePeriodOut = {
   year: number;
   as_of?: string | null;
+  /** Period objects have no root `matched` — only `left.matched` / `right.matched`. */
   left: CompareIllustration;
   right: CompareIllustration;
   deltas: CompareDeltas;

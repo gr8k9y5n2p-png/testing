@@ -1,4 +1,5 @@
 import type {
+  CompareDeltas,
   CompareIllustration,
   CompareResponse,
 } from "./compare-types";
@@ -56,37 +57,105 @@ function numericOrNull(value: unknown): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-/**
- * Chart value for one side of a compare period.
- *
- * N/A when `matched === false` **or** the metric field is null
- * (Data PR #2 `5d02120`). `0` / `"0.00"` / 0% NAV is a real zero.
- */
-export function taxDragValueFromIllustration(
+function totalsMetric(
   illustration: CompareIllustration | null | undefined,
-  metric: TaxDragMetric = "tax_dollars",
+  metric: TaxDragMetric,
 ): number | null {
   if (!illustration || illustrationIsUnmatched(illustration)) return null;
   const totals = illustration.totals;
   if (metric === "tax_dollars") {
     // Request-holding dollars. Never summary.total_tax_difference
     // (that footer field is always normalized to $10,000).
-    return numericOrNull(totals?.estimated_tax ?? totals?.estimated_tax_dollars);
+    return numericOrNull(
+      totals?.estimated_tax ??
+        totals?.estimated_tax_dollars ??
+        illustration.estimated_tax ??
+        illustration.estimated_tax_dollars,
+    );
   }
-  return numericOrNull(totals?.effective_tax_on_holding);
+  return numericOrNull(
+    totals?.effective_tax_on_holding ?? illustration.effective_tax_on_holding,
+  );
+}
+
+function deltaMetric(
+  deltas: CompareDeltas | null | undefined,
+  metric: TaxDragMetric,
+  side?: "left" | "right",
+): number | null {
+  if (!deltas) return null;
+  const nested = side ? deltas[side] : undefined;
+  if (metric === "tax_dollars") {
+    const perSide =
+      side === "left"
+        ? (nested?.estimated_tax ??
+            nested?.estimated_tax_dollars ??
+            deltas.left_estimated_tax ??
+            deltas.left_estimated_tax_dollars)
+        : side === "right"
+          ? (nested?.estimated_tax ??
+              nested?.estimated_tax_dollars ??
+              deltas.right_estimated_tax ??
+              deltas.right_estimated_tax_dollars)
+          : null;
+    return numericOrNull(perSide ?? deltas.estimated_tax ?? deltas.estimated_tax_dollars);
+  }
+  const perSide =
+    side === "left"
+      ? (nested?.effective_tax_on_holding ?? deltas.left_effective_tax_on_holding)
+      : side === "right"
+        ? (nested?.effective_tax_on_holding ?? deltas.right_effective_tax_on_holding)
+        : null;
+  return numericOrNull(perSide ?? deltas.effective_tax_on_holding);
+}
+
+/**
+ * Chart value for one side of a compare period.
+ *
+ * - `matched: false` → N/A (ignore totals and deltas)
+ * - `matched: true` + `"0.00"` / 0 → real zero
+ * - `matched: true` + null totals → fall back to period `deltas.*`
+ *   (live compare can put tax only on deltas)
+ */
+export function taxDragValueFromIllustration(
+  illustration: CompareIllustration | null | undefined,
+  metric: TaxDragMetric = "tax_dollars",
+  deltas?: CompareDeltas | null,
+  side?: "left" | "right",
+): number | null {
+  if (!illustration || illustrationIsUnmatched(illustration)) return null;
+  const fromTotals = totalsMetric(illustration, metric);
+  if (fromTotals != null) return fromTotals;
+  if (!illustrationIsMatched(illustration)) return null;
+  return deltaMetric(deltas, metric, side);
+}
+
+/** Same rules, reading `period.left` / `period.right` (never a root `period.matched`). */
+export function taxDragValueFromPeriodSide(
+  period: {
+    left?: CompareIllustration | null;
+    right?: CompareIllustration | null;
+    deltas?: CompareDeltas | null;
+  },
+  side: "left" | "right",
+  metric: TaxDragMetric = "tax_dollars",
+): number | null {
+  return taxDragValueFromIllustration(period[side], metric, period.deltas, side);
 }
 
 function pickMetric(
   illustration: CompareIllustration | null | undefined,
   metric: TaxDragMetric,
+  deltas?: CompareDeltas | null,
+  side?: "left" | "right",
 ): number | null {
-  return taxDragValueFromIllustration(illustration, metric);
+  return taxDragValueFromIllustration(illustration, metric, deltas, side);
 }
 
-function yearFromLabel(label: string | undefined, fallback: number): number {
+function yearFromLabel(label: string | undefined, fallback?: number): number | null {
   const match = label?.trim().match(/\b(19|20)\d{2}\b/);
-  if (!match) return fallback;
-  return Number(match[0]);
+  if (match) return Number(match[0]);
+  return fallback ?? null;
 }
 
 /**
@@ -94,15 +163,17 @@ function yearFromLabel(label: string | undefined, fallback: number): number {
  *
  * `mode: "yoy"` pairs consecutive vintages (period.year is the newer year;
  * `right` is that vintage, `left` is the prior). Gaps stay `null` when
- * `matched` is false or tax totals are null — years not present in
- * `periods` are not invented.
+ * `matched` is false. Matched sides with null totals still chart when
+ * `period.deltas` exposes tax (live AGTHX/FBGRX shape). Years not present
+ * in `periods` are not invented.
  *
  * `fund_vs_fund`: pass `side` (`left` / `right`) for that fund’s individual
  * series. `auto` is left-only; use `toCompareTaxDragSeries` for both funds.
  *
  * `$` reads `left`/`right` `totals.estimated_tax` at the request
- * `holding_dollars`. Do not chart `summary.total_tax_difference` or
- * `summary.distribution_dollars_difference`.
+ * `holding_dollars`, then period `deltas.estimated_tax` (and per-side
+ * delta fields) when totals are null. Do not chart
+ * `summary.total_tax_difference` or `summary.distribution_dollars_difference`.
  */
 export function toTaxDragPeriods(
   response: CompareResponse,
@@ -111,26 +182,41 @@ export function toTaxDragPeriods(
 ): TaxDragYearPoint[] {
   const byYear = new Map<number, TaxDragYearPoint>();
 
-  const write = (year: number, illustration: CompareIllustration | null | undefined) => {
+  const write = (year: number, value: number | null) => {
     if (!Number.isFinite(year) || year <= 0) return;
-    const value = pickMetric(illustration, metric);
     const prior = byYear.get(year);
     if (prior && prior.value != null && value == null) return;
     byYear.set(year, { year, value });
   };
 
   for (const period of response.periods) {
+    const leftTotals = totalsMetric(period.left, metric);
+    const rightTotals = totalsMetric(period.right, metric);
+    const leftValue = pickMetric(period.left, metric, period.deltas, "left");
+    const rightValue = pickMetric(period.right, metric, period.deltas, "right");
+
     if (response.mode === "yoy") {
       const newerYear = period.year;
       const olderYear = yearFromLabel(period.left?.label, newerYear - 1);
-      write(olderYear, period.left);
-      write(newerYear, period.right);
+      const vintageLabel = yearFromLabel(period.left?.label) != null;
+      const sharedDeltaOnly =
+        leftTotals == null &&
+        rightTotals == null &&
+        (leftValue == null || rightValue == null || leftValue === rightValue);
+      // Live yoy calendar rows label sides with the ticker and put tax on
+      // period.deltas — plot once on period.year. Vintage pairs keep both years.
+      if (!vintageLabel || sharedDeltaOnly) {
+        write(newerYear, rightValue ?? leftValue);
+        continue;
+      }
+      write(olderYear ?? newerYear - 1, leftValue);
+      write(newerYear, rightValue);
       continue;
     }
     if (side === "right") {
-      write(period.year, period.right);
+      write(period.year, rightValue);
     } else {
-      write(period.year, period.left);
+      write(period.year, leftValue);
     }
   }
 
@@ -219,17 +305,23 @@ export function unionTaxDragYears(series: TaxDragFundSeries[]): number[] {
 
 function illustrationHasTaxDrag(
   illustration: CompareIllustration | null | undefined,
+  deltas?: CompareDeltas | null,
+  side?: "left" | "right",
 ): boolean {
   return (
-    taxDragValueFromIllustration(illustration, "effective_tax") != null ||
-    taxDragValueFromIllustration(illustration, "tax_dollars") != null
+    taxDragValueFromIllustration(illustration, "effective_tax", deltas, side) != null ||
+    taxDragValueFromIllustration(illustration, "tax_dollars", deltas, side) != null
   );
 }
 
-/** Both sides have a chartable tax value (including published 0). */
+/** Both sides have a chartable tax value (including published 0 and delta fallback). */
 export function comparePeriodIsCovered(period: {
   left?: CompareIllustration | null;
   right?: CompareIllustration | null;
+  deltas?: CompareDeltas | null;
 }): boolean {
-  return illustrationHasTaxDrag(period.left) && illustrationHasTaxDrag(period.right);
+  return (
+    illustrationHasTaxDrag(period.left, period.deltas, "left") &&
+    illustrationHasTaxDrag(period.right, period.deltas, "right")
+  );
 }
