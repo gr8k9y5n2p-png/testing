@@ -117,6 +117,15 @@ def test_coverage_exposes_estimate_feed_readiness(session) -> None:
     assert vaneck.estimate_feed_ready is True
     assert vaneck.estimate_feed_status == "prelim_updated"
     assert vaneck.history_years == [2024, 2025]
+    assert "MWMIX" in vaneck.performance_tickers
+
+    first_eagle = by_slug["first_eagle"]
+    assert first_eagle.estimate_feed_ready is True
+    assert "FEGE" in first_eagle.performance_tickers
+
+    first_trust = by_slug["first_trust"]
+    assert first_trust.estimate_feed_ready is True
+    assert "BGLD" in first_trust.performance_tickers
 
     wisdomtree = by_slug["wisdomtree"]
     assert wisdomtree.estimate_feed_ready is True

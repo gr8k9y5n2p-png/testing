@@ -289,9 +289,13 @@ class FirstEagleSource(HtmlTableSource):
         "Product-page history "
         "https://www.firsteagle.com/funds/global-fund (SGENX 2025 LT $4.654 / "
         "2023 LT $1.407), overseas-fund (SGOVX), and us-fund (FEVAX). "
-        "2025 family paid PDF sibling URLs 404 (2025-12 and fei-documents paths); "
+        "2025 family paid PDF sibling URLs 404 (2025-12 and fei-documents open-end paths); "
         "product-page history remains the official 2025 paid source for SGENX / "
-        "SGOVX / FEVAX. Gold / Global Income Builder / Small Cap Opportunity "
+        "SGOVX / FEVAX. Official 2025 ETF paid PDF "
+        "https://www.firsteagle.com/sites/default/files/fei-documents/"
+        "2025-Capital-Gains-and-Income%20Distributions-First%20Eagle-ETFs.pdf "
+        "(FEGE income $0.589 / ST $0.000 / LT $0.000; FEOE income $0.738 / ST $0.000 / LT $0.000). "
+        "Gold / Global Income Builder / Small Cap Opportunity "
         "product pages are Drupal SPAs (no scrapeable 2025 paid grid). 2021–2022 "
         "paid PDFs were not a stable public file."
     )
@@ -314,6 +318,16 @@ class FirstEagleSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
+            ),
+            PageSpec(
+                name="2025_etf_paid_year_end",
+                url=(
+                    "https://www.firsteagle.com/sites/default/files/fei-documents/"
+                    "2025-Capital-Gains-and-Income%20Distributions-First%20Eagle-ETFs.pdf"
+                ),
+                fixture="2025_etf_paid_year_end.html",
+                live=False,
+                role="history",
             ),
             PageSpec(
                 name="2025_paid_year_end",

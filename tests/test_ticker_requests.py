@@ -65,6 +65,7 @@ def test_website_submit_ticker_contract(client: TestClient) -> None:
 
     covered = client.post("/request/ticker", json={"ticker": "sgenx", "source": "website_ui"})
     assert covered.status_code == 200, covered.text
+    assert set(covered.json()) == {"id", "ticker", "status", "message"}
     assert covered.json()["status"] == "already_covered"
     assert covered.json()["ticker"] == "SGENX"
     assert covered.json()["message"]
@@ -74,6 +75,7 @@ def test_website_submit_ticker_contract(client: TestClient) -> None:
         json={"ticker": "ZZQRX", "note": "advisor requested", "source": "website_ui"},
     )
     assert queued.status_code == 201, queued.text
+    assert set(queued.json()) == {"id", "ticker", "status", "message"}
     assert queued.json()["status"] == "queued"
     assert queued.json()["ticker"] == "ZZQRX"
     assert "do not invent" in (queued.json()["message"] or "").lower()
@@ -81,6 +83,8 @@ def test_website_submit_ticker_contract(client: TestClient) -> None:
     listed = client.get("/request/ticker", params={"status": "queued"})
     assert listed.status_code == 200
     assert any(item["ticker"] == "ZZQRX" for item in listed.json()["items"])
+    queued_item = next(item for item in listed.json()["items"] if item["ticker"] == "ZZQRX")
+    assert set(queued_item) == {"id", "ticker", "status", "message"}
 
     invalid = client.post("/request/ticker", json={"ticker": "!!!"})
     assert invalid.status_code == 422

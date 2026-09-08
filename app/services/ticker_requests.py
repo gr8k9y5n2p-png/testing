@@ -23,6 +23,28 @@ SKIPPED_SLUGS = frozenset({"amundi"})
 PICKUP_STATUSES = frozenset({"queued", "search_issuer", "matched"})
 WEBSITE_TICKER_RE = re.compile(r"^[A-Z][A-Z0-9]{1,7}$")
 
+# Official-book tickers → adapter slug for weekly expand (never invents amounts).
+KNOWN_TICKER_SLUGS: dict[str, str] = {
+    "SGENX": "first_eagle",
+    "FESGX": "first_eagle",
+    "SGIIX": "first_eagle",
+    "FEGRX": "first_eagle",
+    "SGOVX": "first_eagle",
+    "FEVAX": "first_eagle",
+    "FEGE": "first_eagle",
+    "FEOE": "first_eagle",
+    "GDX": "vaneck",
+    "SMH": "vaneck",
+    "MOAT": "vaneck",
+    "INIVX": "vaneck",
+    "MWMIX": "vaneck",
+    "IBOT": "vaneck",
+    "BFAP": "first_trust",
+    "BFJL": "first_trust",
+    "BGLD": "first_trust",
+    "IGLD": "first_trust",
+}
+
 
 def _now() -> datetime:
     return datetime.now(timezone.utc)
@@ -46,7 +68,7 @@ def _resolve_slug(body: TickerRequestIn, existing: DistributionEstimate | None) 
         slug = resolve_slug(existing.fund_family)
         if slug:
             return slug
-    return alias_family_slug(body.ticker)
+    return alias_family_slug(body.ticker) or KNOWN_TICKER_SLUGS.get(body.ticker.upper())
 
 
 def _classify(session: Session, body: TickerRequestIn) -> tuple[str, str | None, str]:
@@ -192,7 +214,12 @@ def process_ticker_requests(
     out: list[TickerRequestOut] = []
     fetched: set[str] = set()
     for row in rows:
-        slug = row.adapter_slug or resolve_slug(row.fund_family) or alias_family_slug(row.ticker)
+        slug = (
+            row.adapter_slug
+            or resolve_slug(row.fund_family)
+            or alias_family_slug(row.ticker)
+            or KNOWN_TICKER_SLUGS.get((row.ticker or "").upper())
+        )
         if slug in SKIPPED_SLUGS:
             row.status = "skipped"
             row.adapter_slug = slug

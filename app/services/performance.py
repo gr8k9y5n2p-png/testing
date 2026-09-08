@@ -90,6 +90,9 @@ FUND_ALIASES: dict[str, str] = {
     "HLMNX": "HLMNX",
     "MAPTX": "MAPTX",
     "TGDIX": "TGDIX",
+    "BGLD": "BGLD",
+    "MWMIX": "MWMIX",
+    "FEGE": "FEGE",
 }
 
 FUND_META: dict[str, dict[str, str]] = {
@@ -135,6 +138,9 @@ FUND_META: dict[str, dict[str, str]] = {
     "HLMNX": {"name": "Harding Loevner International Equity Investor", "asset_class": "international"},
     "MAPTX": {"name": "Matthews Pacific Tiger Investor", "asset_class": "international"},
     "TGDIX": {"name": "TCW Relative Value Large Cap I", "asset_class": "equity"},
+    "BGLD": {"name": "FT Vest Gold Strategy Quarterly Buffer ETF", "asset_class": "equity"},
+    "MWMIX": {"name": "VanEck Morningstar Wide Moat I", "asset_class": "equity"},
+    "FEGE": {"name": "First Eagle Global Equity ETF", "asset_class": "equity"},
 }
 
 DEFAULT_BENCHMARKS: dict[AssetClass, dict[str, str]] = {

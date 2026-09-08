@@ -2201,6 +2201,46 @@ def test_sixth_tier_fixtures() -> None:
     assert ibot.amount == Decimal("0.9104")
     assert len({r.ticker for r in vaneck_etf_2024 if r.ticker}) >= 40
 
+    vaneck_mf_2024 = parse_distribution_html(
+        (ROOT / "vaneck" / "2024_funds_year_end_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://vaneck-mf-2024",
+        fund_family="VanEck",
+    )
+    mwmix_2024 = next(
+        r
+        for r in vaneck_mf_2024
+        if r.ticker == "MWMIX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert mwmix_2024.amount == Decimal("1.4325")
+    inivx_2024 = next(
+        r
+        for r in vaneck_mf_2024
+        if r.ticker == "INIVX" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert inivx_2024.amount == Decimal("0.7750")
+
+    first_eagle_etf = parse_distribution_html(
+        (ROOT / "first_eagle" / "2025_etf_paid_year_end.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://first-eagle-etf-2025",
+        fund_family="First Eagle",
+    )
+    fege = next(
+        r
+        for r in first_eagle_etf
+        if r.ticker == "FEGE" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert fege.amount == Decimal("0.589")
+    fege_lt = next(
+        r
+        for r in first_eagle_etf
+        if r.ticker == "FEGE" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert fege_lt.amount == Decimal("0.000")
+
     wisdomtree = parse_distribution_html(
         (ROOT / "wisdomtree" / "2025_final_capital_gains.html").read_text(
             encoding="utf-8"

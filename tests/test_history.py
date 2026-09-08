@@ -557,6 +557,15 @@ def test_search_multi_year_top_families(client: TestClient) -> None:
         item["as_of"][:4] for item in sgenx.json()["items"] if item.get("as_of")
     }
 
+    fege = client.get("/distributions", params={"ticker": "FEGE", "page_size": 20})
+    assert any(
+        item["estimate_type"] == "ordinary_income" and Decimal(item["amount"]) == Decimal("0.589")
+        for item in fege.json()["items"]
+    )
+
+    mwmix = client.get("/distributions", params={"fund_identifier": "MWMIX", "page_size": 50})
+    assert {"2024", "2025"} <= {item["as_of"][:4] for item in mwmix.json()["items"] if item.get("as_of")}
+
     seegx = client.get("/distributions", params={"fund_identifier": "SEEGX", "page_size": 50})
     assert {"2024", "2025"} <= {item["as_of"][:4] for item in seegx.json()["items"] if item.get("as_of")}
 

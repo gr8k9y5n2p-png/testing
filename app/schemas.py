@@ -274,6 +274,20 @@ class TickerRequestListOut(BaseModel):
     total: int
 
 
+class WebsiteTickerRequestOut(BaseModel):
+    """Website Submit-ticker contract: { id, ticker, status, message }."""
+
+    id: str
+    ticker: str
+    status: str
+    message: str
+
+
+class WebsiteTickerRequestListOut(BaseModel):
+    items: list[WebsiteTickerRequestOut]
+    total: int
+
+
 class TickerRequestIngestOut(BaseModel):
     processed: int
     items: list[TickerRequestOut]

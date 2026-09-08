@@ -182,7 +182,7 @@ def test_full_book_artisan_ici_and_first_eagle() -> None:
     assert len(artisan_tickers) >= 50
 
     fe_funds, fe_tickers = _funds_and_tickers(FirstEagleSource())
-    assert {"SGENX", "FEVAX", "SGGDX", "FEGRX"} <= fe_tickers
+    assert {"SGENX", "FEVAX", "SGGDX", "FEGRX", "FEGE", "FEOE"} <= fe_tickers
     assert len(fe_tickers) >= 35
     assert len(fe_funds) >= 35
     assert not any("Credit Opportunities" in name for name in fe_funds)

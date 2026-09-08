@@ -175,6 +175,9 @@ class VaneckSource(HtmlTableSource):
         "2024 paid ETF YE: https://www.vaneck.com/us/en/vaneck-etfs-yearend-distributions-2024.pdf "
         "(GDX income $0.4025; SMH income $1.0713; MOAT income $1.2675; "
         "IBOT ST $0.9104 / LT $0.0112; MOTG LT $1.3793; all-None AFK/DGIN/VNM omitted). "
+        "Official 2024 paid mutual-fund PDF "
+        "https://www.vaneck.com/us/en/vaneck-funds-yearend-distributions-2024.pdf "
+        "(INIVX income $0.7750; MWMIX ST $1.4731 / LT $1.4325; printed None omitted; EMRCX all-None omitted). "
         "Hub: https://www.vaneck.com/us/en/resources/etf-distributions/"
     )
     live_limitations = (
@@ -213,6 +216,13 @@ class VaneckSource(HtmlTableSource):
                 url="https://www.vaneck.com/us/en/vaneck-etfs-yearend-distributions-2024.pdf",
                 fixture="2024_etf_year_end_distributions.html",
                 live=False,
+            ),
+            PageSpec(
+                name="2024_funds_year_end_distributions",
+                url="https://www.vaneck.com/us/en/vaneck-funds-yearend-distributions-2024.pdf",
+                fixture="2024_funds_year_end_distributions.html",
+                live=False,
+                role="history",
             ),
         ]
 
@@ -287,7 +297,11 @@ class FirstTrustSource(HtmlTableSource):
         "(BFAP LT $3.1933 / ROC $0.2500; BGLD NII $0.5074 / ST $2.7353 / ROC $4.3407; "
         "IGLD NII $0.1042 / ST $0.1401 / ROC $0.3525). Fiscal YTD cumulative table "
         "omitted so illustration does not double-count. Printed dashes omitted. "
-        "Monthly income-sleeve 19(a) notices (FTHI, FMB) are not this family book."
+        "Monthly income-sleeve 19(a) notices (FTHI, FMB) are not this family book. "
+        "First Trust Capital Management 2025 estimate table "
+        "(https://info.firsttrustcapital.com/ftcm-capital-gain-estimates-2025) "
+        "is interval / tender-offer (VARBX / VFLEX / FTPCX / HFLEX / FTPAX / FTCRED) "
+        "— omitted. Coming-soon Vest rows omitted."
     )
     live_limitations = (
         "Family 19(a) is PDF. Weekly walk uses the ContentGUID notice; "

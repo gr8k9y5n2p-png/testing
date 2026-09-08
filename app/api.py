@@ -38,6 +38,8 @@ from app.schemas import (
     TickerRequestIngestOut,
     TickerRequestListOut,
     TickerRequestOut,
+    WebsiteTickerRequestListOut,
+    WebsiteTickerRequestOut,
 )
 from app.services.coverage import coverage_snapshot, family_to_out, record_gap
 from app.services.performance import growth_of_x
@@ -213,19 +215,28 @@ def get_ticker_requests(
     )
 
 
+def _website_ticker_out(row: TickerRequestOut) -> WebsiteTickerRequestOut:
+    return WebsiteTickerRequestOut(
+        id=row.id,
+        ticker=row.ticker,
+        status=row.status,
+        message=row.message or row.detail or "",
+    )
+
+
 @router.post("/request/ticker", tags=["requests"])
 def website_create_ticker_request(
     body: TickerRequestIn, session: Session = Depends(get_session)
 ) -> JSONResponse:
-    """Website Submit-ticker box. 201 queued / 200 already_covered / 422 invalid."""
+    """Website Submit-ticker box. No auth for beta. 201 queued / 200 already_covered / 422 invalid."""
     try:
         out, status_code = submit_website_ticker_request(session, body)
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
-    return JSONResponse(status_code=status_code, content=jsonable_encoder(out))
+    return JSONResponse(status_code=status_code, content=jsonable_encoder(_website_ticker_out(out)))
 
 
-@router.get("/request/ticker", response_model=TickerRequestListOut, tags=["requests"])
+@router.get("/request/ticker", response_model=WebsiteTickerRequestListOut, tags=["requests"])
 def website_list_ticker_requests(
     status: str | None = Query(
         default="queued",
@@ -233,12 +244,10 @@ def website_list_ticker_requests(
     ),
     limit: int = Query(default=100, ge=1, le=500),
     session: Session = Depends(get_session),
-) -> TickerRequestListOut:
+) -> WebsiteTickerRequestListOut:
     rows = list_ticker_requests(session, status=status, limit=limit)
-    return TickerRequestListOut(
-        items=[TickerRequestOut.model_validate(row) for row in rows],
-        total=len(rows),
-    )
+    items = [_website_ticker_out(TickerRequestOut.model_validate(row)) for row in rows]
+    return WebsiteTickerRequestListOut(items=items, total=len(items))
 
 
 @router.post("/ingest/ticker-requests", response_model=TickerRequestIngestOut, tags=["ingest"])
