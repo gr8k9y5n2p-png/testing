@@ -73,6 +73,7 @@ export {
   resolveFundView,
 } from "@/lib/illustrate/fund-history";
 export { CompareWorkspace } from "@/components/illustrate/CompareWorkspace";
+export { CompareDeltaStrip } from "@/components/illustrate/CompareDeltaStrip";
 export { HomepageFundCompare } from "@/components/illustrate/HomepageFundCompare";
 export {
   defaultComparePeer,

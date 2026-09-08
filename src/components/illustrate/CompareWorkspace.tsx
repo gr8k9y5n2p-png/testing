@@ -3,17 +3,25 @@
 import { useEffect, useMemo, useState } from "react";
 import type { FundEstimateView } from "@/data/types";
 import { CompareAnnualTable } from "@/components/illustrate/CompareAnnualTable";
+import { CompareDeltaStrip } from "@/components/illustrate/CompareDeltaStrip";
 import {
   GrowthAndTaxDragModule,
 } from "@/components/illustrate/GrowthAndTaxDragModule";
 import { TickerField } from "@/components/illustrate/portfolio-compare/TickerField";
 import { UpcomingTable } from "@/components/illustrate/portfolio-compare/UpcomingTable";
 import { postIllustrateCompare } from "@/lib/illustrate/compare-client";
+import { toTaxDeltaCardModel } from "@/lib/illustrate/compare-map";
 import {
+  compareSideFromFund,
   trailingCalendarPeriods,
   yoyTaxDragCompareRequest,
 } from "@/lib/illustrate/compare-request";
 import type { CompareResponse } from "@/lib/illustrate/compare-types";
+import {
+  deltaStripFromPairMetrics,
+  deltaStripFromSingleUpcoming,
+  reservedDeltaStrip,
+} from "@/lib/illustrate/compare-delta-strip";
 import {
   COMPARE_SLOT_COUNT,
   buildCompareAnnualTable,
@@ -62,6 +70,9 @@ export function CompareWorkspace({
   const filledKey = filledCompareTickers(slots).join(",");
   const [loaded, setLoaded] = useState<LoadedTicker[]>([]);
   const [historyError, setHistoryError] = useState<string | null>(null);
+  const [pairMetrics, setPairMetrics] = useState<
+    ReturnType<typeof toTaxDeltaCardModel>["metrics"] | null
+  >(null);
 
   useEffect(() => {
     const tickers = filledKey ? filledKey.split(",") : [];
@@ -121,6 +132,50 @@ export function CompareWorkspace({
     return () => controller.abort();
   }, [filledKey, funds]);
 
+  useEffect(() => {
+    const tickers = filledKey ? filledKey.split(",") : [];
+    if (tickers.length < 2) {
+      return;
+    }
+    const [leftTicker, rightTicker] = tickers;
+    const leftFund = resolveFundView(funds, leftTicker);
+    const rightFund = resolveFundView(funds, rightTicker);
+    const controller = new AbortController();
+    void postIllustrateCompare(
+      {
+        mode: "fund_vs_fund",
+        holding_dollars: DEFAULT_START_DOLLARS,
+        combine_state_with_federal: true,
+        latest_as_of_only: true,
+        left: compareSideFromFund({
+          ticker: leftTicker,
+          fundName: leftFund?.fundName,
+          family: leftFund?.family,
+          nav: leftFund?.nav,
+          fundIdentifier: leftFund?.ticker ?? leftTicker,
+        }),
+        right: compareSideFromFund({
+          ticker: rightTicker,
+          fundName: rightFund?.fundName,
+          family: rightFund?.family,
+          nav: rightFund?.nav,
+          fundIdentifier: rightFund?.ticker ?? rightTicker,
+        }),
+        periods: trailingCalendarPeriods(),
+        tax_rates: {},
+      },
+      { signal: controller.signal },
+    )
+      .then((payload) => {
+        setPairMetrics(toTaxDeltaCardModel(payload).metrics);
+      })
+      .catch((caught: unknown) => {
+        if (caught instanceof DOMException && caught.name === "AbortError") return;
+        setPairMetrics(null);
+      });
+    return () => controller.abort();
+  }, [filledKey, funds]);
+
   const activeLoaded = useMemo(
     () => (filledKey ? loaded : []),
     [filledKey, loaded],
@@ -143,6 +198,23 @@ export function CompareWorkspace({
     [activeLoaded],
   );
   const activeHistoryError = filledKey ? historyError : null;
+  const pairReady = filledKey.split(",").filter(Boolean).length >= 2;
+  const stripItems = useMemo(() => {
+    if (pairReady && pairMetrics) {
+      return deltaStripFromPairMetrics(pairMetrics);
+    }
+    if (activeLoaded.length === 1) {
+      return deltaStripFromSingleUpcoming(
+        activeLoaded[0]?.tax
+          ? toUpcomingSummary(
+              activeLoaded[0].tax.summary.upcoming_taxable_distribution,
+              "left",
+            )
+          : null,
+      );
+    }
+    return reservedDeltaStrip();
+  }, [activeLoaded, pairMetrics, pairReady]);
 
   return (
     <section id="fund-compare" aria-label="Fund comparison" className="w-full">
@@ -183,6 +255,10 @@ export function CompareWorkspace({
             </label>
           );
         })}
+      </div>
+
+      <div className="mt-8 w-full">
+        <CompareDeltaStrip items={stripItems} />
       </div>
 
       <section
