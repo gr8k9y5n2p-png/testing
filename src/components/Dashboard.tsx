@@ -6,15 +6,22 @@ import { searchFunds } from "@/data/queries";
 import { EmptyState } from "@/components/EmptyState";
 import { ResultsTable } from "@/components/ResultsTable";
 import { SearchToolbar } from "@/components/SearchToolbar";
+import {
+  looksLikeExactTicker,
+  normalizeTickerSymbol,
+} from "@/lib/data-api/request-ticker";
+import { useSearchMissRequest } from "@/lib/data-api/use-search-miss";
 
 export function Dashboard({
   funds,
   facets,
   onIllustrate,
+  onNotice,
 }: {
   funds: FundEstimateView[];
   facets: Facets;
   onIllustrate?: (fund: FundEstimateView) => void;
+  onNotice?: (message: string) => void;
 }) {
   const [filters, setFilters] = useState<SearchFilters>({});
   const deferredFilters = useDeferredValue(filters);
@@ -25,6 +32,21 @@ export function Dashboard({
   );
 
   const isPending = filters !== deferredFilters;
+  const query = filters.query ?? "";
+  const exactTicker = looksLikeExactTicker(query);
+  const inUniverse = useMemo(() => {
+    if (!exactTicker) return false;
+    const key = normalizeTickerSymbol(query);
+    return funds.some((fund) => fund.ticker.toUpperCase() === key);
+  }, [exactTicker, funds, query]);
+
+  useSearchMissRequest(
+    query,
+    results.length > 0 || inUniverse,
+    !isPending,
+    onNotice,
+  );
+
   const hasActiveFilters = Boolean(
     filters.query?.trim() || filters.family || filters.category || filters.year,
   );

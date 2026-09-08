@@ -34,6 +34,8 @@ export const UPCOMING_UNAVAILABLE_DETAIL =
   "No unpaid announced estimates in this sample.";
 export const PAID_HISTORY_EMPTY = "No paid history in this sample.";
 
+export { TICKER_REQUEST } from "@/lib/data-api/request-ticker";
+
 export const FREE_SEARCH_LIMIT = 3;
 
 export function freeSearchLabel(remaining: number): string {

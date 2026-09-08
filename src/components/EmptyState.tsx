@@ -11,6 +11,13 @@ export function EmptyState({
       <p className="mx-auto mt-2 max-w-md text-sm text-muted">
         Try a ticker, CUSIP, fund family, category, or distribution year. Sample
         coverage includes American Funds, Vanguard, Fidelity, and T. Rowe Price.
+        Missing tickers stay empty — we do not invent estimates.
+      </p>
+      <p className="mx-auto mt-2 max-w-md text-sm text-muted">
+        <a href="#request-a-fund" className="text-accent underline">
+          Request a fund
+        </a>{" "}
+        if you want us to look for issuer sources.
       </p>
       {hasActiveFilters ? (
         <button
