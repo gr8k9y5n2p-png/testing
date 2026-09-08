@@ -67,6 +67,13 @@ ESTIMATE_STATUS: dict[str, str] = {
     "vaneck": "prelim_updated",
     "wisdomtree": "prelim_updated",
     "first_trust": "prelim_updated",
+    "aqr": "prelim_updated",
+    "causeway": "paid_history_only",
+    "alger": "paid_history_only",
+    "harding_loevner": "paid_history_only",
+    "matthews_asia": "paid_history_only",
+    "tcw": "paid_history_only",
+    "bridgeway": "prelim_updated",
 }
 
 # Calendar years with official YE/paid/estimate fixtures (not invented).
@@ -127,6 +134,13 @@ HISTORY_YEARS: dict[str, tuple[int, ...]] = {
     "vaneck": (2024, 2025),
     "wisdomtree": (2024, 2025),
     "first_trust": (2025,),
+    "aqr": (2024, 2025),
+    "causeway": (2024, 2025),
+    "alger": (2025,),
+    "harding_loevner": (2025,),
+    "matthews_asia": (2021, 2022, 2023, 2024, 2025),
+    "tcw": (2025,),
+    "bridgeway": (2024, 2025),
 }
 
 # Tickers with Growth of $X fixtures (Yahoo monthly adj close).
@@ -154,6 +168,12 @@ PERFORMANCE_TICKERS: dict[str, tuple[str, ...]] = {
     "william_blair": ("BGFIX",),
     "vaneck": ("GDX", "SMH"),
     "wisdomtree": ("GTR", "WTPI"),
+    "aqr": ("AQGIX",),
+    "causeway": ("CIVIX",),
+    "alger": ("CHUSX",),
+    "harding_loevner": ("HLMNX",),
+    "matthews_asia": ("MAPTX",),
+    "tcw": ("TGDIX",),
 }
 
 

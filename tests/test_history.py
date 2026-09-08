@@ -506,6 +506,13 @@ def test_search_multi_year_top_families(client: TestClient) -> None:
         "first_trust",
         "federated_hermes",
         "jpmorgan",
+        "aqr",
+        "causeway",
+        "alger",
+        "harding_loevner",
+        "matthews_asia",
+        "tcw",
+        "bridgeway",
     ):
         fetched = client.post("/ingest/fetch", json={"fund_family": family, "mode": "fixture"})
         assert fetched.status_code == 200, fetched.text
@@ -646,6 +653,34 @@ def test_search_multi_year_top_families(client: TestClient) -> None:
 
     bgfix = client.get("/distributions", params={"fund_identifier": "BGFIX", "page_size": 50})
     assert {"2024", "2025"} <= {item["as_of"][:4] for item in bgfix.json()["items"] if item.get("as_of")}
+
+    aqgix = client.get("/distributions", params={"fund_identifier": "AQGIX", "page_size": 50})
+    assert {"2024", "2025"} <= {item["as_of"][:4] for item in aqgix.json()["items"] if item.get("as_of")}
+    aqgix_2024 = client.get(
+        "/distributions",
+        params={
+            "fund_identifier": "AQGIX",
+            "as_of_from": "2024-01-01",
+            "as_of_to": "2024-12-31",
+            "page_size": 20,
+        },
+    )
+    assert any(
+        item["estimate_type"] == "long_term_capital_gains"
+        and Decimal(item["amount"]) == Decimal("0.5462")
+        for item in aqgix_2024.json()["items"]
+    )
+
+    civix = client.get("/distributions", params={"fund_identifier": "CIVIX", "page_size": 50})
+    assert {"2024", "2025"} <= {item["as_of"][:4] for item in civix.json()["items"] if item.get("as_of")}
+
+    maptx = client.get("/distributions", params={"fund_identifier": "MAPTX", "page_size": 50})
+    assert {"2021", "2022", "2023", "2024", "2025"} <= {
+        item["as_of"][:4] for item in maptx.json()["items"] if item.get("as_of")
+    }
+
+    bragx = client.get("/distributions", params={"fund_identifier": "BRAGX", "page_size": 50})
+    assert {"2024", "2025"} <= {item["as_of"][:4] for item in bragx.json()["items"] if item.get("as_of")}
 
 
 def test_compare_hero_yoy_fixture_bars(client: TestClient) -> None:

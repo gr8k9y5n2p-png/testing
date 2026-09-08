@@ -17,23 +17,38 @@ class TcwSource(HtmlTableSource):
         "TGVOX LT $5.7329; Concentrated Large Cap Growth TGCEX LT $3.7713). "
         "Equity record 12/26/2025, ex/pay 12/29/2025. Allocation fund record "
         "12/30/2025, ex/pay 12/31/2025. The PDF is fund-level; tickers are "
-        "public Class I identifiers."
+        "public Class I identifiers. "
+        "The unversioned TCW-FUND-Distributions-final.pdf filename now serves 2025; "
+        "no dated official 2024 sibling stored."
     )
-    live_limitations = "Year-end book is PDF. Fixture transcribes public Class I identifiers."
+    live_limitations = (
+        "Year-end book is PDF. Weekly walk uses the unversioned final PDF; "
+        "empty/PDF-bytes pages are no-op success. 2024 dated URL missing."
+    )
 
     def pages(self) -> list[PageSpec]:
+        pdf = (
+            "https://edge.sitecorecloud.io/thetcwgroupc320-tcwweb7bc3-prod0f26-25f9/"
+            "media/Downloads/TCW/Products/US-Funds/TCW-Funds/"
+            "Distribution-and-Tax-Information/TCW-FUND-Distributions-final.pdf"
+            "?sc_lang=en"
+        )
         return [
             PageSpec(
+                name="tax_center_hub",
+                url=pdf,
+                fixture="tax_center_hub.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
+            PageSpec(
                 name="2025_capital_gains",
-                url=(
-                    "https://edge.sitecorecloud.io/thetcwgroupc320-tcwweb7bc3-prod0f26-25f9/"
-                    "media/Downloads/TCW/Products/US-Funds/TCW-Funds/"
-                    "Distribution-and-Tax-Information/TCW-FUND-Distributions-final.pdf"
-                    "?sc_lang=en"
-                ),
+                url=pdf,
                 fixture="2025_capital_gains.html",
                 live=False,
-            )
+                role="history",
+            ),
         ]
 
 
@@ -49,12 +64,28 @@ class BridgewaySource(HtmlTableSource):
         "2025-Distribution-Estimates-for-Website.pdf "
         "(e.g. Aggressive Investors 1 BRAGX LT $17.63983; Ultra-Small Company "
         "BRUSX LT $3.25592; Global Opportunity BRGOX ST $0.45243). "
-        "Record 12/15/2025; ex/pay 12/16/2025."
+        "Record 12/15/2025; ex/pay 12/16/2025. "
+        "Official 2024 estimate PDF: "
+        "https://bridgewayfunds.com/wp-content/uploads/sites/2/2024/11/"
+        "2024-Distribution-Estimates-for-Website.pdf "
+        "(BRAGX LT $2.54426; BRUSX ST $1.13357; BRSVX LT $2.17584; BOSVX LT $1.41164). "
+        "BRGOX 2024 NII expected with no amount — omitted."
     )
-    live_limitations = "Estimate book is PDF. Fixture transcribes public ticker rows."
+    live_limitations = (
+        "Estimate book is PDF. Weekly walk uses the distributions hub + 2025 estimate PDF; "
+        "empty/PDF-bytes pages are no-op success."
+    )
 
     def pages(self) -> list[PageSpec]:
         return [
+            PageSpec(
+                name="distributions_hub",
+                url="https://bridgewayfunds.com/mutual-funds/distributions/",
+                fixture="distributions_hub.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
             PageSpec(
                 name="2025_estimated_distributions",
                 url=(
@@ -62,8 +93,20 @@ class BridgewaySource(HtmlTableSource):
                     "2025-Distribution-Estimates-for-Website.pdf"
                 ),
                 fixture="2025_estimated_distributions.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
+            PageSpec(
+                name="2024_estimated_distributions",
+                url=(
+                    "https://bridgewayfunds.com/wp-content/uploads/sites/2/2024/11/"
+                    "2024-Distribution-Estimates-for-Website.pdf"
+                ),
+                fixture="2024_estimated_distributions.html",
                 live=False,
-            )
+                role="history",
+            ),
         ]
 
 

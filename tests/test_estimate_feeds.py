@@ -36,6 +36,18 @@ def test_ranks_41_to_53_have_live_estimate_feed() -> None:
     assert missing == []
 
 
+def test_ranks_56_to_62_have_live_estimate_feed() -> None:
+    missing: list[str] = []
+    for source in list_sources():
+        if source.aum_rank is None or source.aum_rank < 56 or source.aum_rank > 62:
+            continue
+        if not source.supports_live():
+            missing.append(f"{source.slug}: supports_live=False")
+        if not source.estimate_feed_urls():
+            missing.append(f"{source.slug}: no estimate_feed_urls")
+    assert missing == []
+
+
 def test_amundi_stays_off_estimate_ladder() -> None:
     amundi = next(s for s in list_sources() if s.slug == "amundi")
     assert estimate_feed_status("amundi") == "skipped"
@@ -151,3 +163,23 @@ def test_coverage_exposes_estimate_feed_readiness(session) -> None:
     blair = by_slug["william_blair"]
     assert blair.estimate_feed_ready is True
     assert blair.history_years == [2024, 2025]
+
+    aqr = by_slug["aqr"]
+    assert aqr.estimate_feed_ready is True
+    assert aqr.estimate_feed_status == "prelim_updated"
+    assert aqr.history_years == [2024, 2025]
+    assert "AQGIX" in aqr.performance_tickers
+
+    causeway = by_slug["causeway"]
+    assert causeway.estimate_feed_ready is True
+    assert causeway.history_years == [2024, 2025]
+    assert "CIVIX" in causeway.performance_tickers
+
+    matthews = by_slug["matthews_asia"]
+    assert matthews.estimate_feed_ready is True
+    assert matthews.history_years == [2021, 2022, 2023, 2024, 2025]
+    assert "MAPTX" in matthews.performance_tickers
+
+    bridgeway = by_slug["bridgeway"]
+    assert bridgeway.estimate_feed_ready is True
+    assert bridgeway.history_years == [2024, 2025]

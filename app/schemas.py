@@ -234,8 +234,9 @@ class TickerRequestIn(BaseModel):
     fund_name: str | None = Field(default=None, max_length=512)
     fund_family: str | None = Field(default=None, max_length=128)
     source: str = Field(default="website_ui", max_length=64)
+    note: str | None = Field(default=None, max_length=512)
 
-    @field_validator("ticker", "fund_name", "fund_family", "source", mode="before")
+    @field_validator("ticker", "fund_name", "fund_family", "source", "note", mode="before")
     @classmethod
     def blank_request_fields(cls, value: Any) -> Any:
         return _empty_to_none(value)
@@ -257,8 +258,15 @@ class TickerRequestOut(BaseModel):
     status: str
     adapter_slug: str | None
     detail: str | None
+    message: str | None = None
     created_at: datetime
     updated_at: datetime
+
+    @model_validator(mode="after")
+    def fill_website_message(self) -> "TickerRequestOut":
+        if self.message is None:
+            self.message = self.detail
+        return self
 
 
 class TickerRequestListOut(BaseModel):

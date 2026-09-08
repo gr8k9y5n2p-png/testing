@@ -59,6 +59,33 @@ def test_submit_unknown_ticker_stays_search_issuer(client: TestClient) -> None:
     assert leftover["status"] == "search_issuer"
 
 
+def test_website_submit_ticker_contract(client: TestClient) -> None:
+    fetched = client.post("/ingest/fetch", json={"fund_family": "first_eagle", "mode": "fixture"})
+    assert fetched.status_code == 200, fetched.text
+
+    covered = client.post("/request/ticker", json={"ticker": "sgenx", "source": "website_ui"})
+    assert covered.status_code == 200, covered.text
+    assert covered.json()["status"] == "already_covered"
+    assert covered.json()["ticker"] == "SGENX"
+    assert covered.json()["message"]
+
+    queued = client.post(
+        "/request/ticker",
+        json={"ticker": "ZZQRX", "note": "advisor requested", "source": "website_ui"},
+    )
+    assert queued.status_code == 201, queued.text
+    assert queued.json()["status"] == "queued"
+    assert queued.json()["ticker"] == "ZZQRX"
+    assert "do not invent" in (queued.json()["message"] or "").lower()
+
+    listed = client.get("/request/ticker", params={"status": "queued"})
+    assert listed.status_code == 200
+    assert any(item["ticker"] == "ZZQRX" for item in listed.json()["items"])
+
+    invalid = client.post("/request/ticker", json={"ticker": "!!!"})
+    assert invalid.status_code == 422
+
+
 def test_submit_amundi_ticker_is_skipped(client: TestClient) -> None:
     created = client.post(
         "/requests/tickers",

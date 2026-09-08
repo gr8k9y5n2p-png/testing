@@ -326,21 +326,52 @@ class AqrSource(HtmlTableSource):
         "Large Cap Defensive Style I AUEIX ST $0.0619 / LT $3.0673 / 15.62% of NAV). "
         "Most funds record 12/16/2025, ex 12/17/2025, pay 12/18/2025; "
         "Diversifying Strategies uses 12/19 / 12/22 / 12/23. "
-        "Estimates as of 9/30/2025; NAV/shares as of 10/31/2025."
+        "Estimates as of 9/30/2025; NAV/shares as of 10/31/2025. "
+        "Official 2024 final PDF: "
+        "https://funds.aqr.com/-/media/Funds/Tax-Documents/2024/"
+        "2024-AQR-Funds-Final-Distribution-Memo-Ex-Date-121724.pdf?sc_lang=en "
+        "is transcribed as Class I only "
+        "(AQGIX ST $0.6140 / LT $0.5462 / 11.68% of NAV; "
+        "AUEIX ST $0.1898 / LT $4.3691 / 18.93% of NAV). "
+        "Printed dashes omitted. N/R6 2024 clones not added as ticker vanity."
     )
-    live_limitations = "Estimate book is PDF. Fixture transcribes public Class I rows."
+    live_limitations = (
+        "Estimate book is PDF. Weekly walk uses the news hub + 2025 estimate PDF; "
+        "empty/PDF-bytes pages are no-op success."
+    )
 
     def pages(self) -> list[PageSpec]:
+        tax = "https://funds.aqr.com/-/media/Funds/Tax-Documents"
         return [
+            PageSpec(
+                name="tax_documents_hub",
+                url="https://funds.aqr.com/News",
+                fixture="tax_documents_hub.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
             PageSpec(
                 name="2025_estimated_distributions",
                 url=(
-                    "https://funds.aqr.com/-/media/Funds/Tax-Documents/2025/"
+                    f"{tax}/2025/"
                     "2025-AQR-Funds-Announces-Estimated-Distributions.pdf?sc_lang=en"
                 ),
                 fixture="2025_estimated_distributions.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
+            PageSpec(
+                name="2024_final_distributions",
+                url=(
+                    f"{tax}/2024/"
+                    "2024-AQR-Funds-Final-Distribution-Memo-Ex-Date-121724.pdf?sc_lang=en"
+                ),
+                fixture="2024_final_distributions.html",
                 live=False,
-            )
+                role="history",
+            ),
         ]
 
 
@@ -356,18 +387,42 @@ class CausewaySource(HtmlTableSource):
         "(e.g. International Value Institutional CIVIX ST $0.3957 / LT $1.5537; "
         "Global Value Institutional CGVIX ST $0.4236 / LT $0.9631; "
         "International Small Cap Institutional CIISX ST $0.2609 / LT $1.5623). "
-        "Record 12/19/2025; ex 12/22/2025; pay 12/23/2025."
+        "Record 12/19/2025; ex 12/22/2025; pay 12/23/2025. "
+        "Official 2024 final PDF: "
+        "https://www.causewaycap.com/wp-content/uploads/2024_Causeway-Funds-Final-Distributions.pdf "
+        "(CIVIX ST $0.1324 / LT $1.1868; CGVIX ST $1.0338 / LT $1.8282; "
+        "CEMIX published $0.0000 ST/LT stored)."
     )
-    live_limitations = "Year-end book is PDF. Fixture transcribes public Institutional-class rows."
+    live_limitations = (
+        "Year-end book is PDF. Weekly walk uses the resources hub + 2025 final PDF; "
+        "empty/PDF-bytes pages are no-op success."
+    )
 
     def pages(self) -> list[PageSpec]:
         return [
             PageSpec(
+                name="distributions_hub",
+                url="https://www.causewaycap.com/resources/",
+                fixture="distributions_hub.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
+            PageSpec(
                 name="2025_final_distributions",
                 url="https://www.causewaycap.com/wp-content/uploads/2025_Causeway-Funds-Final-Distributions.pdf",
                 fixture="2025_final_distributions.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
+            PageSpec(
+                name="2024_final_distributions",
+                url="https://www.causewaycap.com/wp-content/uploads/2024_Causeway-Funds-Final-Distributions.pdf",
+                fixture="2024_final_distributions.html",
                 live=False,
-            )
+                role="history",
+            ),
         ]
 
 
@@ -385,18 +440,32 @@ class AlgerSource(HtmlTableSource):
         "International Opportunities A ALGAX LT $2.0655 / 10.4% of NAV; "
         "Small Cap Growth Institutional I ALSRX LT $0.4912 / 2.7% of NAV). "
         "Record 12/16/2025; ex/pay 12/17/2025. Published $0.00 amounts are stored. "
-        "The PDF lists International Small Cap A as ALCZX (same ticker as Opportunities Z) — that row is omitted."
+        "The PDF lists International Small Cap A as ALCZX (same ticker as Opportunities Z) — that row is omitted. "
+        "Distrib_FUNDS_2024.pdf 404; no official 2024 ST/LT book stored."
     )
-    live_limitations = "Year-end book is PDF. Fixture transcribes public Class A / Institutional I rows."
+    live_limitations = (
+        "Year-end book is PDF. Weekly walk uses the DividendsDistributions hub + 2025 PDF; "
+        "empty/PDF-bytes pages are no-op success. 2024 official URL missing."
+    )
 
     def pages(self) -> list[PageSpec]:
         return [
             PageSpec(
+                name="dividends_distributions_hub",
+                url="https://www.alger.com/Pages/Page.aspx?pageLabel=DividendsDistributions",
+                fixture="dividends_distributions_hub.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
+            PageSpec(
                 name="2025_dividends_and_distributions",
                 url="https://www.alger.com/AlgerDocuments/Distrib_FUNDS.pdf",
                 fixture="2025_dividends_and_distributions.html",
-                live=False,
-            )
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
         ]
 
 
@@ -413,18 +482,31 @@ class HardingLoevnerSource(HtmlTableSource):
         "Emerging Markets Advisor HLEMX ST $0.589704 / LT $20.71838 / 46.85% of NAV). "
         "Record 12/12/2025; ex 12/15/2025; pay 12/16/2025. "
         "Tax-info reprint: "
-        "https://media.hardingloevner.com/fileadmin/pdf/HLF/HLF-Additional-Tax-Information-2025.pdf"
+        "https://media.hardingloevner.com/fileadmin/pdf/HLF/HLF-Additional-Tax-Information-2025.pdf "
+        "2024 sibling URLs 404; no official 2024 ST/LT book stored."
     )
-    live_limitations = "Year-end book is PDF. Fixture transcribes public Advisor/Investor-class rows."
+    live_limitations = (
+        "Year-end book is PDF. Weekly walk uses the AMG reprint URL; "
+        "empty/PDF-bytes pages are no-op success. 2024 official URL missing."
+    )
 
     def pages(self) -> list[PageSpec]:
         return [
+            PageSpec(
+                name="tax_information_hub",
+                url="https://wealth.amg.com/pdf-library/harding-loevner-2025-year-end-distributions/",
+                fixture="tax_information_hub.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
             PageSpec(
                 name="2025_year_end_distributions",
                 url="https://wealth.amg.com/pdf-library/harding-loevner-2025-year-end-distributions/",
                 fixture="2025_year_end_distributions.html",
                 live=False,
-            )
+                role="history",
+            ),
         ]
 
 
@@ -441,19 +523,54 @@ class MatthewsAsiaSource(HtmlTableSource):
         "India Investor MINDX LT $1.62048 / 6.5% of NAV). "
         "Record 12/16/2025; ex/pay 12/17/2025. "
         "Schedule-only page (no amounts): "
-        "https://www.matthewsasia.com/resources/distributions-tax/distribution-dates/"
+        "https://www.matthewsasia.com/resources/distributions-tax/distribution-dates/ "
+        "Official product-page paid history for existing Investor heroes MEGMX / MAPTX / MINDX "
+        "covers 2021–2024 (e.g. MAPTX 2024 income $0.58609 / LT $0.99319 / 8.0% of NAV; "
+        "MINDX 2024 ST $1.41120 / LT $2.39476 / 12.7% of NAV). No new thin tickers."
     )
     live_limitations = (
         "Live product HTML is public but nested class/accordion tables may not parse. "
+        "Weekly walk uses the product page; empty/SPA pages are no-op success. "
         "Fixture fallback with Investor-class tickers."
     )
 
     def pages(self) -> list[PageSpec]:
+        product = "https://www.matthewsasia.com/funds/mutual-funds/"
         return [
             PageSpec(
                 name="2025_year_end_distributions",
-                url="https://www.matthewsasia.com/funds/mutual-funds/",
+                url=product,
                 fixture="2025_year_end_distributions.html",
                 live=True,
-            )
+                role="estimate",
+                empty_ok=True,
+            ),
+            PageSpec(
+                name="2024_year_end_distributions",
+                url=product,
+                fixture="2024_year_end_distributions.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="2023_year_end_distributions",
+                url=product,
+                fixture="2023_year_end_distributions.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="2022_year_end_distributions",
+                url=product,
+                fixture="2022_year_end_distributions.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="2021_year_end_distributions",
+                url=product,
+                fixture="2021_year_end_distributions.html",
+                live=False,
+                role="history",
+            ),
         ]

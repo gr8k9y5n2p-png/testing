@@ -610,6 +610,8 @@ Goal: for **existing US-domiciled adapters**, ingest every **mutual fund and ETF
 
 **Wave 14 (ranks 41+ three-pillar densify):** Fixture unique tickers **3,561 → 3,583**. Thin top-40 leftovers stay deferred (SSGA Angular, GSAM 403, PIMCO no ST/LT PDF, Franklin SPA, Eaton Vance open-end missing, Lord Abbett no-pay-only, UBS 403, First Eagle 2025 paid PDF 404). Started **beyond-40 families 41–53** with the same playbook (annual performance / historical YE / estimate hub even if empty). Official 2024 books harvested (never invented): Voya 2024 estimate (NLCAX LT $1.905); Oakmark 2024 Wayback paid YE (OAKEX ST $0.0276 / LT $0.7241; published $0 CG stored); Tweedy 2024 estimate (TBGVX LT $1.706; printed None ST omitted; 2024 Final sibling 404); Gabelli 2024 1099 YE summary via Wayback (GABGX LT $6.96640; live GET 403); Royce 2024 Investment-class paid YE (RYTRX ST $0.0584 / LT $0.2980); Victory 2024 final Class A book (MMEAX ST $0.801347 / LT $3.015874); SEI 2024 estimate (SIMT Large Cap Growth ST $1.541 / LT $7.596); Brown Advisory 2024 schedule (BAFFX ST $0.15 / LT $1.72); William Blair 2024 Class I (BGFIX LT $3.03562). Harbor / Nationwide 2024 ST/LT family books still missing (Harbor 2024 PDF 404; Nationwide MFN-0434AO / MFN-1042AO are not CG grids). NYLI / Touchstone 2024 ST/LT books not found. Weekly estimate hubs now live for Tweedy, Gabelli, Royce, NYLI, Touchstone, Victory, SEI, Brown Advisory, and William Blair (empty/403/PDF-bytes = no-op success). Amundi skipped. Growth of $X fixtures added from Yahoo monthly adj close for HACAX, NWHOX, NLCAX, OAKMX, TBGVX, GABGX, RYTRX, MMEAX, BAFFX, BGFIX.
 
+**Wave 15 (launch-bar pillar quality, ranks 56–62):** Live DB already clears the **1,000+** ticker launch bar (~3,400+ distinct). This wave densifies **existing heroes** (performance + multi-year YE + estimate hub) instead of adding thin single-row tickers. Official books only: AQR 2024 **final Class I** (AQGIX ST $0.6140 / LT $0.5462 / 11.68% of NAV; AUEIX ST $0.1898 / LT $4.3691 / 18.93% of NAV; printed dashes omitted; N/R6 clones not added); Causeway 2024 **final Inst+Inv** (CIVIX ST $0.1324 / LT $1.1868; CEMIX published $0.0000 stored); Matthews Asia official product-page paid history **2021–2024** for MEGMX / MAPTX / MINDX only (MAPTX 2024 income $0.58609 / LT $0.99319 / 8.0% of NAV; MINDX 2024 ST $1.41120 / LT $2.39476 / 12.7% of NAV); Bridgeway 2024 estimate (BRAGX LT $2.54426; BRUSX ST $1.13357; BRGOX NII-expected with no amount omitted). Alger `Distrib_FUNDS_2024.pdf` 404, Harding Loevner 2024 siblings 404, TCW unversioned final PDF is the 2025 book — no invented 2024 rows. Weekly estimate hubs now live for AQR, Causeway, Alger, Harding Loevner, Matthews Asia, TCW, and Bridgeway. Growth of $X fixtures added from Yahoo monthly adj close for AQGIX, CIVIX, CHUSX, HLMNX, MAPTX, TGDIX (BRAGX Yahoo adj-close empty — omitted). Website Submit-ticker aliases: `POST /request/ticker` (201 queued / 200 already_covered / 422 invalid) and `GET /request/ticker?status=queued`.
+
 | Family | Estimate feed? | Status | Multi-year history? | Performance? |
 | --- | --- | --- | --- | --- |
 | BlackRock / iShares | Yes (live iShares CG HTML) | prelim_updated | 2021–2026 | MDDVX, AGG |
@@ -925,7 +927,21 @@ Response:
 
 `GET /requests/tickers?status=queued` lists recent requests (`status` filter optional).
 
-`POST /ingest/ticker-requests?mode=fixture` (weekly job / operator) picks up `queued` / `search_issuer` / `matched` rows, runs `POST /ingest/fetch` for the matched family when known, then sets `already_covered` if the ticker is now in the store. Unknown tickers stay `search_issuer`. Amundi stays `skipped`. Empty/403/SPA live hubs remain no-op success.
+**Website Submit-ticker aliases** (same SQLite `ticker_requests` table; no auth for beta):
+
+`POST /request/ticker` body `{ ticker, note?, source? }` — ticker is uppercased.
+
+| HTTP | `status` | When |
+| --- | --- | --- |
+| **200** | `already_covered` | Distributions already exist for that ticker |
+| **201** | `queued` | New request persisted for weekly expand / issuer search |
+| **422** | — | Invalid ticker (not 2–8 `A–Z` / `0–9`) |
+
+Response includes `id`, `ticker`, `status`, and `message` (same text as `detail`). Do not block illustrate on a pending request. Never invent amounts.
+
+`GET /request/ticker?status=queued` lists pending rows for the weekly expand job.
+
+`POST /ingest/ticker-requests?mode=fixture` (weekly job / operator) picks up `queued` / `search_issuer` / `matched` rows, runs `POST /ingest/fetch` for the matched family when known, then sets `already_covered` if the ticker is now in the store. Unknown tickers stay `search_issuer` on the operator path (`/requests/tickers`) and `queued` on the Website path (`/request/ticker`). Amundi stays `skipped`. Empty/403/SPA live hubs remain no-op success.
 
 | Rank | Slug | Display name | Parser | Live HTML | Public source (verified 2026-09-07) |
 | --- | --- | --- | --- | --- | --- |

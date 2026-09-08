@@ -7,6 +7,7 @@ Unknown tickers remain ``search_issuer`` for a later issuer-source hunt.
 
 from __future__ import annotations
 
+import re
 from datetime import datetime, timezone
 
 from sqlalchemy import select
@@ -20,6 +21,7 @@ from app.services.ingest import fetch_and_ingest
 
 SKIPPED_SLUGS = frozenset({"amundi"})
 PICKUP_STATUSES = frozenset({"queued", "search_issuer", "matched"})
+WEBSITE_TICKER_RE = re.compile(r"^[A-Z][A-Z0-9]{1,7}$")
 
 
 def _now() -> datetime:
@@ -112,6 +114,61 @@ def submit_ticker_request(session: Session, body: TickerRequestIn) -> TickerRequ
     session.add(row)
     session.flush()
     return TickerRequestOut.model_validate(row)
+
+
+def submit_website_ticker_request(
+    session: Session, body: TickerRequestIn
+) -> tuple[TickerRequestOut, int]:
+    """Website Submit-ticker box: 200 already_covered / 201 queued / 422 invalid.
+
+    Unknown tickers persist as ``queued`` for weekly expand. Never invents amounts.
+    """
+    if not WEBSITE_TICKER_RE.fullmatch(body.ticker):
+        raise ValueError("invalid ticker")
+    existing = _lookup_existing(session, body.ticker)
+    slug = _resolve_slug(body, existing)
+    now = _now()
+    if existing:
+        status = "already_covered"
+        detail = (
+            f"Ticker {body.ticker} is already in the distribution store "
+            f"({existing.fund_family}). GET /distributions?ticker={body.ticker}."
+        )
+        http_status = 200
+        slug = slug or resolve_slug(existing.fund_family)
+    elif slug in SKIPPED_SLUGS:
+        status = "skipped"
+        detail = "Amundi / Pioneer is skipped. Do not invent amounts or expand this book."
+        http_status = 201
+    else:
+        status = "queued"
+        if slug:
+            detail = (
+                f"Queued {body.ticker} for weekly expand via adapter '{slug}'. "
+                "Do not invent amounts. Website must not block illustrate on this pending request."
+            )
+        else:
+            detail = (
+                f"Queued {body.ticker} for an issuer-source search. "
+                "Do not invent amounts. Website must not block illustrate on this pending request."
+            )
+        if body.note:
+            detail = f"{detail} Note: {body.note}"
+        http_status = 201
+    row = TickerRequest(
+        ticker=body.ticker,
+        fund_name=body.fund_name,
+        fund_family=body.fund_family,
+        source=body.source or "website_ui",
+        status=status,
+        adapter_slug=slug,
+        detail=detail,
+        created_at=now,
+        updated_at=now,
+    )
+    session.add(row)
+    session.flush()
+    return TickerRequestOut.model_validate(row), http_status
 
 
 def list_ticker_requests(

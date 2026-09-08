@@ -3,6 +3,8 @@ from __future__ import annotations
 from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.encoders import jsonable_encoder
+from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -43,6 +45,7 @@ from app.services.ticker_requests import (
     list_ticker_requests,
     process_ticker_requests,
     submit_ticker_request,
+    submit_website_ticker_request,
 )
 from app.services.illustrate import (
     illustrate,
@@ -198,6 +201,34 @@ def create_ticker_request(
 def get_ticker_requests(
     status: str | None = Query(
         default=None,
+        description="queued | search_issuer | matched | already_covered | skipped",
+    ),
+    limit: int = Query(default=100, ge=1, le=500),
+    session: Session = Depends(get_session),
+) -> TickerRequestListOut:
+    rows = list_ticker_requests(session, status=status, limit=limit)
+    return TickerRequestListOut(
+        items=[TickerRequestOut.model_validate(row) for row in rows],
+        total=len(rows),
+    )
+
+
+@router.post("/request/ticker", tags=["requests"])
+def website_create_ticker_request(
+    body: TickerRequestIn, session: Session = Depends(get_session)
+) -> JSONResponse:
+    """Website Submit-ticker box. 201 queued / 200 already_covered / 422 invalid."""
+    try:
+        out, status_code = submit_website_ticker_request(session, body)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return JSONResponse(status_code=status_code, content=jsonable_encoder(out))
+
+
+@router.get("/request/ticker", response_model=TickerRequestListOut, tags=["requests"])
+def website_list_ticker_requests(
+    status: str | None = Query(
+        default="queued",
         description="queued | search_issuer | matched | already_covered | skipped",
     ),
     limit: int = Query(default=100, ge=1, le=500),

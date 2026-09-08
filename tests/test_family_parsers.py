@@ -2319,6 +2319,78 @@ def test_sixth_tier_fixtures() -> None:
     )
     assert megmx.amount == Decimal("0.08706")
 
+    aqr_2024 = parse_distribution_html(
+        (ROOT / "aqr" / "2024_final_distributions.html").read_text(encoding="utf-8"),
+        source_url="fixture://aqr-2024",
+        fund_family="AQR",
+    )
+    aqgix_2024 = next(
+        r
+        for r in aqr_2024
+        if r.ticker == "AQGIX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert aqgix_2024.amount == Decimal("0.5462")
+    aueix_2024 = next(
+        r
+        for r in aqr_2024
+        if r.ticker == "AUEIX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert aueix_2024.amount == Decimal("4.3691")
+
+    causeway_2024 = parse_distribution_html(
+        (ROOT / "causeway" / "2024_final_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://causeway-2024",
+        fund_family="Causeway",
+    )
+    civix_2024 = next(
+        r
+        for r in causeway_2024
+        if r.ticker == "CIVIX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert civix_2024.amount == Decimal("1.1868")
+    cemix_st = next(
+        r
+        for r in causeway_2024
+        if r.ticker == "CEMIX" and r.estimate_type == EstimateType.short_term_capital_gains
+    )
+    assert cemix_st.amount == Decimal("0.0000")
+
+    matthews_2024 = parse_distribution_html(
+        (ROOT / "matthews_asia" / "2024_year_end_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://matthews-2024",
+        fund_family="Matthews Asia",
+    )
+    maptx_2024 = next(
+        r
+        for r in matthews_2024
+        if r.ticker == "MAPTX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert maptx_2024.amount == Decimal("0.99319")
+    mindx_2024 = next(
+        r
+        for r in matthews_2024
+        if r.ticker == "MINDX" and r.estimate_type == EstimateType.short_term_capital_gains
+    )
+    assert mindx_2024.amount == Decimal("1.41120")
+
+    matthews_2021 = parse_distribution_html(
+        (ROOT / "matthews_asia" / "2021_year_end_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://matthews-2021",
+        fund_family="Matthews Asia",
+    )
+    maptx_2021 = next(
+        r
+        for r in matthews_2021
+        if r.ticker == "MAPTX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert maptx_2021.amount == Decimal("5.35902")
+
 
 def test_seventh_tier_fixtures() -> None:
     tcw = parse_distribution_html(
@@ -2346,6 +2418,26 @@ def test_seventh_tier_fixtures() -> None:
         if r.ticker == "BRAGX" and r.estimate_type == EstimateType.long_term_capital_gains
     )
     assert bragx.amount == Decimal("17.63983")
+
+    bridgeway_2024 = parse_distribution_html(
+        (ROOT / "bridgeway" / "2024_estimated_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://bridgeway-2024",
+        fund_family="Bridgeway",
+    )
+    bragx_2024 = next(
+        r
+        for r in bridgeway_2024
+        if r.ticker == "BRAGX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert bragx_2024.amount == Decimal("2.54426")
+    brusx_st = next(
+        r
+        for r in bridgeway_2024
+        if r.ticker == "BRUSX" and r.estimate_type == EstimateType.short_term_capital_gains
+    )
+    assert brusx_st.amount == Decimal("1.13357")
 
     jensen = parse_distribution_html(
         (ROOT / "jensen" / "2025_year_end_distributions.html").read_text(
