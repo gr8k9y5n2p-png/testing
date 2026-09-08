@@ -393,15 +393,20 @@ class IllustrationComponent(BaseModel):
 
 
 class IllustrationTotals(BaseModel):
-    distribution_dollars: Decimal
+    """Money fields are null when the side is unmatched (N/A) — never invent $0.
+
+    A published $0 / 0% of NAV still serializes as ``0.00`` with ``matched=true``.
+    """
+
+    distribution_dollars: Decimal | None
     distribution_dollars_min: Decimal | None
     distribution_dollars_max: Decimal | None
-    estimated_tax: Decimal
+    estimated_tax: Decimal | None
     estimated_tax_min: Decimal | None
     estimated_tax_max: Decimal | None
-    federal_tax: Decimal
-    state_tax: Decimal
-    effective_tax_on_holding: Decimal
+    federal_tax: Decimal | None
+    state_tax: Decimal | None
+    effective_tax_on_holding: Decimal | None
 
 
 class IllustrateResponse(BaseModel):
@@ -693,17 +698,21 @@ class CompareIllustration(IllustrateResponse):
 
 
 class CompareDeltas(BaseModel):
-    """right − left (B − A). Chart Interactive Modules on effective_tax_on_holding."""
+    """right − left (B − A). Chart Interactive Modules on effective_tax_on_holding.
 
-    distribution_dollars: Decimal
+    Money fields are null when either side is unmatched (N/A). Published zeros
+    still produce ``0.00`` deltas when both sides matched.
+    """
+
+    distribution_dollars: Decimal | None
     distribution_dollars_min: Decimal | None = None
     distribution_dollars_max: Decimal | None = None
-    estimated_tax: Decimal
+    estimated_tax: Decimal | None
     estimated_tax_min: Decimal | None = None
     estimated_tax_max: Decimal | None = None
-    federal_tax: Decimal
-    state_tax: Decimal
-    effective_tax_on_holding: Decimal
+    federal_tax: Decimal | None
+    state_tax: Decimal | None
+    effective_tax_on_holding: Decimal | None
     effective_tax_on_holding_min: Decimal | None = None
     effective_tax_on_holding_max: Decimal | None = None
 

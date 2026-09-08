@@ -449,7 +449,7 @@ curl -s -X POST http://127.0.0.1:8000/illustrate/compare \
   }' | jq '{mode, left: .left.label, right: .right.label, deltas, notes}'
 ```
 
-A missing side is **not** a 404. That illustration is empty (zeros, `matched: false`) and a note is appended so the chart still has a period row.
+A missing side is **not** a 404. That illustration is empty (`matched: false`, tax/distribution totals **null** / N/A — not `"0.00"`) and a note is appended so the chart still has a period row. Period deltas are also null when either side is unmatched. A published `$0` / `0%` of NAV stays `"0.00"` with `matched: true`.
 
 Top-level or per-side `nav_per_share` / `shares` apply the same way as single-holding illustrate.
 

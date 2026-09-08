@@ -235,7 +235,13 @@ def test_compare_per_side_holding_and_missing_rows(client: TestClient) -> None:
     assert Decimal(body["left"]["holding_dollars"]) == Decimal("500000.00")
     assert Decimal(body["left"]["totals"]["distribution_dollars"]) == Decimal("10000.00")
     assert body["right"]["matched"] is False
-    assert Decimal(body["right"]["totals"]["estimated_tax"]) == Decimal("0.00")
+    assert body["right"]["totals"]["estimated_tax"] is None
+    assert body["right"]["totals"]["distribution_dollars"] is None
+    assert body["right"]["totals"]["federal_tax"] is None
+    assert body["right"]["totals"]["state_tax"] is None
+    assert body["right"]["totals"]["effective_tax_on_holding"] is None
+    assert body["deltas"]["estimated_tax"] is None
+    assert body["deltas"]["distribution_dollars"] is None
     assert any("No distribution" in note for note in body["notes"])
 
 
@@ -282,8 +288,16 @@ def test_compare_empty_tax_rates_and_missing_side(client: TestClient) -> None:
     period = body["periods"][0]
     assert period["left"]["matched"] is True
     assert period["right"]["matched"] is False
-    assert Decimal(period["right"]["totals"]["estimated_tax"]) == Decimal("0.00")
-    assert Decimal(period["deltas"]["distribution_dollars"]) == Decimal("-40000.00")
+    assert period["right"]["totals"]["estimated_tax"] is None
+    assert period["right"]["totals"]["distribution_dollars"] is None
+    assert period["right"]["totals"]["federal_tax"] is None
+    assert period["right"]["totals"]["state_tax"] is None
+    assert period["right"]["totals"]["effective_tax_on_holding"] is None
+    assert period["deltas"]["estimated_tax"] is None
+    assert period["deltas"]["distribution_dollars"] is None
+    assert period["deltas"]["federal_tax"] is None
+    assert period["deltas"]["state_tax"] is None
+    assert period["deltas"]["effective_tax_on_holding"] is None
     assert any("ZZNOPE" in note or "No distribution" in note for note in body["notes"])
     assert Decimal(period["left"]["tax_rates"]["long_term_capital_gains"]) == Decimal("0.20")
 
@@ -399,3 +413,87 @@ def test_compare_validation(client: TestClient) -> None:
         },
     )
     assert yoy_one_period.status_code == 422
+
+
+def test_compare_missing_year_is_null_not_zero(client: TestClient) -> None:
+    """No row for that fund/year → N/A (null totals), never a invented $0 bar."""
+    _ingest_compare_book(client)
+    response = client.post(
+        "/illustrate/compare",
+        json={
+            "mode": "yoy",
+            "holding_dollars": 100000,
+            "tax_rates": {},
+            "selectors": {"fund_identifier": "amcap-fund"},
+            "periods": [{"year": 2019}, {"year": 2024}],
+        },
+    )
+    assert response.status_code == 200, response.text
+    period = response.json()["periods"][0]
+    assert period["left"]["matched"] is False
+    assert period["right"]["matched"] is True
+    totals = period["left"]["totals"]
+    assert totals["estimated_tax"] is None
+    assert totals["distribution_dollars"] is None
+    assert totals["federal_tax"] is None
+    assert totals["state_tax"] is None
+    assert totals["effective_tax_on_holding"] is None
+    assert period["deltas"]["estimated_tax"] is None
+    assert period["deltas"]["distribution_dollars"] is None
+    assert period["deltas"]["effective_tax_on_holding"] is None
+    assert any("2019" in note and "No distribution" in note for note in response.json()["notes"])
+
+
+def test_compare_published_zero_is_matched_zero(client: TestClient) -> None:
+    """Manager-published $0 / 0% NAV is a real bar: matched=true, totals 0.00."""
+    seeded = client.post(
+        "/ingest/distributions",
+        json={
+            "records": [
+                {
+                    "fund_family": "Test Family",
+                    "fund_name": "Published Zero Fund",
+                    "ticker": "ZZERO",
+                    "estimate_type": "long_term_capital_gains",
+                    "amount": "0",
+                    "amount_unit": "percent_of_nav",
+                    "as_of": "2024-12-31",
+                    "publication_stage": "final",
+                    "source_url": "https://example.invalid/zzero-2024",
+                },
+                {
+                    "fund_family": "Test Family",
+                    "fund_name": "Published Zero Fund",
+                    "ticker": "ZZERO",
+                    "estimate_type": "long_term_capital_gains",
+                    "amount": "0.00",
+                    "amount_unit": "per_share",
+                    "as_of": "2025-12-31",
+                    "publication_stage": "final",
+                    "source_url": "https://example.invalid/zzero-2025",
+                },
+            ]
+        },
+    )
+    assert seeded.status_code == 200, seeded.text
+    response = client.post(
+        "/illustrate/compare",
+        json={
+            "mode": "yoy",
+            "holding_dollars": 100000,
+            "nav_per_share": 10,
+            "tax_rates": {},
+            "selectors": {"ticker": "ZZERO"},
+            "periods": [{"year": 2024}, {"year": 2025}],
+        },
+    )
+    assert response.status_code == 200, response.text
+    period = response.json()["periods"][0]
+    assert period["left"]["matched"] is True
+    assert period["right"]["matched"] is True
+    assert Decimal(period["left"]["totals"]["estimated_tax"]) == Decimal("0.00")
+    assert Decimal(period["left"]["totals"]["distribution_dollars"]) == Decimal("0.00")
+    assert Decimal(period["right"]["totals"]["estimated_tax"]) == Decimal("0.00")
+    assert Decimal(period["right"]["totals"]["distribution_dollars"]) == Decimal("0.00")
+    assert Decimal(period["deltas"]["estimated_tax"]) == Decimal("0.00")
+    assert Decimal(period["deltas"]["distribution_dollars"]) == Decimal("0.00")

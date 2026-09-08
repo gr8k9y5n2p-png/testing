@@ -637,12 +637,17 @@ def _portfolio_pair_deltas(
     current: PortfolioIllustrateResponse, proposed: PortfolioIllustrateResponse
 ) -> PortfolioCompareDeltas:
     return PortfolioCompareDeltas(
-        estimated_tax=_money(proposed.totals.estimated_tax - current.totals.estimated_tax),
+        estimated_tax=_money(
+            (proposed.totals.estimated_tax or Decimal("0"))
+            - (current.totals.estimated_tax or Decimal("0"))
+        ),
         distribution_dollars=_money(
-            proposed.totals.distribution_dollars - current.totals.distribution_dollars
+            (proposed.totals.distribution_dollars or Decimal("0"))
+            - (current.totals.distribution_dollars or Decimal("0"))
         ),
         effective_tax_on_holding=_rate(
-            proposed.totals.effective_tax_on_holding - current.totals.effective_tax_on_holding
+            (proposed.totals.effective_tax_on_holding or Decimal("0"))
+            - (current.totals.effective_tax_on_holding or Decimal("0"))
         ),
         coverage_pct=_rate(proposed.coverage.coverage_pct - current.coverage.coverage_pct),
         estimated_tax_min=_delta_optional(proposed.totals.estimated_tax_min, current.totals.estimated_tax_min),
@@ -723,12 +728,12 @@ def _portfolio_compare_summary(
     proposed_book = proposed.coverage.dollars_total
     common = SUMMARY_HOLDING
     latest_tax = _money(
-        _scale_to_book(proposed.totals.estimated_tax, proposed_book, common)
-        - _scale_to_book(current.totals.estimated_tax, current_book, common)
+        _scale_to_book(proposed.totals.estimated_tax or Decimal("0"), proposed_book, common)
+        - _scale_to_book(current.totals.estimated_tax or Decimal("0"), current_book, common)
     )
     latest_dist = _money(
-        _scale_to_book(proposed.totals.distribution_dollars, proposed_book, common)
-        - _scale_to_book(current.totals.distribution_dollars, current_book, common)
+        _scale_to_book(proposed.totals.distribution_dollars or Decimal("0"), proposed_book, common)
+        - _scale_to_book(current.totals.distribution_dollars or Decimal("0"), current_book, common)
     )
     if period_outs:
         tax_sum = Decimal("0")
@@ -824,7 +829,8 @@ def illustrate_portfolio_compare(
 
 COMPARE_NOTES = [
     "Deltas are right − left (B − A). Interactive Modules charts deltas.effective_tax_on_holding.",
-    "A missing side returns an empty illustration (zeros) and a note; the compare itself is not 404.",
+    "A missing side returns matched=false with null tax/distribution totals (N/A), not $0, plus a note; the compare itself is not 404.",
+    "Published $0 / 0% of NAV stays 0.00 with matched=true.",
     "summary dollar fields are scaled linearly to $10,000 (value × 10000 / holding_dollars).",
 ]
 
@@ -834,14 +840,31 @@ UPCOMING_ESTIMATE_STAGES = {
 }
 
 
+def _unmatched_totals() -> IllustrationTotals:
+    """N/A totals: no row / can't price. Do not invent $0."""
+    return IllustrationTotals(
+        distribution_dollars=None,
+        distribution_dollars_min=None,
+        distribution_dollars_max=None,
+        estimated_tax=None,
+        estimated_tax_min=None,
+        estimated_tax_max=None,
+        federal_tax=None,
+        state_tax=None,
+        effective_tax_on_holding=None,
+    )
+
+
 def _empty_illustration(body: IllustrateRequest, *, reason: str) -> IllustrateResponse:
-    return _response(
-        holding=body.holding_dollars,
-        shares=body.shares,
+    return IllustrateResponse(
+        holding_dollars=_money(body.holding_dollars),
+        shares=_money(body.shares) if body.shares is not None else None,
         nav_per_share=body.nav_per_share,
-        rates=body.tax_rates,
-        combine=body.combine_state_with_federal,
+        tax_rates=body.tax_rates,
+        combine_state_with_federal=body.combine_state_with_federal,
+        rate_mapping=dict(RATE_MAPPING),
         components=[],
+        totals=_unmatched_totals(),
         notes=[reason],
     )
 
@@ -923,17 +946,35 @@ def _delta_value(right: Decimal | None, left: Decimal | None, *, money: bool) ->
 
 def _range_delta(
     right_bound: Decimal | None,
-    right_point: Decimal,
+    right_point: Decimal | None,
     left_bound: Decimal | None,
-    left_point: Decimal,
+    left_point: Decimal | None,
     *,
     money: bool,
 ) -> Decimal | None:
+    if right_point is None or left_point is None:
+        return None
     if right_bound is None and left_bound is None:
         return None
     right = right_bound if right_bound is not None else right_point
     left = left_bound if left_bound is not None else left_point
     return _delta_value(right, left, money=money)
+
+
+def _unmatched_deltas() -> CompareDeltas:
+    return CompareDeltas(
+        distribution_dollars=None,
+        distribution_dollars_min=None,
+        distribution_dollars_max=None,
+        estimated_tax=None,
+        estimated_tax_min=None,
+        estimated_tax_max=None,
+        federal_tax=None,
+        state_tax=None,
+        effective_tax_on_holding=None,
+        effective_tax_on_holding_min=None,
+        effective_tax_on_holding_max=None,
+    )
 
 
 def _effective_from_tax(tax: Decimal | None, holding: Decimal) -> Decimal | None:
@@ -943,6 +984,19 @@ def _effective_from_tax(tax: Decimal | None, holding: Decimal) -> Decimal | None
 
 
 def compare_deltas(right: IllustrationTotals, left: IllustrationTotals, holding: Decimal) -> CompareDeltas:
+    if (
+        right.estimated_tax is None
+        or left.estimated_tax is None
+        or right.distribution_dollars is None
+        or left.distribution_dollars is None
+        or right.federal_tax is None
+        or left.federal_tax is None
+        or right.state_tax is None
+        or left.state_tax is None
+        or right.effective_tax_on_holding is None
+        or left.effective_tax_on_holding is None
+    ):
+        return _unmatched_deltas()
     return CompareDeltas(
         distribution_dollars=_delta_value(right.distribution_dollars, left.distribution_dollars, money=True),
         distribution_dollars_min=_range_delta(
@@ -1178,10 +1232,13 @@ def build_compare_summary(
     notes: list[str],
 ) -> CompareSummary:
     count = len(period_outs)
-    tax_delta = sum((period.deltas.estimated_tax for period in period_outs), Decimal("0"))
-    dist_delta = sum((period.deltas.distribution_dollars for period in period_outs), Decimal("0"))
+    tax_delta = sum((period.deltas.estimated_tax or Decimal("0") for period in period_outs), Decimal("0"))
+    dist_delta = sum((period.deltas.distribution_dollars or Decimal("0") for period in period_outs), Decimal("0"))
     if count:
-        drag = sum((period.deltas.effective_tax_on_holding for period in period_outs), Decimal("0")) / Decimal(count)
+        drag = sum(
+            (period.deltas.effective_tax_on_holding or Decimal("0") for period in period_outs),
+            Decimal("0"),
+        ) / Decimal(count)
     else:
         drag = Decimal("0")
     return CompareSummary(
