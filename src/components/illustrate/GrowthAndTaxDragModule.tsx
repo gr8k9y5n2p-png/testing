@@ -32,8 +32,6 @@ import {
   growthFundKey,
   mergeSeedFunds,
   removeGrowthFund,
-  upcomingPreferSide,
-  upcomingRowForSelectedFunds,
   type GrowthFundInput,
 } from "@/lib/illustrate/growth-selection";
 
@@ -292,20 +290,10 @@ export function GrowthAndTaxDragModule({
   );
 
   const upcomingSummary = useMemo(() => {
-    const row = upcomingRowForSelectedFunds(
-      visibleRows?.map((item) => ({
-        ticker: item.performance.fund_ticker,
-        tax: item.tax,
-        taxSide: item.taxSide,
-      })),
-      selected,
-    );
+    const row = visibleRows?.find((item) => item.tax?.summary.upcoming_taxable_distribution);
     if (!row?.tax) return null;
-    return toUpcomingSummary(
-      row.tax.summary.upcoming_taxable_distribution,
-      upcomingPreferSide(row.taxSide),
-    );
-  }, [selected, visibleRows]);
+    return toUpcomingSummary(row.tax.summary.upcoming_taxable_distribution, "left");
+  }, [visibleRows]);
 
   return (
     <article

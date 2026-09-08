@@ -1,5 +1,4 @@
 import { MAX_GROWTH_FUNDS } from "../charts/series-colors.ts";
-import type { CompareResponse } from "./compare-types.ts";
 
 export type GrowthFundInput = {
   ticker: string;
@@ -48,36 +47,4 @@ export function mergeSeedFunds(
 
 export function isRemovableGrowthSeries(id: string, dashed?: boolean): boolean {
   return !dashed && !id.startsWith("bench-");
-}
-
-export type GrowthUpcomingRow = {
-  ticker: string;
-  tax: CompareResponse | null;
-  taxSide: "left" | "right" | "auto";
-};
-
-/**
- * First remaining fund that already has `upcoming_taxable_distribution`.
- * Removed tickers are skipped so that fund’s Upcoming chip drops immediately.
- * Historical tax-drag periods are never treated as upcoming.
- */
-export function upcomingRowForSelectedFunds(
-  rows: GrowthUpcomingRow[] | null | undefined,
-  selected: GrowthFundInput[],
-): GrowthUpcomingRow | null {
-  if (!rows?.length || selected.length === 0) return null;
-  const keep = new Set(selected.map((fund) => growthFundKey(fund).ticker));
-  return (
-    rows.find(
-      (item) =>
-        keep.has(normalizeGrowthTicker(item.ticker)) &&
-        item.tax?.summary.upcoming_taxable_distribution,
-    ) ?? null
-  );
-}
-
-export function upcomingPreferSide(
-  taxSide: GrowthUpcomingRow["taxSide"],
-): "left" | "right" | "either" {
-  return taxSide === "left" || taxSide === "right" ? taxSide : "either";
 }
