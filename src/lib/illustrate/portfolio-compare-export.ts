@@ -1,5 +1,9 @@
 import { formatOptionalDate, formatUsd } from "@/lib/format";
 import {
+  PAID_HISTORY_EMPTY,
+  UPCOMING_UNAVAILABLE_HEADLINE,
+} from "@/lib/illustrate/portfolio-compare-copy";
+import {
   formatMoreLessTax,
   formatStageLabel,
   formatTaxDragPct,
@@ -148,7 +152,11 @@ function sideHtml(side: PortfolioCompareExportSide): string {
     <section class="col">
       <h2>${escapeHtml(side.label)}</h2>
       <p class="metric">Tax drag <strong>${escapeHtml(side.taxDragLabel)}</strong></p>
-      <p class="metric">Total tax impact <strong>${escapeHtml(money(side.totalUpcomingTax))}</strong></p>
+      <p class="metric">Total tax impact <strong>${escapeHtml(
+        side.upcoming.length
+          ? money(side.totalUpcomingTax)
+          : UPCOMING_UNAVAILABLE_HEADLINE,
+      )}</strong></p>
       <h3>Holdings</h3>
       <table>
         <thead><tr><th>Ticker</th><th>Fund</th><th>Weight</th><th>Dollars</th></tr></thead>
@@ -157,12 +165,12 @@ function sideHtml(side: PortfolioCompareExportSide): string {
       <h3>Upcoming / announced</h3>
       <table>
         <thead><tr><th>Ticker</th><th>Est. dist $</th><th>Est. tax</th><th>Announced</th><th>Record</th><th>Ex-div</th><th>Payable</th><th>Stage</th></tr></thead>
-        <tbody>${upcoming || `<tr><td colspan="8" class="muted">No upcoming estimates.</td></tr>`}</tbody>
+        <tbody>${upcoming || `<tr><td colspan="8" class="muted">${UPCOMING_UNAVAILABLE_HEADLINE}</td></tr>`}</tbody>
       </table>
       <h3>Paid history</h3>
       <table>
         <thead><tr><th>Ticker</th><th>Est. dist $</th><th>Est. tax</th><th>Announced</th><th>Record</th><th>Ex-div</th><th>Payable</th><th>Stage</th></tr></thead>
-        <tbody>${paid || `<tr><td colspan="8" class="muted">No paid distribution history.</td></tr>`}</tbody>
+        <tbody>${paid || `<tr><td colspan="8" class="muted">${PAID_HISTORY_EMPTY}</td></tr>`}</tbody>
       </table>
     </section>`;
 }

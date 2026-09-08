@@ -98,21 +98,24 @@ export function colorForTicker(ticker: string, used = new Set<string>()): string
   return TICKER_PALETTE[hash % TICKER_PALETTE.length];
 }
 
-function taxImpactDollars(holding: PortfolioHoldingOut): number {
-  return num(upcomingFromHolding(holding)?.estimated_tax) ?? 0;
+function taxImpactDollars(holding: PortfolioHoldingOut): number | null {
+  const upcoming = upcomingFromHolding(holding);
+  if (!upcoming) return null;
+  return num(upcoming.estimated_tax) ?? 0;
 }
 
-/** One bar per holding; scale is relative to peers in this allocation only. */
+/** One bar per holding with unpaid announced tax. Skip paid-only so $0 is not a miss. */
 export function taxImpactBarsForSide(allocation: PortfolioAllocationOut): TaxImpactBar[] {
   const used = new Set<string>();
   const items = allocation.holdings
     .map((holding) => {
       const ticker = (holding.ticker || holding.fund_identifier || "").trim().toUpperCase();
-      if (!ticker) return null;
+      const taxDollars = taxImpactDollars(holding);
+      if (!ticker || taxDollars == null) return null;
       return {
         ticker,
         fundName: holding.fund_name || ticker,
-        taxDollars: taxImpactDollars(holding),
+        taxDollars,
         color: colorForTicker(ticker, used),
       };
     })

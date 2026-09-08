@@ -1,19 +1,28 @@
 import { TickerHistoryLink } from "@/components/illustrate/TickerHistoryLink";
 import { formatUsd } from "@/lib/format";
+import {
+  UPCOMING_UNAVAILABLE_DETAIL,
+  UPCOMING_UNAVAILABLE_HEADLINE,
+} from "@/lib/illustrate/portfolio-compare-copy";
 import type { TaxImpactBar } from "@/lib/illustrate/portfolio-compare-map";
 
 export function TaxImpactChart({
   bars,
   headingId,
   totalTax,
+  hasUpcoming = true,
   className = "",
 }: {
   bars: TaxImpactBar[];
   headingId: string;
   /** Sum of this book's holdings[].upcoming.estimated_tax. */
   totalTax: number;
+  /** False when there are no unpaid announced rows — do not render $0. */
+  hasUpcoming?: boolean;
   className?: string;
 }) {
+  const unavailable = !hasUpcoming;
+
   return (
     <section
       aria-labelledby={headingId}
@@ -23,9 +32,18 @@ export function TaxImpactChart({
         <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-faint">
           Total tax impact
         </p>
-        <p className="mt-1 font-serif text-[28px] leading-tight tracking-tight text-ink tabular-nums">
-          {formatUsd(Math.round(totalTax), 0)}
-        </p>
+        {unavailable ? (
+          <>
+            <p className="mt-1 font-serif text-[22px] leading-tight tracking-tight text-ink">
+              {UPCOMING_UNAVAILABLE_HEADLINE}
+            </p>
+            <p className="mt-1 text-[11px] text-muted">{UPCOMING_UNAVAILABLE_DETAIL}</p>
+          </>
+        ) : (
+          <p className="mt-1 font-serif text-[28px] leading-tight tracking-tight text-ink tabular-nums">
+            {formatUsd(Math.round(totalTax), 0)}
+          </p>
+        )}
       </div>
       <header className="mb-3 flex flex-wrap items-end justify-between gap-2">
         <h2
@@ -34,10 +52,15 @@ export function TaxImpactChart({
         >
           Est. tax on upcoming
         </h2>
-        <p className="text-[10px] text-muted">$ per fund · allocated</p>
+        <p className="text-[10px] text-muted">unpaid announced · not paid history</p>
       </header>
 
-      {bars.length === 0 ? (
+      {unavailable ? (
+        <div
+          className="min-h-28 rounded-lg border border-dashed border-line bg-paper"
+          aria-hidden
+        />
+      ) : bars.length === 0 ? (
         <p className="py-6 text-center text-sm text-muted">
           No holdings to chart.
         </p>
