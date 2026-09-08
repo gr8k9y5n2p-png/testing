@@ -24,6 +24,7 @@ Vanguard is the first-choice ICI book: official Primary Layout PDFs on the advis
 - `python -m app.cli refresh` for weekly all-family ingest (`REFRESH_MODE=auto`: live then fixture)
 - Idempotent upserts on `(fund_family, fund identifier, share class, estimate type, as_of, ex-date)`
 - Search API with filters, text search, and pagination
+- `GET /funds` — paginated **unique funds** from the stored book (`limit`/`offset`/`total`) for Website Search / Sample Estimates. Does not invent funds.
 - `POST /illustrate` — server-side tax-impact math for a dollar holding (Website Engineering owns the UI)
 - `POST /illustrate/portfolio` — book-level review with coverage % and explicit gaps
 - `POST /illustrate/portfolio/compare` — Interactive Modules Current vs Proposed Allocation (single snapshot or YoY `periods[]`)
@@ -134,9 +135,15 @@ curl -s -X POST http://127.0.0.1:8000/ingest/distributions \
   -H 'Content-Type: application/json' \
   -d @fixtures/american_funds/partner_feed.json | jq '{created,updated}'
 
-# Search
+# Search — unique funds (Website Sample Estimates / Search table)
+curl -s 'http://127.0.0.1:8000/funds?limit=50&offset=0' | jq
+curl -s 'http://127.0.0.1:8000/funds?q=AMCAP&limit=50&offset=0' | jq
+curl -s 'http://127.0.0.1:8000/funds?fund_family=Vanguard&limit=50&offset=0' | jq
+
+# Search — distribution rows (limit/offset aliases map to page_size/page)
 curl -s 'http://127.0.0.1:8000/distributions?q=AMCAP&estimate_type=long_term_capital_gains' | jq
 curl -s 'http://127.0.0.1:8000/distributions?ticker=CGHM' | jq
+curl -s 'http://127.0.0.1:8000/distributions?limit=50&offset=0' | jq
 curl -s 'http://127.0.0.1:8000/distributions?ex_date_from=2026-06-01&ex_date_to=2026-06-30' | jq
 # Multi-year / estimate-vs-actual (same fund_identifier, different as_of + publication_stage)
 curl -s 'http://127.0.0.1:8000/distributions?fund_identifier=amcap-fund&as_of_from=2024-01-01&as_of_to=2024-12-31' | jq
@@ -760,6 +767,40 @@ Goal: for **existing US-domiciled adapters**, ingest every **mutual fund and ETF
 History packs focus on **US-domiciled** fund firms. Prefer US managers when choosing which gaps to fill. **Skip Amundi / Pioneer** on the history ladder — do not add prior years; leave the existing 2025 fixture as-is. Ranks 21–40 in this pass are US books (John Hancock / Manulife US Investments; Macquarie Delaware Funds US book; GMO US Trust only — skip GMO Australia).
 
 The upsert key includes `as_of` and `ex_date`, so a September preliminary, a December update, and a January final are **separate rows**. Do not collapse them.
+
+### Website Search: unique funds (`GET /funds`)
+
+`GET /distributions` returns **distribution rows** (many per fund). Website Search / Sample Estimates should list **unique funds** instead:
+
+```
+GET /funds?limit=50&offset=0
+GET /funds?q=AMCAP&limit=50&offset=0
+GET /funds?fund_family=Vanguard&limit=50&offset=0
+```
+
+| Query | Default | Notes |
+| --- | --- | --- |
+| `limit` | 50 | Max 200 |
+| `offset` | 0 | Server-side skip |
+| `q` | — | Ticker / name / family / identifier (same alias rules as `/distributions`) |
+| `fund_family` | — | Optional family filter |
+
+Response: `{ "items", "limit", "offset", "total" }`. Each item is a stored fund only (never invented):
+
+```json
+{
+  "ticker": "AMCPX",
+  "fund_name": "AMCAP Fund",
+  "fund_family": "American Funds",
+  "fund_identifier": "amcap-fund",
+  "latest_as_of": "2025-12-15",
+  "has_estimate": true
+}
+```
+
+`ticker` is null when the stored book is name-keyed and no Class A / Investor A alias exists. `has_estimate` is true when any stored row is `preliminary_estimate` or `updated_estimate`. `total` is the unique-fund count, not the distribution-row count.
+
+`GET /distributions` still uses `page` / `page_size` / `total`. Website may send `limit` / `offset` as aliases (`limit` → `page_size`, `offset` → `page = floor(offset / page_size) + 1`). The response keeps `page` / `page_size`.
 
 `GET /distributions` already supports `as_of_from` / `as_of_to`, `publication_stage`, and `fund_identifier` (exact slug or ticker identity).
 

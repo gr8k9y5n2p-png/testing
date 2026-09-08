@@ -121,6 +121,24 @@ class DistributionListOut(BaseModel):
     total: int
 
 
+class FundOut(BaseModel):
+    """One unique fund already stored in the distribution book. Never invented."""
+
+    ticker: str | None
+    fund_name: str
+    fund_family: str
+    fund_identifier: str
+    latest_as_of: date | None = None
+    has_estimate: bool = False
+
+
+class FundListOut(BaseModel):
+    items: list[FundOut]
+    limit: int
+    offset: int
+    total: int
+
+
 class IngestItemOut(BaseModel):
     id: str
     action: str

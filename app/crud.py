@@ -2,13 +2,30 @@ from __future__ import annotations
 
 from datetime import date, datetime, timezone
 from decimal import Decimal
+from typing import NamedTuple
 
-from sqlalchemy import Select, func, or_, select
+from sqlalchemy import Select, case, func, or_, select
 from sqlalchemy.orm import Session
 
-from app.models import CoverageGap, DistributionEstimate, IngestRun
+from app.models import CoverageGap, DistributionEstimate, IngestRun, PublicationStage
 from app.aliases import alias_fund_identifier, enrich_class_a_fields
 from app.schemas import DistributionIn, fund_identifier, make_upsert_key
+
+_ESTIMATE_STAGES = (
+    PublicationStage.preliminary_estimate.value,
+    PublicationStage.updated_estimate.value,
+)
+
+
+class FundSummary(NamedTuple):
+    """One unique fund from the distribution store. Never invented."""
+
+    fund_identifier: str
+    fund_name: str
+    fund_family: str
+    ticker: str | None
+    latest_as_of: date | None
+    has_estimate: bool
 
 
 def _midpoint(record: DistributionIn) -> Decimal | None:
@@ -225,6 +242,88 @@ def search_distributions(
         ).all()
     )
     return rows, int(total)
+
+
+def resolve_page_from_limit_offset(
+    *,
+    page: int,
+    page_size: int,
+    limit: int | None,
+    offset: int | None,
+) -> tuple[int, int]:
+    """Map Website ``limit``/``offset`` onto existing ``page``/``page_size``.
+
+    ``limit`` overrides ``page_size`` when sent. ``offset`` becomes
+    ``page = floor(offset / page_size) + 1``. Existing ``page``/``page_size``
+    stay valid when the aliases are omitted.
+    """
+    resolved_size = page_size if limit is None else limit
+    resolved_size = min(max(int(resolved_size), 1), 200)
+    if offset is None:
+        resolved_page = max(int(page), 1)
+    else:
+        resolved_page = (max(int(offset), 0) // resolved_size) + 1
+    return resolved_page, resolved_size
+
+
+def search_funds(
+    session: Session,
+    *,
+    q: str | None = None,
+    fund_family: str | None = None,
+    limit: int = 50,
+    offset: int = 0,
+) -> tuple[list[FundSummary], int]:
+    """Unique funds already stored as distribution rows. Never invents funds."""
+    limit = min(max(int(limit), 1), 200)
+    offset = max(int(offset), 0)
+    filtered = _filter_stmt(q=q, fund_family=fund_family).subquery()
+    total = session.scalar(select(func.count(func.distinct(filtered.c.fund_identifier)))) or 0
+
+    row_number = func.row_number().over(
+        partition_by=filtered.c.fund_identifier,
+        order_by=(
+            filtered.c.as_of.desc().nulls_last(),
+            filtered.c.ingested_at.desc(),
+            filtered.c.id.desc(),
+        ),
+    )
+    ranked = select(filtered, row_number.label("rn")).subquery()
+    aggregates = (
+        select(
+            filtered.c.fund_identifier,
+            func.max(filtered.c.as_of).label("latest_as_of"),
+            func.max(
+                case((filtered.c.publication_stage.in_(_ESTIMATE_STAGES), 1), else_=0)
+            ).label("has_estimate"),
+        )
+        .group_by(filtered.c.fund_identifier)
+        .subquery()
+    )
+    rows = session.execute(
+        select(ranked, aggregates.c.latest_as_of, aggregates.c.has_estimate)
+        .join(aggregates, aggregates.c.fund_identifier == ranked.c.fund_identifier)
+        .where(ranked.c.rn == 1)
+        .order_by(
+            ranked.c.fund_name.asc(),
+            func.coalesce(ranked.c.ticker, "").asc(),
+            ranked.c.fund_identifier.asc(),
+        )
+        .offset(offset)
+        .limit(limit)
+    ).all()
+    items = [
+        FundSummary(
+            fund_identifier=row.fund_identifier,
+            fund_name=row.fund_name,
+            fund_family=row.fund_family,
+            ticker=row.ticker,
+            latest_as_of=row.latest_as_of,
+            has_estimate=bool(row.has_estimate),
+        )
+        for row in rows
+    ]
+    return items, int(total)
 
 
 def list_matching(

@@ -10,7 +10,13 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.aliases import display_cusip, display_ticker
-from app.crud import get_by_id, list_coverage_gaps, search_distributions
+from app.crud import (
+    get_by_id,
+    list_coverage_gaps,
+    resolve_page_from_limit_offset,
+    search_distributions,
+    search_funds,
+)
 from app.db import get_session
 from app.schemas import (
     CoverageGapIn,
@@ -19,6 +25,8 @@ from app.schemas import (
     DistributionIn,
     DistributionListOut,
     DistributionOut,
+    FundListOut,
+    FundOut,
     FetchRequest,
     FundFamilyOut,
     HealthOut,
@@ -120,9 +128,23 @@ def list_distributions(
     ex_date_to: date | None = None,
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=200),
+    limit: int | None = Query(
+        default=None,
+        ge=1,
+        le=200,
+        description="Website alias of page_size. When set, overrides page_size.",
+    ),
+    offset: int | None = Query(
+        default=None,
+        ge=0,
+        description="Website alias of (page-1)*page_size. When set, overrides page.",
+    ),
     include_raw: bool = False,
     session: Session = Depends(get_session),
 ) -> DistributionListOut:
+    page, page_size = resolve_page_from_limit_offset(
+        page=page, page_size=page_size, limit=limit, offset=offset
+    )
     rows, total = search_distributions(
         session,
         q=q,
@@ -148,6 +170,30 @@ def list_distributions(
             item.raw_payload = None
         items.append(item)
     return DistributionListOut(items=items, page=page, page_size=page_size, total=total)
+
+
+@router.get("/funds", response_model=FundListOut, tags=["search"])
+def list_funds(
+    q: str | None = Query(default=None, description="Search ticker, fund name, family, or identifier"),
+    fund_family: str | None = None,
+    limit: int = Query(default=50, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
+    session: Session = Depends(get_session),
+) -> FundListOut:
+    """Unique funds already in the distribution store. For Website Search / Sample Estimates."""
+    rows, total = search_funds(session, q=q, fund_family=fund_family, limit=limit, offset=offset)
+    items = [
+        FundOut(
+            ticker=display_ticker(row.ticker, row.fund_identifier),
+            fund_name=row.fund_name,
+            fund_family=row.fund_family,
+            fund_identifier=row.fund_identifier,
+            latest_as_of=row.latest_as_of,
+            has_estimate=row.has_estimate,
+        )
+        for row in rows
+    ]
+    return FundListOut(items=items, limit=limit, offset=offset, total=total)
 
 
 @router.get("/distributions/{distribution_id}", response_model=DistributionOut, tags=["search"])
