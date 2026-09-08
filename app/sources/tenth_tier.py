@@ -201,7 +201,10 @@ class MadisonSource(HtmlTableSource):
         "Dividend Income Class A MADAX LT $2.55489945; "
         "Mid Cap Class Y GTSGX ST $0.03280265 / LT $0.45061810). "
         "Amounts are based on gains through October 31. "
-        "The live table is fund-level with no ticker column; fixture attaches public Class A / Y identifiers."
+        "The live table is fund-level with no ticker column; fixture attaches public "
+        "Class A / Y identifiers. Official ETF tickers from "
+        "https://madisonfunds.com/etfs/ (MAGG LT $0.00386; MSTI LT $0.05541). "
+        "All-None Conservative Allocation / Core Bond / Covered Call omitted."
     )
     live_limitations = (
         "Public HTML is fund-name / ST / LT only (no ticker column). Fixture fallback."
@@ -325,12 +328,25 @@ class RiverparkSource(HtmlTableSource):
         "(Large Growth Institutional RPXIX LT $2.6688; "
         "Wedgewood Institutional RWGIX ST $0.0068 / LT $0.5577; "
         "Next Century Large Growth Institutional RPNLX LT $0.7953). "
-        "Capital-gain record 12/16/2025; ex 12/17/2025; pay 12/18/2025."
+        "Capital-gain record 12/16/2025; ex 12/17/2025; pay 12/18/2025. "
+        "Institutional + Retail paying rows only. All-dash Long/Short, Short Term "
+        "High Yield, Floating Rate CMBS, and Next Century Growth omitted."
     )
-    live_limitations = "Year-end book is PDF. Fixture transcribes public Institutional rows."
+    live_limitations = (
+        "Year-end book is PDF. Fixture transcribes public Institutional + Retail paying rows. "
+        "Weekly walk hits the how-to-invest hub (empty/403/PDF-bytes = no-op success)."
+    )
 
     def pages(self) -> list[PageSpec]:
         return [
+            PageSpec(
+                name="how_to_invest_hub",
+                url="https://www.riverparkfunds.com/how-to-invest.html",
+                fixture="how_to_invest_hub.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
             PageSpec(
                 name="2025_final_distributions",
                 url=(

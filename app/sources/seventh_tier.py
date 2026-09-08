@@ -168,7 +168,9 @@ class DiamondHillSource(HtmlTableSource):
         "(e.g. Small Cap DHSCX LT $1.393 / 5.46% of NAV; Mid Cap DHPAX LT $2.698 / "
         "14.46%; Large Cap DHLAX ST $0.001 / LT $1.829 / 5.45%). "
         "Record 12/11/2025; ex 12/12/2025; pay 12/15/2025. "
-        "The PDF is fund-level; tickers are public Investor-class identifiers. "
+        "The PDF is fund-level; Investor tickers attached only where previously "
+        "identified (DHSCX / DHPAX / DHLAX); remaining paying funds are name-only. "
+        "Loss-carryforward bond funds omitted. "
         "Official 2024 estimate sibling "
         "https://www.diamond-hill.com/sitefiles/live/documents/distributions/"
         "dhf-capital-gain-estimates-as-of-10-31-24.pdf "
@@ -254,9 +256,14 @@ class DriehausSource(HtmlTableSource):
         "DMF_Year_end_Distribution_2025.pdf "
         "(e.g. Micro Cap Growth DMCRX ST $0.079978 / LT $2.073159; "
         "Global DMAGX ST $0.776804 / LT $1.422216). "
-        "Record 12/17/2025; ex/pay 12/18/2025."
+        "Record 12/17/2025; ex/pay 12/18/2025. Published $0.00 stored. "
+        "Tickers attached only where previously identified (DMCRX / DMAGX); "
+        "remaining printed funds are name-only."
     )
-    live_limitations = "Year-end book is PDF. Fixture transcribes public ticker rows."
+    live_limitations = (
+        "Year-end book is PDF. Fixture transcribes the official full book; "
+        "tickers only where previously identified."
+    )
 
     def pages(self) -> list[PageSpec]:
         return [
@@ -314,12 +321,15 @@ class MarsicoSource(HtmlTableSource):
     notes = (
         "Public 2025 paid distribution HTML: "
         "https://www.marsicofunds.com/investor-resources/content/distributions.fs "
+        "Full Investor + Institutional book "
         "(e.g. Focus Investor MFOCX LT $4.9890; Growth Investor MGRIX LT $4.0748; "
         "Midcap Growth Focus Investor MXXIX ST $0.5894 / LT $6.0842). "
-        "Record 12/18/2025; pay 12/19/2025."
+        "Record 12/18/2025; pay 12/19/2025. Published $0.0000 stored. "
+        "MXXIX is Midcap Growth Focus (official)."
     )
     live_limitations = (
-        "Live HTML is public but table layout may not parse. Fixture fallback."
+        "Live HTML is public but table layout may not parse. "
+        "Fixture transcribes the official Investor + Institutional book."
     )
 
     def pages(self) -> list[PageSpec]:

@@ -112,13 +112,20 @@ class LongleafSource(HtmlTableSource):
     aum_rank = 74
     priority = 74
     notes = (
-        "Public paid history HTML: "
-        "https://southeasternasset.com/investment-offerings/longleaf-partners-fund/ "
-        "(Partners Fund LLPFX 2025 income $0.2149 / ST $0.8486 / LT $1.7935). "
-        "Record 12/15/2025; ex 12/16/2025."
+        "Hub: https://southeasternasset.com/investment-offerings/ "
+        "Official 2025 product-page paid tables: "
+        "Partners https://southeasternasset.com/investment-offerings/longleaf-partners-fund/ "
+        "(LLPFX income $0.2149 / ST $0.8486 / LT $1.7935); "
+        "Small-Cap https://southeasternasset.com/investment-offerings/longleaf-partners-small-cap-fund/ "
+        "(LLSCX income-only $0.3415); "
+        "Global https://southeasternasset.com/investment-offerings/longleaf-partners-global-fund/ "
+        "(LLGLX ST $0.1104 / LT $0.8608). "
+        "Record 12/15/2025; ex 12/16/2025. "
+        "International product-page sibling 404 this session."
     )
     live_limitations = (
-        "Live HTML is public but product-page layout may not parse. Fixture fallback."
+        "Live HTML is public but product-page layout may not parse. Fixture fallback. "
+        "Weekly walk hits the offerings hub (empty/403 = no-op success)."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -130,7 +137,15 @@ class LongleafSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
-            )
+            ),
+            PageSpec(
+                name="investment_offerings_hub",
+                url="https://southeasternasset.com/investment-offerings/",
+                fixture="investment_offerings_hub.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
         ]
 
 
@@ -237,13 +252,15 @@ class HeartlandSource(HtmlTableSource):
     notes = (
         "Public 2025 paid HTML: "
         "https://www.heartlandadvisors.com/Resources/Tax-Information "
+        "Full Investor + Institutional book "
         "(Mid Cap Value Investor HRMDX LT $0.12387; "
         "Value Investor HRTVX ST $0.05228 / LT $4.34950; "
         "Value Plus Investor HRVIX no CG in 2025). "
         "Record 12/18/2025; pay 12/19/2025."
     )
     live_limitations = (
-        "Live HTML is public but tax-center layout may not parse. Fixture fallback."
+        "Live HTML is public but tax-center layout may not parse. "
+        "Fixture transcribes the official Investor + Institutional book."
     )
 
     def pages(self) -> list[PageSpec]:

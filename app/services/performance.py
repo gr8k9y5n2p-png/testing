@@ -107,6 +107,10 @@ FUND_ALIASES: dict[str, str] = {
     "BSVIX": "BSVIX",
     "GQEIX": "GQEIX",
     "LSVEX": "LSVEX",
+    "HFCSX": "HFCSX",
+    "WWNPX": "WWNPX",
+    "MERDX": "MERDX",
+    "MFOCX": "MFOCX",
 }
 
 FUND_META: dict[str, dict[str, str]] = {
@@ -172,6 +176,10 @@ FUND_META: dict[str, dict[str, str]] = {
     "BSVIX": {"name": "Baird Equity Opportunity Institutional", "asset_class": "equity"},
     "GQEIX": {"name": "GQG Partners US Select Quality Equity Institutional", "asset_class": "equity"},
     "LSVEX": {"name": "LSV Value Equity Institutional", "asset_class": "equity"},
+    "HFCSX": {"name": "Hennessy Focus Investor", "asset_class": "equity"},
+    "WWNPX": {"name": "Kinetics Paradigm No Load", "asset_class": "equity"},
+    "MERDX": {"name": "Meridian Growth Legacy", "asset_class": "equity"},
+    "MFOCX": {"name": "Marsico Focus Investor", "asset_class": "equity"},
 }
 
 DEFAULT_BENCHMARKS: dict[AssetClass, dict[str, str]] = {

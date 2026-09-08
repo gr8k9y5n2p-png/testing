@@ -143,9 +143,12 @@ class OakmarkSource(HtmlTableSource):
     notes = (
         "Public 2025 year-end distribution HTML: "
         "https://oakmark.com/news-insights/2025-oakmark-year-end-fund-distributions/ "
+        "with official Investor / Advisor / Institutional / R6 tickers from "
+        "https://oakmark.com/our-funds/ "
         "(e.g. International Small Cap Investor OAKEX LT $0.7640 / 5.13% of NAV; "
         "Oakmark Fund Investor OAKMX income $1.5797 / 0.91% of NAV — no 2025 CG). "
         "Record 12/10/2025; ex 12/11/2025; pay 12/12/2025. "
+        "Published $0.0000 stored. "
         "2024 paid YE HTML (live sibling 404; Wayback): Investor OAKEX ST $0.0276 / LT $0.7241; "
         "OAKMX / OAKIX published $0.0000 CG stored. "
         "Tax estimates hub is % of NAV only (no ST/LT $/share). "
@@ -153,7 +156,7 @@ class OakmarkSource(HtmlTableSource):
     )
     live_limitations = (
         "Live page is public HTML with class-section tables and no ticker column. "
-        "Static parse may return 0 rows. Fixture fallback with Investor-class tickers."
+        "Static parse may return 0 rows. Fixture fallback with official share-class tickers."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -294,18 +297,19 @@ class RoyceSource(HtmlTableSource):
     notes = (
         "Public 2025 open-end year-end distribution HTML: "
         "https://www.royceinvest.com/news/2025/4Q25/open-end-funds-2025-year-end-distributions "
-        "PDF reprint: "
+        "Full printed ticker PDF: "
         "https://www.royceinvest.com/news/2025/4Q25/PDF/royce-open-end-funds-distributions-2025.pdf "
         "(e.g. Small-Cap Total Return Investment RYTRX ST $0.0257 / LT $0.7656; "
         "Micro-Cap Investment RYOTX LT $1.6509). "
-        "Record 12/10/2025; ex/pay 12/11/2025. "
+        "Record 12/10/2025; ex/pay 12/11/2025. Printed em-dashes omitted. "
         "2024 paid YE PDF: "
         "https://www.royceinvest.com/news/2024/4Q24/PDF/royce-open-end-funds-distributions-2024.pdf "
         "(Small-Cap Total Return Investment RYTRX ST $0.0584 / LT $0.2980). "
         "CEF 19(a) notices are a separate closed-end book."
     )
     live_limitations = (
-        "Live HTML is public but table layout/headers may not parse. Fixture fallback."
+        "Live HTML is public but table layout/headers may not parse. "
+        "Fixture transcribes the official full printed ticker book."
     )
 
     def pages(self) -> list[PageSpec]:

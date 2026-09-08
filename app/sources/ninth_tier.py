@@ -64,11 +64,15 @@ class BaillieGiffordSource(HtmlTableSource):
         "(Developed EAFE All Cap BSGPX LT $4.7303; "
         "Global Alpha Equities BGAKX LT $4.8350; "
         "International Growth BGESX LT $0.7461). "
-        "Record 12/26/2025; ex/pay 12/29/2025. The PDF is fund-level; tickers are "
-        "public Institutional / Class K identifiers."
+        "Record 12/26/2025; ex/pay 12/29/2025. The PDF is fund-level; Institutional / "
+        "Class K tickers attached only where previously identified "
+        "(BSGPX / BGAKX / BGESX). EAFE Plus All Cap LT $1.6704 and International Alpha "
+        "LT $1.3236 are name-only. All-dash China / Emerging Markets / Concentrated "
+        "Growth / Long Term Global Growth / U.S. Equity Growth omitted."
     )
     live_limitations = (
-        "Estimate book is PDF. Fixture transcribes public Institutional / Class K identifiers."
+        "Estimate book is PDF. Fixture transcribes public Institutional / Class K "
+        "identifiers only where previously identified; remaining payers are name-only."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -100,10 +104,15 @@ class BrandesSource(HtmlTableSource):
         "(Global Equity BGVIX ST $0.05 / LT $3.88; "
         "International Equity BIIEX ST $0.04 / LT $0.95; "
         "Small Cap Value BSCMX ST $0.32 / LT $0.49). "
-        "Record 12/09/2025; ex/pay 12/10/2025. The PDF is fund-level; tickers are "
-        "public Class I identifiers."
+        "Record 12/09/2025; ex/pay 12/10/2025. The PDF is fund-level; Class I tickers "
+        "attached only where previously identified. International Small Cap "
+        "(name-only ST $0.16 / income $0.28) and Emerging Markets Value income-only "
+        "(name-only $0.06) added. Tax-loss Core Plus / SMART omitted."
     )
-    live_limitations = "Estimate book is PDF. Fixture transcribes public Class I identifiers."
+    live_limitations = (
+        "Estimate book is PDF. Fixture transcribes public Class I identifiers "
+        "only where previously identified; remaining payers are name-only."
+    )
 
     def pages(self) -> list[PageSpec]:
         return [
@@ -226,13 +235,17 @@ class HennessySource(HtmlTableSource):
     priority = 87
     notes = (
         "Public 2025 paid HTML: https://www.hennessyfunds.com/funds/distributions "
+        "Full Investor + Institutional December YE "
         "(Focus Investor HFCSX LT $17.84742; "
         "Cornerstone Large Growth Investor HFLGX ST $0.00693 / LT $0.57633; "
         "Cornerstone Value Investor HFCVX ST $0.01310 / LT $1.06282). "
-        "Capital-gains record 12/03/2025; pay 12/04/2025."
+        "Capital-gains record 12/03/2025; pay 12/04/2025. "
+        "March/June/September quarterly income-only omitted. Monthly Midstream omitted. "
+        "Cornerstone Growth Investor printed no 2025 distributions — omitted."
     )
     live_limitations = (
-        "Live HTML is public but expandable history tables may not parse. Fixture fallback."
+        "Live HTML is public but expandable history tables may not parse. "
+        "Fixture transcribes official December YE Investor + Institutional rows."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -258,8 +271,9 @@ class FamSource(HtmlTableSource):
         "(Value Investor FAMVX / Institutional FAMWX LT $4.8682; "
         "Dividend Focus Investor FAMEX LT $1.9884 / income $0.017; "
         "Small Cap Investor FAMDX LT $0.773). "
-        "Record 12/29/2025; ex/pay 12/30/2025. The HTML is class-level without tickers; "
-        "tickers are public Investor / Institutional identifiers."
+        "Record 12/29/2025; ex/pay 12/30/2025. Published $0.00 stored. "
+        "The HTML is class-level without tickers; tickers are public Investor / "
+        "Institutional identifiers. Institutional Small Cap ticker was not printed — name-only."
     )
     live_limitations = (
         "Live HTML is public but class-name rows have no ticker column. Fixture fallback."
@@ -291,12 +305,24 @@ class MeridianSource(HtmlTableSource):
         "(Contrarian Legacy MVALX ST $0.86910 / LT $4.10477; "
         "Hedged Equity Legacy MEIFX LT $0.75498; "
         "Small Cap Growth Legacy MSGGX LT $0.95996). "
-        "Record 12/18/2025; ex/pay 12/19/2025."
+        "Record 12/18/2025; ex/pay 12/19/2025. Full printed share-class book. "
+        "Published $0.00 stored."
     )
-    live_limitations = "Year-end book is PDF. Fixture transcribes public Legacy-class rows."
+    live_limitations = (
+        "Year-end book is PDF. Fixture transcribes the official full share-class book. "
+        "Weekly walk hits the investor-resources hub (empty/403/PDF-bytes = no-op success)."
+    )
 
     def pages(self) -> list[PageSpec]:
         return [
+            PageSpec(
+                name="investor_resources_hub",
+                url="https://www.arrowmarkpartners.com/meridian/investor-resources/",
+                fixture="investor_resources_hub.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
             PageSpec(
                 name="2025_final_distributions",
                 url=(
@@ -323,12 +349,24 @@ class KineticsSource(HtmlTableSource):
         "(Paradigm No Load WWNPX LT $8.68572; "
         "Internet No Load WWWFX ST $0.02951 / LT $1.62421; "
         "Spin-Off and Corporate Restructuring No Load LSHEX LT $2.64639). "
-        "Record 12/29/2025; ex/pay 12/30/2025."
+        "Record 12/29/2025; ex/pay 12/30/2025. Full printed share-class book. "
+        "Published $0.00 stored."
     )
-    live_limitations = "Year-end book is PDF. Fixture transcribes public No Load rows."
+    live_limitations = (
+        "Year-end book is PDF. Fixture transcribes the official full share-class book. "
+        "Weekly walk hits the family hub (empty/403/PDF-bytes = no-op success)."
+    )
 
     def pages(self) -> list[PageSpec]:
         return [
+            PageSpec(
+                name="distributions_hub",
+                url="https://kineticsfunds.com/",
+                fixture="distributions_hub.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
             PageSpec(
                 name="2025_final_distributions",
                 url=(

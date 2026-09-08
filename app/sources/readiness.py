@@ -278,6 +278,10 @@ PERFORMANCE_TICKERS: dict[str, tuple[str, ...]] = {
     "baird": ("BSVIX",),
     "gqg": ("GQEIX",),
     "lsv": ("LSVEX",),
+    "hennessy": ("HFCSX",),
+    "kinetics": ("WWNPX",),
+    "meridian": ("MERDX",),
+    "marsico": ("MFOCX",),
 }
 
 

@@ -156,6 +156,22 @@ def test_coverage_exposes_estimate_feed_readiness(session) -> None:
     assert lsv.estimate_feed_ready is True
     assert "LSVEX" in lsv.performance_tickers
 
+    hennessy = by_slug["hennessy"]
+    assert hennessy.estimate_feed_ready is True
+    assert "HFCSX" in hennessy.performance_tickers
+
+    kinetics = by_slug["kinetics"]
+    assert kinetics.estimate_feed_ready is True
+    assert "WWNPX" in kinetics.performance_tickers
+
+    meridian = by_slug["meridian"]
+    assert meridian.estimate_feed_ready is True
+    assert "MERDX" in meridian.performance_tickers
+
+    marsico = by_slug["marsico"]
+    assert marsico.estimate_feed_ready is True
+    assert "MFOCX" in marsico.performance_tickers
+
     first_trust = by_slug["first_trust"]
     assert first_trust.estimate_feed_ready is True
     assert "BGLD" in first_trust.performance_tickers

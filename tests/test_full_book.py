@@ -20,11 +20,35 @@ from app.sources.next_tier import (
     NorthernTrustSource,
     SchwabSource,
 )
-from app.sources.eleventh_tier import AmgSource
-from app.sources.eighth_tier import BairdSource, BuffaloSource, GqgSource
-from app.sources.fifth_tier import HarborSource, NylifeSource, TouchstoneSource, VictorySource, VoyaSource
-from app.sources.ninth_tier import AmericanBeaconSource
-from app.sources.tenth_tier import BostonPartnersSource, LazardSource, LsvSource, ManningNapierSource
+from app.sources.eleventh_tier import AmgSource, GuidestoneSource
+from app.sources.eighth_tier import BairdSource, BuffaloSource, GqgSource, HeartlandSource, LongleafSource
+from app.sources.fifth_tier import (
+    HarborSource,
+    NylifeSource,
+    OakmarkSource,
+    TouchstoneSource,
+    VictorySource,
+    VoyaSource,
+    RoyceSource,
+)
+from app.sources.ninth_tier import (
+    AmericanBeaconSource,
+    BaillieGiffordSource,
+    BrandesSource,
+    FamSource,
+    HennessySource,
+    KineticsSource,
+    MeridianSource,
+)
+from app.sources.seventh_tier import DiamondHillSource, DriehausSource, MarsicoSource
+from app.sources.tenth_tier import (
+    BostonPartnersSource,
+    LazardSource,
+    LsvSource,
+    MadisonSource,
+    ManningNapierSource,
+    RiverparkSource,
+)
 from app.sources.fourth_tier import (
     ArtisanSource,
     CalamosSource,
@@ -277,3 +301,66 @@ def test_full_book_ranks_41_plus_thin_family_harvest() -> None:
     buffalo_funds, buffalo_tickers = _funds_and_tickers(BuffaloSource())
     assert {"BUFEX", "BUFGX", "BUFTX"} <= buffalo_tickers
     assert len(buffalo_funds) >= 8
+
+
+def test_full_book_wave20_thin_family_harvest() -> None:
+    royce_funds, royce_tickers = _funds_and_tickers(RoyceSource())
+    assert {"RYTRX", "RYOTX", "PENNX", "RIPIX"} <= royce_tickers
+    assert len(royce_tickers) >= 30
+
+    oakmark_funds, oakmark_tickers = _funds_and_tickers(OakmarkSource())
+    assert {"OAKEX", "OAKMX", "OAYMX", "OANMX", "OAZMX"} <= oakmark_tickers
+    assert len(oakmark_tickers) >= 30
+
+    kinetics_funds, kinetics_tickers = _funds_and_tickers(KineticsSource())
+    assert {"WWNPX", "WWWFX", "LSHEX", "KNPYX"} <= kinetics_tickers
+    assert len(kinetics_tickers) >= 20
+
+    meridian_funds, meridian_tickers = _funds_and_tickers(MeridianSource())
+    assert {"MVALX", "MERDX", "MEIFX", "MSGGX"} <= meridian_tickers
+    assert len(meridian_tickers) >= 15
+
+    hennessy_funds, hennessy_tickers = _funds_and_tickers(HennessySource())
+    assert {"HFCSX", "HFLGX", "HFCVX", "HFCIX"} <= hennessy_tickers
+    assert len(hennessy_tickers) >= 20
+
+    marsico_funds, marsico_tickers = _funds_and_tickers(MarsicoSource())
+    assert {"MFOCX", "MGRIX", "MXXIX", "MIFOX"} <= marsico_tickers
+    assert len(marsico_tickers) >= 10
+
+    heartland_funds, heartland_tickers = _funds_and_tickers(HeartlandSource())
+    assert {"HRTVX", "HRMDX", "HNTVX"} <= heartland_tickers
+    assert len(heartland_tickers) >= 6
+
+    riverpark_funds, riverpark_tickers = _funds_and_tickers(RiverparkSource())
+    assert {"RPXIX", "RPXFX", "RWGIX", "RPNLX"} <= riverpark_tickers
+    assert len(riverpark_tickers) >= 6
+
+    longleaf_funds, longleaf_tickers = _funds_and_tickers(LongleafSource())
+    assert {"LLPFX", "LLSCX", "LLGLX"} <= longleaf_tickers
+
+    guidestone_funds, guidestone_tickers = _funds_and_tickers(GuidestoneSource())
+    assert {"GGEZX", "GVEZX", "GSCZX"} <= guidestone_tickers
+    assert len(guidestone_funds) >= 15
+
+    diamond_funds, diamond_tickers = _funds_and_tickers(DiamondHillSource())
+    assert {"DHLAX", "DHSCX", "DHPAX"} <= diamond_tickers
+    assert len(diamond_funds) >= 7
+
+    baillie_funds, baillie_tickers = _funds_and_tickers(BaillieGiffordSource())
+    assert {"BSGPX", "BGAKX", "BGESX"} <= baillie_tickers
+    assert len(baillie_funds) >= 5
+
+    brandes_funds, brandes_tickers = _funds_and_tickers(BrandesSource())
+    assert {"BGVIX", "BIIEX", "BSCMX"} <= brandes_tickers
+    assert len(brandes_funds) >= 5
+
+    fam_funds, fam_tickers = _funds_and_tickers(FamSource())
+    assert {"FAMVX", "FAMWX", "FAMEX"} <= fam_tickers
+
+    madison_funds, madison_tickers = _funds_and_tickers(MadisonSource())
+    assert {"MAGG", "MSTI", "MNVAX"} <= madison_tickers
+
+    driehaus_funds, driehaus_tickers = _funds_and_tickers(DriehausSource())
+    assert {"DMCRX", "DMAGX"} <= driehaus_tickers
+    assert len(driehaus_funds) >= 8

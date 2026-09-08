@@ -169,6 +169,10 @@ def test_performance_new_top40_distribution_tickers(client: TestClient) -> None:
         ("BSVIX", "equity", "SPY"),
         ("GQEIX", "equity", "SPY"),
         ("LSVEX", "equity", "SPY"),
+        ("HFCSX", "equity", "SPY"),
+        ("WWNPX", "equity", "SPY"),
+        ("MERDX", "equity", "SPY"),
+        ("MFOCX", "equity", "SPY"),
     ):
         response = client.get("/performance", params={"ticker": ticker, "mode": "fixture"})
         assert response.status_code == 200, f"{ticker}: {response.text}"
