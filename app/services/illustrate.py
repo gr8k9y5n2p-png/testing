@@ -37,6 +37,7 @@ from app.schemas import (
     PortfolioHoldingGap,
     PortfolioHoldingIn,
     PortfolioHoldingOut,
+    PortfolioHoldingPaidHistoryItem,
     PortfolioHoldingUpcoming,
     PortfolioIllustrateRequest,
     PortfolioIllustrateResponse,
@@ -54,6 +55,14 @@ UPCOMING_ESTIMATE_STAGES = {
 PAID_HISTORY_STAGES = {
     PublicationStage.final.value,
     PublicationStage.paid.value,
+}
+# Keep portfolio payloads lean; Paid History is a convenience slice, not a full book dump.
+PAID_HISTORY_MAX_ITEMS = 12
+PAID_HISTORY_STAGE_RANK = {
+    PublicationStage.paid.value: 3,
+    PublicationStage.final.value: 2,
+    PublicationStage.updated_estimate.value: 1,
+    PublicationStage.preliminary_estimate.value: 0,
 }
 
 # estimate_type → TaxRates field. STCG has its own rate (defaults to ordinary).
@@ -435,21 +444,10 @@ def illustrate_from_rows(
     )
 
 
-def _select_holding_rows(
-    session: Session,
-    holding: PortfolioHoldingIn,
-    snapshot: IllustrationSnapshot,
-) -> tuple[list, list[str], str | None]:
-    warnings: list[str] = []
-    stage_used: str | None = None
-    if holding.distribution_ids:
-        rows, missing = get_by_ids(session, holding.distribution_ids)
-        if missing:
-            warnings.append(f"Unknown distribution_ids: {missing}")
-        if not rows:
-            return [], warnings, None
-        return rows, warnings, rows[0].publication_stage
-
+def _lookup_identity_rows(session: Session, holding: PortfolioHoldingIn) -> list:
+    """All matching rows for the holding's ticker/identifier — no snapshot pin."""
+    if not any([holding.ticker, holding.fund_identifier, holding.fund_name]):
+        return []
     rows = list_matching(
         session,
         fund_family=holding.fund_family,
@@ -466,6 +464,25 @@ def _select_holding_rows(
                 fund_identifier=holding.fund_identifier or alias.get("fund_identifier"),
                 fund_name=holding.fund_name or alias.get("fund_name"),
             )
+    return rows
+
+
+def _select_holding_rows(
+    session: Session,
+    holding: PortfolioHoldingIn,
+    snapshot: IllustrationSnapshot,
+) -> tuple[list, list[str], str | None]:
+    warnings: list[str] = []
+    stage_used: str | None = None
+    if holding.distribution_ids:
+        rows, missing = get_by_ids(session, holding.distribution_ids)
+        if missing:
+            warnings.append(f"Unknown distribution_ids: {missing}")
+        if not rows:
+            return [], warnings, None
+        return rows, warnings, rows[0].publication_stage
+
+    rows = _lookup_identity_rows(session, holding)
     if snapshot.as_of:
         rows = [row for row in rows if row.as_of == snapshot.as_of]
     elif snapshot.as_of_year is not None:
@@ -572,6 +589,142 @@ def _holding_upcoming(
     )
 
 
+def _row_record_window_date(row: DistributionEstimate) -> date | None:
+    return row.record_date or row.ex_date or row.payable_date
+
+
+def _row_in_paid_history(row: DistributionEstimate, today: date) -> bool:
+    """Inverse of the upcoming unpaid gate, plus always-include final/paid.
+
+    Dateless prelim/updated stay in upcoming, not paid_history. Dates are never
+    invented: a missing window date does not qualify an estimate as past.
+    """
+    stage = row.publication_stage
+    if stage in PAID_HISTORY_STAGES:
+        return True
+    if stage in UPCOMING_ESTIMATE_STAGES:
+        window = _row_record_window_date(row)
+        return window is not None and today >= window
+    return False
+
+
+def _paid_history_event_key(row: DistributionEstimate) -> tuple:
+    return (
+        row.publication_stage,
+        row.as_of,
+        row.record_date,
+        row.ex_date,
+        row.payable_date,
+    )
+
+
+def _paid_history_sort_key(item: PortfolioHoldingPaidHistoryItem) -> tuple[date, date]:
+    primary = item.payable_date or item.ex_date or item.record_date or item.as_of or date.min
+    secondary = item.as_of or date.min
+    return (primary, secondary)
+
+
+def _paid_history_collapse_key(item: PortfolioHoldingPaidHistoryItem) -> tuple:
+    if item.record_date or item.ex_date or item.payable_date:
+        return ("dates", item.record_date, item.ex_date, item.payable_date)
+    return ("as_of", item.publication_stage, item.as_of)
+
+
+def _paid_history_preference(item: PortfolioHoldingPaidHistoryItem) -> tuple:
+    """Prefer settled stages, then the more complete published dollar amount."""
+    return (
+        PAID_HISTORY_STAGE_RANK.get(item.publication_stage or "", -1),
+        item.distribution_dollars,
+        item.as_of or date.min,
+    )
+
+
+def _collapse_paid_history(
+    items: list[PortfolioHoldingPaidHistoryItem],
+) -> list[PortfolioHoldingPaidHistoryItem]:
+    """One item per event window so YE reprints do not triple the same payable date."""
+    best: dict[tuple, PortfolioHoldingPaidHistoryItem] = {}
+    for item in items:
+        key = _paid_history_collapse_key(item)
+        existing = best.get(key)
+        if existing is None or _paid_history_preference(item) > _paid_history_preference(existing):
+            best[key] = item
+    return list(best.values())
+
+
+def _paid_history_item_from_rows(
+    rows: list[DistributionEstimate],
+    *,
+    holding: Decimal,
+    nav_per_share: Decimal | None,
+    shares: Decimal | None,
+    rates: TaxRates,
+    combine: bool,
+    publication_stage: str | None,
+) -> PortfolioHoldingPaidHistoryItem | None:
+    illustration = illustrate_from_rows(
+        rows,
+        holding=holding,
+        nav_per_share=nav_per_share,
+        shares=shares,
+        rates=rates,
+        combine=combine,
+        extra_notes=[],
+        require_nav_for_per_share=False,
+    )
+    dist = illustration.totals.distribution_dollars
+    if dist is None or dist <= 0:
+        return None
+    tax = illustration.totals.estimated_tax
+    as_ofs = [
+        component.as_of
+        for component in illustration.components
+        if component.included_in_totals and component.as_of is not None
+    ]
+    return PortfolioHoldingPaidHistoryItem(
+        distribution_dollars=_money(dist),
+        estimated_tax=_money(tax) if tax is not None else None,
+        as_of=max(as_ofs) if as_ofs else None,
+        publication_stage=publication_stage,
+        record_date=_known_component_date(illustration.components, "record_date"),
+        ex_date=_known_component_date(illustration.components, "ex_date"),
+        payable_date=_known_component_date(illustration.components, "payable_date"),
+    )
+
+
+def _holding_paid_history(
+    rows: list[DistributionEstimate],
+    *,
+    holding: Decimal,
+    nav_per_share: Decimal | None,
+    shares: Decimal | None,
+    rates: TaxRates,
+    combine: bool,
+) -> list[PortfolioHoldingPaidHistoryItem]:
+    today = _utc_today()
+    eligible = [row for row in rows if _row_in_paid_history(row, today)]
+    groups: dict[tuple, list[DistributionEstimate]] = defaultdict(list)
+    for row in eligible:
+        groups[_paid_history_event_key(row)].append(row)
+
+    items: list[PortfolioHoldingPaidHistoryItem] = []
+    for key, group_rows in groups.items():
+        item = _paid_history_item_from_rows(
+            group_rows,
+            holding=holding,
+            nav_per_share=nav_per_share,
+            shares=shares,
+            rates=rates,
+            combine=combine,
+            publication_stage=key[0],
+        )
+        if item is not None:
+            items.append(item)
+    items = _collapse_paid_history(items)
+    items.sort(key=_paid_history_sort_key, reverse=True)
+    return items[:PAID_HISTORY_MAX_ITEMS]
+
+
 def illustrate_portfolio(session: Session, body: PortfolioIllustrateRequest) -> PortfolioIllustrateResponse:
     holding_outs: list[PortfolioHoldingOut] = []
     gaps: list[PortfolioHoldingGap] = []
@@ -590,7 +743,45 @@ def illustrate_portfolio(session: Session, body: PortfolioIllustrateRequest) -> 
                 detail=f"holdings[{index}] needs holding_dollars or weight_pct with book_dollars",
             )
         rows, warnings, stage_used = _select_holding_rows(session, holding, body.snapshot)
+        history_rows = _lookup_identity_rows(session, holding) or rows
+        paid_history = _holding_paid_history(
+            history_rows,
+            holding=dollars,
+            nav_per_share=holding.nav_per_share,
+            shares=holding.shares,
+            rates=body.tax_rates,
+            combine=body.combine_state_with_federal,
+        )
         if not rows:
+            reason = "No matching distribution estimates for this holding."
+            dollars_uncovered += dollars
+            uncovered_n += 1
+            gaps.append(
+                PortfolioHoldingGap(
+                    holding_index=index,
+                    ticker=holding.ticker,
+                    fund_identifier=holding.fund_identifier,
+                    fund_family=holding.fund_family,
+                    fund_name=holding.fund_name,
+                    holding_dollars=_money(dollars),
+                    reason=reason,
+                )
+            )
+            holding_outs.append(
+                PortfolioHoldingOut(
+                    holding_index=index,
+                    ticker=holding.ticker,
+                    fund_identifier=holding.fund_identifier,
+                    fund_family=holding.fund_family,
+                    fund_name=holding.fund_name,
+                    holding_dollars=_money(dollars),
+                    covered=False,
+                    paid_history=paid_history,
+                    warnings=warnings,
+                    gap_reason=reason,
+                )
+            )
+            continue
             reason = "No matching distribution estimates for this holding."
             dollars_uncovered += dollars
             uncovered_n += 1
@@ -651,6 +842,7 @@ def illustrate_portfolio(session: Session, body: PortfolioIllustrateRequest) -> 
                 covered=True,
                 publication_stage_used=stage_used,
                 upcoming=_holding_upcoming(illustration, stage_used),
+                paid_history=paid_history,
                 warnings=warnings,
                 illustration=illustration,
             )
@@ -669,6 +861,12 @@ def illustrate_portfolio(session: Session, body: PortfolioIllustrateRequest) -> 
             "Snapshot prefers publication_stage in order: "
             + ", ".join(body.snapshot.prefer_publication_stages)
         )
+    notes.append(
+        "holdings[].paid_history is independent of prefer_publication_stages: "
+        "final/paid rows plus prelim/updated whose record_date (else ex_date, else "
+        f"payable_date) is today or earlier UTC. Same record/ex/payable window is "
+        f"collapsed (paid > final > updated > prelim). Newest-first, cap {PAID_HISTORY_MAX_ITEMS}."
+    )
 
     return PortfolioIllustrateResponse(
         holdings=holding_outs,
@@ -692,7 +890,7 @@ def illustrate_portfolio(session: Session, body: PortfolioIllustrateRequest) -> 
 
 PORTFOLIO_COMPARE_NOTES = [
     "Deltas are proposed − current. Interactive Modules charts Current vs Proposed Allocation (center-zero bars).",
-    "Each side is a full POST /illustrate/portfolio result, including per-holding upcoming. Gaps and warnings stay on that side — never dropped.",
+    "Each side is a full POST /illustrate/portfolio result, including per-holding upcoming and paid_history. Gaps and warnings stay on that side — never dropped.",
     "Omit periods[] for one shared snapshot. When periods[] is present, each year is a Proposed − Current pair; top-level current/proposed/deltas copy the latest period.",
     "summary dollar fields are scaled linearly to $10,000, same as POST /illustrate/compare.",
 ]

@@ -312,10 +312,45 @@ curl -s -X POST http://127.0.0.1:8000/illustrate/portfolio \
     "snapshot": {
       "prefer_publication_stages": ["preliminary_estimate", "updated_estimate", "final", "paid"]
     }
-  }' | jq '{coverage, gaps, totals, warnings, holdings: [.holdings[] | {ticker, fund_identifier, covered, publication_stage_used, upcoming, gap_reason, warnings}]}'
+  }' | jq '{coverage, gaps, totals, warnings, holdings: [.holdings[] | {ticker, fund_identifier, covered, publication_stage_used, upcoming, paid_history, gap_reason, warnings}]}'
 ```
 
-On the American Funds fixtures: $1.25M covered / $150k uncovered → `coverage_pct` ≈ 89.3%. AMCAP uses the latest preliminary (3–5% NAV → $40,000 / $10,000 tax at 20%+5%). Covered holdings get `upcoming: {distribution_dollars, estimated_tax, as_of, publication_stage, record_date, ex_date, payable_date}` only when that illustration is still **before the record window** (today UTC strictly before `record_date`, else `ex_date`, else `payable_date`) and the stage is not final/paid. Past-dated prelims (AMCAP Dec 2025) and paid/final rows are `null` so the UI can show Paid history. Dateless prelim/updated rows still qualify. Calendar dates are copied from the source when published and left `null` when unknown — never invented. `XYZAX` is a gap; CGHM without NAV has zero dollars so `upcoming` is also `null`.
+On the American Funds fixtures: $1.25M covered / $150k uncovered → `coverage_pct` ≈ 89.3%. AMCAP uses the latest preliminary (3–5% NAV → $40,000 / $10,000 tax at 20%+5%). Covered holdings get `upcoming: {distribution_dollars, estimated_tax, as_of, publication_stage, record_date, ex_date, payable_date}` only when that illustration is still **before the record window** (today UTC strictly before `record_date`, else `ex_date`, else `payable_date`) and the stage is not final/paid. Past-dated prelims (AMCAP Dec 2025) and paid/final rows are `upcoming: null`. Those past events are instead listed on additive **`paid_history[]`** (same fields; `estimated_tax` null when not computable). Inclusion: `publication_stage` in `{final, paid}`, **or** prelim/updated whose gate date is past (`today >= record_date`, else `ex_date`, else `payable_date`) — the inverse of the upcoming unpaid gate. Same record/ex/payable window is collapsed (`paid` > `final` > `updated_estimate` > `preliminary_estimate`, then larger published dollars). Newest-first by payable/ex/record/as_of, **capped at 12**. Amounts and dates are never invented. `paid_history` is independent of `snapshot.prefer_publication_stages` so a current prelim snapshot still exposes prior paid years. Per-share paid rows need `nav_per_share` or `shares` to illustrate dollars; past `% of NAV` prelims still populate history without NAV. Dateless prelim/updated rows stay in `upcoming`, not `paid_history`. `XYZAX` is a gap (`paid_history: []`); CGHM without NAV has zero dollars so `upcoming` is also `null`.
+
+**Sitrep example** — `$10,000` each, NAV from the Sep 2026 performance fixtures (`AMCPX` 45.70 / `AGTHX` 88.69), default snapshot (latest prelim). Both `upcoming` are null (2025 YE window is past). `paid_history` is newest-first:
+
+```json
+[
+  {
+    "ticker": "AMCPX",
+    "fund_identifier": "amcap-fund",
+    "upcoming": null,
+    "paid_history": [
+      {"distribution_dollars": "773.85", "estimated_tax": "193.46", "as_of": "2026-07-08", "publication_stage": "paid", "record_date": "2026-06-16", "ex_date": "2026-06-16", "payable_date": "2026-06-17"},
+      {"distribution_dollars": "470.66", "estimated_tax": "117.67", "as_of": "2026-01-22", "publication_stage": "final", "record_date": "2025-12-12", "ex_date": "2025-12-12", "payable_date": "2025-12-15"},
+      {"distribution_dollars": "587.97", "estimated_tax": "153.14", "as_of": "2024-12-17", "publication_stage": "final", "record_date": "2024-12-17", "ex_date": "2024-12-17", "payable_date": "2024-12-18"},
+      {"distribution_dollars": "251.64", "estimated_tax": "67.48", "as_of": "2023-12-13", "publication_stage": "final", "record_date": "2023-12-13", "ex_date": "2023-12-13", "payable_date": "2023-12-14"},
+      {"distribution_dollars": "496.02", "estimated_tax": "124.01", "as_of": "2022-06-15", "publication_stage": "paid", "record_date": "2022-06-15", "ex_date": "2022-06-15", "payable_date": "2022-06-16"},
+      {"distribution_dollars": "256.24", "estimated_tax": "64.06", "as_of": "2021-12-15", "publication_stage": "final", "record_date": "2021-12-15", "ex_date": "2021-12-15", "payable_date": "2021-12-16"}
+    ]
+  },
+  {
+    "ticker": "AGTHX",
+    "fund_identifier": "the-growth-fund-of-america",
+    "upcoming": null,
+    "paid_history": [
+      {"distribution_dollars": "943.06", "estimated_tax": "235.77", "as_of": "2026-01-22", "publication_stage": "final", "record_date": "2025-12-17", "ex_date": "2025-12-17", "payable_date": "2025-12-18"},
+      {"distribution_dollars": "970.12", "estimated_tax": "247.14", "as_of": "2025-12-17", "publication_stage": "final", "record_date": "2025-12-17", "ex_date": "2025-12-17", "payable_date": "2025-12-17"},
+      {"distribution_dollars": "754.42", "estimated_tax": "194.55", "as_of": "2024-12-18", "publication_stage": "final", "record_date": "2024-12-18", "ex_date": "2024-12-18", "payable_date": "2024-12-18"},
+      {"distribution_dollars": "526.67", "estimated_tax": "138.76", "as_of": "2023-12-15", "publication_stage": "final", "record_date": "2023-12-15", "ex_date": "2023-12-15", "payable_date": "2023-12-15"},
+      {"distribution_dollars": "226.18", "estimated_tax": "59.71", "as_of": "2022-12-16", "publication_stage": "final", "record_date": "2022-12-16", "ex_date": "2022-12-16", "payable_date": "2022-12-16"},
+      {"distribution_dollars": "685.37", "estimated_tax": "172.58", "as_of": "2021-12-17", "publication_stage": "final", "record_date": "2021-12-17", "ex_date": "2021-12-17", "payable_date": "2021-12-17"}
+    ]
+  }
+]
+```
+
+AMCPX 2026 midyear is the June paid LT `$3.5365`/share. AGTHX keeps two 2025 rows because the YE reprint payable (`2025-12-18`) and the product-page payable (`2025-12-17`) are different published dates — not merged.
 
 Holdings may send **`holding_dollars`** or **`weight_pct` + `book_dollars`**. `weight_pct` is Interactive Modules UI percent **0–100** (`25` = 25% of book; `1` = 1%). The server sets `holding_dollars = book_dollars × weight_pct / 100`.
 
@@ -327,7 +362,7 @@ Interactive Modules **Current Allocation vs Proposed Allocation**. Same center-z
 
 Each holding sends `ticker` and/or `fund_identifier`, and **either** `holding_dollars` **or** `weight_pct` plus the side’s `book_dollars`. `weight_pct` is **0–100** (UI %). Capital Group HTML has no ticker column: `AMCPX` / `AMCAP` resolve to stored `amcap-fund`; `AGTHX` resolves to `the-growth-fund-of-america`.
 
-Each side is a full `/illustrate/portfolio` result plus `label` (defaults: `Current Allocation` / `Proposed Allocation`). Gaps stay on that side. Covered holdings include `upcoming` (same convenience field as `/illustrate/portfolio`).
+Each side is a full `/illustrate/portfolio` result plus `label` (defaults: `Current Allocation` / `Proposed Allocation`). Gaps stay on that side. Covered holdings include `upcoming` and `paid_history` (same convenience fields as `/illustrate/portfolio`).
 
 **Sign convention:** `deltas` are **proposed − current**.
 

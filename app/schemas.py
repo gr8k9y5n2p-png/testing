@@ -563,6 +563,23 @@ class PortfolioHoldingUpcoming(BaseModel):
     payable_date: date | None = None
 
 
+class PortfolioHoldingPaidHistoryItem(BaseModel):
+    """One past distribution event for Portfolio Paid History.
+
+    Same fields as ``upcoming``. ``estimated_tax`` is omitted (null) when the
+    amount cannot be illustrated (e.g. per_share without NAV/shares). Dates and
+    amounts are copied from stored rows — never invented.
+    """
+
+    distribution_dollars: Decimal
+    estimated_tax: Decimal | None = None
+    as_of: date | None = None
+    publication_stage: str | None = None
+    record_date: date | None = None
+    ex_date: date | None = None
+    payable_date: date | None = None
+
+
 class PortfolioHoldingOut(BaseModel):
     holding_index: int
     ticker: str | None
@@ -579,6 +596,18 @@ class PortfolioHoldingOut(BaseModel):
             "Null when uncovered/gap, dollars are zero, publication_stage is "
             "final/paid, or record_date (else ex_date, else payable_date) is "
             "today or earlier UTC."
+        ),
+    )
+    paid_history: list[PortfolioHoldingPaidHistoryItem] = Field(
+        default_factory=list,
+        description=(
+            "Past distribution events for Paid History, independent of "
+            "snapshot.prefer_publication_stages. Includes publication_stage in "
+            "{final, paid}, plus preliminary_estimate/updated_estimate whose "
+            "record_date (else ex_date, else payable_date) is today or earlier "
+            "UTC. Newest-first by payable/ex/record/as_of; one item per event window "
+            "(paid > final > updated > prelim); capped at 12. "
+            "Empty when none. Never invents amounts or dates."
         ),
     )
     warnings: list[str] = Field(default_factory=list)

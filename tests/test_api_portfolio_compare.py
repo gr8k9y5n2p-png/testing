@@ -116,6 +116,7 @@ def test_portfolio_compare_im_field_names_and_hero_tickers(client: TestClient) -
     assert all(h["covered"] for h in body["current"]["holdings"])
     assert all(h["covered"] for h in body["proposed"]["holdings"])
     assert amcap["upcoming"] is None
+    assert amcap["paid_history"]
     assert body["current"]["gaps"] == []
     assert body["proposed"]["gaps"] == []
 

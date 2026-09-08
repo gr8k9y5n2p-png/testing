@@ -77,6 +77,11 @@ def test_portfolio_illustrate_coverage_and_gaps(client: TestClient) -> None:
     assert source["ex_date"] == "2025-12-12"
     assert source["payable_date"] == "2025-12-15"
     assert amcap["upcoming"] is None
+    assert amcap["paid_history"]
+    assert all(
+        item["payable_date"] or item["ex_date"] or item["record_date"] or item["as_of"]
+        for item in amcap["paid_history"]
+    )
 
     cghm = next(h for h in body["holdings"] if h["ticker"] == "CGHM")
     assert cghm["covered"] is True
@@ -87,6 +92,7 @@ def test_portfolio_illustrate_coverage_and_gaps(client: TestClient) -> None:
     xyzax = next(h for h in body["holdings"] if h["ticker"] == "XYZAX")
     assert xyzax["covered"] is False
     assert xyzax["upcoming"] is None
+    assert xyzax["paid_history"] == []
 
     assert Decimal(body["totals"]["distribution_dollars"]) == Decimal("40000.00")
     assert Decimal(body["totals"]["estimated_tax"]) == Decimal("10000.00")
@@ -109,6 +115,7 @@ def test_portfolio_per_share_with_nav(client: TestClient) -> None:
     assert Decimal(holding["illustration"]["totals"]["distribution_dollars"]) > 0
     assert holding["publication_stage_used"] == "paid"
     assert holding["upcoming"] is None
+    assert holding["paid_history"]
 
 
 def test_portfolio_upcoming_copies_record_ex_payable_when_present(client: TestClient) -> None:
@@ -265,6 +272,11 @@ def test_portfolio_past_dated_prelim_excluded_from_upcoming(client: TestClient) 
     assert Decimal(amcpx["illustration"]["totals"]["distribution_dollars"]) == Decimal("400.00")
     assert amcpx["illustration"]["components"][0]["record_date"] == "2025-12-12"
     assert amcpx["upcoming"] is None
+    assert len(amcpx["paid_history"]) == 1
+    assert amcpx["paid_history"][0]["publication_stage"] == "preliminary_estimate"
+    assert amcpx["paid_history"][0]["record_date"] == "2025-12-12"
+    assert amcpx["paid_history"][0]["payable_date"] == "2025-12-15"
+    assert Decimal(amcpx["paid_history"][0]["distribution_dollars"]) == Decimal("400.00")
 
     future = holdings["FUTR"]["upcoming"]
     assert future is not None
@@ -272,9 +284,12 @@ def test_portfolio_past_dated_prelim_excluded_from_upcoming(client: TestClient) 
     assert future["ex_date"] == "2026-12-16"
     assert future["payable_date"] == "2026-12-17"
     assert future["publication_stage"] == "preliminary_estimate"
+    assert holdings["FUTR"]["paid_history"] == []
 
     assert holdings["MIXED"]["upcoming"] is None
+    assert holdings["MIXED"]["paid_history"][0]["record_date"] == "2025-12-12"
     assert holdings["PAIDF"]["upcoming"] is None
+    assert holdings["PAIDF"]["paid_history"][0]["publication_stage"] == "paid"
 
     compared = client.post(
         "/illustrate/portfolio/compare",
@@ -287,6 +302,7 @@ def test_portfolio_past_dated_prelim_excluded_from_upcoming(client: TestClient) 
     assert compared.status_code == 200, compared.text
     body = compared.json()
     assert body["current"]["holdings"][0]["upcoming"] is None
+    assert body["current"]["holdings"][0]["paid_history"]
     proposed_upcoming = body["proposed"]["holdings"][0]["upcoming"]
     assert proposed_upcoming is not None
     assert proposed_upcoming["record_date"] == "2026-12-15"
@@ -365,3 +381,95 @@ def test_portfolio_weight_pct_with_book_dollars(client: TestClient) -> None:
     holding = response.json()["holdings"][0]
     assert Decimal(holding["holding_dollars"]) == Decimal("800000.00")
     assert Decimal(response.json()["totals"]["distribution_dollars"]) == Decimal("32000.00")
+
+
+def _paid_history_sort_value(item: dict) -> str:
+    return item["payable_date"] or item["ex_date"] or item["record_date"] or item["as_of"] or ""
+
+
+def test_portfolio_paid_history_amcpx_agthx_sitrep(client: TestClient) -> None:
+    """Eric Paid History: AMCPX/AGTHX past rows (not upcoming) on portfolio + compare."""
+    ingested = client.post("/ingest/fetch", json={"fund_family": "american_funds", "mode": "fixture"})
+    assert ingested.status_code == 200, ingested.text
+
+    payload = {
+        "holdings": [
+            {"ticker": "AMCPX", "holding_dollars": 10000, "nav_per_share": 45.70},
+            {"ticker": "AGTHX", "holding_dollars": 10000, "nav_per_share": 88.69},
+        ],
+        "tax_rates": {
+            "ordinary_income": 0.37,
+            "long_term_capital_gains": 0.20,
+            "short_term_capital_gains": 0.37,
+            "qualified_dividend": 0.20,
+            "state": 0.05,
+        },
+        "snapshot": {
+            "prefer_publication_stages": [
+                "preliminary_estimate",
+                "updated_estimate",
+                "final",
+                "paid",
+            ]
+        },
+    }
+    response = client.post("/illustrate/portfolio", json=payload)
+    assert response.status_code == 200, response.text
+    holdings = {item["ticker"]: item for item in response.json()["holdings"]}
+
+    amcpx = holdings["AMCPX"]
+    agthx = holdings["AGTHX"]
+    assert amcpx["covered"] is True
+    assert agthx["covered"] is True
+    assert amcpx["upcoming"] is None
+    assert agthx["upcoming"] is None
+    assert 1 <= len(amcpx["paid_history"]) <= 12
+    assert 1 <= len(agthx["paid_history"]) <= 12
+
+    for ticker, holding in (("AMCPX", amcpx), ("AGTHX", agthx)):
+        history = holding["paid_history"]
+        keys = [_paid_history_sort_value(item) for item in history]
+        assert keys == sorted(keys, reverse=True), ticker
+        for item in history:
+            assert "distribution_dollars" in item
+            assert Decimal(item["distribution_dollars"]) > 0
+            assert item["publication_stage"] in {
+                "preliminary_estimate",
+                "updated_estimate",
+                "final",
+                "paid",
+            }
+            assert set(item) >= {
+                "distribution_dollars",
+                "estimated_tax",
+                "as_of",
+                "publication_stage",
+                "record_date",
+                "ex_date",
+                "payable_date",
+            }
+
+    assert amcpx["paid_history"][0]["payable_date"] == "2026-06-17"
+    assert amcpx["paid_history"][0]["publication_stage"] == "paid"
+    assert any(
+        item["payable_date"] == "2025-12-17" or item["ex_date"] == "2025-12-17"
+        for item in agthx["paid_history"]
+    )
+
+    compared = client.post(
+        "/illustrate/portfolio/compare",
+        json={
+            "current": {"holdings": [payload["holdings"][0]]},
+            "proposed": {"holdings": [payload["holdings"][1]]},
+            "tax_rates": payload["tax_rates"],
+            "snapshot": payload["snapshot"],
+        },
+    )
+    assert compared.status_code == 200, compared.text
+    body = compared.json()
+    assert body["current"]["holdings"][0]["ticker"] == "AMCPX"
+    assert body["current"]["holdings"][0]["upcoming"] is None
+    assert body["current"]["holdings"][0]["paid_history"][0]["payable_date"] == "2026-06-17"
+    assert body["proposed"]["holdings"][0]["ticker"] == "AGTHX"
+    assert body["proposed"]["holdings"][0]["upcoming"] is None
+    assert body["proposed"]["holdings"][0]["paid_history"]
