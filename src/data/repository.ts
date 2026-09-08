@@ -1,5 +1,11 @@
 import { getFacets, getHighlights, searchFunds, withPeerContext } from "./queries";
-import { paginateViews, type FundPageQuery, type FundPageResult } from "./pagination";
+import {
+  clampOffset,
+  clampPageSize,
+  paginateViews,
+  type FundPageQuery,
+  type FundPageResult,
+} from "./pagination";
 import { SAMPLE_FUNDS } from "./seed";
 import type {
   DistributionRepository,
@@ -9,6 +15,7 @@ import type {
   SearchFilters,
 } from "./types";
 import { loadFundsFromDataApi } from "@/lib/data-api/distributions";
+import { isRemoteDataApi } from "@/lib/data-api/config";
 import { loadFundPageFromDataApi } from "@/lib/data-api/funds-page";
 
 /**
@@ -30,6 +37,16 @@ export class SeedDistributionRepository implements DistributionRepository {
   async searchPage(query: FundPageQuery = {}): Promise<FundPageResult> {
     const live = await loadFundPageFromDataApi(query);
     if (live) return live;
+    // Remote /funds 404 or down: empty page. Never dump /distributions rows
+    // into unique funds for Sample Estimates.
+    if (isRemoteDataApi()) {
+      return {
+        items: [],
+        total: 0,
+        limit: clampPageSize(query.limit),
+        offset: clampOffset(query.offset),
+      };
+    }
     return paginateViews(this.views, query);
   }
 

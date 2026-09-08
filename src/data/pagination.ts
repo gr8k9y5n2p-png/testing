@@ -49,21 +49,40 @@ export function isSortKey(value: string | null | undefined): value is SortKey {
   return Boolean(value && (FUND_SORT_KEYS as readonly string[]).includes(value));
 }
 
+/**
+ * Search-table paging. Prefer `limit` / `offset` (`GET /funds`).
+ * `/distributions` row pages use `page` / `page_size` — aliases:
+ *   limit ≡ page_size
+ *   offset ≡ (page - 1) * page_size
+ */
 export function parseFundPageQuery(
   searchParams: URLSearchParams,
 ): FundPageQuery {
   const yearValue = searchParams.get("year");
   const sort = searchParams.get("sort");
   const direction = searchParams.get("direction");
+  const family =
+    searchParams.get("fund_family") ?? searchParams.get("family") ?? undefined;
+  const limit = clampPageSize(
+    searchParams.get("limit") ?? searchParams.get("page_size") ?? undefined,
+  );
+  const rawOffset = searchParams.get("offset");
+  const rawPage = searchParams.get("page");
+  const offset =
+    rawOffset != null
+      ? clampOffset(rawOffset)
+      : rawPage != null
+        ? clampOffset((Number(rawPage) - 1) * limit)
+        : 0;
   return {
     query: searchParams.get("q") ?? undefined,
-    family: searchParams.get("family") ?? undefined,
+    family,
     category: searchParams.get("category") ?? undefined,
     year: yearValue ? Number(yearValue) : undefined,
     sort: isSortKey(sort) ? sort : undefined,
     direction: direction === "desc" || direction === "asc" ? direction : undefined,
-    limit: clampPageSize(searchParams.get("limit") ?? undefined),
-    offset: clampOffset(searchParams.get("offset") ?? undefined),
+    limit,
+    offset,
   };
 }
 

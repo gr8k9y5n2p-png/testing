@@ -110,4 +110,12 @@ test("parseFundPageQuery and offsetToPage match the Data contract", () => {
   assert.equal(params.get("offset"), "0");
   assert.equal(params.get("page_size"), "50");
   assert.equal(params.get("page"), "1");
+
+  const aliased = parseFundPageQuery(
+    new URLSearchParams("page=3&page_size=50&fund_family=Vanguard&q=amc"),
+  );
+  assert.equal(aliased.limit, 50);
+  assert.equal(aliased.offset, 100);
+  assert.equal(aliased.family, "Vanguard");
+  assert.equal(aliased.query, "amc");
 });

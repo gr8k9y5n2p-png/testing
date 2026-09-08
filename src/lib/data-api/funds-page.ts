@@ -12,17 +12,18 @@ import { fetchDataApi } from "@/lib/data-api/fetch";
 export { mapFundsApiItem, type FundsApiItem } from "@/data/funds-list";
 
 /**
- * Unique-fund table pages come from Data `GET /funds`.
+ * Sample Estimates / Search unique-fund pages: Data `GET /funds` only.
  *
  *   GET /funds?limit=50&offset=0&q=&fund_family=
  *   → `{ items, limit, offset, total }`
  *
- * Item fields today: `ticker`, `fund_name`, `fund_family`,
- * `fund_identifier`, `latest_as_of`, `has_estimate`.
- * Do not client-aggregate `GET /distributions` into this table.
- *
- * Sort/category/year are forwarded when present; Data may ignore them until
- * those query params land. Missing estimate amounts stay "—" in the UI.
+ * Do **not** client-aggregate `GET /distributions` into unique funds.
+ * `/distributions` is distribution **rows**:
+ *   GET /distributions?page=1&page_size=50
+ *   → `{ items, page, page_size, total }` (max page_size 200)
+ * Mapping if a row view needs it: limit ≡ page_size,
+ * offset ≡ (page - 1) * page_size. Filters: q, fund_family, ticker,
+ * publication_stage, dates. 404 / down → empty page (honest), not a dump.
  */
 type PagePayload = {
   items?: unknown[];
