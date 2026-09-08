@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import type { FundEstimateView } from "../../data/types.ts";
 import {
   firstSearchParam,
@@ -8,6 +11,8 @@ import {
   HOMEPAGE_GROWTH_FUNDS,
   resolveFundView,
 } from "./fund-history.ts";
+
+const here = dirname(fileURLToPath(import.meta.url));
 
 function view(ticker: string, fundName: string, family = "American Funds"): FundEstimateView {
   return {
@@ -37,9 +42,9 @@ const funds = [
 ];
 
 describe("fund history deep-link", () => {
-  it("builds /?ticker= + #growth-and-tax", () => {
-    assert.equal(fundHistoryPath("amcap"), "/?ticker=AMCAP#growth-and-tax");
-    assert.equal(fundHistoryPath(" AGTHX "), "/?ticker=AGTHX#growth-and-tax");
+  it("builds /?ticker= + #illustrate", () => {
+    assert.equal(fundHistoryPath("amcap"), "/?ticker=AMCAP#illustrate");
+    assert.equal(fundHistoryPath(" AGTHX "), "/?ticker=AGTHX#illustrate");
   });
 
   it("reads the first ticker search param", () => {
@@ -78,5 +83,20 @@ describe("fund history deep-link", () => {
       HOMEPAGE_GROWTH_FUNDS.some((fund) => fund.ticker === "FCNTX"),
       false,
     );
+  });
+
+  it("does not mount GrowthAndTaxDragModule on Search", () => {
+    const app = readFileSync(
+      join(here, "../../components/AftertaxApp.tsx"),
+      "utf8",
+    );
+    const moduleFile = readFileSync(
+      join(here, "../../components/illustrate/GrowthAndTaxDragModule.tsx"),
+      "utf8",
+    );
+    assert.doesNotMatch(app, /GrowthAndTaxDragModule/);
+    assert.doesNotMatch(app, /<GrowthAndTaxDragModule/);
+    assert.match(app, /<IllustratePanel/);
+    assert.match(moduleFile, /export function GrowthAndTaxDragModule/);
   });
 });
