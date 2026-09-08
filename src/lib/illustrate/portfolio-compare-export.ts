@@ -1,6 +1,8 @@
 import { formatOptionalDate, formatUsd } from "@/lib/format";
 import {
   PAID_HISTORY_EMPTY,
+  TAX_DRAG_CARD_DETAIL,
+  TAX_IMPACT_DELTA_DETAIL,
   UPCOMING_UNAVAILABLE_HEADLINE,
 } from "@/lib/illustrate/portfolio-compare-copy";
 import {
@@ -151,7 +153,7 @@ function sideHtml(side: PortfolioCompareExportSide): string {
   return `
     <section class="col">
       <h2>${escapeHtml(side.label)}</h2>
-      <p class="metric">Tax drag <strong>${escapeHtml(side.taxDragLabel)}</strong></p>
+      <p class="metric">Tax drag <strong>${escapeHtml(side.taxDragLabel)}</strong> <span class="muted">${escapeHtml(TAX_DRAG_CARD_DETAIL)}</span></p>
       <p class="metric">Total tax impact <strong>${escapeHtml(
         side.upcoming.length
           ? money(side.totalUpcomingTax)
@@ -257,14 +259,17 @@ export function renderPortfolioComparePrintHtml(
     <div>
       <span>Current tax drag</span>
       <strong>${escapeHtml(model.current.taxDragLabel)}</strong>
+      <span class="muted">${escapeHtml(TAX_DRAG_CARD_DETAIL)}</span>
     </div>
     <div>
       <span>Proposed tax drag</span>
       <strong>${escapeHtml(model.proposed.taxDragLabel)}</strong>
+      <span class="muted">${escapeHtml(TAX_DRAG_CARD_DETAIL)}</span>
     </div>
     <div class="delta">
       <span>Tax impact Δ</span>
       <strong>${escapeHtml(model.delta.headline)}</strong>
+      <span class="muted">${escapeHtml(TAX_IMPACT_DELTA_DETAIL)}</span>
     </div>
   </section>
   <p class="foot">Aftertax · estimates / illustrative only · not tax advice · weights × portfolio value → dollars</p>

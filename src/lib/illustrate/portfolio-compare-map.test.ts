@@ -7,6 +7,7 @@ import type {
 } from "./portfolio-compare-types.ts";
 import {
   announcedDateOf,
+  paidHistoryDateOf,
   paidHistoryRowsForSide,
   publicationBucket,
   totalUpcomingTax,
@@ -163,6 +164,22 @@ describe("publicationBucket", () => {
         TODAY,
       ),
       "upcoming",
+    );
+  });
+
+  it("uses record, else ex, else payable to decide past prelims are paid history", () => {
+    assert.equal(
+      publicationBucket(
+        row({
+          publication_stage: "updated_estimate",
+          as_of: "2026-08-12",
+          record_date: "2026-09-01",
+          ex_date: "2026-09-02",
+          payable_date: "2026-12-18",
+        }),
+        TODAY,
+      ),
+      "paid_history",
     );
   });
 });
@@ -438,5 +455,201 @@ describe("PortfolioCompare distribution tables", () => {
     ]);
     assert.equal(upcomingRowsForSide(book, "current").length, 0);
     assert.equal(upcomingFromHolding(book.holdings[0]), null);
+    assert.equal(paidHistoryRowsForSide(book, "current", TODAY).length, 0);
+  });
+
+  it("lists paid_history when Data nulls upcoming after the unpaid gate", () => {
+    const book = allocation([
+      holding({
+        ticker: "AMCAP",
+        upcoming: null,
+        paid_history: [
+          {
+            publication_stage: "paid",
+            distribution_dollars: 1050,
+            estimated_tax: 368,
+            as_of: "2025-12-15",
+            record_date: "2025-12-12",
+            ex_date: "2025-12-15",
+            payable_date: "2025-12-17",
+          },
+        ],
+        illustration: {
+          totals: {
+            distribution_dollars: 1050,
+            estimated_tax: 1050,
+            effective_tax_on_holding: 0.0042,
+          },
+        },
+      }),
+    ]);
+    book.totals = {
+      distribution_dollars: 1050,
+      estimated_tax: 4200,
+      effective_tax_on_holding: 0.0042,
+    };
+
+    const upcoming = upcomingRowsForSide(book, "current", TODAY);
+    const paid = paidHistoryRowsForSide(book, "current", TODAY);
+
+    assert.equal(upcoming.length, 0);
+    assert.equal(paid.length, 1);
+    assert.equal(paid[0]?.ticker, "AMCAP");
+    assert.equal(paid[0]?.recordDate, "2025-12-12");
+    assert.equal(paid[0]?.exDate, "2025-12-15");
+    assert.equal(paid[0]?.payableDate, "2025-12-17");
+    assert.equal(paid[0]?.announcedDate, "2025-12-15");
+    assert.equal(book.totals.effective_tax_on_holding, 0.0042);
+    assert.equal(book.totals.estimated_tax, 4200);
+  });
+
+  it("prefers paid_history over illustration.components", () => {
+    const book = allocation([
+      holding({
+        ticker: "AGTHX",
+        upcoming: null,
+        paid_history: [
+          {
+            publication_stage: "final",
+            distribution_dollars: 900,
+            estimated_tax: 315,
+            as_of: "2026-08-12",
+            record_date: "2026-08-14",
+            ex_date: "2026-08-15",
+            payable_date: "2026-08-18",
+          },
+        ],
+        illustration: {
+          components: [
+            {
+              publication_stage: "paid",
+              distribution_dollars: 50,
+              estimated_tax: 10,
+              as_of: "2025-01-02",
+              record_date: "2025-01-03",
+            },
+          ],
+        },
+      }),
+    ]);
+    const paid = paidHistoryRowsForSide(book, "current", TODAY);
+    assert.equal(paid.length, 1);
+    assert.equal(paid[0]?.distributionDollars, 900);
+    assert.equal(paid[0]?.stage, "final");
+  });
+
+  it("falls back to past illustration.components when paid_history is omitted", () => {
+    const book = allocation([
+      holding({
+        ticker: "DODGX",
+        upcoming: null,
+        illustration: {
+          components: [
+            {
+              publication_stage: "paid",
+              distribution_dollars: 2100,
+              estimated_tax: 735,
+              as_of: "2026-08-12",
+              record_date: "2026-08-14",
+              ex_date: "2026-08-15",
+              payable_date: "2026-08-18",
+            },
+            {
+              publication_stage: "preliminary_estimate",
+              distribution_dollars: 4800,
+              estimated_tax: 1680,
+              as_of: "2026-12-15",
+              record_date: "2026-12-16",
+            },
+          ],
+        },
+      }),
+    ]);
+    const upcoming = upcomingRowsForSide(book, "current", TODAY);
+    const paid = paidHistoryRowsForSide(book, "current", TODAY);
+    assert.equal(upcoming.length, 0);
+    assert.equal(paid.length, 1);
+    assert.equal(paid[0]?.distributionDollars, 2100);
+    assert.equal(paid[0]?.payableDate, "2026-08-18");
+  });
+
+  it("falls back to past distributions when components are not paid history", () => {
+    const book = allocation([
+      holding({
+        ticker: "AMCPX",
+        upcoming: null,
+        distributions: [
+          {
+            publication_stage: "paid",
+            distribution_dollars: 900,
+            estimated_tax: 315,
+            as_of: "2026-08-12",
+            record_date: "2026-08-14",
+            ex_date: "2026-08-15",
+            payable_date: "2026-08-18",
+          },
+        ],
+      }),
+    ]);
+    assert.equal(upcomingRowsForSide(book, "current", TODAY).length, 0);
+    const paid = paidHistoryRowsForSide(book, "current", TODAY);
+    assert.equal(paid.length, 1);
+    assert.equal(paid[0]?.ticker, "AMCPX");
+  });
+
+  it("sorts paid history newest first and leaves missing dates null", () => {
+    const book = allocation([
+      holding({
+        ticker: "AGTHX",
+        upcoming: null,
+        paid_history: [
+          {
+            publication_stage: "paid",
+            distribution_dollars: 400,
+            estimated_tax: 140,
+            as_of: "2025-06-01",
+            record_date: "2025-06-12",
+            ex_date: null,
+            payable_date: null,
+          },
+          {
+            publication_stage: "final",
+            distribution_dollars: 800,
+            estimated_tax: 280,
+            as_of: "2025-12-15",
+            record_date: "2025-12-12",
+            ex_date: "2025-12-15",
+            payable_date: "2025-12-17",
+          },
+          {
+            publication_stage: "paid",
+            distribution_dollars: 200,
+            estimated_tax: 70,
+            as_of: null,
+            record_date: null,
+            ex_date: null,
+            payable_date: null,
+          },
+        ],
+      }),
+    ]);
+    const paid = paidHistoryRowsForSide(book, "current", TODAY);
+    assert.deepEqual(
+      paid.map((item) => item.distributionDollars),
+      [800, 400, 200],
+    );
+    assert.equal(paid[0]?.recordDate, "2025-12-12");
+    assert.equal(paid[1]?.exDate, null);
+    assert.equal(paid[1]?.payableDate, null);
+    assert.equal(paid[2]?.recordDate, null);
+    assert.equal(paid[2]?.announcedDate, null);
+    assert.equal(
+      paidHistoryDateOf({
+        record_date: "2025-12-12",
+        ex_date: "2025-12-15",
+        payable_date: "2025-12-17",
+      }),
+      "2025-12-12",
+    );
   });
 });

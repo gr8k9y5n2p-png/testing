@@ -15,6 +15,7 @@ export {
   isPaidHistoryPublicationStage,
   isUpcomingPublicationStage,
   normalizePublicationStage,
+  paidHistoryDateOf,
   paidHistoryRowsForSide,
   publicationBucket,
   totalUpcomingTax,

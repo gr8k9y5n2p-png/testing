@@ -1,4 +1,8 @@
 import {
+  TAX_DRAG_CARD_DETAIL,
+  TAX_IMPACT_DELTA_DETAIL,
+} from "@/lib/illustrate/portfolio-compare-copy";
+import {
   compactBookLabel,
   formatMoreLessTax,
   formatTaxDragPct,
@@ -39,7 +43,10 @@ export function SummaryStrip({
         <p className="mt-1 font-serif text-[28px] leading-tight tracking-tight text-ink">
           {formatTaxDragPct(currentDrag)}
         </p>
-        <p className="mt-1 text-[11px] text-muted">weighted avg{demo}</p>
+        <p className="mt-1 text-[11px] text-muted">
+          {TAX_DRAG_CARD_DETAIL}
+          {demo}
+        </p>
       </div>
       <div className="border-line px-5 py-4 md:border-r">
         <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-faint">
@@ -48,7 +55,10 @@ export function SummaryStrip({
         <p className="mt-1 font-serif text-[28px] leading-tight tracking-tight text-ink">
           {formatTaxDragPct(proposedDrag)}
         </p>
-        <p className="mt-1 text-[11px] text-muted">weighted avg{demo}</p>
+        <p className="mt-1 text-[11px] text-muted">
+          {TAX_DRAG_CARD_DETAIL}
+          {demo}
+        </p>
       </div>
       <div
         className={`px-5 py-4 ${
@@ -68,7 +78,7 @@ export function SummaryStrip({
           {impact.headline}
         </p>
         <p className="mt-1 text-[11px] text-muted">
-          on {compactBookLabel(bookDollars)}
+          {TAX_IMPACT_DELTA_DETAIL} · on {compactBookLabel(bookDollars)}
           {demo}
         </p>
       </div>

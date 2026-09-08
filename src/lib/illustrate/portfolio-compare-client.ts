@@ -148,6 +148,9 @@ function normalizeHolding(raw: unknown, index: number): PortfolioHoldingOut {
     upcoming: normalizeUpcoming(
       Object.prototype.hasOwnProperty.call(row, "upcoming") ? row.upcoming : undefined,
     ),
+    paid_history: Object.prototype.hasOwnProperty.call(row, "paid_history")
+      ? normalizeUpcoming(row.paid_history) ?? []
+      : undefined,
     distributions: normalizeDistributionList(row.distributions),
     history: normalizeDistributionList(row.history),
     gap_reason: row.gap_reason == null ? null : String(row.gap_reason),

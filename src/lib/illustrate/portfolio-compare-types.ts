@@ -79,6 +79,12 @@ export type PortfolioDistributionRow = PortfolioDistributionDates & {
 /** Data API `holdings[].upcoming`. Null when uncovered or no upcoming dollars. */
 export type PortfolioUpcoming = PortfolioDistributionRow;
 
+/**
+ * Data API `holdings[].paid_history[]`. Additive vs `upcoming`.
+ * Same row shape; Data classifies paid/final or past prelim/updated.
+ */
+export type PortfolioPaidHistory = PortfolioDistributionRow;
+
 export type PortfolioHoldingIllustrationTotals = {
   distribution_dollars: number;
   estimated_tax: number;
@@ -111,11 +117,18 @@ export type PortfolioHoldingOut = {
    * Prefer this for bar charts + heat tables.
    * `null` = no upcoming (do not derive). Omitted = older payload; derive from illustration.
    * Array form is accepted when Data sends more than one snapshot.
+   * Unpaid announced only — never a paid-history source.
    */
   upcoming?: PortfolioUpcoming | PortfolioUpcoming[] | null;
   /**
+   * Prefer this for Paid History. Additive vs `upcoming`.
+   * Present (including `[]`) = Data-classified paid rows; do not derive.
+   * Omitted = older payload; fall back to illustration.components / distributions.
+   */
+  paid_history?: PortfolioPaidHistory | PortfolioPaidHistory[] | null;
+  /**
    * Full distribution events for the holding (GET /distributions shape).
-   * When present, tables split these by publication_stage instead of dumping every row into Upcoming.
+   * Temporary Paid History fallback until `paid_history[]` is live.
    */
   distributions?: PortfolioDistributionRow[];
   history?: PortfolioDistributionRow[];

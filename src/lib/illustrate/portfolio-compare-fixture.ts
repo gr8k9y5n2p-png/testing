@@ -119,6 +119,10 @@ function mockHoldingOut(
     };
   }
 
+  const events = mockDistributionEvents(dist, upcomingTax, rates.asOf, stage, yearEndDates);
+  const paidHistory = events.filter((event) => event.publication_stage === "paid");
+  const upcomingRow = events.find((event) => event.publication_stage !== "paid") ?? events[0];
+
   return {
     holding_index: index,
     ticker,
@@ -130,17 +134,20 @@ function mockHoldingOut(
     covered: true,
     publication_stage_used: stage,
     warnings: [],
-    upcoming: {
-      distribution_dollars: dist,
-      estimated_tax: upcomingTax,
-      as_of: rates.asOf,
-      announced_date: rates.asOf,
-      record_date: yearEndDates.record_date,
-      ex_date: yearEndDates.ex_date,
-      payable_date: yearEndDates.payable_date,
-      publication_stage: stage,
-    },
-    distributions: mockDistributionEvents(dist, upcomingTax, rates.asOf, stage, yearEndDates),
+    upcoming: upcomingRow
+      ? {
+          distribution_dollars: upcomingRow.distribution_dollars,
+          estimated_tax: upcomingRow.estimated_tax,
+          as_of: upcomingRow.as_of,
+          announced_date: upcomingRow.announced_date,
+          record_date: upcomingRow.record_date,
+          ex_date: upcomingRow.ex_date,
+          payable_date: upcomingRow.payable_date,
+          publication_stage: upcomingRow.publication_stage,
+        }
+      : null,
+    paid_history: paidHistory,
+    distributions: events,
     illustration: {
       totals: {
         distribution_dollars: dist,
