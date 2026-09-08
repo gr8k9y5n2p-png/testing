@@ -145,8 +145,8 @@ describe("missing performance coverage", () => {
     assert.equal(performanceCoveredFromRaw(undefined), undefined);
   });
 
-  it("keeps the N/A empty-state copy", () => {
-    assert.match(PERFORMANCE_UNAVAILABLE_LABEL, /Performance not available/i);
+  it("keeps the growth-only No Performance empty-state copy", () => {
+    assert.equal(PERFORMANCE_UNAVAILABLE_LABEL, "No Performance");
     assert.match(PERFORMANCE_UNAVAILABLE_HINT, /N\/A/);
     assert.doesNotMatch(PERFORMANCE_UNAVAILABLE_HINT, /\$0|Upcoming/);
   });

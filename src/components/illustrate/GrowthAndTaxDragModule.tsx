@@ -113,9 +113,11 @@ export function GrowthAndTaxDragModule({
       })
       .catch((caught: unknown) => {
         if (caught instanceof DOMException && caught.name === "AbortError") return;
-        setRows(null);
-        setMissingTickers([]);
-        setError(caught instanceof Error ? caught.message : "Growth and tax drag failed");
+        // Keep last rows so tax-drag / historical bars are not blanked.
+        setMissingTickers(
+          next.funds.map((fund) => fund.ticker.trim().toUpperCase()).filter(Boolean),
+        );
+        setError(caught instanceof Error ? caught.message : "Growth chart failed");
         setSettledKey(fetchKey);
       });
 
@@ -325,64 +327,66 @@ export function GrowthAndTaxDragModule({
         </div>
       ) : null}
 
-      {error ? (
-        <div className="mt-5 rounded-md border border-tax-more/20 bg-tax-more-soft px-4 py-4">
-          <p className="font-serif text-lg text-tax-more">Module unavailable</p>
-          <p className="mt-1 text-sm text-ink">{error}</p>
-          <button
-            type="button"
-            onClick={() => setRetry((value) => value + 1)}
-            className="mt-3 h-9 rounded-md bg-accent px-3 text-sm text-white hover:bg-accent-hover"
-          >
-            Retry
-          </button>
+      <div className="mt-5 flex flex-col gap-4">
+        <div className="rounded-xl border border-line bg-paper/40 px-3 py-3 sm:px-4">
+          {error ? (
+            <div className="flex min-h-[160px] flex-col justify-center py-4">
+              <p className="font-serif text-lg text-ink">{PERFORMANCE_UNAVAILABLE_LABEL}</p>
+              <p className="mt-2 text-sm text-muted">{PERFORMANCE_UNAVAILABLE_HINT}</p>
+              <button
+                type="button"
+                onClick={() => setRetry((value) => value + 1)}
+                className="mt-3 h-9 w-fit rounded-md bg-accent px-3 text-sm text-white hover:bg-accent-hover"
+              >
+                Retry
+              </button>
+            </div>
+          ) : (
+            <>
+              <GrowthOfXChart
+                years={years}
+                series={growthSeries}
+                startDollars={principal}
+                unit="dollars"
+                annualized={annualized}
+                showAnnualized={showAnnualized}
+                loading={loading}
+                axis={axis}
+                emptyLabel={
+                  selected.length === 0 ? "No fund series" : PERFORMANCE_UNAVAILABLE_LABEL
+                }
+                emptyHint={selected.length === 0 ? "" : PERFORMANCE_UNAVAILABLE_HINT}
+              />
+              {missingTickers.length > 0 && growthSeries.some((row) => !row.dashed) ? (
+                <p className="mt-2 text-[11px] text-faint">
+                  {missingTickers.join(", ")}: {PERFORMANCE_UNAVAILABLE_LABEL}
+                </p>
+              ) : null}
+            </>
+          )}
         </div>
-      ) : (
-        <div className="mt-5 flex flex-col gap-4">
-          <div className="rounded-xl border border-line bg-paper/40 px-3 py-3 sm:px-4">
-            <GrowthOfXChart
-              years={years}
-              series={growthSeries}
-              startDollars={principal}
-              unit="dollars"
-              annualized={annualized}
-              showAnnualized={showAnnualized}
-              loading={loading}
-              axis={axis}
-              emptyLabel={
-                selected.length === 0 ? "No fund series" : PERFORMANCE_UNAVAILABLE_LABEL
-              }
-              emptyHint={selected.length === 0 ? "" : PERFORMANCE_UNAVAILABLE_HINT}
-            />
-            {missingTickers.length > 0 && growthSeries.some((row) => !row.dashed) ? (
-              <p className="mt-2 text-[11px] text-faint">
-                {missingTickers.join(", ")}: {PERFORMANCE_UNAVAILABLE_LABEL}
-              </p>
-            ) : null}
-          </div>
-          <div className="rounded-xl border border-line bg-paper/40 px-3 py-3 sm:px-4">
-            <TaxDragByYearChart
-              series={taxSeries}
-              years={years}
-              metric={taxMetric}
-              onUnitChange={setTaxMetric}
-              orientation="down"
-              showBarLabels={selected.length <= 2}
-              layout="flush"
-              title="Estimated annual tax drag"
-              upcomingSummary={upcomingSummary}
-              loading={loading}
-              axis={axis}
-              emptyLabel={
-                selected.length === 0
-                  ? "No fund series"
-                  : "No overlapping tax-drag years"
-              }
-              emptyHint={selected.length === 0 ? "" : undefined}
-            />
-          </div>
+        <div className="rounded-xl border border-line bg-paper/40 px-3 py-3 sm:px-4">
+          <TaxDragByYearChart
+            series={taxSeries}
+            years={years}
+            metric={taxMetric}
+            onUnitChange={setTaxMetric}
+            orientation="down"
+            showBarLabels={selected.length <= 2}
+            layout="flush"
+            title="Estimated annual tax drag"
+            upcomingSummary={upcomingSummary}
+            loading={loading}
+            axis={axis}
+            emptyLabel={
+              selected.length === 0
+                ? "No fund series"
+                : "No overlapping tax-drag years"
+            }
+            emptyHint={selected.length === 0 ? "" : undefined}
+          />
         </div>
-      )}
+      </div>
 
       <p className="mt-4 text-[10px] leading-relaxed text-faint">
         {SKETCH_DISCLAIMER}

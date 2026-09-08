@@ -1,7 +1,7 @@
 import type { PerformanceResponse } from "./types";
 
-/** Advisor-facing empty state when GET /performance (or growth) has no pack. */
-export const PERFORMANCE_UNAVAILABLE_LABEL = "Performance not available";
+/** Growth-chart-only note when GET /performance (or growth) has no pack. */
+export const PERFORMANCE_UNAVAILABLE_LABEL = "No Performance";
 export const PERFORMANCE_UNAVAILABLE_HINT =
   "N/A — no performance pack. Aftertax does not invent a growth series.";
 

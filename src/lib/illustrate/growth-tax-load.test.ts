@@ -11,6 +11,10 @@ import {
 } from "./growth-tax-series.ts";
 import type { CompareResponse } from "./compare-types.ts";
 import { TAX_DRAG_NA_LABEL } from "./tax-drag-map.ts";
+import { PERFORMANCE_UNAVAILABLE_LABEL } from "../performance/coverage.ts";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import type { PerformanceResponse } from "../performance/types.ts";
 
 function fundInput(ticker: string) {
@@ -221,6 +225,21 @@ describe("mapFundsWithOptionalPerformance", () => {
       [TAX_DRAG_NA_LABEL, TAX_DRAG_NA_LABEL],
     );
     assert.deepEqual(growthLinesFromRows(rows, years, 10_000), []);
+  });
+});
+
+describe("module empty-state wiring", () => {
+  it("keeps No Performance on the growth chart and does not blank tax-drag", () => {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const moduleSource = readFileSync(
+      join(here, "../../components/illustrate/GrowthAndTaxDragModule.tsx"),
+      "utf8",
+    );
+    assert.equal(PERFORMANCE_UNAVAILABLE_LABEL, "No Performance");
+    assert.match(moduleSource, /PERFORMANCE_UNAVAILABLE_LABEL/);
+    assert.match(moduleSource, /TaxDragByYearChart/);
+    assert.doesNotMatch(moduleSource, /Module unavailable/);
+    assert.match(moduleSource, /Keep last rows so tax-drag/);
   });
 });
 
