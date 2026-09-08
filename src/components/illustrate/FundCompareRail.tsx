@@ -5,6 +5,7 @@ import type { FundEstimateView } from "@/data/types";
 import { FundPicker } from "@/components/illustrate/FundPicker";
 import { FundTaxDeltaCompare } from "@/components/illustrate/FundTaxDeltaCompare";
 import { compareSideFromFund } from "@/lib/illustrate/compare-request";
+import { defaultComparePeer } from "@/lib/illustrate/fund-compare-defaults";
 import { seedNavLookup } from "@/lib/illustrate/seed-nav";
 import {
   COMPARE_SUMMARY_HOLDING_DOLLARS,
@@ -13,21 +14,6 @@ import {
 import { UI_DEFAULT_TAX_RATES } from "@/lib/illustrate/types";
 
 const COMPARE_TAX_RATES = { state: UI_DEFAULT_TAX_RATES.state };
-
-export function defaultComparePeer(
-  selected: FundEstimateView,
-  funds: FundEstimateView[],
-): FundEstimateView | null {
-  const others = funds.filter(
-    (fund) => fund.id !== selected.id && fund.ticker !== selected.ticker,
-  );
-  const sameCategoryOtherFamily = others.find(
-    (fund) =>
-      fund.category === selected.category && fund.family !== selected.family,
-  );
-  if (sameCategoryOtherFamily) return sameCategoryOtherFamily;
-  return others[0] ?? null;
-}
 
 function sideFromFund(fund: FundEstimateView): CompareSideIn {
   return compareSideFromFund(fund, seedNavLookup);

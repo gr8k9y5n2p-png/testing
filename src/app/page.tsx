@@ -31,6 +31,9 @@ export default async function Home({
   if (firstParam(params.tab) === "portfolio") {
     redirect("/portfolio");
   }
+  if (firstParam(params.tab) === "compare") {
+    redirect("/compare");
+  }
   const repository = await getDistributionRepository();
   const [funds, highlights, facets, coverage] = await Promise.all([
     repository.search(),
