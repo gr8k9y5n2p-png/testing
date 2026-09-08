@@ -1,4 +1,5 @@
 import type {
+  ComparePeriodIn,
   CompareRequest,
   CompareSelectors,
   CompareSideIn,
@@ -6,6 +7,46 @@ import type {
 import type { IllustrateRequest } from "@/lib/illustrate/types";
 
 export type NavLookup = (ticker: string) => number | undefined;
+
+/**
+ * Data `_filter_stmt` ANDs every populated selector. `fund_name=AMCPX`
+ * looks for ILIKE '%AMCPX%' on "AMCAP Fund" / "The Growth Fund of America"
+ * and returns no rows → `matched: false` / N/A for every vintage.
+ * Never send the ticker (or a blank) as `fund_name`.
+ */
+export function sanitizeCompareSelectors(
+  selectors?: CompareSelectors | null,
+): CompareSelectors | undefined {
+  if (!selectors) return undefined;
+  const ticker = tickerFromSelectors(selectors);
+  const fundName = selectors.fund_name?.trim();
+  const next: CompareSelectors = { ...selectors };
+  if (!fundName || (ticker && fundName.toUpperCase() === ticker)) {
+    delete next.fund_name;
+  } else {
+    next.fund_name = fundName;
+  }
+  return next;
+}
+
+export function compareSelectorsFromFund(fund: {
+  ticker: string;
+  fundName?: string;
+  family?: string;
+  fundIdentifier?: string;
+}): CompareSelectors {
+  const ticker = fund.ticker.trim().toUpperCase();
+  const identifier = fund.fundIdentifier?.trim() || ticker;
+  const family = fund.family?.trim();
+  return (
+    sanitizeCompareSelectors({
+      ticker,
+      fund_identifier: identifier,
+      ...(family ? { fund_family: family } : {}),
+      fund_name: fund.fundName,
+    }) ?? { ticker, fund_identifier: identifier }
+  );
+}
 
 /**
  * Data's CompareRequest / CompareSideIn mark `nav_per_share` and `shares` as
@@ -49,6 +90,7 @@ export function compareSideFromFund(
     family?: string;
     nav?: number | null;
     label?: string;
+    fundIdentifier?: string;
   },
   lookup?: NavLookup,
 ): CompareSideIn {
@@ -56,13 +98,49 @@ export function compareSideFromFund(
   const nav = navFromFundMetadata(ticker, fund.nav, lookup);
   return {
     label: fund.label ?? fund.fundName ?? ticker,
-    selectors: {
-      ticker,
-      fund_identifier: ticker,
-      fund_family: fund.family,
-      fund_name: fund.fundName ?? fund.label,
-    },
+    selectors: compareSelectorsFromFund(fund),
     ...(nav != null ? { nav_per_share: nav } : {}),
+  };
+}
+
+/**
+ * Homepage Growth + tax-drag YoY body. One fund, calendar-year periods.
+ * `left.label` stays the ticker (chart series id); Data still zips vintages
+ * and sets `period.year` to the newer year.
+ */
+export function yoyTaxDragCompareRequest(input: {
+  ticker: string;
+  label?: string;
+  fundIdentifier?: string;
+  fundFamily?: string;
+  fundName?: string;
+  holdingDollars: number;
+  navPerShare?: number | null;
+  periods: ComparePeriodIn[];
+}): CompareRequest {
+  const ticker = input.ticker.trim().toUpperCase();
+  const selectors = compareSelectorsFromFund({
+    ticker,
+    fundIdentifier: input.fundIdentifier ?? ticker,
+    family: input.fundFamily,
+    fundName: input.fundName,
+  });
+  const nav = positiveNav(input.navPerShare);
+  return {
+    mode: "yoy",
+    holding_dollars: input.holdingDollars,
+    combine_state_with_federal: true,
+    latest_as_of_only: true,
+    ...(nav != null ? { nav_per_share: nav } : {}),
+    selectors,
+    left: {
+      label: input.label ?? ticker,
+      holding_dollars: input.holdingDollars,
+      ...(nav != null ? { nav_per_share: nav } : {}),
+      selectors,
+    },
+    periods: input.periods,
+    tax_rates: {},
   };
 }
 
@@ -71,12 +149,19 @@ function withSideNav(
   lookup?: NavLookup,
 ): CompareSideIn | undefined {
   if (!side) return undefined;
-  const { nav_per_share: givenNav, shares: givenShares, ...rest } = side;
-  const ticker = tickerFromSelectors(side.selectors);
+  const {
+    nav_per_share: givenNav,
+    shares: givenShares,
+    selectors: givenSelectors,
+    ...rest
+  } = side;
+  const selectors = sanitizeCompareSelectors(givenSelectors);
+  const ticker = tickerFromSelectors(selectors);
   const nav = navFromFundMetadata(ticker, givenNav, lookup);
   const shares = positiveNav(givenShares);
   return {
     ...rest,
+    ...(selectors ? { selectors } : {}),
     ...(nav != null ? { nav_per_share: nav } : {}),
     ...(shares != null ? { shares } : {}),
   };
@@ -113,6 +198,9 @@ export function toDataApiCompareBody(
   delete rest.shares;
   delete rest.left;
   delete rest.right;
+  const selectors = sanitizeCompareSelectors(rest.selectors);
+  if (selectors) rest.selectors = selectors;
+  else delete rest.selectors;
 
   return {
     ...rest,

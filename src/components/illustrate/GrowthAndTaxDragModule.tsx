@@ -19,7 +19,11 @@ import {
 } from "@/lib/charts/shared-axis";
 import { formatUsd } from "@/lib/format";
 import { postIllustrateCompare } from "@/lib/illustrate/compare-client";
-import { navFromFundMetadata, positiveNav } from "@/lib/illustrate/compare-request";
+import {
+  navFromFundMetadata,
+  positiveNav,
+  yoyTaxDragCompareRequest,
+} from "@/lib/illustrate/compare-request";
 import { seedNavLookup } from "@/lib/illustrate/seed-nav";
 import type { ComparePeriodIn, CompareResponse } from "@/lib/illustrate/compare-types";
 import {
@@ -42,6 +46,8 @@ export type GrowthFundInput = {
   label?: string;
   fundIdentifier?: string;
   fundFamily?: string;
+  /** Real product name. Never the ticker — Data ANDs fund_name. */
+  fundName?: string;
   /** Search / fund metadata NAV. Sent on YoY compare when > 0. */
   navPerShare?: number | null;
 };
@@ -491,6 +497,7 @@ function fundKey(fund: GrowthFundInput): GrowthFundInput {
     label: fund.label,
     fundIdentifier: fund.fundIdentifier,
     fundFamily: fund.fundFamily,
+    fundName: fund.fundName,
     navPerShare: fund.navPerShare,
   };
 }
@@ -546,32 +553,16 @@ async function loadModule(
       let tax: CompareResponse | null = null;
       try {
         tax = await postIllustrateCompare(
-          {
-            mode: "yoy",
-            holding_dollars: principal,
-            combine_state_with_federal: true,
-            latest_as_of_only: true,
-            ...(nav != null ? { nav_per_share: nav } : {}),
-            selectors: {
-              ticker,
-              fund_identifier: input.fundIdentifier ?? ticker,
-              fund_family: input.fundFamily,
-              fund_name: input.label,
-            },
-            left: {
-              label: input.label ?? ticker,
-              holding_dollars: principal,
-              ...(nav != null ? { nav_per_share: nav } : {}),
-              selectors: {
-                ticker,
-                fund_identifier: input.fundIdentifier ?? ticker,
-                fund_family: input.fundFamily,
-                fund_name: input.label,
-              },
-            },
+          yoyTaxDragCompareRequest({
+            ticker,
+            label: input.label ?? ticker,
+            fundIdentifier: input.fundIdentifier ?? ticker,
+            fundFamily: input.fundFamily,
+            fundName: input.fundName,
+            holdingDollars: principal,
+            navPerShare: nav,
             periods: taxPeriods,
-            tax_rates: {},
-          },
+          }),
           { signal },
         );
       } catch {

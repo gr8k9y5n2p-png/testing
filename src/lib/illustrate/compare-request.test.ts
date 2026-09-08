@@ -4,11 +4,15 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+  compareSelectorsFromFund,
   compareSideFromFund,
   navFromFundMetadata,
   positiveNav,
   toDataApiCompareBody,
+  yoyTaxDragCompareRequest,
 } from "./compare-request.ts";
+import { mockCompareResponse } from "./compare-fixture.ts";
+import { toTaxDragPeriods } from "./tax-drag-map.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -16,6 +20,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const SEED_NAV: Record<string, number> = {
   AGTHX: 72.14,
   VIGAX: 186.4,
+  AMCPX: 41.22,
 };
 
 function seedLookup(ticker: string): number | undefined {
@@ -128,5 +133,94 @@ describe("compare-request NAV / Data body", () => {
     );
     assert.equal(body.nav_per_share, 72.14);
     assert.equal(body.left?.nav_per_share, 72.14);
+  });
+
+  it("omits fund_name when it is just the ticker (Data ANDs fund_name)", () => {
+    assert.equal(
+      compareSelectorsFromFund({ ticker: "AMCPX", fundName: "AMCPX" }).fund_name,
+      undefined,
+    );
+    assert.equal(
+      compareSelectorsFromFund({ ticker: "AGTHX", fundName: "agthx" }).fund_name,
+      undefined,
+    );
+    assert.equal(
+      compareSelectorsFromFund({
+        ticker: "AGTHX",
+        fundName: "The Growth Fund of America",
+        family: "American Funds",
+      }).fund_name,
+      "The Growth Fund of America",
+    );
+    const stripped = toDataApiCompareBody({
+      mode: "yoy",
+      holding_dollars: 10_000,
+      selectors: {
+        ticker: "AMCPX",
+        fund_identifier: "AMCPX",
+        fund_name: "AMCPX",
+      },
+      left: {
+        label: "AMCPX",
+        selectors: {
+          ticker: "AMCPX",
+          fund_identifier: "AMCPX",
+          fund_name: "AMCPX",
+        },
+      },
+      periods: [{ year: 2021 }, { year: 2025 }],
+    });
+    assert.equal(stripped.selectors?.fund_name, undefined);
+    assert.equal(stripped.left?.selectors?.fund_name, undefined);
+    assert.equal(stripped.selectors?.ticker, "AMCPX");
+  });
+
+  it("builds a homepage AMCPX YoY body that still charts mock 2021–2025 bars", () => {
+    const years = [2021, 2022, 2023, 2024, 2025];
+    const request = yoyTaxDragCompareRequest({
+      ticker: "AMCPX",
+      label: "AMCPX",
+      fundFamily: "American Funds",
+      fundName: "AMCPX",
+      holdingDollars: 10_000,
+      navPerShare: 41.22,
+      periods: years.map((year) => ({ year })),
+    });
+    const body = toDataApiCompareBody(request, seedLookup);
+    assert.equal(body.mode, "yoy");
+    assert.equal(body.selectors?.ticker, "AMCPX");
+    assert.equal(body.selectors?.fund_name, undefined);
+    assert.equal(body.left?.selectors?.fund_name, undefined);
+    assert.equal(body.nav_per_share, 41.22);
+    assert.deepEqual(
+      body.periods?.map((period) => period.year),
+      years,
+    );
+    const points = toTaxDragPeriods(mockCompareResponse(body), "effective_tax");
+    assert.deepEqual(
+      points.map((point) => point.year),
+      years,
+    );
+    assert.ok(
+      points.every((point) => point.value != null),
+      "AMCPX mock vintages 2021–2025 must chart, not N/A",
+    );
+  });
+
+  it("builds an AGTHX YoY body with a real fund_name and NAV", () => {
+    const body = toDataApiCompareBody(
+      yoyTaxDragCompareRequest({
+        ticker: "AGTHX",
+        fundFamily: "American Funds",
+        fundName: "The Growth Fund of America",
+        holdingDollars: 10_000,
+        periods: [{ year: 2021 }, { year: 2022 }, { year: 2023 }, { year: 2024 }, { year: 2025 }],
+      }),
+      seedLookup,
+    );
+    assert.equal(body.selectors?.fund_name, "The Growth Fund of America");
+    assert.equal(body.nav_per_share, 72.14);
+    const points = toTaxDragPeriods(mockCompareResponse(body), "tax_dollars");
+    assert.ok(points.every((point) => point.value != null && point.value !== 0));
   });
 });
