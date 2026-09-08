@@ -35,8 +35,8 @@ const DEFAULT_LEFT_COLOR = "#1b7a72";
 const DEFAULT_RIGHT_COLOR = "#3a4348";
 
 /**
- * Data sends `matched` as the miss signal. Totals stay `"0.00"` / `"0.000000"`
- * on unmatched years — do not treat those zeros as tax drag.
+ * Explicit `matched: true`. Omitted is not a match — pair with null totals
+ * after Data’s compare deploy.
  */
 export function illustrationIsMatched(
   illustration: { matched?: boolean | string | null } | null | undefined,
@@ -44,25 +44,44 @@ export function illustrationIsMatched(
   return illustration?.matched === true || illustration?.matched === "true";
 }
 
-function numericOrZero(value: unknown): number {
-  if (value == null || value === "") return 0;
+/** Today’s miss signal. Unmatched years may still send totals as `"0.00"`. */
+export function illustrationIsUnmatched(
+  illustration: { matched?: boolean | string | null } | null | undefined,
+): boolean {
+  return illustration?.matched === false || illustration?.matched === "false";
+}
+
+function numericOrNull(value: unknown): number | null {
+  if (value == null || value === "") return null;
   const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : 0;
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+/**
+ * Chart value for one side of a compare period.
+ *
+ * N/A when `matched === false` (current API) **or** the metric field is null
+ * (Data’s upcoming unmatched shape). `0` / `"0.00"` / `0%` NAV is a real zero.
+ */
+export function taxDragValueFromIllustration(
+  illustration: CompareIllustration | null | undefined,
+  metric: TaxDragMetric = "tax_dollars",
+): number | null {
+  if (!illustration || illustrationIsUnmatched(illustration)) return null;
+  const totals = illustration.totals;
+  if (metric === "tax_dollars") {
+    // Request-holding dollars. Never summary.total_tax_difference
+    // (that footer field is always normalized to $10,000).
+    return numericOrNull(totals?.estimated_tax ?? totals?.estimated_tax_dollars);
+  }
+  return numericOrNull(totals?.effective_tax_on_holding);
 }
 
 function pickMetric(
   illustration: CompareIllustration | null | undefined,
   metric: TaxDragMetric,
 ): number | null {
-  if (!illustrationIsMatched(illustration)) return null;
-  const totals = illustration?.totals;
-  if (metric === "tax_dollars") {
-    // Request-holding dollars. Never summary.total_tax_difference
-    // (that footer field is always normalized to $10,000).
-    return numericOrZero(totals?.estimated_tax ?? totals?.estimated_tax_dollars);
-  }
-  // Rate — fraction of holding. Does not scale with $. matched + 0.000000 = 0.
-  return numericOrZero(totals?.effective_tax_on_holding);
+  return taxDragValueFromIllustration(illustration, metric);
 }
 
 function yearFromLabel(label: string | undefined, fallback: number): number {
@@ -76,7 +95,8 @@ function yearFromLabel(label: string | undefined, fallback: number): number {
  *
  * `mode: "yoy"` pairs consecutive vintages (period.year is the newer year;
  * `right` is that vintage, `left` is the prior). Gaps stay `null` when
- * `matched` is not true — years not present in `periods` are not invented.
+ * `matched` is false or tax totals are null — years not present in
+ * `periods` are not invented.
  *
  * `fund_vs_fund`: pass `side` (`left` / `right`) for that fund’s individual
  * series. `auto` is left-only; use `toCompareTaxDragSeries` for both funds.
@@ -198,10 +218,19 @@ export function unionTaxDragYears(series: TaxDragFundSeries[]): number[] {
   return [...years].sort((a, b) => a - b);
 }
 
-/** Both sides matched — a delta is chartable. Otherwise the year is N/A. */
+function illustrationHasTaxDrag(
+  illustration: CompareIllustration | null | undefined,
+): boolean {
+  return (
+    taxDragValueFromIllustration(illustration, "effective_tax") != null ||
+    taxDragValueFromIllustration(illustration, "tax_dollars") != null
+  );
+}
+
+/** Both sides have a chartable tax value (including published 0). */
 export function comparePeriodIsCovered(period: {
-  left?: { matched?: boolean | string | null } | null;
-  right?: { matched?: boolean | string | null } | null;
+  left?: CompareIllustration | null;
+  right?: CompareIllustration | null;
 }): boolean {
-  return illustrationIsMatched(period.left) && illustrationIsMatched(period.right);
+  return illustrationHasTaxDrag(period.left) && illustrationHasTaxDrag(period.right);
 }

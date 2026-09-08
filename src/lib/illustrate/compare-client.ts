@@ -44,15 +44,18 @@ function normalizeIllustration(raw: unknown, fallbackLabel: string) {
   const totals = asRecord(row.totals);
   return {
     label: String(row.label ?? fallbackLabel),
-    // Data: unmatched years still send totals as 0.00 — only `matched` is the miss.
     matched: asMatched(row.matched),
     holding_dollars: numOrNull(row.holding_dollars) ?? undefined,
     components: Array.isArray(row.components) ? row.components : [],
     totals: {
-      distribution_dollars: num(totals.distribution_dollars),
-      estimated_tax: num(totals.estimated_tax ?? totals.estimated_tax_dollars),
-      estimated_tax_dollars: num(totals.estimated_tax_dollars ?? totals.estimated_tax),
-      effective_tax_on_holding: num(totals.effective_tax_on_holding),
+      // Preserve null so unmatched years stay N/A after Data’s compare deploy.
+      // `"0.00"` / 0 still normalize to 0 (published $0 / 0% NAV).
+      distribution_dollars: numOrNull(totals.distribution_dollars),
+      estimated_tax: numOrNull(totals.estimated_tax ?? totals.estimated_tax_dollars),
+      estimated_tax_dollars: numOrNull(
+        totals.estimated_tax_dollars ?? totals.estimated_tax,
+      ),
+      effective_tax_on_holding: numOrNull(totals.effective_tax_on_holding),
     },
     notes: Array.isArray(row.notes) ? row.notes.map(String) : [],
   };

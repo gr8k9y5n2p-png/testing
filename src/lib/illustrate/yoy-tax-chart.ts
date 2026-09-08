@@ -1,5 +1,5 @@
 import type { ComparePeriodOut } from "@/lib/illustrate/compare-types";
-import { illustrationIsMatched } from "@/lib/illustrate/tax-drag-chart";
+import { taxDragValueFromIllustration } from "@/lib/illustrate/tax-drag-chart";
 
 export type YoYTaxChartPoint = {
   year: number;
@@ -12,12 +12,6 @@ export type YoYTaxChartModel = {
   /** Year-over-year change (this year − prior). First year is null. */
   line: YoYTaxChartPoint[];
 };
-
-function numOrNull(value: unknown): number | null {
-  if (value == null || value === "") return null;
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : null;
-}
 
 /** Calendar-year bars sorted oldest → newest. Missing years stay as null slots. */
 export function sortYoYPoints(points: YoYTaxChartPoint[]): YoYTaxChartPoint[] {
@@ -54,15 +48,9 @@ export function yoyBarsFromComparePeriods(
   side: "left" | "right",
 ): YoYTaxChartPoint[] {
   return sortYoYPoints(
-    periods.map((period) => {
-      const totals = period[side]?.totals;
-      const matched = illustrationIsMatched(period[side]);
-      const tax = numOrNull(totals?.estimated_tax ?? totals?.estimated_tax_dollars);
-      return {
-        year: period.year,
-        // matched + 0.00 is a real zero; unmatched is N/A even when totals are 0.
-        value: matched ? (tax ?? 0) : null,
-      };
-    }),
+    periods.map((period) => ({
+      year: period.year,
+      value: taxDragValueFromIllustration(period[side], "tax_dollars"),
+    })),
   );
 }

@@ -51,21 +51,22 @@ export type CompareRequest = {
 export type CompareIllustration = {
   label: string;
   /**
-   * Data contract (Engineering | Data): unmatched years still return
-   * `totals.estimated_tax` / `effective_tax_on_holding` as `"0.00"` /
-   * `"0.000000"` — those fields are **not** null on a miss.
+   * Miss signals (both, forward-compatible):
+   * - `matched: false` → N/A (today’s API still sends totals as `"0.00"`)
+   * - `totals.estimated_tax` / `effective_tax_on_holding` `null` → N/A
+   *   (Data is switching unmatched years to null)
    *
-   * - `matched: false` → N/A (do not chart as 0%)
-   * - `matched: true` + estimated_tax `0.00` → real zero tax drag
+   * Published $0 / 0% of NAV: `matched: true` + `0` / `"0.00"` → chart 0.
+   * Never invent a zero when there is no row.
    */
   matched: boolean;
   holding_dollars?: number;
   components?: unknown[];
   totals?: {
-    distribution_dollars?: number;
-    estimated_tax?: number;
-    estimated_tax_dollars?: number;
-    effective_tax_on_holding?: number;
+    distribution_dollars?: number | null;
+    estimated_tax?: number | null;
+    estimated_tax_dollars?: number | null;
+    effective_tax_on_holding?: number | null;
   };
   notes?: string[];
 };

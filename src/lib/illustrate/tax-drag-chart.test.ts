@@ -6,6 +6,8 @@ import {
   alignTaxDragYears,
   comparePeriodIsCovered,
   illustrationIsMatched,
+  illustrationIsUnmatched,
+  taxDragValueFromIllustration,
   toCompareTaxDragSeries,
   toTaxDragPeriods,
 } from "./tax-drag-map.ts";
@@ -73,6 +75,9 @@ describe("matched boolean is the miss signal", () => {
     assert.equal(illustrationIsMatched({ matched: "false" }), false);
     assert.equal(illustrationIsMatched({}), false);
     assert.equal(illustrationIsMatched(null), false);
+    assert.equal(illustrationIsUnmatched({ matched: false }), true);
+    assert.equal(illustrationIsUnmatched({ matched: true }), false);
+    assert.equal(illustrationIsUnmatched({}), false);
   });
 
   it("maps matched:false + 0.00 totals to N/A, not a zero bar", () => {
@@ -103,6 +108,40 @@ describe("matched boolean is the miss signal", () => {
       { year: 2022, value: 0 },
     ]);
     assert.equal(comparePeriodIsCovered(response.periods[0]), true);
+  });
+
+  it("maps null estimated_tax to N/A (Data’s upcoming unmatched shape)", () => {
+    const missing: CompareIllustration = {
+      label: "A",
+      matched: true,
+      totals: {
+        distribution_dollars: null,
+        estimated_tax: null,
+        estimated_tax_dollars: null,
+        effective_tax_on_holding: null,
+      },
+    };
+    const publishedZero: CompareIllustration = {
+      label: "B",
+      matched: true,
+      totals: {
+        distribution_dollars: 0,
+        estimated_tax: 0,
+        estimated_tax_dollars: 0,
+        effective_tax_on_holding: 0,
+      },
+    };
+    const response = fundCompare([period(2024, missing, publishedZero)]);
+    assert.equal(taxDragValueFromIllustration(missing, "tax_dollars"), null);
+    assert.equal(taxDragValueFromIllustration(publishedZero, "tax_dollars"), 0);
+    assert.equal(taxDragValueFromIllustration(publishedZero, "effective_tax"), 0);
+    assert.deepEqual(toTaxDragPeriods(response, "tax_dollars", "left"), [
+      { year: 2024, value: null },
+    ]);
+    assert.deepEqual(toTaxDragPeriods(response, "effective_tax", "right"), [
+      { year: 2024, value: 0 },
+    ]);
+    assert.equal(comparePeriodIsCovered(response.periods[0]), false);
   });
 
   it("does not invent 0 when a shared year has no point", () => {

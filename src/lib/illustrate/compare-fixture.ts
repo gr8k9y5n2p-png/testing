@@ -114,17 +114,18 @@ function taxIllustration(
 ): ComparePeriodOut["left"] {
   const book = holding > 0 ? holding : COMPARE_SUMMARY_HOLDING_DOLLARS;
   const matched = rate != null;
-  const dollars = rate == null ? 0 : rate * book;
+  const dollars = rate == null ? null : rate * book;
   return {
     label,
     matched,
     holding_dollars: book,
     components: [],
     totals: {
+      // Future Data shape: unmatched years send null totals, not 0.00.
       distribution_dollars: dollars,
       estimated_tax: dollars,
       estimated_tax_dollars: dollars,
-      effective_tax_on_holding: rate ?? 0,
+      effective_tax_on_holding: rate,
     },
     notes: matched ? [] : ["No distribution estimates matched the selector"],
   };
