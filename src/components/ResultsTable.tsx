@@ -29,6 +29,16 @@ const TABLE_VIEWPORT = 448;
 const TABLE_ROW_HEIGHT = 76;
 const TABLE_OVERSCAN = 4;
 
+function estimatePct(fund: FundEstimateView): string {
+  if (fund.hasEstimate === false) return "—";
+  return formatPct(fund.estimatedDistributionPctNav);
+}
+
+function estimateUsd(fund: FundEstimateView): string {
+  if (fund.hasEstimate === false) return "—";
+  return `${formatUsd(fund.estimatedDistributionAmount, 4)} / sh`;
+}
+
 function isNestedControl(target: EventTarget | null) {
   const element =
     target instanceof Element
@@ -105,6 +115,7 @@ export function ResultsTable({
 
   return (
     <div className="space-y-6">
+      {page ? <PaginationBar {...page} /> : null}
       <FundSection
         title="Upcoming / announced"
         description="Announced distributions that have not paid out yet. Past record/ex/payable dates stay in history below."
@@ -298,15 +309,15 @@ function FundSection({
                   <Field label="Category" value={fund.category} />
                   <Field
                     label="% of NAV"
-                    value={formatPct(fund.estimatedDistributionPctNav)}
+                    value={estimatePct(fund)}
                   />
                   <Field
                     label="$ / share"
-                    value={formatUsd(fund.estimatedDistributionAmount, 4)}
+                    value={fund.hasEstimate === false ? "—" : formatUsd(fund.estimatedDistributionAmount, 4)}
                   />
                   <Field
                     label="Category avg"
-                    value={formatPct(fund.categoryAveragePctNav)}
+                    value={fund.hasEstimate === false ? "—" : formatPct(fund.categoryAveragePctNav)}
                   />
                 </dl>
                 {onIllustrate ? (
@@ -382,10 +393,10 @@ function EstimateRow({
       <td className="px-3 py-3 text-muted">{fund.category}</td>
       <td className="px-3 py-3 text-right">
         <span className="block font-mono text-ink">
-          {formatPct(fund.estimatedDistributionPctNav)}
+          {estimatePct(fund)}
         </span>
         <span className="mt-0.5 block font-mono text-[11px] text-faint">
-          {formatUsd(fund.estimatedDistributionAmount, 4)} / sh
+          {estimateUsd(fund)}
         </span>
       </td>
       <td className="px-3 py-3">
@@ -400,7 +411,7 @@ function EstimateRow({
         <div className="flex flex-col items-end gap-1">
           <DeltaBadge fund={fund} compact />
           <span className="font-mono text-[11px] text-faint">
-            Cat. {formatPct(fund.categoryAveragePctNav)}
+            Cat. {fund.hasEstimate === false ? "—" : formatPct(fund.categoryAveragePctNav)}
           </span>
         </div>
       </td>

@@ -101,7 +101,10 @@ export function fundPageSearchParams(query: FundPageQuery): URLSearchParams {
   params.set("page_size", String(limit));
   params.set("page", String(offsetToPage(offset, limit)));
   if (query.query?.trim()) params.set("q", query.query.trim());
-  if (query.family) params.set("family", query.family);
+  if (query.family) {
+    params.set("family", query.family);
+    params.set("fund_family", query.family);
+  }
   if (query.category) params.set("category", query.category);
   if (query.year) params.set("year", String(query.year));
   if (query.sort) params.set("sort", query.sort);

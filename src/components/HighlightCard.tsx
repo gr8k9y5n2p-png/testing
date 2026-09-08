@@ -80,7 +80,9 @@ export function HighlightCard({
                 <p className="shrink-0 text-right font-mono text-sm text-ink">
                   {variant === "recent"
                     ? formatCompactDate(fund.asOfDate)
-                    : formatPct(fund.estimatedDistributionPctNav)}
+                    : fund.hasEstimate === false
+                      ? "—"
+                      : formatPct(fund.estimatedDistributionPctNav)}
                 </p>
               </div>
               <DistributionDateStrip
@@ -115,8 +117,8 @@ function OutlierGroup({
 }) {
   const bar =
     tone === "above"
-      ? "border-l-[3px] border-l-above bg-above-soft/40"
-      : "border-l-[3px] border-l-below bg-below-soft/50";
+      ? "border-l-[3px] border-l-tax-more bg-tax-more-soft/40"
+      : "border-l-[3px] border-l-tax-less bg-tax-less-soft/50";
 
   return (
     <div
@@ -127,8 +129,8 @@ function OutlierGroup({
       <p
         className={`sticky top-0 z-10 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] ${
           tone === "above"
-            ? "bg-above-soft/80 text-above"
-            : "bg-below-soft/80 text-below"
+            ? "bg-tax-more-soft/80 text-tax-more"
+            : "bg-tax-less-soft/80 text-tax-less"
         }`}
       >
         {label}

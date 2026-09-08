@@ -1,117 +1,76 @@
-import { aggregateDistributions, type DataDistribution } from "@/data/aggregate-distributions";
+import { mapFundsApiItem, type FundsApiItem } from "@/data/funds-list";
 import {
   clampOffset,
   clampPageSize,
   fundPageSearchParams,
-  paginateViews,
   type FundPageQuery,
   type FundPageResult,
 } from "@/data/pagination";
-import { withPeerContext } from "@/data/queries";
-import type { FundEstimateView } from "@/data/types";
 import { isRemoteDataApi } from "@/lib/data-api/config";
 import { fetchDataApi } from "@/lib/data-api/fetch";
 
-/**
- * Data API pagination contract (for the ingest / Data PR):
- *
- *   GET /funds?limit=50&offset=0&q=&family=&category=&year=&sort=&direction=
- *   → `{ items, total }`
- *
- * `items` must already be one row per fund (aggregated). `total` is the
- * filtered fund count. Existing `GET /distributions` uses `page` /
- * `page_size` / `total` on raw distribution rows — this adapter sends both
- * param pairs. Until Data pages aggregated funds, Search paginates the
- * repository views in memory and does not invent seed rows.
- */
-const PAGE_PATHS = ["/funds", "/distributions"] as const;
+export { mapFundsApiItem, type FundsApiItem } from "@/data/funds-list";
 
+/**
+ * Unique-fund table pages come from Data `GET /funds`.
+ *
+ *   GET /funds?limit=50&offset=0&q=&fund_family=
+ *   → `{ items, limit, offset, total }`
+ *
+ * Item fields today: `ticker`, `fund_name`, `fund_family`,
+ * `fund_identifier`, `latest_as_of`, `has_estimate`.
+ * Do not client-aggregate `GET /distributions` into this table.
+ *
+ * Sort/category/year are forwarded when present; Data may ignore them until
+ * those query params land. Missing estimate amounts stay "—" in the UI.
+ */
 type PagePayload = {
   items?: unknown[];
   data?: unknown[];
-  results?: unknown[];
   total?: number;
   count?: number;
+  limit?: number;
+  offset?: number;
 };
 
-function payloadItems(payload: PagePayload): unknown[] {
-  if (Array.isArray(payload.items)) return payload.items;
-  if (Array.isArray(payload.data)) return payload.data;
-  if (Array.isArray(payload.results)) return payload.results;
-  return [];
-}
-
-function looksLikeDistribution(row: unknown): row is DataDistribution {
+function isFundsApiItem(row: unknown): row is FundsApiItem {
   if (!row || typeof row !== "object") return false;
   const record = row as Record<string, unknown>;
   return (
+    "fund_name" in record ||
     "fund_identifier" in record ||
-    "estimate_type" in record ||
-    "amount_unit" in record
+    "fundName" in record ||
+    "ticker" in record
   );
-}
-
-function looksLikeFundView(row: unknown): row is FundEstimateView {
-  if (!row || typeof row !== "object") return false;
-  const record = row as Record<string, unknown>;
-  return typeof record.ticker === "string" && typeof record.fundName === "string";
-}
-
-function toViews(items: unknown[]): FundEstimateView[] | null {
-  if (!items.length) return [];
-  if (items.every(looksLikeFundView)) return items.filter(looksLikeFundView);
-  if (items.every(looksLikeDistribution)) {
-    return withPeerContext(aggregateDistributions(items as DataDistribution[]));
-  }
-  return null;
-}
-
-async function fetchPagePath(
-  path: string,
-  query: FundPageQuery,
-): Promise<FundPageResult | null> {
-  const params = fundPageSearchParams(query);
-  // Never fall back to /api/funds from this loader (the route calls us).
-  const response = await fetchDataApi(`${path}?${params.toString()}`, {
-    fallbackPath: `${path}?${params.toString()}`,
-  });
-  if (!response.ok) return null;
-  const payload = (await response.json()) as PagePayload;
-  const rawItems = payloadItems(payload);
-  const views = toViews(rawItems);
-  if (views == null) return null;
-
-  const limit = clampPageSize(query.limit);
-  const offset = clampOffset(query.offset);
-  const reportedTotal =
-    typeof payload.total === "number"
-      ? payload.total
-      : typeof payload.count === "number"
-        ? payload.count
-        : undefined;
-
-  if (rawItems.some(looksLikeDistribution) || views.length > limit) {
-    return paginateViews(views, query);
-  }
-
-  return {
-    items: views,
-    total: reportedTotal ?? (offset === 0 && views.length < limit ? views.length : views.length),
-    limit,
-    offset,
-  };
 }
 
 export async function loadFundPageFromDataApi(
   query: FundPageQuery = {},
 ): Promise<FundPageResult | null> {
   if (!isRemoteDataApi()) return null;
+  const params = fundPageSearchParams(query);
   try {
-    for (const path of PAGE_PATHS) {
-      const page = await fetchPagePath(path, query);
-      if (page) return page;
-    }
-    return null;
+    const response = await fetchDataApi(`/funds?${params.toString()}`, {
+      fallbackPath: `/funds?${params.toString()}`,
+    });
+    if (!response.ok) return null;
+    const payload = (await response.json()) as PagePayload;
+    const raw = Array.isArray(payload.items)
+      ? payload.items
+      : Array.isArray(payload.data)
+        ? payload.data
+        : [];
+    if (!raw.every(isFundsApiItem)) return null;
+    const items = raw.map((row) => mapFundsApiItem(row));
+    const limit = clampPageSize(payload.limit ?? query.limit);
+    const offset = clampOffset(payload.offset ?? query.offset);
+    const total =
+      typeof payload.total === "number"
+        ? payload.total
+        : typeof payload.count === "number"
+          ? payload.count
+          : items.length;
+    return { items, total, limit, offset };
   } catch {
     return null;
   }

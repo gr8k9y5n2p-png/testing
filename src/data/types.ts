@@ -79,6 +79,11 @@ export interface FundEstimate {
   /** Paid / final-past snapshots for this ticker. Never mixed into upcoming. */
   paidHistory: PaidDistributionEvent[];
   distributionYear: number;
+  /**
+   * False when GET /funds says has_estimate=false (or amounts are unknown).
+   * UI must show "—" — never invent $0 / 0%.
+   */
+  hasEstimate?: boolean;
 }
 
 export interface FundEstimateView extends FundEstimate {

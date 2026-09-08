@@ -69,6 +69,7 @@ export function formatSignedPp(value: number, digits = 2): string {
   return `${(0).toFixed(digits)} pp`;
 }
 
+/** vs category: above = more tax (style red), below = less tax (style green). */
 export function deltaTone(value: number): "above" | "below" | "neutral" {
   if (value >= 1) return "above";
   if (value <= -1) return "below";

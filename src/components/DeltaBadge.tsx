@@ -8,10 +8,19 @@ export function DeltaBadge({
   fund: FundEstimateView;
   compact?: boolean;
 }) {
+  if (fund.hasEstimate === false) {
+    return (
+      <span className="inline-flex items-center rounded-sm bg-paper px-1.5 py-0.5 font-mono text-[11px] font-medium text-muted">
+        —
+      </span>
+    );
+  }
+
   const tone = deltaTone(fund.vsCategoryPctNav);
+  // Above category avg = more tax to the client (red). Below = less tax (green).
   const classes = {
-    above: "bg-above-soft text-above",
-    below: "bg-below-soft text-below",
+    above: "bg-tax-more-soft text-tax-more",
+    below: "bg-tax-less-soft text-tax-less",
     neutral: "bg-paper text-muted",
   }[tone];
 
