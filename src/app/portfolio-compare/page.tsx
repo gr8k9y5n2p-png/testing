@@ -33,8 +33,10 @@ export default async function PortfolioCompareDemoPage() {
         <code className="font-mono text-[13px] text-ink">
           POST /illustrate/portfolio/compare
         </code>{" "}
-        and falls back to the sketch fixture when the Data API is unreachable. v1
-        is a single snapshot — no YoY bars / no periods[].
+        and falls back to the sketch fixture when the Data API is unreachable.
+        Defaults are GTM’s history-covered smoke books (Current AGTHX / DODIX /
+        AMCAP / DODGX, Proposed AMCPX / CGHM / AGTHX / AMCAP, 25% each at $1M).
+        v1 is a single snapshot — no YoY bars / no periods[].
       </p>
 
       <div className="mt-8">
@@ -56,7 +58,8 @@ export default async function PortfolioCompareDemoPage() {
 // Website wires the Export button + freemium gate, then:
 exportToPdf(toPortfolioCompareExportModel(result, bookDollars));
 
-// Optional: pass book size, funds for autocomplete, or tax rates
+// Optional: pass book size, funds for autocomplete, or tax rates.
+// Omit current/proposed to use GTM history-covered smoke books.
 <PortfolioCompare
   bookDollars={1_000_000}
   taxRates={{ state: 0.05 }}

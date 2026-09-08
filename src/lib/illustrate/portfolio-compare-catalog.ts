@@ -3,6 +3,13 @@ import type {
   PortfolioFundOption,
   PortfolioHoldingDraft,
 } from "@/lib/illustrate/portfolio-compare-types";
+import {
+  SMOKE_CURRENT_TICKERS,
+  SMOKE_PROPOSED_TICKERS,
+  SMOKE_WEIGHT_PCT,
+} from "@/lib/illustrate/portfolio-compare-smoke";
+
+export { SMOKE_CURRENT_TICKERS, SMOKE_PROPOSED_TICKERS, SMOKE_WEIGHT_PCT };
 
 export type PortfolioTickerRates = {
   fundName: string;
@@ -18,8 +25,10 @@ export type PortfolioTickerRates = {
 };
 
 /**
- * Smoke-book rates lock the sketch: Current 0.42% / Proposed 0.28% /
- * $1,400 less tax on $1M, with AGTHX upcoming dist $4,850 and CGHM $0 tax.
+ * Mock rates for ticker autocomplete + localhost fixture math.
+ * Default smoke books are GTM’s history-covered set (funds with live
+ * historical data): Current AGTHX / DODIX / AMCAP / DODGX and Proposed
+ * AMCPX / CGHM / AGTHX / AMCAP, 25% each at $1M.
  */
 export const PORTFOLIO_TICKER_RATES: Record<string, PortfolioTickerRates> = {
   AGTHX: {
@@ -45,6 +54,15 @@ export const PORTFOLIO_TICKER_RATES: Record<string, PortfolioTickerRates> = {
     family: "American Funds",
     taxDrag: 0.0042,
     distRate: 0.0128,
+    upcomingTaxRate: 0.35,
+    asOf: "2026-12-15",
+    stage: "announced",
+  },
+  DODGX: {
+    fundName: "Dodge & Cox Stock Fund",
+    family: "Dodge & Cox",
+    taxDrag: 0.0056,
+    distRate: 0.0162,
     upcomingTaxRate: 0.35,
     asOf: "2026-12-15",
     stage: "announced",
@@ -129,16 +147,6 @@ export function ratesForTicker(ticker: string): PortfolioTickerRates {
   return PORTFOLIO_TICKER_RATES[key] ?? { ...DEFAULT_RATES, fundName: key };
 }
 
-export const SMOKE_CURRENT_TICKERS = ["AGTHX", "DODIX", "AMCAP", "VIGAX"] as const;
-export const SMOKE_PROPOSED_TICKERS = [
-  "AMCPX",
-  "CGHM",
-  "TRBCX",
-  "VFIAX",
-  "VBIAX",
-  "FBGRX",
-] as const;
-
 export function draftHolding(
   ticker: string,
   weightPct: number,
@@ -163,7 +171,7 @@ export function smokeCurrentHoldings(
   funds?: PortfolioFundOption[],
 ): PortfolioHoldingDraft[] {
   return SMOKE_CURRENT_TICKERS.map((ticker) =>
-    draftHolding(ticker, 25, bookDollars, funds, `current-${ticker}`),
+    draftHolding(ticker, SMOKE_WEIGHT_PCT, bookDollars, funds, `current-${ticker}`),
   );
 }
 
@@ -171,9 +179,8 @@ export function smokeProposedHoldings(
   bookDollars = PORTFOLIO_COMPARE_BOOK_DOLLARS,
   funds?: PortfolioFundOption[],
 ): PortfolioHoldingDraft[] {
-  const weight = 100 / SMOKE_PROPOSED_TICKERS.length;
   return SMOKE_PROPOSED_TICKERS.map((ticker) =>
-    draftHolding(ticker, weight, bookDollars, funds, `proposed-${ticker}`),
+    draftHolding(ticker, SMOKE_WEIGHT_PCT, bookDollars, funds, `proposed-${ticker}`),
   );
 }
 

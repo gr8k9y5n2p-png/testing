@@ -27,8 +27,11 @@ import type { TaxRates } from "@/lib/illustrate/types";
 import { UI_DEFAULT_TAX_RATES } from "@/lib/illustrate/types";
 
 export type PortfolioCompareProps = {
+  /** Defaults to $1,000,000. */
   bookDollars?: number;
+  /** Defaults to GTM history-covered Current: AGTHX / DODIX / AMCAP / DODGX @ 25%. */
   current?: PortfolioHoldingDraft[];
+  /** Defaults to GTM history-covered Proposed: AMCPX / CGHM / AGTHX / AMCAP @ 25%. */
   proposed?: PortfolioHoldingDraft[];
   funds?: PortfolioFundOption[];
   taxRates?: Partial<TaxRates>;
