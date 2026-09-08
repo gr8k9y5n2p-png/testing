@@ -32,7 +32,9 @@ class UbsSource(HtmlTableSource):
                 name="october_estimates",
                 url="https://www.ubs.com/us/en/assetmanagement/funds/products/mutual-fund",
                 fixture="estimated_capital_gains.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             ),
             PageSpec(
                 name="paid_price_page",
@@ -73,6 +75,14 @@ class FranklinTempletonSource(HtmlTableSource):
 
     def pages(self) -> list[PageSpec]:
         return [
+            PageSpec(
+                name="capital_gains_distribution_hub",
+                url="https://www.franklintempleton.com/tools-and-resources/capital-gains-distribution",
+                fixture="capital_gains_distribution_hub.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
             PageSpec(
                 name="ft_section_19a",
                 url="https://www.franklintempleton.com/forms-literature/download/ft-section-19-notice-12-31-2025",
@@ -118,7 +128,9 @@ class BnyMellonSource(HtmlTableSource):
                 name="2025_estimated_capital_gains",
                 url="https://www.bny.com/assets/investments/im/documents/manual/tax-forms/2025-Estimated-capital-gains.pdf",
                 fixture="2025_estimated_capital_gains.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             ),
             PageSpec(
                 name="2025_etf_estimated_capital_gains",
@@ -180,7 +192,9 @@ class NuveenSource(HtmlTableSource):
                 name="2025_estimated_taxable_distributions",
                 url="https://documents.nuveen.com/Documents/Nuveen/Default.aspx?uniqueId=3c3be13d-d800-48e2-a537-c251162ab9f4",
                 fixture="2025_estimated_taxable_distributions.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
 
@@ -220,7 +234,9 @@ class NorthernTrustSource(HtmlTableSource):
                 name="2025_capital_gain_distributions",
                 url=f"{tax}/ntam/us/en/documents/account-resources/tax-center/all-investor/estimated-capital-gains-2025.pdf",
                 fixture="2025_capital_gain_distributions.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             ),
             PageSpec(
                 name="2025_ici_december_income",
@@ -277,10 +293,20 @@ class MorganStanleySource(HtmlTableSource):
         tax = "https://www.morganstanley.com/im/publication/forms/tax"
         return [
             PageSpec(
+                name="tax_forms_hub",
+                url="https://www.morganstanley.com/im/publication/forms/tax",
+                fixture="tax_forms_hub.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
+            PageSpec(
                 name="2025_etf_year_end",
                 url=f"{tax}/2025_etf_year_end_distributions.pdf",
                 fixture="2025_etf_year_end_sample.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             ),
             PageSpec(
                 name="2024_etf_year_end",
@@ -316,10 +342,20 @@ class SchwabSource(HtmlTableSource):
     def pages(self) -> list[PageSpec]:
         return [
             PageSpec(
+                name="annual_distributions_hub",
+                url="https://www.schwabassetmanagement.com/resource/schwab-funds-actual-annual-distributions-2025",
+                fixture="annual_distributions_hub.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
+            PageSpec(
                 name="2025_annual_distributions",
                 url="https://schwab.bynder.com/m/3990d008e1558d0d/",
                 fixture="2025_annual_distributions.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             ),
             PageSpec(
                 name="2024_annual_distributions",
@@ -375,7 +411,9 @@ class DimensionalSource(HtmlTableSource):
                 name="2025_capital_gain_distributions",
                 url="https://www.dimensional.com/chmedia/440098/source/download/2025-capital-gain-distribution-estimates.pdf",
                 fixture="2025_capital_gain_distributions.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             ),
             PageSpec(
                 name="2024_capital_gain_distributions",
@@ -412,7 +450,9 @@ class ColumbiaThreadneedleSource(HtmlTableSource):
                 name="2025_midyear_estimates",
                 url=f"{cti}/2025-mid-year-cap-gain-estimates-all-funds.pdf",
                 fixture="2025_midyear_estimates.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             ),
             PageSpec(
                 name="2024_year_end_distributions",

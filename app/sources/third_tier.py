@@ -20,21 +20,25 @@ class AllspringSource(HtmlTableSource):
         "(2025 LT $4.26857; 2024 LT $2.93497; 2023 LT $1.7935; 2022 LT $3.13277) "
         "and Growth SGRNX "
         "https://www.allspringglobal.com/investments/equity/mutual-funds/growth/i/ "
-        "(2025 LT $8.85612; 2024 LT $9.55498; 2023 LT $2.92658; 2022 LT $1.62055)."
+        "(2025 LT $8.85612; 2024 LT $9.55498; 2023 LT $2.92658; 2022 LT $1.62055; "
+        "2021 LT $8.36656 / ST $0.62741). Special Mid Cap Value WFMIX 2021 "
+        "ST $0.97181 / LT $3.75956 (ex 2021-12-09)."
     )
     live_limitations = (
         "Family estimate PDF is gated/image-based. Product-page tables put the date "
         "in the first column, so static parse may return 0 rows. Fixture fallback."
     )
 
-    def source_urls(self) -> list[str]:
-        return [
-            "https://www.allspringglobal.com/resources/product-alerts/",
-            *super().source_urls(),
-        ]
-
     def pages(self) -> list[PageSpec]:
         return [
+            PageSpec(
+                name="product_alerts_hub",
+                url="https://www.allspringglobal.com/resources/product-alerts/",
+                fixture="product_alerts_hub.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
             PageSpec(
                 name="2025_paid_product_pages",
                 url="https://www.allspringglobal.com/investments/equity/mutual-funds/special-mid-cap-value/",
@@ -59,6 +63,13 @@ class AllspringSource(HtmlTableSource):
                 name="2022_paid_product_pages",
                 url="https://www.allspringglobal.com/investments/equity/mutual-funds/special-mid-cap-value/",
                 fixture="2022_paid_distributions.html",
+                live=False,
+                large_aum_only=True,
+            ),
+            PageSpec(
+                name="2021_paid_product_pages",
+                url="https://www.allspringglobal.com/investments/equity/mutual-funds/special-mid-cap-value/",
+                fixture="2021_paid_distributions.html",
                 live=False,
                 large_aum_only=True,
             ),
@@ -145,7 +156,9 @@ class JanusHendersonSource(HtmlTableSource):
                 name="2025_final_distribution_estimates",
                 url=f"{cdn}/2025-Janus-Henderson-Final-Distribution-Estimates.pdf",
                 fixture="2025_final_distribution_estimates.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             ),
             PageSpec(
                 name="2024_distribution_estimates",
@@ -206,10 +219,20 @@ class AmericanCenturySource(HtmlTableSource):
     def pages(self) -> list[PageSpec]:
         return [
             PageSpec(
+                name="estimated_distributions_hub",
+                url="https://www.americancentury.com/plan/tax-center/estimated-distributions/",
+                fixture="estimated_distributions_hub.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
+            PageSpec(
                 name="2025_estimated_distributions",
                 url="https://res.americancentury.com/docs/estimated-distributions-november-retail.pdf",
                 fixture="2025_estimated_distributions.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             ),
             PageSpec(
                 name="2023_estimated_distributions",
@@ -265,7 +288,9 @@ class DodgeCoxSource(HtmlTableSource):
                 name="1q2026_estimated_capital_gains",
                 url="https://www.dodgeandcox.com/content/dam/dc/us/en/pdf/dc-us-estimated-distributions-1Q2026.pdf",
                 fixture="1q2026_estimated_capital_gains.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             ),
             PageSpec(
                 name="2025_supplemental_tax_letter",
@@ -335,7 +360,9 @@ class MfsSource(HtmlTableSource):
                 name="2025_capital_gain_estimates",
                 url="https://www.mfs.com/content/dam/mfs-enterprise/mfscom/backlot/mfs_cg_fly.pdf",
                 fixture="2025_capital_gain_estimates.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             ),
             PageSpec(
                 name="2025_paid_year_end",
@@ -428,13 +455,23 @@ class LordAbbettSource(HtmlTableSource):
     def pages(self) -> list[PageSpec]:
         return [
             PageSpec(
+                name="capital_gains_hub",
+                url="https://www.lordabbett.com/en-us/financial-advisor/resources/tax-center/capital-gains-distributions.html",
+                fixture="capital_gains_hub.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
+            PageSpec(
                 name="2025_funds_not_expected_to_pay",
                 url=(
                     "https://www.lordabbett.com/content/dam/lordabbett-captivate/documents/"
                     "TaxCenter/UnitedStates/Funds-with-Losses.pdf"
                 ),
                 fixture="2025_funds_not_expected_to_pay.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
 
@@ -465,7 +502,9 @@ class AllianceBernsteinSource(HtmlTableSource):
                     "us-retail/us-retail-pdfs/tax-center/Final_GEN-5796-1025.pdf"
                 ),
                 fixture="2025_estimated_capital_gains.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             ),
             PageSpec(
                 name="2023_estimated_capital_gains",
@@ -502,10 +541,20 @@ class FederatedHermesSource(HtmlTableSource):
     def pages(self) -> list[PageSpec]:
         return [
             PageSpec(
+                name="preliminary_estimates_hub",
+                url="https://www.federatedhermes.com/us/resources/resource-centers/tax-center/capital-gains/preliminary.do",
+                fixture="preliminary_estimates_hub.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
+            PageSpec(
                 name="2025_payr_section_19a",
                 url="https://www.federatedhermes.com/siteassets/documents/regulatory/19a-notices/g85307-06.pdf",
                 fixture="2025_section_19a_sample.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
 
@@ -533,7 +582,9 @@ class VirtusSource(HtmlTableSource):
                 name="2026_june_capital_gain_estimates",
                 url="https://www.virtus.com/assets/files/abi/cap_gains_estimate_6-26_8569.pdf",
                 fixture="2026_june_capital_gain_estimates.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             ),
             PageSpec(
                 name="2025_paid_year_end",
@@ -576,12 +627,22 @@ class EatonVanceSource(HtmlTableSource):
     def pages(self) -> list[PageSpec]:
         return [
             PageSpec(
+                name="tax_center_hub",
+                url="https://www.eatonvance.com/tax-center.html",
+                fixture="tax_center_hub.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
+            PageSpec(
                 name="2025_cef_section_19b",
                 url=(
                     "https://www.eatonvance.com/content/dam/im/assets/publication/"
                     "thought-leadership/press-release/combined19bpressreleasemarch2025.pdf"
                 ),
                 fixture="2025_cef_section_19b_sample.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]

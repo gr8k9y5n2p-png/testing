@@ -38,6 +38,8 @@ class BlackRockSource(HtmlTableSource):
                 url="https://www.ishares.com/us/capital-gains-distributions",
                 fixture="capital_gains_distributions.html",
                 live=True,
+                role="estimate",
+                empty_ok=True,
             ),
             PageSpec(
                 name="2025_open_end_distributions",
@@ -100,10 +102,20 @@ class VanguardSource(HtmlTableSource):
         ici = "https://advisors.vanguard.com/content/dam/fas/pdfs"
         return [
             PageSpec(
+                name="tax_center_hub",
+                url="https://advisors.vanguard.com/tax-center",
+                fixture="tax_center_hub.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
+            PageSpec(
                 name="year_end_distributions",
                 url="https://advisors.vanguard.com/tax-center/year-end-distributions",
                 fixture="year_end_distributions.html",
                 live=True,
+                role="estimate",
+                empty_ok=True,
             ),
             PageSpec(
                 name="ici_primary_2025",
@@ -177,6 +189,8 @@ class FidelitySource(HtmlTableSource):
                 url="https://institutional.fidelity.com/app/tabbed/products/FIIS_SP52_DPL6.html?navId=324",
                 fixture="estimated_capital_gains.html",
                 live=True,
+                role="estimate",
+                empty_ok=True,
             ),
             PageSpec(
                 name="prior_year_distributions",
@@ -226,6 +240,16 @@ class StateStreetSource(HtmlTableSource):
                 url="https://www.ssga.com/us/en/individual/resources/documents/etf-capital-gain-distributions",
                 fixture="etf_capital_gain_distributions.html",
                 live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
+            PageSpec(
+                name="mf_capital_gains",
+                url="https://www.ssga.com/us/en/individual/resources/documents/mf-capital-gain-distributions",
+                fixture="mf_capital_gain_hub.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
             ),
             PageSpec(
                 name="2025_historical_distributions",
@@ -287,7 +311,9 @@ class JPMorganSource(HtmlTableSource):
                 name="section_19a_sample",
                 url="https://am.jpmorgan.com/content/dam/jpm-am-aem/americas/us/en/supplemental/section-19-notices/section-19a-notice-aa-funds-12-2025.pdf",
                 fixture="section_19a_sample.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
 
@@ -300,10 +326,11 @@ class GoldmanSachsSource(HtmlTableSource):
     notes = (
         "Document library: "
         "https://www.gsam.com/content/gsam/us/en/advisors/literature-and-forms/forms-and-tax-center.html "
-        "Advisor tax-center HTML returned 403 (2026-09-07 and 2026-09-08); estimates are "
-        "typically Q4 PDFs. Fixture parser uses the GSAM table layout plus the public 2025 "
-        "year-end distribution for Large Cap Growth Insights (GLCGX). Prior-year advisor "
-        "archives remain 403-walled — deferred, not invented."
+        "Advisor tax-center HTML returned 403 (2026-09-07 and 2026-09-08) and 200 with no "
+        "ST/LT table on 2026-09-08 (literature library / no estimate grid). Weekly refresh "
+        "walks the hub anyway. Estimates are typically Q4 PDFs. Fixture parser uses the GSAM "
+        "table layout plus the public 2025 year-end distribution for Large Cap Growth Insights "
+        "(GLCGX). Prior-year advisor archives remain walled — deferred, not invented."
     )
     live_limitations = "Advisor tax center is login/403-walled (including historical packs). Use fixtures or POST /ingest/distributions."
 
@@ -313,7 +340,9 @@ class GoldmanSachsSource(HtmlTableSource):
                 name="year_end_sample",
                 url="https://www.gsam.com/content/gsam/us/en/advisors/literature-and-forms/forms-and-tax-center.html",
                 fixture="year_end_distributions_sample.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
 
@@ -344,7 +373,9 @@ class PimcoSource(HtmlTableSource):
                 name="tax_center_sample",
                 url="https://www.pimco.com/us/en/resources/tax-center",
                 fixture="tax_center_sample.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
 
@@ -374,10 +405,20 @@ class InvescoSource(HtmlTableSource):
     def pages(self) -> list[PageSpec]:
         return [
             PageSpec(
+                name="open_end_tax_guide",
+                url="https://www.invesco.com/us/en/accounts/tax-center/open-end-tax-guide.html",
+                fixture="open_end_tax_guide_hub.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
+            PageSpec(
                 name="estimated_capital_gains_pdf",
                 url="https://www.invesco.com/content/dam/invesco/us/en/documents/tax-centre/2025%20Invesco%20Estimated%20Capital%20Gains%20pdf.pdf",
                 fixture="2025_estimated_capital_gains.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             ),
             PageSpec(
                 name="estimated_capital_gains_2024",
@@ -421,6 +462,14 @@ class TRowePriceSource(HtmlTableSource):
         )
         tax_pdf = "https://www.troweprice.com/content/dam/fai/Funds/Tax_Center"
         return [
+            PageSpec(
+                name="dividend_distributions_hub",
+                url="https://www.troweprice.com/personal-investing/resources/planning/tax/dividend-distributions.html",
+                fixture="dividend_distributions_hub.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
             PageSpec(
                 name="year_end_2025",
                 url=f"{base}/2025-year-end-distributions.html",

@@ -1074,6 +1074,24 @@ def test_third_tier_fixtures() -> None:
     assert wfmix_2024.amount == Decimal("2.93497")
     assert wfmix_2024.publication_stage == PublicationStage.final
 
+    allspring_2021 = parse_distribution_html(
+        (ROOT / "allspring" / "2021_paid_distributions.html").read_text(encoding="utf-8"),
+        source_url="fixture://allspring-2021",
+        fund_family="Allspring",
+    )
+    wfmix_2021 = next(
+        r
+        for r in allspring_2021
+        if r.ticker == "WFMIX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    sgrnx_2021 = next(
+        r
+        for r in allspring_2021
+        if r.ticker == "SGRNX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert wfmix_2021.amount == Decimal("3.75956")
+    assert sgrnx_2021.amount == Decimal("8.36656")
+
     janus_2024 = parse_distribution_html(
         (ROOT / "janus_henderson" / "2024_distribution_estimates.html").read_text(encoding="utf-8"),
         source_url="fixture://janus-2024",

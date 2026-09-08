@@ -123,6 +123,28 @@ def test_performance_unknown_ticker_404(client: TestClient) -> None:
     assert response.status_code == 404
 
 
+def test_performance_new_top40_distribution_tickers(client: TestClient) -> None:
+    for ticker, asset_class, bench in (
+        ("ABALX", "equity", "SPY"),
+        ("VIGAX", "equity", "SPY"),
+        ("TRBCX", "equity", "SPY"),
+        ("DODGX", "equity", "SPY"),
+        ("SWTSX", "equity", "SPY"),
+        ("NOSIX", "equity", "SPY"),
+        ("ALLW", "equity", "SPY"),
+        ("JDCAX", "equity", "SPY"),
+        ("MDDVX", "equity", "SPY"),
+    ):
+        response = client.get("/performance", params={"ticker": ticker, "mode": "fixture"})
+        assert response.status_code == 200, f"{ticker}: {response.text}"
+        body = response.json()
+        assert body["fund_ticker"] == ticker
+        assert body["asset_class"] == asset_class
+        assert body["benchmark_id"] == bench
+        assert len(body["fund"]["points"]) >= 12
+        assert Decimal(body["fund"]["points"][0]["growth_of_x"]) == Decimal("10000.00")
+
+
 def test_performance_requires_fund(client: TestClient) -> None:
     missing = client.get("/performance", params={"mode": "fixture"})
     assert missing.status_code == 422

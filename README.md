@@ -604,6 +604,51 @@ Goal: for **existing US-domiciled adapters**, ingest every **mutual fund and ETF
 
 **Wave 11 (ranks 1–40 thin-family harvest):** State Street unlocked the official Historical Distributions XLSX (`/library-content/products/fund-data/etfs/us/spdr-etf-historical-distributions.xlsx`; 3 → **170** tickers). Schwab unlocked the official 2025 Actual Annual Distributions PDF (`schwab.bynder.com/m/3990d008e1558d0d/`; 4 → **79** tickers) plus SWSSX / SWISX / SWLGX 2021–2024 product-page history. Franklin added FTF / TEI / SMDLX Section 19(a) notices (1 → **4**). PIMCO open-end ST/LT PDF still missing (ZZPIM* remain samples). GSAM advisor tax center still 403. Amundi skipped.
 
+**Wave 12 (estimate-feed readiness):** Every top-40 family except **Amundi** now has a `live=True` estimate hub/PDF in adapter config so `python -m app.cli refresh` and `POST /ingest/fetch` walk the real issuer URL weekly. Seasonal empty / 403 / SPA / PDF-bytes pages are **no-op success** (fixture fallback; no invented zeros). `GET /coverage` exposes `estimate_feed_ready`, `estimate_feed_status` (`prelim_updated` | `paid_history_only` | `deferred` | `skipped`), `history_years`, and `performance_tickers`. Growth of $X fixtures added for mapped distribution tickers: ABALX, VIGAX, VBIAX, TRBCX, DODGX, SWTSX, SWANX, NOSIX, MDDVX, JDCAX, ALLW.
+
+| Family | Estimate feed? | Status | Multi-year history? | Performance? |
+| --- | --- | --- | --- | --- |
+| BlackRock / iShares | Yes (live iShares CG HTML) | prelim_updated | 2021–2026 | MDDVX, AGG |
+| Vanguard | Yes (tax-center + YE SPA) | paid_history_only | 2021–2025 | VFIAX, VTIAX, VIGAX, VBIAX, VXUS |
+| Fidelity | Yes (live FIIS_SP52_DPL6) | prelim_updated | 2024–2026 | FBGRX |
+| State Street / SPDR | Yes (Angular ETF + MF hubs) | deferred | 2021–2025 | SPY, ALLW |
+| J.P. Morgan | Yes (19a PDF walked) | prelim_updated | 2025 | — |
+| Goldman Sachs | Yes (advisor tax-center, 403) | deferred | 2025 sample | — |
+| American Funds | Yes (tax-center + midyear/YE) | prelim_updated | 2021–2026 | AGTHX, AMCPX, ABALX |
+| PIMCO | Yes (tax-center walked) | deferred | sample only | — |
+| Invesco | Yes (tax guide + 2025 PDF) | prelim_updated | 2024–2025 | — |
+| T. Rowe Price | Yes (distributions hub + YE HTML) | prelim_updated | 2021–2025 | TRBCX |
+| UBS | Yes (products hub) | prelim_updated | 2025 | — |
+| Franklin Templeton | Yes (SPA estimate hub) | deferred | 2024–2025 19(a) | — |
+| BNY Mellon | Yes (2025 estimate PDF) | prelim_updated | 2022–2025 | — |
+| Nuveen | Yes (document viewer) | prelim_updated | 2025 | — |
+| Northern Trust | Yes (2025 CG PDF) | prelim_updated | 2021–2025 | NOSIX |
+| Morgan Stanley | Yes (tax forms hub) | paid_history_only | 2024–2025 | — |
+| Schwab | Yes (family SPA + Bynder PDF) | paid_history_only | 2021–2025 | SWTSX, SWANX |
+| Dimensional | Yes (2025 estimate PDF) | prelim_updated | 2024–2025 | — |
+| Columbia Threadneedle | Yes (midyear PDF) | prelim_updated | 2024–2025 | — |
+| Amundi / Pioneer | **Skipped** | skipped | 2025 only | — |
+| Allspring | Yes (product-alerts hub) | paid_history_only | 2021–2025 | — |
+| Janus Henderson | Yes (2025 estimate PDF) | prelim_updated | 2021–2025 | JDCAX |
+| American Century | Yes (HTML hub + retail PDF) | prelim_updated | 2022–2023, 2025 | — |
+| Dodge & Cox | Yes (Q1 2026 estimate PDF) | prelim_updated | 2021–2026 | DODIX, DODGX |
+| MFS | Yes (mfs_cg_fly PDF) | prelim_updated | 2021–2026 | — |
+| Lord Abbett | Yes (HTML hub + no-pay PDF) | prelim_updated | 2025 | — |
+| AllianceBernstein | Yes (2025 GEN-5796 PDF) | prelim_updated | 2023, 2025 | — |
+| Federated Hermes | Yes (preliminary.do SPA) | deferred | 2025 19(a) | — |
+| Virtus | Yes (June 2026 estimate PDF) | prelim_updated | 2024–2026 | — |
+| Eaton Vance | Yes (tax-center + 19b) | deferred | 2025 | — |
+| John Hancock | Yes (2025 estimate PDF) | prelim_updated | 2022–2025 | — |
+| Principal | Yes (tax-center hub) | paid_history_only | 2023–2025 | — |
+| Thrivent | Yes (capital-gains HTML) | paid_history_only | 2025 | — |
+| Hartford | Yes (2025 estimate PDF) | prelim_updated | 2024–2025 | — |
+| Macquarie | Yes (CGE-RET PDF) | prelim_updated | 2023–2025 | — |
+| First Eagle | Yes (2025 estimate PDF) | prelim_updated | 2023–2025 | — |
+| GMO | Yes (July 2026 Trust PDF) | prelim_updated | 2026 | — |
+| Artisan | Yes (tax-center YTD HTML) | paid_history_only | 2024–2026 | — |
+| Calamos | Yes (2025 estimate PDF) | prelim_updated | 2024–2025 | — |
+| Wasatch | Yes (2025 estimate PDF) | prelim_updated | 2022, 2024–2025 | — |
+
 **Year-depth before → after (fixture ingest; calendar year on `as_of` or `ex_date`; ranks 1–40 movers):**
 
 | Family | Before (tickers / year) | After |
@@ -740,7 +785,7 @@ Fixture packs today (ranks 1–40 historical pass):
 | Dimensional | **2024 + 2025** full books (DISVX / DFELX / DFQTX) | No public filled ICI. 2025 retail estimate PDF is every share class (DISVX LT $1.060). **2024** `2024-distributions.pdf` is the full December MF/ETF book (DISVX income $0.305 / LT $0.184; DFELX income $0.288 / LT $0.012; DFQTX income $0.101 / published $0.000 CG stored). `.../2021-2023-distributions.pdf` aliases serve the 2024 file. |
 | Columbia Threadneedle | 2024 YE paid + 2025 midyear sample | No public filled ICI. 2025 mid-year all-funds PDF is wrap-unsafe (not a column-safe full extract). 2024 YE PDF (LBSAX LT $1.38581; ELGAX LT $4.05105). IEVAX 2024 $0 CG not stored. 2023 YE PDF 404. |
 | Amundi / Pioneer | 2025 estimate (PIODX) only | **Off the history ladder** (non-US parent). Existing 2025 fixture left as-is; do not expand. 2024 Pioneer siblings 404 after the Victory transfer. |
-| Allspring | 2022–2025 paid YE (WFMIX / SGRNX) | No public filled ICI. Family estimate PDFs are gated login HTML. Product-page paid history used (WFMIX 2025 LT $4.26857; 2024 $2.93497; 2023 $1.7935; 2022 $3.13277). |
+| Allspring | **2021–2025** paid YE (WFMIX / SGRNX) | No public filled ICI. Family estimate PDFs are gated login HTML. Product-alerts hub is walked weekly. Product-page paid history used (WFMIX 2025 LT $4.26857; 2024 $2.93497; 2023 $1.7935; 2022 $3.13277; **2021 ST $0.97181 / LT $3.75956**. SGRNX 2021 ST $0.62741 / LT $8.36656). |
 | Janus Henderson | **2021–2025 ICI Primary paid YE** + 2021–2022 FINAL paid companions + 2023–2025 estimates | **ICI first** for 2021–2025 (JDCAX LT $4.95363 / $0.02107 / $3.88875 / $5.46939 / $6.96694). Estimate PDFs coexist (JDCAX $3.87 / $5.42 / $6.92). 2021 FINAL paid PDF remains (Forty Fund not on that list — JDBAX 2021 LT $1.50790). Daily ICI income lines skipped. |
 | American Century | **2022 + 2023 + 2025** full retail estimates + 2025 paid (TWCGX) | No public filled ICI. 2025 retail estimate PDF is every share class (TWCGX LT $10.4978) plus product-page paid Total $9.7631 (no ST/LT split). 2023 book from Wayback `estimated-distributions-september-aci-retail.pdf` (TWCGX ST $0.0349 / LT $2.4201 / 5.58% of NAV). **2022 official book** `2022-Estimated-Distributions_ACI-MFs-and-ETFs_final` (TWCGX income $0.0037 / LT $0.7247 / 2.00% of NAV; daily bond income skipped). 2024 unversioned retail PDF serves 2025. 2021 sibling 404. |
 | Dodge & Cox | 2021–2025 Dec YE paid + Q1 2026 estimate | No public filled ICI. Supplemental tax letters (DODGX Dec 2025 LT $1.1999 / 2024 LT $12.036). 2023–2021 letter PDF siblings 404; Dec YE transcribed from the public product-page API `https://api-v1.dodgeandcox.com/api/funds-distribution` (DODIX Dec income $0.0570 / $0.1010 / $0.1290 / $0.1300 / $0.1347). Quarters omitted so one as_of is not summed. |

@@ -34,7 +34,9 @@ class JohnHancockSource(HtmlTableSource):
                 name="2025_estimated_capital_gains",
                 url=press + "estimated-capital-gain-and-income-distribution-press-release-2025-jhi.pdf",
                 fixture="2025_estimated_capital_gains.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             ),
             PageSpec(
                 name="2024_estimated_capital_gains",
@@ -87,6 +89,14 @@ class PrincipalSource(HtmlTableSource):
     def pages(self) -> list[PageSpec]:
         return [
             PageSpec(
+                name="tax_center_hub",
+                url="https://www.principal.com/help/help-individuals/tax-center/dividends-capital-gains-distributions",
+                fixture="tax_center_hub.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
+            PageSpec(
                 name="2025_paid_product_pages",
                 url="https://www.principalam.com/us/fund/pqiax",
                 fixture="2025_paid_distributions.html",
@@ -134,6 +144,8 @@ class ThriventSource(HtmlTableSource):
                 url="https://www.thriventfunds.com/support/tax-resource-center/capital-gains.html",
                 fixture="2025_paid_capital_gains.html",
                 live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
 
@@ -168,7 +180,9 @@ class HartfordSource(HtmlTableSource):
                 name="2025_estimated_capital_gains",
                 url=dam + "Tax%20Center/HMFCapitalGains_December2025EstimateMemo.pdf",
                 fixture="2025_estimated_capital_gains.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             ),
             PageSpec(
                 name="2025_final_capital_gains",
@@ -219,7 +233,9 @@ class MacquarieSource(HtmlTableSource):
                 name="2025_estimated_capital_gains",
                 url="https://mim.fgsfulfillment.com/download.aspx?sku=CGE-RET",
                 fixture="2025_estimated_capital_gains.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             ),
             PageSpec(
                 name="2024_paid_capital_gains",
@@ -265,7 +281,9 @@ class FirstEagleSource(HtmlTableSource):
                 name="2025_estimated_income_and_gains",
                 url="https://www.firsteagle.com/sites/default/files/fei-documents/FEF_Ordinary_Income_Gains_Estimates.pdf",
                 fixture="2025_estimated_income_and_gains.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             ),
             PageSpec(
                 name="2025_paid_year_end",
@@ -318,7 +336,9 @@ class GmoSource(HtmlTableSource):
                     "distribution-estimates-and-dates/gmo-trust-funds---july-2026-distribution-estimate.pdf"
                 ),
                 fixture="2026_july_distribution_estimates.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
 
@@ -356,6 +376,8 @@ class ArtisanSource(HtmlTableSource):
                 url="https://www.artisanpartners.com/individual-investors/resources/tax-center/distributions.html",
                 fixture="ytd_paid_distributions.html",
                 live=True,
+                role="estimate",
+                empty_ok=True,
             ),
             PageSpec(
                 name="ici_primary_2025",
@@ -405,7 +427,9 @@ class CalamosSource(HtmlTableSource):
                 name="2025_estimated_capital_gains",
                 url="https://www.calamos.com/globalassets/media/documents/tax-center/2025-calamos-estimated-capital-gains.pdf",
                 fixture="2025_estimated_capital_gains.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             ),
             PageSpec(
                 name="2024_estimated_capital_gains",
@@ -442,7 +466,9 @@ class WasatchSource(HtmlTableSource):
                 name="2025_year_end_distribution_estimates",
                 url="https://wasatchglobal.com/wp-content/uploads/2025/11/WGI_2025_Yr_End_Dist_Estimates.pdf",
                 fixture="2025_year_end_distribution_estimates.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             ),
             PageSpec(
                 name="2025_paid_year_end",

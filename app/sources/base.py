@@ -34,6 +34,13 @@ class FundSource(ABC):
     def source_urls(self) -> list[str]:
         return []
 
+    def estimate_feed_urls(self) -> list[str]:
+        """Public estimate hub / PDF URLs the weekly scrape should walk.
+
+        May be seasonal or empty. Do not invent amounts when the page has no book.
+        """
+        return []
+
     def supports_live(self) -> bool:
         """True when at least one public HTML page is marked live=True."""
         return False

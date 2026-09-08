@@ -20,6 +20,8 @@ class PageSpec:
     live: bool = True
     parser: str = "html"  # html | ici
     large_aum_only: bool = False
+    role: str = "book"  # estimate | book | history
+    empty_ok: bool = False  # seasonal estimate hubs may publish no table yet
 
 
 class HtmlTableSource(FundSource):
@@ -36,6 +38,14 @@ class HtmlTableSource(FundSource):
     def source_urls(self) -> list[str]:
         return [page.url for page in self.pages() if not page.url.startswith("fixture://")]
 
+    def estimate_feed_urls(self) -> list[str]:
+        urls = [
+            page.url
+            for page in self.pages()
+            if page.role == "estimate" and not page.url.startswith("fixture://")
+        ]
+        return list(dict.fromkeys(urls))
+
     def pages(self) -> list[PageSpec]:
         raise NotImplementedError
 
@@ -45,31 +55,43 @@ class HtmlTableSource(FundSource):
     def fetch(self, *, mode: str = "fixture") -> FetchResult:
         if mode == "live":
             return self._fetch_live_or_fixture()
-        return self._parse_pages(self._load_pages(mode="fixture"), extra_notes=[])
+        pages, notes = self._load_pages(mode="fixture")
+        return self._parse_pages(pages, extra_notes=notes)
 
     def _fetch_live_or_fixture(self) -> FetchResult:
         notes: list[str] = []
-        live_pages: list[dict] = []
+        walked = [
+            page.url
+            for page in self.pages()
+            if page.live and not page.url.startswith("fixture://")
+        ]
         try:
-            live_pages = self._load_pages(mode="live")
+            live_pages, load_notes = self._load_pages(mode="live")
+            notes.extend(load_notes)
         except Exception as exc:
             notes.append(f"Live fetch failed ({exc}). {self.live_limitations or 'Using fixtures.'}")
-            fixture = self._parse_pages(self._load_pages(mode="fixture"), extra_notes=notes)
+            fixture_pages, fixture_notes = self._load_pages(mode="fixture")
+            fixture = self._parse_pages(fixture_pages, extra_notes=[*notes, *fixture_notes])
+            fixture.source_urls = list(dict.fromkeys([*walked, *fixture.source_urls]))
             return fixture
 
         live_result = self._parse_pages(live_pages, extra_notes=notes)
         if live_result.records:
+            live_result.source_urls = list(dict.fromkeys([*walked, *live_result.source_urls]))
             return live_result
         notes.append(
-            "Live fetch returned 0 parseable rows (JavaScript, PDF, or login-walled page). "
+            "Live fetch returned 0 parseable rows (seasonal empty, JavaScript, PDF, or login-walled). "
             + (self.live_limitations or "Falling back to fixtures.")
         )
-        fixture = self._parse_pages(self._load_pages(mode="fixture"), extra_notes=notes)
-        fixture.source_urls = list(dict.fromkeys([*live_result.source_urls, *fixture.source_urls]))
+        fixture_pages, fixture_notes = self._load_pages(mode="fixture")
+        fixture = self._parse_pages(fixture_pages, extra_notes=[*notes, *fixture_notes])
+        fixture.source_urls = list(dict.fromkeys([*walked, *live_result.source_urls, *fixture.source_urls]))
         return fixture
 
-    def _load_pages(self, *, mode: str) -> list[dict]:
+    def _load_pages(self, *, mode: str) -> tuple[list[dict], list[str]]:
         out: list[dict] = []
+        notes: list[str] = []
+        live_configured = any(spec.live for spec in self.pages())
         for spec in self.pages():
             if mode == "live" and not spec.live:
                 continue
@@ -78,7 +100,15 @@ class HtmlTableSource(FundSource):
                 html = path.read_text(encoding="utf-8")
                 url = spec.url
             else:
-                html = self._http_get(spec.url)
+                try:
+                    html = self._http_get(spec.url)
+                except Exception as exc:
+                    kind = "estimate hub" if spec.role == "estimate" or spec.empty_ok else "page"
+                    notes.append(
+                        f"{spec.name}: live {kind} unavailable ({exc}). "
+                        "Seasonal empty / unpublished — no-op."
+                    )
+                    continue
                 url = spec.url
             out.append(
                 {
@@ -89,9 +119,9 @@ class HtmlTableSource(FundSource):
                     "large_aum_only": spec.large_aum_only,
                 }
             )
-        if mode == "live" and not out:
+        if mode == "live" and not live_configured:
             raise RuntimeError(f"No live pages configured for {self.slug}.")
-        return out
+        return out, notes
 
     def _parse_pages(self, pages: list[dict], extra_notes: list[str]) -> FetchResult:
         records = []
@@ -127,9 +157,13 @@ class HtmlTableSource(FundSource):
     def _http_get(self, url: str) -> str:
         headers = {
             "User-Agent": settings.http_user_agent,
-            "Accept": "text/html,application/xhtml+xml",
+            "Accept": "text/html,application/xhtml+xml,application/pdf,*/*",
         }
         with httpx.Client(timeout=settings.http_timeout_seconds, follow_redirects=True) as client:
             response = client.get(url, headers=headers)
             response.raise_for_status()
+            ctype = (response.headers.get("content-type") or "").lower()
+            if any(token in ctype for token in ("pdf", "spreadsheet", "excel", "ms-excel", "octet-stream")):
+                # Weekly walk hit the real file; HTML parser cannot transcribe bytes.
+                return ""
             return response.text

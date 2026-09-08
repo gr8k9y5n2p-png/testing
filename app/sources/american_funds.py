@@ -60,25 +60,53 @@ class AmericanFundsSource(FundSource):
             "https://www.capitalgroup.com/individual/investments/mutual-funds/details/gfa-a",
         ]
 
+    def estimate_feed_urls(self) -> list[str]:
+        return [TAX_CENTER_URL, MIDYEAR_2026_URL, YEAR_END_2025_URL, CALENDAR_URL]
+
     def supports_live(self) -> bool:
         return True
 
     def fetch(self, *, mode: str = "fixture") -> FetchResult:
-        pages = self._pages(mode)
+        if mode == "live":
+            return self._fetch_live_or_fixture()
+        return self._parse_pages(self._pages("fixture"), extra_notes=[])
+
+    def _fetch_live_or_fixture(self) -> FetchResult:
+        notes: list[str] = []
+        pages = self._pages("live", notes)
+        live_result = self._parse_pages(pages, extra_notes=notes)
+        if live_result.records:
+            live_result.source_urls = list(dict.fromkeys([*self.estimate_feed_urls(), *live_result.source_urls]))
+            return live_result
+        notes.append(
+            "Live fetch returned 0 parseable rows (seasonal estimate page). Falling back to fixtures."
+        )
+        fixture = self._parse_pages(self._pages("fixture"), extra_notes=notes)
+        fixture.source_urls = list(dict.fromkeys([*self.estimate_feed_urls(), *fixture.source_urls]))
+        return fixture
+
+    def _parse_pages(self, pages: list[dict], extra_notes: list[str]) -> FetchResult:
         records = []
         urls: list[str] = []
-        notes: list[str] = []
+        notes = list(extra_notes)
         for page in pages:
-            html = page["html"]
-            url = page["url"]
-            urls.append(url)
-            parsed = parse_capital_group_html(html, source_url=url, fund_family=self.display_name)
+            parsed = parse_capital_group_html(
+                page["html"], source_url=page["url"], fund_family=self.display_name
+            )
             records.extend(parsed)
+            urls.append(page["url"])
             notes.append(f"{page['name']}: {len(parsed)} records")
         return FetchResult(records=records, source_urls=urls, notes=notes)
 
-    def _pages(self, mode: str) -> list[dict]:
+    def _pages(self, mode: str, notes: list[str] | None = None) -> list[dict]:
+        notes = notes if notes is not None else []
         specs = [
+            {
+                "name": "tax_center",
+                "url": TAX_CENTER_URL,
+                "fixture": "tax_center_hub.html",
+                "live": True,
+            },
             {
                 "name": "midyear_2026",
                 "url": MIDYEAR_2026_URL,
@@ -120,13 +148,20 @@ class AmericanFundsSource(FundSource):
         for spec in specs:
             if mode == "live" and not spec["live"]:
                 continue
-            if mode == "fixture":
+            if mode == "fixture" or spec["url"].startswith("fixture://"):
                 path = self.fixtures_dir / spec["fixture"]
                 html = path.read_text(encoding="utf-8")
             else:
-                html = self._http_get(spec["url"])
+                try:
+                    html = self._http_get(spec["url"])
+                except Exception as exc:
+                    notes.append(
+                        f"{spec['name']}: live estimate hub unavailable ({exc}). "
+                        "Seasonal empty / unpublished — no-op."
+                    )
+                    continue
             out.append({"name": spec["name"], "url": spec["url"], "html": html})
-        if mode == "live" and not out:
+        if mode == "live" and not any(spec["live"] for spec in specs):
             raise RuntimeError("No live Capital Group pages are configured to fetch.")
         return out
 

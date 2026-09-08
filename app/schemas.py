@@ -159,6 +159,13 @@ class FundFamilyOut(BaseModel):
     priority: int | None = None
     notes: str | None = None
     source_urls: list[str] = Field(default_factory=list)
+    estimate_feed_urls: list[str] = Field(default_factory=list)
+    estimate_feed_status: str | None = None
+    estimate_feed_ready: bool = False
+    has_multi_year_history: bool = False
+    history_years: list[int] = Field(default_factory=list)
+    has_performance: bool = False
+    performance_tickers: list[str] = Field(default_factory=list)
     last_ingest_at: datetime | None = None
     last_ingest_status: str | None = None
     last_ingest_mode: str | None = None

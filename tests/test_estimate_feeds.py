@@ -1,0 +1,84 @@
+from __future__ import annotations
+
+from app.services.coverage import coverage_snapshot
+from app.services.refresh import refresh_families
+from app.sources.families import PimcoSource
+from app.sources.readiness import estimate_feed_status
+from app.sources.registry import list_sources
+
+
+def test_top40_except_amundi_have_live_estimate_feed() -> None:
+    missing: list[str] = []
+    for source in list_sources():
+        if source.aum_rank is None or source.aum_rank > 40:
+            continue
+        if source.slug == "amundi":
+            assert estimate_feed_status("amundi") == "skipped"
+            continue
+        if not source.supports_live():
+            missing.append(f"{source.slug}: supports_live=False")
+        if not source.estimate_feed_urls():
+            missing.append(f"{source.slug}: no estimate_feed_urls")
+    assert missing == []
+
+
+def test_amundi_stays_off_estimate_ladder() -> None:
+    amundi = next(s for s in list_sources() if s.slug == "amundi")
+    assert estimate_feed_status("amundi") == "skipped"
+    assert amundi.supports_live() is False
+
+
+def test_seasonal_empty_estimate_hub_falls_back_without_error() -> None:
+    class EmptyPimco(PimcoSource):
+        def _http_get(self, url: str) -> str:
+            return "<html><body><p>2026 estimates will be posted in October.</p></body></html>"
+
+    result = EmptyPimco().fetch(mode="live")
+    assert result.records, "empty seasonal hub must fall back to fixtures, not invent zeros"
+    blob = " ".join(result.notes).lower()
+    assert "0 parseable" in blob or "seasonal" in blob
+    assert any("pimco.com" in url for url in result.source_urls)
+    assert all(
+        (row.ticker or "").startswith("ZZ") or row.amount is not None for row in result.records
+    )
+
+
+def test_estimate_hub_403_is_noop_success(session) -> None:
+    def boom(self, url: str) -> str:
+        raise RuntimeError("403 Forbidden")
+
+    original = PimcoSource._http_get
+    try:
+        PimcoSource._http_get = boom  # type: ignore[method-assign]
+        summary = refresh_families(session, mode="auto", slugs=["pimco"])
+        session.commit()
+    finally:
+        PimcoSource._http_get = original  # type: ignore[method-assign]
+
+    assert summary.hard_failure is False
+    assert summary.errors == []
+    row = summary.families[0]
+    assert row.slug == "pimco"
+    assert row.status in {"fallback", "success"}
+    assert row.created > 0
+    assert any("pimco.com" in url for url in row.source_urls)
+
+
+def test_coverage_exposes_estimate_feed_readiness(session) -> None:
+    snap = coverage_snapshot(session)
+    by_slug = {row.slug: row for row in snap["families"]}
+    fidelity = by_slug["fidelity"]
+    assert fidelity.estimate_feed_ready is True
+    assert fidelity.estimate_feed_status == "prelim_updated"
+    assert any("FIIS_SP52_DPL6" in url for url in fidelity.estimate_feed_urls)
+    assert fidelity.has_multi_year_history is True
+    assert "FBGRX" in fidelity.performance_tickers
+
+    amundi = by_slug["amundi"]
+    assert amundi.estimate_feed_status == "skipped"
+    assert amundi.estimate_feed_ready is False
+
+    pimco = by_slug["pimco"]
+    assert pimco.estimate_feed_ready is True
+    assert pimco.estimate_feed_status == "deferred"
+    assert pimco.estimate_feed_urls

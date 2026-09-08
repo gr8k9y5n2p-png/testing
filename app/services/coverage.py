@@ -9,11 +9,20 @@ from app.crud import latest_run, log_coverage_gap
 from app.models import CoverageGap, DistributionEstimate
 from app.schemas import CoverageGapIn, CoverageGapOut, FundFamilyOut
 from app.sources.base import FundSource
+from app.sources.readiness import (
+    estimate_feed_status,
+    has_multi_year_history,
+    has_performance,
+    history_years,
+    performance_tickers,
+)
 from app.sources.registry import get_source, list_sources, resolve_slug
 
 
 def family_to_out(source: FundSource, session: Session | None = None) -> FundFamilyOut:
     run = latest_run(session, source.slug) if session is not None else None
+    feed_urls = source.estimate_feed_urls()
+    status = estimate_feed_status(source.slug)
     return FundFamilyOut(
         slug=source.slug,
         display_name=source.display_name,
@@ -23,6 +32,13 @@ def family_to_out(source: FundSource, session: Session | None = None) -> FundFam
         priority=source.priority,
         notes=source.notes,
         source_urls=source.source_urls(),
+        estimate_feed_urls=feed_urls,
+        estimate_feed_status=status,
+        estimate_feed_ready=bool(feed_urls) and source.supports_live() and status != "skipped",
+        has_multi_year_history=has_multi_year_history(source.slug),
+        history_years=history_years(source.slug),
+        has_performance=has_performance(source.slug),
+        performance_tickers=performance_tickers(source.slug),
         last_ingest_at=run.finished_at if run else None,
         last_ingest_status=run.status if run else None,
         last_ingest_mode=run.mode if run else None,

@@ -1,0 +1,108 @@
+{
+  "ticker": "ALLW",
+  "name": "State Street Bridgewater All Weather ETF",
+  "currency": "USD",
+  "frequency": "monthly",
+  "field": "adj_close",
+  "field_notes": "Yahoo Finance monthly adjusted close (split- and dividend-adjusted). Used as a free public total-return proxy. Not an official index level.",
+  "source": "yahoo_chart",
+  "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/ALLW?interval=1mo&range=10y&events=div%2Csplit",
+  "as_of": "2026-09-01",
+  "points": [
+    {
+      "date": "2025-04-01",
+      "adj_close": "24.110147",
+      "close": "25.219999"
+    },
+    {
+      "date": "2025-05-01",
+      "adj_close": "24.177069",
+      "close": "25.290001"
+    },
+    {
+      "date": "2025-06-01",
+      "adj_close": "24.922741",
+      "close": "26.070000"
+    },
+    {
+      "date": "2025-07-01",
+      "adj_close": "24.851044",
+      "close": "25.995001"
+    },
+    {
+      "date": "2025-08-01",
+      "adj_close": "25.558477",
+      "close": "26.735001"
+    },
+    {
+      "date": "2025-09-01",
+      "adj_close": "26.653090",
+      "close": "27.879999"
+    },
+    {
+      "date": "2025-10-01",
+      "adj_close": "27.379644",
+      "close": "28.639999"
+    },
+    {
+      "date": "2025-11-01",
+      "adj_close": "27.733362",
+      "close": "29.010000"
+    },
+    {
+      "date": "2025-12-01",
+      "adj_close": "27.490000",
+      "close": "27.490000"
+    },
+    {
+      "date": "2026-01-01",
+      "adj_close": "28.809999",
+      "close": "28.809999"
+    },
+    {
+      "date": "2026-02-01",
+      "adj_close": "30.139999",
+      "close": "30.139999"
+    },
+    {
+      "date": "2026-03-01",
+      "adj_close": "28.850000",
+      "close": "28.850000"
+    },
+    {
+      "date": "2026-04-01",
+      "adj_close": "29.940001",
+      "close": "29.940001"
+    },
+    {
+      "date": "2026-05-01",
+      "adj_close": "30.129999",
+      "close": "30.129999"
+    },
+    {
+      "date": "2026-06-01",
+      "adj_close": "29.270000",
+      "close": "29.270000"
+    },
+    {
+      "date": "2026-07-01",
+      "adj_close": "29.190001",
+      "close": "29.190001"
+    },
+    {
+      "date": "2026-08-01",
+      "adj_close": "30.120001",
+      "close": "30.120001"
+    },
+    {
+      "date": "2026-09-01",
+      "adj_close": "30.170000",
+      "close": "30.170000"
+    },
+    {
+      "date": "2026-09-08",
+      "adj_close": "30.035000",
+      "close": "30.035000"
+    }
+  ]
+}
