@@ -52,13 +52,19 @@ class FranklinTempletonSource(HtmlTableSource):
         "Tax-center hub: https://www.franklintempleton.com/tools-and-resources/tax-center "
         "(December capital-gains estimates, late October / late November). "
         "Family estimate grid https://www.franklintempleton.com/tools-and-resources/capital-gains-distribution "
-        "is a JavaScript SPA (verified 2026-09-07). Public Section 19(a) notices "
-        "exist for closed-end funds, e.g. Franklin Universal Trust (FT) "
+        "is a JavaScript SPA (verified 2026-09-08). Public Section 19(a) notices: "
+        "Franklin Universal Trust (FT) "
         "https://www.franklintempleton.com/forms-literature/download/ft-section-19-notice-12-31-2025 "
-        "and the 2024 sibling `.../ft-section-19-notice-12-31-2024` "
-        "(Dec 2024 income $0.0387 / RoC $0.0038). ICI reports hub is a JS SPA; "
-        "no public filled Primary Layout download. ≥$1B open-end (FKINX) amounts "
-        "were not on a scrapeable PDF/HTML grid — skipped, not invented."
+        "(Dec 2025 income $0.0358 / ST $0.0004 / RoC $0.0061), "
+        "Franklin Limited Duration Income Trust (FTF) "
+        "`.../ftf-section-19-notice-12-31-2025` (income $0.0418 / RoC $0.0197), "
+        "Templeton Emerging Markets Income Fund (TEI) "
+        "`.../tei-section-19-notice-12-31-2025` (income $0.1031 / ST $0.0648 / RoC $0.1846), "
+        "and ClearBridge Tactical Dividend Income Class C (SMDLX) "
+        "`.../SMDLX-section-19-notice-12-31-2025` (paid $0.149600 / RoC $0.073334). "
+        "2024 sibling `.../ft-section-19-notice-12-31-2024` (income $0.0387 / RoC $0.0038). "
+        "ICI reports hub is a JS SPA; no public filled Primary Layout download. "
+        "≥$1B open-end (FKINX) amounts were not on a scrapeable family PDF — skipped."
     )
     live_limitations = (
         "Open-end December estimate tool is JavaScript-rendered. "
@@ -292,16 +298,14 @@ class SchwabSource(HtmlTableSource):
     aum_rank = 17
     priority = 17
     notes = (
-        "Family annual page "
+        "Family annual SPA "
         "https://www.schwabassetmanagement.com/resource/schwab-funds-actual-annual-distributions-2025 "
-        "is a JS SPA (verified 2026-09-07). Per-fund product pages publish HTML "
-        "distribution history: "
-        "https://www.schwabassetmanagement.com/products/swtsx , "
-        "https://www.schwabassetmanagement.com/products/swppx "
-        "(≥$1B index heroes; SWTSX 2025 income $0.1805; 2024 $1.2252; 2023 $1.1379; "
-        "2022 $1.0547; 2021 income $0.9649 / ST $0.0352 / LT $0.2022. "
-        "SWPPX 2021 LT $0.0678) and the 2025 current-book "
-        "https://www.schwabassetmanagement.com/products/swlsx (SWLSX LT $0.4957). "
+        "is still JavaScript (verified 2026-09-08). The official 2025 Actual Annual "
+        "Distributions PDF https://schwab.bynder.com/m/3990d008e1558d0d/ is the full "
+        "listed mutual-fund book (SWTSX income $0.1805; SWANX LT $1.5191; SWLSX LT "
+        "$0.4957; daily NII omitted). 2021–2024 ≥$1B product-page history adds SWSSX / "
+        "SWISX / SWLGX alongside SWTSX / SWPPX "
+        "(SWSSX 2021 ST $0.3715 / LT $2.3981; SWLGX 2021 LT $0.9628). "
         "No public filled ICI file. Skip SPA family grids."
     )
     live_limitations = (
@@ -313,9 +317,9 @@ class SchwabSource(HtmlTableSource):
         return [
             PageSpec(
                 name="2025_annual_distributions",
-                url="https://www.schwabassetmanagement.com/resource/schwab-funds-actual-annual-distributions-2025",
+                url="https://schwab.bynder.com/m/3990d008e1558d0d/",
                 fixture="2025_annual_distributions.html",
-                live=True,
+                live=False,
             ),
             PageSpec(
                 name="2024_annual_distributions",

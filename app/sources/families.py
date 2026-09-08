@@ -202,25 +202,61 @@ class StateStreetSource(HtmlTableSource):
         "Public estimate page "
         "https://www.ssga.com/us/en/individual/resources/documents/etf-capital-gain-distributions "
         "(as of Oct 31, 2025) is an Angular app — static HTML has {{th.name}} placeholders. "
-        "MF companion: .../mf-capital-gain-distributions. Fixture parser covers the published "
-        "column layout; live fetch falls back to fixtures. "
-        "The dividend-distributions page links a Historical Distributions XLSX, but that "
-        "file has no stable public URL (Angular). 2024 paid ST/LT for SPY/SPLG were not "
-        "transcribed without a fetchable official file."
+        "MF companion: .../mf-capital-gain-distributions. Live estimate fetch falls back "
+        "to fixtures (SPY/SPLG 0% NAV placeholders + ZZSSGA parser sample). "
+        "Official paid history is the public XLSX "
+        "https://www.ssga.com/library-content/products/fund-data/etfs/us/spdr-etf-historical-distributions.xlsx "
+        "(verified 2026-09-08; 2021–2025 December / annual rows that publish a ST or LT "
+        "cell, including official $0.000000). SPLG was renamed SPYM on 10/31/2025."
     )
     live_limitations = (
-        "SSGA estimate tables are client-rendered. Historical XLSX is not a stable public "
-        "file URL. Fixture mode is the supported path; replace figures via POST /ingest/distributions."
+        "SSGA estimate tables are client-rendered Angular. Historical XLSX is public but "
+        "not HTML — fixtures transcribe the paid YE book. Replace live estimates via "
+        "POST /ingest/distributions."
     )
 
     def pages(self) -> list[PageSpec]:
+        xlsx = (
+            "https://www.ssga.com/library-content/products/fund-data/etfs/us/"
+            "spdr-etf-historical-distributions.xlsx"
+        )
         return [
             PageSpec(
                 name="etf_capital_gains",
                 url="https://www.ssga.com/us/en/individual/resources/documents/etf-capital-gain-distributions",
                 fixture="etf_capital_gain_distributions.html",
                 live=True,
-            )
+            ),
+            PageSpec(
+                name="2025_historical_distributions",
+                url=xlsx,
+                fixture="2025_historical_distributions.html",
+                live=False,
+            ),
+            PageSpec(
+                name="2024_historical_distributions",
+                url=xlsx,
+                fixture="2024_historical_distributions.html",
+                live=False,
+            ),
+            PageSpec(
+                name="2023_historical_distributions",
+                url=xlsx,
+                fixture="2023_historical_distributions.html",
+                live=False,
+            ),
+            PageSpec(
+                name="2022_historical_distributions",
+                url=xlsx,
+                fixture="2022_historical_distributions.html",
+                live=False,
+            ),
+            PageSpec(
+                name="2021_historical_distributions",
+                url=xlsx,
+                fixture="2021_historical_distributions.html",
+                live=False,
+            ),
         ]
 
 
@@ -264,9 +300,10 @@ class GoldmanSachsSource(HtmlTableSource):
     notes = (
         "Document library: "
         "https://www.gsam.com/content/gsam/us/en/advisors/literature-and-forms/forms-and-tax-center.html "
-        "Advisor tax-center HTML returned 403 (2026-09-07); estimates are typically Q4 PDFs. "
-        "Fixture parser uses the GSAM table layout plus the public 2025 year-end distribution "
-        "for Large Cap Growth Insights (GLCGX). Prior-year advisor archives remain 403-walled."
+        "Advisor tax-center HTML returned 403 (2026-09-07 and 2026-09-08); estimates are "
+        "typically Q4 PDFs. Fixture parser uses the GSAM table layout plus the public 2025 "
+        "year-end distribution for Large Cap Growth Insights (GLCGX). Prior-year advisor "
+        "archives remain 403-walled — deferred, not invented."
     )
     live_limitations = "Advisor tax center is login/403-walled (including historical packs). Use fixtures or POST /ingest/distributions."
 
@@ -290,10 +327,16 @@ class PimcoSource(HtmlTableSource):
         "Public hub https://www.pimco.com/us/en/resources/tax-center (verified 2026-09-07). "
         "Year-end forms: https://www.pimco.com/us/en/resources/tax-center/2025-tax-information-and-year-end-forms. "
         "Preliminary estimate grids are PDF / Section 19 notices, not a scrapeable HTML table. "
-        "Fixture is a layout sample (synthetic tickers ZZPIMI/ZZPIMB) — no additional "
-        "tax years are invented. Partner ingest is the escape hatch for official notices."
+        "Re-checked 2026-09-08: tax-center document hash served an SAI/prospectus "
+        "supplement (not ST/LT $/share). The 2025 tax-information PDF remains 1099 "
+        "character (muni taxable % / AMT), not a per-share CG book. Open-end Section 19 "
+        "/ year-end estimate PDFs were not fetchable — ZZPIMI/ZZPIMB stay parser-layout "
+        "samples (not official). Partner ingest is the escape hatch for official notices."
     )
-    live_limitations = "No public HTML estimate table or scrapeable multi-year archive; fixture parser + POST /ingest/distributions."
+    live_limitations = (
+        "No public HTML estimate table or open-end ST/LT PDF on this pass; fixture "
+        "parser + POST /ingest/distributions."
+    )
 
     def pages(self) -> list[PageSpec]:
         return [

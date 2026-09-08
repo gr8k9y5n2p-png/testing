@@ -319,6 +319,7 @@ def test_search_multi_year_top_families(client: TestClient) -> None:
         "columbia_threadneedle",
         "morgan_stanley",
         "franklin_templeton",
+        "state_street",
     ):
         fetched = client.post("/ingest/fetch", json={"fund_family": family, "mode": "fixture"})
         assert fetched.status_code == 200, fetched.text
@@ -353,6 +354,27 @@ def test_search_multi_year_top_families(client: TestClient) -> None:
     assert {"2021", "2022", "2023", "2024", "2025"} <= {
         item["as_of"][:4] for item in swtsx.json()["items"] if item.get("as_of")
     }
+    swanx = client.get("/distributions", params={"fund_identifier": "SWANX", "page_size": 20})
+    assert any(
+        item["estimate_type"] == "long_term_capital_gains"
+        and Decimal(item["amount"]) == Decimal("1.5191")
+        for item in swanx.json()["items"]
+    )
+    spy = client.get("/distributions", params={"fund_identifier": "SPY", "page_size": 50})
+    assert {"2021", "2022", "2023", "2024", "2025"} <= {
+        item["as_of"][:4] for item in spy.json()["items"] if item.get("as_of")
+    }
+    allw = client.get("/distributions", params={"fund_identifier": "ALLW", "page_size": 20})
+    assert any(
+        item["estimate_type"] == "long_term_capital_gains"
+        and Decimal(item["amount"]) == Decimal("0.172577")
+        for item in allw.json()["items"]
+    )
+    ftf = client.get("/distributions", params={"fund_identifier": "FTF", "page_size": 20})
+    assert any(
+        item["estimate_type"] == "ordinary_income" and Decimal(item["amount"]) == Decimal("0.0418")
+        for item in ftf.json()["items"]
+    )
     swtsx_2021 = client.get(
         "/distributions",
         params={

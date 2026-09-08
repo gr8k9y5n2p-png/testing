@@ -8,14 +8,17 @@ from app.sources.families import (
     FidelitySource,
     InvescoSource,
     JPMorganSource,
+    StateStreetSource,
     TRowePriceSource,
     VanguardSource,
 )
 from app.sources.next_tier import (
     BnyMellonSource,
     DimensionalSource,
+    FranklinTempletonSource,
     MorganStanleySource,
     NorthernTrustSource,
+    SchwabSource,
 )
 from app.sources.fifth_tier import HarborSource, VoyaSource
 from app.sources.fourth_tier import (
@@ -160,6 +163,20 @@ def test_full_book_jh_hartford_macquarie_msim() -> None:
 
 
 def test_full_book_artisan_ici_and_first_eagle() -> None:
+    ssga_funds, ssga_tickers = _funds_and_tickers(StateStreetSource())
+    assert {"SPY", "SPYM", "ALLW", "DIA"} <= ssga_tickers
+    assert len(ssga_tickers) >= 160
+    assert len(ssga_funds) >= 160
+
+    schwab_funds, schwab_tickers = _funds_and_tickers(SchwabSource())
+    assert {"SWTSX", "SWPPX", "SWANX", "SWSSX", "SWISX", "SWLGX"} <= schwab_tickers
+    assert len(schwab_tickers) >= 70
+    assert len(schwab_funds) >= 70
+
+    ft_funds, ft_tickers = _funds_and_tickers(FranklinTempletonSource())
+    assert {"FT", "FTF", "TEI", "SMDLX"} <= ft_tickers
+    assert len(ft_tickers) >= 4
+
     artisan_funds, artisan_tickers = _funds_and_tickers(ArtisanSource())
     assert {"ARTKX", "ARTIX"} <= artisan_tickers
     assert len(artisan_tickers) >= 50

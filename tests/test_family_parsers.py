@@ -327,6 +327,25 @@ def test_state_street_invesco_jpm_gs_pimco_fixtures() -> None:
     sample = next(r for r in ssga if r.ticker == "ZZSSGA" and r.estimate_type == EstimateType.long_term_capital_gains)
     assert sample.amount == Decimal("0.25")
 
+    ssga_paid = parse_distribution_html(
+        (ROOT / "state_street" / "2025_historical_distributions.html").read_text(encoding="utf-8"),
+        source_url="fixture://ssga-2025-xlsx",
+        fund_family="State Street / SPDR",
+    )
+    spy_paid = next(
+        r
+        for r in ssga_paid
+        if r.ticker == "SPY" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert spy_paid.amount == Decimal("1.993368")
+    allw_lt = next(
+        r
+        for r in ssga_paid
+        if r.ticker == "ALLW" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert allw_lt.amount == Decimal("0.172577")
+    assert "SPYM" in {r.ticker for r in ssga_paid}
+
     invesco = parse_distribution_html(
         (ROOT / "invesco" / "2025_estimated_capital_gains.html").read_text(encoding="utf-8"),
         source_url="fixture://invesco",
@@ -517,6 +536,16 @@ def test_next_tier_fixtures() -> None:
     )
     ft_row = next(r for r in ft if r.ticker == "FT" and r.estimate_type == EstimateType.ordinary_income)
     assert ft_row.amount == Decimal("0.0358")
+    ftf_row = next(r for r in ft if r.ticker == "FTF" and r.estimate_type == EstimateType.ordinary_income)
+    assert ftf_row.amount == Decimal("0.0418")
+    tei_st = next(
+        r for r in ft if r.ticker == "TEI" and r.estimate_type == EstimateType.short_term_capital_gains
+    )
+    assert tei_st.amount == Decimal("0.0648")
+    smdlx_roc = next(
+        r for r in ft if r.ticker == "SMDLX" and r.estimate_type == EstimateType.return_of_capital
+    )
+    assert smdlx_roc.amount == Decimal("0.073334")
 
     bny = parse_distribution_html(
         (ROOT / "bny_mellon" / "2025_estimated_capital_gains.html").read_text(encoding="utf-8"),
@@ -773,6 +802,19 @@ def test_next_tier_fixtures() -> None:
         if r.ticker == "SWLSX" and r.estimate_type == EstimateType.long_term_capital_gains
     )
     assert swlsx_2025.amount == Decimal("0.4957")
+    swanx_2025 = next(
+        r
+        for r in schwab_2025
+        if r.ticker == "SWANX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert swanx_2025.amount == Decimal("1.5191")
+    swssx_2025 = next(
+        r
+        for r in schwab_2025
+        if r.ticker == "SWSSX" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert swssx_2025.amount == Decimal("0.5123")
+    assert len({r.ticker for r in schwab_2025 if r.ticker}) >= 70
 
     dfa_2024 = parse_distribution_html(
         (ROOT / "dimensional" / "2024_capital_gain_distributions.html").read_text(encoding="utf-8"),
