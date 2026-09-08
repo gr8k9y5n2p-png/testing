@@ -30,6 +30,10 @@ export function FundPicker({
     [funds, query],
   );
 
+  function showSuggestions(value: string) {
+    setOpen(value.trim().length > 0);
+  }
+
   return (
     <div className="relative">
       <label htmlFor={inputId} className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.12em] text-faint">
@@ -40,15 +44,26 @@ export function FundPicker({
         type="search"
         value={selected && !open ? `${selected.ticker} · ${selected.fundName}` : query}
         onChange={(event) => {
-          setQuery(event.target.value);
-          setOpen(true);
+          const next = event.target.value;
+          setQuery(next);
+          showSuggestions(next);
         }}
         onFocus={() => {
-          setOpen(true);
-          if (selected) setQuery("");
+          if (selected) {
+            setQuery("");
+            setOpen(false);
+            return;
+          }
+          showSuggestions(query);
         }}
         onBlur={() => {
           window.setTimeout(() => setOpen(false), 120);
+        }}
+        onKeyDown={(event) => {
+          if (event.key === "Escape") {
+            event.preventDefault();
+            setOpen(false);
+          }
         }}
         placeholder="Ticker, name, CUSIP, or family"
         className="h-12 w-full rounded-md border border-line bg-surface px-3 text-base text-ink placeholder:text-faint"
