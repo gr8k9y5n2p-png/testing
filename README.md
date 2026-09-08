@@ -9,11 +9,13 @@ npm install
 npm run dev
 ```
 
-Then open [http://localhost:3000](http://localhost:3000). Search **AMCPX** (Capital Group / AMCAP) to see a dollar illustration. The YoY tax-delta compare card mounts **next to** that panel (selected fund vs a same-category peer). Ledger Light, monogram, and locked GTM hero copy are on that page. No Stripe keys and no Data API are required for this demo.
+Then open [http://localhost:3000](http://localhost:3000). The homepage hero is **Growth of $X** stacked over year-aligned negative tax-drag bars (`GrowthAndTaxDragModule`, default AGTHX + FCNTX at $10,000). Search **AMCPX** (Capital Group / AMCAP) to seed that ticker into the stack and open the dollar illustration. The YoY tax-delta compare card mounts **next to** that panel (selected fund vs a same-category peer). Ledger Light, monogram, and locked GTM hero copy are on that page. No Stripe keys and no Data API are required for this demo.
 
 Standalone compare demo: [http://localhost:3000/compare](http://localhost:3000/compare). Import `FundTaxDeltaCompare` from `@/components/illustrate`.
 
 Standalone **portfolio comparison** demo: [http://localhost:3000/portfolio-compare](http://localhost:3000/portfolio-compare). Import `PortfolioCompare` from `@/components/illustrate`.
+
+Stacked growth + tax-drag also has a standalone demo at [http://localhost:3000/growth-tax](http://localhost:3000/growth-tax). Import `GrowthAndTaxDragModule` from `@/components/illustrate`.
 
 Aftertax is a search-first workspace for wholesalers and financial advisors. This repo slice is the **website UI**: fund search, highlights, holding size, adjustable tax rates, and results. The Data team owns ingest, `GET /distributions`, and production `POST /illustrate` math (see PR #2).
 
@@ -54,11 +56,12 @@ Staging is `noindex`. Switch `AFTERTAX_PUBLIC_URL` to `https://getaftertax.com` 
 
 ## What you will see
 
-- One-screen landing: hero (taxable impact in dollars) + **Search a fund** as the primary action. **Import a portfolio** is secondary and opens the paywall.
+- One-screen landing: hero (taxable impact in dollars) + **Search a fund** as the primary action. **Import a portfolio** scrolls to the portfolio / multi-fund module (not the paywall).
 - Instant **dollar illustration** after a fund is selected ($1,000,000 holding default, editable federal/state rates, min/max when present).
 - **Tax-delta compare** mounts next to that panel (selected fund vs a same-category peer; `/compare` is the standalone demo).
 - **Portfolio comparison** (`/portfolio-compare`): Current vs Proposed Allocation, per-column tax-impact bars, compact upcoming-distributions table, tax drag %, more/less tax Δ. No YoY bars.
-- Soft counter (`3 of 3 free searches left` → `2 of 3…` → `0 free searches left`). After 3 unique tickers, the next search opens the paywall.
+- **Growth of $X + tax drag** is the homepage hero (`GrowthAndTaxDragModule`): cumulative growth vs one benchmark, then year-centered negative tax-drag bars for up to 6 funds. Tax panel toggles % of value / tax $. Defaults AGTHX + FCNTX at $10,000; searching a fund seeds the list. Standalone demo: `/growth-tax`.
+- Soft counter is **temporarily unlocked for beta** (`NEXT_PUBLIC_FREEMIUM_DISABLED`, default on). Set that env to `false` to restore `3 of 3 free searches left` → paywall after 3 unique tickers.
 - Highlights + estimates table sit below the fold as the sample universe — not a landing feature grid.
 - Sample/demo data banner. Capital Group / American Funds is treated as live ingest; other families show a **coverage gap**.
 - Checkout is stubbed (`POST /api/checkout` → 501) until Stripe test mode. Price id `price_1UD6C0RqA7bY5N5qVleZso0d`. Return URLs: `/?checkout=success` stays in this flow; `/?checkout=cancel` reopens the paywall. No onboarding tour.
@@ -81,14 +84,15 @@ The browser **does not** compute tax. Aftertax calls the Data API when `NEXT_PUB
 
 | Mode | How |
 | --- | --- |
-| Demo (default) | Local mocks: `POST /api/illustrate`, `POST /api/illustrate/compare`, `POST /api/illustrate/portfolio`, `POST /api/illustrate/portfolio/compare`, `GET /api/coverage`, `GET /api/fund-families` |
+| Demo (default) | Local mocks: `POST /api/illustrate`, `POST /api/illustrate/compare`, `GET /api/performance`, `POST /api/performance/growth`, `POST /api/illustrate/portfolio`, `POST /api/illustrate/portfolio/compare`, `GET /api/coverage`, `GET /api/fund-families` |
 | Data team FastAPI (PR #2) | `NEXT_PUBLIC_DATA_API_URL=http://localhost:8000` |
 
 Wired endpoints:
 
 - `POST /illustrate` — UI sends locked `selector: { fund_family, fund_identifier }`; the client also sends PR #2’s `selectors` alias. Response is normalized to `tax_rates_applied`, `estimated_tax_dollars`, `warnings`.
-- `POST /illustrate/compare` — `mode: "fund_vs_fund"` with `left` / `right` selectors + `periods[]`. Deltas are **right − left**. The card maps them to Fund A (left) cost-to-holder prose (`costToA = −delta`). Chart field: `periods[].deltas.effective_tax_on_holding`. Footer uses `summary` at $10k. Mixed upcoming coverage still shows YoY bars; the Upcoming tax cell is per side (`$185` or `—` / `Not announced`) and never blanks the card. Local mock returns the locked sketch fixture when the Data API is down. Homepage mounts `FundTaxDeltaCompare` next to dollar illustrate; standalone demo: `/compare`. Reusable historical chart: `YoYTaxChart` (calendar-year bars + optional descending YoY tax line) from `@/components/illustrate`.
+- `POST /illustrate/compare` — `mode: "fund_vs_fund"` with `left` / `right` selectors + `periods[]`. Deltas are **right − left**. The card maps them to Fund A (left) cost-to-holder prose (`costToA = −delta`). Chart field: `periods[].deltas.effective_tax_on_holding`. Footer uses `summary` at $10k. Mixed upcoming coverage still shows YoY bars; the Upcoming tax cell is per side (`$185` or `—` / `Not announced`) and never blanks the card. Local mock returns the locked sketch fixture when the Data API is down. Homepage mounts `FundTaxDeltaCompare` next to dollar illustrate; standalone demo: `/compare`. Reusable historical chart: `YoYTaxChart` (calendar-year bars + optional descending YoY tax line) from `@/components/illustrate`. `mode: "yoy"` feeds calendar-year tax-drag bars in `GrowthAndTaxDragModule`.
 - `POST /illustrate/portfolio/compare` — Current vs Proposed Allocation. Body: `current` / `proposed` `{ label?, holdings[], book_dollars }` with `ticker` + `weight_pct` (or `holding_dollars`). Deltas are **proposed − current** (`deltas.estimated_tax`, `effective_tax_on_holding`). v1 is a single snapshot — **do not send `periods[]`**. Bar charts + heat tables use `holdings[].upcoming` `{ distribution_dollars, estimated_tax, as_of, publication_stage }` (`null` = no upcoming; do not derive). Each column shows **Total tax impact** = Σ `upcoming.estimated_tax` above the chart. Older payloads without the field still fall back to `illustration` + `publication_stage_used`. If compare is 404/down, the client double-calls `POST /illustrate/portfolio` and synthesizes deltas; localhost falls back to the sketch fixture. Print/PDF: `exportToPdf(toPortfolioCompareExportModel(result, bookDollars))` — Website wires the button + freemium gate. Standalone demo: `/portfolio-compare`. Import `PortfolioCompare`, `exportToPdf`, and `toPortfolioCompareExportModel` from `@/components/illustrate`.
+- `GET /performance?ticker=AGTHX&mode=fixture` and `POST /performance/growth` — monthly fund + benchmark `growth_of_x` (default $10,000). Benchmarks SPY / AGG / VXUS by asset class. Fixtures AGTHX, FCNTX, AMCPX, FBGRX, VFIAX, DODIX. Local mock when the Data API is down. Homepage mounts `GrowthAndTaxDragModule`; standalone demo: `/growth-tax`.
 - `POST /illustrate/portfolio` — coverage `dollars_covered` / `dollars_uncovered` / `coverage_pct` + `gaps[]` + `warnings` (shown on the illustrate panel). Also the fallback for portfolio compare.
 - `GET /distributions` — aggregated into the search table (seed fills tickers the API does not yet return).
 - `GET /coverage`, `GET /fund-families` — `coverage_tier`, `aum_rank`, `priority` (Live vs Gap in picker / results / illustrate).
@@ -143,10 +147,10 @@ When `NEXT_PUBLIC_DATA_API_URL` is set and PR #2 is running, search/highlights l
 
 ## Funnel (this UI)
 
-1. Land → search a fund (primary). Import a portfolio is a paywall tease.
-2. Instant dollar illustration. Counter: `2 of 3 free searches left`.
-3. After 3 unique fund searches → paywall (`$39 / user / month`).
-4. Checkout stub returns to the same flow (`?checkout=success`) or paywall (`?checkout=cancel`). No onboarding tour.
+1. Land → search a fund (primary). Import a portfolio opens the module (growth + tax stack, or `#portfolio-compare` when that mount exists).
+2. Instant dollar illustration. Beta: searches are unlimited (soft-wall off).
+3. After 3 unique fund searches → paywall (`$39 / user / month`) **only when** `NEXT_PUBLIC_FREEMIUM_DISABLED=false`.
+4. Checkout stub returns to the same flow (`?checkout=success`) or paywall (`?checkout=cancel`). No onboarding tour. Beta unlock also suppresses the cancel paywall.
 
 Highlights and the full estimates table sit below the illustration as the sample universe — not a landing feature grid.
 
@@ -160,6 +164,17 @@ The Aftertax **website** creates Stripe Checkout Sessions server-side (`POST /ap
 - When test-mode keys exist: set `STRIPE_SECRET_KEY` and optional `STRIPE_PRICE_ID` / `AFTERTAX_PUBLIC_URL`.
 
 Paywall copy is locked in `src/lib/copy.ts`. 3 free unique fund searches use client `localStorage` for this demo.
+
+### Temporary beta unlock (revert before launch)
+
+`NEXT_PUBLIC_FREEMIUM_DISABLED` short-circuits every free-tier check and the soft-wall overlay (`src/lib/freemium.ts`). **Default is on** when the env var is unset so production/staging do not need a Vercel setting for Eric’s beta. Stored `aftertax.freemium.v1` counters are ignored while unlocked.
+
+| Value | Behavior |
+| --- | --- |
+| unset / `true` / `1` | Unlimited searches; Import never opens the paywall |
+| `false` / `0` / `off` | Restore 3-search counter + Upgrade overlay |
+
+Revert this default (or delete the bypass) before the freemium sprint / public launch. Do not treat this as the long-term billing path. Stripe Checkout is still stubbed.
 
 ## Code structure
 
