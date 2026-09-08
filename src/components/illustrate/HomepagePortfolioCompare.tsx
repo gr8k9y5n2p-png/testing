@@ -37,6 +37,7 @@ export function HomepagePortfolioCompare({
         funds={catalog}
         bookDollars={PORTFOLIO_COMPARE_BOOK_DOLLARS}
         taxRates={HOMEPAGE_TAX_RATES}
+        // current/proposed omitted — GTM history-covered smoke books.
         headingAs="h2"
         onExport={(result, bookDollars) => {
           // Freemium gate stays stubbed on beta — export is available.
