@@ -205,7 +205,7 @@ function mockYoyResponse(request: CompareRequest): CompareResponse {
     notes: [
       "MOCK /illustrate/compare mode=yoy — calendar-year tax drag for GrowthAndTaxDragModule.",
       "Period totals.estimated_tax scale with request holding_dollars. summary.*_difference stays at $10,000.",
-      "Unmatched years stay null; the chart must not invent tax-drag rows.",
+      "Unmatched years: matched=false + null tax totals (Data PR #2 5d02120). Published $0 stays 0.00.",
     ],
   };
 }

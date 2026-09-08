@@ -175,6 +175,67 @@ describe("toCompareTaxDragSeries — per-fund YoY", () => {
     );
   });
 
+  it("maps Data PR #2 unmatched sides: matched:false + null money + null deltas", () => {
+    const unmatched: CompareIllustration = {
+      label: "2019",
+      matched: false,
+      notes: ["No distribution estimates matched the selector"],
+      totals: {
+        distribution_dollars: null,
+        estimated_tax: null,
+        estimated_tax_dollars: null,
+        estimated_tax_min: null,
+        estimated_tax_max: null,
+        federal_tax: null,
+        state_tax: null,
+        effective_tax_on_holding: null,
+      },
+    };
+    const published = side("AMCPX", true, "170.00", "0.017");
+    const row = period(2024, unmatched, published);
+    row.deltas = {
+      distribution_dollars: null,
+      estimated_tax: null,
+      federal_tax: null,
+      state_tax: null,
+      effective_tax_on_holding: null,
+    };
+    assert.equal(taxDragValueFromIllustration(unmatched, "tax_dollars"), null);
+    assert.equal(taxDragValueFromIllustration(unmatched, "effective_tax"), null);
+    assert.equal(taxDragValueFromIllustration(published, "effective_tax"), 0.017);
+    assert.equal(comparePeriodIsCovered(row), false);
+    assert.deepEqual(toTaxDragPeriods(fundCompare([row]), "tax_dollars", "left"), [
+      { year: 2024, value: null },
+    ]);
+  });
+
+  it("keeps AMCPX ∩ DODIX 2021–2025 fully charted (Data history tip)", () => {
+    const years = [2021, 2022, 2023, 2024, 2025] as const;
+    const amcpx: Record<(typeof years)[number], number> = {
+      2021: 0.016, 2022: 0.009, 2023: 0.014, 2024: 0.017, 2025: 0.012,
+    };
+    const dodix: Record<(typeof years)[number], number> = {
+      2021: 0.015, 2022: 0.014, 2023: 0.017, 2024: 0.02, 2025: 0.016,
+    };
+    const response = fundCompare(
+      years.map((year) =>
+        period(
+          year,
+          side("AMCPX", true, amcpx[year] * 10_000, amcpx[year]),
+          side("DODIX", true, dodix[year] * 10_000, dodix[year]),
+        ),
+      ),
+    );
+    const series = toCompareTaxDragSeries(response, "effective_tax");
+    assert.deepEqual(
+      series[0].points.map((point) => point.year),
+      [...years],
+    );
+    assert.ok(series[0].points.every((point) => point.value != null));
+    assert.ok(series[1].points.every((point) => point.value != null));
+    assert.ok(response.periods.every((row) => comparePeriodIsCovered(row)));
+  });
+
   it("keeps a yoy vintage pair as one fund series", () => {
     const response: CompareResponse = {
       mode: "yoy",

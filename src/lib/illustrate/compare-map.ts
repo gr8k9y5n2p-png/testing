@@ -114,7 +114,8 @@ function dragHeadline(costToARate: number): string {
 }
 
 export function barFromPeriod(period: ComparePeriodOut): TaxDeltaBar {
-  if (!comparePeriodIsCovered(period)) {
+  const apiDelta = period.deltas.effective_tax_on_holding;
+  if (!comparePeriodIsCovered(period) || apiDelta == null) {
     return {
       year: period.year,
       apiDelta: null,
@@ -123,12 +124,12 @@ export function barFromPeriod(period: ComparePeriodOut): TaxDeltaBar {
       missing: true,
     };
   }
-  const apiDelta = Number(period.deltas.effective_tax_on_holding ?? 0);
-  const { polarity } = fundACost(apiDelta, EVEN_RATE);
+  const numericDelta = Number(apiDelta);
+  const { polarity } = fundACost(numericDelta, EVEN_RATE);
   return {
     year: period.year,
-    apiDelta,
-    displayPct: apiDelta * 100,
+    apiDelta: numericDelta,
+    displayPct: numericDelta * 100,
     polarity,
   };
 }

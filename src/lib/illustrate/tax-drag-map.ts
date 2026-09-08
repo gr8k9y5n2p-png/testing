@@ -35,8 +35,7 @@ const DEFAULT_LEFT_COLOR = "#1b7a72";
 const DEFAULT_RIGHT_COLOR = "#3a4348";
 
 /**
- * Explicit `matched: true`. Omitted is not a match — pair with null totals
- * after Data’s compare deploy.
+ * Explicit `matched: true`. Omitted is not a match.
  */
 export function illustrationIsMatched(
   illustration: { matched?: boolean | string | null } | null | undefined,
@@ -44,7 +43,7 @@ export function illustrationIsMatched(
   return illustration?.matched === true || illustration?.matched === "true";
 }
 
-/** Today’s miss signal. Unmatched years may still send totals as `"0.00"`. */
+/** Data miss signal. Unmatched sides are `matched: false` (totals may be null). */
 export function illustrationIsUnmatched(
   illustration: { matched?: boolean | string | null } | null | undefined,
 ): boolean {
@@ -60,8 +59,8 @@ function numericOrNull(value: unknown): number | null {
 /**
  * Chart value for one side of a compare period.
  *
- * N/A when `matched === false` (current API) **or** the metric field is null
- * (Data’s upcoming unmatched shape). `0` / `"0.00"` / `0%` NAV is a real zero.
+ * N/A when `matched === false` **or** the metric field is null
+ * (Data PR #2 `5d02120`). `0` / `"0.00"` / 0% NAV is a real zero.
  */
 export function taxDragValueFromIllustration(
   illustration: CompareIllustration | null | undefined,

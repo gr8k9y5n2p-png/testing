@@ -31,6 +31,25 @@ const DEMO_RIGHT = {
   },
 };
 
+/** Data PR #2 tip (`5d02120`): overlapping paid YE history 2021–2025. */
+const HISTORY_LEFT = {
+  label: "AMCAP Fund",
+  selectors: {
+    fund_family: "American Funds",
+    fund_identifier: "AMCPX",
+    ticker: "AMCPX",
+  },
+};
+
+const HISTORY_RIGHT = {
+  label: "Dodge & Cox Income",
+  selectors: {
+    fund_family: "Dodge & Cox",
+    fund_identifier: "DODIX",
+    ticker: "DODIX",
+  },
+};
+
 export default function CompareDemoPage() {
   return (
     <main className="mx-auto w-full max-w-7xl px-4 pb-16 pt-8 sm:px-6 lg:px-8">
@@ -77,6 +96,16 @@ export default function CompareDemoPage() {
                 ],
               }),
             )}
+          />
+        </div>
+        <div>
+          <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-faint">
+            AMCPX ∩ DODIX · 2021–2025 history
+          </p>
+          <FundTaxDeltaCompare
+            left={HISTORY_LEFT}
+            right={HISTORY_RIGHT}
+            holdingDollars={10_000}
           />
         </div>
       </div>

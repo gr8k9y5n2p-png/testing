@@ -51,13 +51,11 @@ export type CompareRequest = {
 export type CompareIllustration = {
   label: string;
   /**
-   * Miss signals (both, forward-compatible):
-   * - `matched: false` → N/A (today’s API still sends totals as `"0.00"`)
-   * - `totals.estimated_tax` / `effective_tax_on_holding` `null` → N/A
-   *   (Data is switching unmatched years to null)
+   * Shipped on Data PR #2 (`5d02120`):
+   * - Unmatched: `matched: false` + money totals **null** (N/A, never $0)
+   * - Published $0 / 0% NAV: `matched: true` + `"0.00"` → chart 0
    *
-   * Published $0 / 0% of NAV: `matched: true` + `0` / `"0.00"` → chart 0.
-   * Never invent a zero when there is no row.
+   * Website treats **either** `matched === false` **or** null tax totals as N/A.
    */
   matched: boolean;
   holding_dollars?: number;
@@ -66,22 +64,27 @@ export type CompareIllustration = {
     distribution_dollars?: number | null;
     estimated_tax?: number | null;
     estimated_tax_dollars?: number | null;
+    estimated_tax_min?: number | null;
+    estimated_tax_max?: number | null;
+    federal_tax?: number | null;
+    state_tax?: number | null;
     effective_tax_on_holding?: number | null;
   };
   notes?: string[];
 };
 
 export type CompareDeltas = {
-  distribution_dollars: number;
+  /** Null when either side is unmatched (Data PR #2) — not a $0 delta. */
+  distribution_dollars: number | null;
   distribution_dollars_min?: number | null;
   distribution_dollars_max?: number | null;
-  estimated_tax: number;
+  estimated_tax: number | null;
   estimated_tax_min?: number | null;
   estimated_tax_max?: number | null;
-  federal_tax?: number;
-  state_tax?: number;
-  /** right − left, as a decimal rate (0.008 = 0.8%). Chart this field. */
-  effective_tax_on_holding: number;
+  federal_tax?: number | null;
+  state_tax?: number | null;
+  /** right − left, as a decimal rate (0.008 = 0.8%). Null if a side is N/A. */
+  effective_tax_on_holding: number | null;
   effective_tax_on_holding_min?: number | null;
   effective_tax_on_holding_max?: number | null;
 };
