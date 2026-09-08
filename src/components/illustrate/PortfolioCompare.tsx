@@ -33,6 +33,11 @@ export type PortfolioCompareProps = {
   funds?: PortfolioFundOption[];
   taxRates?: Partial<TaxRates>;
   className?: string;
+  /** Standalone demo keeps h1; homepage mount uses h2 under the hero. */
+  headingAs?: "h1" | "h2";
+  /** Website wires Export + freemium. Omit to hide the button. */
+  onExport?: (result: PortfolioCompareResponse, bookDollars: number) => void;
+  exportLabel?: string;
 };
 
 function toApiHoldings(holdings: PortfolioHoldingDraft[]) {
@@ -68,6 +73,9 @@ export function PortfolioCompare({
   funds: fundsProp,
   taxRates,
   className = "",
+  headingAs: Heading = "h1",
+  onExport,
+  exportLabel = "Export",
 }: PortfolioCompareProps) {
   const funds = useMemo(() => catalogFunds(fundsProp ?? []), [fundsProp]);
   const [bookDollars, setBookDollars] = useState(bookDollarsProp);
@@ -181,27 +189,42 @@ export function PortfolioCompare({
             <span aria-hidden className="inline-block size-1.5 rounded-full bg-tax-less" />
             Aftertax · {sample || !result ? "Sample" : "Live"}
           </p>
-          <h1 className="mt-1 font-serif text-3xl tracking-tight text-ink">
+          <Heading className="mt-1 font-serif text-3xl tracking-tight text-ink">
             Portfolio comparison
-          </h1>
+          </Heading>
         </div>
-        <label className="block">
-          <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.14em] text-faint">
-            Portfolio value
-          </span>
-          <div className="relative w-[12.5rem]">
-            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-faint">
-              $
+        <div className="flex flex-wrap items-end gap-3">
+          {onExport ? (
+            <button
+              type="button"
+              disabled={!result}
+              onClick={() => {
+                if (!result) return;
+                onExport(result, bookDollars);
+              }}
+              className="inline-flex h-11 items-center rounded-md border border-line px-4 text-sm text-ink hover:border-line-strong disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {exportLabel}
+            </button>
+          ) : null}
+          <label className="block">
+            <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.14em] text-faint">
+              Portfolio value
             </span>
-            <input
-              inputMode="decimal"
-              value={bookInput}
-              onChange={(event) => setBookInput(event.target.value)}
-              onBlur={(event) => commitBook(event.target.value)}
-              className="h-11 w-full rounded-md border border-line bg-surface pl-7 pr-3 font-mono text-base text-ink shadow-[0_1px_2px_rgba(26,29,26,0.04)]"
-            />
-          </div>
-        </label>
+            <div className="relative w-[12.5rem]">
+              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-faint">
+                $
+              </span>
+              <input
+                inputMode="decimal"
+                value={bookInput}
+                onChange={(event) => setBookInput(event.target.value)}
+                onBlur={(event) => commitBook(event.target.value)}
+                className="h-11 w-full rounded-md border border-line bg-surface pl-7 pr-3 font-mono text-base text-ink shadow-[0_1px_2px_rgba(26,29,26,0.04)]"
+              />
+            </div>
+          </label>
+        </div>
       </header>
 
       <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-2 lg:grid-rows-[auto_auto_auto] lg:[grid-template-areas:'holdings-c_holdings-p'_'charts-c_charts-p'_'tables-c_tables-p']">

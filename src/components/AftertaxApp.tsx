@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Facets, FundEstimateView, HighlightSets } from "@/data/types";
 import { Dashboard } from "@/components/Dashboard";
 import { DemoBanner } from "@/components/DemoBanner";
 import { HighlightsSection } from "@/components/HighlightsSection";
 import { Hero } from "@/components/landing/Hero";
 import { FundCompareRail } from "@/components/illustrate/FundCompareRail";
+import { HomepagePortfolioCompare } from "@/components/illustrate/HomepagePortfolioCompare";
 import {
   GrowthAndTaxDragModule,
   type GrowthFundInput,
@@ -85,6 +86,23 @@ function AftertaxAppInner({
   const freemium = useFreemium();
   const coverage = useCoverage();
 
+  useEffect(() => {
+    const id = window.location.hash.replace(/^#/, "");
+    if (
+      id === "portfolio-compare" ||
+      id === "fund-compare" ||
+      id === "illustrate" ||
+      id === "growth-and-tax"
+    ) {
+      scrollToId(id);
+    }
+  }, []);
+
+  const seedFunds = useMemo(
+    () => (selected ? [toGrowthFund(selected)] : undefined),
+    [selected],
+  );
+
   function selectFund(fund: FundEstimateView) {
     const result = freemium.trySearch(fund.ticker);
     if (!result.allowed) {
@@ -102,14 +120,17 @@ function AftertaxAppInner({
     scrollToId("growth-and-tax");
   }
 
-  const seedFunds = useMemo(
-    () => (selected ? [toGrowthFund(selected)] : undefined),
-    [selected],
-  );
+  function openFundCompare() {
+    if (selected) {
+      scrollToId("fund-compare");
+      return;
+    }
+    document.getElementById("fund-search")?.focus();
+  }
 
   function openPortfolio() {
-    // Prefer PortfolioCompare when mounted (other PRs); otherwise the
-    // homepage multi-fund growth + tax stack. Never open the paywall.
+    // Prefer PortfolioCompare when mounted; otherwise the homepage
+    // multi-fund growth + tax stack. Never open the paywall.
     const target =
       document.getElementById("portfolio-compare") ??
       document.getElementById("growth-and-tax");
@@ -145,6 +166,7 @@ function AftertaxAppInner({
         remaining={freemium.remaining}
         unlimited={freemium.unlimited}
         onSelect={selectFund}
+        onCompare={openFundCompare}
         onImport={openPortfolio}
       />
 
@@ -166,6 +188,8 @@ function AftertaxAppInner({
           <FundCompareRail funds={funds} selected={selected} />
         </div>
       ) : null}
+
+      <HomepagePortfolioCompare funds={funds} />
 
       <section
         className="mt-4 border-t border-line pt-10"

@@ -6,6 +6,7 @@ export function Hero({
   funds,
   selected,
   onSelect,
+  onCompare,
   onImport,
   remaining,
   unlimited,
@@ -13,6 +14,7 @@ export function Hero({
   funds: FundEstimateView[];
   selected: FundEstimateView | null;
   onSelect: (fund: FundEstimateView) => void;
+  onCompare?: () => void;
   onImport: () => void;
   remaining: number;
   unlimited: boolean;
@@ -35,13 +37,24 @@ export function Hero({
         />
       </div>
       <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-        <button
-          type="button"
-          onClick={onImport}
-          className="inline-flex h-10 items-center rounded-md border border-line px-4 text-sm text-ink hover:border-line-strong"
-        >
-          {COPY.importCta}
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          {onCompare ? (
+            <button
+              type="button"
+              onClick={onCompare}
+              className="inline-flex h-10 items-center rounded-md border border-line px-4 text-sm text-ink hover:border-line-strong"
+            >
+              {COPY.compareCta}
+            </button>
+          ) : null}
+          <button
+            type="button"
+            onClick={onImport}
+            className="inline-flex h-10 items-center rounded-md border border-line px-4 text-sm text-ink hover:border-line-strong"
+          >
+            {COPY.importCta}
+          </button>
+        </div>
         <p className="font-mono text-xs text-faint" aria-live="polite">
           {unlimited ? "Unlimited searches" : freeSearchLabel(remaining)}
         </p>

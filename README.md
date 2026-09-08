@@ -13,7 +13,7 @@ Then open [http://localhost:3000](http://localhost:3000). The homepage hero is *
 
 Standalone compare demo: [http://localhost:3000/compare](http://localhost:3000/compare). Import `FundTaxDeltaCompare` from `@/components/illustrate`.
 
-Standalone **portfolio comparison** demo: [http://localhost:3000/portfolio-compare](http://localhost:3000/portfolio-compare). Import `PortfolioCompare` from `@/components/illustrate`.
+**Portfolio comparison** is mounted on the homepage (`#portfolio-compare`). **Import a portfolio** scrolls there. Standalone demo: [http://localhost:3000/portfolio-compare](http://localhost:3000/portfolio-compare). Import `PortfolioCompare` from `@/components/illustrate`.
 
 Stacked growth + tax-drag also has a standalone demo at [http://localhost:3000/growth-tax](http://localhost:3000/growth-tax). Import `GrowthAndTaxDragModule` from `@/components/illustrate`.
 
@@ -56,10 +56,10 @@ Staging is `noindex`. Switch `AFTERTAX_PUBLIC_URL` to `https://getaftertax.com` 
 
 ## What you will see
 
-- One-screen landing: hero (taxable impact in dollars) + **Search a fund** as the primary action. **Import a portfolio** scrolls to the portfolio / multi-fund module (not the paywall).
+- One-screen landing: hero (taxable impact in dollars) + **Search a fund** as the primary action. CTA order when present: **Search a fund** → **Fund Comparison** → **Import a portfolio**. Import scrolls to the mounted Current vs Proposed module (`#portfolio-compare`), not the paywall.
 - Instant **dollar illustration** after a fund is selected ($1,000,000 holding default, editable federal/state rates, min/max when present).
 - **Tax-delta compare** mounts next to that panel (selected fund vs a same-category peer; `/compare` is the standalone demo).
-- **Portfolio comparison** (`/portfolio-compare`): Current vs Proposed Allocation, per-column tax-impact bars, compact upcoming-distributions table, tax drag %, more/less tax Δ. No YoY bars.
+- **Portfolio comparison** on the homepage (and `/portfolio-compare`): Current vs Proposed Allocation, smoke books + $1M + state 0.05, per-column tax-impact bars, compact upcoming-distributions table, tax drag %, more/less tax Δ. Single snapshot only — no YoY bars / no `periods[]`. Export calls `exportToPdf` (freemium gate stubbed).
 - **Growth of $X + tax drag** is the homepage hero (`GrowthAndTaxDragModule`): cumulative growth vs one benchmark, then year-centered negative tax-drag bars for up to 6 funds. Tax panel toggles % of value / tax $. Defaults AGTHX + FCNTX at $10,000; searching a fund seeds the list. Standalone demo: `/growth-tax`.
 - Soft counter is **temporarily unlocked for beta** (`NEXT_PUBLIC_FREEMIUM_DISABLED`, default on). Set that env to `false` to restore `3 of 3 free searches left` → paywall after 3 unique tickers.
 - Highlights + estimates table sit below the fold as the sample universe — not a landing feature grid.
@@ -147,7 +147,7 @@ When `NEXT_PUBLIC_DATA_API_URL` is set and PR #2 is running, search/highlights l
 
 ## Funnel (this UI)
 
-1. Land → search a fund (primary). Import a portfolio opens the module (growth + tax stack, or `#portfolio-compare` when that mount exists).
+1. Land → search a fund (primary). Import a portfolio opens Current vs Proposed (`#portfolio-compare`).
 2. Instant dollar illustration. Beta: searches are unlimited (soft-wall off).
 3. After 3 unique fund searches → paywall (`$39 / user / month`) **only when** `NEXT_PUBLIC_FREEMIUM_DISABLED=false`.
 4. Checkout stub returns to the same flow (`?checkout=success`) or paywall (`?checkout=cancel`). No onboarding tour. Beta unlock also suppresses the cancel paywall.

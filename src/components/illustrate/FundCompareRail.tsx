@@ -64,7 +64,11 @@ export function FundCompareRail({
   if (!peer || !right) return null;
 
   return (
-    <aside aria-labelledby="compare-heading" className="min-w-0">
+    <aside
+      id="fund-compare"
+      aria-labelledby="compare-heading"
+      className="min-w-0 scroll-mt-6"
+    >
       <div className="mb-4">
         <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
           Fund vs fund

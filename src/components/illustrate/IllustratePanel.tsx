@@ -35,7 +35,7 @@ export function IllustratePanel({
     <section
       id="illustrate"
       aria-labelledby="illustrate-heading"
-      className="rounded-lg border border-line bg-surface p-4 shadow-[0_1px_2px_rgba(26,29,26,0.04)] sm:p-6"
+      className="scroll-mt-6 rounded-lg border border-line bg-surface p-4 shadow-[0_1px_2px_rgba(26,29,26,0.04)] sm:p-6"
     >
       <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
