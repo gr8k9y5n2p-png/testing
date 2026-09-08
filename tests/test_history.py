@@ -490,6 +490,17 @@ def test_search_multi_year_top_families(client: TestClient) -> None:
         "wasatch",
         "harbor",
         "nationwide",
+        "voya",
+        "oakmark",
+        "tweedy",
+        "gabelli",
+        "royce",
+        "nylife",
+        "touchstone",
+        "victory",
+        "sei",
+        "brown_advisory",
+        "william_blair",
         "vaneck",
         "wisdomtree",
         "first_trust",
@@ -611,6 +622,30 @@ def test_search_multi_year_top_families(client: TestClient) -> None:
         and Decimal(item["amount"]) == Decimal("3.7231")
         for item in nwhox.json()["items"]
     )
+
+    nlcax = client.get("/distributions", params={"fund_identifier": "NLCAX", "page_size": 50})
+    assert {"2024", "2025"} <= {item["as_of"][:4] for item in nlcax.json()["items"] if item.get("as_of")}
+
+    oakex = client.get("/distributions", params={"fund_identifier": "OAKEX", "page_size": 50})
+    assert {"2024", "2025"} <= {item["as_of"][:4] for item in oakex.json()["items"] if item.get("as_of")}
+
+    tbgvx = client.get("/distributions", params={"fund_identifier": "TBGVX", "page_size": 50})
+    assert {"2024", "2025"} <= {item["as_of"][:4] for item in tbgvx.json()["items"] if item.get("as_of")}
+
+    gabgx = client.get("/distributions", params={"fund_identifier": "GABGX", "page_size": 50})
+    assert {"2024", "2025"} <= {item["as_of"][:4] for item in gabgx.json()["items"] if item.get("as_of")}
+
+    rytrx = client.get("/distributions", params={"fund_identifier": "RYTRX", "page_size": 50})
+    assert {"2024", "2025"} <= {item["as_of"][:4] for item in rytrx.json()["items"] if item.get("as_of")}
+
+    mmeax = client.get("/distributions", params={"fund_identifier": "MMEAX", "page_size": 50})
+    assert {"2024", "2025"} <= {item["as_of"][:4] for item in mmeax.json()["items"] if item.get("as_of")}
+
+    baffx = client.get("/distributions", params={"fund_identifier": "BAFFX", "page_size": 50})
+    assert {"2024", "2025"} <= {item["as_of"][:4] for item in baffx.json()["items"] if item.get("as_of")}
+
+    bgfix = client.get("/distributions", params={"fund_identifier": "BGFIX", "page_size": 50})
+    assert {"2024", "2025"} <= {item["as_of"][:4] for item in bgfix.json()["items"] if item.get("as_of")}
 
 
 def test_compare_hero_yoy_fixture_bars(client: TestClient) -> None:

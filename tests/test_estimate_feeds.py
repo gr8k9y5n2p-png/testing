@@ -22,6 +22,20 @@ def test_top40_except_amundi_have_live_estimate_feed() -> None:
     assert missing == []
 
 
+def test_ranks_41_to_53_have_live_estimate_feed() -> None:
+    missing: list[str] = []
+    for source in list_sources():
+        if source.aum_rank is None or source.aum_rank < 41 or source.aum_rank > 53:
+            continue
+        if source.slug == "amundi":
+            continue
+        if not source.supports_live():
+            missing.append(f"{source.slug}: supports_live=False")
+        if not source.estimate_feed_urls():
+            missing.append(f"{source.slug}: no estimate_feed_urls")
+    assert missing == []
+
+
 def test_amundi_stays_off_estimate_ladder() -> None:
     amundi = next(s for s in list_sources() if s.slug == "amundi")
     assert estimate_feed_status("amundi") == "skipped"
@@ -100,3 +114,40 @@ def test_coverage_exposes_estimate_feed_readiness(session) -> None:
     assert first_trust.estimate_feed_ready is True
     assert first_trust.estimate_feed_status == "prelim_updated"
     assert any("ftportfolios.com" in url for url in first_trust.estimate_feed_urls)
+
+    voya = by_slug["voya"]
+    assert voya.estimate_feed_ready is True
+    assert voya.history_years == [2024, 2025]
+    assert "NLCAX" in voya.performance_tickers
+
+    oakmark = by_slug["oakmark"]
+    assert oakmark.estimate_feed_ready is True
+    assert oakmark.history_years == [2024, 2025]
+
+    tweedy = by_slug["tweedy"]
+    assert tweedy.estimate_feed_ready is True
+    assert tweedy.history_years == [2024, 2025]
+
+    gabelli = by_slug["gabelli"]
+    assert gabelli.estimate_feed_ready is True
+    assert gabelli.history_years == [2024, 2025]
+
+    royce = by_slug["royce"]
+    assert royce.estimate_feed_ready is True
+    assert royce.history_years == [2024, 2025]
+
+    victory = by_slug["victory"]
+    assert victory.estimate_feed_ready is True
+    assert victory.history_years == [2024, 2025]
+
+    sei = by_slug["sei"]
+    assert sei.estimate_feed_ready is True
+    assert sei.history_years == [2024, 2025]
+
+    brown = by_slug["brown_advisory"]
+    assert brown.estimate_feed_ready is True
+    assert brown.history_years == [2024, 2025]
+
+    blair = by_slug["william_blair"]
+    assert blair.estimate_feed_ready is True
+    assert blair.history_years == [2024, 2025]

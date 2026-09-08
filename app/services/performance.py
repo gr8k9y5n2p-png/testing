@@ -74,6 +74,16 @@ FUND_ALIASES: dict[str, str] = {
     "SMH": "SMH",
     "GTR": "GTR",
     "WTPI": "WTPI",
+    "HACAX": "HACAX",
+    "NWHOX": "NWHOX",
+    "NLCAX": "NLCAX",
+    "OAKMX": "OAKMX",
+    "TBGVX": "TBGVX",
+    "GABGX": "GABGX",
+    "RYTRX": "RYTRX",
+    "MMEAX": "MMEAX",
+    "BAFFX": "BAFFX",
+    "BGFIX": "BGFIX",
 }
 
 FUND_META: dict[str, dict[str, str]] = {
@@ -103,6 +113,16 @@ FUND_META: dict[str, dict[str, str]] = {
     "SMH": {"name": "VanEck Semiconductor ETF", "asset_class": "equity"},
     "GTR": {"name": "WisdomTree Target Range Fund", "asset_class": "equity"},
     "WTPI": {"name": "WisdomTree Equity Premium Income Fund", "asset_class": "equity"},
+    "HACAX": {"name": "Harbor Capital Appreciation Institutional", "asset_class": "equity"},
+    "NWHOX": {"name": "Nationwide Bailard Technology & Science A", "asset_class": "equity"},
+    "NLCAX": {"name": "Voya Large-Cap Growth A", "asset_class": "equity"},
+    "OAKMX": {"name": "Oakmark Fund Investor", "asset_class": "equity"},
+    "TBGVX": {"name": "Tweedy, Browne International Value", "asset_class": "international"},
+    "GABGX": {"name": "Gabelli Growth AAA", "asset_class": "equity"},
+    "RYTRX": {"name": "Royce Small-Cap Total Return Investment", "asset_class": "equity"},
+    "MMEAX": {"name": "Victory Integrity Discovery A", "asset_class": "equity"},
+    "BAFFX": {"name": "Brown Advisory Flexible Equity Institutional", "asset_class": "equity"},
+    "BGFIX": {"name": "William Blair Growth I", "asset_class": "equity"},
 }
 
 DEFAULT_BENCHMARKS: dict[AssetClass, dict[str, str]] = {

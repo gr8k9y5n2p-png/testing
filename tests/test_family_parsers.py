@@ -1900,6 +1900,19 @@ def test_fifth_tier_fixtures() -> None:
     )
     assert nlcax.amount == Decimal("7.259")
 
+    voya_2024 = parse_distribution_html(
+        (ROOT / "voya" / "2024_estimated_capital_gains.html").read_text(encoding="utf-8"),
+        source_url="fixture://voya-2024",
+        fund_family="Voya",
+    )
+    nlcax_24 = next(
+        r
+        for r in voya_2024
+        if r.ticker == "NLCAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert nlcax_24.amount == Decimal("1.905")
+    assert str(nlcax_24.as_of)[:4] == "2024"
+
     oakmark = parse_distribution_html(
         (ROOT / "oakmark" / "2025_year_end_distributions.html").read_text(encoding="utf-8"),
         source_url="fixture://oakmark",
@@ -1911,6 +1924,19 @@ def test_fifth_tier_fixtures() -> None:
         if r.ticker == "OAKEX" and r.estimate_type == EstimateType.long_term_capital_gains
     )
     assert oakex.amount == Decimal("0.7640")
+
+    oakmark_2024 = parse_distribution_html(
+        (ROOT / "oakmark" / "2024_year_end_distributions.html").read_text(encoding="utf-8"),
+        source_url="fixture://oakmark-2024",
+        fund_family="Oakmark / Harris Associates",
+    )
+    oakex_24 = next(
+        r
+        for r in oakmark_2024
+        if r.ticker == "OAKEX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert oakex_24.amount == Decimal("0.7241")
+    assert str(oakex_24.as_of)[:4] == "2024"
 
     tweedy = parse_distribution_html(
         (ROOT / "tweedy" / "2025_estimated_year_end_distributions.html").read_text(
@@ -1926,6 +1952,21 @@ def test_fifth_tier_fixtures() -> None:
     )
     assert tbgvx.amount == Decimal("2.516")
 
+    tweedy_2024 = parse_distribution_html(
+        (ROOT / "tweedy" / "2024_estimated_year_end_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://tweedy-2024",
+        fund_family="Tweedy, Browne",
+    )
+    tbgvx_24 = next(
+        r
+        for r in tweedy_2024
+        if r.ticker == "TBGVX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert tbgvx_24.amount == Decimal("1.706")
+    assert str(tbgvx_24.as_of)[:4] == "2024"
+
     gabelli = parse_distribution_html(
         (ROOT / "gabelli" / "2025_year_end_distributions.html").read_text(encoding="utf-8"),
         source_url="fixture://gabelli",
@@ -1938,6 +1979,19 @@ def test_fifth_tier_fixtures() -> None:
     )
     assert gabgx.amount == Decimal("6.8575")
 
+    gabelli_2024 = parse_distribution_html(
+        (ROOT / "gabelli" / "2024_year_end_distributions.html").read_text(encoding="utf-8"),
+        source_url="fixture://gabelli-2024",
+        fund_family="Gabelli",
+    )
+    gabgx_24 = next(
+        r
+        for r in gabelli_2024
+        if r.ticker == "GABGX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert gabgx_24.amount == Decimal("6.96640")
+    assert str(gabgx_24.as_of)[:4] == "2024"
+
     royce = parse_distribution_html(
         (ROOT / "royce" / "2025_year_end_distributions.html").read_text(encoding="utf-8"),
         source_url="fixture://royce",
@@ -1949,6 +2003,19 @@ def test_fifth_tier_fixtures() -> None:
         if r.ticker == "RYTRX" and r.estimate_type == EstimateType.long_term_capital_gains
     )
     assert rytrx.amount == Decimal("0.7656")
+
+    royce_2024 = parse_distribution_html(
+        (ROOT / "royce" / "2024_year_end_distributions.html").read_text(encoding="utf-8"),
+        source_url="fixture://royce-2024",
+        fund_family="Royce",
+    )
+    rytrx_24 = next(
+        r
+        for r in royce_2024
+        if r.ticker == "RYTRX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert rytrx_24.amount == Decimal("0.2980")
+    assert str(rytrx_24.as_of)[:4] == "2024"
 
     nylife = parse_distribution_html(
         (ROOT / "nylife" / "2025_estimated_capital_gains.html").read_text(encoding="utf-8"),
@@ -1989,6 +2056,21 @@ def test_fifth_tier_fixtures() -> None:
     )
     assert mmeax.amount == Decimal("3.876127")
 
+    victory_2024 = parse_distribution_html(
+        (ROOT / "victory" / "2024_final_ordinary_income_and_capital_gains.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://victory-2024",
+        fund_family="Victory Capital",
+    )
+    mmeax_24 = next(
+        r
+        for r in victory_2024
+        if r.ticker == "MMEAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert mmeax_24.amount == Decimal("3.015874")
+    assert str(mmeax_24.as_of)[:4] == "2024"
+
 
 def test_sixth_tier_fixtures() -> None:
     sei = parse_distribution_html(
@@ -2004,6 +2086,20 @@ def test_sixth_tier_fixtures() -> None:
     )
     assert slcg.amount == Decimal("8.018")
 
+    sei_2024 = parse_distribution_html(
+        (ROOT / "sei" / "2024_estimated_capital_gains.html").read_text(encoding="utf-8"),
+        source_url="fixture://sei-2024",
+        fund_family="SEI",
+    )
+    slcg_24 = next(
+        r
+        for r in sei_2024
+        if "Large Cap Growth" in r.fund_name
+        and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert slcg_24.amount == Decimal("7.596")
+    assert str(slcg_24.as_of)[:4] == "2024"
+
     brown = parse_distribution_html(
         (ROOT / "brown_advisory" / "2025_estimated_capital_gains.html").read_text(
             encoding="utf-8"
@@ -2018,6 +2114,19 @@ def test_sixth_tier_fixtures() -> None:
     )
     assert baffx.amount == Decimal("2.17")
 
+    brown_2024 = parse_distribution_html(
+        (ROOT / "brown_advisory" / "2024_capital_gains.html").read_text(encoding="utf-8"),
+        source_url="fixture://brown_advisory-2024",
+        fund_family="Brown Advisory",
+    )
+    baffx_24 = next(
+        r
+        for r in brown_2024
+        if r.ticker == "BAFFX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert baffx_24.amount == Decimal("1.72")
+    assert str(baffx_24.as_of)[:4] == "2024"
+
     blair = parse_distribution_html(
         (ROOT / "william_blair" / "2025_annual_distributions.html").read_text(
             encoding="utf-8"
@@ -2031,6 +2140,21 @@ def test_sixth_tier_fixtures() -> None:
         if r.ticker == "BGFIX" and r.estimate_type == EstimateType.long_term_capital_gains
     )
     assert bgfix.amount == Decimal("2.91999")
+
+    blair_2024 = parse_distribution_html(
+        (ROOT / "william_blair" / "2024_annual_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://william_blair-2024",
+        fund_family="William Blair",
+    )
+    bgfix_24 = next(
+        r
+        for r in blair_2024
+        if r.ticker == "BGFIX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert bgfix_24.amount == Decimal("3.03562")
+    assert str(bgfix_24.as_of)[:4] == "2024"
 
     vaneck = parse_distribution_html(
         (ROOT / "vaneck" / "2025_estimated_year_end_distributions.html").read_text(

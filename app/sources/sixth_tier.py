@@ -17,7 +17,10 @@ class SeiSource(HtmlTableSource):
         "SIMT Mid-Cap ST $0.080 / LT $5.609 / 17.81% of NAV). "
         "Equity record 12/16/2025, ex 12/17/2025, pay 12/18/2025. "
         "The PDF is fund-level (ETF tickers kept when printed in the name). "
-        "All-dash / not-expected rows are omitted."
+        "All-dash / not-expected rows are omitted. "
+        "2024 estimate PDF: "
+        "https://www.seic.com/sites/default/files/2024-10/SEI-2024-Capital-Gains-Distribution-Estimates.pdf "
+        "(SIMT Large Cap Growth ST $1.541 / LT $7.596 / 15.46% of NAV)."
     )
     live_limitations = "Estimate book is PDF. Fixture transcribes the public paying-fund table."
 
@@ -30,8 +33,17 @@ class SeiSource(HtmlTableSource):
                     "SEI%20Capital%20gains%20distribution%20estimates_11.20.2025.pdf"
                 ),
                 fixture="2025_estimated_capital_gains.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
+            PageSpec(
+                name="2024_estimated_capital_gains",
+                url="https://www.seic.com/sites/default/files/2024-10/SEI-2024-Capital-Gains-Distribution-Estimates.pdf",
+                fixture="2024_estimated_capital_gains.html",
                 live=False,
-            )
+                role="history",
+            ),
         ]
 
 
@@ -50,7 +62,9 @@ class BrownAdvisorySource(HtmlTableSource):
         "Sustainable Growth Institutional BAFWX ST $0.07 / LT $10.90). "
         "Institutional / Investor / Advisor columns are ingested when printed. "
         "Tickers only for previously identified Institutional classes. "
-        "Record/declaration 12/12/2025; ex/reinvest and pay 12/15/2025."
+        "Record/declaration 12/12/2025; ex/reinvest and pay 12/15/2025. "
+        "2024 schedule: https://www.brownadvisory.com/sites/default/files/2024_Capital_Gain_Distribution.pdf "
+        "(Flexible Equity Institutional BAFFX ST $0.15 / LT $1.72)."
     )
     live_limitations = (
         "Estimate book is PDF with Institutional / Investor / Advisor columns. "
@@ -66,8 +80,17 @@ class BrownAdvisorySource(HtmlTableSource):
                     "2025-Capital-Gain-Distribution-Update.pdf"
                 ),
                 fixture="2025_estimated_capital_gains.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
+            PageSpec(
+                name="2024_capital_gains",
+                url="https://www.brownadvisory.com/sites/default/files/2024_Capital_Gain_Distribution.pdf",
+                fixture="2024_capital_gains.html",
                 live=False,
-            )
+                role="history",
+            ),
         ]
 
 
@@ -87,7 +110,12 @@ class WilliamBlairSource(HtmlTableSource):
         "Global Leaders Class I WGFIX LT $5.52579 / 47% of NAV). "
         "Record 12/17/2025; ex 12/18/2025; pay 12/19/2025. "
         "PDF text extraction reverses amount/name columns — not column-safe "
-        "for a full-book auto-extract; Class I flagship rows remain."
+        "for a full-book auto-extract; Class I flagship rows remain. "
+        "2024 paid Class I/N/R6: "
+        "https://media.im.williamblair.com/v1/media/edge/images/"
+        "williamblaib9c8-wbim74f8-wbimprod42cd-8345/media/documents/resources/us/"
+        "distributions/2024-yearend-distributions-and-dividends--class-i-n-and-r6.pdf "
+        "(Growth Class I BGFIX LT $3.03562 / 19% of NAV)."
     )
     live_limitations = "Year-end book is PDF. Text extract is wrap-unsafe; fixture keeps Class I flagships."
 
@@ -102,8 +130,30 @@ class WilliamBlairSource(HtmlTableSource):
                     "william-blair-funds---annual-distributions-2025---class-i-n-and-r6.pdf"
                 ),
                 fixture="2025_annual_distributions.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
+            PageSpec(
+                name="2024_annual_distributions",
+                url=(
+                    "https://media.im.williamblair.com/v1/media/edge/images/"
+                    "williamblaib9c8-wbim74f8-wbimprod42cd-8345/media/documents/"
+                    "resources/us/distributions/"
+                    "2024-yearend-distributions-and-dividends--class-i-n-and-r6.pdf"
+                ),
+                fixture="2024_annual_distributions.html",
                 live=False,
-            )
+                role="history",
+            ),
+            PageSpec(
+                name="distributions_hub",
+                url="https://im.williamblair.com/investments/resources-us",
+                fixture="distributions_hub.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
         ]
 
 

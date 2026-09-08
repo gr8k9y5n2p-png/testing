@@ -14,7 +14,8 @@ class HarborSource(HtmlTableSource):
         "https://assets.harborcapital.com/docs/Distribution_Estimates_Mutual_Funds_2025.pdf "
         "(Capital Appreciation Institutional HACAX LT $11.89 / 9% of NAV). "
         "2024 sibling Distribution_Estimates_Mutual_Funds_2024.pdf 404. "
-        "Third-party combined dividend totals unused (no official ST/LT split)."
+        "Third-party combined dividend totals unused (no official ST/LT split). "
+        "Weekly walk also hits the tax-center hub."
     )
     live_limitations = "Estimate book is PDF. Fixture transcribes public Institutional-class rows."
 
@@ -27,7 +28,15 @@ class HarborSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
-            )
+            ),
+            PageSpec(
+                name="tax_center_hub",
+                url="https://www.harborcapital.com/tax-center/",
+                fixture="tax_center_hub.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
         ]
 
 
@@ -43,7 +52,9 @@ class NationwideSource(HtmlTableSource):
         "https://nationwidefinancial.com/media/pdf/MFN-0435AO.pdf "
         "(Bailard Technology & Science Class A NWHOX LT $3.7231 / 12.48% of NAV). "
         "2024 sibling MFN-0434AO is not a capital-gains book (HTML/8937-style). "
-        "Hub PDF link is unversioned — prior-year ST/LT not transcribed."
+        "MFN-1042AO extract is not an ST/LT grid. "
+        "Hub PDF link is unversioned — prior-year ST/LT not transcribed. "
+        "Weekly walk also hits the year-end information hub."
     )
     live_limitations = (
         "Family book is PDF. Automated GET is sometimes Akamai-denied without a "
@@ -59,7 +70,15 @@ class NationwideSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
-            )
+            ),
+            PageSpec(
+                name="year_end_information_hub",
+                url="https://www.nationwide.com/personal/investing/mutual-funds/year-end-information/",
+                fixture="year_end_information_hub.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
         ]
 
 
@@ -77,7 +96,9 @@ class VoyaSource(HtmlTableSource):
         "Corporate Leaders 100 ST $0.654 / LT $1.205 / 6.83%). "
         "Record 12/11/2025; ex/pay 12/12/2025. Tickers are public Class A/I identifiers; "
         "the PDF is fund-level. AllianzGI US retail books transferred to Voya in 2022 — "
-        "use this adapter, not a distinct allianzgi source."
+        "use this adapter, not a distinct allianzgi source. "
+        "2024 estimate PDF: https://individuals.voya.com/document/tax-center/2024-estimated-capital-gains.pdf "
+        "(Large-Cap Growth NLCAX ST $0.000 / LT $1.905 / 3.39% of NAV)."
     )
     live_limitations = "Estimate book is PDF. Fixture transcribes public open-end rows."
 
@@ -90,7 +111,22 @@ class VoyaSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
-            )
+            ),
+            PageSpec(
+                name="2024_estimated_capital_gains",
+                url="https://individuals.voya.com/document/tax-center/2024-estimated-capital-gains.pdf",
+                fixture="2024_estimated_capital_gains.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="tax_center_hub",
+                url="https://individuals.voya.com/product/tax-center/about-capital-gain-distributions",
+                fixture="tax_center_hub.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
         ]
 
 
@@ -105,6 +141,9 @@ class OakmarkSource(HtmlTableSource):
         "(e.g. International Small Cap Investor OAKEX LT $0.7640 / 5.13% of NAV; "
         "Oakmark Fund Investor OAKMX income $1.5797 / 0.91% of NAV — no 2025 CG). "
         "Record 12/10/2025; ex 12/11/2025; pay 12/12/2025. "
+        "2024 paid YE HTML (live sibling 404; Wayback): Investor OAKEX ST $0.0276 / LT $0.7241; "
+        "OAKMX / OAKIX published $0.0000 CG stored. "
+        "Tax estimates hub is % of NAV only (no ST/LT $/share). "
         "Tax guide: https://oakmark.com/wp-content/uploads/sites/3/documents/HarrisOakmark-Tax-Information-Guide.pdf"
     )
     live_limitations = (
@@ -121,7 +160,22 @@ class OakmarkSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
-            )
+            ),
+            PageSpec(
+                name="2024_year_end_distributions",
+                url="https://oakmark.com/news-insights/2024-oakmark-year-end-fund-distributions/",
+                fixture="2024_year_end_distributions.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="capital_gain_tax_estimates_hub",
+                url="https://oakmark.com/news-insights/oakmark-capital-gain-tax-estimates/",
+                fixture="capital_gain_tax_estimates_hub.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
         ]
 
 
@@ -134,8 +188,12 @@ class TweedySource(HtmlTableSource):
         "Public 9/30/2025 estimate PDF: "
         "https://www.tweedyfunds.com/wp-content/uploads/sites/10/2025/10/2025-Estimated-Distributions-9-30-25-2.pdf "
         "(e.g. International Value TBGVX LT $2.516; Value Fund TWEBX ST $0.017 / LT $0.408). "
-        "Record 12/10/2025; ex/pay/reinvest 12/11/2025. Paid history is on product pages, "
-        "e.g. https://www.tweedyfunds.com/mutual-funds/value-fund-distributions/"
+        "Record 12/10/2025; ex/pay/reinvest 12/11/2025. "
+        "2024 estimate PDF: "
+        "https://www.tweedyfunds.com/wp-content/uploads/sites/10/2024/09/"
+        "2024-Estimated-Distributions-8-31-24.pdf "
+        "(International Value TBGVX LT $1.706; Value Fund TWEBX LT $1.604; printed None ST omitted). "
+        "2024 Final Distributions sibling URLs 404."
     )
     live_limitations = "Family estimate book is PDF. Fixture transcribes public Investor-class rows."
 
@@ -148,8 +206,28 @@ class TweedySource(HtmlTableSource):
                     "2025-Estimated-Distributions-9-30-25-2.pdf"
                 ),
                 fixture="2025_estimated_year_end_distributions.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
+            PageSpec(
+                name="2024_estimated_year_end_distributions",
+                url=(
+                    "https://www.tweedyfunds.com/wp-content/uploads/sites/10/2024/09/"
+                    "2024-Estimated-Distributions-8-31-24.pdf"
+                ),
+                fixture="2024_estimated_year_end_distributions.html",
                 live=False,
-            )
+                role="history",
+            ),
+            PageSpec(
+                name="estimated_distributions_hub",
+                url="https://www.tweedyfunds.com/mutual-funds/international-value-fund-distributions/",
+                fixture="estimated_distributions_hub.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
         ]
 
 
@@ -163,7 +241,10 @@ class GabelliSource(HtmlTableSource):
         "Public 12/29/2025 paid year-end memo: "
         "https://gabelli.com/wp-content/uploads/2025/12/Distribution-memo-12.29.2025.pdf "
         "(e.g. Growth Fund Class AAA GABGX LT $6.8575; Asset Fund Class AAA GABAX LT $5.6168). "
-        "Record 12/26/2025; ex/pay/reinvest 12/29/2025."
+        "Record 12/26/2025; ex/pay/reinvest 12/29/2025. "
+        "2024 year-end dividend summary (Wayback; live GET 403): "
+        "https://gabelli.com/wp-content/uploads/2025/09/GabelliTetonKeeleyETF-2024-Year-End-Dividend-Summary-1.pdf "
+        "(Growth AAA GABGX LT $6.96640; Asset AAA GABAX LT $6.83330)."
     )
     live_limitations = "Year-end book is PDF. Fixture transcribes public Class AAA rows."
 
@@ -173,8 +254,25 @@ class GabelliSource(HtmlTableSource):
                 name="2025_year_end_distributions",
                 url="https://gabelli.com/wp-content/uploads/2025/12/Distribution-memo-12.29.2025.pdf",
                 fixture="2025_year_end_distributions.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
+            PageSpec(
+                name="2024_year_end_distributions",
+                url="https://gabelli.com/wp-content/uploads/2025/09/GabelliTetonKeeleyETF-2024-Year-End-Dividend-Summary-1.pdf",
+                fixture="2024_year_end_distributions.html",
                 live=False,
-            )
+                role="history",
+            ),
+            PageSpec(
+                name="open_end_distributions_hub",
+                url="https://gabelli.com/funds/open-ends/distributions/",
+                fixture="open_end_distributions_hub.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
         ]
 
 
@@ -190,7 +288,11 @@ class RoyceSource(HtmlTableSource):
         "https://www.royceinvest.com/news/2025/4Q25/PDF/royce-open-end-funds-distributions-2025.pdf "
         "(e.g. Small-Cap Total Return Investment RYTRX ST $0.0257 / LT $0.7656; "
         "Micro-Cap Investment RYOTX LT $1.6509). "
-        "Record 12/10/2025; ex/pay 12/11/2025. CEF 19(a) notices are a separate closed-end book."
+        "Record 12/10/2025; ex/pay 12/11/2025. "
+        "2024 paid YE PDF: "
+        "https://www.royceinvest.com/news/2024/4Q24/PDF/royce-open-end-funds-distributions-2024.pdf "
+        "(Small-Cap Total Return Investment RYTRX ST $0.0584 / LT $0.2980). "
+        "CEF 19(a) notices are a separate closed-end book."
     )
     live_limitations = (
         "Live HTML is public but table layout/headers may not parse. Fixture fallback."
@@ -203,7 +305,24 @@ class RoyceSource(HtmlTableSource):
                 url="https://www.royceinvest.com/news/2025/4Q25/open-end-funds-2025-year-end-distributions",
                 fixture="2025_year_end_distributions.html",
                 live=True,
-            )
+                role="estimate",
+                empty_ok=True,
+            ),
+            PageSpec(
+                name="2024_year_end_distributions",
+                url="https://www.royceinvest.com/news/2024/4Q24/PDF/royce-open-end-funds-distributions-2024.pdf",
+                fixture="2024_year_end_distributions.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="year_end_distributions_hub",
+                url="https://www.royceinvest.com/news/2024/4Q24/open-end-funds-2024-year-end-distributions",
+                fixture="year_end_distributions_hub.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
         ]
 
 
@@ -218,7 +337,8 @@ class NylifeSource(HtmlTableSource):
         "(e.g. Winslow Large Cap Growth MLAIX ST $0.26–$0.50 / LT $1.01–$3.00 / over 10% of NAV; "
         "Epoch U.S. Equity Yield EPLCX LT $1.01–$3.00 / 5.01–10.00% of NAV). "
         "Equity record/ex dates vary (Winslow 12/3–12/4/2025). "
-        "MainStay funds were rebranded NYLI; this adapter covers both names."
+        "MainStay funds were rebranded NYLI; this adapter covers both names. "
+        "No harvestable 2024 ST/LT family book found (do not invent ranges)."
     )
     live_limitations = "Estimate book is PDF with per-share ranges. Fixture transcribes public Class I identifiers."
 
@@ -228,8 +348,10 @@ class NylifeSource(HtmlTableSource):
                 name="2025_estimated_capital_gains",
                 url="https://www.nylim.com/assets/documents/tax/cap-gains-estimate.pdf",
                 fixture="2025_estimated_capital_gains.html",
-                live=False,
-            )
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
         ]
 
 
@@ -244,7 +366,8 @@ class TouchstoneSource(HtmlTableSource):
         "(e.g. Value Fund TVLAX ST $0.16201 / LT $1.28631 / 10.99–11.12% of NAV; "
         "Mid Cap Fund TMAPX LT $1.10236 / 1.86–2.14% of NAV). "
         "Record 12/10/2025; ex/pay 12/11/2025. Tickers are public Class A identifiers; "
-        "% of NAV is a share-class range."
+        "% of NAV is a share-class range. "
+        "2024 supplemental tax PDF is DRD / Treasury-source, not an ST/LT CG book."
     )
     live_limitations = "Year-end book is PDF. Fixture transcribes public Class A rows."
 
@@ -254,8 +377,10 @@ class TouchstoneSource(HtmlTableSource):
                 name="2025_capital_gains",
                 url="https://www.westernsouthern.com/-/media/files/touchstone/tax-planning/capital-gains.pdf",
                 fixture="2025_capital_gains.html",
-                live=False,
-            )
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
         ]
 
 
@@ -272,7 +397,10 @@ class VictorySource(HtmlTableSource):
         "(e.g. Integrity Discovery Class A MMEAX ST $0.607411 / LT $3.876127 / 10.07% of NAV; "
         "S&P 500 Index Class A MUXAX ST $0.040958 / LT $1.957923 / 6.72%). "
         "Capital-gains record 12/11/2025; ex 12/12/2025; pay 12/15/2025. "
-        "USAA (Portfolios III) and RS books have separate public estimate PDFs on vcm.com."
+        "USAA (Portfolios III) and RS books have separate public estimate PDFs on vcm.com. "
+        "2024 final Class A book: "
+        "https://investor.vcm.com/assets/resources-mutualfunddoc/Victory-Funds-2024-Final-Ordinary-Income-and-Capital-Gains.pdf "
+        "(Integrity Discovery MMEAX ST $0.801347 / LT $3.015874 / 8.95% of NAV)."
     )
     live_limitations = "Integrity/Sycamore estimate book is PDF. Fixture transcribes public Class A rows."
 
@@ -282,6 +410,15 @@ class VictorySource(HtmlTableSource):
                 name="2025_estimated_capital_gains",
                 url="https://investor.vcm.com/assets/resources-mutualfunddoc/Victory-Funds-2025-Estimated-Capital-Gains.pdf",
                 fixture="2025_estimated_capital_gains.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
+            PageSpec(
+                name="2024_final_ordinary_income_and_capital_gains",
+                url="https://investor.vcm.com/assets/resources-mutualfunddoc/Victory-Funds-2024-Final-Ordinary-Income-and-Capital-Gains.pdf",
+                fixture="2024_final_ordinary_income_and_capital_gains.html",
                 live=False,
-            )
+                role="history",
+            ),
         ]
