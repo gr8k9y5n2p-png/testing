@@ -286,6 +286,8 @@ _ALIASES = {
     "deutsche_bank": "dws",
     "dbx": "dws",
     "dbx_advisors": "dws",
+    "dws_funds": "dws",
+    "dws_mutual_funds": "dws",
     "aqr": "aqr",
     "causeway": "causeway",
     "alger": "alger",

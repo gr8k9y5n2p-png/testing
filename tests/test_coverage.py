@@ -191,6 +191,17 @@ def test_coverage_gap_alias_ishares(client: TestClient) -> None:
     assert response.json()["adapter_slug"] == "blackrock"
 
 
+def test_coverage_gap_alias_xtrackers_and_dws_funds(client: TestClient) -> None:
+    xtrackers = client.post("/coverage/gaps", json={"ticker": "DBEF", "fund_family": "xtrackers"})
+    assert xtrackers.status_code == 200
+    assert xtrackers.json()["adapter_slug"] == "dws"
+    funds = client.post(
+        "/coverage/gaps", json={"ticker": "SDGAX", "fund_family": "dws_mutual_funds"}
+    )
+    assert funds.status_code == 200
+    assert funds.json()["adapter_slug"] == "dws"
+
+
 def test_coverage_gap_alias_pioneer_and_dfa(client: TestClient) -> None:
     pioneer = client.post("/coverage/gaps", json={"ticker": "PIODX", "fund_family": "pioneer"})
     assert pioneer.status_code == 200

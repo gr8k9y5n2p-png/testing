@@ -3655,3 +3655,50 @@ def test_dws_xtrackers_fixtures() -> None:
         and r.estimate_type == EstimateType.short_term_capital_gains
     )
     assert pswd_final.amount == Decimal("0.1578")
+
+    dws_mf = parse_distribution_html(
+        (ROOT / "dws" / "2025_retail_capital_gains.html").read_text(encoding="utf-8"),
+        source_url="fixture://dws-mf-2025",
+        fund_family="DWS / Xtrackers",
+    )
+    sdgax = next(
+        r
+        for r in dws_mf
+        if r.ticker == "SDGAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert sdgax.amount == Decimal("9.7933")
+    ktcax_lt = next(
+        r
+        for r in dws_mf
+        if r.ticker == "KTCAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert ktcax_lt.amount == Decimal("3.5700")
+    suwax = next(
+        r
+        for r in dws_mf
+        if r.ticker == "SUWAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert suwax.amount == Decimal("3.5547")
+    assert len({r.ticker for r in dws_mf if r.ticker}) >= 19
+    assert not any("Municipal Income Trust" in r.fund_name for r in dws_mf)
+    assert not any("New Germany" in r.fund_name for r in dws_mf)
+
+    dws_mid = parse_distribution_html(
+        (ROOT / "dws" / "2026_estimated_midyear_capital_gains.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://dws-mf-2026-mid",
+        fund_family="DWS / Xtrackers",
+    )
+    sxpax_mid = next(
+        r
+        for r in dws_mid
+        if r.ticker == "SXPAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert sxpax_mid.amount == Decimal("0.6101")
+    btiex_mid = next(
+        r
+        for r in dws_mid
+        if r.ticker == "BTIEX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert btiex_mid.amount == Decimal("6.1523")

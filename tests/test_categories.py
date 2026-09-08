@@ -19,6 +19,12 @@ def test_curated_flagships() -> None:
         "High Yield Bond"
     )
     assert resolve_category(ticker="ASHR") == "China Region"
+    assert resolve_category(ticker="SDGAX", fund_name="DWS Capital Growth Fund") == "Large Growth"
+    assert resolve_category(ticker="SUWAX", fund_name="DWS Core Equity Fund") == "Large Blend"
+    assert resolve_category(ticker="KTCAX", fund_name="DWS Science and Technology Fund") == (
+        "Technology"
+    )
+    assert resolve_category(ticker="SXPAX", fund_name="DWS S&P 500 Index Fund") == "Large Blend"
 
 
 def test_name_rules_high_confidence() -> None:
