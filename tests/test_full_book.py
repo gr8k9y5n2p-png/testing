@@ -20,7 +20,8 @@ from app.sources.next_tier import (
     NorthernTrustSource,
     SchwabSource,
 )
-from app.sources.fifth_tier import HarborSource, VoyaSource
+from app.sources.eleventh_tier import AmgSource
+from app.sources.fifth_tier import HarborSource, NylifeSource, TouchstoneSource, VictorySource, VoyaSource
 from app.sources.fourth_tier import (
     ArtisanSource,
     CalamosSource,
@@ -123,8 +124,24 @@ def test_full_book_jpm_aci_sei_aqr_alger() -> None:
 
 def test_full_book_harbor_voya_keep_heroes() -> None:
     harbor_funds, harbor_tickers = _funds_and_tickers(HarborSource())
-    assert "HACAX" in harbor_tickers
+    assert {"HACAX", "HAVLX", "HSICX"} <= harbor_tickers
     assert len(harbor_funds) >= 8
+    assert len(harbor_tickers) >= 9
+
+    nylife_funds, nylife_tickers = _funds_and_tickers(NylifeSource())
+    assert "MLAIX" in nylife_tickers
+    assert len(nylife_tickers) >= 20
+
+    touchstone_funds, touchstone_tickers = _funds_and_tickers(TouchstoneSource())
+    assert {"TVLAX", "TSEC", "SIO", "TUSI"} <= touchstone_tickers
+    assert len(touchstone_funds) >= 15
+
+    victory_funds, victory_tickers = _funds_and_tickers(VictorySource())
+    assert {"MMEAX", "VETAX", "USSPX", "RSGRX"} <= victory_tickers
+    assert len(victory_tickers) >= 80
+
+    amg_funds, amg_tickers = _funds_and_tickers(AmgSource())
+    assert "YACKX" in amg_tickers
 
     voya_funds, voya_tickers = _funds_and_tickers(VoyaSource())
     assert {"NLCAX", "IEDAX", "NAWGX", "VWYFX"} <= voya_tickers
@@ -182,7 +199,7 @@ def test_full_book_artisan_ici_and_first_eagle() -> None:
     assert len(artisan_tickers) >= 50
 
     fe_funds, fe_tickers = _funds_and_tickers(FirstEagleSource())
-    assert {"SGENX", "FEVAX", "SGGDX", "FEGRX", "FEGE", "FEOE"} <= fe_tickers
+    assert {"SGENX", "FEVAX", "SGGDX", "FEGRX", "FEGE", "FEOE", "FEFAX"} <= fe_tickers
     assert len(fe_tickers) >= 35
     assert len(fe_funds) >= 35
     assert not any("Credit Opportunities" in name for name in fe_funds)

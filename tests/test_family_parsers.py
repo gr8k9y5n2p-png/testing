@@ -1832,6 +1832,30 @@ def test_fourth_tier_fixtures() -> None:
     )
     assert sgenx_2024.amount == Decimal("2.038")
 
+    fei_2025_paid = parse_distribution_html(
+        (ROOT / "first_eagle" / "2025_paid_year_end.html").read_text(encoding="utf-8"),
+        source_url="fixture://fei-2025-paid",
+        fund_family="First Eagle",
+    )
+    sgenx_2025_paid = next(
+        r
+        for r in fei_2025_paid
+        if r.ticker == "SGENX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert sgenx_2025_paid.amount == Decimal("4.654")
+    fefax_2025 = next(
+        r
+        for r in fei_2025_paid
+        if r.ticker == "FEFAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert fefax_2025.amount == Decimal("2.015")
+    fefax_st = next(
+        r
+        for r in fei_2025_paid
+        if r.ticker == "FEFAX" and r.estimate_type == EstimateType.short_term_capital_gains
+    )
+    assert fefax_st.amount == Decimal("0.339")
+
     calamos_2024 = parse_distribution_html(
         (ROOT / "calamos" / "2024_estimated_capital_gains.html").read_text(
             encoding="utf-8"
@@ -1873,6 +1897,18 @@ def test_fifth_tier_fixtures() -> None:
         if r.ticker == "HACAX" and r.estimate_type == EstimateType.long_term_capital_gains
     )
     assert hacax.amount == Decimal("11.89")
+    hsicx = next(
+        r
+        for r in harbor
+        if r.ticker == "HSICX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert hsicx.amount == Decimal("0.00")
+    havlx = next(
+        r
+        for r in harbor
+        if r.ticker == "HAVLX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert havlx.amount == Decimal("3.69")
 
     nationwide = parse_distribution_html(
         (ROOT / "nationwide" / "2025_capital_gains_distributions.html").read_text(
@@ -2055,6 +2091,60 @@ def test_fifth_tier_fixtures() -> None:
         if r.ticker == "MMEAX" and r.estimate_type == EstimateType.long_term_capital_gains
     )
     assert mmeax.amount == Decimal("3.876127")
+    vetax_est = next(
+        r
+        for r in victory
+        if r.ticker == "VETAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert vetax_est.amount == Decimal("1.622252")
+
+    victory_final = parse_distribution_html(
+        (ROOT / "victory" / "2025_final_ordinary_income_and_capital_gains.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://victory-2025-final",
+        fund_family="Victory Capital",
+    )
+    mmeax_final = next(
+        r
+        for r in victory_final
+        if r.ticker == "MMEAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert mmeax_final.amount == Decimal("3.922505")
+    vetax_final = next(
+        r
+        for r in victory_final
+        if r.ticker == "VETAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert vetax_final.amount == Decimal("1.677515")
+
+    victory_rs = parse_distribution_html(
+        (ROOT / "victory" / "2025_rs_final_ordinary_income_and_capital_gains.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://victory-rs-2025",
+        fund_family="Victory Capital",
+    )
+    rsgrx = next(
+        r
+        for r in victory_rs
+        if r.ticker == "RSGRX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert rsgrx.amount == Decimal("1.817625")
+
+    victory_iii = parse_distribution_html(
+        (ROOT / "victory" / "2025_portfolios_iii_final_ordinary_income_and_capital_gains.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://victory-iii-2025",
+        fund_family="Victory Capital",
+    )
+    usspx = next(
+        r
+        for r in victory_iii
+        if r.ticker == "USSPX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert usspx.amount == Decimal("2.615144")
 
     victory_2024 = parse_distribution_html(
         (ROOT / "victory" / "2024_final_ordinary_income_and_capital_gains.html").read_text(

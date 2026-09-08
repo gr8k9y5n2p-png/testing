@@ -124,6 +124,17 @@ def test_coverage_exposes_estimate_feed_readiness(session) -> None:
     assert first_eagle.estimate_feed_ready is True
     assert "FEGE" in first_eagle.performance_tickers
     assert "FEOE" in first_eagle.performance_tickers
+    assert "FEFAX" in first_eagle.performance_tickers
+
+    harbor = by_slug["harbor"]
+    assert harbor.estimate_feed_ready is True
+    assert "HACAX" in harbor.performance_tickers
+    assert "HAVLX" in harbor.performance_tickers
+
+    amg = by_slug["amg"]
+    assert amg.estimate_feed_ready is True
+    assert amg.history_years == [2025]
+    assert "YACKX" in amg.performance_tickers
 
     first_trust = by_slug["first_trust"]
     assert first_trust.estimate_feed_ready is True
@@ -173,6 +184,8 @@ def test_coverage_exposes_estimate_feed_readiness(session) -> None:
     victory = by_slug["victory"]
     assert victory.estimate_feed_ready is True
     assert victory.history_years == [2024, 2025]
+    assert "MMEAX" in victory.performance_tickers
+    assert "VETAX" in victory.performance_tickers
 
     sei = by_slug["sei"]
     assert sei.estimate_feed_ready is True
@@ -223,6 +236,18 @@ def test_ranks_81_to_90_have_live_estimate_feed() -> None:
     missing: list[str] = []
     for source in list_sources():
         if source.aum_rank is None or source.aum_rank < 81 or source.aum_rank > 90:
+            continue
+        if not source.supports_live():
+            missing.append(f"{source.slug}: supports_live=False")
+        if not source.estimate_feed_urls():
+            missing.append(f"{source.slug}: no estimate_feed_urls")
+    assert missing == []
+
+
+def test_ranks_91_to_110_have_live_estimate_feed() -> None:
+    missing: list[str] = []
+    for source in list_sources():
+        if source.aum_rank is None or source.aum_rank < 91 or source.aum_rank > 110:
             continue
         if not source.supports_live():
             missing.append(f"{source.slug}: supports_live=False")

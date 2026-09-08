@@ -14,6 +14,8 @@ class HarborSource(HtmlTableSource):
         "https://assets.harborcapital.com/docs/Distribution_Estimates_Mutual_Funds_2025.pdf "
         "(Capital Appreciation Institutional HACAX LT $11.89 / 9% of NAV). "
         "2024 sibling Distribution_Estimates_Mutual_Funds_2024.pdf 404. "
+        "Institutional tickers attached from the official Harbor Funds prospectus "
+        "(HACAX / HSICX / HAOSX / HASCX / HAIDX / HAISX / HAVLX / HMCLX / HAMVX). "
         "Third-party combined dividend totals unused (no official ST/LT split). "
         "Weekly walk also hits the tax-center hub."
     )
@@ -338,7 +340,9 @@ class NylifeSource(HtmlTableSource):
         "Epoch U.S. Equity Yield EPLCX LT $1.01–$3.00 / 5.01–10.00% of NAV). "
         "Equity record/ex dates vary (Winslow 12/3–12/4/2025). "
         "MainStay funds were rebranded NYLI; this adapter covers both names. "
-        "No harvestable 2024 ST/LT family book found (do not invent ranges)."
+        "2025 flyer is the full paying-fund estimate book (Class I tickers from "
+        "official NYLI prices/equities pages). No harvestable 2024 ST/LT family "
+        "book found (do not invent ranges)."
     )
     live_limitations = "Estimate book is PDF with per-share ranges. Fixture transcribes public Class I identifiers."
 
@@ -365,8 +369,9 @@ class TouchstoneSource(HtmlTableSource):
         "https://www.westernsouthern.com/-/media/files/touchstone/tax-planning/capital-gains.pdf "
         "(e.g. Value Fund TVLAX ST $0.16201 / LT $1.28631 / 10.99–11.12% of NAV; "
         "Mid Cap Fund TMAPX LT $1.10236 / 1.86–2.14% of NAV). "
-        "Record 12/10/2025; ex/pay 12/11/2025. Tickers are public Class A identifiers; "
-        "% of NAV is a share-class range. "
+        "Record 12/10/2025; ex/pay 12/11/2025. Class A tickers attached only where "
+        "official product pages print them; ETF tickers TSEC / SIO / TUSI from "
+        "official Touchstone ETF pages. Remaining PDF rows are name-only. "
         "2024 supplemental tax PDF is DRD / Treasury-source, not an ST/LT CG book."
     )
     live_limitations = "Year-end book is PDF. Fixture transcribes public Class A rows."
@@ -398,14 +403,29 @@ class VictorySource(HtmlTableSource):
         "S&P 500 Index Class A MUXAX ST $0.040958 / LT $1.957923 / 6.72%). "
         "Capital-gains record 12/11/2025; ex 12/12/2025; pay 12/15/2025. "
         "USAA (Portfolios III) and RS books have separate public estimate PDFs on vcm.com. "
+        "2025 final Portfolios I/II + RS + Portfolios III (USAA) official PDFs "
+        "are the full printed books (MMEAX LT $3.922505; RSGRX LT $1.817625; "
+        "USSPX ST $0.026267 / LT $2.615144). Pioneer / Victory Portfolios IV "
+        "stays on the skipped amundi adapter. "
         "2024 final Class A book: "
         "https://investor.vcm.com/assets/resources-mutualfunddoc/Victory-Funds-2024-Final-Ordinary-Income-and-Capital-Gains.pdf "
         "(Integrity Discovery MMEAX ST $0.801347 / LT $3.015874 / 8.95% of NAV)."
     )
-    live_limitations = "Integrity/Sycamore estimate book is PDF. Fixture transcribes public Class A rows."
+    live_limitations = (
+        "Integrity/Sycamore/RS/USAA books are PDF. Weekly walk uses the tax-center "
+        "hub + 2025 estimate PDF; empty/PDF-bytes pages are no-op success."
+    )
 
     def pages(self) -> list[PageSpec]:
         return [
+            PageSpec(
+                name="tax_center_hub",
+                url="https://investor.vcm.com/tools-resources/tax-center",
+                fixture="tax_center_hub.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
             PageSpec(
                 name="2025_estimated_capital_gains",
                 url="https://investor.vcm.com/assets/resources-mutualfunddoc/Victory-Funds-2025-Estimated-Capital-Gains.pdf",
@@ -413,6 +433,27 @@ class VictorySource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
+            ),
+            PageSpec(
+                name="2025_final_ordinary_income_and_capital_gains",
+                url="https://investor.vcm.com/assets/resources-mutualfunddoc/Victory-Funds-2025-Final-Ordinary-Income-and-Capital-Gains-Distributions.pdf",
+                fixture="2025_final_ordinary_income_and_capital_gains.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="2025_rs_final_ordinary_income_and_capital_gains",
+                url="https://investor.vcm.com/assets/resources-mutualfunddoc/Victory-RS-Funds-2025-Final-Ordinary-Income-and-Capital-Gains%20Distributions.pdf",
+                fixture="2025_rs_final_ordinary_income_and_capital_gains.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="2025_portfolios_iii_final_ordinary_income_and_capital_gains",
+                url="https://investor.vcm.com/assets/resources-mutualfunddoc/Victory-Portfolios-III-Mutual-Funds-Final-2025-Ordinary-Income-and-Capital-Gain-Distributions.pdf",
+                fixture="2025_portfolios_iii_final_ordinary_income_and_capital_gains.html",
+                live=False,
+                role="history",
             ),
             PageSpec(
                 name="2024_final_ordinary_income_and_capital_gains",

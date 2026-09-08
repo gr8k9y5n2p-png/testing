@@ -31,7 +31,9 @@ class LazardSource(HtmlTableSource):
                     "LazardFundsAnnualDistributionDeclarationEstimated.pdf"
                 ),
                 fixture="2025_estimated_annual_distributions.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
 
@@ -64,7 +66,9 @@ class ManningNapierSource(HtmlTableSource):
                     "distributions/2025%20Distributions.pdf"
                 ),
                 fixture="2025_distributions.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
 
@@ -98,7 +102,9 @@ class WestwoodSource(HtmlTableSource):
                     "Fund-Distribution-2025-Cap-Estimate_STAMPED.pdf"
                 ),
                 fixture="2025_estimated_capital_gains.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
 
@@ -132,7 +138,9 @@ class BostonPartnersSource(HtmlTableSource):
                     "bp-funds-estimated-cap-gain-dist-10_31_2025.pdf"
                 ),
                 fixture="2025_estimated_capital_gains.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
 
@@ -159,7 +167,9 @@ class HomesteadSource(HtmlTableSource):
                 name="2025_year_end_distributions",
                 url="https://www.homesteadadvisers.com/wp-content/uploads/Year-End-Distributions.pdf",
                 fixture="2025_year_end_distributions.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
 
@@ -189,6 +199,8 @@ class MadisonSource(HtmlTableSource):
                 url="https://madisonfunds.com/resources/tax-center/",
                 fixture="2025_capital_gains.html",
                 live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
 
@@ -215,7 +227,9 @@ class LsvSource(HtmlTableSource):
                 name="2025_year_end_distributions",
                 url="https://www.lsvasset.com/pdf/fund-docs/2025-Distributions-12-25.pdf",
                 fixture="2025_year_end_distributions.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
 
@@ -244,7 +258,9 @@ class LkcmSource(HtmlTableSource):
                     "2025-LKCM-Year-End-Mutual-Fund-Distribution-Estimates-11-3-25.pdf"
                 ),
                 fixture="2025_estimated_year_end_distributions.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
 
@@ -270,7 +286,9 @@ class OberweisSource(HtmlTableSource):
                 name="2025_final_distributions",
                 url="https://oberweisfunds.com/wp-content/uploads/2026/03/2025-Final-Distributions-Sheet.pdf",
                 fixture="2025_final_distributions.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
 
@@ -301,6 +319,8 @@ class RiverparkSource(HtmlTableSource):
                     "Distribution_Info_2025_Website_RFT_FINAL_CAP_GAINS_FINAL_INCOME.pdf"
                 ),
                 fixture="2025_final_distributions.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]

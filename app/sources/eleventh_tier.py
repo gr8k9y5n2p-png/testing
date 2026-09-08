@@ -28,7 +28,9 @@ class AmgSource(HtmlTableSource):
                 name="2025_year_end_distributions",
                 url="https://wealth.amg.com/pdf-library/amg-funds-2025-year-end-distributions/",
                 fixture="2025_year_end_distributions.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
 
@@ -59,6 +61,8 @@ class GuidestoneSource(HtmlTableSource):
                 url="https://www.guidestonefunds.com/Tax-Information/Capital-Gains",
                 fixture="2025_estimated_capital_gains.html",
                 live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
 
@@ -87,6 +91,8 @@ class ValueLineSource(HtmlTableSource):
                 url="https://vlfunds.com/gains",
                 fixture="2025_year_end_distributions.html",
                 live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
 
@@ -119,7 +125,9 @@ class PermanentPortfolioSource(HtmlTableSource):
                     "2025%20Supplemental%20Tax%20Information_FINAL.pdf"
                 ),
                 fixture="2025_supplemental_tax_information.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
 
@@ -149,6 +157,8 @@ class ConestogaSource(HtmlTableSource):
                 url="https://conestogacapital.com/capital-gains-information/",
                 fixture="2026_estimated_capital_gains.html",
                 live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
 
@@ -177,7 +187,9 @@ class KopernikSource(HtmlTableSource):
                     "KGI-CG-MEMO-December-2025-FINAL-1.pdf"
                 ),
                 fixture="2025_final_distributions.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
 
@@ -208,7 +220,9 @@ class LocorrSource(HtmlTableSource):
                     "LoCorr-Funds-Annual-CapitalGains-Dividends.pdf"
                 ),
                 fixture="2025_annual_distributions.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
 
@@ -235,7 +249,9 @@ class TimothyPlanSource(HtmlTableSource):
                 name="2025_year_end_distributions",
                 url="https://timothyplan.com/download/Capital_Gains_Distribution.pdf",
                 fixture="2025_year_end_distributions.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
 
@@ -266,7 +282,9 @@ class HodgesSource(HtmlTableSource):
                     "Year_End_Distribution_Estimates.pdf"
                 ),
                 fixture="2025_estimated_capital_gains.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
 
@@ -296,6 +314,8 @@ class TocquevilleSource(HtmlTableSource):
                     "2025-FINAL-Distributions-December-9-2025.pdf"
                 ),
                 fixture="2025_final_distributions.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
