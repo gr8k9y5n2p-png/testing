@@ -13,6 +13,7 @@ from app.sources.families import (
     VanguardSource,
 )
 from app.sources.next_tier import (
+    AmundiSource,
     BnyMellonSource,
     DimensionalSource,
     FranklinTempletonSource,
@@ -372,3 +373,32 @@ def test_full_book_wave20_thin_family_harvest() -> None:
     assert {"DMCRX", "DMAGX", "DVSMX", "DNSMX", "DSMDX", "DIDEX", "DREGX"} <= driehaus_tickers
     assert len(driehaus_tickers) >= 11
     assert len(driehaus_funds) >= 8
+
+
+def test_full_book_amundi_pioneer_included() -> None:
+    funds, tickers = _funds_and_tickers(AmundiSource())
+    assert {
+        "PIODX",
+        "PIGFX",
+        "PEQIX",
+        "PIOTX",
+        "AOBLX",
+        "PINDX",
+        "CVFCX",
+        "GLOSX",
+        "PIIFX",
+        "PCGRX",
+        "PGOFX",
+        "PIALX",
+        "PYODX",
+        "ACBAX",
+        "PMAIX",
+        "PGSVX",
+        "PISVX",
+        "PICYX",
+        "STRYX",
+    } <= tickers
+    assert "XILSX" not in tickers
+    assert len(tickers) >= 60
+    assert len(funds) >= 60
+    assert not any(re.search(r"\bInterval\b", name, re.I) for name in funds)

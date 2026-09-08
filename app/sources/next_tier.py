@@ -470,22 +470,57 @@ class AmundiSource(HtmlTableSource):
     aum_rank = 20
     priority = 20
     notes = (
+        "Included per Eric 2026-09-08 (Victory-hosted Pioneer tax center). "
         "US Pioneer retail funds transferred to Victory Capital (April 2025). "
-        "Public 10/15/2025 estimate PDF remains on the Pioneer/Amundi tax center: "
+        "Weekly walk: Pioneer / Amundi / Victory tax-center hubs plus the "
+        "10/15/2025 estimate PDF and 2025 final PDFs that still resolve. "
+        "Official 10/15/2025 Class A estimate book "
         "https://pioneerinvestments.com/content/dam/pioneer/en/documents/resources/tax-center/2025/10152025-mutual-funds-2025-capital-gain-estimates.pdf "
-        "(e.g. Victory Pioneer Fund PIODX ST $0.53 / LT $3.73 / 9.09% of NAV). "
-        "Hubs: https://www.amundi.com/usinvestors/Resources/Tax-Center and "
-        "https://pioneerinvestments.com/resources/tax-center. Final 2025 PDF: "
-        "2025-final-ord-inc-cap-gain-distributions.pdf on the same path. "
-        "No public filled ICI file. 2024 estimate/final sibling URLs on that "
-        "path returned 404 (Pioneer site is now Victory-hosted) — skipped. "
-        "Off the multi-year history ladder (non-US parent): do not add prior "
-        "years; leave the 2025 fixture as-is."
+        "(Victory Pioneer Fund PIODX ST $0.53 / LT $3.73 / 9.09% of NAV). "
+        "2025 finals: "
+        "https://pioneerinvestments.com/content/dam/pioneer/en/documents/resources/tax-center/2025/2025-final-ord-inc-cap-gain-distributions.pdf "
+        "and Victory-hosted "
+        "https://investor.vcm.com/assets/resources-mutualfunddoc/Victory-Portfolios-IV-Mutual-Funds-2025-Final-Capital-Gains.pdf "
+        "(PIODX Class A ST $0.8354 / LT $3.4776). Pioneer ILS Interval Fund XILSX omitted. "
+        "Hubs: https://www.amundi.com/usinvestors/Resources/Tax-Center (redirects to Pioneer), "
+        "https://pioneerinvestments.com/resources/tax-center, "
+        "https://investor.vcm.com/tools-resources/tax-center. "
+        "YE history: official 2024 Final Capital Gain Distributions (PIODX LT $4.1900) and "
+        "2024 special year-end income estimates; official 2023 finals + 10/31/2023 estimates. "
+        "Printed N/A / dashes omitted; published $0 stored. No public filled ICI file. "
+        "Live fetch prefers issuer URLs with fixture fallback — never invent amounts."
     )
-    live_limitations = "US estimates are PDF on the Pioneer/Victory tax center. Fixture transcribes that table."
+    live_limitations = (
+        "Pioneer/Victory tax hubs are HTML shells; estimate/final books are PDF. "
+        "Weekly walk is no-op success on empty/PDF-bytes pages; fixtures transcribe the official tables."
+    )
 
     def pages(self) -> list[PageSpec]:
         return [
+            PageSpec(
+                name="pioneer_tax_center_hub",
+                url="https://pioneerinvestments.com/resources/tax-center",
+                fixture="pioneer_tax_center_hub.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
+            PageSpec(
+                name="amundi_tax_center_hub",
+                url="https://www.amundi.com/usinvestors/Resources/Tax-Center",
+                fixture="amundi_tax_center_hub.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
+            PageSpec(
+                name="victory_tax_center_hub",
+                url="https://investor.vcm.com/tools-resources/tax-center",
+                fixture="victory_tax_center_hub.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
             PageSpec(
                 name="2025_capital_gain_estimates",
                 url=(
@@ -493,6 +528,70 @@ class AmundiSource(HtmlTableSource):
                     "resources/tax-center/2025/10152025-mutual-funds-2025-capital-gain-estimates.pdf"
                 ),
                 fixture="2025_capital_gain_estimates.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
+            PageSpec(
+                name="2025_final_ordinary_income_and_capital_gains",
+                url=(
+                    "https://pioneerinvestments.com/content/dam/pioneer/en/documents/"
+                    "resources/tax-center/2025/2025-final-ord-inc-cap-gain-distributions.pdf"
+                ),
+                fixture="2025_final_ordinary_income_and_capital_gains.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
+            PageSpec(
+                name="2025_victory_portfolios_iv_final_capital_gains",
+                url=(
+                    "https://investor.vcm.com/assets/resources-mutualfunddoc/"
+                    "Victory-Portfolios-IV-Mutual-Funds-2025-Final-Capital-Gains.pdf"
+                ),
+                fixture="victory_portfolios_iv_final_hub.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
+            PageSpec(
+                name="2024_final_capital_gains",
+                url=(
+                    "https://pioneerinvestments.com/content/dam/pioneer/en/documents/"
+                    "resources/tax-center/2024/2024-Final-Capital-Gain-Distributions.pdf"
+                ),
+                fixture="2024_final_capital_gains.html",
                 live=False,
-            )
+                role="history",
+            ),
+            PageSpec(
+                name="2024_special_year_end_distributions",
+                url=(
+                    "https://pioneerinvestments.com/content/dam/pioneer/en/documents/"
+                    "resources/tax-center/2024-Special-Year-End-Distributions.pdf"
+                ),
+                fixture="2024_special_year_end_distributions.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="2023_final_capital_gains",
+                url=(
+                    "https://pioneerinvestments.com/content/dam/pioneer/en/documents/"
+                    "resources/tax-center/2023/2023-Final-Capital-Gain-Distributions.pdf"
+                ),
+                fixture="2023_final_capital_gains.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="2023_capital_gain_estimates",
+                url=(
+                    "https://pioneerinvestments.com/content/dam/pioneer/en/documents/"
+                    "resources/tax-center/2023/Capital-Gain-Distribution-Estimates-as-of-10-31-2023.pdf"
+                ),
+                fixture="2023_capital_gain_estimates.html",
+                live=False,
+                role="history",
+            ),
         ]

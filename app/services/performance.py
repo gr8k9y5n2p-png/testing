@@ -117,6 +117,11 @@ FUND_ALIASES: dict[str, str] = {
     "BGVIX": "BGVIX",
     "FAMVX": "FAMVX",
     "DMCRX": "DMCRX",
+    "PIODX": "PIODX",
+    "VICTORY-PIONEER-FUND": "PIODX",
+    "PIONEER-FUND": "PIODX",
+    "PIGFX": "PIGFX",
+    "VICTORY-PIONEER-FUNDAMENTAL-GROWTH-FUND": "PIGFX",
 }
 
 FUND_META: dict[str, dict[str, str]] = {
@@ -192,6 +197,8 @@ FUND_META: dict[str, dict[str, str]] = {
     "BGVIX": {"name": "Brandes Global Equity I", "asset_class": "equity"},
     "FAMVX": {"name": "FAM Value Investor", "asset_class": "equity"},
     "DMCRX": {"name": "Driehaus Micro Cap Growth", "asset_class": "equity"},
+    "PIODX": {"name": "Victory Pioneer Fund A", "asset_class": "equity"},
+    "PIGFX": {"name": "Victory Pioneer Fundamental Growth Fund A", "asset_class": "equity"},
 }
 
 DEFAULT_BENCHMARKS: dict[AssetClass, dict[str, str]] = {

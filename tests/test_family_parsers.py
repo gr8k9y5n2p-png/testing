@@ -658,6 +658,64 @@ def test_next_tier_fixtures() -> None:
     )
     assert piodx.amount == Decimal("3.73")
     assert piodx.cusip == "92648C512"
+    assert {r.ticker for r in amundi} >= {
+        "PIODX",
+        "PIGFX",
+        "PEQIX",
+        "PIOTX",
+        "AOBLX",
+        "PINDX",
+        "CVFCX",
+        "GLOSX",
+        "PIIFX",
+        "PCGRX",
+        "PGOFX",
+        "PIALX",
+    }
+    aoblx_st = next(
+        r
+        for r in amundi
+        if r.ticker == "AOBLX" and r.estimate_type == EstimateType.short_term_capital_gains
+    )
+    assert aoblx_st.amount == Decimal("0.03")
+
+    amundi_final = parse_distribution_html(
+        (ROOT / "amundi" / "2025_final_ordinary_income_and_capital_gains.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://amundi-final",
+        fund_family="Amundi US / Pioneer",
+    )
+    piodx_final = next(
+        r
+        for r in amundi_final
+        if r.ticker == "PIODX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert piodx_final.amount == Decimal("3.4776")
+    assert not any(r.ticker == "XILSX" for r in amundi_final)
+    acbax = next(
+        r
+        for r in amundi_final
+        if r.ticker == "ACBAX" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert acbax.amount == Decimal("0.9951")
+    assert not any(
+        r.ticker == "ACBAX" and r.estimate_type == EstimateType.long_term_capital_gains
+        for r in amundi_final
+    )
+
+    amundi_2024 = parse_distribution_html(
+        (ROOT / "amundi" / "2024_final_capital_gains.html").read_text(encoding="utf-8"),
+        source_url="fixture://amundi-2024",
+        fund_family="Amundi US / Pioneer",
+    )
+    piodx_2024 = next(
+        r
+        for r in amundi_2024
+        if r.ticker == "PIODX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert piodx_2024.amount == Decimal("4.1900")
+    assert {r.ticker for r in amundi_2024} >= {"PGSVX", "PISVX", "AOBLX"}
 
     ft_2024 = parse_distribution_html(
         (ROOT / "franklin_templeton" / "2024_section_19a.html").read_text(encoding="utf-8"),
