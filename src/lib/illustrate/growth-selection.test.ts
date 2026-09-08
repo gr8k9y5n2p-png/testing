@@ -78,6 +78,19 @@ describe("growth fund remove selection", () => {
     );
   });
 
+  it("does not invent upcoming from historical tax-drag periods", () => {
+    const historicalOnly = {
+      mode: "yoy",
+      periods: [],
+      summary: {},
+    } as CompareResponse;
+    const row = upcomingRowForSelectedFunds(
+      [{ ticker: "AMCPX", tax: historicalOnly, taxSide: "auto" }],
+      [fund("AMCPX")],
+    );
+    assert.equal(row, null);
+  });
+
   it("keeps Add Fund extras when search reseeds a ticker", () => {
     const merged = mergeSeedFunds([fund("AGTHX"), fund("FBGRX")], [fund("AMCPX")]);
     assert.deepEqual(

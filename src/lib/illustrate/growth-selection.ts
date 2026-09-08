@@ -57,8 +57,9 @@ export type GrowthUpcomingRow = {
 };
 
 /**
- * First remaining fund with an upcoming payload. Removed tickers are skipped
- * so the header/tax-drag badges drop that fund immediately.
+ * First remaining fund that already has `upcoming_taxable_distribution`.
+ * Removed tickers are skipped so that fund’s Upcoming chip drops immediately.
+ * Historical tax-drag periods are never treated as upcoming.
  */
 export function upcomingRowForSelectedFunds(
   rows: GrowthUpcomingRow[] | null | undefined,
