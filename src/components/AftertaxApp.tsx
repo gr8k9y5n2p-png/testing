@@ -21,6 +21,7 @@ import { reportCoverageGap } from "@/lib/coverage";
 import { isFreemiumDisabled, useFreemium } from "@/lib/freemium";
 import {
   FUND_HISTORY_HASH,
+  HOMEPAGE_GROWTH_FUNDS,
   growthFundFromTicker,
   resolveFundView,
 } from "@/lib/illustrate/fund-history";
@@ -34,11 +35,6 @@ function scrollToId(id: string) {
     });
   });
 }
-
-const HOMEPAGE_GROWTH_FUNDS: GrowthFundInput[] = [
-  { ticker: "AGTHX", label: "AGTHX", fundFamily: "American Funds" },
-  { ticker: "FCNTX", label: "FCNTX", fundFamily: "Fidelity" },
-];
 
 export type CheckoutReturn = "success" | "cancel" | null;
 

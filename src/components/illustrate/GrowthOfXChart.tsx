@@ -43,6 +43,8 @@ export function GrowthOfXChart({
   height = 236,
   pad = SHARED_CHART_PAD,
   axis: axisProp,
+  emptyLabel = "No growth series",
+  emptyHint = "GET /performance returned no overlapping monthly points.",
 }: {
   years: number[];
   series: GrowthLineSeries[];
@@ -57,6 +59,8 @@ export function GrowthOfXChart({
   height?: number;
   pad?: ChartPad;
   axis?: YearLayout;
+  emptyLabel?: string;
+  emptyHint?: string;
 }) {
   if (loading) {
     return (
@@ -72,10 +76,10 @@ export function GrowthOfXChart({
   if (years.length === 0 || values.length === 0) {
     return (
       <div className={`flex min-h-[160px] flex-col justify-center py-4 ${className}`}>
-        <p className="font-serif text-lg text-ink">No growth series</p>
-        <p className="mt-2 text-sm text-muted">
-          GET /performance returned no overlapping monthly points.
-        </p>
+        <p className="font-serif text-lg text-ink">{emptyLabel}</p>
+        {emptyHint ? (
+          <p className="mt-2 text-sm text-muted">{emptyHint}</p>
+        ) : null}
       </div>
     );
   }
