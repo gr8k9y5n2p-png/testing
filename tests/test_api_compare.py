@@ -509,12 +509,23 @@ def test_compare_per_share_requires_nav_or_shares(client: TestClient) -> None:
                     "fund_name": "Per Share Fund",
                     "ticker": "PSHRX",
                     "estimate_type": "long_term_capital_gains",
+                    "amount": "1.00",
+                    "amount_unit": "per_share",
+                    "as_of": "2024-12-31",
+                    "publication_stage": "final",
+                    "source_url": "https://example.invalid/pshrx-2024",
+                },
+                {
+                    "fund_family": "Test Family",
+                    "fund_name": "Per Share Fund",
+                    "ticker": "PSHRX",
+                    "estimate_type": "long_term_capital_gains",
                     "amount": "1.25",
                     "amount_unit": "per_share",
                     "as_of": "2025-12-31",
                     "publication_stage": "final",
                     "source_url": "https://example.invalid/pshrx-2025",
-                }
+                },
             ]
         },
     )
@@ -526,7 +537,7 @@ def test_compare_per_share_requires_nav_or_shares(client: TestClient) -> None:
             "holding_dollars": 100000,
             "tax_rates": {},
             "selectors": {"ticker": "PSHRX"},
-            "periods": [{"year": 2025}],
+            "periods": [{"year": 2024}, {"year": 2025}],
         },
     )
     assert missing.status_code == 422
@@ -543,7 +554,7 @@ def test_compare_per_share_requires_nav_or_shares(client: TestClient) -> None:
             "nav_per_share": 25,
             "tax_rates": {},
             "selectors": {"ticker": "PSHRX"},
-            "periods": [{"year": 2025}],
+            "periods": [{"year": 2024}, {"year": 2025}],
         },
     )
     assert ok.status_code == 200, ok.text
