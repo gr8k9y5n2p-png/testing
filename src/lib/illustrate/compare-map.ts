@@ -1,4 +1,8 @@
 import { formatUsd } from "@/lib/format";
+import {
+  scaleNormalizedHoldingDollars,
+  scaleUpcomingToHolding,
+} from "@/lib/illustrate/compare-delta-strip";
 import type {
   ComparePeriodOut,
   CompareResponse,
@@ -175,10 +179,15 @@ export function upcomingSidesFromSummary(
   };
 }
 
+function holdingPhrase(holdingDollars: number | undefined): string {
+  return holdingDollars != null ? `on ${formatUsd(holdingDollars, 0)}` : "on $10k";
+}
+
 function upcomingMetric(
   sides: UpcomingSides,
   deltaDollars: number | null | undefined,
   demo: string,
+  holdingLabel: string,
 ): TaxDeltaMetric {
   const both = sides.left.announced && sides.right.announced;
   const neither = !sides.left.announced && !sides.right.announced;
@@ -194,8 +203,8 @@ function upcomingMetric(
       ? moreLessTaxHeadline(upcoming.costToA)
       : `${sides.left.display} · ${sides.right.display}`,
     detail: neither
-      ? `Not announced · this year · on $10k${demo}`
-      : `A ${sides.left.statusLabel} · B ${sides.right.statusLabel} · on $10k${demo}`,
+      ? `Not announced · this year · ${holdingLabel}${demo}`
+      : `A ${sides.left.statusLabel} · B ${sides.right.statusLabel} · ${holdingLabel}${demo}`,
     polarity: upcoming?.polarity ?? "even",
   };
 }
@@ -211,6 +220,7 @@ function pickLabel(
 export function toTaxDeltaCardModel(
   response: CompareResponse,
   fallbacks?: { left?: string; right?: string },
+  options?: { holdingDollars?: number },
 ): TaxDeltaCardModel {
   const sample =
     response.source === "mock" ||
@@ -231,18 +241,34 @@ export function toTaxDeltaCardModel(
     .map(barFromPeriod);
 
   const summary = response.summary;
-  const tax = fundACost(Number(summary.total_tax_difference ?? 0), EVEN_DOLLARS);
+  const displayHolding = options?.holdingDollars;
+  const normalized =
+    summary.normalized_holding_dollars > 0
+      ? summary.normalized_holding_dollars
+      : 10_000;
+  const scaleDollars = (value: number) =>
+    displayHolding != null
+      ? scaleNormalizedHoldingDollars(value, displayHolding, normalized)
+      : value;
+  const upcoming =
+    displayHolding != null
+      ? scaleUpcomingToHolding(
+          summary.upcoming_taxable_distribution,
+          displayHolding,
+          normalized,
+        )
+      : summary.upcoming_taxable_distribution;
+  const tax = fundACost(scaleDollars(Number(summary.total_tax_difference ?? 0)), EVEN_DOLLARS);
   const drag = fundACost(
     Number(summary.annualized_tax_drag_delta ?? 0),
     EVEN_RATE,
   );
   const dist = fundACost(
-    Number(summary.distribution_dollars_difference ?? 0),
+    scaleDollars(Number(summary.distribution_dollars_difference ?? 0)),
     EVEN_DOLLARS,
   );
-  const upcomingSides = upcomingSidesFromSummary(
-    summary.upcoming_taxable_distribution,
-  );
+  const upcomingSides = upcomingSidesFromSummary(upcoming);
+  const onHolding = holdingPhrase(displayHolding);
 
   const window = inceptionLabel(summary);
   const demo = sample ? " · demo" : "";
@@ -252,7 +278,7 @@ export function toTaxDeltaCardModel(
       key: "tax_difference",
       label: "Tax difference",
       headline: moreLessTaxHeadline(tax.costToA),
-      detail: `on $10k · ${window}${demo}`,
+      detail: `${onHolding} · ${window}${demo}`,
       polarity: tax.polarity,
     },
     {
@@ -266,13 +292,14 @@ export function toTaxDeltaCardModel(
       key: "distributions",
       label: "Distributions Δ",
       headline: moreLessTaxHeadline(dist.costToA),
-      detail: `from distributions · on $10k · window${demo}`,
+      detail: `from distributions · ${onHolding} · window${demo}`,
       polarity: dist.polarity,
     },
     upcomingMetric(
       upcomingSides,
-      summary.upcoming_taxable_distribution?.delta_dollars,
+      upcoming?.delta_dollars,
       demo,
+      onHolding,
     ),
   ];
 

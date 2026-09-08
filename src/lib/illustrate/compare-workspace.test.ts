@@ -3,11 +3,13 @@ import { describe, it } from "node:test";
 import type { FundEstimateView } from "../../data/types.ts";
 import type { CompareIllustration, ComparePeriodOut, CompareResponse } from "./compare-types.ts";
 import {
+  COMPARE_DEFAULT_HOLDING_DOLLARS,
   buildCompareAnnualTable,
   emptyCompareSlots,
   filledCompareTickers,
   growthFundsFromSlots,
   padCompareSlots,
+  parseCompareHoldingDollars,
   setCompareSlot,
   upcomingRowForCompareTicker,
   upcomingRowsFromCompareTickers,
@@ -118,7 +120,21 @@ describe("compare workspace slots", () => {
     assert.deepEqual(setCompareSlot(slots, 1, "amcpx"), slots);
     assert.deepEqual(setCompareSlot(slots, 1, "AGTHX")[1], "AGTHX");
   });
+});
 
+describe("compare shared holding", () => {
+  it("defaults to $10,000 and parses the shared dollars-invested field", () => {
+    assert.equal(COMPARE_DEFAULT_HOLDING_DOLLARS, 10_000);
+    assert.equal(parseCompareHoldingDollars("25000"), 25_000);
+    assert.equal(parseCompareHoldingDollars("25,000"), 25_000);
+    assert.equal(parseCompareHoldingDollars("$5,000.50"), 5_000.5);
+    assert.equal(parseCompareHoldingDollars("", 12_000), 12_000);
+    assert.equal(parseCompareHoldingDollars("0"), 10_000);
+    assert.equal(parseCompareHoldingDollars("abc", 8_000), 8_000);
+  });
+});
+
+describe("compare workspace slots (filled)", () => {
   it("clears a slot and drops it from the filled list", () => {
     const slots = setCompareSlot(padCompareSlots(["AMCPX", "AGTHX"]), 0, "");
     assert.deepEqual(filledCompareTickers(slots), ["AGTHX"]);

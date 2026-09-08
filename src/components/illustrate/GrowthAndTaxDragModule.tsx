@@ -130,6 +130,13 @@ export function GrowthAndTaxDragModule({
   }, [seedKey, lockToSeed]);
 
   useEffect(() => {
+    if (editablePrincipal) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Compare owns the shared holding
+    setPrincipal(startDollars);
+    setPrincipalDraft(formatPrincipal(startDollars));
+  }, [editablePrincipal, startDollars]);
+
+  useEffect(() => {
     const controller = new AbortController();
     const next = JSON.parse(requestKey) as {
       funds: GrowthFundInput[];
@@ -356,7 +363,12 @@ export function GrowthAndTaxDragModule({
               </span>
             </label>
           ) : (
-            <p className="text-sm text-muted">{formatUsd(principal, 0)}</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-faint">
+              Growth of $
+              <span className="mt-1 block font-mono text-sm font-normal normal-case tracking-normal text-ink">
+                {formatUsd(principal, 0)}
+              </span>
+            </p>
           )}
           {allowAddFund && selected.length < MAX_GROWTH_FUNDS ? (
             adding ? (

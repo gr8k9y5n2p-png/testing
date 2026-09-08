@@ -30,6 +30,19 @@ export type CompareUpcomingHint = {
 
 export const COMPARE_SLOT_COUNT = MAX_GROWTH_FUNDS;
 
+/** Shared Compare holding. Default $10,000 — one input drives every $ module. */
+export const COMPARE_DEFAULT_HOLDING_DOLLARS = 10_000;
+
+/** Parse the shared dollars-invested field. Invalid / ≤ 0 keeps the prior holding. */
+export function parseCompareHoldingDollars(
+  raw: string,
+  fallback = COMPARE_DEFAULT_HOLDING_DOLLARS,
+): number {
+  const parsed = Number(String(raw).replace(/[$,\s]/g, ""));
+  if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
+  return Math.round(parsed * 100) / 100;
+}
+
 function normalizeTicker(value: string | null | undefined): string {
   return value?.trim().toUpperCase() ?? "";
 }

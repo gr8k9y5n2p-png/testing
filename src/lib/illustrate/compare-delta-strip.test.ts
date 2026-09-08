@@ -5,6 +5,8 @@ import {
   deltaStripFromPairMetrics,
   deltaStripFromSingleUpcoming,
   reservedDeltaStrip,
+  scaleNormalizedHoldingDollars,
+  scaleUpcomingToHolding,
 } from "./compare-delta-strip.ts";
 
 describe("compare delta strip", () => {
@@ -23,6 +25,8 @@ describe("compare delta strip", () => {
       items.some((item) => item.headline === "$0" || item.headline === "$0.00"),
       false,
     );
+    assert.equal(items[0]?.detail, "on $10,000");
+    assert.equal(reservedDeltaStrip(25_000)[0]?.detail, "on $25,000");
   });
 
   it("keeps pair Δ reserved for one fund and uses unpaid upcoming or Undisclosed", () => {
@@ -51,5 +55,18 @@ describe("compare delta strip", () => {
     assert.equal(items[0]?.reserved, false);
     assert.equal(items[1]?.reserved, true);
     assert.match(items[3]?.headline ?? "", /undisclosed/i);
+  });
+
+  it("rescales $10k-normalized pair dollars to the shared holding", () => {
+    assert.equal(scaleNormalizedHoldingDollars(-142, 20_000, 10_000), -284);
+    assert.equal(scaleNormalizedHoldingDollars(-142, 10_000, 10_000), -142);
+    const upcoming = scaleUpcomingToHolding(
+      { left_dollars: 185, right_dollars: 100, delta_dollars: -85 },
+      20_000,
+      10_000,
+    );
+    assert.equal(upcoming?.left_dollars, 370);
+    assert.equal(upcoming?.right_dollars, 200);
+    assert.equal(upcoming?.delta_dollars, -170);
   });
 });

@@ -1,7 +1,39 @@
 import { formatUsd } from "../format.ts";
+import type { CompareUpcomingDistribution } from "./compare-types.ts";
 import { UPCOMING_UNAVAILABLE_HEADLINE } from "./portfolio-compare-copy.ts";
 
 export const COMPARE_DELTA_STRIP_HOLDING_DOLLARS = 10_000;
+
+/**
+ * Pair summaries stay normalized to `normalized_holding_dollars` ($10k).
+ * Compare rescales $ deltas to the shared dollars-invested holding.
+ */
+export function scaleNormalizedHoldingDollars(
+  dollars: number,
+  holdingDollars: number,
+  normalizedHoldingDollars = COMPARE_DELTA_STRIP_HOLDING_DOLLARS,
+): number {
+  if (!(normalizedHoldingDollars > 0)) return dollars;
+  return dollars * (holdingDollars / normalizedHoldingDollars);
+}
+
+export function scaleUpcomingToHolding(
+  upcoming: CompareUpcomingDistribution | null | undefined,
+  holdingDollars: number,
+  normalizedHoldingDollars = COMPARE_DELTA_STRIP_HOLDING_DOLLARS,
+): CompareUpcomingDistribution | null | undefined {
+  if (!upcoming) return upcoming;
+  const scale = (value: number | null | undefined) =>
+    value == null
+      ? value
+      : scaleNormalizedHoldingDollars(value, holdingDollars, normalizedHoldingDollars);
+  return {
+    ...upcoming,
+    left_dollars: scale(upcoming.left_dollars) ?? null,
+    right_dollars: scale(upcoming.right_dollars) ?? null,
+    delta_dollars: scale(upcoming.delta_dollars) ?? null,
+  };
+}
 
 export type CompareDeltaStripKey =
   | "tax_difference"

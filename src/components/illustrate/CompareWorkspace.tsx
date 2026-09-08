@@ -23,19 +23,20 @@ import {
   reservedDeltaStrip,
 } from "@/lib/illustrate/compare-delta-strip";
 import {
+  COMPARE_DEFAULT_HOLDING_DOLLARS,
   COMPARE_SLOT_COUNT,
   buildCompareAnnualTable,
   compareHistoryYears,
   filledCompareTickers,
   growthFundsFromSlots,
   padCompareSlots,
+  parseCompareHoldingDollars,
   setCompareSlot,
   upcomingRowsFromCompareTickers,
 } from "@/lib/illustrate/compare-workspace";
 import { resolveFundView } from "@/lib/illustrate/fund-history";
 import { toUpcomingSummary } from "@/lib/illustrate/tax-drag-chart";
 import type { PortfolioFundOption } from "@/lib/illustrate/portfolio-compare-types";
-import { DEFAULT_START_DOLLARS } from "@/lib/performance/types";
 
 type LoadedTicker = {
   ticker: string;
@@ -53,6 +54,10 @@ export function CompareWorkspace({
   headingAs?: "h1" | "h2";
 }) {
   const [slots, setSlots] = useState(() => padCompareSlots(initialTickers));
+  const [holdingDollars, setHoldingDollars] = useState(COMPARE_DEFAULT_HOLDING_DOLLARS);
+  const [holdingDraft, setHoldingDraft] = useState(() =>
+    formatHoldingInput(COMPARE_DEFAULT_HOLDING_DOLLARS),
+  );
   const catalog = useMemo<PortfolioFundOption[]>(
     () =>
       funds.map((fund) => ({
@@ -68,11 +73,15 @@ export function CompareWorkspace({
     [slots, funds],
   );
   const filledKey = filledCompareTickers(slots).join(",");
-  const [loaded, setLoaded] = useState<LoadedTicker[]>([]);
+  const [loaded, setLoaded] = useState<{
+    holdingDollars: number;
+    rows: LoadedTicker[];
+  }>({ holdingDollars: COMPARE_DEFAULT_HOLDING_DOLLARS, rows: [] });
   const [historyError, setHistoryError] = useState<string | null>(null);
-  const [pairMetrics, setPairMetrics] = useState<
-    ReturnType<typeof toTaxDeltaCardModel>["metrics"] | null
-  >(null);
+  const [pairMetrics, setPairMetrics] = useState<{
+    holdingDollars: number;
+    metrics: ReturnType<typeof toTaxDeltaCardModel>["metrics"];
+  } | null>(null);
 
   useEffect(() => {
     const tickers = filledKey ? filledKey.split(",") : [];
@@ -94,7 +103,7 @@ export function CompareWorkspace({
               fundIdentifier: fund?.ticker ?? ticker,
               fundFamily: fund?.family,
               fundName: fund?.fundName,
-              holdingDollars: DEFAULT_START_DOLLARS,
+              holdingDollars,
               navPerShare: fund && fund.nav > 0 ? fund.nav : undefined,
               periods,
             }),
@@ -110,7 +119,7 @@ export function CompareWorkspace({
       }),
     )
       .then((rows) => {
-        setLoaded(rows);
+        setLoaded({ holdingDollars, rows });
         setHistoryError(
           rows.every((row) => row.tax == null)
             ? "Calendar-year history is unavailable for these tickers."
@@ -119,18 +128,21 @@ export function CompareWorkspace({
       })
       .catch((caught: unknown) => {
         if (caught instanceof DOMException && caught.name === "AbortError") return;
-        setLoaded(tickers.map((ticker) => ({
-          ticker,
-          fund: resolveFundView(funds, ticker) ?? null,
-          tax: null,
-        })));
+        setLoaded({
+          holdingDollars,
+          rows: tickers.map((ticker) => ({
+            ticker,
+            fund: resolveFundView(funds, ticker) ?? null,
+            tax: null,
+          })),
+        });
         setHistoryError(
           caught instanceof Error ? caught.message : "Calendar-year history failed",
         );
       });
 
     return () => controller.abort();
-  }, [filledKey, funds]);
+  }, [filledKey, funds, holdingDollars]);
 
   useEffect(() => {
     const tickers = filledKey ? filledKey.split(",") : [];
@@ -144,7 +156,7 @@ export function CompareWorkspace({
     void postIllustrateCompare(
       {
         mode: "fund_vs_fund",
-        holding_dollars: DEFAULT_START_DOLLARS,
+        holding_dollars: holdingDollars,
         combine_state_with_federal: true,
         latest_as_of_only: true,
         left: compareSideFromFund({
@@ -167,18 +179,22 @@ export function CompareWorkspace({
       { signal: controller.signal },
     )
       .then((payload) => {
-        setPairMetrics(toTaxDeltaCardModel(payload).metrics);
+        setPairMetrics({
+          holdingDollars,
+          metrics: toTaxDeltaCardModel(payload, undefined, { holdingDollars }).metrics,
+        });
       })
       .catch((caught: unknown) => {
         if (caught instanceof DOMException && caught.name === "AbortError") return;
         setPairMetrics(null);
       });
     return () => controller.abort();
-  }, [filledKey, funds]);
+  }, [filledKey, funds, holdingDollars]);
 
+  const historyMatchesHolding = loaded.holdingDollars === holdingDollars;
   const activeLoaded = useMemo(
-    () => (filledKey ? loaded : []),
-    [filledKey, loaded],
+    () => (filledKey && historyMatchesHolding ? loaded.rows : []),
+    [filledKey, historyMatchesHolding, loaded.rows],
   );
   const annualModel = useMemo(
     () => buildCompareAnnualTable(activeLoaded, compareHistoryYears()),
@@ -200,8 +216,8 @@ export function CompareWorkspace({
   const activeHistoryError = filledKey ? historyError : null;
   const pairReady = filledKey.split(",").filter(Boolean).length >= 2;
   const stripItems = useMemo(() => {
-    if (pairReady && pairMetrics) {
-      return deltaStripFromPairMetrics(pairMetrics);
+    if (pairReady && pairMetrics && pairMetrics.holdingDollars === holdingDollars) {
+      return deltaStripFromPairMetrics(pairMetrics.metrics, holdingDollars);
     }
     if (activeLoaded.length === 1) {
       return deltaStripFromSingleUpcoming(
@@ -211,27 +227,66 @@ export function CompareWorkspace({
               "left",
             )
           : null,
+        holdingDollars,
       );
     }
-    return reservedDeltaStrip();
-  }, [activeLoaded, pairMetrics, pairReady]);
+    return reservedDeltaStrip(holdingDollars);
+  }, [activeLoaded, holdingDollars, pairMetrics, pairReady]);
+
+  function commitHolding(raw: string) {
+    const next = parseCompareHoldingDollars(raw, holdingDollars);
+    setHoldingDollars(next);
+    setHoldingDraft(formatHoldingInput(next));
+  }
 
   return (
     <section id="fund-compare" aria-label="Fund comparison" className="w-full">
-      <header className="mb-6">
-        <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-faint">
-          <span aria-hidden className="inline-block size-1.5 rounded-full bg-tax-less" />
-          Aftertax · Compare
-        </p>
-        <Heading className="mt-1 font-serif text-3xl tracking-tight text-ink">
-          Compare funds
-        </Heading>
-        <p className="mt-2 max-w-2xl text-sm text-muted">
-          Start with one ticker — growth, calendar-year history, and upcoming all
-          populate for that fund. Each additional filled slot (up to{" "}
-          {COMPARE_SLOT_COUNT}) joins every module. Empty slots are ignored.
-          Upcoming is never filled from paid history.
-        </p>
+      <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0">
+          <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-faint">
+            <span aria-hidden className="inline-block size-1.5 rounded-full bg-tax-less" />
+            Aftertax · Compare
+          </p>
+          <Heading className="mt-1 font-serif text-3xl tracking-tight text-ink">
+            Compare funds
+          </Heading>
+          <p className="mt-2 max-w-2xl text-sm text-muted">
+            Start with one ticker — growth, calendar-year history, and upcoming all
+            populate for that fund. Each additional filled slot (up to{" "}
+            {COMPARE_SLOT_COUNT}) joins every module. Empty slots are ignored.
+            Dollars invested is shared — one holding for growth, tax $, history,
+            delta, and upcoming. Upcoming is never filled from paid history.
+          </p>
+        </div>
+        <label className="block shrink-0">
+          <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.14em] text-faint">
+            Dollars invested
+          </span>
+          <div className="relative w-[12.5rem]">
+            <span
+              aria-hidden
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-faint"
+            >
+              $
+            </span>
+            <input
+              inputMode="decimal"
+              value={holdingDraft}
+              onChange={(event) => setHoldingDraft(event.target.value)}
+              onBlur={(event) => commitHolding(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.currentTarget.blur();
+                }
+              }}
+              className="h-11 w-full rounded-md border border-line bg-surface pl-7 pr-3 font-mono text-base text-ink shadow-[0_1px_2px_rgba(26,29,26,0.04)]"
+              aria-label="Dollars invested"
+            />
+          </div>
+          <span className="mt-1 block max-w-[12.5rem] text-[10px] leading-snug text-muted">
+            Shared starting holding · default $10,000
+          </span>
+        </label>
       </header>
 
       <div className="grid w-full grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
@@ -272,7 +327,8 @@ export function CompareWorkspace({
           seedFunds={growthFunds}
           lockToSeed
           allowAddFund={false}
-          startDollars={DEFAULT_START_DOLLARS}
+          editablePrincipal={false}
+          startDollars={holdingDollars}
         />
       </section>
 
@@ -282,7 +338,7 @@ export function CompareWorkspace({
         ) : null}
         <CompareAnnualTable
           model={annualModel}
-          loading={Boolean(filledKey) && loaded.length === 0}
+          loading={Boolean(filledKey) && (!historyMatchesHolding || loaded.rows.length === 0)}
         />
       </div>
 
@@ -294,4 +350,8 @@ export function CompareWorkspace({
       </div>
     </section>
   );
+}
+
+function formatHoldingInput(value: number): string {
+  return new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(value);
 }
