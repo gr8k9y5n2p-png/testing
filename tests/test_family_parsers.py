@@ -993,6 +993,40 @@ def test_third_tier_fixtures() -> None:
     assert jdcax_ici_2025.amount == Decimal("6.96694")
     assert len({r.ticker for r in janus_ici_2025 if r.ticker}) >= 140
 
+    janus_ici_2022 = parse_ici_primary(
+        (ROOT / "janus_henderson" / "ici_primary_2022.csv").read_text(encoding="utf-8"),
+        source_url="fixture://janus-ici-2022",
+        fund_family="Janus Henderson",
+    )
+    jdcax_ici_2022 = next(
+        r
+        for r in janus_ici_2022
+        if r.ticker == "JDCAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert jdcax_ici_2022.amount == Decimal("0.02107")
+    assert str(jdcax_ici_2022.as_of) == "2022-12-31"
+    assert len({r.ticker for r in janus_ici_2022 if r.ticker}) >= 140
+
+    janus_ici_2021 = parse_ici_primary(
+        (ROOT / "janus_henderson" / "ici_primary_2021.csv").read_text(encoding="utf-8"),
+        source_url="fixture://janus-ici-2021",
+        fund_family="Janus Henderson",
+    )
+    jdcax_ici_2021 = next(
+        r
+        for r in janus_ici_2021
+        if r.ticker == "JDCAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert jdcax_ici_2021.amount == Decimal("4.95363")
+    jdcax_ici_2021_st = next(
+        r
+        for r in janus_ici_2021
+        if r.ticker == "JDCAX" and r.estimate_type == EstimateType.short_term_capital_gains
+    )
+    assert jdcax_ici_2021_st.amount == Decimal("0.25332800")
+    assert str(jdcax_ici_2021.as_of) == "2021-12-31"
+    assert len({r.ticker for r in janus_ici_2021 if r.ticker}) >= 170
+
     janus_2022 = parse_distribution_html(
         (ROOT / "janus_henderson" / "2022_final_distributions.html").read_text(encoding="utf-8"),
         source_url="fixture://janus-2022-final",
@@ -1033,6 +1067,29 @@ def test_third_tier_fixtures() -> None:
         source_url="fixture://aci-paid",
         fund_family="American Century",
     )
+    aci_2023 = parse_distribution_html(
+        (ROOT / "american_century" / "2023_estimated_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://aci-2023",
+        fund_family="American Century",
+    )
+    twcgx_2023 = next(
+        r
+        for r in aci_2023
+        if r.ticker == "TWCGX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert twcgx_2023.amount == Decimal("2.4201")
+    assert twcgx_2023.publication_stage == PublicationStage.preliminary_estimate
+    assert str(twcgx_2023.as_of) == "2023-10-31"
+    twcgx_2023_st = next(
+        r
+        for r in aci_2023
+        if r.ticker == "TWCGX" and r.estimate_type == EstimateType.short_term_capital_gains
+    )
+    assert twcgx_2023_st.amount == Decimal("0.0349")
+    assert len({r.ticker for r in aci_2023 if r.ticker}) >= 300
+
     twcgx_paid = next(
         r
         for r in aci_paid
@@ -1270,6 +1327,28 @@ def test_fourth_tier_fixtures() -> None:
     )
     assert artkx_lt.amount == Decimal("2.725068")
     assert len({r.ticker for r in artisan_ici}) >= 50
+
+    artisan_ici_2024 = parse_ici_primary(
+        (ROOT / "artisan" / "ici_primary_2024.csv").read_text(encoding="utf-8"),
+        source_url=(
+            "https://www.artisanpartners.com/content/dam/documents/distributions/"
+            "Year-End-Tax-Reporting-Information-2024.pdf"
+        ),
+        fund_family="Artisan Partners",
+    )
+    artix_2024_lt = next(
+        r
+        for r in artisan_ici_2024
+        if r.ticker == "ARTIX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert artix_2024_lt.amount == Decimal("2.067175")
+    artix_2024_st = next(
+        r
+        for r in artisan_ici_2024
+        if r.ticker == "ARTIX" and r.estimate_type == EstimateType.short_term_capital_gains
+    )
+    assert artix_2024_st.amount == Decimal("0.456695")
+    assert len({r.ticker for r in artisan_ici_2024}) >= 40
 
     calamos = parse_distribution_html(
         (ROOT / "calamos" / "2025_estimated_capital_gains.html").read_text(encoding="utf-8"),

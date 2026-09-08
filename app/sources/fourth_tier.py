@@ -312,13 +312,15 @@ class ArtisanSource(HtmlTableSource):
         "Year-End-Tax-Reporting-Information-2025.pdf is column-safe (30-token "
         "layout; income / ST / LT at tokens 4 / 5 / 12). December income plus "
         "any-month ST/LT rows; monthly non-December income omitted so illustration "
-        "does not sum. 2022–2024 sibling PDFs are not column-safe (token counts "
-        "vary / wrap). Year selector for older HTML YE tables is JavaScript — skip SPA. "
+        "does not sum. 2024 sibling Year-End-Tax-Reporting-Information-2024.pdf "
+        "is column-safe with LT at token 11 (one Box 1b column omitted vs 31-token; "
+        "ARTIX ST $0.456695 / LT $2.067175). 2022–2023 sibling PDFs still vary / wrap. "
+        "Year selector for older HTML YE tables is JavaScript — skip SPA. "
         "NRA / DRD PDFs are tax-character layouts, not ingested as CG."
     )
     live_limitations = (
         "Live YTD page is public HTML; year-end equity capital-gains sit behind a year selector. "
-        "2025 ICI-style Year-End Tax Reporting PDF is the full-book fixture."
+        "2024–2025 ICI-style Year-End Tax Reporting PDFs are the full-book fixtures."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -336,6 +338,17 @@ class ArtisanSource(HtmlTableSource):
                     "Year-End-Tax-Reporting-Information-2025.pdf"
                 ),
                 fixture="ici_primary_2025.csv",
+                live=False,
+                parser="ici",
+                large_aum_only=False,
+            ),
+            PageSpec(
+                name="ici_primary_2024",
+                url=(
+                    "https://www.artisanpartners.com/content/dam/documents/distributions/"
+                    "Year-End-Tax-Reporting-Information-2024.pdf"
+                ),
+                fixture="ici_primary_2024.csv",
                 live=False,
                 parser="ici",
                 large_aum_only=False,

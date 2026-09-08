@@ -369,7 +369,7 @@ def test_search_multi_year_top_families(client: TestClient) -> None:
     )
 
     jdcax = client.get("/distributions", params={"fund_identifier": "JDCAX", "page_size": 50})
-    assert {"2022", "2023", "2024", "2025"} <= {
+    assert {"2021", "2022", "2023", "2024", "2025"} <= {
         item["as_of"][:4] for item in jdcax.json()["items"] if item.get("as_of")
     }
     jdcax_lt = {
@@ -385,6 +385,7 @@ def test_search_multi_year_top_families(client: TestClient) -> None:
     twcgx_types = {item["estimate_type"] for item in twcgx.json()["items"]}
     assert "long_term_capital_gains" in twcgx_types
     assert "total_capital_gains" in twcgx_types
+    assert {"2023", "2025"} <= {item["as_of"][:4] for item in twcgx.json()["items"] if item.get("as_of")}
 
     dodgx = client.get("/distributions", params={"fund_identifier": "DODGX", "page_size": 50})
     assert {"2021", "2022", "2023", "2024", "2025", "2026"} <= {

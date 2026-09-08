@@ -74,21 +74,23 @@ class JanusHendersonSource(HtmlTableSource):
         "Advisor tax hub: "
         "https://www.janushenderson.com/en-us/advisor/annual-distributions-supplemental-tax-documents-mutual-funds/ "
         "hosts public estimate, final, and filled ICI Primary Layout PDFs on the "
-        "rackcdn distribution-tax path. **ICI first** for 2023–2025 paid YE "
+        "rackcdn distribution-tax path. **ICI first** for 2021–2025 paid YE "
         "(column-safe 31-token layout; income / ST / LT at tokens 4 / 5 / 12; "
         "December rows only; Daily income lines skipped): "
+        "Janus Henderson ICI Primary Layout 2021.pdf (JDCAX ST $0.253328 / LT $4.95363; "
+        "Forty Fund is on ICI, not the 2021 FINAL PDF), "
+        "Janus Henderson 2022 ICI Primary Layout.pdf (JDCAX LT $0.02107), "
         "Janus Henderson 2023 ICI Primary Layout.pdf (JDCAX LT $3.88875), "
         "Janus-Henderson-2024-ICI-Primary-Layout.pdf (JDCAX ST $0.19019347 / LT $5.46939), "
         "Janus Henderson 2025 ICI Primary Layout.pdf (JDCAX LT $6.96694). "
         "2025 final YE estimates (through 11/03/2025) remain as the estimate book "
         "(JDCAX LT $6.92). 2024 Preliminary Distribution Estimates 2024.pdf "
         "(JDCAX LT $5.42). 2023 Final Distribution Estimates 2023.pdf "
-        "(JDCAX LT $3.87). 2021–2022 FINAL paid PDFs are full share-class books "
-        "(JDCAX 2022 LT $0.02107 / published $0 income and ST; Forty Fund is "
-        "not on the 2021 final list — JDBAX 2021 LT $1.50790)."
+        "(JDCAX LT $3.87). 2021–2022 FINAL paid PDFs remain as companion books "
+        "(JDBAX 2021 LT $1.50790)."
     )
     live_limitations = (
-        "Year-end book is PDF. 2023–2025 ICI Primary Layout PDFs are the paid "
+        "Year-end book is PDF. 2021–2025 ICI Primary Layout PDFs are the paid "
         "full-book fixtures. Estimate PDFs coexist (2023–2025). 2021–2022 finals "
         "are share-class transcriptions (live=False)."
     )
@@ -119,6 +121,22 @@ class JanusHendersonSource(HtmlTableSource):
                 name="ici_primary_2023",
                 url=f"{cdn}/Janus%20Henderson%202023%20ICI%20Primary%20Layout.pdf",
                 fixture="ici_primary_2023.csv",
+                live=False,
+                parser="ici",
+                large_aum_only=False,
+            ),
+            PageSpec(
+                name="ici_primary_2022",
+                url=f"{cdn}/Janus%20Henderson%202022%20ICI%20Primary%20Layout.pdf",
+                fixture="ici_primary_2022.csv",
+                live=False,
+                parser="ici",
+                large_aum_only=False,
+            ),
+            PageSpec(
+                name="ici_primary_2021",
+                url=f"{cdn}/Janus%20Henderson%20ICI%20Primary%20Layout%202021.pdf",
+                fixture="ici_primary_2021.csv",
                 live=False,
                 parser="ici",
                 large_aum_only=False,
@@ -174,7 +192,11 @@ class AmericanCenturySource(HtmlTableSource):
         "is the full share-class book (TWCGX LT $10.4978 / 15.30% of NAV). Official Growth product page "
         "https://www.americancentury.com/invest/funds/growth/twcgx/ publishes "
         "2025 paid Total $9.7631 (no ST/LT split — stored as total capital gains). "
-        "2024 retail estimate sibling PDFs 404. Historical-distribution CSV is not public."
+        "2023 full retail estimate book recovered from Wayback "
+        "https://web.archive.org/web/20240807220342/https://res.americancentury.com/docs/estimated-distributions-september-aci-retail.pdf "
+        "(title 2023 Estimated Distributions as of October 31, 2023; TWCGX ST $0.0349 / LT $2.4201 / 5.58% of NAV). "
+        "Daily bond income lines skipped. 2024 unversioned retail PDF is the 2025 book; "
+        "2022/2021 sibling PDFs were not fetchable. Historical-distribution CSV is not public."
     )
     live_limitations = "Family HTML grid is JavaScript-rendered; the retail PDF is the parseable book."
 
@@ -185,6 +207,16 @@ class AmericanCenturySource(HtmlTableSource):
                 url="https://res.americancentury.com/docs/estimated-distributions-november-retail.pdf",
                 fixture="2025_estimated_distributions.html",
                 live=False,
+            ),
+            PageSpec(
+                name="2023_estimated_distributions",
+                url=(
+                    "https://web.archive.org/web/20240807220342/"
+                    "https://res.americancentury.com/docs/estimated-distributions-september-aci-retail.pdf"
+                ),
+                fixture="2023_estimated_distributions.html",
+                live=False,
+                large_aum_only=False,
             ),
             PageSpec(
                 name="2025_paid_twcgx",
