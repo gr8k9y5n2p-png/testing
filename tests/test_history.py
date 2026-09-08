@@ -671,11 +671,11 @@ def test_amcpx_dodix_tax_drag_years_overlap(client: TestClient) -> None:
 
 def test_compare_yoy_without_periods_uses_real_calendar_years(client: TestClient) -> None:
     """Heroes with multi-year books must not emit year=0 when periods[] is omitted."""
-    for family in ("american_funds", "dodge_cox"):
+    for family in ("american_funds", "dodge_cox", "fidelity"):
         fetched = client.post("/ingest/fetch", json={"fund_family": family, "mode": "fixture"})
         assert fetched.status_code == 200, fetched.text
 
-    for ticker in ("AGTHX", "AMCPX", "DODIX"):
+    for ticker in ("AGTHX", "AMCPX", "DODIX", "FBGRX"):
         response = client.post(
             "/illustrate/compare",
             json={
