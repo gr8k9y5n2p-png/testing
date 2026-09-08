@@ -9,6 +9,7 @@ import {
   navFromFundMetadata,
   positiveNav,
   toDataApiCompareBody,
+  trailingCalendarPeriods,
   yoyTaxDragCompareRequest,
 } from "./compare-request.ts";
 
@@ -212,5 +213,54 @@ describe("compare-request NAV / Data body", () => {
     assert.equal(body.selectors?.fund_name, "The Growth Fund of America");
     assert.equal(body.nav_per_share, 72.14);
     assert.equal(body.left?.selectors?.ticker, "AGTHX");
+  });
+
+  it("uses 2022–2026 as the trailing window in 2026", () => {
+    assert.deepEqual(
+      trailingCalendarPeriods(2026).map((period) => period.year),
+      [2022, 2023, 2024, 2025, 2026],
+    );
+  });
+
+  it("builds AMCPX vs AGTHX fund_vs_fund without ticker-as-fund_name", () => {
+    const body = toDataApiCompareBody(
+      {
+        mode: "fund_vs_fund",
+        holding_dollars: 10_000,
+        left: {
+          ...compareSideFromFund({
+            ticker: "AMCPX",
+            fundName: "AMCPX",
+            family: "American Funds",
+            label: "AMCPX",
+            nav: 41.22,
+          }),
+          holding_dollars: 10_000,
+        },
+        right: {
+          ...compareSideFromFund({
+            ticker: "AGTHX",
+            fundName: "The Growth Fund of America",
+            family: "American Funds",
+            label: "AGTHX",
+            nav: 72.14,
+          }),
+          holding_dollars: 10_000,
+        },
+        periods: trailingCalendarPeriods(2026),
+      },
+      seedLookup,
+    );
+    assert.equal(body.mode, "fund_vs_fund");
+    assert.equal(body.left?.selectors?.ticker, "AMCPX");
+    assert.equal(body.left?.selectors?.fund_name, undefined);
+    assert.equal(body.right?.selectors?.ticker, "AGTHX");
+    assert.equal(body.right?.selectors?.fund_name, "The Growth Fund of America");
+    assert.equal(body.left?.nav_per_share, 41.22);
+    assert.equal(body.right?.nav_per_share, 72.14);
+    assert.deepEqual(
+      body.periods?.map((period) => period.year),
+      [2022, 2023, 2024, 2025, 2026],
+    );
   });
 });

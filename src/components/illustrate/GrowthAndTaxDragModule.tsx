@@ -20,8 +20,10 @@ import {
 import { formatUsd } from "@/lib/format";
 import { postIllustrateCompare } from "@/lib/illustrate/compare-client";
 import {
+  compareSideFromFund,
   navFromFundMetadata,
   positiveNav,
+  trailingCalendarPeriods,
   yoyTaxDragCompareRequest,
 } from "@/lib/illustrate/compare-request";
 import { seedNavLookup } from "@/lib/illustrate/seed-nav";
@@ -74,6 +76,8 @@ type LoadedFund = {
   color: string;
   performance: PerformanceResponse;
   tax: CompareResponse | null;
+  /** fund_vs_fund: this fund is `left` or `right`. YoY uses `auto`. */
+  taxSide: "left" | "right" | "auto";
 };
 
 export function GrowthAndTaxDragModule({
@@ -153,9 +157,14 @@ export function GrowthAndTaxDragModule({
       for (const point of yearEndGrowth(row.performance.fund.points)) {
         set.add(point.year);
       }
+      if (row.tax) {
+        for (const point of toTaxDragPeriods(row.tax, taxMetric, row.taxSide)) {
+          if (point.year > 0) set.add(point.year);
+        }
+      }
     }
     return sketchYears([...set].sort((a, b) => a - b));
-  }, [rows]);
+  }, [rows, taxMetric]);
 
   const growthSeries = useMemo<GrowthLineSeries[]>(() => {
     if (!rows) return [];
@@ -186,7 +195,10 @@ export function GrowthAndTaxDragModule({
       color: row.color,
       points: row.tax
         ? toNegativeTaxDrag(
-            alignTaxDragYears(toTaxDragPeriods(row.tax, taxMetric), years),
+            alignTaxDragYears(
+              toTaxDragPeriods(row.tax, taxMetric, row.taxSide),
+              years,
+            ),
           )
         : years.map((year) => ({ year, value: null })),
     }));
@@ -519,7 +531,7 @@ async function loadModule(
   periods: ComparePeriodIn[] | undefined,
   signal: AbortSignal,
 ): Promise<LoadedFund[]> {
-  return Promise.all(
+  const prepared = await Promise.all(
     funds.map(async (input, index) => {
       const ticker = input.ticker.trim().toUpperCase();
       const usePost = principal !== DEFAULT_START_DOLLARS;
@@ -533,47 +545,105 @@ async function loadModule(
       const performance = usePost
         ? await postPerformanceGrowth(request, { signal })
         : await fetchPerformance(request, { signal });
-
-      const yearPoints = yearEndGrowth(performance.fund.points);
-      const taxYears =
-        periods && periods.length > 0
-          ? periods
-          : yearPoints.map((point) => ({ year: point.year }));
-      const taxPeriods =
-        taxYears.length >= 2
-          ? taxYears
-          : [{ year: 2021 }, { year: 2022 }, { year: 2023 }, { year: 2024 }, { year: 2025 }];
-
       const lastClose =
         performance.fund.points[performance.fund.points.length - 1]?.adj_close;
       const nav =
         navFromFundMetadata(ticker, input.navPerShare, seedNavLookup) ??
         positiveNav(lastClose);
+      return { input, index, ticker, performance, nav };
+    }),
+  );
 
-      let tax: CompareResponse | null = null;
-      try {
-        tax = await postIllustrateCompare(
-          yoyTaxDragCompareRequest({
-            ticker,
-            label: input.label ?? ticker,
-            fundIdentifier: input.fundIdentifier ?? ticker,
-            fundFamily: input.fundFamily,
-            fundName: input.fundName,
-            holdingDollars: principal,
-            navPerShare: nav,
-            periods: taxPeriods,
-          }),
-          { signal },
-        );
-      } catch {
-        tax = null;
+  const yearSet = new Set<number>();
+  for (const row of prepared) {
+    for (const point of yearEndGrowth(row.performance.fund.points)) {
+      yearSet.add(point.year);
+    }
+  }
+  for (const period of trailingCalendarPeriods()) yearSet.add(period.year);
+  const taxPeriods =
+    periods && periods.length > 0
+      ? periods
+      : [...yearSet]
+          .sort((a, b) => a - b)
+          .map((year) => ({ year }));
+  const usablePeriods =
+    taxPeriods.length >= 2 ? taxPeriods : trailingCalendarPeriods();
+
+  let pair: CompareResponse | null = null;
+  if (prepared.length === 2) {
+    const [left, right] = prepared;
+    try {
+      pair = await postIllustrateCompare(
+        {
+          mode: "fund_vs_fund",
+          holding_dollars: principal,
+          combine_state_with_federal: true,
+          latest_as_of_only: true,
+          ...(left.nav != null ? { nav_per_share: left.nav } : {}),
+          left: {
+            ...compareSideFromFund({
+              ticker: left.ticker,
+              fundName: left.input.fundName,
+              family: left.input.fundFamily,
+              fundIdentifier: left.input.fundIdentifier ?? left.ticker,
+              label: left.input.label ?? left.ticker,
+              nav: left.nav,
+            }),
+            holding_dollars: principal,
+          },
+          right: {
+            ...compareSideFromFund({
+              ticker: right.ticker,
+              fundName: right.input.fundName,
+              family: right.input.fundFamily,
+              fundIdentifier: right.input.fundIdentifier ?? right.ticker,
+              label: right.input.label ?? right.ticker,
+              nav: right.nav,
+            }),
+            holding_dollars: principal,
+          },
+          periods: usablePeriods,
+          tax_rates: {},
+        },
+        { signal },
+      );
+    } catch {
+      pair = null;
+    }
+  }
+
+  return Promise.all(
+    prepared.map(async (row) => {
+      let tax: CompareResponse | null = pair;
+      let taxSide: LoadedFund["taxSide"] =
+        pair == null ? "auto" : row.index === 0 ? "left" : "right";
+      if (!tax) {
+        try {
+          tax = await postIllustrateCompare(
+            yoyTaxDragCompareRequest({
+              ticker: row.ticker,
+              label: row.input.label ?? row.ticker,
+              fundIdentifier: row.input.fundIdentifier ?? row.ticker,
+              fundFamily: row.input.fundFamily,
+              fundName: row.input.fundName,
+              holdingDollars: principal,
+              navPerShare: row.nav,
+              periods: usablePeriods,
+            }),
+            { signal },
+          );
+        } catch {
+          tax = null;
+        }
+        taxSide = "auto";
       }
-
       return {
-        input,
-        color: fundSeriesColor(index),
-        performance,
+        input: row.input,
+        color: fundSeriesColor(row.index),
+        performance: row.performance,
         tax,
+        taxSide,
       };
     }),
   );

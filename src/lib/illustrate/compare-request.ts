@@ -104,6 +104,16 @@ export function compareSideFromFund(
 }
 
 /**
+ * Last five calendar years through today (2022–2026 in 2026).
+ * Live compare covers this window for AMCPX / AGTHX; do not hardcode 2021–2025.
+ */
+export function trailingCalendarPeriods(
+  nowYear = new Date().getUTCFullYear(),
+): ComparePeriodIn[] {
+  return [0, 1, 2, 3, 4].map((offset) => ({ year: nowYear - 4 + offset }));
+}
+
+/**
  * Homepage Growth + tax-drag YoY body. One fund, calendar-year periods.
  * `left.label` stays the ticker (chart series id); Data still zips vintages
  * and sets `period.year` to the newer year.
