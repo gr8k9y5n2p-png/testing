@@ -12,10 +12,12 @@ export function CompareAnnualTable({
   model,
   headingId = "compare-annual-history",
   className = "",
+  loading = false,
 }: {
   model: CompareAnnualTableModel;
   headingId?: string;
   className?: string;
+  loading?: boolean;
 }) {
   const empty = model.groups.length === 0;
 
@@ -33,7 +35,13 @@ export function CompareAnnualTable({
         </p>
       </header>
 
-      {empty ? (
+      {loading ? (
+        <div
+          className="min-h-[160px] animate-pulse rounded-xl border border-line bg-paper"
+          aria-busy
+          aria-label="Loading calendar-year history"
+        />
+      ) : empty ? (
         <p className="px-1 py-5 text-sm text-muted">
           Add tickers above to load calendar-year history from the Data API.
         </p>

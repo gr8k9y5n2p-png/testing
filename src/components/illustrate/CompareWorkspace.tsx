@@ -190,6 +190,7 @@ export function CompareWorkspace({
         className="mt-10 w-full scroll-mt-20"
       >
         <GrowthAndTaxDragModule
+          key={filledKey || "empty"}
           funds={growthFunds}
           seedFunds={growthFunds}
           lockToSeed
@@ -202,7 +203,10 @@ export function CompareWorkspace({
         {activeHistoryError ? (
           <p className="mb-3 text-sm text-tax-more">{activeHistoryError}</p>
         ) : null}
-        <CompareAnnualTable model={annualModel} />
+        <CompareAnnualTable
+          model={annualModel}
+          loading={Boolean(filledKey) && loaded.length === 0}
+        />
       </div>
 
       <div className="mt-10 w-full">
