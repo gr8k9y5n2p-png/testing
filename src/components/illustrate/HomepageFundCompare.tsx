@@ -5,6 +5,10 @@ import type { FundEstimateView } from "@/data/types";
 import { FundPicker } from "@/components/illustrate/FundPicker";
 import { FundTaxDeltaCompare } from "@/components/illustrate/FundTaxDeltaCompare";
 import {
+  GrowthAndTaxDragModule,
+  type GrowthFundInput,
+} from "@/components/illustrate/GrowthAndTaxDragModule";
+import {
   defaultComparePeer,
   findFundByTicker,
 } from "@/lib/illustrate/fund-compare-defaults";
@@ -15,6 +19,7 @@ import {
   type CompareSideIn,
 } from "@/lib/illustrate/compare-types";
 import { UI_DEFAULT_TAX_RATES } from "@/lib/illustrate/types";
+import { DEFAULT_START_DOLLARS } from "@/lib/performance/types";
 
 const COMPARE_TAX_RATES = { state: UI_DEFAULT_TAX_RATES.state };
 
@@ -77,6 +82,12 @@ export function HomepageFundCompare({
     () => (rightFund ? sideFromFund(rightFund) : null),
     [rightFund],
   );
+  const growthFunds = useMemo(() => {
+    const next: GrowthFundInput[] = [];
+    if (leftFund) next.push(toGrowthFund(leftFund));
+    if (rightFund) next.push(toGrowthFund(rightFund));
+    return next;
+  }, [leftFund, rightFund]);
 
   return (
     <section id="fund-compare" aria-label="Fund-to-fund comparison" className="w-full">
@@ -94,7 +105,7 @@ export function HomepageFundCompare({
         </p>
       </header>
 
-      <div className="grid max-w-3xl items-start gap-4 sm:grid-cols-2">
+      <div className="grid w-full items-start gap-4 sm:grid-cols-2">
         <FundPicker
           funds={funds}
           selected={leftFund}
@@ -120,12 +131,13 @@ export function HomepageFundCompare({
       </div>
 
       {left && right ? (
-        <div className="mt-8">
+        <div className="mt-8 w-full">
           <FundTaxDeltaCompare
             left={left}
             right={right}
             holdingDollars={COMPARE_SUMMARY_HOLDING_DOLLARS}
             taxRates={COMPARE_TAX_RATES}
+            fullWidth
           />
         </div>
       ) : (
@@ -133,6 +145,29 @@ export function HomepageFundCompare({
           Choose two different funds to see the tax-delta compare.
         </p>
       )}
+
+      <section
+        id="growth-and-tax"
+        aria-label="Growth of dollars and tax drag"
+        className="mt-10 w-full scroll-mt-20"
+      >
+        <GrowthAndTaxDragModule
+          funds={growthFunds}
+          seedFunds={growthFunds}
+          startDollars={DEFAULT_START_DOLLARS}
+        />
+      </section>
     </section>
   );
+}
+
+function toGrowthFund(fund: FundEstimateView): GrowthFundInput {
+  return {
+    ticker: fund.ticker,
+    label: fund.ticker,
+    fundIdentifier: fund.ticker,
+    fundFamily: fund.family,
+    fundName: fund.fundName,
+    navPerShare: fund.nav > 0 ? fund.nav : undefined,
+  };
 }

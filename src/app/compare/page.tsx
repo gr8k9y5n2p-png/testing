@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Aftertax — fund-to-fund comparison",
-  description: `${COPY.sub} Year-over-year tax impact for two funds.`,
+  description: `${COPY.sub} Year-over-year tax impact and growth versus tax drag for two funds.`,
 };
 
 function firstParam(value: string | string[] | undefined): string | undefined {
