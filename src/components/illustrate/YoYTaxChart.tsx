@@ -1,4 +1,5 @@
 import { formatUsd } from "@/lib/format";
+import { TAX_DRAG_NA_LABEL } from "@/lib/illustrate/tax-drag-chart";
 import {
   computeYoyLine,
   sortYoYPoints,
@@ -92,31 +93,37 @@ export function YoYTaxChart({
             aria-label={series
               .map((point) =>
                 point.value == null
-                  ? `${point.year}: not announced`
+                  ? `${point.year}: ${TAX_DRAG_NA_LABEL}`
                   : `${point.year}: ${valueFormat(point.value)}`,
               )
               .join(". ")}
           >
             {series.map((point) => {
               const heightPct =
-                point.value == null || maxBar <= 0
-                  ? 4
-                  : Math.max(8, (point.value / maxBar) * 100);
+                point.value == null
+                  ? 0
+                  : maxBar <= 0
+                    ? 6
+                    : Math.max(point.value === 0 ? 4 : 8, (point.value / maxBar) * 100);
               return (
                 <div
                   key={point.year}
                   className="flex min-w-0 flex-1 flex-col items-center gap-1"
                 >
                   <span className="font-mono text-[10px] tabular-nums text-muted">
-                    {point.value == null ? "—" : valueFormat(point.value)}
+                    {point.value == null ? TAX_DRAG_NA_LABEL : valueFormat(point.value)}
                   </span>
                   <div className="flex h-28 w-full items-end justify-center">
-                    <div
-                      className={`w-[68%] max-w-9 rounded-t-sm ${
-                        point.value == null ? "bg-line" : "bg-ink/80"
-                      }`}
-                      style={{ height: `${heightPct}%` }}
-                    />
+                    {point.value == null ? (
+                      <span className="mb-8 font-mono text-[10px] text-faint">
+                        {TAX_DRAG_NA_LABEL}
+                      </span>
+                    ) : (
+                      <div
+                        className="w-[68%] max-w-9 rounded-t-sm bg-ink/80"
+                        style={{ height: `${heightPct}%` }}
+                      />
+                    )}
                   </div>
                 </div>
               );

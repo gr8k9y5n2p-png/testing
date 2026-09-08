@@ -5,6 +5,11 @@ import type {
   CompareSummary,
   CompareUpcomingDistribution,
 } from "@/lib/illustrate/compare-types";
+import {
+  comparePeriodIsCovered,
+  toCompareTaxDragSeries,
+  type TaxDragFundSeries,
+} from "@/lib/illustrate/tax-drag-map";
 
 /**
  * API deltas are **right − left** (Fund B − Fund A).
@@ -30,10 +35,12 @@ export type FundACost = {
 export type TaxDeltaBar = {
   year: number;
   /** API `periods[].deltas.effective_tax_on_holding` (decimal rate). */
-  apiDelta: number;
+  apiDelta: number | null;
   /** apiDelta × 100, for ±0.8% labels. */
-  displayPct: number;
+  displayPct: number | null;
   polarity: TaxPolarity;
+  /** Either side `matched: false` — N/A, not a 0.0% bar. */
+  missing?: boolean;
 };
 
 export type TaxDeltaMetric = {
@@ -61,6 +68,8 @@ export type TaxDeltaCardModel = {
   rightLabel: string;
   sample: boolean;
   bars: TaxDeltaBar[];
+  /** Each fund’s individual tax drag (not the delta series). */
+  taxSeries: TaxDragFundSeries[];
   metrics: TaxDeltaMetric[];
   upcoming: UpcomingSides;
   inceptionLabel: string;
@@ -105,12 +114,22 @@ function dragHeadline(costToARate: number): string {
 }
 
 export function barFromPeriod(period: ComparePeriodOut): TaxDeltaBar {
-  const apiDelta = Number(period.deltas.effective_tax_on_holding ?? 0);
-  const { polarity } = fundACost(apiDelta, EVEN_RATE);
+  const apiDelta = period.deltas.effective_tax_on_holding;
+  if (!comparePeriodIsCovered(period) || apiDelta == null) {
+    return {
+      year: period.year,
+      apiDelta: null,
+      displayPct: null,
+      polarity: "even",
+      missing: true,
+    };
+  }
+  const numericDelta = Number(apiDelta);
+  const { polarity } = fundACost(numericDelta, EVEN_RATE);
   return {
     year: period.year,
-    apiDelta,
-    displayPct: apiDelta * 100,
+    apiDelta: numericDelta,
+    displayPct: numericDelta * 100,
     polarity,
   };
 }
@@ -262,6 +281,7 @@ export function toTaxDeltaCardModel(
     rightLabel,
     sample,
     bars,
+    taxSeries: toCompareTaxDragSeries(response, "effective_tax"),
     metrics,
     upcoming: upcomingSides,
     inceptionLabel: window,
@@ -270,6 +290,9 @@ export function toTaxDeltaCardModel(
 }
 
 export function chartScalePct(bars: TaxDeltaBar[], floor = 2): number {
-  const peak = bars.reduce((max, bar) => Math.max(max, Math.abs(bar.displayPct)), 0);
+  const peak = bars.reduce((max, bar) => {
+    if (bar.missing || bar.displayPct == null) return max;
+    return Math.max(max, Math.abs(bar.displayPct));
+  }, 0);
   return Math.max(floor, Math.ceil(peak));
 }

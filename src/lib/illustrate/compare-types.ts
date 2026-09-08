@@ -50,29 +50,41 @@ export type CompareRequest = {
 
 export type CompareIllustration = {
   label: string;
+  /**
+   * Shipped on Data PR #2 (`5d02120`):
+   * - Unmatched: `matched: false` + money totals **null** (N/A, never $0)
+   * - Published $0 / 0% NAV: `matched: true` + `"0.00"` → chart 0
+   *
+   * Website treats **either** `matched === false` **or** null tax totals as N/A.
+   */
   matched: boolean;
   holding_dollars?: number;
   components?: unknown[];
   totals?: {
-    distribution_dollars?: number;
-    estimated_tax?: number;
-    estimated_tax_dollars?: number;
-    effective_tax_on_holding?: number;
+    distribution_dollars?: number | null;
+    estimated_tax?: number | null;
+    estimated_tax_dollars?: number | null;
+    estimated_tax_min?: number | null;
+    estimated_tax_max?: number | null;
+    federal_tax?: number | null;
+    state_tax?: number | null;
+    effective_tax_on_holding?: number | null;
   };
   notes?: string[];
 };
 
 export type CompareDeltas = {
-  distribution_dollars: number;
+  /** Null when either side is unmatched (Data PR #2) — not a $0 delta. */
+  distribution_dollars: number | null;
   distribution_dollars_min?: number | null;
   distribution_dollars_max?: number | null;
-  estimated_tax: number;
+  estimated_tax: number | null;
   estimated_tax_min?: number | null;
   estimated_tax_max?: number | null;
-  federal_tax?: number;
-  state_tax?: number;
-  /** right − left, as a decimal rate (0.008 = 0.8%). Chart this field. */
-  effective_tax_on_holding: number;
+  federal_tax?: number | null;
+  state_tax?: number | null;
+  /** right − left, as a decimal rate (0.008 = 0.8%). Null if a side is N/A. */
+  effective_tax_on_holding: number | null;
   effective_tax_on_holding_min?: number | null;
   effective_tax_on_holding_max?: number | null;
 };

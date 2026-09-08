@@ -35,19 +35,31 @@ function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" ? (value as Record<string, unknown>) : {};
 }
 
+function asMatched(value: unknown): boolean {
+  return value === true || value === "true";
+}
+
 function normalizeIllustration(raw: unknown, fallbackLabel: string) {
   const row = asRecord(raw);
   const totals = asRecord(row.totals);
   return {
     label: String(row.label ?? fallbackLabel),
-    matched: row.matched !== false,
+    matched: asMatched(row.matched),
     holding_dollars: numOrNull(row.holding_dollars) ?? undefined,
     components: Array.isArray(row.components) ? row.components : [],
     totals: {
-      distribution_dollars: num(totals.distribution_dollars),
-      estimated_tax: num(totals.estimated_tax ?? totals.estimated_tax_dollars),
-      estimated_tax_dollars: num(totals.estimated_tax_dollars ?? totals.estimated_tax),
-      effective_tax_on_holding: num(totals.effective_tax_on_holding),
+      // Data PR #2 (`5d02120`): unmatched money fields are null. Keep them.
+      // `"0.00"` / 0 still normalize to 0 (published $0 / 0% NAV).
+      distribution_dollars: numOrNull(totals.distribution_dollars),
+      estimated_tax: numOrNull(totals.estimated_tax ?? totals.estimated_tax_dollars),
+      estimated_tax_dollars: numOrNull(
+        totals.estimated_tax_dollars ?? totals.estimated_tax,
+      ),
+      estimated_tax_min: numOrNull(totals.estimated_tax_min),
+      estimated_tax_max: numOrNull(totals.estimated_tax_max),
+      federal_tax: numOrNull(totals.federal_tax),
+      state_tax: numOrNull(totals.state_tax),
+      effective_tax_on_holding: numOrNull(totals.effective_tax_on_holding),
     },
     notes: Array.isArray(row.notes) ? row.notes.map(String) : [],
   };
@@ -56,15 +68,16 @@ function normalizeIllustration(raw: unknown, fallbackLabel: string) {
 function normalizeDeltas(raw: unknown) {
   const row = asRecord(raw);
   return {
-    distribution_dollars: num(row.distribution_dollars),
+    // Unmatched period: Data sends null deltas, not 0.00.
+    distribution_dollars: numOrNull(row.distribution_dollars),
     distribution_dollars_min: numOrNull(row.distribution_dollars_min),
     distribution_dollars_max: numOrNull(row.distribution_dollars_max),
-    estimated_tax: num(row.estimated_tax ?? row.estimated_tax_dollars),
+    estimated_tax: numOrNull(row.estimated_tax ?? row.estimated_tax_dollars),
     estimated_tax_min: numOrNull(row.estimated_tax_min),
     estimated_tax_max: numOrNull(row.estimated_tax_max),
-    federal_tax: num(row.federal_tax),
-    state_tax: num(row.state_tax),
-    effective_tax_on_holding: num(row.effective_tax_on_holding),
+    federal_tax: numOrNull(row.federal_tax),
+    state_tax: numOrNull(row.state_tax),
+    effective_tax_on_holding: numOrNull(row.effective_tax_on_holding),
     effective_tax_on_holding_min: numOrNull(row.effective_tax_on_holding_min),
     effective_tax_on_holding_max: numOrNull(row.effective_tax_on_holding_max),
   };
