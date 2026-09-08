@@ -47,6 +47,7 @@ export type GrowthFundInput = {
 };
 
 export type GrowthAndTaxDragModuleProps = {
+  /** Initial series. Empty / omitted starts with no funds until search or Add Fund. */
   funds?: GrowthFundInput[];
   /** Tickers to prepend when search/illustrate selection changes. Does not reset Add Fund extras. */
   seedFunds?: GrowthFundInput[];
@@ -59,21 +60,6 @@ export type GrowthAndTaxDragModuleProps = {
   editablePrincipal?: boolean;
 };
 
-const DEFAULT_FUNDS: GrowthFundInput[] = [
-  {
-    ticker: "AGTHX",
-    label: "AGTHX",
-    fundIdentifier: "AGTHX",
-    fundFamily: "American Funds",
-  },
-  {
-    ticker: "FCNTX",
-    label: "FCNTX",
-    fundIdentifier: "FCNTX",
-    fundFamily: "Fidelity",
-  },
-];
-
 const SKETCH_DISCLAIMER =
   "Hypothetical illustration based on estimated distributions and assumed tax rates. Estimates only — not tax advice. Past performance does not guarantee future results. Up to 6 funds + benchmark.";
 
@@ -85,7 +71,7 @@ type LoadedFund = {
 };
 
 export function GrowthAndTaxDragModule({
-  funds = DEFAULT_FUNDS,
+  funds = [],
   seedFunds,
   startDollars = DEFAULT_START_DOLLARS,
   benchmark,
@@ -96,7 +82,7 @@ export function GrowthAndTaxDragModule({
   editablePrincipal = true,
 }: GrowthAndTaxDragModuleProps) {
   const [selected, setSelected] = useState<GrowthFundInput[]>(() =>
-    (funds.length > 0 ? funds : DEFAULT_FUNDS).slice(0, MAX_GROWTH_FUNDS),
+    funds.slice(0, MAX_GROWTH_FUNDS),
   );
   const [principal, setPrincipal] = useState(startDollars);
   const [principalDraft, setPrincipalDraft] = useState(formatPrincipal(startDollars));
@@ -115,7 +101,7 @@ export function GrowthAndTaxDragModule({
     periods: periods ?? null,
   });
   const fetchKey = `${requestKey}:${retry}`;
-  const loading = settledKey !== fetchKey;
+  const loading = selected.length > 0 && settledKey !== fetchKey;
   const seedKey = JSON.stringify((seedFunds ?? []).map(fundKey));
 
   useEffect(() => {
@@ -133,6 +119,10 @@ export function GrowthAndTaxDragModule({
       principal: number;
       benchmark: string | null;
     };
+
+    if (next.funds.length === 0) {
+      return;
+    }
 
     void loadModule(next.funds, next.principal, next.benchmark, periods, controller.signal)
       .then((loaded) => {
@@ -439,6 +429,14 @@ export function GrowthAndTaxDragModule({
               showAnnualized={showAnnualized}
               loading={loading}
               axis={axis}
+              emptyLabel={
+                selected.length === 0 ? "No fund series" : "No growth series"
+              }
+              emptyHint={
+                selected.length === 0
+                  ? ""
+                  : "GET /performance returned no overlapping monthly points."
+              }
             />
           </div>
           <div className="rounded-xl border border-line bg-paper/40 px-3 py-3 sm:px-4">
@@ -454,7 +452,12 @@ export function GrowthAndTaxDragModule({
               upcomingSummary={upcomingSummary}
               loading={loading}
               axis={axis}
-              emptyLabel="No overlapping tax-drag years"
+              emptyLabel={
+                selected.length === 0
+                  ? "No fund series"
+                  : "No overlapping tax-drag years"
+              }
+              emptyHint={selected.length === 0 ? "" : undefined}
             />
           </div>
         </div>

@@ -31,6 +31,7 @@ export type TaxDragByYearChartProps = {
   upcomingSummary?: UpcomingSummary | null;
   loading?: boolean;
   emptyLabel?: string;
+  emptyHint?: string;
   className?: string;
   sample?: boolean;
   /** `down` draws negative bars from a 0% baseline at the top. */
@@ -62,6 +63,7 @@ export function TaxDragByYearChart({
   upcomingSummary = null,
   loading = false,
   emptyLabel = "No calendar-year tax-drag rows",
+  emptyHint = `Missing years stay ${TAX_DRAG_NA_LABEL} — Aftertax does not invent tax-drag rows.`,
   className = "",
   sample = false,
   orientation = "up",
@@ -127,9 +129,9 @@ export function TaxDragByYearChart({
         }
       >
         <p className="font-serif text-lg text-ink">{emptyLabel}</p>
-        <p className="mt-2 text-sm text-muted">
-          Missing years stay {TAX_DRAG_NA_LABEL} — Aftertax does not invent tax-drag rows.
-        </p>
+        {emptyHint ? (
+          <p className="mt-2 text-sm text-muted">{emptyHint}</p>
+        ) : null}
       </div>
     );
   }

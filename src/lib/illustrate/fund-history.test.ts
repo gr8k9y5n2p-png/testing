@@ -5,6 +5,7 @@ import {
   firstSearchParam,
   fundHistoryPath,
   growthFundFromTicker,
+  HOMEPAGE_GROWTH_FUNDS,
   resolveFundView,
 } from "./fund-history.ts";
 
@@ -68,5 +69,13 @@ describe("fund history deep-link", () => {
       navPerShare: 41.22,
     });
     assert.equal(Object.hasOwn(input ?? {}, "benchmark"), false);
+  });
+
+  it("does not preload homepage growth funds", () => {
+    assert.deepEqual(HOMEPAGE_GROWTH_FUNDS, []);
+    assert.equal(
+      HOMEPAGE_GROWTH_FUNDS.some((fund) => fund.ticker === "FCNTX"),
+      false,
+    );
   });
 });

@@ -5,6 +5,12 @@ import type { FundEstimateView } from "@/data/types";
 export const FUND_HISTORY_HASH = "growth-and-tax";
 
 /**
+ * Homepage GrowthAndTaxDragModule initial series. Empty so first visit does
+ * not fetch missing fixtures (FCNTX) and error. Search / Add Fund seeds the list.
+ */
+export const HOMEPAGE_GROWTH_FUNDS: GrowthFundInput[] = [];
+
+/**
  * Deep-link into the existing homepage fund-vs-benchmark module.
  * `ticker` is the only navigation param — benchmark stays unspecified so
  * GET /performance uses the same default the homepage Growth module already
