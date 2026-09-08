@@ -23,7 +23,9 @@ export type CompareSideIn = {
   selectors?: CompareSelectors;
   distribution_ids?: string[];
   holding_dollars?: number;
+  /** Required by Data when matched rows are `per_share`. Omit for % of NAV. */
   nav_per_share?: number | null;
+  shares?: number | null;
 };
 
 export type ComparePeriodIn = {
@@ -41,7 +43,9 @@ export type CompareRequest = {
   right?: CompareSideIn;
   selectors?: CompareSelectors;
   periods?: ComparePeriodIn[];
+  /** Top-level NAV for YoY (same fund). Per-side NAV wins in fund_vs_fund. */
   nav_per_share?: number | null;
+  shares?: number | null;
 };
 
 export type CompareIllustration = {

@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import type { FundEstimateView } from "@/data/types";
 import { FundPicker } from "@/components/illustrate/FundPicker";
 import { FundTaxDeltaCompare } from "@/components/illustrate/FundTaxDeltaCompare";
+import { compareSideFromFund } from "@/lib/illustrate/compare-request";
+import { seedNavLookup } from "@/lib/illustrate/seed-nav";
 import {
   COMPARE_SUMMARY_HOLDING_DOLLARS,
   type CompareSideIn,
@@ -28,15 +30,7 @@ export function defaultComparePeer(
 }
 
 function sideFromFund(fund: FundEstimateView): CompareSideIn {
-  return {
-    label: fund.fundName,
-    selectors: {
-      ticker: fund.ticker,
-      fund_identifier: fund.ticker,
-      fund_family: fund.family,
-      fund_name: fund.fundName,
-    },
-  };
+  return compareSideFromFund(fund, seedNavLookup);
 }
 
 export function FundCompareRail({

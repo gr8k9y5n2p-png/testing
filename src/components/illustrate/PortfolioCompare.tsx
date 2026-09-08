@@ -5,6 +5,8 @@ import { AllocationColumn } from "@/components/illustrate/portfolio-compare/Allo
 import { SummaryStrip } from "@/components/illustrate/portfolio-compare/SummaryStrip";
 import { TaxImpactChart } from "@/components/illustrate/portfolio-compare/TaxImpactChart";
 import { UpcomingTable } from "@/components/illustrate/portfolio-compare/UpcomingTable";
+import { navFromFundMetadata } from "@/lib/illustrate/compare-request";
+import { seedNavLookup } from "@/lib/illustrate/seed-nav";
 import { catalogFunds } from "@/lib/illustrate/portfolio-compare-catalog";
 import {
   smokeCurrentHoldings,
@@ -46,13 +48,18 @@ export type PortfolioCompareProps = {
 function toApiHoldings(holdings: PortfolioHoldingDraft[]) {
   return holdings
     .filter((holding) => holding.ticker.trim() && holding.weightPct > 0)
-    .map((holding) => ({
-      ticker: holding.ticker.trim().toUpperCase(),
-      fund_identifier: holding.ticker.trim().toUpperCase(),
-      fund_name: holding.fundName || undefined,
-      fund_family: holding.family,
-      weight_pct: holding.weightPct,
-    }));
+    .map((holding) => {
+      const ticker = holding.ticker.trim().toUpperCase();
+      const nav = navFromFundMetadata(ticker, undefined, seedNavLookup);
+      return {
+        ticker,
+        fund_identifier: ticker,
+        fund_name: holding.fundName || undefined,
+        fund_family: holding.family,
+        weight_pct: holding.weightPct,
+        ...(nav != null ? { nav_per_share: nav } : {}),
+      };
+    });
 }
 
 function rescaleFromWeights(
