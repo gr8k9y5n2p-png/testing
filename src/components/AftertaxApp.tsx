@@ -7,7 +7,6 @@ import { Dashboard } from "@/components/Dashboard";
 import { DemoBanner } from "@/components/DemoBanner";
 import { HighlightsSection } from "@/components/HighlightsSection";
 import { Hero } from "@/components/landing/Hero";
-import { FundCompareRail } from "@/components/illustrate/FundCompareRail";
 import {
   GrowthAndTaxDragModule,
   type GrowthFundInput,
@@ -109,7 +108,11 @@ function AftertaxAppInner({
       router.replace("/portfolio");
       return;
     }
-    if (id === "fund-compare" || id === "illustrate" || id === FUND_HISTORY_HASH) {
+    if (id === "fund-compare") {
+      router.replace("/compare");
+      return;
+    }
+    if (id === "illustrate" || id === FUND_HISTORY_HASH) {
       scrollToId(id);
     }
   }, [router]);
@@ -154,14 +157,6 @@ function AftertaxAppInner({
     scrollToId("growth-and-tax");
   }
 
-  function openFundCompare() {
-    if (selected) {
-      scrollToId("fund-compare");
-      return;
-    }
-    document.getElementById("fund-search")?.focus();
-  }
-
   async function unlock() {
     try {
       const response = await fetch("/api/checkout", { method: "POST" });
@@ -191,7 +186,6 @@ function AftertaxAppInner({
         remaining={freemium.remaining}
         unlimited={freemium.unlimited}
         onSelect={selectFund}
-        onCompare={openFundCompare}
       />
 
       <section
@@ -208,9 +202,8 @@ function AftertaxAppInner({
       </section>
 
       {selected ? (
-        <div className="mb-10 grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(20rem,26.25rem)]">
+        <div className="mb-10">
           <IllustratePanel selected={selected} />
-          <FundCompareRail funds={funds} selected={selected} />
         </div>
       ) : null}
 
