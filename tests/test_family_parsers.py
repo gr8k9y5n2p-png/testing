@@ -2221,6 +2221,84 @@ def test_sixth_tier_fixtures() -> None:
     )
     assert inivx_2024.amount == Decimal("0.7750")
 
+    vaneck_etf_2023 = parse_distribution_html(
+        (ROOT / "vaneck" / "2023_etf_year_end_distributions.html").read_text(encoding="utf-8"),
+        source_url="fixture://vaneck-etf-2023",
+        fund_family="VanEck",
+    )
+    gdx_2023 = next(
+        r
+        for r in vaneck_etf_2023
+        if r.ticker == "GDX" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert gdx_2023.amount == Decimal("0.5001")
+    ibot_2023 = next(
+        r
+        for r in vaneck_etf_2023
+        if r.ticker == "IBOT" and r.estimate_type == EstimateType.short_term_capital_gains
+    )
+    assert ibot_2023.amount == Decimal("0.6716")
+
+    vaneck_mf_2023 = parse_distribution_html(
+        (ROOT / "vaneck" / "2023_funds_year_end_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://vaneck-mf-2023",
+        fund_family="VanEck",
+    )
+    inivx_2023 = next(
+        r
+        for r in vaneck_mf_2023
+        if r.ticker == "INIVX" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert inivx_2023.amount == Decimal("0.0102")
+    mwmix_2023 = next(
+        r
+        for r in vaneck_mf_2023
+        if r.ticker == "MWMIX" and r.estimate_type == EstimateType.short_term_capital_gains
+    )
+    assert mwmix_2023.amount == Decimal("1.6352")
+
+    vaneck_mf_2025_paid = parse_distribution_html(
+        (ROOT / "vaneck" / "2025_funds_year_end_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://vaneck-mf-2025-paid",
+        fund_family="VanEck",
+    )
+    inivx_2025_paid = next(
+        r
+        for r in vaneck_mf_2025_paid
+        if r.ticker == "INIVX" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert inivx_2025_paid.amount == Decimal("1.5675")
+    mwmix_2025_lt = next(
+        r
+        for r in vaneck_mf_2025_paid
+        if r.ticker == "MWMIX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert mwmix_2025_lt.amount == Decimal("1.6944")
+
+    vaneck_etf_2025_paid = parse_distribution_html(
+        (ROOT / "vaneck" / "2025_etf_year_end_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://vaneck-etf-2025-paid",
+        fund_family="VanEck",
+    )
+    gdx_2025_paid = next(
+        r
+        for r in vaneck_etf_2025_paid
+        if r.ticker == "GDX" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert gdx_2025_paid.amount == Decimal("0.6331")
+    motg_2025_lt = next(
+        r
+        for r in vaneck_etf_2025_paid
+        if r.ticker == "MOTG" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert motg_2025_lt.amount == Decimal("4.0549")
+
     first_eagle_etf = parse_distribution_html(
         (ROOT / "first_eagle" / "2025_etf_paid_year_end.html").read_text(
             encoding="utf-8"
@@ -2267,6 +2345,44 @@ def test_sixth_tier_fixtures() -> None:
     )
     assert gtr_2024.amount == Decimal("0.51992")
 
+    wisdomtree_dec = parse_distribution_html(
+        (ROOT / "wisdomtree" / "2025_december_etf_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://wisdomtree-dec-2025",
+        fund_family="WisdomTree",
+    )
+    dgrw = next(
+        r
+        for r in wisdomtree_dec
+        if r.ticker == "DGRW" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert dgrw.amount == Decimal("0.23270")
+    dhs = next(
+        r
+        for r in wisdomtree_dec
+        if r.ticker == "DHS" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert dhs.amount == Decimal("0.58476")
+    xc_inc = next(
+        r
+        for r in wisdomtree_dec
+        if r.ticker == "XC" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert xc_inc.amount == Decimal("0.22721")
+    epi_zero = next(
+        r
+        for r in wisdomtree_dec
+        if r.ticker == "EPI" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert epi_zero.amount == Decimal("0.00000")
+    assert len({r.ticker for r in wisdomtree_dec if r.ticker}) >= 80
+    assert not any(
+        r.estimate_type
+        in {EstimateType.short_term_capital_gains, EstimateType.long_term_capital_gains}
+        for r in wisdomtree_dec
+    )
+
     first_trust = parse_distribution_html(
         (ROOT / "first_trust" / "2025_section_19a_notice.html").read_text(encoding="utf-8"),
         source_url="fixture://first-trust",
@@ -2290,6 +2406,42 @@ def test_sixth_tier_fixtures() -> None:
         if r.ticker == "IGLD" and r.estimate_type == EstimateType.return_of_capital
     )
     assert igld_roc.amount == Decimal("0.3525")
+
+    first_trust_sept = parse_distribution_html(
+        (ROOT / "first_trust" / "2025_september_etf_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://first-trust-sept-2025",
+        fund_family="First Trust",
+    )
+    fvd = next(
+        r
+        for r in first_trust_sept
+        if r.ticker == "FVD" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert fvd.amount == Decimal("0.2519")
+    fthi = next(
+        r
+        for r in first_trust_sept
+        if r.ticker == "FTHI" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert fthi.amount == Decimal("0.1710")
+    fpe = next(
+        r
+        for r in first_trust_sept
+        if r.ticker == "FPE" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert fpe.amount == Decimal("0.0845")
+    cibr = next(
+        r
+        for r in first_trust_sept
+        if r.ticker == "CIBR" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert cibr.amount == Decimal("0.0006")
+    assert len({r.ticker for r in first_trust_sept if r.ticker}) >= 140
+    assert not any(
+        r.estimate_type == EstimateType.long_term_capital_gains for r in first_trust_sept
+    )
 
     aqr = parse_distribution_html(
         (ROOT / "aqr" / "2025_estimated_distributions.html").read_text(encoding="utf-8"),
@@ -2493,6 +2645,29 @@ def test_seventh_tier_fixtures() -> None:
     )
     assert jensx.amount == Decimal("16.65")
 
+    jensen_2024 = parse_distribution_html(
+        (ROOT / "jensen" / "2024_year_end_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://jensen-2024",
+        fund_family="Jensen",
+    )
+    jensx_2024 = next(
+        r
+        for r in jensen_2024
+        if r.ticker == "JENSX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert jensx_2024.amount == Decimal("6.77")
+    jenix_2024 = next(
+        r
+        for r in jensen_2024
+        if r.ticker == "JENIX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert jenix_2024.amount == Decimal("6.77")
+    assert not any(
+        r.estimate_type == EstimateType.short_term_capital_gains for r in jensen_2024
+    )
+
     diamond = parse_distribution_html(
         (ROOT / "diamond_hill" / "2025_estimated_capital_gains.html").read_text(
             encoding="utf-8"
@@ -2506,6 +2681,26 @@ def test_seventh_tier_fixtures() -> None:
         if r.ticker == "DHPAX" and r.estimate_type == EstimateType.long_term_capital_gains
     )
     assert dhpax.amount == Decimal("2.698")
+
+    diamond_2024 = parse_distribution_html(
+        (ROOT / "diamond_hill" / "2024_estimated_capital_gains.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://diamond_hill-2024",
+        fund_family="Diamond Hill",
+    )
+    dhlax_2024 = next(
+        r
+        for r in diamond_2024
+        if r.ticker == "DHLAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert dhlax_2024.amount == Decimal("2.900")
+    dhlax_st_2024 = next(
+        r
+        for r in diamond_2024
+        if r.ticker == "DHSCX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert dhlax_st_2024.amount == Decimal("2.511")
 
     champlain = parse_distribution_html(
         (ROOT / "champlain" / "2025_final_distributions.html").read_text(

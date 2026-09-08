@@ -56,6 +56,13 @@ jobs:
             --output refresh-summary.json \
             --markdown refresh-summary.md
 
+      - name: Pick up queued ticker requests
+        env:
+          REFRESH_MODE: ${{ github.event.inputs.refresh_mode || 'auto' }}
+        run: |
+          python -m app.cli ticker-requests \
+            --output ticker-request-summary.json
+
       - name: Job summary
         if: always()
         run: |
@@ -63,6 +70,14 @@ jobs:
             cat refresh-summary.md >> "$GITHUB_STEP_SUMMARY"
           else
             echo "Refresh did not write a Markdown summary." >> "$GITHUB_STEP_SUMMARY"
+          fi
+          if [ -f ticker-request-summary.json ]; then
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "## Queued ticker-request pickup" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo '```json' >> "$GITHUB_STEP_SUMMARY"
+            cat ticker-request-summary.json >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
           fi
 
       - name: Upload summary artifact
@@ -73,4 +88,5 @@ jobs:
           path: |
             refresh-summary.json
             refresh-summary.md
+            ticker-request-summary.json
           if-no-files-found: warn

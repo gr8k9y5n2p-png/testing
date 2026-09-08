@@ -297,7 +297,7 @@ class FirstEagleSource(HtmlTableSource):
         "(FEGE income $0.589 / ST $0.000 / LT $0.000; FEOE income $0.738 / ST $0.000 / LT $0.000). "
         "Gold / Global Income Builder / Small Cap Opportunity "
         "product pages are Drupal SPAs (no scrapeable 2025 paid grid). 2021–2022 "
-        "paid PDFs were not a stable public file."
+        "paid PDFs were not a stable public file. Growth of $X added for FEOE."
     )
     live_limitations = "Family estimate book is PDF. Paid history is on public product pages."
 

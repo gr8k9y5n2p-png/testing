@@ -32,7 +32,9 @@ class PrimecapSource(HtmlTableSource):
                     "2025-Distribution-Estimates-as-of-10312025-PCF000287.pdf"
                 ),
                 fixture="2025_distribution_estimates.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
 
@@ -61,7 +63,9 @@ class ArielSource(HtmlTableSource):
                     "Distributions_ArielFund_as-of-12.17.2025-Final.pdf"
                 ),
                 fixture="2025_year_end_distributions.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
 
@@ -92,7 +96,9 @@ class BairdSource(HtmlTableSource):
                     "distributions/2025-final-capital-gains.pdf"
                 ),
                 fixture="2025_final_capital_gains.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
 
@@ -119,6 +125,8 @@ class LongleafSource(HtmlTableSource):
                 url="https://southeasternasset.com/investment-offerings/longleaf-partners-fund/",
                 fixture="2025_partners_fund_distributions.html",
                 live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
 
@@ -147,7 +155,9 @@ class BuffaloSource(HtmlTableSource):
                 name="2025_estimated_capital_gains",
                 url="https://buffalofunds.com/wp-content/uploads/2025/11/Final-Cap-Gains-Estimates.pdf",
                 fixture="2025_estimated_capital_gains.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
 
@@ -177,7 +187,9 @@ class GqgSource(HtmlTableSource):
                     "2025-Estimated-Capital-Gain-Distributions-09.30.pdf"
                 ),
                 fixture="2025_estimated_capital_gains.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
 
@@ -206,6 +218,8 @@ class ThirdAvenueSource(HtmlTableSource):
                 url="https://www.thirdave.com/2025-income-capital-gain-distributions",
                 fixture="2025_income_capital_gain_distributions.html",
                 live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
 
@@ -234,6 +248,8 @@ class HeartlandSource(HtmlTableSource):
                 url="https://www.heartlandadvisors.com/Resources/Tax-Information",
                 fixture="2025_year_end_distributions.html",
                 live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
 
@@ -258,7 +274,9 @@ class FmiSource(HtmlTableSource):
                 name="2025_distribution_summary",
                 url="https://www.fmimgt.com/fmi/funds/cs/CS_distribution_summary_2025.pdf",
                 fixture="2025_distribution_summary.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
 
@@ -277,7 +295,8 @@ class ImpaxSource(HtmlTableSource):
         "Record 12/19/2025; ex/reinvest 12/22/2025; pay 12/23/2025."
     )
     live_limitations = (
-        "Live hub is geo/investor-type gated. Fixture transcribes the public December 2025 table."
+        "Live hub is geo/investor-type gated. Weekly walk still hits the hub; "
+        "empty/403/SPA pages are no-op success. Fixture transcribes the public December 2025 table."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -286,6 +305,8 @@ class ImpaxSource(HtmlTableSource):
                 name="2025_year_end_distributions",
                 url="https://impaxam.com/customer-service/distributions/",
                 fixture="2025_year_end_distributions.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]

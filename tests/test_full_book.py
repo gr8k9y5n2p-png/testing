@@ -199,9 +199,9 @@ def test_full_book_artisan_ici_and_first_eagle() -> None:
     assert len(vaneck_tickers) >= 50
 
     wt_funds, wt_tickers = _funds_and_tickers(WisdomtreeSource())
-    assert {"GTR", "XC", "WTPI", "INDH"} <= wt_tickers
-    assert len(wt_tickers) >= 9
+    assert {"GTR", "XC", "WTPI", "INDH", "DGRW", "DHS", "XSOE"} <= wt_tickers
+    assert len(wt_tickers) >= 80
 
     first_trust_funds, first_trust_tickers = _funds_and_tickers(FirstTrustSource())
-    assert {"BFAP", "BGLD", "IGLD", "BFJL"} <= first_trust_tickers
-    assert len(first_trust_tickers) >= 4
+    assert {"BFAP", "BGLD", "IGLD", "BFJL", "FVD", "FTHI", "FPE"} <= first_trust_tickers
+    assert len(first_trust_tickers) >= 140

@@ -1,0 +1,118 @@
+{
+  "ticker": "FEOE",
+  "name": "First Eagle Overseas Equity ETF",
+  "currency": "USD",
+  "frequency": "monthly",
+  "field": "adj_close",
+  "field_notes": "Yahoo Finance monthly adjusted close (split- and dividend-adjusted). Used as a free public total-return proxy. Not an official index level.",
+  "source": "yahoo_chart",
+  "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/FEOE?interval=1mo&range=10y&events=div%2Csplit",
+  "as_of": "2026-09-01",
+  "points": [
+    {
+      "date": "2025-01-01",
+      "adj_close": "35.937149",
+      "close": "36.486000"
+    },
+    {
+      "date": "2025-02-01",
+      "adj_close": "37.372234",
+      "close": "37.943001"
+    },
+    {
+      "date": "2025-03-01",
+      "adj_close": "38.373932",
+      "close": "38.959999"
+    },
+    {
+      "date": "2025-04-01",
+      "adj_close": "39.474129",
+      "close": "40.077000"
+    },
+    {
+      "date": "2025-05-01",
+      "adj_close": "40.422646",
+      "close": "41.040001"
+    },
+    {
+      "date": "2025-06-01",
+      "adj_close": "41.437149",
+      "close": "42.070000"
+    },
+    {
+      "date": "2025-07-01",
+      "adj_close": "41.230309",
+      "close": "41.860001"
+    },
+    {
+      "date": "2025-08-01",
+      "adj_close": "43.505558",
+      "close": "44.169998"
+    },
+    {
+      "date": "2025-09-01",
+      "adj_close": "45.430168",
+      "close": "46.124001"
+    },
+    {
+      "date": "2025-10-01",
+      "adj_close": "45.766037",
+      "close": "46.465000"
+    },
+    {
+      "date": "2025-11-01",
+      "adj_close": "46.903660",
+      "close": "47.619999"
+    },
+    {
+      "date": "2025-12-01",
+      "adj_close": "48.360001",
+      "close": "48.360001"
+    },
+    {
+      "date": "2026-01-01",
+      "adj_close": "51.320000",
+      "close": "51.320000"
+    },
+    {
+      "date": "2026-02-01",
+      "adj_close": "55.650002",
+      "close": "55.650002"
+    },
+    {
+      "date": "2026-03-01",
+      "adj_close": "50.459999",
+      "close": "50.459999"
+    },
+    {
+      "date": "2026-04-01",
+      "adj_close": "52.709999",
+      "close": "52.709999"
+    },
+    {
+      "date": "2026-05-01",
+      "adj_close": "54.110001",
+      "close": "54.110001"
+    },
+    {
+      "date": "2026-06-01",
+      "adj_close": "53.400002",
+      "close": "53.400002"
+    },
+    {
+      "date": "2026-07-01",
+      "adj_close": "55.330002",
+      "close": "55.330002"
+    },
+    {
+      "date": "2026-08-01",
+      "adj_close": "56.049999",
+      "close": "56.049999"
+    },
+    {
+      "date": "2026-09-01",
+      "adj_close": "55.849998",
+      "close": "55.849998"
+    }
+  ]
+}

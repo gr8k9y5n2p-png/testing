@@ -116,20 +116,33 @@ def test_coverage_exposes_estimate_feed_readiness(session) -> None:
     vaneck = by_slug["vaneck"]
     assert vaneck.estimate_feed_ready is True
     assert vaneck.estimate_feed_status == "prelim_updated"
-    assert vaneck.history_years == [2024, 2025]
+    assert vaneck.history_years == [2023, 2024, 2025]
     assert "MWMIX" in vaneck.performance_tickers
+    assert "INIVX" in vaneck.performance_tickers
 
     first_eagle = by_slug["first_eagle"]
     assert first_eagle.estimate_feed_ready is True
     assert "FEGE" in first_eagle.performance_tickers
+    assert "FEOE" in first_eagle.performance_tickers
 
     first_trust = by_slug["first_trust"]
     assert first_trust.estimate_feed_ready is True
     assert "BGLD" in first_trust.performance_tickers
+    assert "FVD" in first_trust.performance_tickers
 
     wisdomtree = by_slug["wisdomtree"]
     assert wisdomtree.estimate_feed_ready is True
     assert wisdomtree.history_years == [2024, 2025]
+    assert "XC" in wisdomtree.performance_tickers
+
+    jensen = by_slug["jensen"]
+    assert jensen.estimate_feed_ready is True
+    assert jensen.history_years == [2024, 2025]
+    assert "JENSX" in jensen.performance_tickers
+
+    diamond = by_slug["diamond_hill"]
+    assert diamond.estimate_feed_ready is True
+    assert diamond.history_years == [2024, 2025]
 
     first_trust = by_slug["first_trust"]
     assert first_trust.estimate_feed_ready is True
@@ -192,3 +205,27 @@ def test_coverage_exposes_estimate_feed_readiness(session) -> None:
     bridgeway = by_slug["bridgeway"]
     assert bridgeway.estimate_feed_ready is True
     assert bridgeway.history_years == [2024, 2025]
+
+
+def test_ranks_63_to_80_have_live_estimate_feed() -> None:
+    missing: list[str] = []
+    for source in list_sources():
+        if source.aum_rank is None or source.aum_rank < 63 or source.aum_rank > 80:
+            continue
+        if not source.supports_live():
+            missing.append(f"{source.slug}: supports_live=False")
+        if not source.estimate_feed_urls():
+            missing.append(f"{source.slug}: no estimate_feed_urls")
+    assert missing == []
+
+
+def test_ranks_81_to_90_have_live_estimate_feed() -> None:
+    missing: list[str] = []
+    for source in list_sources():
+        if source.aum_rank is None or source.aum_rank < 81 or source.aum_rank > 90:
+            continue
+        if not source.supports_live():
+            missing.append(f"{source.slug}: supports_live=False")
+        if not source.estimate_feed_urls():
+            missing.append(f"{source.slug}: no estimate_feed_urls")
+    assert missing == []

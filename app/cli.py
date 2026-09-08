@@ -11,6 +11,7 @@ from app import db as app_db
 from app.schemas import DistributionIn, IngestRequest
 from app.services.ingest import fetch_and_ingest, ingest_records
 from app.services.refresh import REFRESH_MODES, refresh_families
+from app.services.ticker_requests import process_ticker_requests
 from app.sources.registry import list_sources, resolve_slug
 
 
@@ -106,6 +107,33 @@ def cmd_refresh(args: argparse.Namespace) -> int:
     return 1 if summary.hard_failure else 0
 
 
+def cmd_ticker_requests(args: argparse.Namespace) -> int:
+    """Pick up queued Website ticker requests. Fetch matched adapters. Never invent amounts."""
+    _ensure_db()
+    assert app_db.SessionLocal is not None
+    mode = (args.mode or settings.refresh_mode or settings.fetch_mode or "auto").strip().lower()
+    if mode not in REFRESH_MODES:
+        print(f"error: mode must be one of {', '.join(REFRESH_MODES)}", file=sys.stderr)
+        return 2
+    if mode == "auto":
+        # Adapters treat live as live-then-fixture. fetch_and_ingest has no auto path.
+        mode = "live"
+    with app_db.SessionLocal() as session:
+        items = process_ticker_requests(session, mode=mode, limit=args.limit)
+        session.commit()
+    payload = {
+        "processed": len(items),
+        "items": [item.model_dump(mode="json") for item in items],
+    }
+    print(json.dumps(payload, indent=2, default=str))
+    if args.output:
+        path = Path(args.output)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(payload, indent=2, default=str) + "\n", encoding="utf-8")
+        print(f"Wrote {path}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Fund distribution estimates CLI")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -147,6 +175,29 @@ def main(argv: list[str] | None = None) -> int:
         help="Write Markdown summary to this path (GitHub job summary)",
     )
     p_refresh.set_defaults(func=cmd_refresh)
+
+    p_tr = sub.add_parser(
+        "ticker-requests",
+        help="Pick up queued Website ticker requests and fetch matched adapters",
+    )
+    p_tr.add_argument(
+        "--mode",
+        default=None,
+        choices=list(REFRESH_MODES),
+        help="Override FETCH/REFRESH mode (default auto: live then fixture)",
+    )
+    p_tr.add_argument(
+        "--limit",
+        type=int,
+        default=50,
+        help="Max queued/search/matched rows to process (default 50)",
+    )
+    p_tr.add_argument(
+        "--output",
+        default=None,
+        help="Write JSON pickup summary to this path",
+    )
+    p_tr.set_defaults(func=cmd_ticker_requests)
 
     args = parser.parse_args(argv)
     return args.func(args)

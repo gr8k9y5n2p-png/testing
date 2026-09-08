@@ -90,6 +90,25 @@ def test_website_submit_ticker_contract(client: TestClient) -> None:
     assert invalid.status_code == 422
 
 
+def test_website_queued_first_trust_ticker_picks_up_september_book(client: TestClient) -> None:
+    queued = client.post(
+        "/request/ticker",
+        json={"ticker": "FVD", "note": "advisor requested First Trust dividend ETF"},
+    )
+    assert queued.status_code == 201, queued.text
+    assert queued.json()["status"] == "queued"
+
+    pickup = client.post("/ingest/ticker-requests", params={"mode": "fixture"})
+    assert pickup.status_code == 200, pickup.text
+    covered = next(item for item in pickup.json()["items"] if item["ticker"] == "FVD")
+    assert covered["status"] == "already_covered"
+    assert covered["adapter_slug"] == "first_trust"
+
+    found = client.get("/distributions", params={"ticker": "FVD", "page_size": 10})
+    assert found.status_code == 200
+    assert found.json()["total"] >= 1
+
+
 def test_submit_amundi_ticker_is_skipped(client: TestClient) -> None:
     created = client.post(
         "/requests/tickers",

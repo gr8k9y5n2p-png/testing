@@ -513,6 +513,8 @@ def test_search_multi_year_top_families(client: TestClient) -> None:
         "matthews_asia",
         "tcw",
         "bridgeway",
+        "jensen",
+        "diamond_hill",
     ):
         fetched = client.post("/ingest/fetch", json={"fund_family": family, "mode": "fixture"})
         assert fetched.status_code == 200, fetched.text
@@ -564,7 +566,7 @@ def test_search_multi_year_top_families(client: TestClient) -> None:
     )
 
     mwmix = client.get("/distributions", params={"fund_identifier": "MWMIX", "page_size": 50})
-    assert {"2024", "2025"} <= {item["as_of"][:4] for item in mwmix.json()["items"] if item.get("as_of")}
+    assert {"2023", "2024", "2025"} <= {item["as_of"][:4] for item in mwmix.json()["items"] if item.get("as_of")}
 
     seegx = client.get("/distributions", params={"fund_identifier": "SEEGX", "page_size": 50})
     assert {"2024", "2025"} <= {item["as_of"][:4] for item in seegx.json()["items"] if item.get("as_of")}
@@ -581,13 +583,46 @@ def test_search_multi_year_top_families(client: TestClient) -> None:
     )
 
     gdx = client.get("/distributions", params={"ticker": "GDX", "page_size": 20})
+    assert {"2023", "2024", "2025"} <= {item["as_of"][:4] for item in gdx.json()["items"] if item.get("as_of")}
     assert any(
         item["estimate_type"] == "ordinary_income" and Decimal(item["amount"]) == Decimal("0.4025")
         for item in gdx.json()["items"]
     )
+    assert any(
+        item["estimate_type"] == "ordinary_income" and Decimal(item["amount"]) == Decimal("0.5001")
+        for item in gdx.json()["items"]
+    )
+
+    fvd = client.get("/distributions", params={"ticker": "FVD", "page_size": 20})
+    assert any(
+        item["estimate_type"] == "ordinary_income" and Decimal(item["amount"]) == Decimal("0.2519")
+        for item in fvd.json()["items"]
+    )
+
+    jensx = client.get("/distributions", params={"ticker": "JENSX", "page_size": 20})
+    assert {"2024", "2025"} <= {item["as_of"][:4] for item in jensx.json()["items"] if item.get("as_of")}
+    assert any(
+        item["estimate_type"] == "long_term_capital_gains"
+        and Decimal(item["amount"]) == Decimal("6.77")
+        for item in jensx.json()["items"]
+    )
+
+    dhlax = client.get("/distributions", params={"ticker": "DHLAX", "page_size": 20})
+    assert {"2024", "2025"} <= {item["as_of"][:4] for item in dhlax.json()["items"] if item.get("as_of")}
+    assert any(
+        item["estimate_type"] == "long_term_capital_gains"
+        and Decimal(item["amount"]) == Decimal("2.900")
+        for item in dhlax.json()["items"]
+    )
 
     gtr = client.get("/distributions", params={"ticker": "GTR", "page_size": 20})
     assert {"2024", "2025"} <= {item["as_of"][:4] for item in gtr.json()["items"] if item.get("as_of")}
+
+    dgrw = client.get("/distributions", params={"ticker": "DGRW", "page_size": 20})
+    assert any(
+        item["estimate_type"] == "ordinary_income" and Decimal(item["amount"]) == Decimal("0.23270")
+        for item in dgrw.json()["items"]
+    )
 
     bfap = client.get("/distributions", params={"ticker": "BFAP", "page_size": 20})
     assert any(

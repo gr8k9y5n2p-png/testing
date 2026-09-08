@@ -93,6 +93,11 @@ FUND_ALIASES: dict[str, str] = {
     "BGLD": "BGLD",
     "MWMIX": "MWMIX",
     "FEGE": "FEGE",
+    "INIVX": "INIVX",
+    "FEOE": "FEOE",
+    "XC": "XC",
+    "FVD": "FVD",
+    "JENSX": "JENSX",
 }
 
 FUND_META: dict[str, dict[str, str]] = {
@@ -141,6 +146,14 @@ FUND_META: dict[str, dict[str, str]] = {
     "BGLD": {"name": "FT Vest Gold Strategy Quarterly Buffer ETF", "asset_class": "equity"},
     "MWMIX": {"name": "VanEck Morningstar Wide Moat I", "asset_class": "equity"},
     "FEGE": {"name": "First Eagle Global Equity ETF", "asset_class": "equity"},
+    "INIVX": {"name": "VanEck International Investors Gold Fund A", "asset_class": "equity"},
+    "FEOE": {"name": "First Eagle Overseas Equity ETF", "asset_class": "international"},
+    "XC": {
+        "name": "WisdomTree True Emerging Markets Fund",
+        "asset_class": "international",
+    },
+    "FVD": {"name": "First Trust Value Line Dividend Index Fund", "asset_class": "equity"},
+    "JENSX": {"name": "Jensen Quality Growth Fund J", "asset_class": "equity"},
 }
 
 DEFAULT_BENCHMARKS: dict[AssetClass, dict[str, str]] = {

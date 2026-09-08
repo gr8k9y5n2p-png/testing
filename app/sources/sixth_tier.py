@@ -178,6 +178,17 @@ class VaneckSource(HtmlTableSource):
         "Official 2024 paid mutual-fund PDF "
         "https://www.vaneck.com/us/en/vaneck-funds-yearend-distributions-2024.pdf "
         "(INIVX income $0.7750; MWMIX ST $1.4731 / LT $1.4325; printed None omitted; EMRCX all-None omitted). "
+        "Official 2023 equity-ETF paid PDF "
+        "https://www.vaneck.com/us/en/vaneck-equity-etfs-2023-year-end-distributions.pdf "
+        "(GDX income $0.5001; SMH $1.0427; IBOT ST $0.6716; printed None / all-None CNXT/DAPP/REMX omitted). "
+        "Official 2023 mutual-fund paid PDF "
+        "https://www.vaneck.com/us/en/vaneck-funds-yearend-distributions-2023.pdf "
+        "(INIVX income $0.0102; MWMIX ST $1.6352; printed None / IIGCX all-None omitted). "
+        "Official 2025 paid YE PDF "
+        "https://www.vaneck.com/us/en/vaneck-funds-yearend-distributions-2025.pdf "
+        "(INIVX income $1.5675; MWMIX ST $1.9529 / LT $1.6944; GDX $0.6331; "
+        "MOTG ST $1.8899 / LT $4.0549; printed None / all-None BUZZ/DAPP omitted; "
+        "RAAX/LFEQ/CMCI finals-to-come omitted). "
         "Hub: https://www.vaneck.com/us/en/resources/etf-distributions/"
     )
     live_limitations = (
@@ -224,6 +235,34 @@ class VaneckSource(HtmlTableSource):
                 live=False,
                 role="history",
             ),
+            PageSpec(
+                name="2023_etf_year_end_distributions",
+                url="https://www.vaneck.com/us/en/vaneck-equity-etfs-2023-year-end-distributions.pdf",
+                fixture="2023_etf_year_end_distributions.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="2023_funds_year_end_distributions",
+                url="https://www.vaneck.com/us/en/vaneck-funds-yearend-distributions-2023.pdf",
+                fixture="2023_funds_year_end_distributions.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="2025_funds_year_end_distributions",
+                url="https://www.vaneck.com/us/en/vaneck-funds-yearend-distributions-2025.pdf",
+                fixture="2025_funds_year_end_distributions.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="2025_etf_year_end_distributions",
+                url="https://www.vaneck.com/us/en/vaneck-funds-yearend-distributions-2025.pdf",
+                fixture="2025_etf_year_end_distributions.html",
+                live=False,
+                role="history",
+            ),
         ]
 
 
@@ -248,9 +287,23 @@ class WisdomtreeSource(HtmlTableSource):
         "wisdomtree-etfs-declare-final-capital-gains-distributions-2024.pdf "
         "is the full family list; payers ingested "
         "(GTR ST $0.51992; INDH LT $0.12765; QSML ST $0.00236; USIN ST $0.02859; "
-        "USSH ST $0.02407; WTBN ST $0.02168). Dashed no-CG rows omitted."
+        "USSH ST $0.02407; WTBN ST $0.02168). Dashed no-CG rows omitted. "
+        "2023 ETF final sibling PDF was not a stable public file (do not invent). "
+        "Digital-fund 2024 CG book is a separate tokenized product line — omitted. "
+        "Official December 2025 income declaration "
+        "https://www.wisdomtree.com/investments/-/media/us-media-files/documents/"
+        "resource-library/fund-reports-schedules/distribution-history/"
+        "wisdomtree-etfs-declare-distributions-december-2025.pdf "
+        "is the family income book (DGRW $0.23270; DHS $0.58476; XC $0.22721; "
+        "GTR $0.18160; WTPI $0.08373; published $0.00000 income stored for "
+        "EPI / HEDJ / INDH / WCBR / WCLD / WQTM). Printed $0.00000 ST/LT "
+        "columns omitted (the December 10 CG book remains the CG source). "
+        "Growth of $X added for XC."
     )
-    live_limitations = "Family books are PDF. Weekly walk uses the 2025 final CG PDF."
+    live_limitations = (
+        "Family books are PDF. Weekly walk uses the 2025 estimate hub, "
+        "final CG PDF, and December income declaration."
+    )
 
     def pages(self) -> list[PageSpec]:
         media = "https://www.wisdomtree.com/investments/-/media/us-media-files/documents/about/pdf"
@@ -280,6 +333,18 @@ class WisdomtreeSource(HtmlTableSource):
                 fixture="2024_final_capital_gains.html",
                 live=False,
             ),
+            PageSpec(
+                name="2025_december_etf_distributions",
+                url=(
+                    "https://www.wisdomtree.com/investments/-/media/us-media-files/documents/"
+                    "resource-library/fund-reports-schedules/distribution-history/"
+                    "wisdomtree-etfs-declare-distributions-december-2025.pdf"
+                ),
+                fixture="2025_december_etf_distributions.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
         ]
 
 
@@ -297,15 +362,18 @@ class FirstTrustSource(HtmlTableSource):
         "(BFAP LT $3.1933 / ROC $0.2500; BGLD NII $0.5074 / ST $2.7353 / ROC $4.3407; "
         "IGLD NII $0.1042 / ST $0.1401 / ROC $0.3525). Fiscal YTD cumulative table "
         "omitted so illustration does not double-count. Printed dashes omitted. "
-        "Monthly income-sleeve 19(a) notices (FTHI, FMB) are not this family book. "
-        "First Trust Capital Management 2025 estimate table "
-        "(https://info.firsttrustcapital.com/ftcm-capital-gain-estimates-2025) "
-        "is interval / tender-offer (VARBX / VFLEX / FTPCX / HFLEX / FTPAX / FTCRED) "
-        "— omitted. Coming-soon Vest rows omitted."
+        "Official 24 Sep 2025 family declaration of 146 ETFs "
+        "https://www.ftportfolios.com/Common/ContentFileLoader.aspx?"
+        "ContentGUID=865e45a8-c914-4704-bc74-7227c3cabaf5 "
+        "(ex/record 9/25/2025; pay 9/30/2025) is ordinary income "
+        "(FVD $0.2519; FTHI $0.1710; FPE $0.0845; CIBR $0.0006). "
+        "Printed LT column was blank — omitted, not stored as $0. "
+        "Interval / tender-offer First Trust Capital Management funds omitted. "
+        "Coming-soon Vest rows omitted."
     )
     live_limitations = (
-        "Family 19(a) is PDF. Weekly walk uses the ContentGUID notice; "
-        "empty/PDF-bytes pages are no-op success."
+        "Family 19(a) and declaration PDFs. Weekly walk uses the ContentGUID notice "
+        "plus the 2025 tax-information reprint; empty/PDF-bytes pages are no-op success."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -320,7 +388,28 @@ class FirstTrustSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
-            )
+            ),
+            PageSpec(
+                name="2025_september_etf_distributions",
+                url=(
+                    "https://www.ftportfolios.com/Common/ContentFileLoader.aspx?"
+                    "ContentGUID=865e45a8-c914-4704-bc74-7227c3cabaf5"
+                ),
+                fixture="2025_september_etf_distributions.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="tax_information_hub",
+                url=(
+                    "https://www.ftportfolios.com/Common/ContentFileLoader.aspx?"
+                    "ContentGUID=ef0fb0f7-095d-48e9-a38e-ef09507f9729"
+                ),
+                fixture="tax_information_hub.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
         ]
 
 

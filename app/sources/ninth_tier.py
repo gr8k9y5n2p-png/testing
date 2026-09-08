@@ -31,7 +31,9 @@ class AmericanBeaconSource(HtmlTableSource):
                     "2025-Annual-Ordinary-Income-and-Capital-Gains-Mutual-Funds-updated.pdf"
                 ),
                 fixture="2025_annual_ordinary_income_and_capital_gains.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
 
@@ -64,7 +66,9 @@ class BaillieGiffordSource(HtmlTableSource):
                     "mutual-funds/estimated-capital-gain-distribution/"
                 ),
                 fixture="2025_estimated_capital_gains.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
 
@@ -98,7 +102,9 @@ class BrandesSource(HtmlTableSource):
                     "?sfvrsn=1329da10_43"
                 ),
                 fixture="2025_estimated_capital_gains.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
 
@@ -131,6 +137,8 @@ class MairsPowerSource(HtmlTableSource):
                 ),
                 fixture="2025_capital_gains_and_dividends.html",
                 live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
 
@@ -161,7 +169,9 @@ class BostonTrustSource(HtmlTableSource):
                     "Boston-Trust-Mutual-Funds-2025-Ex-Date-ending-NAV.pdf"
                 ),
                 fixture="2025_distribution_factors.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
 
@@ -189,6 +199,8 @@ class GrandeurPeakSource(HtmlTableSource):
                 url="https://grandeurpeakglobal.com/distributions/",
                 fixture="2025_year_end_distributions.html",
                 live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
 
@@ -216,6 +228,8 @@ class HennessySource(HtmlTableSource):
                 url="https://www.hennessyfunds.com/funds/distributions",
                 fixture="2025_year_end_distributions.html",
                 live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
 
@@ -244,6 +258,8 @@ class FamSource(HtmlTableSource):
                 url="https://fenimoreasset.com/resources/fam-funds-tax-center/",
                 fixture="2025_year_end_distributions.html",
                 live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
 
@@ -274,7 +290,9 @@ class MeridianSource(HtmlTableSource):
                     "2025-Final-Distributions-Meridian-Funds-121925.pdf"
                 ),
                 fixture="2025_final_distributions.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
 
@@ -304,6 +322,8 @@ class KineticsSource(HtmlTableSource):
                     "2025-Q4-Kinetics-Funds-Final-Distributions.pdf"
                 ),
                 fixture="2025_final_distributions.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]

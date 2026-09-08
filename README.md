@@ -619,6 +619,8 @@ Goal: for **existing US-domiciled adapters**, ingest every **mutual fund and ETF
 
 **Wave 16 (Website Submit-ticker + FE / VanEck / First Trust):** Website `POST /request/ticker` / `GET /request/ticker?status=queued` is the beta intake (201 queued / 200 already_covered / 422 invalid; SQLite `ticker_requests`; weekly `POST /ingest/ticker-requests` fetches the matched adapter and never invents amounts). Official densify: First Eagle 2025 ETF paid PDF (FEGE income $0.589 / ST $0.000 / LT $0.000; FEOE $0.738 / $0 / $0; open-end 2025 paid siblings still 404); VanEck 2024 paid mutual-fund YE (INIVX income $0.7750; MWMIX ST $1.4731 / LT $1.4325; printed None omitted); First Trust Capital Management 2025 table is interval / tender-offer (omitted) and Vest “Coming Soon” rows omitted. Growth of $X added for FEGE, MWMIX, BGLD.
 
+**Wave 17 (VanEck / First Trust / WisdomTree densify + weekly ticker pickup):** Fixture unique tickers **3,591 → 3,824**; funds **3,870 → 4,102** (38.2% of the 10,000 aspiration). Official books only: VanEck 2023 equity-ETF YE (GDX income $0.5001; IBOT ST $0.6716) + 2023 MF YE (INIVX $0.0102; MWMIX ST $1.6352) + 2025 paid MF/ETF YE (INIVX $1.5675; MWMIX ST $1.9529 / LT $1.6944; GDX $0.6331; MOTG ST $1.8899 / LT $4.0549; printed None / all-None / finals-to-come omitted) → **71** tickers. First Trust 24 Sep 2025 family declaration of **146** ETFs (FVD $0.2519; FTHI $0.1710; FPE $0.0845; CIBR $0.0006; blank LT omitted) → **150** tickers with the 19(a) sleeve. WisdomTree official December 2025 income declaration is the family income book (**85** tickers; DGRW $0.23270; published $0.00000 income stored; printed $0.00000 ST/LT omitted). Jensen 2024 official PDF (JENSX / JENIX LT $6.77; Mid Cap LT $1.10 without printed tickers omitted). Diamond Hill 2024 estimate sibling (DHLAX ST $0.035 / LT $2.900). First Eagle 2025 open-end paid siblings still 404; Gold / GIB / Small Cap remain Drupal SPAs. WisdomTree 2023 ETF final sibling still not a stable public file; Digital Funds omitted. Ranks 63–90 now have `live=True` estimate hubs on the weekly walk (empty/403/PDF-bytes = no-op success; Impax stays deferred/geo-gated). Weekly Action runs `python -m app.cli ticker-requests` after refresh. Growth of $X added for INIVX, FEOE, XC, FVD, JENSX. Amundi skipped. Never invents amounts.
+
 **Wave 15 (launch-bar pillar quality, ranks 56–62):** Live DB already clears the **1,000+** ticker launch bar (~3,400+ distinct). This wave densifies **existing heroes** (performance + multi-year YE + estimate hub) instead of adding thin single-row tickers. Official books only: AQR 2024 **final Class I** (AQGIX ST $0.6140 / LT $0.5462 / 11.68% of NAV; AUEIX ST $0.1898 / LT $4.3691 / 18.93% of NAV; printed dashes omitted; N/R6 clones not added); Causeway 2024 **final Inst+Inv** (CIVIX ST $0.1324 / LT $1.1868; CEMIX published $0.0000 stored); Matthews Asia official product-page paid history **2021–2024** for MEGMX / MAPTX / MINDX only (MAPTX 2024 income $0.58609 / LT $0.99319 / 8.0% of NAV; MINDX 2024 ST $1.41120 / LT $2.39476 / 12.7% of NAV); Bridgeway 2024 estimate (BRAGX LT $2.54426; BRUSX ST $1.13357; BRGOX NII-expected with no amount omitted). Alger `Distrib_FUNDS_2024.pdf` 404, Harding Loevner 2024 siblings 404, TCW unversioned final PDF is the 2025 book — no invented 2024 rows. Weekly estimate hubs now live for AQR, Causeway, Alger, Harding Loevner, Matthews Asia, TCW, and Bridgeway. Growth of $X fixtures added from Yahoo monthly adj close for AQGIX, CIVIX, CHUSX, HLMNX, MAPTX, TGDIX (BRAGX Yahoo adj-close empty — omitted). Website Submit-ticker aliases: `POST /request/ticker` (201 queued / 200 already_covered / 422 invalid) and `GET /request/ticker?status=queued`.
 
 | Family | Estimate feed? | Status | Multi-year history? | Performance? |
@@ -658,7 +660,7 @@ Goal: for **existing US-domiciled adapters**, ingest every **mutual fund and ETF
 | Thrivent | Yes (capital-gains HTML) | paid_history_only | 2024–2025 | — |
 | Hartford | Yes (2025 estimate PDF) | prelim_updated | 2024–2025 | — |
 | Macquarie | Yes (CGE-RET PDF) | prelim_updated | 2023–2025 | — |
-| First Eagle | Yes (2025 estimate PDF) | prelim_updated | 2023–2025 | — |
+| First Eagle | Yes (2025 estimate PDF) | prelim_updated | 2023–2025 | SGENX, FEVAX, FEGE, FEOE |
 | GMO | Yes (July 2026 Trust PDF) | prelim_updated | 2025–2026 | — |
 | Artisan | Yes (tax-center YTD HTML) | paid_history_only | 2024–2026 | — |
 | Calamos | Yes (2025 estimate PDF) | prelim_updated | 2024–2025 | — |
@@ -710,9 +712,9 @@ Goal: for **existing US-domiciled adapters**, ingest every **mutual fund and ETF
 | 43 | Voya | 3 / 3 | 3 / **17** | 2025 estimate PDF paying funds | Class A tickers only for NLCAX / VYCAX / NMCAX; other rows are PDF names. |
 | 51 | SEI | 0 / 3 | 1 / **51** | Full 2025 paying-fund estimate PDF | Fund-level (QALT ticker when printed). All-dash rows omitted. |
 | 52 | Brown Advisory | 4 / 4 | 4 / **17** | Full 2025 Inst/Inv/Adv estimate PDF | Tickers only for BAFFX / BAFGX / BAFWX / BVALX. All-dash funds omitted. |
-| 54 | VanEck | 3 / 3 | **56 / 56** | 2025 MF estimate + 2025 ETF estimate payers + **2024 full ETF YE** | Printed `None` omitted. GDX 2024 income $0.4025; SMH $1.0713; IBOT ST $0.9104 / LT $0.0112. |
-| 55 | WisdomTree | 4 / 4 | **9 / 9** | 2025 + **2024** final CG PDFs (payers only) | Dashed no-CG rows omitted. GTR 2024 ST $0.51992. |
-| 111 | First Trust | 0 / 0 | **4 / 4** | Official 19(a) ContentGUID notice | Current NII/ST/LT/ROC only. BFAP LT $3.1933 / ROC $0.2500. |
+| 54 | VanEck | 3 / 3 | **71 / 71** | 2025 MF/ETF estimate + **2023–2025 paid ETF/MF YE** | Printed `None` omitted. GDX 2023 $0.5001 / 2024 $0.4025 / 2025 $0.6331. INIVX 2023 $0.0102 / 2025 paid $1.5675. |
+| 55 | WisdomTree | 4 / 4 | **85 / 85** | 2025 + 2024 final CG payers + **Dec 2025 family income declaration** | Dashed no-CG omitted. DGRW income $0.23270. Published $0.00000 income stored. |
+| 111 | First Trust | 0 / 0 | **150 / 150** | 19(a) ContentGUID + **24 Sep 2025 146-ETF ordinary-income declaration** | FVD $0.2519; FTHI $0.1710; FPE $0.0845. Blank LT omitted. Interval/tender-offer omitted. |
 | 56 | AQR | 4 / 4 | **75 / 75** | Full 2025 I/N/R6 estimate PDF | Diversifying Strategies uses the later 12/19–12/23 dates. |
 | 57 | Causeway | 3 / 3 | **10 / 10** | Full 2025 Institutional + Investor final PDF | — |
 | 58 | Alger | 3 / 3 | **84 / 84** | Full 2025 share-class PDF | International Small Cap ALCZX collision omitted. Published $0.00 stored. |
@@ -986,6 +988,8 @@ Response body is exactly `{ "id", "ticker", "status", "message" }` — no auth f
 
 `POST /ingest/ticker-requests?mode=fixture` (weekly job / operator) picks up `queued` / `search_issuer` / `matched` rows, runs `POST /ingest/fetch` for the matched family when known, then sets `already_covered` if the ticker is now in the store. Unknown tickers stay `search_issuer` on the operator path (`/requests/tickers`) and `queued` on the Website path (`/request/ticker`). Amundi stays `skipped`. Empty/403/SPA live hubs remain no-op success.
 
+Weekly GitHub Action `.github/workflows/weekly-ingest.yml` runs `python -m app.cli refresh` then `python -m app.cli ticker-requests` so queued Website Submit-ticker rows are expanded after the family walk. No amounts are invented.
+
 | Rank | Slug | Display name | Parser | Live HTML | Public source (verified 2026-09-07) |
 | --- | --- | --- | --- | --- | --- |
 | 1 | `blackrock` (alias `ishares`) | BlackRock / iShares | implemented | yes | https://www.ishares.com/us/capital-gains-distributions |
@@ -1130,7 +1134,7 @@ Response body is exactly `{ "id", "ticker", "status", "message" }` — no auth f
 
 **Guggenheim:** skipped. Public materials are CEF monthly distributions / Section 19(a) notices, not an open-end family capital-gains estimate book.
 
-**First Trust:** implemented (rank 111, aliases `ft`, `ftportfolios`). Official Section 19(a) notice `ContentGUID=ad59e9bb-c8bb-4696-bf2d-42b9fa64b17e` is the current NII/ST/LT/ROC book for BFAP / BFJL / BGLD / IGLD. Monthly income-sleeve 19(a) notices are not this family book.
+**First Trust:** implemented (rank 111, aliases `ft`, `ftportfolios`). Official Section 19(a) notice `ContentGUID=ad59e9bb-c8bb-4696-bf2d-42b9fa64b17e` is the current NII/ST/LT/ROC book for BFAP / BFJL / BGLD / IGLD. Official 24 Sep 2025 family declaration `ContentGUID=865e45a8-c914-4704-bc74-7227c3cabaf5` is the 146-ETF ordinary-income book (FVD $0.2519). Blank LT omitted. Interval / tender-offer First Trust Capital Management and Vest “Coming Soon” rows omitted.
 
 **Pacer / Innovator / Global X:** skipped for this wave. Public 2025 family-level MF/ETF capital-gains estimate tables with scrapeable per-share amounts were not verified.
 

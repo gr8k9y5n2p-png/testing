@@ -119,10 +119,16 @@ class JensenSource(HtmlTableSource):
         "Public 2025 paid capital-gains HTML: "
         "https://www.jenseninvestment.com/insights/2025-growth-mutual-fund-distributions/ "
         "(Quality Growth Class J JENSX / Class I JENIX ST $0.15 / LT $16.65). "
-        "Record 11/12/2025; ex/pay 11/13/2025."
+        "Record 11/12/2025; ex/pay 11/13/2025. "
+        "Official 2024 PDF "
+        "https://www.jenseninvestment.com/wp-content/uploads/2024/11/"
+        "2024.11.13-jensen-funds-quality-growth-quality-mid-cap-capital-gains-dividend-distributions.pdf "
+        "(JENSX / JENIX LT $6.77; printed no-ST omitted; Mid Cap LT $1.10 "
+        "share-class tickers were not printed — omitted)."
     )
     live_limitations = (
-        "Live page is public HTML with prose lists, not a parseable table. Fixture fallback."
+        "Live page is public HTML with prose lists, not a parseable table. "
+        "Weekly walk uses the 2025 HTML; empty/SPA pages are no-op success."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -132,7 +138,20 @@ class JensenSource(HtmlTableSource):
                 url="https://www.jenseninvestment.com/insights/2025-growth-mutual-fund-distributions/",
                 fixture="2025_year_end_distributions.html",
                 live=True,
-            )
+                role="estimate",
+                empty_ok=True,
+            ),
+            PageSpec(
+                name="2024_year_end_distributions",
+                url=(
+                    "https://www.jenseninvestment.com/wp-content/uploads/2024/11/"
+                    "2024.11.13-jensen-funds-quality-growth-quality-mid-cap-capital-gains-"
+                    "dividend-distributions.pdf"
+                ),
+                fixture="2024_year_end_distributions.html",
+                live=False,
+                role="history",
+            ),
         ]
 
 
@@ -149,21 +168,44 @@ class DiamondHillSource(HtmlTableSource):
         "(e.g. Small Cap DHSCX LT $1.393 / 5.46% of NAV; Mid Cap DHPAX LT $2.698 / "
         "14.46%; Large Cap DHLAX ST $0.001 / LT $1.829 / 5.45%). "
         "Record 12/11/2025; ex 12/12/2025; pay 12/15/2025. "
-        "The PDF is fund-level; tickers are public Investor-class identifiers."
+        "The PDF is fund-level; tickers are public Investor-class identifiers. "
+        "Official 2024 estimate sibling "
+        "https://www.diamond-hill.com/sitefiles/live/documents/distributions/"
+        "dhf-capital-gain-estimates-as-of-10-31-24.pdf "
+        "(DHSCX LT $2.511; DHPAX LT $1.311; DHLAX ST $0.035 / LT $2.900; "
+        "printed dash ST omitted; loss-carryforward funds omitted)."
     )
-    live_limitations = "Estimate book is PDF. Fixture transcribes public Investor-class identifiers."
+    live_limitations = (
+        "Estimate book is PDF. Weekly walk uses the 2025 estimate PDF; "
+        "empty/PDF-bytes pages are no-op success."
+    )
 
     def pages(self) -> list[PageSpec]:
+        docs = "https://www.diamond-hill.com/sitefiles/live/documents/distributions"
         return [
             PageSpec(
                 name="2025_estimated_capital_gains",
-                url=(
-                    "https://www.diamond-hill.com/sitefiles/live/documents/distributions/"
-                    "dhf-capital-gain-estimates-as-of-10-31-25.pdf"
-                ),
+                url=f"{docs}/dhf-capital-gain-estimates-as-of-10-31-25.pdf",
                 fixture="2025_estimated_capital_gains.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
+            PageSpec(
+                name="2024_estimated_capital_gains",
+                url=f"{docs}/dhf-capital-gain-estimates-as-of-10-31-24.pdf",
+                fixture="2024_estimated_capital_gains.html",
                 live=False,
-            )
+                role="history",
+            ),
+            PageSpec(
+                name="distributions_hub",
+                url="https://www.diamond-hill.com/investment-strategies/distributions/mutual-funds/",
+                fixture="distributions_hub.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
         ]
 
 
@@ -194,7 +236,9 @@ class ChamplainSource(HtmlTableSource):
                     "Champlain-Funds-2025-Year-End-Distributions-Final-12-16-25.pdf"
                 ),
                 fixture="2025_final_distributions.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
 
@@ -223,7 +267,9 @@ class DriehausSource(HtmlTableSource):
                     "DMF_Year_end_Distribution_2025.pdf"
                 ),
                 fixture="2025_year_end_distributions.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
 
@@ -253,7 +299,9 @@ class HotchkisWileySource(HtmlTableSource):
                     "HW-Funds-Dec-2025-Div-Cap-Gain-Distributions.pdf"
                 ),
                 fixture="2025_year_end_distributions.html",
-                live=False,
+                live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
 
@@ -281,6 +329,8 @@ class MarsicoSource(HtmlTableSource):
                 url="https://www.marsicofunds.com/investor-resources/content/distributions.fs",
                 fixture="2025_year_end_distributions.html",
                 live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
 
@@ -299,16 +349,29 @@ class OsterweisSource(HtmlTableSource):
         "Equity record 12/12/2025; ex/pay 12/15/2025. "
         "Paid history: https://www.osterweis.com/files/OSTFX_Historical_Distributions.pdf"
     )
-    live_limitations = "Estimate book is PDF. Fixture transcribes public ticker rows."
+    live_limitations = (
+        "Estimate book is PDF. Weekly walk uses the tax-center hub + estimate PDF; "
+        "empty/PDF-bytes pages are no-op success."
+    )
 
     def pages(self) -> list[PageSpec]:
         return [
             PageSpec(
+                name="tax_center_hub",
+                url="https://www.osterweis.com/mutual_funds/tax_center",
+                fixture="tax_center_hub.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
+            PageSpec(
                 name="2025_estimated_distributions",
                 url="https://www.osterweis.com/files/Distribution-Estimates.pdf",
                 fixture="2025_estimated_distributions.html",
-                live=False,
-            )
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
         ]
 
 
@@ -336,5 +399,7 @@ class DavisSource(HtmlTableSource):
                 url="https://davisfunds.com/funds/distributions",
                 fixture="2025_year_end_distributions.html",
                 live=True,
+                role="estimate",
+                empty_ok=True,
             )
         ]
