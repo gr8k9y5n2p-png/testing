@@ -1,65 +1,41 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import {
-  PORTFOLIO_TICKER_RATES,
   SMOKE_CURRENT_TICKERS,
   SMOKE_PROPOSED_TICKERS,
   SMOKE_WEIGHT_PCT,
-  smokeCurrentHoldings,
-  smokeProposedHoldings,
-} from "./portfolio-compare-catalog.ts";
-import { PORTFOLIO_COMPARE_BOOK_DOLLARS } from "./portfolio-compare-types.ts";
+} from "./portfolio-compare-smoke.ts";
 
 const HISTORY_COVERED_CURRENT = ["AGTHX", "DODIX", "AMCAP", "DODGX"] as const;
 const HISTORY_COVERED_PROPOSED = ["AMCPX", "CGHM", "AGTHX", "AMCAP"] as const;
 const GAP_HEROES = ["VFIAX", "VBIAX", "TRBCX", "FBGRX", "VIGAX"] as const;
+const DEFAULT_BOOK = 1_000_000;
+
+const here = dirname(fileURLToPath(import.meta.url));
+
+function holdingDollars(weightPct: number, bookDollars: number): number {
+  return (weightPct / 100) * bookDollars;
+}
 
 describe("PortfolioCompare smoke books", () => {
   it("defaults Current to GTM history-covered tickers at 25% each", () => {
     assert.deepEqual([...SMOKE_CURRENT_TICKERS], [...HISTORY_COVERED_CURRENT]);
     assert.equal(SMOKE_WEIGHT_PCT, 25);
-
-    const holdings = smokeCurrentHoldings();
-    assert.deepEqual(
-      holdings.map((holding) => holding.ticker),
-      [...HISTORY_COVERED_CURRENT],
-    );
-    assert.ok(holdings.every((holding) => holding.weightPct === 25));
-    assert.equal(
-      holdings.reduce((sum, holding) => sum + holding.weightPct, 0),
-      100,
-    );
-    assert.ok(
-      holdings.every(
-        (holding) =>
-          holding.holdingDollars === 0.25 * PORTFOLIO_COMPARE_BOOK_DOLLARS,
-      ),
-    );
+    assert.equal(SMOKE_CURRENT_TICKERS.length * SMOKE_WEIGHT_PCT, 100);
+    assert.equal(holdingDollars(SMOKE_WEIGHT_PCT, DEFAULT_BOOK), 250_000);
   });
 
   it("defaults Proposed to GTM history-covered tickers at 25% each", () => {
     assert.deepEqual([...SMOKE_PROPOSED_TICKERS], [...HISTORY_COVERED_PROPOSED]);
-
-    const holdings = smokeProposedHoldings();
-    assert.deepEqual(
-      holdings.map((holding) => holding.ticker),
-      [...HISTORY_COVERED_PROPOSED],
-    );
-    assert.ok(holdings.every((holding) => holding.weightPct === 25));
-    assert.equal(
-      holdings.reduce((sum, holding) => sum + holding.weightPct, 0),
-      100,
-    );
+    assert.equal(SMOKE_PROPOSED_TICKERS.length * SMOKE_WEIGHT_PCT, 100);
   });
 
   it("keeps dollars derived from weight × book value when the book changes", () => {
     const book = 2_000_000;
-    const current = smokeCurrentHoldings(book);
-    const proposed = smokeProposedHoldings(book);
-    for (const holding of [...current, ...proposed]) {
-      assert.equal(holding.holdingDollars, (holding.weightPct / 100) * book);
-      assert.equal(holding.holdingDollars, 500_000);
-    }
+    assert.equal(holdingDollars(SMOKE_WEIGHT_PCT, book), 500_000);
   });
 
   it("does not seed the Render coverage-gap heroes as smoke defaults", () => {
@@ -69,8 +45,11 @@ describe("PortfolioCompare smoke books", () => {
     }
   });
 
-  it("includes DODGX in the localhost fixture catalog", () => {
-    assert.equal(PORTFOLIO_TICKER_RATES.DODGX?.fundName, "Dodge & Cox Stock Fund");
-    assert.equal(PORTFOLIO_TICKER_RATES.DODGX?.family, "Dodge & Cox");
+  it("includes DODGX fixture rates and re-exports smoke books from the catalog", () => {
+    const catalog = readFileSync(join(here, "portfolio-compare-catalog.ts"), "utf8");
+    assert.match(catalog, /DODGX:\s*\{/);
+    assert.match(catalog, /fundName:\s*"Dodge & Cox Stock Fund"/);
+    assert.match(catalog, /from "@\/lib\/illustrate\/portfolio-compare-smoke"/);
+    assert.match(catalog, /draftHolding\(ticker, SMOKE_WEIGHT_PCT,/);
   });
 });

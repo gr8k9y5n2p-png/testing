@@ -3,6 +3,13 @@ import type {
   PortfolioFundOption,
   PortfolioHoldingDraft,
 } from "@/lib/illustrate/portfolio-compare-types";
+import {
+  SMOKE_CURRENT_TICKERS,
+  SMOKE_PROPOSED_TICKERS,
+  SMOKE_WEIGHT_PCT,
+} from "@/lib/illustrate/portfolio-compare-smoke";
+
+export { SMOKE_CURRENT_TICKERS, SMOKE_PROPOSED_TICKERS, SMOKE_WEIGHT_PCT };
 
 export type PortfolioTickerRates = {
   fundName: string;
@@ -139,12 +146,6 @@ export function ratesForTicker(ticker: string): PortfolioTickerRates {
   const key = ticker.trim().toUpperCase();
   return PORTFOLIO_TICKER_RATES[key] ?? { ...DEFAULT_RATES, fundName: key };
 }
-
-/** GTM history-covered Current book — 25% each. */
-export const SMOKE_CURRENT_TICKERS = ["AGTHX", "DODIX", "AMCAP", "DODGX"] as const;
-/** GTM history-covered Proposed book — 25% each. */
-export const SMOKE_PROPOSED_TICKERS = ["AMCPX", "CGHM", "AGTHX", "AMCAP"] as const;
-export const SMOKE_WEIGHT_PCT = 25;
 
 export function draftHolding(
   ticker: string,
