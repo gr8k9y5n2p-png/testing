@@ -1,6 +1,5 @@
 import { formatOptionalDate, formatUsd } from "@/lib/format";
 import {
-  PAID_HISTORY_EMPTY,
   TAX_DRAG_CARD_DETAIL,
   TAX_IMPACT_DELTA_DETAIL,
   UPCOMING_UNAVAILABLE_HEADLINE,
@@ -12,7 +11,6 @@ import {
   formatMoreLessTax,
   formatStageLabel,
   formatTaxDragPct,
-  paidHistoryRowsForSide,
   totalUpcomingTax,
   upcomingHoldingsForSide,
   type TaxPolarity,
@@ -51,7 +49,6 @@ export type PortfolioCompareExportSide = {
   totalUpcomingTax: number;
   holdings: PortfolioCompareExportHolding[];
   upcoming: PortfolioCompareExportUpcoming[];
-  paidHistory: PortfolioCompareExportUpcoming[];
 };
 
 export type PortfolioCompareExportModel = {
@@ -86,17 +83,6 @@ function sideModel(
       holdingDollars: holding.holding_dollars,
     })),
     upcoming: upcomingHoldingsForSide(allocation, side).map((row) => ({
-      ticker: row.ticker,
-      distributionDollars: row.distributionDollars,
-      estimatedTax: row.estimatedTax,
-      available: row.available,
-      stageLabel: formatStageLabel(row.stage),
-      announcedDate: row.announcedDate,
-      recordDate: row.recordDate,
-      exDate: row.exDate,
-      payableDate: row.payableDate,
-    })),
-    paidHistory: paidHistoryRowsForSide(allocation, side).map((row) => ({
       ticker: row.ticker,
       distributionDollars: row.distributionDollars,
       estimatedTax: row.estimatedTax,
@@ -169,7 +155,6 @@ function sideHtml(side: PortfolioCompareExportSide): string {
     )
     .join("");
   const upcoming = distributionRowsHtml(side.upcoming);
-  const paid = distributionRowsHtml(side.paidHistory);
 
   return `
     <section class="col">
@@ -189,11 +174,6 @@ function sideHtml(side: PortfolioCompareExportSide): string {
       <table>
         <thead><tr><th>Ticker</th><th>Est. dist $</th><th>Est. tax</th><th>Announced</th><th>Record</th><th>Ex-div</th><th>Payable</th><th>Stage</th></tr></thead>
         <tbody>${upcoming || `<tr><td colspan="8" class="muted">${UPCOMING_UNAVAILABLE_HEADLINE}</td></tr>`}</tbody>
-      </table>
-      <h3>Paid history</h3>
-      <table>
-        <thead><tr><th>Ticker</th><th>Est. dist $</th><th>Est. tax</th><th>Announced</th><th>Record</th><th>Ex-div</th><th>Payable</th><th>Stage</th></tr></thead>
-        <tbody>${paid || `<tr><td colspan="8" class="muted">${PAID_HISTORY_EMPTY}</td></tr>`}</tbody>
       </table>
     </section>`;
 }

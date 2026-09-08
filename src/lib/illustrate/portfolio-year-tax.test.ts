@@ -10,6 +10,7 @@ import { PORTFOLIO_COMPARE_YEARS, portfolioYearTaxRate } from "./portfolio-compa
 import {
   calendarYearTaxTable,
   defaultPortfolioComparePeriods,
+  ensurePortfolioComparePeriods,
   hasCalendarYearTax,
   periodHoldingTax,
 } from "./portfolio-year-tax.ts";
@@ -120,6 +121,18 @@ describe("periodHoldingTax", () => {
   it("keeps a matched published $0 as zero, not N/A", () => {
     assert.equal(periodHoldingTax(tax("DODIX", 0, true)), 0);
   });
+
+  it("treats covered:false as N/A even when a zero is present", () => {
+    assert.equal(
+      periodHoldingTax({
+        ticker: "CGHM",
+        matched: true,
+        estimated_tax: 0,
+        covered: false,
+      }),
+      null,
+    );
+  });
 });
 
 describe("portfolioYearTaxRate smoke coverage", () => {
@@ -140,16 +153,22 @@ describe("portfolioYearTaxRate smoke coverage", () => {
 });
 
 describe("calendar-year tax table", () => {
-  it("sends 2021–2025 periods by default", () => {
+  it("sends 2021–2025 periods by default and fills a missing 2025", () => {
     assert.deepEqual(
       defaultPortfolioComparePeriods().map((period) => period.year),
+      [2021, 2022, 2023, 2024, 2025],
+    );
+    assert.deepEqual(
+      ensurePortfolioComparePeriods([{ year: 2021 }, { year: 2024 }]).map(
+        (period) => period.year,
+      ),
       [2021, 2022, 2023, 2024, 2025],
     );
   });
 
   it("fills AGTHX/AMCAP/AMCPX/DODGX and DODIX 2021–2025; CGHM is N/A", () => {
     const model = calendarYearTaxTable(resultForSmoke());
-    assert.deepEqual(model.years, [2021, 2022, 2023, 2024, 2025]);
+    assert.deepEqual(model.years, [2025, 2024, 2023, 2022, 2021]);
     assert.equal(hasCalendarYearTax(model), true);
 
     const byTicker = (side: "current" | "proposed", ticker: string) =>
@@ -179,8 +198,27 @@ describe("calendar-year tax table", () => {
     ];
     const model = calendarYearTaxTable(book);
     const agthx = model.current.find((row) => row.ticker === "AGTHX");
-    assert.deepEqual(agthx?.cells, [null, null, null, 2400, null]);
+    assert.deepEqual(model.years, [2025, 2024, 2023, 2022, 2021]);
+    assert.deepEqual(agthx?.cells, [null, 2400, null, null, null]);
     assert.equal(agthx?.cells.includes(0), false);
+  });
+
+  it("keeps a 2025 column when Data only returns 2021–2024", () => {
+    const book = resultForSmoke();
+    book.periods = (book.periods ?? []).filter((period) => period.year !== 2025);
+    const model = calendarYearTaxTable(book);
+    assert.deepEqual(model.years, [2025, 2024, 2023, 2022, 2021]);
+    const agthx = model.current.find((row) => row.ticker === "AGTHX");
+    assert.equal(agthx?.cells.length, 5);
+    assert.equal(agthx?.cells[0], null);
+    assert.ok(agthx?.cells.slice(1).every((cell) => cell != null && cell > 0));
+  });
+
+  it("keeps one row per ticker even when the book repeats a holding", () => {
+    const book = resultForSmoke();
+    book.proposed.holdings.push(holding({ ticker: "AMCPX", holding_index: 4 }));
+    const model = calendarYearTaxTable(book);
+    assert.equal(model.proposed.filter((row) => row.ticker === "AMCPX").length, 1);
   });
 
   it("treats uncovered holdings as N/A across years, never $0", () => {

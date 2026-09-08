@@ -5,7 +5,7 @@ import { AllocationColumn } from "@/components/illustrate/portfolio-compare/Allo
 import { CalendarYearTaxTable } from "@/components/illustrate/portfolio-compare/CalendarYearTaxTable";
 import { SummaryStrip } from "@/components/illustrate/portfolio-compare/SummaryStrip";
 import { TaxImpactChart } from "@/components/illustrate/portfolio-compare/TaxImpactChart";
-import { UpcomingTable, PaidHistoryTable } from "@/components/illustrate/portfolio-compare/UpcomingTable";
+import { UpcomingTable } from "@/components/illustrate/portfolio-compare/UpcomingTable";
 import { navFromFundMetadata } from "@/lib/illustrate/compare-request";
 import { seedNavLookup } from "@/lib/illustrate/seed-nav";
 import { catalogFunds } from "@/lib/illustrate/portfolio-compare-catalog";
@@ -15,7 +15,6 @@ import {
 } from "@/lib/illustrate/portfolio-compare-catalog";
 import { postIllustratePortfolioCompare } from "@/lib/illustrate/portfolio-compare-client";
 import {
-  paidHistoryRowsForSide,
   taxImpactBarsForSide,
   totalUpcomingTax,
   upcomingHoldingsForSide,
@@ -194,12 +193,6 @@ export function PortfolioCompare({
   const proposedUpcomingHoldings = result
     ? upcomingHoldingsForSide(result.proposed, "proposed")
     : [];
-  const currentPaid = result
-    ? paidHistoryRowsForSide(result.current, "current")
-    : [];
-  const proposedPaid = result
-    ? paidHistoryRowsForSide(result.proposed, "proposed")
-    : [];
   const currentBars = result ? taxImpactBarsForSide(result.current) : [];
   const proposedBars = result ? taxImpactBarsForSide(result.proposed) : [];
   const currentTotalTax = result ? totalUpcomingTax(result.current) : 0;
@@ -257,7 +250,7 @@ export function PortfolioCompare({
         </div>
       </header>
 
-      <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-2 lg:grid-rows-[auto_auto_auto_auto] lg:[grid-template-areas:'holdings-c_holdings-p'_'upcoming-c_upcoming-p'_'charts-c_charts-p'_'tables-c_tables-p']">
+      <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-2 lg:grid-rows-[auto_auto_auto] lg:[grid-template-areas:'holdings-c_holdings-p'_'upcoming-c_upcoming-p'_'charts-c_charts-p']">
         <AllocationColumn
           title="Current allocation"
           holdings={current}
@@ -296,20 +289,6 @@ export function PortfolioCompare({
             rows={currentUpcomingHoldings}
             sideLabel="Current"
             className="h-full lg:[grid-area:upcoming-c]"
-          />
-        ) : null}
-        {!canFetch ? null : loading && !result ? (
-          <div
-            className="h-48 min-h-48 animate-pulse rounded-2xl border border-line bg-surface lg:h-full lg:[grid-area:tables-c]"
-            aria-busy
-            aria-label="Loading current paid history"
-          />
-        ) : result ? (
-          <PaidHistoryTable
-            headingId="paid-history-current"
-            rows={currentPaid}
-            sideLabel="Current"
-            className="h-full lg:[grid-area:tables-c]"
           />
         ) : null}
 
@@ -351,20 +330,6 @@ export function PortfolioCompare({
             rows={proposedUpcomingHoldings}
             sideLabel="Proposed"
             className="h-full lg:[grid-area:upcoming-p]"
-          />
-        ) : null}
-        {!canFetch ? null : loading && !result ? (
-          <div
-            className="h-48 min-h-48 animate-pulse rounded-2xl border border-line bg-surface lg:h-full lg:[grid-area:tables-p]"
-            aria-busy
-            aria-label="Loading proposed paid history"
-          />
-        ) : result ? (
-          <PaidHistoryTable
-            headingId="paid-history-proposed"
-            rows={proposedPaid}
-            sideLabel="Proposed"
-            className="h-full lg:[grid-area:tables-p]"
           />
         ) : null}
       </div>
