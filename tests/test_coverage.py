@@ -7,8 +7,8 @@ def test_coverage_endpoint_lists_top_110(client: TestClient) -> None:
     response = client.get("/coverage")
     assert response.status_code == 200
     body = response.json()
-    assert body["top_n"] == 111
-    assert body["implemented_count"] == 111
+    assert body["top_n"] == 112
+    assert body["implemented_count"] == 112
     assert body["stub_count"] == 0
     assert body["implemented_pct"] == 100.0
     slugs = [row["slug"] for row in body["families"]]
@@ -124,6 +124,7 @@ def test_coverage_endpoint_lists_top_110(client: TestClient) -> None:
         "hodges",
         "tocqueville",
         "first_trust",
+        "dws",
     ]
     assert all(row["coverage_tier"] == "implemented" for row in body["families"])
     assert body["families"][0]["priority"] == 1
@@ -148,6 +149,7 @@ def test_coverage_endpoint_lists_top_110(client: TestClient) -> None:
     assert body["families"][100]["aum_rank"] == 101
     assert body["families"][109]["slug"] == "tocqueville"
     assert body["families"][110]["slug"] == "first_trust"
+    assert body["families"][111]["slug"] == "dws"
 
 
 def test_coverage_gap_implemented_family(client: TestClient) -> None:
@@ -187,6 +189,17 @@ def test_coverage_gap_alias_ishares(client: TestClient) -> None:
     response = client.post("/coverage/gaps", json={"ticker": "BDVL", "fund_family": "ishares"})
     assert response.status_code == 200
     assert response.json()["adapter_slug"] == "blackrock"
+
+
+def test_coverage_gap_alias_xtrackers_and_dws_funds(client: TestClient) -> None:
+    xtrackers = client.post("/coverage/gaps", json={"ticker": "DBEF", "fund_family": "xtrackers"})
+    assert xtrackers.status_code == 200
+    assert xtrackers.json()["adapter_slug"] == "dws"
+    funds = client.post(
+        "/coverage/gaps", json={"ticker": "SDGAX", "fund_family": "dws_mutual_funds"}
+    )
+    assert funds.status_code == 200
+    assert funds.json()["adapter_slug"] == "dws"
 
 
 def test_coverage_gap_alias_pioneer_and_dfa(client: TestClient) -> None:

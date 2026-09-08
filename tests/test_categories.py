@@ -12,6 +12,19 @@ def test_curated_flagships() -> None:
     assert resolve_category(ticker="DODIX", fund_name="Dodge & Cox Income Fund") == "Intermediate Core Bond"
     assert resolve_category(ticker="DODGX") == "Large Value"
     assert resolve_category(ticker="VTIAX") == "Foreign Large Blend"
+    assert resolve_category(ticker="DBEF", fund_name="Xtrackers MSCI EAFE Hedged Equity ETF") == (
+        "Foreign Large Blend"
+    )
+    assert resolve_category(ticker="HYLB", fund_name="Xtrackers USD High Yield Corporate Bond ETF") == (
+        "High Yield Bond"
+    )
+    assert resolve_category(ticker="ASHR") == "China Region"
+    assert resolve_category(ticker="SDGAX", fund_name="DWS Capital Growth Fund") == "Large Growth"
+    assert resolve_category(ticker="SUWAX", fund_name="DWS Core Equity Fund") == "Large Blend"
+    assert resolve_category(ticker="KTCAX", fund_name="DWS Science and Technology Fund") == (
+        "Technology"
+    )
+    assert resolve_category(ticker="SXPAX", fund_name="DWS S&P 500 Index Fund") == "Large Blend"
 
 
 def test_name_rules_high_confidence() -> None:

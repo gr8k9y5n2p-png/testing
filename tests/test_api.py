@@ -290,6 +290,7 @@ def test_fund_families_coverage_ranks(client: TestClient) -> None:
     assert slugs["amg"]["aum_rank"] == 101
     assert slugs["tocqueville"]["aum_rank"] == 110
     assert slugs["first_trust"]["aum_rank"] == 111
+    assert slugs["dws"]["aum_rank"] == 112
     assert slugs["impax"]["implemented"] is True
     assert slugs["gqg"]["implemented"] is True
     assert slugs["third_avenue"]["implemented"] is True
@@ -312,7 +313,9 @@ def test_fund_families_coverage_ranks(client: TestClient) -> None:
     assert slugs["value_line"]["implemented"] is True
     assert slugs["tocqueville"]["implemented"] is True
     assert slugs["first_trust"]["implemented"] is True
-    assert len(slugs) == 111
+    assert slugs["dws"]["implemented"] is True
+    assert slugs["dws"]["display_name"] == "DWS / Xtrackers"
+    assert len(slugs) == 112
 
 
 def test_manual_ingest_partner_feed(client: TestClient) -> None:

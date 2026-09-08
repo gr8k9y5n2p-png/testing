@@ -61,6 +61,7 @@ from app.sources.fourth_tier import (
     WasatchSource,
 )
 from app.sources.third_tier import AmericanCenturySource, JanusHendersonSource, MfsSource
+from app.sources.dws import DwsSource
 from app.sources.sixth_tier import (
     AqrSource,
     AlgerSource,
@@ -261,6 +262,15 @@ def test_full_book_artisan_ici_and_first_eagle() -> None:
     first_trust_funds, first_trust_tickers = _funds_and_tickers(FirstTrustSource())
     assert {"BFAP", "BGLD", "IGLD", "BFJL", "FVD", "FTHI", "FPE"} <= first_trust_tickers
     assert len(first_trust_tickers) >= 140
+
+    dws_funds, dws_tickers = _funds_and_tickers(DwsSource())
+    assert {"DBEF", "HYLB", "HDEF", "ASHR", "PSWD", "DBAW", "HAUZ"} <= dws_tickers
+    assert {"SDGAX", "SUWAX", "KTCAX", "SXPAX", "TOLLX", "BTIEX"} <= dws_tickers
+    assert len(dws_tickers) >= 55
+    assert "ASHS" not in dws_tickers
+    assert "IND" not in dws_tickers
+    assert not any("Municipal Income Trust" in name for name in dws_funds)
+    assert not any("New Germany" in name for name in dws_funds)
 
 
 def test_full_book_ranks_41_plus_thin_family_harvest() -> None:

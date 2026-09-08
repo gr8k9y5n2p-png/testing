@@ -122,6 +122,7 @@ from app.sources.tenth_tier import (
     RiverparkSource,
     WestwoodSource,
 )
+from app.sources.dws import DwsSource
 from app.sources.eleventh_tier import (
     AmgSource,
     ConestogaSource,
@@ -278,6 +279,15 @@ _ALIASES = {
     "firsttrust": "first_trust",
     "ft": "first_trust",
     "ftportfolios": "first_trust",
+    "dws": "dws",
+    "xtrackers": "dws",
+    "xtracker": "dws",
+    "deutsche": "dws",
+    "deutsche_bank": "dws",
+    "dbx": "dws",
+    "dbx_advisors": "dws",
+    "dws_funds": "dws",
+    "dws_mutual_funds": "dws",
     "aqr": "aqr",
     "causeway": "causeway",
     "alger": "alger",
@@ -445,6 +455,7 @@ def _sources() -> dict[str, FundSource]:
         VaneckSource(),
         WisdomtreeSource(),
         FirstTrustSource(),
+        DwsSource(),
         AqrSource(),
         CausewaySource(),
         AlgerSource(),
