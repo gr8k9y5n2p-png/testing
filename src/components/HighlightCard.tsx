@@ -115,6 +115,7 @@ function OutlierGroup({
   funds: FundEstimateView[];
   split: boolean;
 }) {
+  // Eric: above category avg = more tax (red); below = less tax (green/teal).
   const bar =
     tone === "above"
       ? "border-l-[3px] border-l-tax-more bg-tax-more-soft/40"

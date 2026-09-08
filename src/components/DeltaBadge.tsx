@@ -17,7 +17,8 @@ export function DeltaBadge({
   }
 
   const tone = deltaTone(fund.vsCategoryPctNav);
-  // Above category avg = more tax to the client (red). Below = less tax (green).
+  // Eric: above category avg = more tax to the client (red / bad).
+  // Below = less tax (green/teal / good). Do not use Ledger --above green for +.
   const classes = {
     above: "bg-tax-more-soft text-tax-more",
     below: "bg-tax-less-soft text-tax-less",
