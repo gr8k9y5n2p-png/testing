@@ -19,6 +19,8 @@ import {
 } from "@/lib/charts/shared-axis";
 import { formatUsd } from "@/lib/format";
 import { postIllustrateCompare } from "@/lib/illustrate/compare-client";
+import { navFromFundMetadata, positiveNav } from "@/lib/illustrate/compare-request";
+import { seedNavLookup } from "@/lib/illustrate/seed-nav";
 import type { ComparePeriodIn, CompareResponse } from "@/lib/illustrate/compare-types";
 import {
   toNegativeTaxDrag,
@@ -38,6 +40,8 @@ export type GrowthFundInput = {
   label?: string;
   fundIdentifier?: string;
   fundFamily?: string;
+  /** Search / fund metadata NAV. Sent on YoY compare when > 0. */
+  navPerShare?: number | null;
 };
 
 export type GrowthAndTaxDragModuleProps = {
@@ -465,6 +469,7 @@ function fundKey(fund: GrowthFundInput): GrowthFundInput {
     label: fund.label,
     fundIdentifier: fund.fundIdentifier,
     fundFamily: fund.fundFamily,
+    navPerShare: fund.navPerShare,
   };
 }
 
@@ -520,6 +525,12 @@ async function loadModule(
           ? taxYears
           : [{ year: 2021 }, { year: 2022 }, { year: 2023 }, { year: 2024 }, { year: 2025 }];
 
+      const lastClose =
+        performance.fund.points[performance.fund.points.length - 1]?.adj_close;
+      const nav =
+        navFromFundMetadata(ticker, input.navPerShare, seedNavLookup) ??
+        positiveNav(lastClose);
+
       let tax: CompareResponse | null = null;
       try {
         tax = await postIllustrateCompare(
@@ -528,6 +539,7 @@ async function loadModule(
             holding_dollars: principal,
             combine_state_with_federal: true,
             latest_as_of_only: true,
+            ...(nav != null ? { nav_per_share: nav } : {}),
             selectors: {
               ticker,
               fund_identifier: input.fundIdentifier ?? ticker,
@@ -537,6 +549,7 @@ async function loadModule(
             left: {
               label: input.label ?? ticker,
               holding_dollars: principal,
+              ...(nav != null ? { nav_per_share: nav } : {}),
               selectors: {
                 ticker,
                 fund_identifier: input.fundIdentifier ?? ticker,

@@ -42,8 +42,19 @@ function mergeFunds(
   apiFunds: FundEstimateView[],
   seedFunds: FundEstimateView[],
 ): FundEstimateView[] {
-  const tickers = new Set(apiFunds.map((fund) => fund.ticker.toUpperCase()));
-  return [...apiFunds, ...seedFunds.filter((fund) => !tickers.has(fund.ticker.toUpperCase()))];
+  const seedByTicker = new Map(
+    seedFunds.map((fund) => [fund.ticker.toUpperCase(), fund]),
+  );
+  const mergedApi = apiFunds.map((fund) => {
+    if (fund.nav > 0) return fund;
+    const seed = seedByTicker.get(fund.ticker.toUpperCase());
+    return seed && seed.nav > 0 ? { ...fund, nav: seed.nav } : fund;
+  });
+  const tickers = new Set(mergedApi.map((fund) => fund.ticker.toUpperCase()));
+  return [
+    ...mergedApi,
+    ...seedFunds.filter((fund) => !tickers.has(fund.ticker.toUpperCase())),
+  ];
 }
 
 export async function getDistributionRepository(): Promise<DistributionRepository> {

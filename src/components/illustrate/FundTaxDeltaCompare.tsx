@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { TaxDeltaCompareCard } from "@/components/illustrate/TaxDeltaCompareCard";
 import { postIllustrateCompare } from "@/lib/illustrate/compare-client";
+import { toDataApiCompareBody } from "@/lib/illustrate/compare-request";
+import { seedNavLookup } from "@/lib/illustrate/seed-nav";
 import {
   COMPARE_SUMMARY_HOLDING_DOLLARS,
   type ComparePeriodIn,
@@ -69,16 +71,19 @@ export function FundTaxDeltaCompare({
     const next = JSON.parse(requestKey) as CompareQuery;
 
     void postIllustrateCompare(
-      {
-        mode: "fund_vs_fund",
-        holding_dollars: next.holdingDollars,
-        combine_state_with_federal: true,
-        latest_as_of_only: true,
-        left: next.left,
-        right: next.right,
-        periods: next.periods,
-        tax_rates: next.taxRates ?? {},
-      },
+      toDataApiCompareBody(
+        {
+          mode: "fund_vs_fund",
+          holding_dollars: next.holdingDollars,
+          combine_state_with_federal: true,
+          latest_as_of_only: true,
+          left: next.left,
+          right: next.right,
+          periods: next.periods,
+          tax_rates: next.taxRates ?? {},
+        },
+        seedNavLookup,
+      ),
       { signal: controller.signal },
     )
       .then((payload) => {

@@ -39,6 +39,12 @@ export type {
   UpcomingSummary,
 } from "@/lib/illustrate/tax-drag-chart";
 export { postIllustrateCompare } from "@/lib/illustrate/compare-client";
+export {
+  compareSideFromFund,
+  navFromFundMetadata,
+  toDataApiCompareBody,
+} from "@/lib/illustrate/compare-request";
+export { seedNavLookup } from "@/lib/illustrate/seed-nav";
 export type {
   CompareRequest,
   CompareResponse,
