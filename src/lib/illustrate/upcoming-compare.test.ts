@@ -92,13 +92,13 @@ describe("unpaid-only Upcoming gate", () => {
   });
 
   it("keeps Growth & tax drag off compare-summary Upcoming badges", () => {
-    const module = readFileSync(
+    const growthModule = readFileSync(
       join(here, "../../components/illustrate/GrowthAndTaxDragModule.tsx"),
       "utf8",
     );
-    assert.doesNotMatch(module, /toUpcomingSummary/);
-    assert.doesNotMatch(module, /upcoming_taxable_distribution/);
-    assert.doesNotMatch(module, /upcomingSummary/);
+    assert.doesNotMatch(growthModule, /toUpcomingSummary/);
+    assert.doesNotMatch(growthModule, /upcoming_taxable_distribution/);
+    assert.doesNotMatch(growthModule, /upcomingSummary/);
   });
 
   it("does not invent YoY upcoming from the latest calendar-year tax", () => {
