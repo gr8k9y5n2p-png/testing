@@ -2,6 +2,11 @@ import {
   getIllustrateEndpoint,
   isMockIllustrateEndpoint,
 } from "@/lib/data-api/config";
+import {
+  toDataApiIllustrateBody,
+  userFacingIllustrateError,
+} from "@/lib/illustrate/illustrate-request";
+import { seedNavLookup } from "@/lib/illustrate/seed-nav";
 import type {
   IllustrateErrorBody,
   IllustrateRequest,
@@ -14,6 +19,13 @@ export {
   getIllustrateEndpoint,
   isMockIllustrateEndpoint as isMockIllustrate,
 } from "@/lib/data-api/config";
+
+export {
+  NEED_FUND_PRICE_COPY,
+  NAV_OR_SHARES_REQUIRED_DETAIL,
+  toDataApiIllustrateBody,
+  userFacingIllustrateError,
+} from "@/lib/illustrate/illustrate-request";
 
 export class IllustrateRequestError extends Error {
   constructor(
@@ -108,31 +120,13 @@ export function normalizeIllustrateResponse(raw: Record<string, unknown>): Illus
   };
 }
 
-export function toDataApiIllustrateBody(
-  request: IllustrateRequest,
-): Record<string, unknown> {
-  const { selector, nav_per_share, ...rest } = request;
-  const body: Record<string, unknown> = { ...rest };
-  if (selector) {
-    body.selector = selector;
-    body.selectors = {
-      fund_family: selector.fund_family,
-      fund_identifier: selector.fund_identifier,
-      ticker: selector.ticker ?? selector.fund_identifier,
-    };
-  }
-  if (nav_per_share != null) body.nav_per_share = nav_per_share;
-  body.latest_as_of_only = true;
-  return body;
-}
-
 export async function postIllustrate(
   request: IllustrateRequest,
   init?: { signal?: AbortSignal },
 ): Promise<IllustrateResponse> {
   const endpoint = getIllustrateEndpoint();
   const remote = !isMockIllustrateEndpoint(endpoint);
-  const payload = remote ? toDataApiIllustrateBody(request) : request;
+  const payload = remote ? toDataApiIllustrateBody(request, seedNavLookup) : request;
 
   async function post(url: string, body: unknown) {
     return fetch(url, {
@@ -158,16 +152,22 @@ export async function postIllustrate(
   }
 
   if (!response.ok) {
-    let detail = `Illustrate failed (${response.status})`;
-    let code: string | undefined;
+    let mapped = userFacingIllustrateError(
+      null,
+      `Illustrate failed (${response.status})`,
+    );
     try {
       const body = (await response.json()) as IllustrateErrorBody;
-      if (body.detail) detail = body.detail;
-      code = body.code;
+      mapped = userFacingIllustrateError(
+        body,
+        typeof body.detail === "string" && body.detail
+          ? body.detail
+          : mapped.message,
+      );
     } catch {
       /* ignore */
     }
-    throw new IllustrateRequestError(detail, response.status, code);
+    throw new IllustrateRequestError(mapped.message, response.status, mapped.code);
   }
 
   const raw = (await response.json()) as Record<string, unknown>;

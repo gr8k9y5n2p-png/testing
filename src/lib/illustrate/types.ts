@@ -63,7 +63,7 @@ export const EXAMPLE_ILLUSTRATE_REQUEST: IllustrateRequest = {
   combine_state_with_federal: true,
 };
 
-/** Alternate selector form: % of NAV needs no nav_per_share. */
+/** Alternate selector form: % of NAV can omit nav_per_share when the snapshot is percent_of_nav. */
 export const EXAMPLE_SELECTOR_REQUEST: IllustrateRequest = {
   holding_dollars: 1_000_000,
   selector: { fund_family: "American Funds", fund_identifier: "AMCPX" },
@@ -106,9 +106,16 @@ export type IllustrateResponse = {
 };
 
 export type IllustrateErrorBody = {
-  detail: string;
+  detail?: string | Record<string, unknown>;
   code?: string;
+  needs_nav_or_shares?: boolean;
+  nav_required?: boolean;
 };
+
+export {
+  NEED_FUND_PRICE_COPY,
+  NAV_OR_SHARES_REQUIRED_DETAIL,
+} from "./illustrate-error";
 
 /**
  * estimate_type → TaxRates key (locked mapping).

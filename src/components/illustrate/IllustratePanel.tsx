@@ -4,7 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import type { FundEstimateView } from "@/data/types";
 import { useCoverage } from "@/components/coverage/CoverageProvider";
 import { isMockIllustrate, postIllustrate } from "@/lib/illustrate/client";
+import { navFromFundMetadata, positiveNav } from "@/lib/illustrate/compare-request";
 import { distributionIdsForFund } from "@/lib/illustrate/ids";
+import { seedNavLookup } from "@/lib/illustrate/seed-nav";
 import {
   postIllustratePortfolio,
   type PortfolioIllustrateResponse,
@@ -102,8 +104,10 @@ function IllustrationWorkspace({ fund }: { fund: FundEstimateView }) {
 
   const needsNav = unit === AMOUNT_UNITS.per_share;
   const nav = Number(navInput);
+  const metadataNav = navFromFundMetadata(fund.ticker, fund.nav, seedNavLookup);
+  const requestNav = needsNav ? positiveNav(nav) : metadataNav;
   const navError =
-    needsNav && !(nav > 0)
+    needsNav && requestNav == null
       ? "Enter NAV per share to illustrate $ / share amounts."
       : null;
   const mock = isMockIllustrate();
@@ -126,7 +130,7 @@ function IllustrationWorkspace({ fund }: { fund: FundEstimateView }) {
                 ticker: fund.ticker,
               },
             }),
-        nav_per_share: needsNav ? nav : null,
+        ...(requestNav != null ? { nav_per_share: requestNav } : {}),
         tax_rates: rates,
         combine_state_with_federal: combine,
       };
@@ -153,7 +157,7 @@ function IllustrationWorkspace({ fund }: { fund: FundEstimateView }) {
               fund_family: fund.family,
               fund_identifier: fund.ticker,
               fund_name: fund.fundName,
-              nav_per_share: needsNav ? nav : undefined,
+              ...(requestNav != null ? { nav_per_share: requestNav } : {}),
             },
           ],
           tax_rates: rates,
@@ -169,7 +173,7 @@ function IllustrationWorkspace({ fund }: { fund: FundEstimateView }) {
       controller.abort();
       window.clearTimeout(timer);
     };
-  }, [canFetch, useIds, distributionIds, holding, rates, combine, needsNav, nav, fund.family, fund.ticker, fund.fundName]);
+  }, [canFetch, useIds, distributionIds, holding, rates, combine, requestNav, fund.family, fund.ticker, fund.fundName]);
 
   function commitHolding(raw: string) {
     const parsed = Number(raw.replace(/,/g, ""));
@@ -230,8 +234,9 @@ function IllustrationWorkspace({ fund }: { fund: FundEstimateView }) {
           </label>
         ) : (
           <p className="text-xs text-faint">
-            % of NAV uses holding dollars only. Switch to $ / share to send
-            nav_per_share.
+            {metadataNav != null
+              ? "% of NAV sends holding dollars plus the fund's NAV so per_share snapshots can convert to shares."
+              : "% of NAV sends holding dollars. Per_share snapshots need a fund price — switch to $ / share to enter NAV."}
           </p>
         )}
         <TaxRateFields

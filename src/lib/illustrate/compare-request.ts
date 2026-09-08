@@ -3,6 +3,7 @@ import type {
   CompareSelectors,
   CompareSideIn,
 } from "@/lib/illustrate/compare-types";
+import type { IllustrateRequest } from "@/lib/illustrate/types";
 
 export type NavLookup = (ticker: string) => number | undefined;
 
@@ -120,4 +121,30 @@ export function toDataApiCompareBody(
     ...(topNav != null ? { nav_per_share: topNav } : {}),
     ...(shares != null ? { shares } : {}),
   };
+}
+
+/**
+ * Locked POST /illustrate body. Attach `nav_per_share` from the request or
+ * search/seed metadata (same pattern as compare) so holding dollars can
+ * convert to shares on per_share snapshots. Do not invent a NAV.
+ */
+export function toDataApiIllustrateBody(
+  request: IllustrateRequest,
+  lookup?: NavLookup,
+): Record<string, unknown> {
+  const { selector, nav_per_share, ...rest } = request;
+  const ticker = selector?.ticker ?? selector?.fund_identifier;
+  const nav = navFromFundMetadata(ticker, nav_per_share, lookup);
+  const body: Record<string, unknown> = { ...rest };
+  if (selector) {
+    body.selector = selector;
+    body.selectors = {
+      fund_family: selector.fund_family,
+      fund_identifier: selector.fund_identifier,
+      ticker: selector.ticker ?? selector.fund_identifier,
+    };
+  }
+  if (nav != null) body.nav_per_share = nav;
+  body.latest_as_of_only = true;
+  return body;
 }
