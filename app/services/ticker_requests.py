@@ -71,7 +71,6 @@ KNOWN_TICKER_SLUGS: dict[str, str] = {
     "HDEF": "dws",
     "PSWD": "dws",
     "DBAW": "dws",
-}
     "JENSX": "jensen",
     "JENIX": "jensen",
     "DHLAX": "diamond_hill",
