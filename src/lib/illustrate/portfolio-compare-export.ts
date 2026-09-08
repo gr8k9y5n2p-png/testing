@@ -1,8 +1,9 @@
 import { formatUsd } from "@/lib/format";
 import {
-  formatAsOfStage,
   formatMoreLessTax,
+  formatStageLabel,
   formatTaxDragPct,
+  paidHistoryRowsForSide,
   totalUpcomingTax,
   upcomingRowsForSide,
   type TaxPolarity,
@@ -21,6 +22,10 @@ export type PortfolioCompareExportUpcoming = {
   distributionDollars: number;
   estimatedTax: number | null;
   stageLabel: string;
+  announcedDate: string | null;
+  recordDate: string | null;
+  exDate: string | null;
+  payableDate: string | null;
 };
 
 export type PortfolioCompareExportSide = {
@@ -30,6 +35,7 @@ export type PortfolioCompareExportSide = {
   totalUpcomingTax: number;
   holdings: PortfolioCompareExportHolding[];
   upcoming: PortfolioCompareExportUpcoming[];
+  paidHistory: PortfolioCompareExportUpcoming[];
 };
 
 export type PortfolioCompareExportModel = {
@@ -66,7 +72,21 @@ function sideModel(
       ticker: row.ticker,
       distributionDollars: row.distributionDollars,
       estimatedTax: row.estimatedTax,
-      stageLabel: formatAsOfStage(row.asOf, row.stage),
+      stageLabel: formatStageLabel(row.stage),
+      announcedDate: row.announcedDate,
+      recordDate: row.recordDate,
+      exDate: row.exDate,
+      payableDate: row.payableDate,
+    })),
+    paidHistory: paidHistoryRowsForSide(allocation, side).map((row) => ({
+      ticker: row.ticker,
+      distributionDollars: row.distributionDollars,
+      estimatedTax: row.estimatedTax,
+      stageLabel: formatStageLabel(row.stage),
+      announcedDate: row.announcedDate,
+      recordDate: row.recordDate,
+      exDate: row.exDate,
+      payableDate: row.payableDate,
     })),
   };
 }
@@ -121,17 +141,8 @@ function sideHtml(side: PortfolioCompareExportSide): string {
         </tr>`,
     )
     .join("");
-  const upcoming = side.upcoming
-    .map(
-      (row) => `
-        <tr>
-          <td class="mono">${escapeHtml(row.ticker)}</td>
-          <td class="num">${escapeHtml(money(row.distributionDollars))}</td>
-          <td class="num">${escapeHtml(money(row.estimatedTax))}</td>
-          <td class="muted">${escapeHtml(row.stageLabel)}</td>
-        </tr>`,
-    )
-    .join("");
+  const upcoming = distributionRowsHtml(side.upcoming);
+  const paid = distributionRowsHtml(side.paidHistory);
 
   return `
     <section class="col">
@@ -143,12 +154,39 @@ function sideHtml(side: PortfolioCompareExportSide): string {
         <thead><tr><th>Ticker</th><th>Fund</th><th>Weight</th><th>Dollars</th></tr></thead>
         <tbody>${holdings}</tbody>
       </table>
-      <h3>Upcoming distributions</h3>
+      <h3>Upcoming / announced</h3>
       <table>
-        <thead><tr><th>Ticker</th><th>Est. dist $</th><th>Est. tax</th><th>Stage</th></tr></thead>
-        <tbody>${upcoming || `<tr><td colspan="4" class="muted">No upcoming estimates.</td></tr>`}</tbody>
+        <thead><tr><th>Ticker</th><th>Est. dist $</th><th>Est. tax</th><th>Announced</th><th>Record</th><th>Ex-div</th><th>Payable</th><th>Stage</th></tr></thead>
+        <tbody>${upcoming || `<tr><td colspan="8" class="muted">No upcoming estimates.</td></tr>`}</tbody>
+      </table>
+      <h3>Paid history</h3>
+      <table>
+        <thead><tr><th>Ticker</th><th>Est. dist $</th><th>Est. tax</th><th>Announced</th><th>Record</th><th>Ex-div</th><th>Payable</th><th>Stage</th></tr></thead>
+        <tbody>${paid || `<tr><td colspan="8" class="muted">No paid distribution history.</td></tr>`}</tbody>
       </table>
     </section>`;
+}
+
+function dateCell(value: string | null): string {
+  return value ? escapeHtml(value) : "—";
+}
+
+function distributionRowsHtml(rows: PortfolioCompareExportUpcoming[]): string {
+  return rows
+    .map(
+      (row) => `
+        <tr>
+          <td class="mono">${escapeHtml(row.ticker)}</td>
+          <td class="num">${escapeHtml(money(row.distributionDollars))}</td>
+          <td class="num">${escapeHtml(money(row.estimatedTax))}</td>
+          <td class="muted">${dateCell(row.announcedDate)}</td>
+          <td class="muted">${dateCell(row.recordDate)}</td>
+          <td class="muted">${dateCell(row.exDate)}</td>
+          <td class="muted">${dateCell(row.payableDate)}</td>
+          <td class="muted">${escapeHtml(row.stageLabel)}</td>
+        </tr>`,
+    )
+    .join("");
 }
 
 export function renderPortfolioComparePrintHtml(

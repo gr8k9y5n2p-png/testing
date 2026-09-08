@@ -50,13 +50,34 @@ export type PortfolioCompareRequest = {
   snapshot?: IllustrationSnapshot;
 };
 
-/** Data API `holdings[].upcoming`. Null when uncovered or no upcoming dollars. */
-export type PortfolioUpcoming = {
+/**
+ * Data contract shared by GET /distributions and portfolio upcoming payloads.
+ * `as_of` stands in for announced until `announced_date` exists. Do not invent dates.
+ */
+export type PublicationStage =
+  | "preliminary_estimate"
+  | "updated_estimate"
+  | "final"
+  | "paid"
+  | (string & {});
+
+export type PortfolioDistributionDates = {
+  /** Publication / snapshot date. Use as announced until announced_date exists. */
+  as_of?: string | null;
+  announced_date?: string | null;
+  record_date?: string | null;
+  ex_date?: string | null;
+  payable_date?: string | null;
+};
+
+export type PortfolioDistributionRow = PortfolioDistributionDates & {
   distribution_dollars?: number | null;
   estimated_tax?: number | null;
-  as_of?: string | null;
-  publication_stage?: string | null;
+  publication_stage?: PublicationStage | null;
 };
+
+/** Data API `holdings[].upcoming`. Null when uncovered or no upcoming dollars. */
+export type PortfolioUpcoming = PortfolioDistributionRow;
 
 export type PortfolioHoldingIllustrationTotals = {
   distribution_dollars: number;
@@ -66,14 +87,11 @@ export type PortfolioHoldingIllustrationTotals = {
 };
 
 export type PortfolioHoldingIllustration = {
-  components?: Array<{
-    distribution_dollars?: number | null;
-    estimated_tax?: number | null;
-    estimated_tax_dollars?: number | null;
-    as_of?: string | null;
-    publication_stage?: string | null;
-    ex_date?: string | null;
-  }>;
+  components?: Array<
+    PortfolioDistributionRow & {
+      estimated_tax_dollars?: number | null;
+    }
+  >;
   totals?: PortfolioHoldingIllustrationTotals;
 };
 
@@ -92,8 +110,15 @@ export type PortfolioHoldingOut = {
   /**
    * Prefer this for bar charts + heat tables.
    * `null` = no upcoming (do not derive). Omitted = older payload; derive from illustration.
+   * Array form is accepted when Data sends more than one snapshot.
    */
-  upcoming?: PortfolioUpcoming | null;
+  upcoming?: PortfolioUpcoming | PortfolioUpcoming[] | null;
+  /**
+   * Full distribution events for the holding (GET /distributions shape).
+   * When present, tables split these by publication_stage instead of dumping every row into Upcoming.
+   */
+  distributions?: PortfolioDistributionRow[];
+  history?: PortfolioDistributionRow[];
   gap_reason?: string | null;
 };
 
