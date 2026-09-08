@@ -72,6 +72,7 @@ export {
   growthFundFromTicker,
   resolveFundView,
 } from "@/lib/illustrate/fund-history";
+export { CompareWorkspace } from "@/components/illustrate/CompareWorkspace";
 export { HomepageFundCompare } from "@/components/illustrate/HomepageFundCompare";
 export {
   defaultComparePeer,

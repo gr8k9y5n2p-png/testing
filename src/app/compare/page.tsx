@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Disclaimer } from "@/components/Disclaimer";
 import { CoverageProvider } from "@/components/coverage/CoverageProvider";
-import { HomepageFundCompare } from "@/components/illustrate/HomepageFundCompare";
+import { CompareWorkspace } from "@/components/illustrate/CompareWorkspace";
 import { getDistributionRepository } from "@/data";
 import { loadCoverageSnapshot } from "@/lib/data-api/coverage";
 import { COPY } from "@/lib/copy";
@@ -9,8 +9,8 @@ import { COPY } from "@/lib/copy";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Aftertax — fund-to-fund comparison",
-  description: `${COPY.sub} Year-over-year tax impact and growth versus tax drag for two funds.`,
+  title: "Aftertax — compare funds",
+  description: `${COPY.sub} Growth, calendar-year tax history, and upcoming for up to six tickers.`,
 };
 
 function firstParam(value: string | string[] | undefined): string | undefined {
@@ -32,10 +32,9 @@ export default async function ComparePage({
   return (
     <main className="mx-auto w-full max-w-7xl px-4 pb-16 pt-6 sm:px-6 lg:px-8">
       <CoverageProvider families={coverage.families}>
-        <HomepageFundCompare
+        <CompareWorkspace
           funds={funds}
-          initialLeftTicker={firstParam(params.left)}
-          initialRightTicker={firstParam(params.right)}
+          initialTickers={[firstParam(params.left), firstParam(params.right)]}
         />
       </CoverageProvider>
       <Disclaimer className="mt-8 text-xs leading-relaxed text-muted" />

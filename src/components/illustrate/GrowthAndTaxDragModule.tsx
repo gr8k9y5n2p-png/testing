@@ -66,6 +66,8 @@ export type GrowthAndTaxDragModuleProps = {
   showAnnualized?: boolean;
   allowAddFund?: boolean;
   editablePrincipal?: boolean;
+  /** Compare slots: replace the series when seedFunds change. */
+  lockToSeed?: boolean;
 };
 
 const SKETCH_DISCLAIMER =
@@ -90,6 +92,7 @@ export function GrowthAndTaxDragModule({
   showAnnualized = true,
   allowAddFund = true,
   editablePrincipal = true,
+  lockToSeed = false,
 }: GrowthAndTaxDragModuleProps) {
   const [selected, setSelected] = useState<GrowthFundInput[]>(() =>
     funds.slice(0, MAX_GROWTH_FUNDS),
@@ -116,11 +119,15 @@ export function GrowthAndTaxDragModule({
 
   useEffect(() => {
     const seeds = JSON.parse(seedKey) as GrowthFundInput[];
+    if (lockToSeed) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Compare slots own the series
+      setSelected(seeds.slice(0, MAX_GROWTH_FUNDS));
+      return;
+    }
     if (seeds.length === 0) return;
     // Homepage remounts pass a new funds[] seed; merge without dropping user adds.
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- sync selected to funds prop
     setSelected((current) => mergeSeedFunds(current, seeds));
-  }, [seedKey]);
+  }, [seedKey, lockToSeed]);
 
   useEffect(() => {
     const controller = new AbortController();
