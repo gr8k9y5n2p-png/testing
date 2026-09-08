@@ -72,18 +72,11 @@ def test_portfolio_illustrate_coverage_and_gaps(client: TestClient) -> None:
     )
     assert listed.status_code == 200, listed.text
     source = listed.json()["items"][0]
-    assert amcap["upcoming"] == {
-        "distribution_dollars": "40000.00",
-        "estimated_tax": "10000.00",
-        "as_of": "2025-09-19",
-        "publication_stage": "preliminary_estimate",
-        "record_date": source["record_date"],
-        "ex_date": source["ex_date"],
-        "payable_date": source["payable_date"],
-    }
+    # Past record/ex/payable (Dec 2025) must not land in upcoming.
     assert source["record_date"] == "2025-12-12"
     assert source["ex_date"] == "2025-12-12"
     assert source["payable_date"] == "2025-12-15"
+    assert amcap["upcoming"] is None
 
     cghm = next(h for h in body["holdings"] if h["ticker"] == "CGHM")
     assert cghm["covered"] is True
@@ -115,11 +108,7 @@ def test_portfolio_per_share_with_nav(client: TestClient) -> None:
     assert holding["covered"] is True
     assert Decimal(holding["illustration"]["totals"]["distribution_dollars"]) > 0
     assert holding["publication_stage_used"] == "paid"
-    assert holding["upcoming"] is not None
-    assert Decimal(holding["upcoming"]["distribution_dollars"]) == Decimal(
-        holding["illustration"]["totals"]["distribution_dollars"]
-    )
-    assert holding["upcoming"]["publication_stage"] == "paid"
+    assert holding["upcoming"] is None
 
 
 def test_portfolio_upcoming_copies_record_ex_payable_when_present(client: TestClient) -> None:
@@ -185,6 +174,122 @@ def test_portfolio_upcoming_copies_record_ex_payable_when_present(client: TestCl
     assert dateless["ex_date"] is None
     assert dateless["payable_date"] is None
     assert dateless["as_of"] == "2026-09-01"
+
+
+def test_portfolio_past_dated_prelim_excluded_from_upcoming(client: TestClient) -> None:
+    ingested = client.post(
+        "/ingest/distributions",
+        json={
+            "records": [
+                {
+                    "fund_family": "American Funds",
+                    "fund_name": "AMCAP Fund",
+                    "ticker": "AMCPX",
+                    "fund_identifier": "amcap-fund",
+                    "estimate_type": "long_term_capital_gains",
+                    "amount": "4",
+                    "amount_unit": "percent_of_nav",
+                    "as_of": "2025-09-19",
+                    "record_date": "2025-12-12",
+                    "ex_date": "2025-12-12",
+                    "payable_date": "2025-12-15",
+                    "publication_stage": "preliminary_estimate",
+                },
+                {
+                    "fund_family": "American Funds",
+                    "fund_name": "Future Prelim Fund",
+                    "ticker": "FUTR",
+                    "estimate_type": "long_term_capital_gains",
+                    "amount": "3",
+                    "amount_unit": "percent_of_nav",
+                    "as_of": "2026-09-01",
+                    "record_date": "2026-12-15",
+                    "ex_date": "2026-12-16",
+                    "payable_date": "2026-12-17",
+                    "publication_stage": "preliminary_estimate",
+                },
+                {
+                    "fund_family": "American Funds",
+                    "fund_name": "Record Past Payable Future",
+                    "ticker": "MIXED",
+                    "estimate_type": "long_term_capital_gains",
+                    "amount": "2",
+                    "amount_unit": "percent_of_nav",
+                    "as_of": "2026-09-01",
+                    "record_date": "2025-12-12",
+                    "ex_date": "2026-12-16",
+                    "payable_date": "2026-12-17",
+                    "publication_stage": "preliminary_estimate",
+                },
+                {
+                    "fund_family": "American Funds",
+                    "fund_name": "Paid Future Record",
+                    "ticker": "PAIDF",
+                    "estimate_type": "long_term_capital_gains",
+                    "amount": "2",
+                    "amount_unit": "percent_of_nav",
+                    "as_of": "2026-09-01",
+                    "record_date": "2026-12-15",
+                    "ex_date": "2026-12-16",
+                    "payable_date": "2026-12-17",
+                    "publication_stage": "paid",
+                },
+            ]
+        },
+    )
+    assert ingested.status_code == 200, ingested.text
+
+    payload = {
+        "holdings": [
+            {"ticker": "AMCPX", "holding_dollars": 10000},
+            {"ticker": "FUTR", "holding_dollars": 10000},
+            {"ticker": "MIXED", "holding_dollars": 10000},
+            {"ticker": "PAIDF", "holding_dollars": 10000},
+        ],
+        "snapshot": {
+            "prefer_publication_stages": [
+                "preliminary_estimate",
+                "updated_estimate",
+                "final",
+                "paid",
+            ]
+        },
+    }
+    response = client.post("/illustrate/portfolio", json=payload)
+    assert response.status_code == 200, response.text
+    holdings = {item["ticker"]: item for item in response.json()["holdings"]}
+
+    amcpx = holdings["AMCPX"]
+    assert amcpx["covered"] is True
+    assert amcpx["publication_stage_used"] == "preliminary_estimate"
+    assert Decimal(amcpx["illustration"]["totals"]["distribution_dollars"]) == Decimal("400.00")
+    assert amcpx["illustration"]["components"][0]["record_date"] == "2025-12-12"
+    assert amcpx["upcoming"] is None
+
+    future = holdings["FUTR"]["upcoming"]
+    assert future is not None
+    assert future["record_date"] == "2026-12-15"
+    assert future["ex_date"] == "2026-12-16"
+    assert future["payable_date"] == "2026-12-17"
+    assert future["publication_stage"] == "preliminary_estimate"
+
+    assert holdings["MIXED"]["upcoming"] is None
+    assert holdings["PAIDF"]["upcoming"] is None
+
+    compared = client.post(
+        "/illustrate/portfolio/compare",
+        json={
+            "current": {"holdings": [{"ticker": "AMCPX", "holding_dollars": 10000}]},
+            "proposed": {"holdings": [{"ticker": "FUTR", "holding_dollars": 10000}]},
+            "snapshot": payload["snapshot"],
+        },
+    )
+    assert compared.status_code == 200, compared.text
+    body = compared.json()
+    assert body["current"]["holdings"][0]["upcoming"] is None
+    proposed_upcoming = body["proposed"]["holdings"][0]["upcoming"]
+    assert proposed_upcoming is not None
+    assert proposed_upcoming["record_date"] == "2026-12-15"
 
 
 def test_portfolio_compare_upcoming_includes_calendar_dates(client: TestClient) -> None:

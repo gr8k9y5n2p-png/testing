@@ -548,7 +548,7 @@ class PortfolioHoldingGap(BaseModel):
 
 
 class PortfolioHoldingUpcoming(BaseModel):
-    """Convenience slice of the illustration chosen for this holding.
+    """Convenience slice of an announced distribution still before the record window.
 
     Calendar dates are copied from the underlying distribution row(s) when
     present. Null means the source did not publish that date — never invented.
@@ -574,7 +574,12 @@ class PortfolioHoldingOut(BaseModel):
     publication_stage_used: str | None = None
     upcoming: PortfolioHoldingUpcoming | None = Field(
         default=None,
-        description="Null when uncovered/gap or the chosen illustration has no distribution dollars.",
+        description=(
+            "Announced unpaid distribution still before the record window. "
+            "Null when uncovered/gap, dollars are zero, publication_stage is "
+            "final/paid, or record_date (else ex_date, else payable_date) is "
+            "today or earlier UTC."
+        ),
     )
     warnings: list[str] = Field(default_factory=list)
     illustration: IllustrateResponse | None = None

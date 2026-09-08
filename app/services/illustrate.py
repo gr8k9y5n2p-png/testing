@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from datetime import date
+from datetime import date, datetime, timezone
 from decimal import ROUND_HALF_UP, Decimal
 
 from fastapi import HTTPException
@@ -46,6 +46,15 @@ from app.schemas import (
 CENTS = Decimal("0.01")
 RATE_PLACES = Decimal("0.000001")
 SUMMARY_HOLDING = Decimal("10000")
+
+UPCOMING_ESTIMATE_STAGES = {
+    PublicationStage.updated_estimate.value,
+    PublicationStage.preliminary_estimate.value,
+}
+PAID_HISTORY_STAGES = {
+    PublicationStage.final.value,
+    PublicationStage.paid.value,
+}
 
 # estimate_type → TaxRates field. STCG has its own rate (defaults to ordinary).
 # Unspecified combined capital-gain estimates are treated as LTCG.
@@ -504,6 +513,39 @@ def _known_component_date(components: list[IllustrationComponent], attr: str) ->
     return None
 
 
+def _utc_today() -> date:
+    return datetime.now(timezone.utc).date()
+
+
+def _component_record_window_date(component: IllustrationComponent) -> date | None:
+    """First published date that closes the sell-before-record window. Never invented."""
+    return component.record_date or component.ex_date or component.payable_date
+
+
+def _holding_still_upcoming(
+    illustration: IllustrateResponse, stage_used: str | None
+) -> bool:
+    """True when the chosen illustration is announced and not yet past the record window.
+
+    Advisors sell before record date to avoid the distribution tax, so upcoming
+    requires today (UTC date) strictly before the window date. Prefer record_date,
+    else ex_date, else payable_date. Dateless prelim/updated rows keep the
+    publication_stage fallback; final/paid never qualify.
+    """
+    if stage_used in PAID_HISTORY_STAGES:
+        return False
+    today = _utc_today()
+    window_dates = [
+        event_date
+        for component in illustration.components
+        if component.included_in_totals
+        and (event_date := _component_record_window_date(component)) is not None
+    ]
+    if window_dates:
+        return all(today < event_date for event_date in window_dates)
+    return stage_used in UPCOMING_ESTIMATE_STAGES
+
+
 def _holding_upcoming(
     illustration: IllustrateResponse | None, stage_used: str | None
 ) -> PortfolioHoldingUpcoming | None:
@@ -511,6 +553,8 @@ def _holding_upcoming(
         return None
     dist = illustration.totals.distribution_dollars
     if dist is None or dist <= 0:
+        return None
+    if not _holding_still_upcoming(illustration, stage_used):
         return None
     as_ofs = [
         component.as_of
@@ -866,11 +910,6 @@ COMPARE_NOTES = [
     "Published $0 / 0% of NAV stays 0.00 with matched=true.",
     "summary dollar fields are scaled linearly to $10,000 (value × 10000 / holding_dollars).",
 ]
-
-UPCOMING_ESTIMATE_STAGES = {
-    PublicationStage.updated_estimate.value,
-    PublicationStage.preliminary_estimate.value,
-}
 
 
 def _unmatched_totals() -> IllustrationTotals:
