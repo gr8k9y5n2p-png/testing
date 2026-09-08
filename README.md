@@ -125,7 +125,7 @@ Request: `holding_dollars`, `distribution_ids` **or** `selector: { fund_family, 
 
 If `tax_rates` is omitted, the mock applies ordinary/STCG `0.37`, LTCG/QDI `0.20`, state `0.0`. The UI sends explicit advisor defaults (including state `0.05`) on every request.
 
-`% of NAV` works with holding dollars alone. `$ / share` requires `nav_per_share` (422 `nav_required` otherwise).
+`% of NAV` sends holding dollars and, when search/seed metadata has a NAV, `nav_per_share` so Data can derive shares for per_share snapshots. `$ / share` requires `nav_per_share` (422 `nav_required` / `needs_nav_or_shares` otherwise; UI maps that to “Need fund price to convert this holding.”).
 
 ### Rate mapping (locked)
 
