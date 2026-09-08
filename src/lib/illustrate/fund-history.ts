@@ -65,6 +65,7 @@ export function growthFundFromTicker(
     label: resolved,
     fundIdentifier: resolved,
     fundFamily: match?.family,
+    fundName: match?.fundName,
     navPerShare: match && match.nav > 0 ? match.nav : undefined,
   };
 }

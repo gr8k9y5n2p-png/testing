@@ -261,6 +261,7 @@ function toGrowthFund(fund: FundEstimateView): GrowthFundInput {
     label: fund.ticker,
     fundIdentifier: fund.ticker,
     fundFamily: fund.family,
+    fundName: fund.fundName,
     navPerShare: fund.nav > 0 ? fund.nav : undefined,
   };
 }

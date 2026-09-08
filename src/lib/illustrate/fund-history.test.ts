@@ -66,6 +66,7 @@ describe("fund history deep-link", () => {
       label: "AMCPX",
       fundIdentifier: "AMCPX",
       fundFamily: "American Funds",
+      fundName: "AMCAP Fund",
       navPerShare: 41.22,
     });
     assert.equal(Object.hasOwn(input ?? {}, "benchmark"), false);
