@@ -51,7 +51,7 @@ describe("portfolio compare periods wiring", () => {
     assert.match(client, /portfolioPeriodTaxIsUnmatched/);
   });
 
-  it("splits Upcoming from Paid History and lists every fund", () => {
+  it("keeps Upcoming as its own module and does not mount Paid History", () => {
     const compare = readFileSync(
       join(here, "../../components/illustrate/PortfolioCompare.tsx"),
       "utf8",
@@ -61,14 +61,12 @@ describe("portfolio compare periods wiring", () => {
       "utf8",
     );
     assert.match(compare, /upcomingHoldingsForSide/);
-    assert.match(compare, /PaidHistoryTable/);
-    assert.doesNotMatch(compare, /paidRows=/);
+    assert.match(compare, /<UpcomingTable/);
+    assert.doesNotMatch(compare, /PaidHistoryTable/);
+    assert.doesNotMatch(compare, /paidHistoryRowsForSide/);
     assert.match(table, /UPCOMING_MODULE_DETAIL/);
-    assert.match(table, /export function PaidHistoryTable/);
-    assert.doesNotMatch(
-      table.split("export function UpcomingTable")[1]?.split("export function PaidHistoryTable")[0] ?? "",
-      /Paid history/,
-    );
+    assert.doesNotMatch(table, /export function PaidHistoryTable/);
+    assert.doesNotMatch(table, /Paid history/);
     assert.doesNotMatch(table, /ticker×year matrix is Website/);
     assert.doesNotMatch(table, /Website owns converting/);
   });
@@ -83,8 +81,12 @@ describe("portfolio compare periods wiring", () => {
       "utf8",
     );
     assert.match(compare, /<CalendarYearTaxTable/);
+    assert.doesNotMatch(compare, /PaidHistoryTable/);
     assert.match(yearTable, /YEAR_TAX_HEADING/);
     assert.match(yearTable, /Website keeps\/enhances/);
+    const exportSrc = readFileSync(join(here, "portfolio-compare-export.ts"), "utf8");
+    assert.doesNotMatch(exportSrc, /<h3>Paid history<\/h3>/);
+    assert.doesNotMatch(exportSrc, /paidHistoryRowsForSide/);
   });
 
   it("mocks calendar-year tax per ticker", () => {

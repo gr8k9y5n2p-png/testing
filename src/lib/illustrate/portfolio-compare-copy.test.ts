@@ -55,11 +55,11 @@ describe("PortfolioCompare tax drag copy", () => {
 });
 
 describe("PortfolioCompare calendar-year tax copy", () => {
-  it("stays visually and verbally distinct from Upcoming and Paid history", () => {
+  it("stays visually and verbally distinct from Upcoming", () => {
     assert.match(YEAR_TAX_HEADING, /calendar-year tax/i);
     assert.match(YEAR_TAX_DETAIL, /2025–2021/);
     assert.match(YEAR_TAX_DETAIL, /not Upcoming/);
-    assert.match(YEAR_TAX_DETAIL, /not Paid history/);
+    assert.doesNotMatch(YEAR_TAX_DETAIL, /Paid history/i);
     assert.notEqual(YEAR_TAX_HEADING, UPCOMING_UNAVAILABLE_HEADLINE);
     assert.notEqual(YEAR_TAX_EMPTY, PAID_HISTORY_EMPTY);
     assert.notEqual(YEAR_TAX_DETAIL, TAX_DRAG_CARD_DETAIL);

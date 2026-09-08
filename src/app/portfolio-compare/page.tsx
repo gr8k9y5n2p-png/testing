@@ -38,8 +38,8 @@ export default async function PortfolioCompareDemoPage() {
         AMCAP / DODGX, Proposed AMCPX / CGHM / AGTHX / AMCAP, 25% each at $1M).
         POSTs periods for calendar years 2021 through 2025. Calendar-year tax
         is the ticker × year matrix (2025–2021; unmatched / uncovered = N/A,
-        never $0). Upcoming stays unpaid-announced; Paid History is
-        `paid_history[]` only.
+        never $0). Upcoming stays unpaid-announced. Paid History is not shown
+        as a chronological list — historical tax lives in Calendar-year tax.
       </p>
 
       <div className="mt-8">
