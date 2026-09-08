@@ -49,7 +49,7 @@ function periodTaxForSide(
 ): number | null {
   const totals = period[side]?.totals;
   const value = totals?.estimated_tax ?? totals?.estimated_tax_dollars;
-  if (value == null || value === "") return null;
+  if (value == null) return null;
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
 }

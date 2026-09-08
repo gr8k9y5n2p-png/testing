@@ -57,7 +57,7 @@ describe("PortfolioCompare smoke books", () => {
     const catalog = readFileSync(join(here, "portfolio-compare-catalog.ts"), "utf8");
     const seed = readFileSync(join(here, "../../data/seed.ts"), "utf8");
     assert.match(catalog, /AGTHX:\s*\{[\s\S]*?fundName:\s*"The Growth Fund of America"/);
-    assert.match(seed, /ticker:\s*"AGTHX"[\s\S]*?fundName:\s*"The Growth Fund of America"/);
+    assert.match(seed, /fundName:\s*"The Growth Fund of America"[\s\S]*?ticker:\s*"AGTHX"/);
     assert.doesNotMatch(catalog, /American Funds Growth Fund of America/);
   });
 });

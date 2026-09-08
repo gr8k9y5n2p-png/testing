@@ -52,7 +52,7 @@ describe("unpaid-only Upcoming gate", () => {
   it("drops invented annual-tax upcoming even when staged as prelim", () => {
     const invented: CompareUpcomingDistribution = {
       left_dollars: 214,
-      right_dollars: 214,
+      right_dollars: 290,
       delta_dollars: 0,
       left_publication_stage: "preliminary_estimate",
       right_publication_stage: "preliminary_estimate",
