@@ -134,7 +134,11 @@ export default function FundCompareDemoPage() {
         {`import {
   FundTaxDeltaCompare,
   YoYTaxChart,
+  requestTicker,
 } from "@/components/illustrate";
+// or: import { requestTicker } from "@/lib/request-ticker";
+// source: "web" | "search_miss" | "portfolio"
+// await requestTicker({ ticker, note, source: "portfolio" });
 
 <FundTaxDeltaCompare
   left={{

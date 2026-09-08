@@ -97,7 +97,24 @@ Wired endpoints:
 - `GET /distributions` — aggregated into the search table (seed fills tickers the API does not yet return).
 - `GET /coverage`, `GET /fund-families` — `coverage_tier`, `aum_rank`, `priority` (Live vs Gap in picker / results / illustrate).
 - `POST /coverage/gaps` — logged when a gap ticker is selected.
-- `POST /request/ticker` — beta ticker intake (no auth). Body `{ ticker, note?, source: "web" | "search_miss" | "portfolio" }`. Search auto-POSTs `search_miss` on an exact ticker with no match (toast, no invented fund data). Request a fund on Search sends `source: "web"`. Shared helper: `requestTicker` from `@/lib/data-api/request-ticker` (Portfolio / Compare can import later with `source: "portfolio"`). 201 queued / 200 already in universe / 422 invalid. Local mock: `POST /api/request/ticker`.
+- `POST /request/ticker` — beta ticker intake (no auth). Body `{ ticker, note?, source }`. One client: `requestTicker({ ticker, note?, source })` from `@/lib/request-ticker` (also `@/components/illustrate`). Do not duplicate the fetch. 201 queued / 200 already in universe / 422 invalid. Local mock: `POST /api/request/ticker`.
+
+### `requestTicker` source enum (locked)
+
+```ts
+import { requestTicker, TICKER_REQUEST_SOURCES } from "@/lib/request-ticker";
+// or: import { requestTicker } from "@/components/illustrate";
+
+await requestTicker({ ticker: "ABCDX", note: "optional", source: "portfolio" });
+```
+
+| `source` | Who sends it |
+| --- | --- |
+| `web` | Request a fund form on Search |
+| `search_miss` | Search typed an exact ticker with no match |
+| `portfolio` | Portfolio import / Compare slot miss (Modules) |
+
+`TICKER_REQUEST_SOURCES` is `["web", "search_miss", "portfolio"]`. Search already uses `web` and `search_miss`. Modules should import this helper for slot misses — never invent fund data while queued.
 
 ### Run UI + Data API side by side
 

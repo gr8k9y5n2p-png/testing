@@ -101,3 +101,13 @@ export type {
   PerformanceGrowthRequest,
   PerformanceResponse,
 } from "@/lib/performance/types";
+export {
+  requestTicker,
+  TICKER_REQUEST_SOURCES,
+  noticeForTickerRequest,
+} from "@/lib/request-ticker";
+export type {
+  RequestTickerArgs,
+  TickerRequestSource,
+  TickerRequestResult,
+} from "@/lib/request-ticker";

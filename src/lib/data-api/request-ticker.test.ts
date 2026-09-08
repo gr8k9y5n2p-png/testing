@@ -11,16 +11,31 @@ import {
   resetTickerRequestDedupe,
   shouldReportSearchMiss,
   TICKER_REQUEST,
+  TICKER_REQUEST_SOURCES,
   tickerRequestFetchInit,
   tickerRequestUrl,
   toRequestTickerBody,
 } from "./request-ticker.ts";
+import {
+  requestTicker as publicRequestTicker,
+  TICKER_REQUEST_SOURCES as publicSources,
+} from "../request-ticker.ts";
 
 afterEach(() => {
   resetTickerRequestDedupe();
 });
 
 describe("ticker request normalize", () => {
+  it("locks source to web | search_miss | portfolio and re-exports one client", () => {
+    assert.deepEqual([...TICKER_REQUEST_SOURCES], [
+      "web",
+      "search_miss",
+      "portfolio",
+    ]);
+    assert.equal(publicRequestTicker, requestTicker);
+    assert.deepEqual([...publicSources], ["web", "search_miss", "portfolio"]);
+  });
+
   it("uppercases and trims the ticker", () => {
     assert.equal(normalizeTickerSymbol(" abcdx "), "ABCDX");
     assert.equal(normalizeTickerSymbol("agthx"), "AGTHX");
@@ -101,11 +116,12 @@ describe("ticker request normalize", () => {
 
     const portfolio = toRequestTickerBody({
       ticker: "CGHM",
+      note: "slot miss",
       source: "portfolio",
     });
     assert.deepEqual(portfolio, {
       ok: true,
-      body: { ticker: "CGHM", source: "portfolio" },
+      body: { ticker: "CGHM", note: "slot miss", source: "portfolio" },
     });
 
     const omitted = toRequestTickerBody({ ticker: "VFIAX", note: "   " });
@@ -256,6 +272,17 @@ describe("requestTicker POST", () => {
         ticker: "ABCDX",
         note: "from search",
         source: "web",
+      });
+
+      seen.length = 0;
+      const slot = await publicRequestTicker({
+        ticker: "cghm",
+        source: "portfolio",
+      });
+      assert.equal(slot.kind, "queued");
+      assert.deepEqual(JSON.parse(seen[0].body ?? "{}"), {
+        ticker: "CGHM",
+        source: "portfolio",
       });
     } finally {
       globalThis.fetch = prev;

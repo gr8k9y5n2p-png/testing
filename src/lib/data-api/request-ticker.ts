@@ -24,6 +24,12 @@ export const TICKER_REQUEST = {
   submitting: "Sending…",
 } as const;
 
+/**
+ * Locked `source` enum for POST /request/ticker.
+ * - `web` — Request a fund form (Search)
+ * - `search_miss` — Search typed an exact ticker with no match
+ * - `portfolio` — Portfolio import / Compare slot miss (Modules)
+ */
 export const TICKER_REQUEST_SOURCES = ["web", "search_miss", "portfolio"] as const;
 export type TickerRequestSource = (typeof TICKER_REQUEST_SOURCES)[number];
 
@@ -34,6 +40,13 @@ export type TickerRequestInput = {
   ticker: string;
   note?: string;
   source?: TickerRequestSource;
+};
+
+/** Public helper args. Modules call `requestTicker({ ticker, note?, source })`. */
+export type RequestTickerArgs = {
+  ticker: string;
+  note?: string;
+  source: TickerRequestSource;
 };
 
 export type TickerRequestBody = {
@@ -197,8 +210,14 @@ async function readJson(response: Response): Promise<unknown> {
   }
 }
 
+/**
+ * One client for ticker intake. Search, Portfolio import, and Compare
+ * slot misses must import this — do not duplicate the fetch.
+ *
+ *   requestTicker({ ticker: "ABCDX", note: "optional", source: "portfolio" })
+ */
 export async function requestTicker(
-  input: TickerRequestInput,
+  input: RequestTickerArgs,
 ): Promise<TickerRequestResult> {
   const prepared = toRequestTickerBody(input);
   if (!prepared.ok) {

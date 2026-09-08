@@ -5,7 +5,7 @@ import { TICKER_REQUEST } from "@/lib/copy";
 import {
   noticeForTickerRequest,
   requestTicker,
-} from "@/lib/data-api/request-ticker";
+} from "@/lib/request-ticker";
 
 export function RequestFundForm({
   onNotice,
