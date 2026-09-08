@@ -1286,10 +1286,74 @@ def _compare_response(
     )
 
 
+def _calendar_years_for_selectors(
+    session: Session, selectors: IllustrateSelectors | None
+) -> list[int]:
+    """Unique calendar years on matching rows (as_of, else ex_date)."""
+    unbound = _unbound_selectors(selectors)
+    if unbound is None:
+        return []
+    rows = list_matching(
+        session,
+        fund_family=unbound.fund_family,
+        fund_identifier=unbound.fund_identifier,
+        ticker=unbound.ticker,
+        fund_name=unbound.fund_name,
+        estimate_type=unbound.estimate_type,
+        limit=2000,
+    )
+    years: set[int] = set()
+    for row in rows:
+        stamp = row.as_of or row.ex_date
+        if stamp is not None:
+            years.add(stamp.year)
+    return sorted(years)
+
+
+def _yoy_years_from_book(session: Session, body: CompareRequest) -> list[int]:
+    """Calendar years to expand when the client omitted periods[].
+
+    Same-fund (or overlapping history) uses the intersection so pair bars
+    share a real vintage. If the sides never overlap, fall back to the union
+    so a thin side still surfaces unmatched years instead of year=0.
+    """
+    left_sel = (body.left.selectors if body.left else None) or body.selectors
+    right_sel = (body.right.selectors if body.right else None) or body.selectors
+    left_years = _calendar_years_for_selectors(session, left_sel)
+    right_years = _calendar_years_for_selectors(session, right_sel)
+    if left_years and right_years:
+        common = sorted(set(left_years) & set(right_years))
+        if common:
+            return common
+        return sorted(set(left_years) | set(right_years))
+    return left_years or right_years
+
+
+def _expand_yoy_periods_from_book(session: Session, body: CompareRequest) -> CompareRequest:
+    """YoY with no periods[] and no as_of pins → expand vintages from the book.
+
+    Website / Interactive Modules send mode=yoy + left/right tickers and expect
+    real calendar years. The previous fallback emitted a single period with
+    year=0, which then latest_as_of_only'd both sides onto the newest snapshot.
+    Explicit periods[] and left/right as_of pins are left unchanged.
+    """
+    if body.mode != "yoy" or body.periods:
+        return body
+    left_as_of = body.left.selectors.as_of if body.left and body.left.selectors else None
+    right_as_of = body.right.selectors.as_of if body.right and body.right.selectors else None
+    if left_as_of or right_as_of:
+        return body
+    years = _yoy_years_from_book(session, body)
+    if not years:
+        return body
+    return body.model_copy(update={"periods": [ComparePeriodIn(year=year) for year in years]})
+
+
 def illustrate_compare(session: Session, body: CompareRequest) -> CompareResponse:
     notes = list(COMPARE_NOTES)
     notes.append(ILLUSTRATION_NOTES[0])
     period_outs: list[ComparePeriodOut] = []
+    body = _expand_yoy_periods_from_book(session, body)
 
     if body.mode == "yoy" and body.periods and len(body.periods) >= 2:
         shared = _yoy_shared_selectors(body)
@@ -1340,7 +1404,11 @@ def illustrate_compare(session: Session, body: CompareRequest) -> CompareRespons
         left_as_of = body.left.selectors.as_of if body.left and body.left.selectors else None
         right_as_of = body.right.selectors.as_of if body.right and body.right.selectors else None
         stamp = right_as_of or left_as_of
-        jobs.append((stamp.year if stamp else 0, None, False))
+        if stamp:
+            jobs.append((stamp.year, None, False))
+        else:
+            years = _yoy_years_from_book(session, body)
+            jobs.append((years[-1] if years else date.today().year, None, False))
 
     for year, as_of, pin in jobs:
         year_filter = year if pin and as_of is None and year else None

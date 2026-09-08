@@ -209,6 +209,31 @@ def test_fidelity_prior_year_and_estimate_coexist() -> None:
     assert all(r.amount != Decimal("253.23") for r in paid if r.ticker == "FBGRX")
 
 
+def test_fidelity_2024_prior_year_fbgrx() -> None:
+    paid = parse_distribution_html(
+        (FID / "prior_year_distributions_2024.html").read_text(encoding="utf-8"),
+        source_url="https://institutional.fidelity.com/app/tabbed/products/FIIS_SP10_DPL6.html?navId=324",
+        fund_family="Fidelity",
+    )
+    fbgrx = [r for r in paid if r.ticker == "FBGRX"]
+    lt = sorted(
+        (r for r in fbgrx if r.estimate_type == EstimateType.long_term_capital_gains),
+        key=lambda r: r.ex_date or r.as_of,
+    )
+    assert [r.amount for r in lt] == [Decimal("11.08100"), Decimal("1.66900")]
+    assert str(lt[0].ex_date) == "2024-09-13"
+    assert str(lt[1].ex_date) == "2024-12-20"
+    assert {str(r.as_of) for r in lt} == {"2024-12-31"}
+    st_sep = next(
+        r
+        for r in fbgrx
+        if r.estimate_type == EstimateType.short_term_capital_gains and str(r.ex_date) == "2024-09-13"
+    )
+    assert st_sep.amount == Decimal("0.00000")
+    assert all(r.amount != Decimal("230.68") for r in fbgrx)
+    assert all(r.amount != Decimal("204.17") for r in fbgrx)
+
+
 def test_invesco_2024_estimate_fixture() -> None:
     records = parse_distribution_html(
         (INV / "2024_estimated_capital_gains.html").read_text(encoding="utf-8"),
@@ -234,7 +259,7 @@ def test_search_multi_year_top_families(client: TestClient) -> None:
     fbgrx = client.get("/distributions", params={"fund_identifier": "FBGRX", "page_size": 50})
     assert fbgrx.status_code == 200
     years = {item["as_of"][:4] for item in fbgrx.json()["items"] if item.get("as_of")}
-    assert {"2025", "2026"} <= years
+    assert {"2024", "2025", "2026"} <= years
     stages = {item["publication_stage"] for item in fbgrx.json()["items"]}
     assert "final" in stages
     assert "preliminary_estimate" in stages
@@ -642,3 +667,34 @@ def test_amcpx_dodix_tax_drag_years_overlap(client: TestClient) -> None:
     assert all(p["left"]["matched"] and p["right"]["matched"] for p in periods)
     assert all(Decimal(p["left"]["totals"]["distribution_dollars"]) > 0 for p in periods)
     assert all(Decimal(p["right"]["totals"]["distribution_dollars"]) > 0 for p in periods)
+
+
+def test_compare_yoy_without_periods_uses_real_calendar_years(client: TestClient) -> None:
+    """Heroes with multi-year books must not emit year=0 when periods[] is omitted."""
+    for family in ("american_funds", "dodge_cox"):
+        fetched = client.post("/ingest/fetch", json={"fund_family": family, "mode": "fixture"})
+        assert fetched.status_code == 200, fetched.text
+
+    for ticker in ("AGTHX", "AMCPX", "DODIX"):
+        response = client.post(
+            "/illustrate/compare",
+            json={
+                "mode": "yoy",
+                "holding_dollars": 100000,
+                "nav_per_share": 100,
+                "tax_rates": {},
+                "left": {"selectors": {"ticker": ticker}},
+                "right": {"selectors": {"ticker": ticker}},
+            },
+        )
+        assert response.status_code == 200, (ticker, response.text)
+        years = [period["year"] for period in response.json()["periods"]]
+        assert years, ticker
+        assert 0 not in years, (ticker, years)
+        assert all(year >= 1900 for year in years), (ticker, years)
+        assert len(years) >= 2, (ticker, years)
+        assert years == sorted(set(years))
+        assert all(period["left"]["matched"] and period["right"]["matched"] for period in response.json()["periods"]), (
+            ticker,
+            years,
+        )

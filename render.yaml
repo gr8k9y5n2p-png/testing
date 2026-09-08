@@ -1,11 +1,17 @@
 # Blueprint for a dedicated FastAPI service (do not attach this to the Next.js Website project).
 # Dashboard: New → Blueprint → this repo / this branch. Health path is /health.
+# Disk keeps the SQLite book across deploys (ephemeral filesystem otherwise).
+# plan: starter is required for persistent disks (free web services cannot attach one).
 services:
   - type: web
     name: aftertax-data-api
     runtime: docker
-    plan: free
+    plan: starter
     healthCheckPath: /health
+    disk:
+      name: aftertax-data
+      mountPath: /var/data
+      sizeGB: 1
     envVars:
       - key: FETCH_MODE
         value: fixture
@@ -13,7 +19,7 @@ services:
         value: "true"
         # Background full fixture ingest (all families). /health stays up; see health.seed.
       - key: DATABASE_URL
-        value: sqlite:///./data/distributions.db
+        value: sqlite:////var/data/distributions.db
       - key: CORS_ORIGINS
         value: https://testing-seven-umber-19.vercel.app,http://localhost:3000,http://127.0.0.1:3000
       - key: CORS_ORIGIN_REGEX

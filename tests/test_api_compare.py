@@ -559,3 +559,32 @@ def test_compare_per_share_requires_nav_or_shares(client: TestClient) -> None:
     )
     assert ok.status_code == 200, ok.text
     assert ok.json()["left"]["matched"] is True
+
+
+def test_compare_yoy_without_periods_expands_calendar_years(client: TestClient) -> None:
+    """Website YoY sketch: mode=yoy + tickers, no periods[] → real years, never year=0."""
+    _ingest_compare_book(client)
+    response = client.post(
+        "/illustrate/compare",
+        json={
+            "mode": "yoy",
+            "holding_dollars": 1000000,
+            "tax_rates": RATES,
+            "left": {"selectors": {"fund_identifier": "amcap-fund"}},
+            "right": {"selectors": {"fund_identifier": "amcap-fund"}},
+        },
+    )
+    assert response.status_code == 200, response.text
+    body = response.json()
+    years = [period["year"] for period in body["periods"]]
+    assert years
+    assert 0 not in years
+    # 2024 + 2025 vintages → one pair bar labeled with the newer year.
+    assert years == [2025]
+    period = body["periods"][0]
+    assert period["left"]["matched"] is True
+    assert period["right"]["matched"] is True
+    assert Decimal(period["left"]["totals"]["distribution_dollars"]) == Decimal("20000.00")
+    assert Decimal(period["right"]["totals"]["distribution_dollars"]) == Decimal("40000.00")
+    assert body["summary"]["common_inception"]["from_year"] == 2024
+    assert body["summary"]["common_inception"]["to_year"] == 2025
