@@ -2586,6 +2586,13 @@ def test_sixth_tier_fixtures() -> None:
         if r.ticker == "HLMGX" and r.estimate_type == EstimateType.long_term_capital_gains
     )
     assert hlmgx.amount == Decimal("6.192933")
+    assert {r.ticker for r in harding if r.ticker} >= {
+        "HLMGX",
+        "HLMNX",
+        "HLEMX",
+        "HLMIX",
+        "HLMVX",
+    }
 
     matthews = parse_distribution_html(
         (ROOT / "matthews_asia" / "2025_year_end_distributions.html").read_text(
@@ -3046,6 +3053,7 @@ def test_ninth_tier_fixtures() -> None:
         if r.ticker == "AADEX" and r.estimate_type == EstimateType.long_term_capital_gains
     )
     assert aadex.amount == Decimal("2.3846")
+    assert {r.ticker for r in beacon if r.ticker} >= {"AADEX", "SFMIX", "ABCIX", "AVFIX"}
 
     bg = parse_distribution_html(
         (ROOT / "baillie_gifford" / "2025_estimated_capital_gains.html").read_text(
@@ -3186,6 +3194,7 @@ def test_tenth_tier_fixtures() -> None:
         if r.ticker == "LZIEX" and r.estimate_type == EstimateType.long_term_capital_gains
     )
     assert lziex.amount == Decimal("1.50")
+    assert {r.ticker for r in lazard if r.ticker} >= {"LZIEX", "LEAIX", "ICMPX", "LISIX"}
 
     manning = parse_distribution_html(
         (ROOT / "manning_napier" / "2025_distributions.html").read_text(
@@ -3322,6 +3331,7 @@ def test_eleventh_tier_fixtures() -> None:
         if r.ticker == "YACKX" and r.estimate_type == EstimateType.long_term_capital_gains
     )
     assert yackx.amount == Decimal("2.8135")
+    assert {r.ticker for r in amg if r.ticker} >= {"YACKX", "YAFIX", "MCGIX", "ARIDX"}
 
     guidestone = parse_distribution_html(
         (ROOT / "guidestone" / "2025_estimated_capital_gains.html").read_text(

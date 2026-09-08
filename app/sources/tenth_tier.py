@@ -12,18 +12,29 @@ class LazardSource(HtmlTableSource):
     priority = 91
     notes = (
         "Tax library: https://www.lazardassetmanagement.com/us/en_us/tax-center/document-library "
-        "Public 11/24/2025 estimate PDF: "
+        "Public 11/24/2025 estimate PDF is the full Institutional / Open / R6 book: "
         "https://www.lazardassetmanagement.com/docs/1791/"
         "LazardFundsAnnualDistributionDeclarationEstimated.pdf "
         "(International Equity Institutional LZIEX ST $0.20 / LT $1.50; "
         "Emerging Markets Equity Advantage Institutional LEAIX LT $0.17; "
         "International Quality Growth Institutional ICMPX ST $0.05 / LT $0.60). "
-        "Record 12/18/2025; ex/reinvest 12/19/2025; pay 12/22/2025."
+        "Record 12/18/2025; ex/reinvest 12/19/2025; pay 12/22/2025. "
+        "All-dash Concentrated / High Yield rows omitted. Printed 0.00* stored as 0.00."
     )
-    live_limitations = "Year-end book is PDF. Fixture transcribes public Institutional rows."
+    live_limitations = (
+        "Year-end book is PDF. Fixture transcribes the official Institutional / Open / R6 table."
+    )
 
     def pages(self) -> list[PageSpec]:
         return [
+            PageSpec(
+                name="tax_document_library_hub",
+                url="https://www.lazardassetmanagement.com/us/en_us/tax-center/document-library",
+                fixture="tax_document_library_hub.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
             PageSpec(
                 name="2025_estimated_annual_distributions",
                 url=(
@@ -51,10 +62,12 @@ class ManningNapierSource(HtmlTableSource):
         "Equity Series Class S EXEYX LT $1.61030; "
         "Pro-Blend Maximum Term Class I MNHIX LT $2.56840). "
         "Year-end record 12/15/2025; ex/reinvest 12/16/2025; pay 12/17/2025. "
-        "The PDF is CUSIP/class-level; tickers are public Class I / Class S identifiers."
+        "December YE capital-gain rows only (monthly / quarterly income-only omitted). "
+        "Tickers attached only where previously identified (CEIIX / MNDFX / EXEYX / MNHIX); "
+        "remaining rows keep official CUSIP / class from the PDF."
     )
     live_limitations = (
-        "Paid book is PDF. Fixture transcribes public Class I / Class S identifiers."
+        "Paid book is PDF. Fixture transcribes December CG-paying CUSIP/class rows."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -122,10 +135,12 @@ class BostonPartnersSource(HtmlTableSource):
         "Small Cap Value II Institutional BPSIX ST $0.05 / LT $1.93; "
         "Global Equity Institutional BPGIX ST $0.56 / LT $1.76). "
         "Record 12/11/2025; ex/pay 12/12/2025. "
-        "Estimated distribution applies to all share classes; fixture uses Institutional tickers."
+        "Estimated distribution applies to all share classes; fixture uses printed Inst/Inv tickers. "
+        "Emerging Markets Dynamic Equity printed dash / liquidation — omitted. "
+        "Published $0.00 ST stored."
     )
     live_limitations = (
-        "Estimate book is PDF. Fixture transcribes public Institutional identifiers."
+        "Estimate book is PDF. Fixture transcribes public Institutional + Investor identifiers."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -217,9 +232,13 @@ class LsvSource(HtmlTableSource):
         "Conservative Value Equity Institutional LSVVX ST $0.0410 / LT $1.5946; "
         "US Managed Volatility Institutional LSVMX ST $0.1063 / LT $1.7713). "
         "Capital-gain record 12/16/2025; ex 12/17/2025; pay 12/18/2025. "
-        "The PDF lists Institutional / Investor ticker pairs; fixture uses Institutional identifiers."
+        "The PDF lists Institutional / Investor ticker pairs; fixture uses both. "
+        "Income rows use the official December dividend table (record 12/29/2025). "
+        "Published $0.0000 ST stored."
     )
-    live_limitations = "Year-end book is PDF. Fixture transcribes public Institutional identifiers."
+    live_limitations = (
+        "Year-end book is PDF. Fixture transcribes public Institutional + Investor identifiers."
+    )
 
     def pages(self) -> list[PageSpec]:
         return [

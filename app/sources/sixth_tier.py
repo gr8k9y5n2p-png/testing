@@ -578,18 +578,18 @@ class HardingLoevnerSource(HtmlTableSource):
     aum_rank = 59
     priority = 59
     notes = (
-        "Public 2025 year-end distributions PDF (AMG reprint): "
-        "https://wealth.amg.com/pdf-library/harding-loevner-2025-year-end-distributions/ "
-        "(e.g. Global Equity Advisor HLMGX ST $0.240073 / LT $6.192933 / 17.15% of NAV; "
+        "Official 2025 annual-distributions PDF is the full printed share-class book: "
+        "https://media.hardingloevner.com/fileadmin/pdf/HLF/HLF-2025-Distributions.pdf "
+        "(AMG reprint https://wealth.amg.com/pdf-library/harding-loevner-2025-year-end-distributions/) "
+        "(Global Equity Advisor HLMGX ST $0.240073 / LT $6.192933 / 17.15% of NAV; "
         "International Equity Investor HLMNX ST $0.097311 / LT $3.415402 / 11.43% of NAV; "
         "Emerging Markets Advisor HLEMX ST $0.589704 / LT $20.71838 / 46.85% of NAV). "
         "Record 12/12/2025; ex 12/15/2025; pay 12/16/2025. "
-        "Tax-info reprint: "
-        "https://media.hardingloevner.com/fileadmin/pdf/HLF/HLF-Additional-Tax-Information-2025.pdf "
+        "Frontier Emerging Markets printed no CG (income stored). "
         "2024 sibling URLs 404; no official 2024 ST/LT book stored."
     )
     live_limitations = (
-        "Year-end book is PDF. Weekly walk uses the AMG reprint URL; "
+        "Year-end book is PDF. Weekly walk uses the official media.hardingloevner.com PDF; "
         "empty/PDF-bytes pages are no-op success. 2024 official URL missing."
     )
 
@@ -597,7 +597,7 @@ class HardingLoevnerSource(HtmlTableSource):
         return [
             PageSpec(
                 name="tax_information_hub",
-                url="https://wealth.amg.com/pdf-library/harding-loevner-2025-year-end-distributions/",
+                url="https://media.hardingloevner.com/fileadmin/pdf/HLF/HLF-2025-Distributions.pdf",
                 fixture="tax_information_hub.html",
                 live=True,
                 role="estimate",
@@ -605,7 +605,7 @@ class HardingLoevnerSource(HtmlTableSource):
             ),
             PageSpec(
                 name="2025_year_end_distributions",
-                url="https://wealth.amg.com/pdf-library/harding-loevner-2025-year-end-distributions/",
+                url="https://media.hardingloevner.com/fileadmin/pdf/HLF/HLF-2025-Distributions.pdf",
                 fixture="2025_year_end_distributions.html",
                 live=False,
                 role="history",

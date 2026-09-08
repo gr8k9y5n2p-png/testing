@@ -102,6 +102,11 @@ FUND_ALIASES: dict[str, str] = {
     "XC": "XC",
     "FVD": "FVD",
     "JENSX": "JENSX",
+    "AADEX": "AADEX",
+    "LZIEX": "LZIEX",
+    "BSVIX": "BSVIX",
+    "GQEIX": "GQEIX",
+    "LSVEX": "LSVEX",
 }
 
 FUND_META: dict[str, dict[str, str]] = {
@@ -162,6 +167,11 @@ FUND_META: dict[str, dict[str, str]] = {
     },
     "FVD": {"name": "First Trust Value Line Dividend Index Fund", "asset_class": "equity"},
     "JENSX": {"name": "Jensen Quality Growth Fund J", "asset_class": "equity"},
+    "AADEX": {"name": "American Beacon Large Cap Value R5", "asset_class": "equity"},
+    "LZIEX": {"name": "Lazard International Equity Institutional", "asset_class": "international"},
+    "BSVIX": {"name": "Baird Equity Opportunity Institutional", "asset_class": "equity"},
+    "GQEIX": {"name": "GQG Partners US Select Quality Equity Institutional", "asset_class": "equity"},
+    "LSVEX": {"name": "LSV Value Equity Institutional", "asset_class": "equity"},
 }
 
 DEFAULT_BENCHMARKS: dict[AssetClass, dict[str, str]] = {

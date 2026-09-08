@@ -273,6 +273,11 @@ PERFORMANCE_TICKERS: dict[str, tuple[str, ...]] = {
     "matthews_asia": ("MAPTX",),
     "tcw": ("TGDIX",),
     "jensen": ("JENSX",),
+    "american_beacon": ("AADEX",),
+    "lazard": ("LZIEX",),
+    "baird": ("BSVIX",),
+    "gqg": ("GQEIX",),
+    "lsv": ("LSVEX",),
 }
 
 

@@ -56,11 +56,14 @@ class NationwideSource(HtmlTableSource):
         "2024 sibling MFN-0434AO is not a capital-gains book (HTML/8937-style). "
         "MFN-1042AO extract is not an ST/LT grid. "
         "Hub PDF link is unversioned — prior-year ST/LT not transcribed. "
-        "Weekly walk also hits the year-end information hub."
+        "Weekly walk also hits the year-end information hub. "
+        "Live MFN-0435AO GET 403 this session — deferred after noting; "
+        "existing Class A fixture left as-is (no invented amounts)."
     )
     live_limitations = (
         "Family book is PDF. Automated GET is sometimes Akamai-denied without a "
-        "browser/query token; fixture transcribes public Class A rows."
+        "browser/query token; fixture transcribes public Class A rows. "
+        "403 this session is no-op success."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -246,9 +249,14 @@ class GabelliSource(HtmlTableSource):
         "Record 12/26/2025; ex/pay/reinvest 12/29/2025. "
         "2024 year-end dividend summary (Wayback; live GET 403): "
         "https://gabelli.com/wp-content/uploads/2025/09/GabelliTetonKeeleyETF-2024-Year-End-Dividend-Summary-1.pdf "
-        "(Growth AAA GABGX LT $6.96640; Asset AAA GABAX LT $6.83330)."
+        "(Growth AAA GABGX LT $6.96640; Asset AAA GABAX LT $6.83330). "
+        "Live 2025 memo GET 403 this session — deferred after noting; "
+        "existing Class AAA fixture left as-is (no invented amounts)."
     )
-    live_limitations = "Year-end book is PDF. Fixture transcribes public Class AAA rows."
+    live_limitations = (
+        "Year-end book is PDF. Live GET is sometimes 403; fixture transcribes "
+        "public Class AAA rows. 403 this session is no-op success."
+    )
 
     def pages(self) -> list[PageSpec]:
         return [

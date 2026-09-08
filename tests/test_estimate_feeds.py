@@ -136,6 +136,26 @@ def test_coverage_exposes_estimate_feed_readiness(session) -> None:
     assert amg.history_years == [2025]
     assert "YACKX" in amg.performance_tickers
 
+    beacon = by_slug["american_beacon"]
+    assert beacon.estimate_feed_ready is True
+    assert "AADEX" in beacon.performance_tickers
+
+    lazard = by_slug["lazard"]
+    assert lazard.estimate_feed_ready is True
+    assert "LZIEX" in lazard.performance_tickers
+
+    baird = by_slug["baird"]
+    assert baird.estimate_feed_ready is True
+    assert "BSVIX" in baird.performance_tickers
+
+    gqg = by_slug["gqg"]
+    assert gqg.estimate_feed_ready is True
+    assert "GQEIX" in gqg.performance_tickers
+
+    lsv = by_slug["lsv"]
+    assert lsv.estimate_feed_ready is True
+    assert "LSVEX" in lsv.performance_tickers
+
     first_trust = by_slug["first_trust"]
     assert first_trust.estimate_feed_ready is True
     assert "BGLD" in first_trust.performance_tickers

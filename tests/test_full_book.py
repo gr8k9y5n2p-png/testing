@@ -21,7 +21,10 @@ from app.sources.next_tier import (
     SchwabSource,
 )
 from app.sources.eleventh_tier import AmgSource
+from app.sources.eighth_tier import BairdSource, BuffaloSource, GqgSource
 from app.sources.fifth_tier import HarborSource, NylifeSource, TouchstoneSource, VictorySource, VoyaSource
+from app.sources.ninth_tier import AmericanBeaconSource
+from app.sources.tenth_tier import BostonPartnersSource, LazardSource, LsvSource, ManningNapierSource
 from app.sources.fourth_tier import (
     ArtisanSource,
     CalamosSource,
@@ -33,7 +36,15 @@ from app.sources.fourth_tier import (
     WasatchSource,
 )
 from app.sources.third_tier import AmericanCenturySource, JanusHendersonSource, MfsSource
-from app.sources.sixth_tier import AqrSource, AlgerSource, FirstTrustSource, SeiSource, VaneckSource, WisdomtreeSource
+from app.sources.sixth_tier import (
+    AqrSource,
+    AlgerSource,
+    FirstTrustSource,
+    HardingLoevnerSource,
+    SeiSource,
+    VaneckSource,
+    WisdomtreeSource,
+)
 
 
 def _funds_and_tickers(source) -> tuple[set[str], set[str]]:
@@ -142,6 +153,8 @@ def test_full_book_harbor_voya_keep_heroes() -> None:
 
     amg_funds, amg_tickers = _funds_and_tickers(AmgSource())
     assert "YACKX" in amg_tickers
+    assert {"YAFIX", "MCGIX", "ARIDX"} <= amg_tickers
+    assert len(amg_tickers) >= 60
 
     voya_funds, voya_tickers = _funds_and_tickers(VoyaSource())
     assert {"NLCAX", "IEDAX", "NAWGX", "VWYFX"} <= voya_tickers
@@ -222,3 +235,45 @@ def test_full_book_artisan_ici_and_first_eagle() -> None:
     first_trust_funds, first_trust_tickers = _funds_and_tickers(FirstTrustSource())
     assert {"BFAP", "BGLD", "IGLD", "BFJL", "FVD", "FTHI", "FPE"} <= first_trust_tickers
     assert len(first_trust_tickers) >= 140
+
+
+def test_full_book_ranks_41_plus_thin_family_harvest() -> None:
+    beacon_funds, beacon_tickers = _funds_and_tickers(AmericanBeaconSource())
+    assert {"AADEX", "SFMIX", "ABCIX", "AVFIX", "AHLIX"} <= beacon_tickers
+    assert len(beacon_tickers) >= 100
+
+    amg_funds, amg_tickers = _funds_and_tickers(AmgSource())
+    assert {"YACKX", "YAFIX", "MCGIX", "ARIDX"} <= amg_tickers
+    assert len(amg_tickers) >= 70
+
+    lazard_funds, lazard_tickers = _funds_and_tickers(LazardSource())
+    assert {"LZIEX", "LEAIX", "ICMPX", "LISIX", "LZUSX"} <= lazard_tickers
+    assert len(lazard_tickers) >= 35
+
+    harding_funds, harding_tickers = _funds_and_tickers(HardingLoevnerSource())
+    assert {"HLMNX", "HLMGX", "HLEMX", "HLMIX", "HLMVX"} <= harding_tickers
+    assert len(harding_tickers) >= 15
+
+    baird_funds, baird_tickers = _funds_and_tickers(BairdSource())
+    assert {"BSVIX", "BSVSX", "BMDIX", "CCGIX", "CCWIX"} <= baird_tickers
+    assert len(baird_tickers) >= 8
+
+    gqg_funds, gqg_tickers = _funds_and_tickers(GqgSource())
+    assert {"GQEIX", "GQRIX", "GQFIX", "GQGIX", "GQGU"} <= gqg_tickers
+    assert len(gqg_tickers) >= 15
+
+    lsv_funds, lsv_tickers = _funds_and_tickers(LsvSource())
+    assert {"LSVEX", "LVAEX", "LSVVX", "LSVMX"} <= lsv_tickers
+    assert len(lsv_tickers) >= 14
+
+    boston_funds, boston_tickers = _funds_and_tickers(BostonPartnersSource())
+    assert {"BPAIX", "BPAVX", "BPSIX", "BPGIX"} <= boston_tickers
+    assert len(boston_tickers) >= 12
+
+    manning_funds, manning_tickers = _funds_and_tickers(ManningNapierSource())
+    assert {"CEIIX", "MNDFX", "EXEYX", "MNHIX"} <= manning_tickers
+    assert len(manning_funds) >= 30
+
+    buffalo_funds, buffalo_tickers = _funds_and_tickers(BuffaloSource())
+    assert {"BUFEX", "BUFGX", "BUFTX"} <= buffalo_tickers
+    assert len(buffalo_funds) >= 8

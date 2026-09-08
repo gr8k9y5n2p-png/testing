@@ -12,18 +12,30 @@ class AmgSource(HtmlTableSource):
     priority = 101
     notes = (
         "Tax hub: https://wealth.amg.com/resources/tax-information/capital-gain-distributions/ "
-        "Public 2025 year-end distributions PDF: "
+        "Public 2025 year-end distributions PDF is the full printed I/N/Z book: "
         "https://wealth.amg.com/pdf-library/amg-funds-2025-year-end-distributions/ "
         "(Yacktman Class I YACKX income $1.1267 / ST $0.0843 / LT $2.8135; "
         "GW&K Small Cap Growth Class I MCGIX ST $0.4791 / LT $3.8429; "
         "River Road Dividend All Cap Value Class I ARIDX income $0.1044 / LT $1.1294). "
         "Record 12/15/2025; ex/reinvest/pay 12/16/2025. "
+        "SMA shares omitted. Monthly income-only / no-CG rows omitted. "
         "Harding Loevner and Tweedy stay on their own adapters."
     )
-    live_limitations = "Year-end book is PDF. Fixture transcribes public Class I rows with capital gains."
+    live_limitations = (
+        "Year-end book is PDF. Weekly walk uses the tax hub + PDF URL; "
+        "empty/PDF-bytes pages are no-op success."
+    )
 
     def pages(self) -> list[PageSpec]:
         return [
+            PageSpec(
+                name="tax_information_hub",
+                url="https://wealth.amg.com/resources/tax-information/capital-gain-distributions/",
+                fixture="tax_information_hub.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
             PageSpec(
                 name="2025_year_end_distributions",
                 url="https://wealth.amg.com/pdf-library/amg-funds-2025-year-end-distributions/",

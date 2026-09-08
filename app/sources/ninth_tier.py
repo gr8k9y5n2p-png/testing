@@ -12,18 +12,32 @@ class AmericanBeaconSource(HtmlTableSource):
     priority = 81
     notes = (
         "Tax center: https://americanbeaconfunds.com/fund-resources/tax-and-distribution-center/ "
-        "Public 2025 year-end ordinary-income and capital-gains PDF: "
+        "Official 2025 year-end ordinary-income and capital-gains PDF is the full "
+        "printed share-class book (Wayback id_ capture after live WP 403): "
         "https://americanbeaconfunds.com/wp-content/uploads/2025/09/"
         "2025-Annual-Ordinary-Income-and-Capital-Gains-Mutual-Funds-updated.pdf "
         "(Large Cap Value R5 AADEX ST $0.3607 / LT $2.3846; "
         "Stephens Mid-Cap Growth R5 SFMIX ST $0.7583 / LT $8.0356; "
         "London Company Income Equity R5 ABCIX ST $0.0696 / LT $3.0255). "
-        "Record 12/19/2025; ex/reinvest 12/22/2025; pay 12/23/2025."
+        "Record 12/19/2025; ex/reinvest 12/22/2025; pay 12/23/2025. "
+        "All-dash rows omitted. Live WP GET 403 this session — weekly walk still "
+        "hits the tax-center hub + PDF URL (empty/403 = no-op success)."
     )
-    live_limitations = "Year-end book is PDF. Fixture transcribes public R5 rows with amounts."
+    live_limitations = (
+        "Year-end book is PDF. Live WP path is sometimes 403; fixture transcribes "
+        "the official Wayback full share-class book."
+    )
 
     def pages(self) -> list[PageSpec]:
         return [
+            PageSpec(
+                name="tax_and_distribution_center_hub",
+                url="https://americanbeaconfunds.com/fund-resources/tax-and-distribution-center/",
+                fixture="tax_and_distribution_center_hub.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
             PageSpec(
                 name="2025_annual_ordinary_income_and_capital_gains",
                 url=(

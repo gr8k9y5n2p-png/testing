@@ -83,9 +83,12 @@ class BairdSource(HtmlTableSource):
         "Mid Cap Growth Inst BMDIX ST $0.14763 / LT $2.19832; "
         "Chautauqua Global Growth Inst CCGIX ST $0.11209 / LT $0.69980). "
         "Record 12/12/2025; ex 12/15/2025; pay 12/16/2025. "
-        "Bond book is all None this year — fixture uses equity rows with amounts."
+        "Bond book is all printed None — omitted. Small/Mid Cap Growth printed None — omitted. "
+        "Institutional + Investor equity rows with amounts."
     )
-    live_limitations = "Year-end book is PDF. Fixture transcribes public Institutional equity rows."
+    live_limitations = (
+        "Year-end book is PDF. Fixture transcribes public Institutional + Investor equity rows."
+    )
 
     def pages(self) -> list[PageSpec]:
         return [
@@ -143,7 +146,8 @@ class BuffaloSource(HtmlTableSource):
         "Growth Investor BUFGX ST $0.04585 / LT $2.22250; "
         "Mid Cap Discovery Investor BUFTX LT $3.74685). "
         "CG record/pay 12/04–12/05/2025. The PDF is class-level without tickers; "
-        "tickers are public Investor-class identifiers."
+        "Investor tickers attached only where previously identified (BUFEX / BUFGX / BUFTX). "
+        "High Yield income-only / Small Cap Growth all-dash omitted."
     )
     live_limitations = (
         "Estimate book is PDF. Fixture transcribes public Investor-class identifiers."
@@ -174,9 +178,10 @@ class GqgSource(HtmlTableSource):
         "(US Select Quality Equity Inst GQEIX LT $0.81 / 3.7% of NAV; "
         "Global Quality Equity Inst GQRIX LT $0.97 / 5.1% of NAV; "
         "Global Quality Value Inst GQFIX LT $0.27 / 2.2% of NAV). "
-        "Record 12/17/2025; ex 12/18/2025; pay 12/19/2025."
+        "Record 12/17/2025; ex 12/18/2025; pay 12/19/2025. "
+        "Official PDF is the full Inst/Inv/R6 + GQGU ETF book; published $0.00 stored."
     )
-    live_limitations = "Estimate book is PDF. Fixture transcribes public Institutional rows."
+    live_limitations = "Estimate book is PDF. Fixture transcribes the official printed ticker book."
 
     def pages(self) -> list[PageSpec]:
         return [
