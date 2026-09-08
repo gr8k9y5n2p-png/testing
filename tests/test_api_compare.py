@@ -497,3 +497,54 @@ def test_compare_published_zero_is_matched_zero(client: TestClient) -> None:
     assert Decimal(period["right"]["totals"]["distribution_dollars"]) == Decimal("0.00")
     assert Decimal(period["deltas"]["estimated_tax"]) == Decimal("0.00")
     assert Decimal(period["deltas"]["distribution_dollars"]) == Decimal("0.00")
+
+
+def test_compare_per_share_requires_nav_or_shares(client: TestClient) -> None:
+    seeded = client.post(
+        "/ingest/distributions",
+        json={
+            "records": [
+                {
+                    "fund_family": "Test Family",
+                    "fund_name": "Per Share Fund",
+                    "ticker": "PSHRX",
+                    "estimate_type": "long_term_capital_gains",
+                    "amount": "1.25",
+                    "amount_unit": "per_share",
+                    "as_of": "2025-12-31",
+                    "publication_stage": "final",
+                    "source_url": "https://example.invalid/pshrx-2025",
+                }
+            ]
+        },
+    )
+    assert seeded.status_code == 200, seeded.text
+    missing = client.post(
+        "/illustrate/compare",
+        json={
+            "mode": "yoy",
+            "holding_dollars": 100000,
+            "tax_rates": {},
+            "selectors": {"ticker": "PSHRX"},
+            "periods": [{"year": 2025}],
+        },
+    )
+    assert missing.status_code == 422
+    body = missing.json()
+    assert body["code"] == "needs_nav_or_shares"
+    assert "nav_per_share" in body["detail"]
+    assert missing.headers.get("x-error-code") == "needs_nav_or_shares"
+
+    ok = client.post(
+        "/illustrate/compare",
+        json={
+            "mode": "yoy",
+            "holding_dollars": 100000,
+            "nav_per_share": 25,
+            "tax_rates": {},
+            "selectors": {"ticker": "PSHRX"},
+            "periods": [{"year": 2025}],
+        },
+    )
+    assert ok.status_code == 200, ok.text
+    assert ok.json()["left"]["matched"] is True

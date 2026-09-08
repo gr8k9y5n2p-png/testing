@@ -14,17 +14,18 @@ class BlackRockSource(HtmlTableSource):
         "(every fund on the mid-year and year-end tables; $/share, % of NAV, ex/pay) plus the "
         "BlackRock open-end mutual-fund distribution books "
         "https://www.blackrock.com/us/individual/resources/tax-information/2025-distributions "
-        "(and the 2024 / 2023 HTML siblings). Investor A when listed. Mutual funds + ETFs "
-        "only; SMAs skipped. Live 2023–2024 pages are per-fund share-class tables "
-        "(no ticker column) — fixtures flatten December YE Investor A rows. "
-        "Equity Dividend Investor A LT $0.481929 (2023) / $0.728360 (2024) / $0.999925 (2025). "
+        "(and the 2024 / 2023 / 2022 / 2021 HTML siblings). Investor A when listed. Mutual funds + ETFs "
+        "only; SMAs and Variable Series skipped. Live 2021–2024 pages are per-fund share-class tables "
+        "(no ticker column) — fixtures flatten November–December YE Investor A rows. "
+        "Equity Dividend Investor A LT $1.089256 (2021) / $0.740291 (2022) / "
+        "$0.481929 (2023) / $0.728360 (2024) / $0.999925 (2025). "
         "iShares 2023–2024 tax kits remain 1099-style PDFs, not an ETF HTML CG grid. "
         "No public ICI Primary Layout download was found on the iShares tax library."
     )
     live_limitations = (
         "Live HTML on ishares.com/us/capital-gains-distributions is supported. "
-        "Open-end 2023–2025 tax-information HTML is public but not column-safe "
-        "(h3 + share-class tables); fixtures are flattened December YE books."
+        "Open-end 2021–2025 tax-information HTML is public but not column-safe "
+        "(h3 + share-class tables); fixtures are flattened November–December YE books."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -52,6 +53,18 @@ class BlackRockSource(HtmlTableSource):
                 name="2023_open_end_distributions",
                 url=f"{tax}/2023-distributions",
                 fixture="2023_open_end_distributions.html",
+                live=False,
+            ),
+            PageSpec(
+                name="2022_open_end_distributions",
+                url=f"{tax}/2022-distributions",
+                fixture="2022_open_end_distributions.html",
+                live=False,
+            ),
+            PageSpec(
+                name="2021_open_end_distributions",
+                url=f"{tax}/2021-distributions",
+                fixture="2021_open_end_distributions.html",
                 live=False,
             ),
         ]

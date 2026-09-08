@@ -73,20 +73,24 @@ class JanusHendersonSource(HtmlTableSource):
     notes = (
         "Advisor tax hub: "
         "https://www.janushenderson.com/en-us/advisor/annual-distributions-supplemental-tax-documents-mutual-funds/ "
-        "hosts public estimate and final PDFs on the rackcdn distribution-tax path. "
-        "No public filled ICI. 2025 final YE estimates (through 11/03/2025) "
-        "are the full share-class PDF "
-        "2025-Janus-Henderson-Final-Distribution-Estimates.pdf (JDCAX LT $6.92). "
-        "2024 Preliminary Distribution Estimates 2024.pdf (JDCAX LT $5.42; "
-        "2024 Final sibling 404). 2023 Final Distribution Estimates 2023.pdf "
+        "hosts public estimate, final, and filled ICI Primary Layout PDFs on the "
+        "rackcdn distribution-tax path. **ICI first** for 2023–2025 paid YE "
+        "(column-safe 31-token layout; income / ST / LT at tokens 4 / 5 / 12; "
+        "December rows only; Daily income lines skipped): "
+        "Janus Henderson 2023 ICI Primary Layout.pdf (JDCAX LT $3.88875), "
+        "Janus-Henderson-2024-ICI-Primary-Layout.pdf (JDCAX ST $0.19019347 / LT $5.46939), "
+        "Janus Henderson 2025 ICI Primary Layout.pdf (JDCAX LT $6.96694). "
+        "2025 final YE estimates (through 11/03/2025) remain as the estimate book "
+        "(JDCAX LT $6.92). 2024 Preliminary Distribution Estimates 2024.pdf "
+        "(JDCAX LT $5.42). 2023 Final Distribution Estimates 2023.pdf "
         "(JDCAX LT $3.87). 2021–2022 FINAL paid PDFs are full share-class books "
         "(JDCAX 2022 LT $0.02107 / published $0 income and ST; Forty Fund is "
         "not on the 2021 final list — JDBAX 2021 LT $1.50790)."
     )
     live_limitations = (
-        "Year-end book is PDF. Fixtures transcribe public final/estimate rows "
-        "(2025 and 2021–2022 finals are full share-class; 2023–2024 estimates "
-        "are large-AUM flagships)."
+        "Year-end book is PDF. 2023–2025 ICI Primary Layout PDFs are the paid "
+        "full-book fixtures. Estimate PDFs coexist (2023–2025). 2021–2022 finals "
+        "are share-class transcriptions (live=False)."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -95,6 +99,30 @@ class JanusHendersonSource(HtmlTableSource):
             "Documents/product/distribution-tax"
         )
         return [
+            PageSpec(
+                name="ici_primary_2025",
+                url=f"{cdn}/Janus%20Henderson%202025%20ICI%20Primary%20Layout.pdf",
+                fixture="ici_primary_2025.csv",
+                live=False,
+                parser="ici",
+                large_aum_only=False,
+            ),
+            PageSpec(
+                name="ici_primary_2024",
+                url=f"{cdn}/Janus-Henderson-2024-ICI-Primary-Layout.pdf",
+                fixture="ici_primary_2024.csv",
+                live=False,
+                parser="ici",
+                large_aum_only=False,
+            ),
+            PageSpec(
+                name="ici_primary_2023",
+                url=f"{cdn}/Janus%20Henderson%202023%20ICI%20Primary%20Layout.pdf",
+                fixture="ici_primary_2023.csv",
+                live=False,
+                parser="ici",
+                large_aum_only=False,
+            ),
             PageSpec(
                 name="2025_final_distribution_estimates",
                 url=f"{cdn}/2025-Janus-Henderson-Final-Distribution-Estimates.pdf",

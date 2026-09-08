@@ -63,6 +63,23 @@ RATE_MAPPING: dict[str, str] = {
     EstimateType.other.value: "ordinary_income",
 }
 
+NEEDS_NAV_OR_SHARES = "needs_nav_or_shares"
+NEEDS_NAV_OR_SHARES_MESSAGE = (
+    "nav_per_share or shares is required when illustrating per_share distributions"
+)
+
+
+class NeedsNavOrShares(HTTPException):
+    """422 when amount_unit=per_share cannot be priced without NAV or share units."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            status_code=422,
+            detail=NEEDS_NAV_OR_SHARES_MESSAGE,
+            headers={"X-Error-Code": NEEDS_NAV_OR_SHARES},
+        )
+
+
 PERCENT_SKIP_REASON = (
     "amount_unit=percent is a characterization of fund income (e.g. qualified dividend "
     "percentage on Form 1099-DIV), not a dollar distribution as % of NAV or $ per share. "
@@ -178,7 +195,7 @@ def _illustrate_row(
             federal_tax=None,
             state_tax=None,
             included_in_totals=False,
-            skip_reason="nav_per_share or shares is required when illustrating per_share distributions",
+            skip_reason=NEEDS_NAV_OR_SHARES_MESSAGE,
         )
 
     if unit == AmountUnit.percent.value:
@@ -381,11 +398,7 @@ def illustrate_from_rows(
     if needs_shares and resolved is None and nav_per_share is not None:
         resolved = holding / nav_per_share
     if needs_shares and resolved is None and require_nav_for_per_share:
-        raise HTTPException(
-            status_code=422,
-            detail="nav_per_share or shares is required when illustrating per_share distributions",
-            headers={"X-Error-Code": "nav_required"},
-        )
+        raise NeedsNavOrShares()
     elif resolved is None and nav_per_share is not None:
         resolved = holding / nav_per_share
 
@@ -877,6 +890,8 @@ def _try_illustrate(
 ) -> tuple[IllustrateResponse, bool, str | None]:
     try:
         return illustrate(session, request, as_of_year=as_of_year), True, None
+    except NeedsNavOrShares:
+        raise
     except HTTPException as exc:
         if exc.status_code in {404, 422}:
             detail = exc.detail if isinstance(exc.detail, str) else str(exc.detail)

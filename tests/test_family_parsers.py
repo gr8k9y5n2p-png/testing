@@ -246,6 +246,35 @@ def test_blackrock_ishares_fixture() -> None:
     assert str(equity_div_2023.as_of) == "2023-12-29"
     assert not any("SMA" in (r.fund_name or "") for r in oef_2024 + oef_2023)
 
+    oef_2022 = parse_distribution_html(
+        (ROOT / "blackrock" / "2022_open_end_distributions.html").read_text(encoding="utf-8"),
+        source_url="fixture://blackrock-oef-2022",
+        fund_family="BlackRock / iShares",
+    )
+    equity_div_2022 = next(
+        r
+        for r in oef_2022
+        if "Equity Dividend" in r.fund_name and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert equity_div_2022.amount == Decimal("0.740291")
+    assert equity_div_2022.publication_stage == PublicationStage.final
+    assert str(equity_div_2022.as_of) == "2022-12-30"
+    assert not any("Variable Series" in (r.fund_name or "") for r in oef_2022)
+
+    oef_2021 = parse_distribution_html(
+        (ROOT / "blackrock" / "2021_open_end_distributions.html").read_text(encoding="utf-8"),
+        source_url="fixture://blackrock-oef-2021",
+        fund_family="BlackRock / iShares",
+    )
+    equity_div_2021 = next(
+        r
+        for r in oef_2021
+        if "Equity Dividend" in r.fund_name and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert equity_div_2021.amount == Decimal("1.089256")
+    assert str(equity_div_2021.as_of) == "2021-12-31"
+    assert not any("SMA" in (r.fund_name or "") for r in oef_2022 + oef_2021)
+
 
 def test_vanguard_fixture() -> None:
     html = (ROOT / "vanguard" / "year_end_distributions.html").read_text(encoding="utf-8")
@@ -917,6 +946,52 @@ def test_third_tier_fixtures() -> None:
         if r.ticker == "JDCAX" and r.estimate_type == EstimateType.long_term_capital_gains
     )
     assert jdcax_2023.amount == Decimal("3.87")
+
+    janus_ici_2023 = parse_ici_primary(
+        (ROOT / "janus_henderson" / "ici_primary_2023.csv").read_text(encoding="utf-8"),
+        source_url="fixture://janus-ici-2023",
+        fund_family="Janus Henderson",
+    )
+    jdcax_ici_2023 = next(
+        r
+        for r in janus_ici_2023
+        if r.ticker == "JDCAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert jdcax_ici_2023.amount == Decimal("3.88875")
+    assert jdcax_ici_2023.publication_stage == PublicationStage.final
+    assert str(jdcax_ici_2023.as_of) == "2023-12-31"
+    assert len({r.ticker for r in janus_ici_2023 if r.ticker}) >= 140
+
+    janus_ici_2024 = parse_ici_primary(
+        (ROOT / "janus_henderson" / "ici_primary_2024.csv").read_text(encoding="utf-8"),
+        source_url="fixture://janus-ici-2024",
+        fund_family="Janus Henderson",
+    )
+    jdcax_ici_2024 = next(
+        r
+        for r in janus_ici_2024
+        if r.ticker == "JDCAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert jdcax_ici_2024.amount == Decimal("5.46939")
+    jdcax_ici_2024_st = next(
+        r
+        for r in janus_ici_2024
+        if r.ticker == "JDCAX" and r.estimate_type == EstimateType.short_term_capital_gains
+    )
+    assert jdcax_ici_2024_st.amount == Decimal("0.19019347")
+
+    janus_ici_2025 = parse_ici_primary(
+        (ROOT / "janus_henderson" / "ici_primary_2025.csv").read_text(encoding="utf-8"),
+        source_url="fixture://janus-ici-2025",
+        fund_family="Janus Henderson",
+    )
+    jdcax_ici_2025 = next(
+        r
+        for r in janus_ici_2025
+        if r.ticker == "JDCAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert jdcax_ici_2025.amount == Decimal("6.96694")
+    assert len({r.ticker for r in janus_ici_2025 if r.ticker}) >= 140
 
     janus_2022 = parse_distribution_html(
         (ROOT / "janus_henderson" / "2022_final_distributions.html").read_text(encoding="utf-8"),

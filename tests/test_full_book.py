@@ -88,7 +88,7 @@ def test_full_book_vanguard_ici_and_next_wave() -> None:
 
     janus_funds, janus_tickers = _funds_and_tickers(JanusHendersonSource())
     assert "JDCAX" in janus_tickers
-    assert len(janus_tickers) >= 100
+    assert len(janus_tickers) >= 140
 
 
 def test_full_book_jpm_aci_sei_aqr_alger() -> None:

@@ -17,6 +17,7 @@ from app.api import router
 from app import db as app_db
 from app.config import settings
 from app.db import init_db
+from app.services.illustrate import NEEDS_NAV_OR_SHARES, NEEDS_NAV_OR_SHARES_MESSAGE, NeedsNavOrShares
 
 logger = logging.getLogger(__name__)
 
@@ -127,6 +128,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.include_router(router)
+
+
+@app.exception_handler(NeedsNavOrShares)
+async def needs_nav_or_shares_handler(_request: Request, exc: NeedsNavOrShares) -> JSONResponse:
+    return JSONResponse(
+        status_code=422,
+        content={"code": NEEDS_NAV_OR_SHARES, "detail": NEEDS_NAV_OR_SHARES_MESSAGE},
+        headers={"X-Error-Code": NEEDS_NAV_OR_SHARES},
+    )
 
 
 @app.exception_handler(RequestValidationError)

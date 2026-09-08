@@ -100,7 +100,11 @@ def test_illustrate_per_share_requires_nav(client: TestClient) -> None:
         json={"holding_dollars": 1000000, "distribution_ids": [dist_id]},
     )
     assert missing.status_code == 422
-    assert "nav_per_share" in missing.json()["detail"]
+    body = missing.json()
+    assert body["code"] == "needs_nav_or_shares"
+    assert "nav_per_share" in body["detail"]
+    assert "shares" in body["detail"]
+    assert missing.headers.get("x-error-code") == "needs_nav_or_shares"
 
     ok = client.post(
         "/illustrate",

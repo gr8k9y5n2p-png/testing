@@ -331,7 +331,10 @@ class IllustrateRequest(BaseModel):
     nav_per_share: Decimal | None = Field(
         default=None,
         gt=0,
-        description="Required (unless shares is set) when any selected row uses amount_unit=per_share.",
+        description=(
+            "Required (unless shares is set) when any selected row uses amount_unit=per_share. "
+            "Missing both returns HTTP 422 with code=needs_nav_or_shares."
+        ),
     )
     shares: Decimal | None = Field(
         default=None,
@@ -648,7 +651,11 @@ class CompareRequest(BaseModel):
         description="YoY: one fund's selectors. periods[] supply the two (or more) vintages.",
     )
     periods: list[ComparePeriodIn] = Field(default_factory=list)
-    nav_per_share: Decimal | None = Field(default=None, gt=0)
+    nav_per_share: Decimal | None = Field(
+        default=None,
+        gt=0,
+        description="Required (unless shares is set) when a selected side uses amount_unit=per_share.",
+    )
     shares: Decimal | None = Field(default=None, gt=0)
 
     @field_validator("holding_dollars", "nav_per_share", "shares", mode="before")
