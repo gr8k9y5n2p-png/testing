@@ -285,7 +285,7 @@ function matchedNullTotals(label: string): CompareIllustration {
 }
 
 describe("matched:true + null totals falls back to period deltas", () => {
-  it("charts deltas.estimated_tax when both sides are matched with null totals", () => {
+  it("charts yoy shared deltas.estimated_tax when both vintages are matched with null totals", () => {
     const row = period(2024, matchedNullTotals("AGTHX"), matchedNullTotals("AGTHX"));
     row.deltas = {
       distribution_dollars: null,
@@ -293,11 +293,35 @@ describe("matched:true + null totals falls back to period deltas", () => {
       estimated_tax_dollars: "82.00" as unknown as number,
       effective_tax_on_holding: "0.0082" as unknown as number,
     };
-    assert.equal(taxDragValueFromPeriodSide(row, "left", "tax_dollars"), 82);
-    assert.equal(taxDragValueFromPeriodSide(row, "right", "effective_tax"), 0.0082);
+    assert.equal(taxDragValueFromPeriodSide(row, "left", "tax_dollars", true), 82);
+    assert.equal(taxDragValueFromPeriodSide(row, "right", "effective_tax", true), 0.0082);
     assert.equal(comparePeriodIsCovered(row), true);
+    const yoy: CompareResponse = {
+      mode: "yoy",
+      periods: [row],
+      summary: {
+        normalized_holding_dollars: 10_000,
+        total_tax_difference: 0,
+        annualized_tax_drag_delta: 0,
+        distribution_dollars_difference: 0,
+        periods_compared: 1,
+        common_inception: { from_year: 2024, to_year: 2024 },
+      },
+      notes: [],
+    };
+    assert.deepEqual(toTaxDragPeriods(yoy, "tax_dollars"), [{ year: 2024, value: 82 }]);
+  });
+
+  it("does not use shared deltas for a fund_vs_fund series (peer miss must not wipe a fund)", () => {
+    const row = period(2024, matchedNullTotals("AGTHX"), matchedNullTotals("FBGRX"));
+    row.deltas = {
+      distribution_dollars: null,
+      estimated_tax: 82,
+      effective_tax_on_holding: 0.0082,
+    };
+    assert.equal(taxDragValueFromPeriodSide(row, "left", "tax_dollars"), null);
     assert.deepEqual(toTaxDragPeriods(fundCompare([row]), "tax_dollars", "left"), [
-      { year: 2024, value: 82 },
+      { year: 2024, value: null },
     ]);
   });
 
@@ -314,7 +338,7 @@ describe("matched:true + null totals falls back to period deltas", () => {
     ]);
   });
 
-  it("does not chart deltas when matched:false", () => {
+  it("does not chart shared deltas when matched:false", () => {
     const unmatched = {
       ...matchedNullTotals("FBGRX"),
       matched: false,
@@ -326,14 +350,11 @@ describe("matched:true + null totals falls back to period deltas", () => {
       estimated_tax: 95,
       effective_tax_on_holding: 0.0095,
     };
-    assert.equal(taxDragValueFromPeriodSide(row, "left", "tax_dollars"), null);
-    assert.equal(taxDragValueFromPeriodSide(row, "right", "tax_dollars"), 95);
+    assert.equal(taxDragValueFromPeriodSide(row, "left", "tax_dollars", true), null);
+    assert.equal(taxDragValueFromPeriodSide(row, "right", "tax_dollars", true), 95);
     assert.equal(comparePeriodIsCovered(row), false);
     assert.deepEqual(toTaxDragPeriods(fundCompare([row]), "tax_dollars", "left"), [
       { year: 2023, value: null },
-    ]);
-    assert.deepEqual(toTaxDragPeriods(fundCompare([row]), "tax_dollars", "right"), [
-      { year: 2023, value: 95 },
     ]);
   });
 
@@ -443,5 +464,110 @@ describe("matched:true + null totals falls back to period deltas", () => {
       points.map((point) => point.value),
       [null, null, null, 310, 310],
     );
+  });
+
+  it("charts AGTHX independently when FBGRX is unmatched for 2021–2023", () => {
+    const years = [2021, 2022, 2023, 2024, 2025];
+    const agthx: Record<number, number> = {
+      2021: 0.0082, 2022: 0.0071, 2023: 0.0118, 2024: 0.0096, 2025: 0.0088,
+    };
+    const fbgrx: Record<number, number | null> = {
+      2021: null, 2022: null, 2023: null, 2024: 0.036, 2025: 0.031,
+    };
+    const response = fundCompare(
+      years.map((year) => {
+        const rightMatched = fbgrx[year] != null;
+        const row = period(
+          year,
+          side("AGTHX", true, agthx[year] * 10_000, agthx[year]),
+          rightMatched
+            ? side("FBGRX", true, (fbgrx[year] as number) * 10_000, fbgrx[year] as number)
+            : { ...matchedNullTotals("FBGRX"), matched: false },
+        );
+        row.deltas = rightMatched
+          ? {
+              distribution_dollars: 0,
+              estimated_tax: ((fbgrx[year] as number) - agthx[year]) * 10_000,
+              effective_tax_on_holding: (fbgrx[year] as number) - agthx[year],
+            }
+          : {
+              distribution_dollars: null,
+              estimated_tax: null,
+              effective_tax_on_holding: null,
+            };
+        return row;
+      }),
+    );
+    const series = toCompareTaxDragSeries(response, "effective_tax");
+    assert.equal(series[0].label, "AGTHX");
+    assert.equal(series[1].label, "FBGRX");
+    assert.deepEqual(
+      series[0].points.map((point) => point.value),
+      years.map((year) => agthx[year]),
+    );
+    assert.deepEqual(
+      series[1].points.map((point) => point.value),
+      [null, null, null, 0.036, 0.031],
+    );
+    assert.equal(comparePeriodIsCovered(response.periods[0]), false);
+    assert.ok(
+      series[0].points.every((point) => point.value != null),
+      "AGTHX bars must not be wiped by FBGRX gaps or comparePeriodIsCovered",
+    );
+  });
+
+  it("charts a matched yoy vintage even when the paired vintage is unmatched", () => {
+    const response: CompareResponse = {
+      mode: "yoy",
+      periods: [
+        period(2022, { ...matchedNullTotals("2021"), matched: false }, side("2022", true, 71, 0.0071)),
+      ],
+      summary: {
+        normalized_holding_dollars: 10_000,
+        total_tax_difference: 0,
+        annualized_tax_drag_delta: 0,
+        distribution_dollars_difference: 0,
+        periods_compared: 1,
+        common_inception: { from_year: 2021, to_year: 2022 },
+      },
+      notes: [],
+    };
+    response.periods[0].deltas = {
+      distribution_dollars: null,
+      estimated_tax: null,
+      effective_tax_on_holding: null,
+    };
+    const points = toTaxDragPeriods(response, "effective_tax");
+    assert.deepEqual(points, [
+      { year: 2021, value: null },
+      { year: 2022, value: 0.0071 },
+    ]);
+  });
+
+  it("derives % tax drag from estimated_tax / holding when effective_tax_on_holding is null", () => {
+    const left: CompareIllustration = {
+      label: "AGTHX",
+      matched: true,
+      holding_dollars: 10_000,
+      totals: {
+        distribution_dollars: 82,
+        estimated_tax: 82,
+        estimated_tax_dollars: 82,
+        effective_tax_on_holding: null,
+      },
+    };
+    const response = fundCompare([period(2021, left, { ...matchedNullTotals("FBGRX"), matched: false })]);
+    response.periods[0].deltas = {
+      distribution_dollars: null,
+      estimated_tax: null,
+      effective_tax_on_holding: null,
+    };
+    assert.equal(taxDragValueFromIllustration(left, "effective_tax"), 0.0082);
+    assert.deepEqual(toTaxDragPeriods(response, "effective_tax", "left"), [
+      { year: 2021, value: 0.0082 },
+    ]);
+    assert.deepEqual(toTaxDragPeriods(response, "effective_tax", "right"), [
+      { year: 2021, value: null },
+    ]);
   });
 });
