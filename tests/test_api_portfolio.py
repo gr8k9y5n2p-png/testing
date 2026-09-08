@@ -60,12 +60,30 @@ def test_portfolio_illustrate_coverage_and_gaps(client: TestClient) -> None:
     # Latest prelim is 2025 3–5% NAV on $1M → $40,000 mid, 25% tax → $10,000
     assert Decimal(amcap["illustration"]["totals"]["distribution_dollars"]) == Decimal("40000.00")
     assert Decimal(amcap["illustration"]["totals"]["estimated_tax"]) == Decimal("10000.00")
+    listed = client.get(
+        "/distributions",
+        params={
+            "fund_identifier": "amcap-fund",
+            "publication_stage": "preliminary_estimate",
+            "as_of_from": "2025-09-19",
+            "as_of_to": "2025-09-19",
+            "page_size": 50,
+        },
+    )
+    assert listed.status_code == 200, listed.text
+    source = listed.json()["items"][0]
     assert amcap["upcoming"] == {
         "distribution_dollars": "40000.00",
         "estimated_tax": "10000.00",
         "as_of": "2025-09-19",
         "publication_stage": "preliminary_estimate",
+        "record_date": source["record_date"],
+        "ex_date": source["ex_date"],
+        "payable_date": source["payable_date"],
     }
+    assert source["record_date"] == "2025-12-12"
+    assert source["ex_date"] == "2025-12-12"
+    assert source["payable_date"] == "2025-12-15"
 
     cghm = next(h for h in body["holdings"] if h["ticker"] == "CGHM")
     assert cghm["covered"] is True
@@ -102,6 +120,117 @@ def test_portfolio_per_share_with_nav(client: TestClient) -> None:
         holding["illustration"]["totals"]["distribution_dollars"]
     )
     assert holding["upcoming"]["publication_stage"] == "paid"
+
+
+def test_portfolio_upcoming_copies_record_ex_payable_when_present(client: TestClient) -> None:
+    ingested = client.post(
+        "/ingest/distributions",
+        json={
+            "records": [
+                {
+                    "fund_family": "American Funds",
+                    "fund_name": "Dateful Fund",
+                    "ticker": "DATES",
+                    "estimate_type": "long_term_capital_gains",
+                    "amount": "4",
+                    "amount_unit": "percent_of_nav",
+                    "as_of": "2026-09-01",
+                    "record_date": "2026-12-15",
+                    "ex_date": "2026-12-16",
+                    "payable_date": "2026-12-17",
+                    "publication_stage": "preliminary_estimate",
+                },
+                {
+                    "fund_family": "American Funds",
+                    "fund_name": "Dateless Fund",
+                    "ticker": "NODTE",
+                    "estimate_type": "long_term_capital_gains",
+                    "amount": "2",
+                    "amount_unit": "percent_of_nav",
+                    "as_of": "2026-09-01",
+                    "publication_stage": "preliminary_estimate",
+                },
+            ]
+        },
+    )
+    assert ingested.status_code == 200, ingested.text
+
+    response = client.post(
+        "/illustrate/portfolio",
+        json={
+            "holdings": [
+                {"ticker": "DATES", "holding_dollars": 10000},
+                {"ticker": "NODTE", "holding_dollars": 10000},
+            ],
+            "snapshot": {"prefer_publication_stages": ["preliminary_estimate"]},
+        },
+    )
+    assert response.status_code == 200, response.text
+    holdings = {item["ticker"]: item for item in response.json()["holdings"]}
+
+    dated = holdings["DATES"]["upcoming"]
+    assert dated is not None
+    assert dated["record_date"] == "2026-12-15"
+    assert dated["ex_date"] == "2026-12-16"
+    assert dated["payable_date"] == "2026-12-17"
+    assert dated["as_of"] == "2026-09-01"
+    assert dated["publication_stage"] == "preliminary_estimate"
+    assert holdings["DATES"]["illustration"]["components"][0]["record_date"] == "2026-12-15"
+    assert holdings["DATES"]["illustration"]["components"][0]["ex_date"] == "2026-12-16"
+    assert holdings["DATES"]["illustration"]["components"][0]["payable_date"] == "2026-12-17"
+
+    dateless = holdings["NODTE"]["upcoming"]
+    assert dateless is not None
+    assert dateless["record_date"] is None
+    assert dateless["ex_date"] is None
+    assert dateless["payable_date"] is None
+    assert dateless["as_of"] == "2026-09-01"
+
+
+def test_portfolio_compare_upcoming_includes_calendar_dates(client: TestClient) -> None:
+    ingested = client.post(
+        "/ingest/distributions",
+        json={
+            "records": [
+                {
+                    "fund_family": "American Funds",
+                    "fund_name": "Dateful Fund",
+                    "ticker": "DATES",
+                    "estimate_type": "long_term_capital_gains",
+                    "amount": "4",
+                    "amount_unit": "percent_of_nav",
+                    "as_of": "2026-09-01",
+                    "record_date": "2026-12-15",
+                    "ex_date": "2026-12-16",
+                    "payable_date": "2026-12-17",
+                    "publication_stage": "updated_estimate",
+                }
+            ]
+        },
+    )
+    assert ingested.status_code == 200, ingested.text
+
+    response = client.post(
+        "/illustrate/portfolio/compare",
+        json={
+            "current": {
+                "holdings": [{"ticker": "DATES", "holding_dollars": 25000}],
+            },
+            "proposed": {
+                "holdings": [{"ticker": "DATES", "holding_dollars": 10000}],
+            },
+            "snapshot": {
+                "prefer_publication_stages": ["preliminary_estimate", "updated_estimate"]
+            },
+        },
+    )
+    assert response.status_code == 200, response.text
+    body = response.json()
+    for side in ("current", "proposed"):
+        upcoming = body[side]["holdings"][0]["upcoming"]
+        assert upcoming["record_date"] == "2026-12-15"
+        assert upcoming["ex_date"] == "2026-12-16"
+        assert upcoming["payable_date"] == "2026-12-17"
 
 
 def test_portfolio_holding_requires_lookup(client: TestClient) -> None:

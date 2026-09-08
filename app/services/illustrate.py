@@ -181,7 +181,9 @@ def _illustrate_row(
             amount_min=low,
             amount_max=high,
             as_of=row.as_of,
+            record_date=getattr(row, "record_date", None),
             ex_date=row.ex_date,
+            payable_date=getattr(row, "payable_date", None),
             federal_rate_key=rate_key,
             federal_rate=_rate(federal),
             state_rate=_rate(state),
@@ -211,7 +213,9 @@ def _illustrate_row(
             amount_min=low,
             amount_max=high,
             as_of=row.as_of,
+            record_date=getattr(row, "record_date", None),
             ex_date=row.ex_date,
+            payable_date=getattr(row, "payable_date", None),
             federal_rate_key=rate_key,
             federal_rate=_rate(federal),
             state_rate=_rate(state),
@@ -259,7 +263,9 @@ def _illustrate_row(
         amount_min=low,
         amount_max=high,
         as_of=row.as_of,
+        record_date=getattr(row, "record_date", None),
         ex_date=row.ex_date,
+        payable_date=getattr(row, "payable_date", None),
         federal_rate_key=rate_key,
         federal_rate=_rate(federal),
         state_rate=_rate(state),
@@ -487,6 +493,17 @@ def _select_holding_rows(
     return rows, warnings, stage_used
 
 
+def _known_component_date(components: list[IllustrationComponent], attr: str) -> date | None:
+    """Return a published calendar date from included rows; never invent one."""
+    included = [component for component in components if component.included_in_totals]
+    ordered = sorted(included, key=lambda component: component.as_of or date.min, reverse=True)
+    for component in ordered:
+        value = getattr(component, attr, None)
+        if value is not None:
+            return value
+    return None
+
+
 def _holding_upcoming(
     illustration: IllustrateResponse | None, stage_used: str | None
 ) -> PortfolioHoldingUpcoming | None:
@@ -505,6 +522,9 @@ def _holding_upcoming(
         estimated_tax=_money(illustration.totals.estimated_tax),
         as_of=max(as_ofs) if as_ofs else None,
         publication_stage=stage_used,
+        record_date=_known_component_date(illustration.components, "record_date"),
+        ex_date=_known_component_date(illustration.components, "ex_date"),
+        payable_date=_known_component_date(illustration.components, "payable_date"),
     )
 
 

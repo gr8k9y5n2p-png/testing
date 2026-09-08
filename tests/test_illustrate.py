@@ -22,7 +22,9 @@ def _row(**overrides) -> SimpleNamespace:
         amount_min=Decimal("3"),
         amount_max=Decimal("5"),
         as_of=date(2025, 9, 19),
+        record_date=date(2025, 12, 12),
         ex_date=date(2025, 12, 12),
+        payable_date=date(2025, 12, 15),
     )
     payload.update(overrides)
     return SimpleNamespace(**payload)
@@ -53,6 +55,9 @@ def test_percent_of_nav_math_and_range() -> None:
     assert component.estimated_tax_min == Decimal("7500.00")
     assert component.estimated_tax_max == Decimal("12500.00")
     assert component.included_in_totals is True
+    assert component.record_date == date(2025, 12, 12)
+    assert component.ex_date == date(2025, 12, 12)
+    assert component.payable_date == date(2025, 12, 15)
 
 
 def test_per_share_math() -> None:

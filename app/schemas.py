@@ -378,7 +378,9 @@ class IllustrationComponent(BaseModel):
     amount_min: Decimal | None
     amount_max: Decimal | None
     as_of: date | None
+    record_date: date | None = None
     ex_date: date | None
+    payable_date: date | None = None
     federal_rate_key: str | None
     federal_rate: Decimal | None
     state_rate: Decimal | None
@@ -546,12 +548,19 @@ class PortfolioHoldingGap(BaseModel):
 
 
 class PortfolioHoldingUpcoming(BaseModel):
-    """Convenience slice of the illustration chosen for this holding."""
+    """Convenience slice of the illustration chosen for this holding.
+
+    Calendar dates are copied from the underlying distribution row(s) when
+    present. Null means the source did not publish that date — never invented.
+    """
 
     distribution_dollars: Decimal
     estimated_tax: Decimal
     as_of: date | None = None
     publication_stage: str | None = None
+    record_date: date | None = None
+    ex_date: date | None = None
+    payable_date: date | None = None
 
 
 class PortfolioHoldingOut(BaseModel):
