@@ -132,10 +132,10 @@ function AftertaxAppInner({
   );
 
   const seedFunds = useMemo(() => {
-    if (selected) return [toGrowthFund(selected)];
+    if (picked) return [toGrowthFund(picked)];
     if (drillInFund) return [drillInFund];
-    return undefined;
-  }, [drillInFund, selected]);
+    return selected ? [toGrowthFund(selected)] : undefined;
+  }, [drillInFund, picked, selected]);
 
   function selectFund(fund: FundEstimateView) {
     const result = freemium.trySearch(fund.ticker);

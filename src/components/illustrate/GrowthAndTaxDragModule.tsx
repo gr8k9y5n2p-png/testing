@@ -277,11 +277,9 @@ export function GrowthAndTaxDragModule({
   );
 
   const upcomingSummary = useMemo(() => {
-    if (!rows || rows.length !== 1) return null;
-    return toUpcomingSummary(
-      rows[0].tax?.summary.upcoming_taxable_distribution,
-      "left",
-    );
+    const row = rows?.find((item) => item.tax?.summary.upcoming_taxable_distribution);
+    if (!row?.tax) return null;
+    return toUpcomingSummary(row.tax.summary.upcoming_taxable_distribution, "left");
   }, [rows]);
 
   return (
