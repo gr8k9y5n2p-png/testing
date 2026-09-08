@@ -350,9 +350,23 @@ def test_search_multi_year_top_families(client: TestClient) -> None:
     assert "final" in dgagx_stages
 
     swtsx = client.get("/distributions", params={"fund_identifier": "SWTSX", "page_size": 50})
-    assert {"2022", "2023", "2024", "2025"} <= {
+    assert {"2021", "2022", "2023", "2024", "2025"} <= {
         item["as_of"][:4] for item in swtsx.json()["items"] if item.get("as_of")
     }
+    swtsx_2021 = client.get(
+        "/distributions",
+        params={
+            "fund_identifier": "SWTSX",
+            "as_of_from": "2021-01-01",
+            "as_of_to": "2021-12-31",
+            "page_size": 20,
+        },
+    )
+    assert any(
+        item["estimate_type"] == "long_term_capital_gains"
+        and Decimal(item["amount"]) == Decimal("0.2022")
+        for item in swtsx_2021.json()["items"]
+    )
 
     disvx = client.get("/distributions", params={"fund_identifier": "DISVX", "page_size": 50})
     disvx_years = {item["as_of"][:4] for item in disvx.json()["items"] if item.get("as_of")}

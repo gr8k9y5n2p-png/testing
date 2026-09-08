@@ -598,13 +598,16 @@ Goal: for **existing US-domiciled adapters**, ingest every **mutual fund and ETF
 
 **Wave 8 (year-depth, ranks 1–40 only):** MFS 10-year Excel expanded beyond MIGHX / MITTX to official Class A product pages (MEIAX / MFEGX / MFRFX / OTCAX / MVCAX / MSFRX / MGRAX / MGIAX / MNDAX / MTCAX / MMUFX). Northern Trust added the official **2021** equity CG book (NOSIX LT $0.985777). Macquarie added the official **2023** CGE-RET-ACT paying book (WSTAX LT $5.331; 20 Class A tickers). Fidelity 2021–2023 still HPDY SPA / no CDX prior-year HTML. ACI 2021/2024 siblings 404 (unversioned September PDF is the 2023 book). Artisan 2021–2023 ICI public but token order / Box 1a breakdown not column-safe. First Eagle 2022 skipped (prior 403). Invesco ICI still 406. CGHM / YoY / render.yaml disk left as-is.
 
+**Wave 9 (year-depth, ranks 1–40 only):** Northern Trust 2022–2024 equity CG PDFs are now the full paying-fund books (were NOSIX/NOLCX/NOMIX flagships). Schwab gained official 2021 YE product-page rows for SWTSX / SWPPX plus 2025 SWLSX LT $0.4957. Columbia 2024 YE PDF remains wrap-unsafe (not expanded). Fidelity 2021–2023 still HPDY SPA (Wayback DPL6 closest-match served the 2024 book). SSGA historical XLSX still no stable URL. GSAM advisor 403. PIMCO 2025 tax PDF is 1099 character, not ST/LT $/share. MSIM 2023 ETF PDF Akamai 403. Invesco ICI 406. DFA `.../2021-2023-distributions.pdf` aliases serve the 2024 file. Principal product-page CG history still starts 2023. Lord Abbett paying-fund PDF 404. Eaton Vance open-end still missing. Amundi skipped.
+
 **Year-depth before → after (fixture ingest; calendar year on `as_of` or `ex_date`; ranks 1–40 movers):**
 
 | Family | Before (tickers / year) | After |
 | --- | --- | --- |
-| MFS | 2021–2024:2 / 2025:175 / 2026:2 | **2021:13** / **2022:12** / **2023:11** / **2024:12** / **2025:180** / **2026:3** |
-| Northern Trust | 2022–2024:3 / 2025:22 | **2021:19** / 2022–2024:3 / 2025:22 (24 unique tickers) |
-| Macquarie | 2024:3 / 2025:21 | **2023:20** / 2024:3 / 2025:21 (26 unique tickers) |
+| Northern Trust | 2021:19 / 2022–2024:3 / 2025:22 | 2021:19 / **2022:16** / **2023:10** / **2024:15** / 2025:22 |
+| Schwab | 2022–2024:2 / 2025:3 | **2021:2** / 2022–2024:2 / **2025:4** |
+| MFS | 2021:13 / 2022:12 / 2023:11 / 2024:12 / 2025:180 / 2026:3 | unchanged this wave |
+| Macquarie | 2023:20 / 2024:3 / 2025:21 | unchanged this wave |
 | Fidelity | 2024:350 / 2025:349 / 2026:15 | unchanged (2021–2023 HPDY SPA) |
 | American Century | 2022:266 / 2023:350 / 2025:389 | unchanged (2021/2024 siblings 404) |
 | Artisan | 2024:46 / 2025:51 / 2026:2 | unchanged (2021–2023 ICI not column-safe) |

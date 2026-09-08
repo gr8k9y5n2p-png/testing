@@ -84,6 +84,7 @@ def test_full_book_vanguard_ici_and_next_wave() -> None:
 
     nt_funds, nt_tickers = _funds_and_tickers(NorthernTrustSource())
     assert {"NOSIX", "NOMIX", "NSGRX", "NMMEX"} <= nt_tickers
+    assert {"NENGX", "NMIEX", "NOSGX"} <= nt_tickers
     assert len(nt_tickers) >= 20
 
     janus_funds, janus_tickers = _funds_and_tickers(JanusHendersonSource())

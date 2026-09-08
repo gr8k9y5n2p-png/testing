@@ -671,6 +671,57 @@ def test_next_tier_fixtures() -> None:
     assert nosix_2021.publication_stage == PublicationStage.final
     assert len({r.ticker for r in nt_2021 if r.ticker}) >= 15
 
+    nt_2022 = parse_distribution_html(
+        (ROOT / "northern_trust" / "2022_capital_gain_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://nt-2022",
+        fund_family="Northern Trust",
+    )
+    nosix_2022 = next(
+        r
+        for r in nt_2022
+        if r.ticker == "NOSIX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert nosix_2022.amount == Decimal("1.243605")
+    nengx_2022 = next(
+        r
+        for r in nt_2022
+        if r.ticker == "NENGX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert nengx_2022.amount == Decimal("1.892337")
+    assert len({r.ticker for r in nt_2022 if r.ticker}) >= 15
+
+    nt_2023 = parse_distribution_html(
+        (ROOT / "northern_trust" / "2023_capital_gain_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://nt-2023",
+        fund_family="Northern Trust",
+    )
+    nmi_2023 = next(
+        r
+        for r in nt_2023
+        if r.ticker == "NMIEX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert nmi_2023.amount == Decimal("0.434841")
+    assert len({r.ticker for r in nt_2023 if r.ticker}) >= 10
+
+    assert nosix_2024.amount == Decimal("0.699110")
+    nsgrx_2024 = next(
+        r
+        for r in nt_2024
+        if r.ticker == "NSGRX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert nsgrx_2024.amount == Decimal("4.052773")
+    nosgx_2024 = next(
+        r
+        for r in nt_2024
+        if r.ticker == "NOSGX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert nosgx_2024.amount == Decimal("7.263053")
+    assert len({r.ticker for r in nt_2024 if r.ticker}) >= 14
+
     msim_2024 = parse_distribution_html(
         (ROOT / "morgan_stanley" / "2024_etf_year_end.html").read_text(encoding="utf-8"),
         source_url="fixture://msim-2024",
@@ -692,6 +743,36 @@ def test_next_tier_fixtures() -> None:
         if r.ticker == "SWTSX" and r.estimate_type == EstimateType.ordinary_income
     )
     assert swtsx_2024.amount == Decimal("1.2252")
+
+    schwab_2021 = parse_distribution_html(
+        (ROOT / "schwab" / "2021_annual_distributions.html").read_text(encoding="utf-8"),
+        source_url="fixture://schwab-2021",
+        fund_family="Charles Schwab Investment Management",
+    )
+    swtsx_2021 = next(
+        r
+        for r in schwab_2021
+        if r.ticker == "SWTSX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert swtsx_2021.amount == Decimal("0.2022")
+    swppx_2021 = next(
+        r
+        for r in schwab_2021
+        if r.ticker == "SWPPX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert swppx_2021.amount == Decimal("0.0678")
+
+    schwab_2025 = parse_distribution_html(
+        (ROOT / "schwab" / "2025_annual_distributions.html").read_text(encoding="utf-8"),
+        source_url="fixture://schwab-2025",
+        fund_family="Charles Schwab Investment Management",
+    )
+    swlsx_2025 = next(
+        r
+        for r in schwab_2025
+        if r.ticker == "SWLSX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert swlsx_2025.amount == Decimal("0.4957")
 
     dfa_2024 = parse_distribution_html(
         (ROOT / "dimensional" / "2024_capital_gain_distributions.html").read_text(encoding="utf-8"),

@@ -194,9 +194,13 @@ class NorthernTrustSource(HtmlTableSource):
         "omitted. 2025 .../estimated-capital-gains-2025.pdf is the full equity "
         "CG book (NOSIX ST $0.041654 / LT $1.182288; NOMIX ST $0.136686 / "
         "LT $1.011150; NSGRX/NSCKX ST $0.189098 / LT $3.454742). "
-        "2024 .../estimated-capital-gains-2024.pdf (NOSIX ST $0.088060 / LT $0.699110), "
-        "2023 .../capital-gains-2023.pdf (NOSIX LT $1.697952), "
-        "2022 .../capital-gains-2022.pdf (NOSIX LT $1.243605), "
+        "2024 .../estimated-capital-gains-2024.pdf is the full equity CG book "
+        "(NOSIX ST $0.088060 / LT $0.699110; NSGRX/NSCKX LT $4.052773; "
+        "NOSGX LT $7.263053). "
+        "2023 .../capital-gains-2023.pdf is the full equity CG book "
+        "(NOSIX LT $1.697952; NOLCX LT $1.865371; NSGRX/NSCKX LT $1.216779). "
+        "2022 .../capital-gains-2022.pdf is the full equity CG book "
+        "(NOSIX LT $1.243605; NENGX LT $1.892337; NOMIX LT $1.629689). "
         "2021 .../capital-gains-2021.pdf (NOSIX ST $0.096491 / LT $0.985777; "
         "full equity CG book; FI daily/monthly omitted). "
         "Hub: https://ntam.northerntrust.com/united-states/all-investor/account-resources/tax-center"
@@ -223,21 +227,18 @@ class NorthernTrustSource(HtmlTableSource):
                 url=f"{tax}/northerntrust/investment-management/global/en/documents/account-resources/tax-center/estimated-capital-gains-2024.pdf",
                 fixture="2024_capital_gain_distributions.html",
                 live=False,
-                large_aum_only=True,
             ),
             PageSpec(
                 name="2023_capital_gain_distributions",
                 url=f"{tax}/northerntrust/investment-management/global/en/documents/account-resources/tax-center/capital-gains-2023.pdf",
                 fixture="2023_capital_gain_distributions.html",
                 live=False,
-                large_aum_only=True,
             ),
             PageSpec(
                 name="2022_capital_gain_distributions",
                 url=f"{tax}/northerntrust/investment-management/global/en/documents/account-resources/tax-center/capital-gains-2022.pdf",
                 fixture="2022_capital_gain_distributions.html",
                 live=False,
-                large_aum_only=True,
             ),
             PageSpec(
                 name="2021_capital_gain_distributions",
@@ -294,11 +295,14 @@ class SchwabSource(HtmlTableSource):
         "Family annual page "
         "https://www.schwabassetmanagement.com/resource/schwab-funds-actual-annual-distributions-2025 "
         "is a JS SPA (verified 2026-09-07). Per-fund product pages publish HTML "
-        "distribution history for ≥$1B index funds: "
-        "https://www.schwabassetmanagement.com/products/swtsx and "
+        "distribution history: "
+        "https://www.schwabassetmanagement.com/products/swtsx , "
         "https://www.schwabassetmanagement.com/products/swppx "
-        "(SWTSX 2025 income $0.1805; 2024 $1.2252; 2023 $1.1379; 2022 $1.0547 — "
-        "2022–2024 CG $0). No public filled ICI file. Skip SPA family grids."
+        "(≥$1B index heroes; SWTSX 2025 income $0.1805; 2024 $1.2252; 2023 $1.1379; "
+        "2022 $1.0547; 2021 income $0.9649 / ST $0.0352 / LT $0.2022. "
+        "SWPPX 2021 LT $0.0678) and the 2025 current-book "
+        "https://www.schwabassetmanagement.com/products/swlsx (SWLSX LT $0.4957). "
+        "No public filled ICI file. Skip SPA family grids."
     )
     live_limitations = (
         "Family annual grid is JavaScript-rendered. Product pages mix performance "
@@ -331,6 +335,13 @@ class SchwabSource(HtmlTableSource):
                 name="2022_annual_distributions",
                 url="https://www.schwabassetmanagement.com/products/swtsx",
                 fixture="2022_annual_distributions.html",
+                live=False,
+                large_aum_only=True,
+            ),
+            PageSpec(
+                name="2021_annual_distributions",
+                url="https://www.schwabassetmanagement.com/products/swtsx",
+                fixture="2021_annual_distributions.html",
                 live=False,
                 large_aum_only=True,
             ),
