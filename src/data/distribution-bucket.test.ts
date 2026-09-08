@@ -153,6 +153,33 @@ test("past ex-date keeps a preliminary row out of upcoming", () => {
   );
 });
 
+test("past record_date alone sends a preliminary row to paid history", () => {
+  assert.equal(
+    distributionBucket(
+      {
+        asOfDate: "2025-11-02",
+        recordDate: "2025-12-12",
+        exDate: null,
+        payableDate: null,
+        publicationStage: "preliminary_estimate",
+      },
+      TODAY,
+    ),
+    "paid",
+  );
+  assert.equal(
+    distributionBucket(
+      {
+        asOfDate: "2025-11-02",
+        recordDate: "2025-12-12",
+        publicationStage: "updated_estimate",
+      },
+      TODAY,
+    ),
+    "paid",
+  );
+});
+
 test("FIGFX-style upcoming row is not mixed with paid history", () => {
   const announced = distributionBucket(
     {

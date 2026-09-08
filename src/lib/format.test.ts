@@ -6,6 +6,7 @@ describe("formatDate", () => {
   it("includes the year in advisor-facing dates", () => {
     assert.equal(formatDate("2025-12-15"), "Dec 15, 2025");
     assert.equal(formatDate("2026-08-12"), "Aug 12, 2026");
+    assert.equal(formatDate("2026-09-19"), "Sep 19, 2026");
   });
 });
 

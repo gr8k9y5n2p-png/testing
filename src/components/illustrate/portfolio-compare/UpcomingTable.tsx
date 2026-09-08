@@ -1,7 +1,6 @@
 import { TickerHistoryLink } from "@/components/illustrate/TickerHistoryLink";
 import { formatOptionalDate, formatUsd } from "@/lib/format";
 import {
-  distributionHasPayable,
   formatStageLabel,
   heatBackground,
   type UpcomingRow,
@@ -14,15 +13,12 @@ function dateCell(value: string | null): string {
 function DistributionGrid({
   rows,
   empty,
-  showPayable,
   showHeat,
 }: {
   rows: UpcomingRow[];
   empty: string;
-  showPayable: boolean;
   showHeat: boolean;
 }) {
-  const colSpan = showPayable ? 8 : 7;
   return (
     <div className="overflow-x-auto">
       <table className="min-w-full text-sm">
@@ -34,16 +30,14 @@ function DistributionGrid({
             <th className="px-2 py-1.5 text-right">Announced</th>
             <th className="px-2 py-1.5 text-right">Record</th>
             <th className="px-2 py-1.5 text-right">Ex-div</th>
-            {showPayable ? (
-              <th className="px-2 py-1.5 text-right">Payable</th>
-            ) : null}
+            <th className="px-2 py-1.5 text-right">Payable</th>
             <th className="py-1.5 pl-2 text-right">Stage</th>
           </tr>
         </thead>
         <tbody>
           {rows.length === 0 ? (
             <tr>
-              <td colSpan={colSpan} className="py-6 text-center text-sm text-muted">
+              <td colSpan={8} className="py-6 text-center text-sm text-muted">
                 {empty}
               </td>
             </tr>
@@ -80,11 +74,9 @@ function DistributionGrid({
                 <td className="px-2 py-2 text-right font-mono text-[11px] tabular-nums text-muted">
                   {dateCell(row.exDate)}
                 </td>
-                {showPayable ? (
-                  <td className="px-2 py-2 text-right font-mono text-[11px] tabular-nums text-muted">
-                    {dateCell(row.payableDate)}
-                  </td>
-                ) : null}
+                <td className="px-2 py-2 text-right font-mono text-[11px] tabular-nums text-muted">
+                  {dateCell(row.payableDate)}
+                </td>
                 <td className="py-2 pl-2 text-right text-[11px] text-muted">
                   {formatStageLabel(row.stage)}
                 </td>
@@ -111,8 +103,6 @@ export function UpcomingTable({
   className?: string;
 }) {
   const paidHeadingId = `${headingId}-paid`;
-  const showUpcomingPayable = distributionHasPayable(rows);
-  const showPaidPayable = distributionHasPayable(paidRows);
 
   return (
     <section
@@ -140,7 +130,6 @@ export function UpcomingTable({
       <DistributionGrid
         rows={rows}
         empty="No upcoming estimates for these holdings."
-        showPayable={showUpcomingPayable}
         showHeat
       />
 
@@ -156,7 +145,6 @@ export function UpcomingTable({
       <DistributionGrid
         rows={paidRows}
         empty="No paid distribution history for these holdings."
-        showPayable={showPaidPayable}
         showHeat={false}
       />
       <p className="mt-2 text-[10px] text-faint">
