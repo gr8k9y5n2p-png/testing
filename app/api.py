@@ -7,6 +7,7 @@ from pydantic import ValidationError
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from app.aliases import display_ticker
 from app.crud import get_by_id, list_coverage_gaps, search_distributions
 from app.db import get_session
 from app.schemas import (
@@ -127,6 +128,7 @@ def list_distributions(
     items = []
     for row in rows:
         item = DistributionOut.model_validate(row)
+        item.ticker = display_ticker(item.ticker, item.fund_identifier)
         if not include_raw:
             item.raw_payload = None
         items.append(item)
@@ -138,7 +140,9 @@ def get_distribution(distribution_id: str, session: Session = Depends(get_sessio
     row = get_by_id(session, distribution_id)
     if row is None:
         raise HTTPException(status_code=404, detail="Distribution estimate not found")
-    return DistributionOut.model_validate(row)
+    item = DistributionOut.model_validate(row)
+    item.ticker = display_ticker(item.ticker, item.fund_identifier)
+    return item
 
 
 @router.get("/fund-families", response_model=list[FundFamilyOut], tags=["search"])

@@ -52,6 +52,8 @@ def test_fixture_fetch_and_search_filters(client: TestClient) -> None:
     names = {item["fund_name"] for item in payload["items"]}
     assert "AMCAP Fund" in names
     assert all(item["raw_payload"] is None for item in payload["items"])
+    assert all(item["ticker"] == "AMCPX" for item in payload["items"])
+    assert all(item["fund_identifier"] == "amcap-fund" for item in payload["items"])
 
     ticker = client.get("/distributions", params={"ticker": "CGHM"})
     assert ticker.json()["total"] >= 1
@@ -81,6 +83,58 @@ def test_fixture_fetch_and_search_filters(client: TestClient) -> None:
 
     missing = client.get("/distributions/00000000-0000-0000-0000-000000000000")
     assert missing.status_code == 404
+
+
+def test_distributions_alias_search_agthx_amcap_amcpx(client: TestClient) -> None:
+    fetched = client.post("/ingest/fetch", json={"fund_family": "american_funds", "mode": "fixture"})
+    assert fetched.status_code == 200, fetched.text
+
+    for params in (
+        {"q": "AGTHX"},
+        {"ticker": "AGTHX"},
+        {"fund_identifier": "AGTHX"},
+    ):
+        response = client.get("/distributions", params={**params, "page_size": 50})
+        assert response.status_code == 200, response.text
+        body = response.json()
+        assert body["total"] >= 1, params
+        assert {item["fund_identifier"] for item in body["items"]} == {"the-growth-fund-of-america"}
+        assert {item["ticker"] for item in body["items"]} == {"AGTHX"}
+
+    for params in (
+        {"q": "AMCPX"},
+        {"ticker": "AMCPX"},
+        {"fund_identifier": "AMCPX"},
+        {"ticker": "AMCAP"},
+        {"fund_identifier": "AMCAP"},
+    ):
+        response = client.get("/distributions", params={**params, "page_size": 50})
+        assert response.status_code == 200, response.text
+        body = response.json()
+        assert body["total"] >= 1, params
+        assert {item["fund_identifier"] for item in body["items"]} == {"amcap-fund"}
+        assert {item["ticker"] for item in body["items"]} == {"AMCPX"}
+
+    slug = client.get(
+        "/distributions",
+        params={"fund_identifier": "the-growth-fund-of-america", "page_size": 5},
+    )
+    assert slug.json()["total"] >= 1
+    assert slug.json()["items"][0]["ticker"] == "AGTHX"
+
+    illustrated = client.post(
+        "/illustrate",
+        json={
+            "holding_dollars": 100000,
+            "nav_per_share": 50,
+            "selectors": {"ticker": "AGTHX"},
+        },
+    )
+    assert illustrated.status_code == 200, illustrated.text
+    assert illustrated.json()["components"]
+    assert {c["fund_identifier"] for c in illustrated.json()["components"]} == {
+        "the-growth-fund-of-america"
+    }
 
     families = client.get("/fund-families")
     assert families.status_code == 200

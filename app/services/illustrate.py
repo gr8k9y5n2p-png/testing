@@ -7,6 +7,7 @@ from decimal import ROUND_HALF_UP, Decimal
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
+from app.aliases import TICKER_LOOKUP_ALIASES
 from app.crud import get_by_ids, list_matching
 from app.models import AmountUnit, DistributionEstimate, EstimateType, PublicationStage
 from app.schemas import (
@@ -45,12 +46,6 @@ from app.schemas import (
 CENTS = Decimal("0.01")
 RATE_PLACES = Decimal("0.000001")
 SUMMARY_HOLDING = Decimal("10000")
-# Class A ticker → stored fund_identifier when the HTML book has no ticker column.
-TICKER_LOOKUP_ALIASES: dict[str, dict[str, str]] = {
-    "AMCPX": {"fund_identifier": "amcap-fund"},
-    "AMCAP": {"fund_identifier": "amcap-fund"},
-    "AGTHX": {"fund_identifier": "the-growth-fund-of-america"},
-}
 
 # estimate_type → TaxRates field. STCG has its own rate (defaults to ordinary).
 # Unspecified combined capital-gain estimates are treated as LTCG.

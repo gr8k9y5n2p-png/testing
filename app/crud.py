@@ -7,6 +7,7 @@ from sqlalchemy import Select, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.models import CoverageGap, DistributionEstimate, IngestRun
+from app.aliases import alias_fund_identifier
 from app.schemas import DistributionIn, fund_identifier, make_upsert_key
 
 
@@ -113,21 +114,45 @@ def _filter_stmt(
 ) -> Select[tuple[DistributionEstimate]]:
     stmt: Select[tuple[DistributionEstimate]] = select(DistributionEstimate)
     if q:
-        like = f"%{q.strip()}%"
-        stmt = stmt.where(
-            or_(
-                DistributionEstimate.fund_name.ilike(like),
-                DistributionEstimate.ticker.ilike(like),
-                DistributionEstimate.fund_family.ilike(like),
-                DistributionEstimate.fund_identifier.ilike(like),
-            )
-        )
+        raw_q = q.strip()
+        like = f"%{raw_q}%"
+        q_clauses = [
+            DistributionEstimate.fund_name.ilike(like),
+            DistributionEstimate.ticker.ilike(like),
+            DistributionEstimate.fund_family.ilike(like),
+            DistributionEstimate.fund_identifier.ilike(like),
+        ]
+        alias_ident = alias_fund_identifier(raw_q)
+        if alias_ident:
+            q_clauses.append(DistributionEstimate.fund_identifier.ilike(alias_ident))
+        stmt = stmt.where(or_(*q_clauses))
     if fund_family:
         stmt = stmt.where(DistributionEstimate.fund_family.ilike(f"%{fund_family.strip()}%"))
     if fund_identifier:
-        stmt = stmt.where(DistributionEstimate.fund_identifier.ilike(fund_identifier.strip()))
+        raw_ident = fund_identifier.strip()
+        alias_ident = alias_fund_identifier(raw_ident)
+        if alias_ident:
+            stmt = stmt.where(
+                or_(
+                    DistributionEstimate.fund_identifier.ilike(raw_ident),
+                    DistributionEstimate.fund_identifier.ilike(alias_ident),
+                    DistributionEstimate.ticker.ilike(raw_ident),
+                )
+            )
+        else:
+            stmt = stmt.where(DistributionEstimate.fund_identifier.ilike(raw_ident))
     if ticker:
-        stmt = stmt.where(DistributionEstimate.ticker.ilike(ticker.strip()))
+        raw_ticker = ticker.strip()
+        alias_ident = alias_fund_identifier(raw_ticker)
+        if alias_ident:
+            stmt = stmt.where(
+                or_(
+                    DistributionEstimate.ticker.ilike(raw_ticker),
+                    DistributionEstimate.fund_identifier.ilike(alias_ident),
+                )
+            )
+        else:
+            stmt = stmt.where(DistributionEstimate.ticker.ilike(raw_ticker))
     if fund_name:
         stmt = stmt.where(DistributionEstimate.fund_name.ilike(f"%{fund_name.strip()}%"))
     if estimate_type:
