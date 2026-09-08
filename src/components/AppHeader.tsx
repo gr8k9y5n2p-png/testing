@@ -18,14 +18,9 @@ export function AppHeader() {
               className="h-8 w-auto"
               priority
             />
-            <div>
-              <p className="font-serif text-[15px] leading-tight tracking-tight text-ink">
-                Aftertax
-              </p>
-              <p className="text-[11px] uppercase tracking-[0.14em] text-muted">
-                Wholesalers · advisors
-              </p>
-            </div>
+            <p className="font-serif text-[15px] leading-tight tracking-tight text-ink">
+              Aftertax
+            </p>
           </Link>
           <AppNav />
         </div>
