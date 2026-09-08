@@ -65,6 +65,13 @@ KNOWN_TICKER_SLUGS: dict[str, str] = {
     "DGRW": "wisdomtree",
     "DHS": "wisdomtree",
     "XSOE": "wisdomtree",
+    "DBEF": "dws",
+    "HYLB": "dws",
+    "ASHR": "dws",
+    "HDEF": "dws",
+    "PSWD": "dws",
+    "DBAW": "dws",
+}
     "JENSX": "jensen",
     "JENIX": "jensen",
     "DHLAX": "diamond_hill",

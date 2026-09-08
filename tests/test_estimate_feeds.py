@@ -223,6 +223,15 @@ def test_coverage_exposes_estimate_feed_readiness(session) -> None:
     assert first_trust.estimate_feed_status == "prelim_updated"
     assert any("ftportfolios.com" in url for url in first_trust.estimate_feed_urls)
 
+    dws = by_slug["dws"]
+    assert dws.estimate_feed_ready is True
+    assert dws.estimate_feed_status == "paid_history_only"
+    assert dws.history_years == [2025]
+    assert "DBEF" in dws.performance_tickers
+    assert any("dws.com/en-us/resources/tax-center" in url for url in dws.estimate_feed_urls)
+    assert any("9a1f54ed-fcf9-4b50-9d74-ae2343ee5bef" in url for url in dws.estimate_feed_urls)
+    assert any("dividend-schedules-2026" in url for url in dws.estimate_feed_urls)
+
     voya = by_slug["voya"]
     assert voya.estimate_feed_ready is True
     assert voya.history_years == [2024, 2025]

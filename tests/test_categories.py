@@ -12,6 +12,13 @@ def test_curated_flagships() -> None:
     assert resolve_category(ticker="DODIX", fund_name="Dodge & Cox Income Fund") == "Intermediate Core Bond"
     assert resolve_category(ticker="DODGX") == "Large Value"
     assert resolve_category(ticker="VTIAX") == "Foreign Large Blend"
+    assert resolve_category(ticker="DBEF", fund_name="Xtrackers MSCI EAFE Hedged Equity ETF") == (
+        "Foreign Large Blend"
+    )
+    assert resolve_category(ticker="HYLB", fund_name="Xtrackers USD High Yield Corporate Bond ETF") == (
+        "High Yield Bond"
+    )
+    assert resolve_category(ticker="ASHR") == "China Region"
 
 
 def test_name_rules_high_confidence() -> None:

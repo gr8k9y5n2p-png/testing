@@ -504,6 +504,7 @@ def test_search_multi_year_top_families(client: TestClient) -> None:
         "vaneck",
         "wisdomtree",
         "first_trust",
+        "dws",
         "federated_hermes",
         "jpmorgan",
         "aqr",

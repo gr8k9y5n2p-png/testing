@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import date
 from decimal import Decimal
 from pathlib import Path
 
@@ -136,6 +137,7 @@ from app.sources.eleventh_tier import (
     TocquevilleSource,
     ValueLineSource,
 )
+from app.sources.dws import DwsSource
 from app.sources.ici import parse_ici_primary
 from app.sources.parser import parse_distribution_html, split_fund_identity
 
@@ -455,6 +457,7 @@ def test_adapters_fetch_fixture_mode() -> None:
         VaneckSource(),
         WisdomtreeSource(),
         FirstTrustSource(),
+        DwsSource(),
         AqrSource(),
         CausewaySource(),
         AlgerSource(),
@@ -3570,3 +3573,85 @@ def test_eleventh_tier_fixtures() -> None:
         if r.ticker == "TOCQX" and r.estimate_type == EstimateType.long_term_capital_gains
     )
     assert tocqx.amount == Decimal("3.578")
+
+
+def test_dws_xtrackers_fixtures() -> None:
+    dws_ici = parse_ici_primary(
+        (ROOT / "dws" / "ici_primary_2025.csv").read_text(encoding="utf-8"),
+        source_url="fixture://dws-ici-2025",
+        fund_family="DWS / Xtrackers",
+        default_as_of=date(2025, 12, 31),
+    )
+    dbef_jun = next(
+        r
+        for r in dws_ici
+        if r.ticker == "DBEF"
+        and r.estimate_type == EstimateType.ordinary_income
+        and str(r.ex_date) == "2025-06-20"
+    )
+    assert dbef_jun.amount == Decimal("1.419000000")
+    dbef_dec = next(
+        r
+        for r in dws_ici
+        if r.ticker == "DBEF"
+        and r.estimate_type == EstimateType.ordinary_income
+        and str(r.ex_date) == "2025-12-19"
+    )
+    assert dbef_dec.amount == Decimal("1.250620000")
+    hylb_feb = next(
+        r
+        for r in dws_ici
+        if r.ticker == "HYLB"
+        and r.estimate_type == EstimateType.ordinary_income
+        and str(r.ex_date) == "2025-02-03"
+    )
+    assert hylb_feb.amount == Decimal("0.197230000")
+    hdef_jun = next(
+        r
+        for r in dws_ici
+        if r.ticker == "HDEF"
+        and r.estimate_type == EstimateType.ordinary_income
+        and str(r.ex_date) == "2025-06-20"
+    )
+    assert hdef_jun.amount == Decimal("0.630650000")
+    ashr_dec = next(
+        r
+        for r in dws_ici
+        if r.ticker == "ASHR" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert ashr_dec.amount == Decimal("0.758110000")
+    pswd_st = next(
+        r
+        for r in dws_ici
+        if r.ticker == "PSWD"
+        and r.estimate_type == EstimateType.short_term_capital_gains
+    )
+    assert pswd_st.amount == Decimal("0.157780000")
+    assert len({r.ticker for r in dws_ici if r.ticker}) >= 40
+    assert not any(r.ticker in {"ASHS", "IND"} for r in dws_ici)
+
+    dws_est = parse_distribution_html(
+        (ROOT / "dws" / "2025_estimated_capital_gains.html").read_text(encoding="utf-8"),
+        source_url="fixture://dws-est-2025",
+        fund_family="DWS / Xtrackers",
+    )
+    pswd_est = next(
+        r
+        for r in dws_est
+        if r.ticker == "PSWD"
+        and r.estimate_type == EstimateType.short_term_capital_gains
+    )
+    assert pswd_est.amount == Decimal("0.1599")
+
+    dws_final = parse_distribution_html(
+        (ROOT / "dws" / "2025_final_capital_gains.html").read_text(encoding="utf-8"),
+        source_url="fixture://dws-final-2025",
+        fund_family="DWS / Xtrackers",
+    )
+    pswd_final = next(
+        r
+        for r in dws_final
+        if r.ticker == "PSWD"
+        and r.estimate_type == EstimateType.short_term_capital_gains
+    )
+    assert pswd_final.amount == Decimal("0.1578")
