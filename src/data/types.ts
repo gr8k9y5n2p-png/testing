@@ -108,8 +108,23 @@ export interface HighlightSets {
   belowCategory: FundEstimateView[];
 }
 
+export interface FundPage {
+  items: FundEstimateView[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
 export interface DistributionRepository {
   search(filters?: SearchFilters): Promise<FundEstimateView[]>;
+  searchPage?(
+    query?: SearchFilters & {
+      limit?: number;
+      offset?: number;
+      sort?: string;
+      direction?: "asc" | "desc";
+    },
+  ): Promise<FundPage>;
   highlights(limit?: number): Promise<HighlightSets>;
   facets(): Promise<Facets>;
   getById(id: string): Promise<FundEstimateView | null>;

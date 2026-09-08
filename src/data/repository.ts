@@ -1,4 +1,5 @@
 import { getFacets, getHighlights, searchFunds, withPeerContext } from "./queries";
+import { paginateViews, type FundPageQuery, type FundPageResult } from "./pagination";
 import { SAMPLE_FUNDS } from "./seed";
 import type {
   DistributionRepository,
@@ -8,6 +9,7 @@ import type {
   SearchFilters,
 } from "./types";
 import { loadFundsFromDataApi } from "@/lib/data-api/distributions";
+import { loadFundPageFromDataApi } from "@/lib/data-api/funds-page";
 
 /**
  * In-memory repository. Prefers GET /distributions from the Data API
@@ -23,6 +25,12 @@ export class SeedDistributionRepository implements DistributionRepository {
 
   async search(filters: SearchFilters = {}): Promise<FundEstimateView[]> {
     return searchFunds(this.views, filters);
+  }
+
+  async searchPage(query: FundPageQuery = {}): Promise<FundPageResult> {
+    const live = await loadFundPageFromDataApi(query);
+    if (live) return live;
+    return paginateViews(this.views, query);
   }
 
   async highlights(limit = 5): Promise<HighlightSets> {
