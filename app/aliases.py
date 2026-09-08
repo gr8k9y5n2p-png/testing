@@ -1,13 +1,14 @@
 """Shared Class A / Investor A ticker ↔ stored fund_identifier aliases.
 
-Official books for American Funds, BlackRock open-end mutual funds, and
-J.P. Morgan Section 19a notices are name-keyed: HTML tables have a fund-name
-column and no ticker/CUSIP. Rows store ``ticker=null`` and a name slug
-(``american-balanced-fund``, ``blackrock-equity-dividend-fund``).
+Official books for American Funds, BlackRock open-end, J.P. Morgan Section 19a,
+and other name-keyed tax PDFs/HTML (Invesco, MFS, John Hancock, BNY, Hartford,
+AllianceBernstein, Thrivent, Calamos, Wasatch, Voya) have a fund-name column
+and no ticker/CUSIP. Rows store ``ticker=null`` and a name slug
+(``american-balanced-fund``, ``invesco-american-franchise-fund``).
 
 List, search, and illustrate resolve Class A / Investor A tickers (ABALX,
-MDDVX, OIEIX, …) through this map. Attaching a ticker must **not** change the
-name-slug identity, or re-ingest would fork upsert keys.
+MDDVX, OIEIX, VAFAX, MRGAX, …) through this map. Attaching a ticker must
+**not** change the name-slug identity, or re-ingest would fork upsert keys.
 
 SEEGX / JLGMX were already ticker-keyed in the JPM fixture and keep those
 identifiers. iShares ETF HTML already has tickers — this map does not
@@ -21,8 +22,18 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
+from app.aliases_ab import AB_FUND_ROWS
 from app.aliases_blackrock import BLACKROCK_FUND_ROWS
+from app.aliases_bny import BNY_FUND_ROWS
+from app.aliases_calamos import CALAMOS_FUND_ROWS
+from app.aliases_hartford import HARTFORD_FUND_ROWS
+from app.aliases_invesco import INVESCO_FUND_ROWS
+from app.aliases_john_hancock import JOHNHANCOCK_FUND_ROWS
 from app.aliases_jpmorgan import JPMORGAN_FUND_ROWS
+from app.aliases_mfs import MFS_FUND_ROWS
+from app.aliases_thrivent import THRIVENT_FUND_ROWS
+from app.aliases_voya import VOYA_FUND_ROWS
+from app.aliases_wasatch import WASATCH_FUND_ROWS
 
 _SLUG_RE = re.compile(r"[^a-z0-9]+")
 
@@ -35,6 +46,16 @@ def _slugify(name: str) -> str:
 FAMILY_AMERICAN_FUNDS = "american_funds"
 FAMILY_BLACKROCK = "blackrock"
 FAMILY_JPMORGAN = "jpmorgan"
+FAMILY_INVESCO = "invesco"
+FAMILY_MFS = "mfs"
+FAMILY_JOHNHANCOCK = "john_hancock"
+FAMILY_BNY = "bny_mellon"
+FAMILY_HARTFORD = "hartford"
+FAMILY_AB = "ab"
+FAMILY_THRIVENT = "thrivent"
+FAMILY_CALAMOS = "calamos"
+FAMILY_WASATCH = "wasatch"
+FAMILY_VOYA = "voya"
 
 
 def is_american_funds_family(fund_family: str | None) -> bool:
@@ -57,6 +78,26 @@ def family_key(fund_family: str | None) -> str | None:
         return FAMILY_BLACKROCK
     if "j.p. morgan" in blob or "jpmorgan" in blob or "jp morgan" in blob:
         return FAMILY_JPMORGAN
+    if "invesco" in blob:
+        return FAMILY_INVESCO
+    if "mfs" in blob:
+        return FAMILY_MFS
+    if "john hancock" in blob or "manulife" in blob:
+        return FAMILY_JOHNHANCOCK
+    if "bny" in blob or "dreyfus" in blob:
+        return FAMILY_BNY
+    if "hartford" in blob:
+        return FAMILY_HARTFORD
+    if "alliancebernstein" in blob or "alliance bernstein" in blob:
+        return FAMILY_AB
+    if "thrivent" in blob:
+        return FAMILY_THRIVENT
+    if "calamos" in blob:
+        return FAMILY_CALAMOS
+    if "wasatch" in blob:
+        return FAMILY_WASATCH
+    if "voya" in blob:
+        return FAMILY_VOYA
     return None
 
 
@@ -398,6 +439,16 @@ _BY_FAMILY_SLUG: dict[str, dict[str, ClassAIdentity]] = {
     FAMILY_AMERICAN_FUNDS: {},
     FAMILY_BLACKROCK: {},
     FAMILY_JPMORGAN: {},
+    FAMILY_INVESCO: {},
+    FAMILY_MFS: {},
+    FAMILY_JOHNHANCOCK: {},
+    FAMILY_BNY: {},
+    FAMILY_HARTFORD: {},
+    FAMILY_AB: {},
+    FAMILY_THRIVENT: {},
+    FAMILY_CALAMOS: {},
+    FAMILY_WASATCH: {},
+    FAMILY_VOYA: {},
 }
 
 
@@ -433,11 +484,33 @@ for _identity in CLASS_A_FUNDS:
 
 BLACKROCK_FUNDS: tuple[ClassAIdentity, ...] = _identities_from_rows(BLACKROCK_FUND_ROWS)
 JPMORGAN_FUNDS: tuple[ClassAIdentity, ...] = _identities_from_rows(JPMORGAN_FUND_ROWS)
+INVESCO_FUNDS: tuple[ClassAIdentity, ...] = _identities_from_rows(INVESCO_FUND_ROWS)
+MFS_FUNDS: tuple[ClassAIdentity, ...] = _identities_from_rows(MFS_FUND_ROWS)
+JOHNHANCOCK_FUNDS: tuple[ClassAIdentity, ...] = _identities_from_rows(JOHNHANCOCK_FUND_ROWS)
+BNY_FUNDS: tuple[ClassAIdentity, ...] = _identities_from_rows(BNY_FUND_ROWS)
+HARTFORD_FUNDS: tuple[ClassAIdentity, ...] = _identities_from_rows(HARTFORD_FUND_ROWS)
+AB_FUNDS: tuple[ClassAIdentity, ...] = _identities_from_rows(AB_FUND_ROWS)
+THRIVENT_FUNDS: tuple[ClassAIdentity, ...] = _identities_from_rows(THRIVENT_FUND_ROWS)
+CALAMOS_FUNDS: tuple[ClassAIdentity, ...] = _identities_from_rows(CALAMOS_FUND_ROWS)
+WASATCH_FUNDS: tuple[ClassAIdentity, ...] = _identities_from_rows(WASATCH_FUND_ROWS)
+VOYA_FUNDS: tuple[ClassAIdentity, ...] = _identities_from_rows(VOYA_FUND_ROWS)
 
-for _identity in BLACKROCK_FUNDS:
-    _register_identity(FAMILY_BLACKROCK, _identity)
-for _identity in JPMORGAN_FUNDS:
-    _register_identity(FAMILY_JPMORGAN, _identity)
+for _family, _funds in (
+    (FAMILY_BLACKROCK, BLACKROCK_FUNDS),
+    (FAMILY_JPMORGAN, JPMORGAN_FUNDS),
+    (FAMILY_INVESCO, INVESCO_FUNDS),
+    (FAMILY_MFS, MFS_FUNDS),
+    (FAMILY_JOHNHANCOCK, JOHNHANCOCK_FUNDS),
+    (FAMILY_BNY, BNY_FUNDS),
+    (FAMILY_HARTFORD, HARTFORD_FUNDS),
+    (FAMILY_AB, AB_FUNDS),
+    (FAMILY_THRIVENT, THRIVENT_FUNDS),
+    (FAMILY_CALAMOS, CALAMOS_FUNDS),
+    (FAMILY_WASATCH, WASATCH_FUNDS),
+    (FAMILY_VOYA, VOYA_FUNDS),
+):
+    for _identity in _funds:
+        _register_identity(_family, _identity)
 
 
 def class_a_for_name(fund_name: str | None, *, fund_family: str | None = None) -> ClassAIdentity | None:

@@ -164,6 +164,45 @@ def test_distributions_alias_search_blackrock_jpmorgan(client: TestClient) -> No
         assert all(family in item["fund_family"] for item in body["items"])
 
 
+def test_distributions_alias_search_name_keyed_families(client: TestClient) -> None:
+    """Name-keyed books resolve Class A / Class S / Investor tickers after maps."""
+    for family in (
+        "invesco",
+        "mfs",
+        "john_hancock",
+        "bny_mellon",
+        "hartford",
+        "ab",
+        "thrivent",
+        "calamos",
+        "wasatch",
+        "voya",
+    ):
+        fetched = client.post("/ingest/fetch", json={"fund_family": family, "mode": "fixture"})
+        assert fetched.status_code == 200, fetched.text
+
+    for ticker, ident, family in (
+        ("VAFAX", "invesco-american-franchise-fund", "Invesco"),
+        ("MRGAX", "mfs-core-equity-fund-class-a", "MFS"),
+        ("MIEJX", "mfs-international-equity-fund-all-classes", "MFS"),
+        ("SVBAX", "john-hancock-balanced-fund", "John Hancock"),
+        ("DAGVX", "bny-mellon-dynamic-value-fund", "BNY"),
+        ("ITHAX", "the-hartford-capital-appreciation-fund", "Hartford"),
+        ("CHCLX", "ab-discovery-growth-fund-inc", "AllianceBernstein"),
+        ("TAAIX", "thrivent-aggressive-allocation-fund", "Thrivent"),
+        ("CPLSX", "calamos-phineus-long-short-fund", "Calamos"),
+        ("WAAEX", "wasatch-small-cap-growth-fund", "Wasatch"),
+        ("IEDAX", "voya-large-cap-value-fund", "Voya"),
+    ):
+        response = client.get("/distributions", params={"ticker": ticker, "page_size": 20})
+        assert response.status_code == 200, response.text
+        body = response.json()
+        assert body["total"] >= 1, ticker
+        assert {item["ticker"] for item in body["items"]} == {ticker}
+        assert {item["fund_identifier"] for item in body["items"]} == {ident}
+        assert all(family in item["fund_family"] for item in body["items"])
+
+
 def test_distributions_alias_search_abalx_class_a(client: TestClient) -> None:
     """Live Cap Group HTML is name-keyed; ABALX must resolve to American Balanced Fund."""
     fetched = client.post("/ingest/fetch", json={"fund_family": "american_funds", "mode": "fixture"})

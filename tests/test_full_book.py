@@ -20,10 +20,13 @@ from app.sources.next_tier import (
 from app.sources.fifth_tier import HarborSource, VoyaSource
 from app.sources.fourth_tier import (
     ArtisanSource,
+    CalamosSource,
     FirstEagleSource,
     HartfordSource,
     JohnHancockSource,
     MacquarieSource,
+    ThriventSource,
+    WasatchSource,
 )
 from app.sources.third_tier import AmericanCenturySource, JanusHendersonSource, MfsSource
 from app.sources.sixth_tier import AqrSource, AlgerSource, SeiSource
@@ -63,8 +66,8 @@ def test_full_book_american_funds_invesco_dimensional() -> None:
     assert {"AMCPX", "ABALX", "AGTHX"} <= af_tickers
     assert len(af_funds) >= 70
 
-    inv_funds, _inv_tickers = _funds_and_tickers(InvescoSource())
-    assert any("American Franchise" in name for name in inv_funds)
+    inv_funds, inv_tickers = _funds_and_tickers(InvescoSource())
+    assert {"VAFAX", "ACSTX", "CHTRX", "OPOCX"} <= inv_tickers
     assert len(inv_funds) >= 50
     assert not any(re.search(r"\bSMA\b", name, re.I) for name in inv_funds)
 
@@ -79,9 +82,8 @@ def test_full_book_vanguard_ici_and_next_wave() -> None:
     assert len(vg_tickers) >= 250
 
     bny_funds, bny_tickers = _funds_and_tickers(BnyMellonSource())
-    assert "DGAGX" in bny_tickers
+    assert {"DGAGX", "DAGVX", "BKCG", "BKLC"} <= bny_tickers
     assert len(bny_funds) >= 40
-    assert any("Concentrated Growth ETF" in name for name in bny_funds)
 
     nt_funds, nt_tickers = _funds_and_tickers(NorthernTrustSource())
     assert {"NOSIX", "NOMIX", "NSGRX", "NMMEX"} <= nt_tickers
@@ -122,20 +124,31 @@ def test_full_book_harbor_voya_keep_heroes() -> None:
     assert len(harbor_funds) >= 8
 
     voya_funds, voya_tickers = _funds_and_tickers(VoyaSource())
-    assert "NLCAX" in voya_tickers
+    assert {"NLCAX", "IEDAX", "NAWGX", "VWYFX"} <= voya_tickers
     assert len(voya_funds) >= 15
+
+    thrivent_funds, thrivent_tickers = _funds_and_tickers(ThriventSource())
+    assert {"TMSIX", "THLCX", "TAAIX", "TWAIX", "TSCSX"} <= thrivent_tickers
+    assert len(thrivent_funds) >= 12
+
+    calamos_funds, calamos_tickers = _funds_and_tickers(CalamosSource())
+    assert {"CVGRX", "CPLSX", "CAGCX", "CIGRX", "CVAAX"} <= calamos_tickers
+    assert len(calamos_funds) >= 12
+
+    wasatch_funds, wasatch_tickers = _funds_and_tickers(WasatchSource())
+    assert {"WGROX", "WAAEX", "WAINX", "WAMVX", "FMIEX"} <= wasatch_tickers
+    assert len(wasatch_funds) >= 12
 
 
 def test_full_book_jh_hartford_macquarie_msim() -> None:
     jh_funds, jh_tickers = _funds_and_tickers(JohnHancockSource())
-    assert "TAGRX" in jh_tickers
+    assert {"TAGRX", "SVBAX", "JVLAX", "JHHY"} <= jh_tickers
     assert len(jh_funds) >= 50
     assert not any("Closed-End" in name or "Premium Dividend" in name for name in jh_funds)
 
     hartford_funds, hartford_tickers = _funds_and_tickers(HartfordSource())
-    assert "HFMCX" in hartford_tickers
+    assert {"HFMCX", "ITHAX", "HQIAX", "HSLAX", "HGHAX", "HILAX", "HSMAX"} <= hartford_tickers
     assert len(hartford_funds) >= 25
-    assert any("Small Cap Growth" in name for name in hartford_funds)
 
     mac_funds, mac_tickers = _funds_and_tickers(MacquarieSource())
     assert {"WSTAX", "WASAX", "DEVLX"} <= mac_tickers
@@ -159,7 +172,7 @@ def test_full_book_artisan_ici_and_first_eagle() -> None:
     assert not any("Tactical Municipal" in name for name in fe_funds)
 
     mfs_funds, mfs_tickers = _funds_and_tickers(MfsSource())
-    assert {"MIGHX", "MITTX", "MEIAX", "MFEGX", "MFRFX", "MGIAX"} <= mfs_tickers
-    assert len(mfs_tickers) >= 10
+    assert {"MIGHX", "MITTX", "MEIAX", "MFEGX", "MFRFX", "MGIAX", "MAAGX", "MRGAX", "MIEJX"} <= mfs_tickers
+    assert len(mfs_tickers) >= 80
     assert len(mfs_funds) >= 80
     assert any("Value Fund" in name for name in mfs_funds)

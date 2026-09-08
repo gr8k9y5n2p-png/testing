@@ -3,9 +3,19 @@ from __future__ import annotations
 from pathlib import Path
 
 from app.aliases import (
+    AB_FUNDS,
     BLACKROCK_FUNDS,
+    BNY_FUNDS,
+    CALAMOS_FUNDS,
     CLASS_A_FUNDS,
+    HARTFORD_FUNDS,
+    INVESCO_FUNDS,
+    JOHNHANCOCK_FUNDS,
     JPMORGAN_FUNDS,
+    MFS_FUNDS,
+    THRIVENT_FUNDS,
+    VOYA_FUNDS,
+    WASATCH_FUNDS,
     class_a_for_name,
     class_a_identifier_for_name,
     display_cusip,
@@ -152,6 +162,45 @@ def test_jpmorgan_fixture_name_keyed_rows_have_class_a_tickers() -> None:
         }
     )
     assert unmapped == [], unmapped
+
+
+def test_name_keyed_family_maps_attach_retail_tickers() -> None:
+    cases = (
+        ("Invesco American Franchise Fund", "Invesco", "VAFAX", INVESCO_FUNDS),
+        ("MFS Core Equity Fund Class A", "MFS Investment Management", "MRGAX", MFS_FUNDS),
+        ("MFS International Equity Fund All Classes", "MFS Investment Management", "MIEJX", MFS_FUNDS),
+        ("John Hancock Balanced Fund", "John Hancock / Manulife", "SVBAX", JOHNHANCOCK_FUNDS),
+        ("BNY Mellon Dynamic Value Fund", "BNY Mellon", "DAGVX", BNY_FUNDS),
+        ("The Hartford Capital Appreciation Fund", "Hartford Funds", "ITHAX", HARTFORD_FUNDS),
+        ("AB Discovery Growth Fund, Inc.", "AllianceBernstein", "CHCLX", AB_FUNDS),
+        ("Thrivent Aggressive Allocation Fund", "Thrivent", "TAAIX", THRIVENT_FUNDS),
+        ("Calamos Phineus Long/Short Fund", "Calamos", "CPLSX", CALAMOS_FUNDS),
+        ("Wasatch Small Cap Growth Fund", "Wasatch", "WAAEX", WASATCH_FUNDS),
+        ("Voya Large Cap Value Fund", "Voya", "IEDAX", VOYA_FUNDS),
+    )
+    for fund_name, family, ticker, catalog in cases:
+        identity = class_a_for_name(fund_name, fund_family=family)
+        assert identity is not None, fund_name
+        assert identity.ticker == ticker
+        ticker_out, _cusip = enrich_class_a_fields(
+            ticker=None,
+            cusip=None,
+            fund_name=fund_name,
+            fund_family=family,
+        )
+        assert ticker_out == ticker
+        assert ticker in {fund.ticker for fund in catalog}
+
+    # Wrong share class / institutional-only names stay unmapped.
+    assert class_a_for_name("MFS Growth Fund Class I", fund_family="MFS Investment Management") is None
+    assert class_a_for_name("John Hancock Marathon Asset-Based Lending Fund", fund_family="John Hancock / Manulife") is None
+
+
+def test_mfs_all_classes_keeps_name_slug_not_product_page_ticker() -> None:
+    ident = fund_identifier(None, "MFS Growth Fund All Classes", "MFS Investment Management")
+    assert ident == "mfs-growth-fund-all-classes"
+    ident = fund_identifier("MFEGX", "MFS Growth Fund Class A", "MFS Investment Management")
+    assert ident == "MFEGX"
 
 
 def test_year_end_fixture_name_keyed_rows_have_class_a_tickers() -> None:
