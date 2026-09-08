@@ -1,10 +1,15 @@
+import { splitFundsByBucket } from "./distribution-bucket";
 import type {
+  DistributionBucket,
   Facets,
   FundEstimate,
   FundEstimateView,
   HighlightSets,
+  PaidDistributionEvent,
   SearchFilters,
 } from "./types";
+
+export { splitFundsByBucket } from "./distribution-bucket";
 
 /** Absolute percentage-point gap vs. category average to qualify as an outlier. */
 export const OUTLIER_THRESHOLD_PP = 2.25;
@@ -92,19 +97,67 @@ export function getFacets(funds: FundEstimate[]): Facets {
   return { families, categories, years };
 }
 
+export function paidHistoryViews(funds: FundEstimateView[]): FundEstimateView[] {
+  const rows: FundEstimateView[] = [];
+  for (const fund of funds) {
+    if (fund.bucket === "paid") {
+      rows.push(fund);
+      for (const event of fund.paidHistory) {
+        rows.push(fundFromPaidEvent(fund, event));
+      }
+      continue;
+    }
+    for (const event of fund.paidHistory) {
+      rows.push(fundFromPaidEvent(fund, event));
+    }
+  }
+  return rows.sort((a, b) => {
+    const byDate = (b.payableDate ?? b.exDate ?? b.asOfDate).localeCompare(
+      a.payableDate ?? a.exDate ?? a.asOfDate,
+    );
+    if (byDate !== 0) return byDate;
+    return a.ticker.localeCompare(b.ticker);
+  });
+}
+
+export function fundFromPaidEvent(
+  fund: FundEstimateView,
+  event: PaidDistributionEvent,
+): FundEstimateView {
+  return {
+    ...fund,
+    id: `${fund.id}:paid:${event.asOfDate}:${event.exDate ?? ""}`,
+    asOfDate: event.asOfDate,
+    publishedAt: event.asOfDate,
+    recordDate: event.recordDate,
+    exDate: event.exDate,
+    payableDate: event.payableDate,
+    publicationStage: event.publicationStage,
+    bucket: "paid" satisfies DistributionBucket,
+    estimatedDistributionAmount: event.estimatedDistributionAmount,
+    estimatedOrdinaryIncome: event.estimatedOrdinaryIncome,
+    estimatedCapitalGains: event.estimatedCapitalGains,
+    estimatedDistributionPctNav: event.estimatedDistributionPctNav,
+    distributionYear: event.distributionYear,
+    paidHistory: [],
+  };
+}
+
 export function getHighlights(
   funds: FundEstimateView[],
   limit = 5,
 ): HighlightSets {
-  const mostRecent = [...funds]
+  const { upcoming } = splitFundsByBucket(funds);
+  const pool = upcoming.length ? upcoming : funds;
+  const mostRecent = [...pool]
     .sort((a, b) => {
-      const byPublished = b.publishedAt.localeCompare(a.publishedAt);
+      const byPublished = b.asOfDate.localeCompare(a.asOfDate);
       if (byPublished !== 0) return byPublished;
       return a.fundName.localeCompare(b.fundName);
     })
     .slice(0, limit);
 
-  const largest = [...funds]
+  const largest = [...pool]
     .sort((a, b) => {
       const byPct = b.estimatedDistributionPctNav - a.estimatedDistributionPctNav;
       if (byPct !== 0) return byPct;
@@ -112,12 +165,12 @@ export function getHighlights(
     })
     .slice(0, limit);
 
-  const aboveCategory = funds
+  const aboveCategory = pool
     .filter((fund) => fund.vsCategoryPctNav >= OUTLIER_THRESHOLD_PP)
     .sort((a, b) => b.vsCategoryPctNav - a.vsCategoryPctNav)
     .slice(0, limit);
 
-  const belowCategory = funds
+  const belowCategory = pool
     .filter((fund) => fund.vsCategoryPctNav <= -OUTLIER_THRESHOLD_PP)
     .sort((a, b) => a.vsCategoryPctNav - b.vsCategoryPctNav)
     .slice(0, limit);

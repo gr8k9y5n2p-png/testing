@@ -46,9 +46,17 @@ function mergeFunds(
     seedFunds.map((fund) => [fund.ticker.toUpperCase(), fund]),
   );
   const mergedApi = apiFunds.map((fund) => {
-    if (fund.nav > 0) return fund;
     const seed = seedByTicker.get(fund.ticker.toUpperCase());
-    return seed && seed.nav > 0 ? { ...fund, nav: seed.nav } : fund;
+    if (!seed) return fund;
+    return {
+      ...fund,
+      nav: fund.nav > 0 ? fund.nav : seed.nav,
+      category: fund.category !== "—" ? fund.category : seed.category,
+      recordDate: fund.recordDate ?? seed.recordDate,
+      exDate: fund.exDate ?? seed.exDate,
+      payableDate: fund.payableDate ?? seed.payableDate,
+      paidHistory: fund.paidHistory.length ? fund.paidHistory : seed.paidHistory,
+    };
   });
   const tickers = new Set(mergedApi.map((fund) => fund.ticker.toUpperCase()));
   return [

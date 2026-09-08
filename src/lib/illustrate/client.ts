@@ -51,11 +51,11 @@ export function normalizeIllustrateResponse(raw: Record<string, unknown>): Illus
       estimate_type: String(row.estimate_type ?? ""),
       amount_unit: String(row.amount_unit ?? ""),
       publication_stage:
-        row.publication_stage == null
-          ? row.as_of == null
-            ? null
-            : String(row.as_of)
-          : String(row.publication_stage),
+        row.publication_stage == null ? null : String(row.publication_stage),
+      as_of: row.as_of == null ? null : String(row.as_of),
+      record_date: row.record_date == null ? null : String(row.record_date),
+      ex_date: row.ex_date == null ? null : String(row.ex_date),
+      payable_date: row.payable_date == null ? null : String(row.payable_date),
       distribution_dollars: num(row.distribution_dollars),
       distribution_dollars_min: num(row.distribution_dollars_min),
       distribution_dollars_max: num(row.distribution_dollars_max),

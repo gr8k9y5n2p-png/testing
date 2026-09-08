@@ -21,6 +21,14 @@ export function formatCompactDate(isoDate: string): string {
   return compactDateFormatter.format(new Date(`${isoDate}T00:00:00Z`));
 }
 
+export function formatOptionalDate(
+  iso: string | null | undefined,
+  compact = false,
+): string {
+  if (!iso) return "—";
+  return compact ? formatCompactDate(iso) : formatDate(iso);
+}
+
 export function formatUsd(value: number, digits = 2): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",

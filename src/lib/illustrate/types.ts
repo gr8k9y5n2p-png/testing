@@ -76,6 +76,10 @@ export type IllustrationComponent = {
   estimate_type: string;
   amount_unit: string;
   publication_stage: string | null;
+  as_of: string | null;
+  record_date: string | null;
+  ex_date: string | null;
+  payable_date: string | null;
   distribution_dollars: number | null;
   distribution_dollars_min: number | null;
   distribution_dollars_max: number | null;

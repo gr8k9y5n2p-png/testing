@@ -41,6 +41,7 @@ export function Dashboard({
           </h2>
           <p className="mt-1 text-sm text-muted">
             Filter by name, ticker, CUSIP, family, category, or distribution year.
+            Upcoming estimates stay separate from paid history.
           </p>
         </div>
         <p className="font-mono text-xs text-faint" aria-live="polite">

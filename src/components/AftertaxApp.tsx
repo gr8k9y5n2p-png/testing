@@ -222,7 +222,8 @@ function AftertaxAppInner({
         </h2>
         <p className="mt-2 max-w-2xl text-sm text-muted">
           The dollar illustration is the product. This table is the sample
-          dataset search reads from — not a feature grid.
+          dataset search reads from — upcoming / announced estimates stay
+          separate from paid history.
         </p>
         <div className="mt-5">
           <DemoBanner />

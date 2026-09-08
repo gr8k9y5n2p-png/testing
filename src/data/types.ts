@@ -29,6 +29,20 @@ export const FUND_CATEGORIES = [
 
 export type FundCategory = (typeof FUND_CATEGORIES)[number];
 
+import type { DistributionBucket, PaidDistributionEvent } from "./distribution-bucket";
+
+export type { DistributionBucket, PaidDistributionEvent } from "./distribution-bucket";
+
+/** GET /distributions publication_stage. Do not invent announced_date. */
+export const PUBLICATION_STAGES = [
+  "preliminary_estimate",
+  "updated_estimate",
+  "final",
+  "paid",
+] as const;
+
+export type PublicationStage = (typeof PUBLICATION_STAGES)[number];
+
 export interface FundEstimate {
   id: string;
   fundName: string;
@@ -49,8 +63,21 @@ export interface FundEstimate {
   estimatedDistributionPctNav: number;
   /** Date the manager published this estimate (ISO date). */
   publishedAt: string;
-  /** Holdings / NAV as-of date for the estimate (ISO date). */
+  /**
+   * GET /distributions `as_of`. UI copy labels this Announced until a
+   * literal `announced_date` exists — do not invent that field.
+   */
   asOfDate: string;
+  /** GET /distributions `record_date`. */
+  recordDate: string | null;
+  /** GET /distributions `ex_date`. */
+  exDate: string | null;
+  /** GET /distributions `payable_date`. */
+  payableDate: string | null;
+  publicationStage: string | null;
+  bucket: DistributionBucket;
+  /** Paid / final-past snapshots for this ticker. Never mixed into upcoming. */
+  paidHistory: PaidDistributionEvent[];
   distributionYear: number;
 }
 

@@ -32,6 +32,9 @@ export type MockDistributionRow = {
   amount_max: number | null;
   publication_stage: string;
   as_of: string;
+  record_date: string | null;
+  ex_date: string | null;
+  payable_date: string | null;
   nav_per_share: number;
 };
 
@@ -72,8 +75,11 @@ function rowsForFund(fund: FundEstimate): MockDistributionRow[] {
       amount: ordinaryPct,
       amount_min: null,
       amount_max: null,
-      publication_stage: "preliminary",
+      publication_stage: fund.publicationStage ?? "preliminary_estimate",
       as_of: fund.asOfDate,
+      record_date: fund.recordDate,
+      ex_date: fund.exDate,
+      payable_date: fund.payableDate,
       nav_per_share: fund.nav,
     },
     {
@@ -87,8 +93,11 @@ function rowsForFund(fund: FundEstimate): MockDistributionRow[] {
       amount: ltcgPct,
       amount_min: roundTo(ltcgPct * 0.8, 4),
       amount_max: roundTo(ltcgPct * 1.2, 4),
-      publication_stage: "preliminary",
+      publication_stage: fund.publicationStage ?? "preliminary_estimate",
       as_of: fund.asOfDate,
+      record_date: fund.recordDate,
+      ex_date: fund.exDate,
+      payable_date: fund.payableDate,
       nav_per_share: fund.nav,
     },
     {
@@ -102,8 +111,11 @@ function rowsForFund(fund: FundEstimate): MockDistributionRow[] {
       amount: fund.estimatedOrdinaryIncome,
       amount_min: null,
       amount_max: null,
-      publication_stage: "preliminary",
+      publication_stage: fund.publicationStage ?? "preliminary_estimate",
       as_of: fund.asOfDate,
+      record_date: fund.recordDate,
+      ex_date: fund.exDate,
+      payable_date: fund.payableDate,
       nav_per_share: fund.nav,
     },
     {
@@ -117,8 +129,11 @@ function rowsForFund(fund: FundEstimate): MockDistributionRow[] {
       amount: fund.estimatedCapitalGains,
       amount_min: roundTo(fund.estimatedCapitalGains * 0.8, 4),
       amount_max: roundTo(fund.estimatedCapitalGains * 1.2, 4),
-      publication_stage: "preliminary",
+      publication_stage: fund.publicationStage ?? "preliminary_estimate",
       as_of: fund.asOfDate,
+      record_date: fund.recordDate,
+      ex_date: fund.exDate,
+      payable_date: fund.payableDate,
       nav_per_share: fund.nav,
     },
   ];
@@ -183,6 +198,10 @@ function illustrateRow(
     estimate_type: row.estimate_type,
     amount_unit: row.amount_unit,
     publication_stage: row.publication_stage,
+    as_of: row.as_of,
+    record_date: row.record_date,
+    ex_date: row.ex_date,
+    payable_date: row.payable_date,
     distribution_dollars: dist == null ? null : money(dist),
     distribution_dollars_min: distMin == null ? null : money(distMin),
     distribution_dollars_max: distMax == null ? null : money(distMax),

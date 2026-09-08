@@ -2,8 +2,9 @@
 
 import { useMemo, useState } from "react";
 import type { FundEstimateView } from "@/data/types";
-import { searchFunds } from "@/data/queries";
+import { searchFunds, splitFundsByBucket } from "@/data/queries";
 import { COPY } from "@/lib/copy";
+import { DistributionDateStrip } from "@/components/DistributionDateStrip";
 import { useCoverage } from "@/components/coverage/CoverageProvider";
 
 export function FundPicker({
@@ -25,10 +26,11 @@ export function FundPicker({
   const [open, setOpen] = useState(false);
   const coverage = useCoverage();
 
-  const matches = useMemo(
-    () => searchFunds(funds, { query }).slice(0, 8),
-    [funds, query],
-  );
+  const matches = useMemo(() => {
+    const found = searchFunds(funds, { query });
+    const { upcoming, paid } = splitFundsByBucket(found);
+    return [...upcoming, ...paid].slice(0, 8);
+  }, [funds, query]);
 
   function showSuggestions(value: string) {
     setOpen(value.trim().length > 0);
@@ -87,23 +89,40 @@ export function FundPicker({
                     setOpen(false);
                   }}
                 >
-                  <span>
+                  <span className="min-w-0">
                     <span className="block text-sm font-medium text-ink">
                       {fund.fundName}
                     </span>
                     <span className="font-mono text-[11px] text-faint">
                       {fund.ticker} · {fund.family}
                     </span>
+                    <DistributionDateStrip
+                      fund={fund}
+                      compact
+                      showPayable={false}
+                      className="mt-1"
+                    />
                   </span>
-                  {!coverage.isLive(fund.family) ? (
-                    <span className="mt-0.5 shrink-0 rounded-sm bg-notice px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">
-                      Gap
+                  <span className="mt-0.5 flex shrink-0 flex-col items-end gap-1">
+                    <span
+                      className={`rounded-sm px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] ${
+                        fund.bucket === "paid"
+                          ? "bg-notice text-muted"
+                          : "bg-above-soft text-above"
+                      }`}
+                    >
+                      {fund.bucket === "paid" ? "Paid" : "Upcoming"}
                     </span>
-                  ) : (
-                    <span className="mt-0.5 shrink-0 rounded-sm bg-above-soft px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-above">
-                      Live
-                    </span>
-                  )}
+                    {!coverage.isLive(fund.family) ? (
+                      <span className="rounded-sm bg-notice px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">
+                        Gap
+                      </span>
+                    ) : (
+                      <span className="rounded-sm bg-above-soft px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-above">
+                        Live
+                      </span>
+                    )}
+                  </span>
                 </button>
               </li>
             ))
