@@ -114,6 +114,40 @@ describe("Search hydrate from /distributions", () => {
     );
   });
 
+  it("does not invent Upcoming from future-dated finals when has_estimate is false", () => {
+    const catalog = mapFundsApiItem({
+      ticker: "ABALX",
+      fund_name: "American Balanced Fund",
+      fund_family: "American Funds",
+      has_estimate: false,
+    });
+    const futureFinals: DataDistribution[] = [
+      row({
+        id: "ltcg-future",
+        estimate_type: "long_term_capital_gains",
+        amount: "2.125000",
+        amount_unit: "per_share",
+        publication_stage: "final",
+        as_of: "2026-08-15",
+        record_date: "2026-12-15",
+        ex_date: "2026-12-15",
+        payable_date: "2026-12-16",
+      }),
+    ];
+    const aggregated = aggregateDistributions(futureFinals, "2026-09-09")[0];
+    assert.equal(aggregated.bucket, "paid");
+    const merged = mergeFundWithDistributions(catalog, aggregated);
+    assert.equal(merged.bucket, "paid");
+    assert.equal(merged.hasEstimate, false);
+    assert.equal(merged.estimatedDistributionAmount, 2.125);
+    assert.equal(splitFundsByBucket([merged]).upcoming.length, 0);
+    assert.ok(
+      paidHistoryViews([merged]).some(
+        (fund) => Math.abs(fund.estimatedDistributionAmount - 2.125) < 1e-6,
+      ),
+    );
+  });
+
   it("does not invent Upcoming from paid-only rows when has_estimate is false", () => {
     const catalog = mapFundsApiItem({
       ticker: "ABALX",

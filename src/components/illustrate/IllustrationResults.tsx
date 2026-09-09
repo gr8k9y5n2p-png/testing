@@ -1,8 +1,13 @@
 import type { ReactNode } from "react";
 import type { FundEstimate } from "@/data/types";
-import { distributionBucket, publicationStageLabel } from "@/data/distribution-bucket";
+import { publicationStageLabel } from "@/data/distribution-bucket";
 import { paidEventsForFund } from "@/data/hydrate-funds";
 import type { IllustrationComponent, IllustrateResponse } from "@/lib/illustrate/types";
+import {
+  illustrationComponentBucket,
+  splitIllustrationComponents,
+  upcomingIllustrationTotals,
+} from "@/lib/illustrate/illustration-upcoming";
 import { DistributionDateStrip } from "@/components/DistributionDateStrip";
 import { Disclaimer } from "@/components/Disclaimer";
 import {
@@ -29,14 +34,11 @@ export function IllustrationResults({
   result: IllustrateResponse;
   fund?: FundEstimate | null;
 }) {
-  const { totals, components, warnings } = result;
-  const upcomingComponents = components.filter(
-    (component) => componentBucket(component) === "upcoming",
-  );
-  const paidComponents = components.filter(
-    (component) => componentBucket(component) === "paid",
-  );
-  const hasUpcoming = upcomingComponents.length > 0;
+  const { components, warnings } = result;
+  const { upcoming: upcomingComponents, paid: paidComponents } =
+    splitIllustrationComponents(components, fund);
+  const upcomingTotals = upcomingIllustrationTotals(upcomingComponents);
+  const hasUpcoming = upcomingTotals != null;
 
   return (
     <div className="space-y-4">
@@ -46,9 +48,9 @@ export function IllustrationResults({
           value={
             hasUpcoming
               ? formatUsdRange(
-                  totals.distribution_dollars,
-                  totals.distribution_dollars_min,
-                  totals.distribution_dollars_max,
+                  upcomingTotals.distribution_dollars,
+                  upcomingTotals.distribution_dollars_min,
+                  upcomingTotals.distribution_dollars_max,
                 )
               : UPCOMING_UNAVAILABLE_HEADLINE
           }
@@ -58,9 +60,9 @@ export function IllustrationResults({
           value={
             hasUpcoming
               ? formatUsdRange(
-                  totals.estimated_tax_dollars,
-                  totals.estimated_tax_dollars_min,
-                  totals.estimated_tax_dollars_max,
+                  upcomingTotals.estimated_tax_dollars,
+                  upcomingTotals.estimated_tax_dollars_min,
+                  upcomingTotals.estimated_tax_dollars_max,
                 )
               : UPCOMING_UNAVAILABLE_HEADLINE
           }
@@ -73,6 +75,7 @@ export function IllustrationResults({
         kicker="unpaid announced · not paid history"
         wellClassName="bg-surface"
         components={upcomingComponents}
+        fund={fund}
         empty={
           <div className="px-3 py-5">
             <p className="font-serif text-base tracking-tight text-ink">
@@ -88,6 +91,7 @@ export function IllustrationResults({
           kicker="past · not upcoming"
           wellClassName="bg-paper"
           components={paidComponents}
+          fund={fund}
         />
       ) : null}
 
@@ -139,27 +143,19 @@ export function IllustrationResults({
   );
 }
 
-function componentBucket(component: IllustrationComponent) {
-  return distributionBucket({
-    asOfDate: component.as_of,
-    recordDate: component.record_date,
-    exDate: component.ex_date,
-    payableDate: component.payable_date,
-    publicationStage: component.publication_stage,
-  });
-}
-
 function ComponentTable({
   heading,
   kicker,
   wellClassName,
   components,
+  fund,
   empty,
 }: {
   heading: string;
   kicker: string;
   wellClassName: string;
   components: IllustrationComponent[];
+  fund?: FundEstimate | null;
   empty?: ReactNode;
 }) {
   return (
@@ -203,7 +199,7 @@ function ComponentTable({
                       exDate: component.ex_date,
                       payableDate: component.payable_date,
                       publicationStage: component.publication_stage,
-                      bucket: componentBucket(component),
+                      bucket: illustrationComponentBucket(component, fund),
                     }}
                     compact
                     showPayable={Boolean(component.payable_date)}

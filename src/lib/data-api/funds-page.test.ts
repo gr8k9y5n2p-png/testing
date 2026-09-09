@@ -39,4 +39,20 @@ describe("Search / Sample Estimates fund page", () => {
     assert.doesNotMatch(table, /hasEstimate === false \? "—"/);
     assert.match(badge, /hideUpcomingAmounts/);
   });
+
+  it("Dollar Illustration Upcoming stays unpaid prelim only — never result.totals", () => {
+    const results = readFileSync(
+      join(here, "../../components/illustrate/IllustrationResults.tsx"),
+      "utf8",
+    );
+    const bucket = readFileSync(
+      join(here, "../../data/distribution-bucket.ts"),
+      "utf8",
+    );
+    assert.match(results, /upcomingIllustrationTotals/);
+    assert.match(results, /splitIllustrationComponents/);
+    assert.doesNotMatch(results, /totals\.distribution_dollars/);
+    assert.match(bucket, /unpaid preliminary_estimate or/);
+    assert.match(bucket, /`final` and `paid` are Paid history/);
+  });
 });

@@ -144,7 +144,7 @@ describe("publicationBucket", () => {
     );
   });
 
-  it("keeps a future unpaid final in upcoming", () => {
+  it("keeps a future unpaid final in paid history, not upcoming", () => {
     assert.equal(
       publicationBucket(
         row({
@@ -156,7 +156,7 @@ describe("publicationBucket", () => {
         }),
         TODAY,
       ),
-      "upcoming",
+      "paid_history",
     );
   });
 
