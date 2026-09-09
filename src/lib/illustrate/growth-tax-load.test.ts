@@ -9,6 +9,7 @@ import {
   taxSeriesFromRows,
   type GrowthSeriesRow,
 } from "./growth-tax-series.ts";
+import { loadGrowthAndTaxDrag } from "./growth-tax-load.ts";
 import type { CompareResponse } from "./compare-types.ts";
 import { TAX_DRAG_NA_LABEL } from "./tax-drag-map.ts";
 import { PERFORMANCE_UNAVAILABLE_LABEL } from "../performance/coverage.ts";
@@ -255,6 +256,77 @@ describe("growthLinesFromRows", () => {
       ["AMCPX"],
     );
     assert.ok(lines[0]?.points.every((point) => point.value > 0));
+  });
+});
+
+describe("loadGrowthAndTaxDrag performance mode", () => {
+  it("requests live performance when the Data API is configured", async () => {
+    const previous = process.env.NEXT_PUBLIC_DATA_API_URL;
+    process.env.NEXT_PUBLIC_DATA_API_URL = "https://data.example";
+    const seen: string[] = [];
+    try {
+      const result = await loadGrowthAndTaxDrag(
+        [fundInput("AMCPX")],
+        10_000,
+        null,
+        undefined,
+        new AbortController().signal,
+        {
+          loaders: {
+            loadPerformance: async (request) => {
+              seen.push(String(request.mode));
+              return null;
+            },
+            loadCompare: async () => {
+              throw new Error("skip tax");
+            },
+          },
+        },
+      );
+      assert.deepEqual(seen, ["live"]);
+      assert.deepEqual(result.missingTickers, ["AMCPX"]);
+      assert.equal(result.rows[0]?.performance, null);
+    } finally {
+      if (previous == null) delete process.env.NEXT_PUBLIC_DATA_API_URL;
+      else process.env.NEXT_PUBLIC_DATA_API_URL = previous;
+    }
+  });
+
+  it("requests fixture performance for local same-origin mock", async () => {
+    const previous = process.env.NEXT_PUBLIC_DATA_API_URL;
+    delete process.env.NEXT_PUBLIC_DATA_API_URL;
+    const seen: string[] = [];
+    try {
+      await loadGrowthAndTaxDrag(
+        [fundInput("AMCPX")],
+        10_000,
+        null,
+        undefined,
+        new AbortController().signal,
+        {
+          loaders: {
+            loadPerformance: async (request) => {
+              seen.push(String(request.mode));
+              return pack("AMCPX");
+            },
+            loadCompare: async () => {
+              throw new Error("skip tax");
+            },
+          },
+        },
+      );
+      assert.deepEqual(seen, ["fixture"]);
+    } finally {
+      if (previous == null) delete process.env.NEXT_PUBLIC_DATA_API_URL;
+      else process.env.NEXT_PUBLIC_DATA_API_URL = previous;
+    }
+  });
+
+  it("does not hardcode fixture on the PerformanceQuery", () => {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const source = readFileSync(join(here, "growth-tax-load.ts"), "utf8");
+    assert.match(source, /mode:\s*defaultPerformanceMode\(\)/);
+    assert.doesNotMatch(source, /mode:\s*"fixture"/);
   });
 });
 

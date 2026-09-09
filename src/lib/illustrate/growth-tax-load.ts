@@ -16,7 +16,7 @@ import {
   missingPerformanceTickers,
 } from "@/lib/illustrate/growth-tax-series";
 import { seedNavLookup } from "@/lib/illustrate/seed-nav";
-import { fetchPerformanceIfAvailable } from "@/lib/performance/client";
+import { defaultPerformanceMode, fetchPerformanceIfAvailable } from "@/lib/performance/client";
 import {
   DEFAULT_START_DOLLARS,
   type PerformanceQuery,
@@ -100,7 +100,7 @@ export async function loadGrowthAndTaxDrag(
       fund_identifier: input.fundIdentifier ?? ticker,
       benchmark,
       start_dollars: principal,
-      mode: "fixture",
+      mode: defaultPerformanceMode(),
     };
     return loaders.loadPerformance(request, {
       signal,
