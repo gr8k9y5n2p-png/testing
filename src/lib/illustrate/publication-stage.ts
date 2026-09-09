@@ -180,138 +180,36 @@ function coalesceUpcomingRows(
   };
 }
 
+/**
+ * Upcoming $ only from non-null unpaid `holdings[].upcoming`.
+ * Omitted / null / paid / historical illustration totals → undisclosed.
+ * Never invent or pull forward annual tax as a future announce.
+ */
 export function upcomingFromHolding(
   holding: PortfolioHoldingOut,
   today = utcToday(),
 ): PortfolioUpcoming | null {
-  if (holding.upcoming === null) return null;
+  if (holding.upcoming == null) return null;
 
-  if (holding.upcoming) {
-    const rows = asDistributionRows(holding.upcoming)
-      .map((row) => withStage(row, holding.publication_stage_used ?? null))
-      .filter(hasDistributionSignal);
-    return coalesceUpcomingRows(rows, today);
-  }
-
-  const illustration = holding.illustration;
-  if (!illustration) return null;
-
-  const components = illustration.components ?? [];
-  const classified = components
-    .map((row) =>
-      withStage(
-        {
-          ...row,
-          estimated_tax: row.estimated_tax ?? row.estimated_tax_dollars,
-        },
-        holding.publication_stage_used ?? null,
-      ),
-    )
-    .filter((row) => publicationBucket(row, today) === "upcoming");
-  if (classified.length) return coalesceUpcomingRows(classified, today);
-
-  if (components.length) return null;
-
-  const totals = illustration.totals;
-  const candidate: PortfolioUpcoming = {
-    distribution_dollars: num(totals?.distribution_dollars),
-    estimated_tax: num(totals?.estimated_tax) ?? num(totals?.estimated_tax_dollars),
-    as_of: null,
-    publication_stage: holding.publication_stage_used ?? null,
-  };
-  if (!hasDistributionSignal(candidate)) return null;
-  if (publicationBucket(candidate, today) !== "upcoming") return null;
-  return candidate;
-}
-
-function sameUpcomingSnapshot(
-  left: PortfolioDistributionRow,
-  right: PortfolioDistributionRow,
-): boolean {
-  const leftKey = announcedDateOf(left) ?? isoDate(left.as_of);
-  const rightKey = announcedDateOf(right) ?? isoDate(right.as_of);
-  if (leftKey && rightKey) return leftKey === rightKey;
-  const leftDist = num(left.distribution_dollars);
-  const rightDist = num(right.distribution_dollars);
-  return (
-    normalizePublicationStage(left.publication_stage) ===
-      normalizePublicationStage(right.publication_stage) &&
-    leftDist != null &&
-    leftDist === rightDist
-  );
-}
-
-/** Copy live `upcoming` dates onto a row. Never invent a day that Data did not send. */
-function overlayLiveUpcomingDates(
-  event: PortfolioDistributionRow,
-  upcomingRows: PortfolioDistributionRow[],
-): PortfolioDistributionRow {
-  if (!upcomingRows.length) return event;
-  if (publicationBucket(event) === "paid_history") return event;
-  const match = upcomingRows.find((row) => sameUpcomingSnapshot(event, row));
-  if (!match) return event;
-  return {
-    ...event,
-    as_of: isoDate(event.as_of) ?? isoDate(match.as_of),
-    announced_date: isoDate(event.announced_date) ?? isoDate(match.announced_date),
-    record_date: isoDate(event.record_date) ?? isoDate(match.record_date),
-    ex_date: isoDate(event.ex_date) ?? isoDate(match.ex_date),
-    payable_date: isoDate(event.payable_date) ?? isoDate(match.payable_date),
-  };
-}
-
-function tableEventsFromHolding(holding: PortfolioHoldingOut): PortfolioDistributionRow[] {
-  const fallback = holding.publication_stage_used ?? null;
-  const listed = [
-    ...asDistributionRows(holding.distributions),
-    ...asDistributionRows(holding.history),
-  ]
-    .map((row) => withStage(row, fallback))
+  const rows = asDistributionRows(holding.upcoming)
+    .map((row) => withStage(row, holding.publication_stage_used ?? null))
     .filter(hasDistributionSignal);
-
-  const fromUpcoming =
-    holding.upcoming == null
-      ? []
-      : asDistributionRows(holding.upcoming)
-          .map((row) => withStage(row, fallback))
-          .filter(hasDistributionSignal);
-
-  if (listed.length) {
-    const merged = listed.map((event) => overlayLiveUpcomingDates(event, fromUpcoming));
-    for (const upcoming of fromUpcoming) {
-      if (merged.some((event) => sameUpcomingSnapshot(event, upcoming))) continue;
-      merged.push(upcoming);
-    }
-    return merged;
-  }
-
-  if (fromUpcoming.length) return fromUpcoming;
-
-  return (holding.illustration?.components ?? [])
-    .map((row) =>
-      withStage(
-        {
-          ...row,
-          estimated_tax: row.estimated_tax ?? row.estimated_tax_dollars,
-        },
-        fallback,
-      ),
-    )
-    .filter(hasDistributionSignal);
+  return coalesceUpcomingRows(rows, today);
 }
 
 /**
- * Unpaid announced rows only. Explicit `upcoming: null` is undisclosed —
- * do not derive from illustration or paid history.
+ * Unpaid announced rows only. Omitted or `upcoming: null` is undisclosed —
+ * do not derive from illustration, distributions, history, or annual tax.
  */
 function upcomingEventsFromHolding(
   holding: PortfolioHoldingOut,
   today = utcToday(),
 ): PortfolioDistributionRow[] {
-  if (holding.upcoming === null) return [];
-  return tableEventsFromHolding(holding).filter(
-    (event) => publicationBucket(event, today) === "upcoming",
-  );
+  if (holding.upcoming == null) return [];
+  return asDistributionRows(holding.upcoming)
+    .map((row) => withStage(row, holding.publication_stage_used ?? null))
+    .filter(hasDistributionSignal)
+    .filter((event) => publicationBucket(event, today) === "upcoming");
 }
 
 /** Data `paid_history[]` cap. Newest-first after that is dropped. */

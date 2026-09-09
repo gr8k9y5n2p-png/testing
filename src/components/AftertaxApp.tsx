@@ -19,6 +19,10 @@ import {
   FUND_HISTORY_HASH,
   resolveFundView,
 } from "@/lib/illustrate/fund-history";
+import {
+  compareTickersPath,
+  parseCompareQueryTickers,
+} from "@/lib/illustrate/compare-workspace";
 
 function scrollToId(id: string) {
   requestAnimationFrame(() => {
@@ -98,7 +102,17 @@ function AftertaxAppInner({
       return;
     }
     if (id === "fund-compare") {
-      router.replace("/compare");
+      const search = new URLSearchParams(window.location.search);
+      router.replace(
+        compareTickersPath(
+          parseCompareQueryTickers({
+            tickers: search.getAll("tickers"),
+            ticker: search.get("ticker") ?? undefined,
+            left: search.get("left") ?? undefined,
+            right: search.get("right") ?? undefined,
+          }),
+        ),
+      );
       return;
     }
     if (id === "illustrate" || id === FUND_HISTORY_HASH || id === "growth-and-tax") {
@@ -177,7 +191,7 @@ function AftertaxAppInner({
         aria-labelledby="universe-heading"
       >
         <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-faint">
-          Sample universe
+          Live estimates
         </p>
         <h2
           id="universe-heading"
@@ -187,8 +201,10 @@ function AftertaxAppInner({
         </h2>
         <p className="mt-2 max-w-2xl text-sm text-muted">
           Search a fund to open that ticker&apos;s historical distribution table
-          and Upcoming / announced estimates. Upcoming stays unpaid announced
-          only — undisclosed is never invented from paid history.
+          and Upcoming / announced estimates. Search and Sample Estimates read
+          GET /distributions only. Upcoming stays unpaid announced only —
+          undisclosed is never invented from paid history. Missing or uncovered
+          values stay empty, N/A, or Undisclosed.
         </p>
         <div className="mt-5">
           <DemoBanner />

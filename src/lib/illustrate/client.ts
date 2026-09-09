@@ -6,7 +6,6 @@ import {
   toDataApiIllustrateBody,
   userFacingIllustrateError,
 } from "@/lib/illustrate/illustrate-request";
-import { seedNavLookup } from "@/lib/illustrate/seed-nav";
 import type {
   IllustrateErrorBody,
   IllustrateRequest,
@@ -126,7 +125,7 @@ export async function postIllustrate(
 ): Promise<IllustrateResponse> {
   const endpoint = getIllustrateEndpoint();
   const remote = !isMockIllustrateEndpoint(endpoint);
-  const payload = remote ? toDataApiIllustrateBody(request, seedNavLookup) : request;
+  const payload = remote ? toDataApiIllustrateBody(request) : request;
 
   async function post(url: string, body: unknown) {
     return fetch(url, {

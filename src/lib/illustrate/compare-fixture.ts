@@ -177,10 +177,7 @@ function mockYoyResponse(request: CompareRequest): CompareResponse {
 
   const fromYear = years[0] ?? 2021;
   const toYear = years[years.length - 1] ?? 2025;
-  const upcomingYear =
-    [...years].reverse().find((year) => taxRateFor(ticker, year) != null) ?? toYear;
-  const latestRate = taxRateFor(ticker, upcomingYear);
-  const latestTax = latestRate == null ? null : latestRate * holding;
+  const latestRate = taxRateFor(ticker, toYear);
 
   return {
     mode: "yoy",
@@ -201,13 +198,8 @@ function mockYoyResponse(request: CompareRequest): CompareResponse {
         from_as_of: `${fromYear}-12-15`,
         to_as_of: `${toYear}-12-15`,
       },
-      upcoming_taxable_distribution: {
-        left_dollars: latestTax,
-        right_dollars: latestTax,
-        delta_dollars: 0,
-        left_publication_stage: latestTax == null ? null : "preliminary_estimate",
-        right_publication_stage: latestTax == null ? null : "preliminary_estimate",
-      },
+      // Historical YoY tax is not Upcoming. Null = undisclosed, never invent $ from annual.
+      upcoming_taxable_distribution: null,
     },
     notes: [
       "MOCK /illustrate/compare mode=yoy — calendar-year tax drag for GrowthAndTaxDragModule.",

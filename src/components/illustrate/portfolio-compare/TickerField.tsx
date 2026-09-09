@@ -9,11 +9,13 @@ export function TickerField({
   funds,
   inputId,
   onSelect,
+  allowEmpty = false,
 }: {
   ticker: string;
   fundName: string;
   funds: PortfolioFundOption[];
   inputId: string;
+  allowEmpty?: boolean;
   onSelect: (fund: {
     ticker: string;
     fundName: string;
@@ -64,7 +66,15 @@ export function TickerField({
           window.setTimeout(() => {
             setOpen(false);
             const typed = query.trim().toUpperCase();
-            if (typed && typed !== ticker) {
+            if (!typed) {
+              if (allowEmpty && ticker) {
+                onSelect({ ticker: "", fundName: "", nav: null });
+              } else {
+                setQuery(ticker);
+              }
+              return;
+            }
+            if (typed !== ticker) {
               const match = funds.find((fund) => fund.ticker.toUpperCase() === typed);
               onSelect({
                 ticker: typed,

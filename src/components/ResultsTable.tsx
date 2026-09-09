@@ -20,6 +20,7 @@ import {
   UPCOMING_UNAVAILABLE_DETAIL,
   UPCOMING_UNAVAILABLE_HEADLINE,
 } from "@/lib/copy";
+import { CompareTickerLink } from "@/components/illustrate/CompareTickerLink";
 
 function isNestedControl(target: EventTarget | null) {
   const element =
@@ -260,7 +261,7 @@ function FundSection({
                   <div>
                     <h3 className="font-medium text-ink">{fund.fundName}</h3>
                     <p className="mt-0.5 font-mono text-[11px] text-faint">
-                      {fund.ticker} · {fund.family}
+                      <CompareTickerLink ticker={fund.ticker} /> · {fund.family}
                     </p>
                     <StageBadge fund={fund} />
                     {!coverage.isLive(fund.family) ? (
@@ -347,9 +348,11 @@ function EstimateRow({
       onKeyDown={onRowKeyDown}
     >
       <td className="px-3 py-3">
-        <span className="block font-medium text-ink">{fund.fundName}</span>
+        <span className="block font-medium text-ink">
+          <CompareTickerLink ticker={fund.ticker}>{fund.fundName}</CompareTickerLink>
+        </span>
         <span className="mt-0.5 block font-mono text-[11px] text-faint">
-          {fund.ticker}
+          <CompareTickerLink ticker={fund.ticker} />
           <span className="mx-1.5">·</span>
           {fund.shareClass}
         </span>
