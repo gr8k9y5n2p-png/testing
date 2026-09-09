@@ -1,22 +1,30 @@
 import { STRIPE } from "@/lib/copy";
 import { publicOrigin } from "@/lib/hosts";
+import { BILLING_STUB_NOTE } from "./billing-copy";
+
+export {
+  BILLING_PLAN_LABEL,
+  BILLING_STUB_NOTE,
+  CHECKOUT_API_PATH,
+  MANAGE_BILLING_LABEL,
+  PORTAL_API_PATH,
+  isBillingEnabled,
+} from "./billing-copy";
 
 /**
  * Billing hooks for later Checkout + Customer Portal.
  *
- * Friends beta: Soft-wall and Checkout stay off. This module does not
- * create live Checkout Sessions or Portal sessions.
+ * Friends beta: Soft-wall and Checkout stay off. Account must not start
+ * a live Checkout Session or Customer Portal session.
  *
  * Next steps when billing is turned on:
- * - STRIPE_SECRET_KEY + optional STRIPE_PRICE_ID → existing createCheckoutSession()
- * - Persist a Stripe customer id on the account
- * - POST /api/billing/portal → createCustomerPortalSession() below
- * - Return users to /account
+ * 1. Set NEXT_PUBLIC_BILLING_ENABLED=true (this flag is the Account gate)
+ * 2. STRIPE_SECRET_KEY + optional STRIPE_PRICE_ID → POST /api/checkout
+ *    (existing createCheckoutSession)
+ * 3. Persist a Stripe customer id on the account
+ * 4. POST /api/billing/portal → createCustomerPortalSession() below
+ * 5. Return users to /account (or STRIPE_PORTAL_RETURN_URL)
  */
-export const BILLING_PLAN_LABEL = "$39 / user / month";
-export const MANAGE_BILLING_LABEL = "Manage billing — coming soon";
-export const BILLING_STUB_NOTE =
-  "Billing and subscription management will be available when Checkout is on.";
 
 export function billingPortalReturnUrl(): string {
   return `${publicOrigin()}/account`;

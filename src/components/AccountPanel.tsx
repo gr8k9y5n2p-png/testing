@@ -1,9 +1,6 @@
 import { CONTACT_EMAIL } from "@/lib/copy";
-import {
-  BILLING_PLAN_LABEL,
-  BILLING_STUB_NOTE,
-  MANAGE_BILLING_LABEL,
-} from "@/lib/stripe/billing";
+import { ManageBillingButton } from "@/components/ManageBillingButton";
+import { BILLING_PLAN_LABEL, BILLING_STUB_NOTE } from "@/lib/stripe/billing-copy";
 
 export function AccountPanel({ compact = false }: { compact?: boolean }) {
   return (
@@ -17,8 +14,8 @@ export function AccountPanel({ compact = false }: { compact?: boolean }) {
 
       <div>
         <p className="text-sm text-ink">Plan · {BILLING_PLAN_LABEL}</p>
-        <p className="mt-2 text-sm text-muted">{MANAGE_BILLING_LABEL}</p>
-        <p className="mt-1 text-xs leading-relaxed text-faint">{BILLING_STUB_NOTE}</p>
+        <ManageBillingButton />
+        <p className="mt-2 text-xs leading-relaxed text-faint">{BILLING_STUB_NOTE}</p>
       </div>
 
       <p className="border-t border-line pt-4 text-sm">
