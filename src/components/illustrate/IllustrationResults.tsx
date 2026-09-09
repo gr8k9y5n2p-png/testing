@@ -79,7 +79,7 @@ export function IllustrationResults({
       </div>
 
       <ComponentTable
-        heading="Upcoming / announced"
+        heading="Upcoming / Announced"
         kicker="unpaid announced · not paid history"
         wellClassName="bg-surface"
         components={upcomingComponents}

@@ -16,7 +16,11 @@ import {
   upcomingDollarImpactAmount,
   upcomingEstimatedTaxLine,
   upcomingPctOfNavAmount,
+  upcomingDistributionPerShareAmount,
+  upcomingHolderTaxDollars,
+  upcomingPctOfNavFromPerShare,
   upcomingPerShareAmount,
+  UPCOMING_SOFT_DASH,
   PAID_HISTORY_DETAIL,
   PAID_HISTORY_EMPTY,
   PAID_HISTORY_HEADING,
@@ -59,12 +63,13 @@ describe("PortfolioCompare upcoming module copy", () => {
     assert.doesNotMatch(UPCOMING_MODULE_DETAIL, /\$0|0\.00/);
     assert.notEqual(UPCOMING_MODULE_HEADING, PAID_HISTORY_HEADING);
     assert.equal(UPCOMING_AMOUNT_UNAVAILABLE, "Undisclosed");
-    assert.equal(DIST_AMOUNT_COLUMN, "Dist $");
-    assert.equal(PCT_OF_NAV_COLUMN, "% of NAV");
-    assert.equal(DOLLAR_IMPACT_COLUMN, "$ impact");
-    assert.equal(ANNOUNCED_COLUMN, "Announced");
-    assert.equal(RECORD_COLUMN, "Record");
-    assert.equal(EX_COLUMN, "Ex");
+    assert.equal(UPCOMING_MODULE_HEADING, "Upcoming / Announced");
+    assert.equal(DIST_AMOUNT_COLUMN, "$ Distribution / share");
+    assert.equal(PCT_OF_NAV_COLUMN, "Distribution % of NAV");
+    assert.equal(DOLLAR_IMPACT_COLUMN, "$ tax impact");
+    assert.equal(ANNOUNCED_COLUMN, "Announced date");
+    assert.equal(RECORD_COLUMN, "Record date");
+    assert.equal(EX_COLUMN, "Ex-date");
     assert.equal(EST_DISTRIBUTION_LINE_LABEL, "Est. Distribution");
     assert.equal(ESTIMATED_TAX_LINE_LABEL, "Estimated Tax");
     assert.doesNotMatch(EST_DISTRIBUTION_LINE_LABEL, /\$0|0\.00/);
@@ -79,7 +84,7 @@ describe("PortfolioCompare upcoming module copy", () => {
         covered: true,
         estimatedTax: null,
       }),
-      "Estimated Tax: N/A",
+      "Estimated Tax: Undisclosed",
     );
     assert.equal(
       upcomingDistributionAmount({ available: false, distributionDollars: null }),
@@ -122,6 +127,85 @@ describe("PortfolioCompare upcoming module copy", () => {
         navPerShare: null,
       }),
       null,
+    );
+    assert.equal(
+      upcomingDistributionPerShareAmount({
+        available: true,
+        distributionPerShare: 2.6,
+        distributionDollars: null,
+        holdingDollars: 10_000,
+        navPerShare: 41.22,
+      }),
+      "$2.6000 / sh",
+    );
+    assert.equal(
+      upcomingDistributionPerShareAmount({
+        available: true,
+        distributionDollars: null,
+        holdingDollars: 10_000,
+        navPerShare: null,
+      }),
+      UPCOMING_SOFT_DASH,
+    );
+    assert.equal(upcomingPctOfNavFromPerShare(2.6, 41.22)?.toFixed(2), "6.31");
+    assert.equal(upcomingPctOfNavFromPerShare(2.6, null), null);
+    assert.equal(
+      upcomingHolderTaxDollars({
+        distDollars: 631,
+        taxRates: {
+          ordinary_income: 0.37,
+          long_term_capital_gains: 0.2,
+          short_term_capital_gains: 0.37,
+          qualified_dividend: 0.2,
+          state: 0.05,
+        },
+        combine: true,
+      }),
+      631 * 0.42,
+    );
+    assert.equal(
+      upcomingDollarImpactAmount(
+        {
+          available: true,
+          covered: true,
+          estimatedTax: null,
+          distributionPerShare: 2.6,
+          distributionDollars: null,
+          holdingDollars: 10_000,
+          navPerShare: 41.22,
+        },
+        {
+          taxRates: {
+            ordinary_income: 0.24,
+            long_term_capital_gains: 0.15,
+            short_term_capital_gains: 0.24,
+            qualified_dividend: 0.15,
+            state: 0.05,
+          },
+          combine: true,
+        },
+      ) !== upcomingDollarImpactAmount(
+        {
+          available: true,
+          covered: true,
+          estimatedTax: null,
+          distributionPerShare: 2.6,
+          distributionDollars: null,
+          holdingDollars: 10_000,
+          navPerShare: 41.22,
+        },
+        {
+          taxRates: {
+            ordinary_income: 0.37,
+            long_term_capital_gains: 0.2,
+            short_term_capital_gains: 0.37,
+            qualified_dividend: 0.2,
+            state: 0.05,
+          },
+          combine: true,
+        },
+      ),
+      true,
     );
     assert.equal(
       upcomingDistributionAmount({

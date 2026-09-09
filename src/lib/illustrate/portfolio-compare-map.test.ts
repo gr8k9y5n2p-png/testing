@@ -776,6 +776,7 @@ describe("PortfolioCompare distribution tables", () => {
       holding({
         ticker: "AMCAP",
         holding_index: 2,
+        nav_per_share: 41.22,
         upcoming: {
           publication_stage: "preliminary_estimate",
           distribution_dollars: 3200,
@@ -848,7 +849,7 @@ describe("PortfolioCompare distribution tables", () => {
         covered: true,
         estimatedTax: null,
       }),
-      "Estimated Tax: N/A",
+      "Estimated Tax: Undisclosed",
     );
     assert.doesNotMatch(
       upcomingDistributionLine({ available: false, distributionDollars: null }),
@@ -872,7 +873,7 @@ describe("PortfolioCompare distribution tables", () => {
         covered: false,
         estimatedTax: 0,
       }),
-      "Estimated Tax: N/A",
+      "Estimated Tax: —",
     );
     assert.equal(
       upcomingPctOfNavAmount({ available: true, pctOfNav: 1.28 }),

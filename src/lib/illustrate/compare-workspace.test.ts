@@ -339,6 +339,7 @@ describe("compare upcoming rows", () => {
     assert.equal(row.exDate, null);
     assert.equal(row.estimatedTax, null);
     assert.equal(row.distributionDollars, null);
+    assert.equal(row.distributionPerShare, null);
   });
 
   it("keeps unpaid announced catalog dates and live upcoming tax dollars", () => {
@@ -357,22 +358,22 @@ describe("compare upcoming rows", () => {
     assert.equal(row.estimatedTax, 185);
     assert.equal(row.recordDate, "2026-12-16");
     assert.equal(row.exDate, "2026-12-17");
+    assert.equal(row.distributionPerShare, 2.6);
     assert.equal(row.distributionDollars, null);
-    assert.equal(row.pctOfNav, null);
+    assert.ok(row.pctOfNav != null);
+    assert.equal(Number(row.pctOfNav?.toFixed(2)), 6.31);
     assert.equal(row.holdingDollars, null);
     assert.equal(row.navPerShare, 41.22);
   });
 
-  it("never copies catalog Dist $ / % of NAV as manager prelims", () => {
+  it("uses unpaid manager $/share only and never copies paid/final catalog amounts", () => {
     const source = readFileSync(join(here, "compare-workspace.ts"), "utf8");
-    assert.match(source, /distributionDollars:\s*null/);
-    assert.match(source, /pctOfNav:\s*null/);
-    assert.doesNotMatch(source, /distributionDollars:\s*fund\??\./);
-    assert.doesNotMatch(source, /pctOfNav:\s*fund\??\./);
+    assert.match(source, /catalogUpcoming && fund && Number.isFinite\(fund\.estimatedDistributionAmount\)/);
+    assert.match(source, /upcomingPctOfNavFromPerShare/);
+    assert.doesNotMatch(source, /estimatedDistributionPctNav/);
     assert.doesNotMatch(source, /ticker === ["'][A-Z0-9]+["']/);
     const stage = readFileSync(join(here, "publication-stage.ts"), "utf8");
     assert.doesNotMatch(stage, /ticker === ["'][A-Z0-9]+["']/);
-    assert.doesNotMatch(stage, /estimatedDistributionAmount/);
   });
 
   it("treats has_estimate-false finals as Undisclosed for every ticker, not only ABALX", () => {
@@ -396,13 +397,14 @@ describe("compare upcoming rows", () => {
       });
       assert.equal(row.available, false, ticker);
       assert.equal(row.distributionDollars, null, ticker);
+      assert.equal(row.distributionPerShare, null, ticker);
       assert.equal(row.pctOfNav, null, ticker);
       assert.equal(row.estimatedTax, null, ticker);
       assert.equal(row.recordDate, null, ticker);
     }
   });
 
-  it("does not invent Dist $ or % of NAV from catalog prelims", () => {
+  it("computes Dist $ and % of NAV from unpaid $/share ÷ weekly NAV", () => {
     const row = upcomingRowForCompareTicker({
       ticker: "AMCPX",
       fund: view("AMCPX"),
@@ -416,15 +418,17 @@ describe("compare upcoming rows", () => {
       index: 0,
     });
     assert.equal(row.holdingDollars, 10_000);
-    assert.equal(row.distributionDollars, null);
-    assert.equal(row.pctOfNav, null);
+    assert.equal(row.distributionPerShare, 2.6);
     assert.equal(row.navPerShare, 41.22);
+    assert.ok(row.distributionDollars != null);
+    assert.equal(Math.round(row.distributionDollars ?? 0), Math.round(2.6 * (10_000 / 41.22)));
+    assert.equal(Number(row.pctOfNav?.toFixed(2)), 6.31);
     assert.equal(row.estimatedTax, 185);
   });
 });
 
 describe("Compare workspace Upcoming + NAV soft path", () => {
-  it("surfaces Dist $ / % NAV / $ impact columns and prompts for missing NAV", () => {
+  it("locks Upcoming / Announced six columns and prompts for missing NAV", () => {
     const workspace = readFileSync(
       join(here, "../../components/illustrate/CompareWorkspace.tsx"),
       "utf8",
@@ -447,8 +451,13 @@ describe("Compare workspace Upcoming + NAV soft path", () => {
     assert.match(table, /DIST_AMOUNT_COLUMN/);
     assert.match(table, /PCT_OF_NAV_COLUMN/);
     assert.match(table, /DOLLAR_IMPACT_COLUMN/);
-    assert.match(table, /DistributionDateStrip/);
-    assert.match(table, /showPayable=\{Boolean\(row\.payableDate\)\}/);
+    assert.match(table, /ANNOUNCED_COLUMN/);
+    assert.match(table, /RECORD_COLUMN/);
+    assert.match(table, /EX_COLUMN/);
+    assert.match(table, /taxRates/);
+    assert.match(table, /combineStateWithFederal/);
+    assert.doesNotMatch(table, /DistributionDateStrip/);
+    assert.doesNotMatch(table, /showPayable/);
     assert.match(panel, /illustrationRequestNav/);
     assert.match(panel, /perShareNavError/);
     assert.match(panel, /isMissingNavError/);

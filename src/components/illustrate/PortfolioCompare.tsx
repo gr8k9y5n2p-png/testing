@@ -132,11 +132,15 @@ export function PortfolioCompare({
   const currentFilled = currentApi.length > 0;
   const proposedFilled = proposedApi.length > 0;
   const canFetch = currentFilled || proposedFilled;
+  const appliedTaxRates: TaxRates = {
+    ...UI_DEFAULT_TAX_RATES,
+    ...taxRates,
+  };
   const requestKey = JSON.stringify({
     bookDollars,
     current: currentApi,
     proposed: proposedApi,
-    taxRates: taxRates ?? { state: UI_DEFAULT_TAX_RATES.state },
+    taxRates: appliedTaxRates,
     periods: defaultPortfolioComparePeriods(),
     retry,
   });
@@ -314,6 +318,7 @@ export function PortfolioCompare({
           sideLabel: "Current",
           gridAreaClass: "lg:[grid-area:upcoming-c]",
           loadingLabel: "Loading current upcoming distributions",
+          taxRates: appliedTaxRates,
         })}
 
         <AllocationColumn
@@ -338,6 +343,7 @@ export function PortfolioCompare({
           sideLabel: "Proposed",
           gridAreaClass: "lg:[grid-area:upcoming-p]",
           loadingLabel: "Loading proposed upcoming distributions",
+          taxRates: appliedTaxRates,
         })}
       </div>
 
@@ -403,6 +409,7 @@ function upcomingPanel({
   sideLabel,
   gridAreaClass,
   loadingLabel,
+  taxRates,
 }: {
   canFetch: boolean;
   sideFilled: boolean;
@@ -413,6 +420,7 @@ function upcomingPanel({
   sideLabel: "Current" | "Proposed";
   gridAreaClass: string;
   loadingLabel: string;
+  taxRates: TaxRates;
 }) {
   if (!canFetch) return null;
   if (!sideFilled) {
@@ -440,6 +448,8 @@ function upcomingPanel({
       rows={rows}
       sideLabel={sideLabel}
       className={`h-full ${gridAreaClass}`}
+      taxRates={taxRates}
+      combineStateWithFederal
     />
   );
 }

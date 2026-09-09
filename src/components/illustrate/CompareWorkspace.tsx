@@ -270,12 +270,15 @@ export function CompareWorkspace({
           ticker: item.ticker,
           fund: item.fund,
           holdingDollars,
+          navPerShare:
+            navOverrides[item.ticker] ??
+            (item.fund && item.fund.nav > 0 ? item.fund.nav : null),
           upcoming: item.tax
             ? toUpcomingSummary(item.tax.summary.upcoming_taxable_distribution, "left")
             : null,
         })),
       ),
-    [activeLoaded, holdingDollars],
+    [activeLoaded, holdingDollars, navOverrides],
   );
   const activeHistoryError = filledKey ? historyError : null;
   const pairReady = filledKey.split(",").filter(Boolean).length >= 2;
@@ -444,6 +447,8 @@ export function CompareWorkspace({
         <UpcomingTable
           rows={upcomingRows}
           headingId="compare-upcoming"
+          taxRates={taxRates}
+          combineStateWithFederal={combineState}
         />
       </div>
       <NoticeToast message={notice} onDismiss={dismissNotice} />

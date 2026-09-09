@@ -83,6 +83,13 @@ export type PortfolioDistributionRow = PortfolioDistributionDates & {
   estimated_tax?: number | null;
   /** Data-provided % of NAV. Never invent when omitted. */
   percent_of_nav?: number | null;
+  /** Manager unpaid prelim $/share when Data sends per_share amounts. */
+  per_share?: number | null;
+  amount?: number | null;
+  amount_unit?: string | null;
+  /** Weekly NAV from Data #74. Soft-null when absent. */
+  nav_per_share?: number | null;
+  nav_as_of?: string | null;
   publication_stage?: PublicationStage | null;
 };
 
@@ -119,6 +126,9 @@ export type PortfolioHoldingOut = {
   fund_name?: string | null;
   holding_dollars: number;
   weight_pct?: number | null;
+  /** Weekly NAV from Data #74. Soft-null when absent — never send 0. */
+  nav_per_share?: number | null;
+  nav_as_of?: string | null;
   covered: boolean;
   publication_stage_used?: string | null;
   warnings: string[];

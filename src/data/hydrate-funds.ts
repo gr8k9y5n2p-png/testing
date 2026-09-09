@@ -177,6 +177,7 @@ export function mergeFundWithDistributions(
     cusip: fund.cusip || fromDists.cusip,
     shareClass: fund.shareClass || fromDists.shareClass,
     nav: fromDists.nav || fund.nav,
+    navAsOf: fund.navAsOf ?? fromDists.navAsOf ?? null,
     estimatedDistributionAmount: fromDists.estimatedDistributionAmount,
     estimatedOrdinaryIncome: fromDists.estimatedOrdinaryIncome,
     estimatedCapitalGains: fromDists.estimatedCapitalGains,

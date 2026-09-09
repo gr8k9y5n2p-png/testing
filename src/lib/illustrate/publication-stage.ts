@@ -1,3 +1,8 @@
+import {
+  upcomingDistDollarsFromPerShare,
+  upcomingPctOfNavFromPerShare,
+  resolveUpcomingPerShare,
+} from "./portfolio-compare-copy.ts";
 import type {
   PortfolioAllocationOut,
   PortfolioDistributionRow,
@@ -20,12 +25,17 @@ export type UpcomingRow = {
   /** Holding $ used to derive % of NAV. Null when unknown. */
   holdingDollars: number | null;
   /**
-   * Issuer-published % of NAV only (`percent_of_nav` from Data).
-   * Never derive from Dist $ / holding $ — that invents a rate.
+   * Display % of NAV = est $/share ÷ weekly NAV when both exist.
+   * Never invent a manager rate from Dist $ / holding $ alone.
    */
   pctOfNav: number | null;
-  /** Search/seed NAV when known. Used for $ / share presentation only. */
+  /** Weekly NAV (`nav_per_share` from Data when live). Soft-null when absent. */
   navPerShare: number | null;
+  navAsOf: string | null;
+  /** Manager unpaid prelim $/share. Never invent. */
+  distributionPerShare: number | null;
+  ordinaryPerShare: number | null;
+  capitalGainsPerShare: number | null;
   estimatedTax: number | null;
   asOf: string | null;
   announcedDate: string | null;
@@ -336,18 +346,35 @@ function toTableRow(
   const dist = num(event.distribution_dollars);
   const holdingDollars = num(holding.holding_dollars);
   const ticker = holdingTicker(holding);
+  const nav =
+    num(event.nav_per_share) ??
+    num(holding.nav_per_share);
+  const perShare =
+    num(event.per_share) ??
+    (event.amount_unit === "per_share" ? num(event.amount) : null);
+  const resolvedPerShare = resolveUpcomingPerShare({
+    distributionPerShare: perShare,
+    distributionDollars: dist,
+    holdingDollars,
+    navPerShare: nav,
+  });
   return {
     key: `${side}-${holding.holding_index}-${ticker}-${index}-${bucket}-${eventIndex}`,
     ticker,
     fundName: holding.fund_name || ticker,
     side,
     sideLabel: side === "current" ? "Current" : "Proposed",
-    distributionDollars: dist,
+    distributionDollars:
+      dist ?? upcomingDistDollarsFromPerShare(resolvedPerShare, holdingDollars, nav),
     distributionDollarsMin: num(event.distribution_dollars_min),
     distributionDollarsMax: num(event.distribution_dollars_max),
     holdingDollars,
-    pctOfNav: pctOfNavFromDist(dist, holdingDollars, num(event.percent_of_nav)),
-    navPerShare: null,
+    pctOfNav: upcomingPctOfNavFromPerShare(resolvedPerShare, nav),
+    navPerShare: nav,
+    navAsOf: isoDate(event.nav_as_of) ?? isoDate(holding.nav_as_of),
+    distributionPerShare: resolvedPerShare,
+    ordinaryPerShare: null,
+    capitalGainsPerShare: null,
     estimatedTax: num(event.estimated_tax),
     asOf: isoDate(event.as_of),
     announcedDate: announcedDateOf(event),
@@ -379,7 +406,11 @@ function undisclosedUpcomingRow(
     distributionDollarsMax: null,
     holdingDollars: num(holding.holding_dollars),
     pctOfNav: null,
-    navPerShare: null,
+    navPerShare: num(holding.nav_per_share),
+    navAsOf: isoDate(holding.nav_as_of),
+    distributionPerShare: null,
+    ordinaryPerShare: null,
+    capitalGainsPerShare: null,
     estimatedTax: null,
     asOf: null,
     announcedDate: null,
@@ -512,11 +543,27 @@ export function withUpcomingNav(
       ? navByTicker
       : new Map(Object.entries(navByTicker));
   return rows.map((row) => {
-    if (row.navPerShare != null && row.navPerShare > 0) return row;
-    const nav = lookup.get(row.ticker) ?? lookup.get(row.ticker.toUpperCase());
+    const lookedUp = lookup.get(row.ticker) ?? lookup.get(row.ticker.toUpperCase());
+    const nav =
+      row.navPerShare != null && row.navPerShare > 0
+        ? row.navPerShare
+        : lookedUp != null && lookedUp > 0
+          ? lookedUp
+          : row.navPerShare;
+    const perShare = resolveUpcomingPerShare({
+      distributionPerShare: row.distributionPerShare,
+      distributionDollars: row.distributionDollars,
+      holdingDollars: row.holdingDollars,
+      navPerShare: nav,
+    });
     return {
       ...row,
-      navPerShare: nav != null && nav > 0 ? nav : row.navPerShare,
+      navPerShare: nav,
+      distributionPerShare: perShare,
+      pctOfNav: upcomingPctOfNavFromPerShare(perShare, nav),
+      distributionDollars:
+        row.distributionDollars ??
+        upcomingDistDollarsFromPerShare(perShare, row.holdingDollars, nav),
     };
   });
 }
