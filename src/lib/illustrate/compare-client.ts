@@ -8,6 +8,7 @@ import type {
 import { IllustrateRequestError } from "@/lib/illustrate/client";
 import { userFacingIllustrateError } from "@/lib/illustrate/illustrate-error";
 import { gateCompareUpcoming } from "@/lib/illustrate/upcoming-compare";
+import { userFacingNotes } from "@/lib/illustrate/user-facing-notes";
 
 export function getCompareEndpoint(): string {
   if (process.env.NEXT_PUBLIC_COMPARE_URL?.trim()) {
@@ -155,7 +156,7 @@ export function normalizeCompareResponse(
     upcomingRaw && typeof upcomingRaw === "object"
       ? asRecord(upcomingRaw)
       : null;
-  const notes = Array.isArray(raw.notes) ? raw.notes.map(String) : [];
+  const notes = userFacingNotes(raw.notes);
   const periods = periodsRaw.map((item) => {
     const row = asRecord(item);
     return {

@@ -233,7 +233,15 @@ describe("compare-request NAV / Data body", () => {
         fundName: "The Growth Fund of America",
         family: "American Funds",
       }).fund_name,
-      "The Growth Fund of America",
+      undefined,
+    );
+    assert.equal(
+      compareSelectorsFromFund({
+        ticker: "AGTHX",
+        fundName: "American Funds Growth Fund of America",
+        family: "American Funds",
+      }).fund_name,
+      undefined,
     );
     const stripped = toDataApiCompareBody({
       mode: "yoy",
@@ -318,20 +326,22 @@ describe("compare-request NAV / Data body", () => {
     assert.equal(body.combine_state_with_federal, false);
   });
 
-  it("builds an AGTHX YoY body with a real fund_name and NAV", () => {
+  it("builds an AGTHX YoY body without fund_name so Data does not AND-miss", () => {
     const body = toDataApiCompareBody(
       yoyTaxDragCompareRequest({
         ticker: "AGTHX",
         fundFamily: "American Funds",
-        fundName: "The Growth Fund of America",
+        fundName: "American Funds Growth Fund of America",
         holdingDollars: 10_000,
         periods: [{ year: 2021 }, { year: 2022 }, { year: 2023 }, { year: 2024 }, { year: 2025 }],
       }),
       seedLookup,
     );
-    assert.equal(body.selectors?.fund_name, "The Growth Fund of America");
+    assert.equal(body.selectors?.fund_name, undefined);
+    assert.equal(body.left?.selectors?.fund_name, undefined);
     assert.equal(body.nav_per_share, 72.14);
     assert.equal(body.left?.selectors?.ticker, "AGTHX");
+    assert.equal(body.selectors?.fund_family, "American Funds");
   });
 
   it("uses 2022–2026 as the trailing window in 2026", () => {
@@ -374,7 +384,7 @@ describe("compare-request NAV / Data body", () => {
     assert.equal(body.left?.selectors?.ticker, "AMCPX");
     assert.equal(body.left?.selectors?.fund_name, undefined);
     assert.equal(body.right?.selectors?.ticker, "AGTHX");
-    assert.equal(body.right?.selectors?.fund_name, "The Growth Fund of America");
+    assert.equal(body.right?.selectors?.fund_name, undefined);
     assert.equal(body.left?.nav_per_share, 41.22);
     assert.equal(body.right?.nav_per_share, 72.14);
     assert.deepEqual(

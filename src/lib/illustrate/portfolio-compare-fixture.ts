@@ -25,6 +25,7 @@ import type {
   PortfolioPeriodHoldingTax,
 } from "@/lib/illustrate/portfolio-compare-types";
 import { PORTFOLIO_COMPARE_BOOK_DOLLARS } from "@/lib/illustrate/portfolio-compare-types";
+import { demoEngineNotes } from "@/lib/illustrate/user-facing-notes";
 
 export { isPortfolioCompareRequestValid, resolveHoldingDollars };
 
@@ -295,9 +296,9 @@ export function mockIllustratePortfolioSide(
       holdings_uncovered: holdingsUncovered,
     },
     gaps,
-    warnings: [
+    warnings: demoEngineNotes(
       "MOCK /illustrate/portfolio/compare — sample seed math, not the Data team service.",
-    ],
+    ),
     notes: [],
   };
 }
@@ -360,7 +361,9 @@ export function mockPortfolioCompareResponse(
       "Deltas are proposed − current on one shared snapshot.",
       "periods[] are calendar-year tax $ per ticker. Unmatched years are N/A, never $0.",
       "Each side is a full POST /illustrate/portfolio result. Gaps stay on that side.",
-      "MOCK /illustrate/portfolio/compare — sketch fixture so localhost still demos when the Data API is down.",
+      ...demoEngineNotes(
+        "MOCK /illustrate/portfolio/compare — sketch fixture so localhost still demos when the Data API is down.",
+      ),
     ],
   };
 }

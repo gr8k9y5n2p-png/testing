@@ -190,7 +190,7 @@ function IllustrationWorkspace({ fund }: { fund: FundEstimateView }) {
               ticker: fund.ticker,
               fund_family: fund.family,
               fund_identifier: fund.ticker,
-              fund_name: fund.fundName,
+              ...(mock ? { fund_name: fund.fundName } : {}),
               ...(requestNav != null ? { nav_per_share: requestNav } : {}),
             },
           ],

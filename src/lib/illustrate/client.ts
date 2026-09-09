@@ -6,6 +6,7 @@ import {
   toDataApiIllustrateBody,
   userFacingIllustrateError,
 } from "@/lib/illustrate/illustrate-request";
+import { userFacingNotes } from "@/lib/illustrate/user-facing-notes";
 import type {
   IllustrateErrorBody,
   IllustrateRequest,
@@ -105,11 +106,13 @@ export function normalizeIllustrateResponse(raw: Record<string, unknown>): Illus
   });
 
   const totalsRaw = (raw.totals ?? {}) as Record<string, unknown>;
-  const warnings = Array.isArray(raw.warnings)
-    ? raw.warnings.map(String)
-    : Array.isArray(raw.notes)
-      ? raw.notes.map(String)
-      : [];
+  const warnings = userFacingNotes(
+    Array.isArray(raw.warnings)
+      ? raw.warnings
+      : Array.isArray(raw.notes)
+        ? raw.notes
+        : [],
+  );
 
   return {
     tax_rates_applied: (raw.tax_rates_applied ??
@@ -151,18 +154,12 @@ export async function postIllustrate(
     });
   }
 
-  let response: Response;
-  try {
-    response = await post(endpoint, payload);
-    if (remote && response.status >= 500) {
-      response = await post("/api/illustrate", request);
-    }
-  } catch (error) {
-    if (remote && !init?.signal?.aborted) {
-      response = await post("/api/illustrate", request);
-    } else {
-      throw error;
-    }
+  const response = await post(endpoint, payload);
+  if (remote && response.status >= 500) {
+    throw new IllustrateRequestError(
+      `Illustrate failed (${response.status})`,
+      response.status,
+    );
   }
 
   if (!response.ok) {

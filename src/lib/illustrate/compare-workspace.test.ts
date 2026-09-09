@@ -295,6 +295,45 @@ describe("compare annual table", () => {
     assert.deepEqual(model.groups[0]?.rows[0]?.cells, [88, 88, null]);
     assert.deepEqual(model.groups[0]?.rows[1]?.cells, [210, 210, null]);
   });
+
+  it("maps live AGTHX YoY zip pairs to Tax $ / Dist $ years, not all N/A", () => {
+    const taxes: Record<number, { tax: number; dist: number }> = {
+      2021: { tax: 82, dist: 210 },
+      2022: { tax: 71, dist: 180 },
+      2023: { tax: 118, dist: 260 },
+      2024: { tax: 96, dist: 240 },
+      2025: { tax: 88, dist: 220 },
+    };
+    const years = [2021, 2022, 2023, 2024, 2025];
+    const pairs = [];
+    for (let index = 0; index < years.length - 1; index += 1) {
+      const older = years[index];
+      const newer = years[index + 1];
+      pairs.push(
+        period(
+          newer,
+          side("AGTHX", true, taxes[older].tax, taxes[older].dist),
+          side("AGTHX", true, taxes[newer].tax, taxes[newer].dist),
+        ),
+      );
+    }
+    const model = buildCompareAnnualTable(
+      [{ ticker: "AGTHX", tax: yoy(pairs) }],
+      [2025, 2024, 2023, 2022, 2021],
+    );
+    const taxRow = model.groups[0]?.rows.find((row) => row.kind === "tax");
+    const distRow = model.groups[0]?.rows.find((row) => row.kind === "distribution");
+    assert.deepEqual(
+      taxRow?.cells,
+      years.slice().reverse().map((year) => taxes[year].tax),
+    );
+    assert.deepEqual(
+      distRow?.cells,
+      years.slice().reverse().map((year) => taxes[year].dist),
+    );
+    assert.ok(taxRow?.cells.every((cell) => cell != null), "AGTHX Tax $ must not be all N/A");
+    assert.ok(distRow?.cells.every((cell) => cell != null), "AGTHX Dist $ must not be all N/A");
+  });
 });
 
 describe("compare upcoming rows", () => {

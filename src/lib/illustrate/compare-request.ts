@@ -28,23 +28,20 @@ export type NavLookup = (ticker: string) => number | undefined;
 export type FundNameLookup = (ticker: string) => string | undefined;
 
 /**
- * Data `_filter_stmt` ANDs every populated selector. `fund_name=AMCPX`
- * looks for ILIKE '%AMCPX%' on "AMCAP Fund" / "The Growth Fund of America"
- * and returns no rows → `matched: false` / N/A for every vintage.
- * Never send the ticker (or a blank) as `fund_name`.
+ * Data `_filter_stmt` ANDs every populated selector. Catalog `fund_name`
+ * values (e.g. "American Funds Growth Fund of America") miss Data's product
+ * name ("The Growth Fund of America") and return `matched: false` / N/A
+ * for every vintage. Ticker is unique — never send `fund_name`.
  */
 export function sanitizeCompareSelectors(
   selectors?: CompareSelectors | null,
 ): CompareSelectors | undefined {
   if (!selectors) return undefined;
-  const ticker = tickerFromSelectors(selectors);
-  const fundName = selectors.fund_name?.trim();
   const next: CompareSelectors = { ...selectors };
-  if (!fundName || (ticker && fundName.toUpperCase() === ticker)) {
-    delete next.fund_name;
-  } else {
-    next.fund_name = fundName;
-  }
+  // Data `_filter_stmt` ANDs every populated selector. Catalog labels like
+  // "American Funds Growth Fund of America" miss "The Growth Fund of America"
+  // and return matched:false / N/A for every vintage. Ticker is unique.
+  delete next.fund_name;
   return next;
 }
 

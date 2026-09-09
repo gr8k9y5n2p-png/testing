@@ -81,7 +81,7 @@ Hero / footer keep the short trust line: “Illustrative estimates only. Not tax
 
 ## Mock vs real Data API (PR #2)
 
-The browser **does not** compute tax. Aftertax calls the Data API when `NEXT_PUBLIC_DATA_API_URL` is set, and falls back to local mocks only if that host is down (network / 5xx). 4xx from a running API is shown as an error.
+The browser **does not** compute tax. Aftertax calls the Data API when `NEXT_PUBLIC_DATA_API_URL` is set. Production does not fall back to local `/api/*` mocks (those responses carry MOCK / seed-math chrome). 4xx / 5xx from a running API is shown as an error.
 
 | Mode | How |
 | --- | --- |

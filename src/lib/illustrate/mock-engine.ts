@@ -12,6 +12,7 @@ import {
   type IllustrationComponent,
   type TaxRates,
 } from "@/lib/illustrate/types";
+import { demoEngineNotes } from "@/lib/illustrate/user-facing-notes";
 
 /**
  * MOCK illustrate engine — server-side only.
@@ -259,9 +260,9 @@ export function mockIllustrate(body: IllustrateRequest): IllustrateResponse {
   }
 
   const stages = new Set(rows.map((row) => `${row.publication_stage}|${row.as_of}`));
-  const warnings: string[] = [
+  const warnings: string[] = demoEngineNotes(
     "MOCK /illustrate — sample seed math, not the Data team service. Set NEXT_PUBLIC_ILLUSTRATE_URL to swap.",
-  ];
+  );
   if (stages.size > 1) {
     warnings.push(
       "Selected rows span more than one publication_stage / as_of snapshot. Prefer one snapshot to avoid double-counting.",

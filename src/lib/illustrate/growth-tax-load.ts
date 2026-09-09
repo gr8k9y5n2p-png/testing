@@ -37,7 +37,7 @@ export type GrowthFundInput = {
   label?: string;
   fundIdentifier?: string;
   fundFamily?: string;
-  /** Real product name. Never the ticker — Data ANDs fund_name. */
+  /** Display name only. Compare omits fund_name so Data does not AND-miss. */
   fundName?: string;
   /** Search / fund metadata NAV. Sent on YoY compare when > 0. */
   navPerShare?: number | null;

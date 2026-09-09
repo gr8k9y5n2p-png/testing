@@ -26,6 +26,7 @@ import type {
   PortfolioTotalsOut,
   PortfolioUpcoming,
 } from "@/lib/illustrate/portfolio-compare-types";
+import { userFacingNotes } from "@/lib/illustrate/user-facing-notes";
 
 export function getPortfolioCompareEndpoint(): string {
   if (process.env.NEXT_PUBLIC_PORTFOLIO_COMPARE_URL?.trim()) {
@@ -116,12 +117,18 @@ function withSideNav(
   side: PortfolioCompareSideIn,
   lookup: NavLookup,
 ): PortfolioCompareSideIn {
-  const nameLookup = isRemoteDataApi() ? () => undefined : seedFundNameLookup;
+  // Live Data ANDs fund_name. Catalog labels miss product names (AGTHX
+  // "American Funds Growth Fund of America" ≠ "The Growth Fund of America")
+  // and return unmatched / N/A for every year. Ticker is unique — omit.
+  const nameLookup = isRemoteDataApi() ? undefined : seedFundNameLookup;
   return {
     ...side,
-    holdings: side.holdings.map((holding) =>
-      withPortfolioHoldingNav(holding, lookup, nameLookup),
-    ),
+    holdings: side.holdings.map((holding) => {
+      const next = withPortfolioHoldingNav(holding, lookup, nameLookup);
+      if (!isRemoteDataApi()) return next;
+      const { fund_name: _omit, ...rest } = next;
+      return rest;
+    }),
   };
 }
 
@@ -302,11 +309,11 @@ export function normalizePortfolioAllocation(
     totals: normalizeTotals(row.totals, holdings),
     coverage: normalizeCoverage(row.coverage),
     gaps: normalizeGaps(row.gaps),
-    warnings: [
+    warnings: userFacingNotes([
       ...(Array.isArray(row.warnings) ? row.warnings : []),
       ...(Array.isArray(row.notes) ? row.notes : []),
-    ].map(String),
-    notes: Array.isArray(row.notes) ? row.notes.map(String) : [],
+    ]),
+    notes: userFacingNotes(row.notes),
   };
 }
 
@@ -318,7 +325,7 @@ export function normalizePortfolioCompareResponse(
   const proposed = normalizePortfolioAllocation(raw.proposed, "Proposed Allocation");
   const deltasRaw = asRecord(raw.deltas);
   const summaryRaw = asRecord(raw.summary);
-  const notes = Array.isArray(raw.notes) ? raw.notes.map(String) : [];
+  const notes = userFacingNotes(raw.notes);
 
   const estimatedTax = num(
     deltasRaw.estimated_tax ?? deltasRaw.estimated_tax_dollars,

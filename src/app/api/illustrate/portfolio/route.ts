@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { SAMPLE_FUNDS } from "@/data/seed";
 import { isLiveCoveredFamily } from "@/lib/coverage";
 import type { PortfolioIllustrateRequest } from "@/lib/illustrate/portfolio";
+import { demoEngineNotes } from "@/lib/illustrate/user-facing-notes";
 
 export const dynamic = "force-dynamic";
 
@@ -53,8 +54,8 @@ export async function POST(request: Request) {
       coverage_pct: total ? Math.round((covered / total) * 10000) / 100 : 0,
     },
     gaps,
-    warnings: [
+    warnings: demoEngineNotes(
       "MOCK /illustrate/portfolio. Set NEXT_PUBLIC_DATA_API_URL to use the Data team endpoint.",
-    ],
+    ),
   });
 }

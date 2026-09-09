@@ -21,7 +21,12 @@ export async function fetchDataApi(
       headers,
       cache: fetchInit.cache ?? "no-store",
     });
-    if (remote && !response.ok && response.status >= 500 && fallback !== endpoint) {
+    if (
+      !remote &&
+      !response.ok &&
+      response.status >= 500 &&
+      fallback !== endpoint
+    ) {
       return fetch(fallback, {
         ...fetchInit,
         headers,
@@ -30,7 +35,7 @@ export async function fetchDataApi(
     }
     return response;
   } catch (error) {
-    if (remote && fallback !== endpoint && !fetchInit.signal?.aborted) {
+    if (!remote && fallback !== endpoint && !fetchInit.signal?.aborted) {
       return fetch(fallback, {
         ...fetchInit,
         headers,
