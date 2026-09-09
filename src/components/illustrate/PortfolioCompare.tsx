@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { CompactDisclaimer } from "@/components/CompactDisclaimer";
+import { NoticeToast, useNoticeToast } from "@/components/NoticeToast";
 import { AllocationColumn } from "@/components/illustrate/portfolio-compare/AllocationColumn";
 import { CalendarYearTaxTable } from "@/components/illustrate/portfolio-compare/CalendarYearTaxTable";
 import { SummaryStrip } from "@/components/illustrate/portfolio-compare/SummaryStrip";
@@ -29,9 +30,9 @@ import { UI_DEFAULT_TAX_RATES } from "@/lib/illustrate/types";
 export type PortfolioCompareProps = {
   /** Defaults to $1,000,000. */
   bookDollars?: number;
-  /** Defaults to GTM history-covered Current: AGTHX / DODIX / AMCAP / DODGX @ 25%. */
+  /** Defaults to an empty Current book. Advisors add tickers via + Add holding. */
   current?: PortfolioHoldingDraft[];
-  /** Defaults to GTM history-covered Proposed: AMCPX / CGHM / AGTHX / AMCAP @ 25%. */
+  /** Defaults to an empty Proposed book. Advisors add tickers via + Add holding. */
   proposed?: PortfolioHoldingDraft[];
   funds?: PortfolioFundOption[];
   taxRates?: Partial<TaxRates>;
@@ -100,6 +101,7 @@ export function PortfolioCompare({
   const [result, setResult] = useState<PortfolioCompareResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const { notice, onNotice, dismissNotice } = useNoticeToast();
 
   function commitBook(raw: string) {
     const parsed = Number(raw.replace(/,/g, ""));
@@ -245,6 +247,7 @@ export function PortfolioCompare({
           inputIdPrefix="current"
           onUnitChange={setCurrentUnit}
           onChange={setCurrent}
+          onNotice={onNotice}
           className="h-full lg:[grid-area:holdings-c]"
         />
         {!canFetch ? null : loading && !result ? (
@@ -271,6 +274,7 @@ export function PortfolioCompare({
           inputIdPrefix="proposed"
           onUnitChange={setProposedUnit}
           onChange={setProposed}
+          onNotice={onNotice}
           className="h-full lg:[grid-area:holdings-p]"
         />
         {!canFetch ? null : loading && !result ? (
@@ -304,7 +308,7 @@ export function PortfolioCompare({
       <div className="mt-4">
         {!canFetch ? (
           <p className="rounded-2xl border border-dashed border-line-strong bg-surface px-5 py-4 text-sm text-muted">
-            Add at least one weighted holding on each side.
+            Add at least one weighted holding on each side with + Add holding.
           </p>
         ) : loading && !result ? (
           <div
@@ -335,6 +339,7 @@ export function PortfolioCompare({
         Demo data · weights × Portfolio Value → dollars · tax from Data API TBD
       </p>
       <CompactDisclaimer className="mt-1 text-center text-[10px] leading-relaxed text-faint" />
+      <NoticeToast message={notice} onDismiss={dismissNotice} />
     </article>
   );
 }

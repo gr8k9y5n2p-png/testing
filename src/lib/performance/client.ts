@@ -1,6 +1,11 @@
 import { dataApiUrl, isRemoteDataApi } from "@/lib/data-api/config";
 import { IllustrateRequestError } from "@/lib/illustrate/client";
 import {
+  performanceCoveredFromRaw,
+  performanceFromFetchError,
+  performancePackIsUsable,
+} from "@/lib/performance/coverage";
+import {
   mockPerformanceResponse,
   PerformanceMockError,
 } from "@/lib/performance/mock";
@@ -90,6 +95,9 @@ export function normalizePerformanceResponse(
     fund: normalizeSeries(raw.fund, fundTicker),
     benchmark: normalizeSeries(raw.benchmark, benchId),
     disclaimers: Array.isArray(raw.disclaimers) ? raw.disclaimers.map(String) : [],
+    ...(performanceCoveredFromRaw(raw.covered) == null
+      ? {}
+      : { covered: performanceCoveredFromRaw(raw.covered) }),
   };
 }
 
@@ -190,4 +198,21 @@ export async function postPerformanceGrowth(
   init?: { signal?: AbortSignal },
 ): Promise<PerformanceResponse> {
   return loadPerformance("POST", request, init);
+}
+
+/**
+ * Per-ticker fetch. 404 / uncovered / empty packs return null so callers can
+ * skip that series without failing the rest of the module.
+ */
+export async function fetchPerformanceIfAvailable(
+  request: PerformanceQuery,
+  init?: { signal?: AbortSignal; method?: "GET" | "POST" },
+): Promise<PerformanceResponse | null> {
+  try {
+    const response = await loadPerformance(init?.method === "POST" ? "POST" : "GET", request, init);
+    return performancePackIsUsable(response) ? response : null;
+  } catch (error) {
+    if (init?.signal?.aborted) throw error;
+    return performanceFromFetchError(error);
+  }
 }

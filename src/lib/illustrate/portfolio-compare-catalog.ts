@@ -26,14 +26,13 @@ export type PortfolioTickerRates = {
 };
 
 /**
- * Mock rates for ticker autocomplete + localhost fixture math.
- * Default smoke books are GTM’s history-covered set (funds with live
- * historical data): Current AGTHX / DODIX / AMCAP / DODGX and Proposed
- * AMCPX / CGHM / AGTHX / AMCAP, 25% each at $1M.
+ * Mock rates for ticker autocomplete + localhost fixture math when a
+ * user adds a holding. Initial Current / Proposed books are empty
+ * (`SMOKE_*_TICKERS`); do not prefill AGTHX / DODIX / AMCAP / DODGX.
  */
 export const PORTFOLIO_TICKER_RATES: Record<string, PortfolioTickerRates> = {
   AGTHX: {
-    fundName: "American Funds Growth Fund of America",
+    fundName: "The Growth Fund of America",
     family: "American Funds",
     taxDrag: 0.0068,
     distRate: 0.0194,

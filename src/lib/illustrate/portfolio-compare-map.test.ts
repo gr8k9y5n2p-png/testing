@@ -454,6 +454,35 @@ describe("PortfolioCompare distribution tables", () => {
     assert.equal(totalUpcomingTax(allocation([prelim])), 1120);
   });
 
+  it("does not invent Upcoming from omitted holdings.upcoming + illustration totals", () => {
+    const omitted = holding({
+      ticker: "AMCPX",
+      illustration: {
+        totals: {
+          distribution_dollars: 1491,
+          estimated_tax: 522,
+          effective_tax_on_holding: 0.0021,
+        },
+        components: [
+          {
+            publication_stage: "preliminary_estimate",
+            distribution_dollars: 1491,
+            estimated_tax: 522,
+            as_of: "2025-12-15",
+          },
+        ],
+      },
+    });
+    assert.equal(Object.prototype.hasOwnProperty.call(omitted, "upcoming"), false);
+    assert.equal(upcomingFromHolding(omitted, TODAY), null);
+    assert.equal(totalUpcomingTax(allocation([omitted])), 0);
+    const rows = upcomingHoldingsForSide(allocation([omitted]), "current", TODAY);
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0]?.available, false);
+    assert.equal(rows[0]?.estimatedTax, null);
+    assert.equal(upcomingRowsForSide(allocation([omitted]), "current", TODAY).length, 0);
+  });
+
   it("does not derive table rows when upcoming is explicitly null", () => {
     const book = allocation([
       holding({

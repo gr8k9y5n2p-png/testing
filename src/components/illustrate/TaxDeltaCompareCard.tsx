@@ -33,16 +33,21 @@ function barAriaLabel(bar: TaxDeltaBar): string {
 export function TaxDeltaCompareCard({
   model,
   className = "",
+  fullWidth = false,
 }: {
   model: TaxDeltaCardModel;
   className?: string;
+  /** Dedicated Compare tab: span the page instead of the 420px card rail. */
+  fullWidth?: boolean;
 }) {
   const scale = chartScalePct(model.bars);
   const ticks = [-scale, -scale / 2, 0, scale / 2, scale];
 
   return (
     <article
-      className={`flex min-h-[420px] w-full max-w-[420px] flex-col rounded-2xl border border-line bg-surface px-5 py-5 shadow-[0_8px_24px_rgba(26,29,26,0.08)] ${className}`}
+      className={`flex min-h-[420px] w-full flex-col rounded-2xl border border-line bg-surface px-5 py-5 shadow-[0_8px_24px_rgba(26,29,26,0.08)] ${
+        fullWidth ? "" : "max-w-[420px]"
+      } ${className}`}
     >
       <header>
         <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-faint">

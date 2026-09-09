@@ -1,10 +1,14 @@
 import type { FundEstimateView } from "@/data/types";
 import { DeltaBadge } from "@/components/DeltaBadge";
 import { DistributionDateStrip } from "@/components/DistributionDateStrip";
+import { CompareTickerLink } from "@/components/illustrate/CompareTickerLink";
 import { UPCOMING_UNAVAILABLE_HEADLINE } from "@/lib/copy";
 import { formatCompactDate, formatPct, formatUsd } from "@/lib/format";
 
 type Variant = "recent" | "largest" | "outliers";
+
+/** Collapsed footprint (~header + a few rows). Lists scroll inside this. */
+export const HIGHLIGHT_CARD_HEIGHT = "h-[22rem]";
 
 export function HighlightCard({
   title,
@@ -14,6 +18,7 @@ export function HighlightCard({
   variant,
   above = [],
   below = [],
+  wide = false,
 }: {
   title: string;
   metricLabel: string;
@@ -22,10 +27,13 @@ export function HighlightCard({
   variant: Variant;
   above?: FundEstimateView[];
   below?: FundEstimateView[];
+  wide?: boolean;
 }) {
   return (
-    <article className="flex min-h-[22rem] flex-col rounded-lg border border-line bg-surface shadow-[0_1px_2px_rgba(26,29,26,0.04)]">
-      <header className="border-b border-line px-4 py-3.5">
+    <article
+      className={`flex ${HIGHLIGHT_CARD_HEIGHT} flex-col overflow-hidden rounded-lg border border-line bg-surface shadow-[0_1px_2px_rgba(26,29,26,0.04)]`}
+    >
+      <header className="shrink-0 border-b border-line px-4 py-3.5">
         <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-faint">
           {metricLabel}
         </p>
@@ -33,33 +41,39 @@ export function HighlightCard({
         <p className="mt-1 text-sm leading-snug text-muted">{description}</p>
       </header>
       {variant === "outliers" ? (
-        <div className="flex flex-1 flex-col">
+        <div
+          className={`min-h-0 flex-1 ${
+            wide ? "grid grid-cols-1 md:grid-cols-2" : "flex flex-col"
+          }`}
+        >
           <OutlierGroup
             label="Well above category"
             tone="above"
             funds={above}
+            split={wide}
           />
           <OutlierGroup
             label="Well below category"
             tone="below"
             funds={below}
+            split={wide}
           />
         </div>
       ) : funds.length === 0 ? (
-        <p className="px-4 py-6 text-sm text-muted">
+        <p className="overflow-y-auto px-4 py-6 text-sm text-muted">
           {UPCOMING_UNAVAILABLE_HEADLINE}
         </p>
       ) : (
-        <ul className="divide-y divide-line">
+        <ul className="min-h-0 flex-1 divide-y divide-line overflow-y-auto">
           {funds.map((fund) => (
             <li key={fund.id} className="px-4 py-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-ink">
-                    {fund.fundName}
+                    <CompareTickerLink ticker={fund.ticker}>{fund.fundName}</CompareTickerLink>
                   </p>
                   <p className="mt-0.5 font-mono text-[11px] text-faint">
-                    {fund.ticker}
+                    <CompareTickerLink ticker={fund.ticker} />
                     <span className="mx-1.5 text-line-strong">·</span>
                     {fund.family}
                   </p>
@@ -67,7 +81,9 @@ export function HighlightCard({
                 <p className="shrink-0 text-right font-mono text-sm text-ink">
                   {variant === "recent"
                     ? formatCompactDate(fund.asOfDate)
-                    : formatPct(fund.estimatedDistributionPctNav)}
+                    : fund.hasEstimate === false
+                      ? "—"
+                      : formatPct(fund.estimatedDistributionPctNav)}
                 </p>
               </div>
               <DistributionDateStrip
@@ -93,54 +109,65 @@ function OutlierGroup({
   label,
   tone,
   funds,
+  split,
 }: {
   label: string;
   tone: "above" | "below";
   funds: FundEstimateView[];
+  split: boolean;
 }) {
+  // Eric: above category avg = more tax (red); below = less tax (green/teal).
   const bar =
     tone === "above"
-      ? "border-l-[3px] border-l-above bg-above-soft/40"
-      : "border-l-[3px] border-l-below bg-below-soft/50";
+      ? "border-l-[3px] border-l-tax-more bg-tax-more-soft/40"
+      : "border-l-[3px] border-l-tax-less bg-tax-less-soft/50";
 
   return (
-    <div className={`flex-1 ${tone === "below" ? "border-t border-line" : ""}`}>
+    <div
+      className={`flex min-h-0 flex-1 flex-col overflow-hidden ${
+        !split && tone === "below" ? "border-t border-line" : ""
+      } ${split && tone === "below" ? "md:border-l md:border-line" : ""}`}
+    >
       <p
-        className={`px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] ${
-          tone === "above" ? "text-above" : "text-below"
+        className={`sticky top-0 z-10 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] ${
+          tone === "above"
+            ? "bg-tax-more-soft/80 text-tax-more"
+            : "bg-tax-less-soft/80 text-tax-less"
         }`}
       >
         {label}
       </p>
-      {funds.length === 0 ? (
-        <p className="px-4 pb-3 text-sm text-muted">None in this sample.</p>
-      ) : (
-        <ul>
-          {funds.slice(0, 3).map((fund) => (
-            <li key={fund.id} className={`px-4 py-2.5 ${bar}`}>
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-ink">
-                    {fund.fundName}
-                  </p>
-                  <p className="mt-0.5 font-mono text-[11px] text-faint">
-                    {fund.ticker}
-                    <span className="mx-1.5 text-line-strong">·</span>
-                    {fund.category}
-                  </p>
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        {funds.length === 0 ? (
+          <p className="px-4 pb-3 text-sm text-muted">None available.</p>
+        ) : (
+          <ul>
+            {funds.map((fund) => (
+              <li key={fund.id} className={`px-4 py-2.5 ${bar}`}>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-ink">
+                      <CompareTickerLink ticker={fund.ticker}>{fund.fundName}</CompareTickerLink>
+                    </p>
+                    <p className="mt-0.5 font-mono text-[11px] text-faint">
+                      <CompareTickerLink ticker={fund.ticker} />
+                      <span className="mx-1.5 text-line-strong">·</span>
+                      {fund.category}
+                    </p>
+                  </div>
+                  <DeltaBadge fund={fund} compact />
                 </div>
-                <DeltaBadge fund={fund} compact />
-              </div>
-              <DistributionDateStrip
-                fund={fund}
-                compact
-                showPayable={false}
-                className="mt-1.5"
-              />
-            </li>
-          ))}
-        </ul>
-      )}
+                <DistributionDateStrip
+                  fund={fund}
+                  compact
+                  showPayable={false}
+                  className="mt-1.5"
+                />
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   );
 }
