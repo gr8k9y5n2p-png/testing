@@ -7,6 +7,7 @@ import {
   type NavLookup,
 } from "@/lib/illustrate/compare-request";
 import {
+  mockIllustratePortfolioSide,
   mockPortfolioCompareResponse,
   synthesizePortfolioCompare,
 } from "@/lib/illustrate/portfolio-compare-fixture";
@@ -489,27 +490,34 @@ export async function postIllustratePortfolioCompare(
 
   try {
     const [current, proposed] = await Promise.all([
-      postPortfolioSide(
-        request.current,
-        request.tax_rates,
-        request.combine_state_with_federal,
-        init?.signal,
-      ),
-      postPortfolioSide(
-        request.proposed,
-        request.tax_rates,
-        request.combine_state_with_federal,
-        init?.signal,
-      ),
+      request.current.holdings.length > 0
+        ? postPortfolioSide(
+            request.current,
+            request.tax_rates,
+            request.combine_state_with_federal,
+            init?.signal,
+          )
+        : Promise.resolve(
+            mockIllustratePortfolioSide(
+              request.current,
+              request.current.label || "Current Allocation",
+            ),
+          ),
+      request.proposed.holdings.length > 0
+        ? postPortfolioSide(
+            request.proposed,
+            request.tax_rates,
+            request.combine_state_with_federal,
+            init?.signal,
+          )
+        : Promise.resolve(
+            mockIllustratePortfolioSide(
+              request.proposed,
+              request.proposed.label || "Proposed Allocation",
+            ),
+          ),
     ]);
-    if (
-      current &&
-      proposed &&
-      (current.holdings.length > 0 || proposed.holdings.length > 0) &&
-      (current.totals.estimated_tax > 0 ||
-        proposed.totals.estimated_tax > 0 ||
-        current.holdings.some((holding) => holding.illustration || holding.upcoming))
-    ) {
+    if (current && proposed && (current.holdings.length > 0 || proposed.holdings.length > 0)) {
       return synthesizePortfolioCompare(current, proposed, remote ? "live" : "mock");
     }
   } catch (error) {

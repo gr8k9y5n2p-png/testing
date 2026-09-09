@@ -7,7 +7,7 @@ import { COPY } from "@/lib/copy";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Aftertax — portfolio comparison",
+  title: "Aftertax — Portfolio",
   description: `${COPY.sub} Current vs proposed books, tax impact, and holdings.`,
 };
 

@@ -4,6 +4,7 @@ import {
   ANNOUNCED_COLUMN,
   DIST_AMOUNT_COLUMN,
   DOLLAR_IMPACT_COLUMN,
+  EMPTY_BOOK_INVITE,
   EST_DISTRIBUTION_LINE_LABEL,
   ESTIMATED_TAX_LINE_LABEL,
   EX_COLUMN,
@@ -19,6 +20,8 @@ import {
   PAID_HISTORY_DETAIL,
   PAID_HISTORY_EMPTY,
   PAID_HISTORY_HEADING,
+  PORTFOLIO_HEADING,
+  SINGLE_BOOK_DELTA_DETAIL,
   TAX_DRAG_CARD_DETAIL,
   TAX_IMPACT_DELTA_DETAIL,
   UPCOMING_MODULE_DETAIL,
@@ -142,6 +145,18 @@ describe("PortfolioCompare tax drag copy", () => {
     assert.match(TAX_IMPACT_DELTA_DETAIL, /not Upcoming/i);
     assert.notEqual(TAX_DRAG_CARD_DETAIL, UPCOMING_UNAVAILABLE_HEADLINE);
     assert.notEqual(TAX_IMPACT_DELTA_DETAIL, PAID_HISTORY_EMPTY);
+  });
+
+  it("labels the page Portfolio and does not invent a single-book delta", () => {
+    assert.equal(PORTFOLIO_HEADING, "Portfolio");
+    assert.doesNotMatch(PORTFOLIO_HEADING, /comparison/i);
+    assert.match(EMPTY_BOOK_INVITE, /Add holding/);
+    assert.doesNotMatch(EMPTY_BOOK_INVITE, /\$0|0\.00/);
+    assert.match(SINGLE_BOOK_DELTA_DETAIL, /both sides/i);
+    assert.match(SINGLE_BOOK_DELTA_DETAIL, /not Upcoming/i);
+    assert.doesNotMatch(SINGLE_BOOK_DELTA_DETAIL, /\$0|0\.00/);
+    assert.notEqual(SINGLE_BOOK_DELTA_DETAIL, TAX_IMPACT_DELTA_DETAIL);
+    assert.notEqual(EMPTY_BOOK_INVITE, UPCOMING_UNAVAILABLE_HEADLINE);
   });
 });
 

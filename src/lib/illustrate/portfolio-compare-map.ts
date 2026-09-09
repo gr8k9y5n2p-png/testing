@@ -2,6 +2,11 @@ import { formatUsd } from "@/lib/format";
 import type { PortfolioAllocationOut } from "@/lib/illustrate/portfolio-compare-types";
 
 export {
+  canComparePortfolioBooks,
+  portfolioBookFilled,
+} from "@/lib/illustrate/portfolio-compare-books";
+
+export {
   upcomingDistributionAmount,
   upcomingDistributionLine,
   upcomingDollarImpactAmount,
