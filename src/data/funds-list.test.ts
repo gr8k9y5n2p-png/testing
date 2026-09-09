@@ -15,6 +15,8 @@ test("mapFundsApiItem keeps missing estimates honest", () => {
   assert.equal(view.fundName, "500 Index Fund Admiral Shares");
   assert.equal(view.hasEstimate, false);
   assert.equal(view.estimatedDistributionPctNav, 0);
+  assert.equal(view.bucket, "paid");
+  assert.equal(view.publicationStage, null);
 });
 
 test("mapFundsApiItem accepts a null ticker without inventing one", () => {

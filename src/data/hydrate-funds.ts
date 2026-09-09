@@ -91,9 +91,15 @@ export function findHydratedFund<T extends Pick<FundEstimate, "ticker" | "id">>(
   return undefined;
 }
 
+function catalogBucket(fund: Pick<FundEstimate, "hasEstimate" | "bucket">): FundEstimate["bucket"] {
+  if (fund.hasEstimate === false) return "paid";
+  return fund.bucket === "paid" ? "paid" : "upcoming";
+}
+
 /**
  * Overlay `GET /distributions` aggregation onto a unique `GET /funds` row.
  * Upcoming amounts stay unpaid-only. Paid / final YE never becomes Upcoming.
+ * A miss does **not** invent Upcoming from `latest_as_of`.
  */
 export function mergeFundWithDistributions(
   fund: FundEstimateView,
@@ -103,7 +109,8 @@ export function mergeFundWithDistributions(
     return {
       ...fund,
       paidHistory: [],
-      bucket: "upcoming",
+      bucket: catalogBucket(fund),
+      hasEstimate: fund.hasEstimate === true,
     };
   }
 
@@ -138,20 +145,38 @@ export function mergeFundWithDistributions(
   };
 }
 
+function fundListKey(fund: Pick<FundEstimate, "ticker" | "id">): string {
+  const ticker = fund.ticker.trim().toUpperCase();
+  return ticker && ticker !== "—" ? `ticker:${ticker}` : fund.id;
+}
+
+function hydrationScore(fund: FundEstimateView): number {
+  let score = 0;
+  if ((fund.paidHistory?.length ?? 0) > 0) score += 3;
+  if (fund.estimatedDistributionAmount) score += 3;
+  if (fund.publicationStage) score += 1;
+  if (fund.recordDate || fund.exDate || fund.payableDate) score += 1;
+  if (fund.bucket === "paid" && fund.hasEstimate !== true) score += 1;
+  return score;
+}
+
 export function mergeFundLists(
   primary: FundEstimateView[],
   extra: FundEstimateView[],
 ): FundEstimateView[] {
-  const seen = new Set<string>();
-  const out: FundEstimateView[] = [];
+  const map = new Map<string, FundEstimateView>();
+  const order: string[] = [];
   for (const fund of [...extra, ...primary]) {
-    const key =
-      fund.ticker.trim().toUpperCase() !== "—" && fund.ticker.trim()
-        ? `ticker:${fund.ticker.trim().toUpperCase()}`
-        : fund.id;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    out.push(fund);
+    const key = fundListKey(fund);
+    const prev = map.get(key);
+    if (!prev) {
+      map.set(key, fund);
+      order.push(key);
+      continue;
+    }
+    if (hydrationScore(fund) > hydrationScore(prev)) {
+      map.set(key, fund);
+    }
   }
-  return out;
+  return order.map((key) => map.get(key)!);
 }

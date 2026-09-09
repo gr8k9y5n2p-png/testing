@@ -97,11 +97,19 @@ export function getFacets(funds: FundEstimate[]): Facets {
   return { families, categories, years };
 }
 
+function hasPaidHistorySignal(fund: FundEstimateView): boolean {
+  if ((fund.paidHistory?.length ?? 0) > 0) return true;
+  if (fund.estimatedDistributionAmount) return true;
+  if (fund.recordDate || fund.exDate || fund.payableDate) return true;
+  const stage = (fund.publicationStage ?? "").trim().toLowerCase();
+  return stage === "paid" || stage === "final";
+}
+
 export function paidHistoryViews(funds: FundEstimateView[]): FundEstimateView[] {
   const rows: FundEstimateView[] = [];
   for (const fund of funds) {
     if (fund.bucket === "paid") {
-      rows.push(fund);
+      if (hasPaidHistorySignal(fund)) rows.push(fund);
       for (const event of fund.paidHistory) {
         rows.push(fundFromPaidEvent(fund, event));
       }

@@ -62,6 +62,48 @@ test("paid and final-past rows are paid history", () => {
   );
 });
 
+test("latest_as_of-only identity rows are paid history, not Upcoming", () => {
+  assert.equal(
+    distributionBucket(
+      {
+        asOfDate: "2025-12-31",
+        recordDate: null,
+        exDate: null,
+        payableDate: null,
+        publicationStage: null,
+      },
+      TODAY,
+    ),
+    "paid",
+  );
+  assert.equal(
+    distributionBucket(
+      {
+        asOfDate: "2025-12-24",
+        publicationStage: null,
+      },
+      TODAY,
+    ),
+    "paid",
+  );
+});
+
+test("has_estimate false never qualifies as Upcoming", () => {
+  const { upcoming, paid } = splitFundsByBucket([
+    { ticker: "FXAIX", bucket: "upcoming" as const, hasEstimate: false },
+    { ticker: "VFIAX", bucket: "paid" as const, hasEstimate: false },
+    { ticker: "AMCPX", bucket: "upcoming" as const, hasEstimate: true },
+  ]);
+  assert.deepEqual(
+    upcoming.map((row) => row.ticker),
+    ["AMCPX"],
+  );
+  assert.deepEqual(
+    paid.map((row) => row.ticker),
+    ["FXAIX", "VFIAX"],
+  );
+});
+
 test("past final with only as_of (no ex/payable) is paid history, not upcoming", () => {
   assert.equal(
     isPastDistribution(

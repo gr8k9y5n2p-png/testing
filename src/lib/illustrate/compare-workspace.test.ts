@@ -234,6 +234,28 @@ describe("compare annual table", () => {
 });
 
 describe("compare upcoming rows", () => {
+  it("does not treat has_estimate-false YE as_of as Upcoming", () => {
+    const row = upcomingRowForCompareTicker({
+      ticker: "VFIAX",
+      fund: view("VFIAX", {
+        bucket: "upcoming",
+        hasEstimate: false,
+        publicationStage: null,
+        asOfDate: "2025-12-24",
+        publishedAt: "2025-12-24",
+        recordDate: null,
+        exDate: null,
+        payableDate: null,
+      }),
+      upcoming: { dollars: null, announced: false, asOf: null },
+      index: 0,
+    });
+    assert.equal(row.available, false);
+    assert.equal(row.announcedDate, null);
+    assert.equal(row.asOf, null);
+    assert.equal(row.estimatedTax, null);
+  });
+
   it("does not copy paid-history dates onto an unannounced ticker", () => {
     const paid = view("DODIX", {
       bucket: "paid_history",

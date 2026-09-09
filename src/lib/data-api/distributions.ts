@@ -117,10 +117,14 @@ export async function loadDistributionsForFundPage(input: {
     .map((ticker) => ticker.trim().toUpperCase())
     .filter((ticker) => ticker && ticker !== "—" && !covered.has(ticker));
   // Search / small picker pages only — do not fan out 50 ticker GETs on browse.
-  const fetchEachTicker = Boolean(q) || missingTickers.length <= 8;
-  if (fetchEachTicker && missingTickers.length) {
+  // Search hydrates every missing ticker. Browse hydrates the first 8 so
+  // FXAIX/VFIAX YE finals land in Paid history without 50 hobby-plan GETs.
+  const tickersToFetch = Boolean(q)
+    ? missingTickers
+    : missingTickers.slice(0, 8);
+  if (tickersToFetch.length) {
     const extra = await mapPool(
-      missingTickers,
+      tickersToFetch,
       TICKER_FETCH_CONCURRENCY,
       (ticker) => loadDistributionRows({ ticker }),
     );
@@ -130,9 +134,12 @@ export async function loadDistributionsForFundPage(input: {
   const missingIdents = [...new Set(input.fundIdentifiers ?? [])]
     .map((value) => value.trim())
     .filter((value) => value && value !== "unknown");
-  if (fetchEachTicker && missingIdents.length && missingTickers.length === 0) {
+  const identsToFetch = Boolean(q)
+    ? missingIdents
+    : missingIdents.slice(0, 8);
+  if (tickersToFetch.length === 0 && identsToFetch.length) {
     const extra = await mapPool(
-      missingIdents,
+      identsToFetch,
       TICKER_FETCH_CONCURRENCY,
       (fundIdentifier) => loadDistributionRows({ fundIdentifier }),
     );

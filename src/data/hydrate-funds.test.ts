@@ -4,6 +4,7 @@ import { aggregateDistributions, type DataDistribution } from "./aggregate-distr
 import { mapFundsApiItem } from "./funds-list.ts";
 import {
   hideUpcomingAmounts,
+  mergeFundLists,
   mergeFundWithDistributions,
   paidEventsForFund,
 } from "./hydrate-funds.ts";
@@ -125,6 +126,52 @@ describe("Search hydrate from /distributions", () => {
     assert.equal(merged.bucket, "paid");
     assert.equal(merged.hasEstimate, false);
     assert.equal(splitFundsByBucket([merged]).upcoming.length, 0);
+  });
+
+  it("does not leak FXAIX/VFIAX latest_as_of YE dates into Upcoming", () => {
+    const catalogs = [
+      mapFundsApiItem({
+        ticker: "FXAIX",
+        fund_name: "500 Index",
+        fund_family: "Fidelity",
+        latest_as_of: "2025-12-31",
+        has_estimate: false,
+      }),
+      mapFundsApiItem({
+        ticker: "VFIAX",
+        fund_name: "500 Index Fund Admiral Shares",
+        fund_family: "Vanguard",
+        latest_as_of: "2025-12-24",
+        has_estimate: false,
+      }),
+    ];
+    for (const catalog of catalogs) {
+      assert.equal(catalog.bucket, "paid");
+      assert.equal(catalog.hasEstimate, false);
+      const missing = mergeFundWithDistributions(catalog, null);
+      assert.equal(missing.bucket, "paid");
+      assert.equal(missing.hasEstimate, false);
+      assert.equal(splitFundsByBucket([catalog, missing]).upcoming.length, 0);
+      assert.equal(paidHistoryViews([catalog, missing]).length, 0);
+    }
+  });
+
+  it("prefers a hydrated paid row over an unhydrated catalog duplicate", () => {
+    const empty = mapFundsApiItem({
+      ticker: "ABALX",
+      fund_name: "American Balanced Fund",
+      fund_family: "American Funds",
+      latest_as_of: "2026-01-22",
+      has_estimate: false,
+    });
+    const aggregated = withPeerContext(
+      aggregateDistributions(ABALX_ROWS, "2026-09-09"),
+    )[0];
+    const hydrated = mergeFundWithDistributions(empty, aggregated);
+    const merged = mergeFundLists([hydrated], [empty]);
+    assert.equal(merged.length, 1);
+    assert.equal(merged[0].estimatedDistributionAmount, 2.125);
+    assert.equal(merged[0].bucket, "paid");
   });
 
   it("keeps an unpaid prelim in Upcoming and paid YE in history", () => {

@@ -23,6 +23,7 @@ export {
   eventDateOf,
   isoDate,
   isPastDistribution,
+  isUpcomingFund,
   publicationStageLabel,
 } from "./distribution-bucket";
 export { SAMPLE_FUNDS } from "./seed";

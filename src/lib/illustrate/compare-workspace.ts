@@ -340,7 +340,9 @@ export function upcomingRowForCompareTicker(input: {
 }
 
 function catalogIsUnpaidAnnounced(fund?: FundEstimateView | null): boolean {
-  if (!fund || fund.bucket !== "upcoming") return false;
+  if (!fund || fund.hasEstimate === false || fund.bucket !== "upcoming") {
+    return false;
+  }
   return (
     publicationBucket(
       {
