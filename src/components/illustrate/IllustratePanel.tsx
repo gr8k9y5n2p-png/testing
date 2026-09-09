@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { FundEstimateView } from "@/data/types";
 import { useCoverage } from "@/components/coverage/CoverageProvider";
-import { isMockIllustrate, postIllustrate } from "@/lib/illustrate/client";
+import { isMissingNavError, isMockIllustrate, postIllustrate } from "@/lib/illustrate/client";
 import {
   illustrationRequestNav,
   navFromFundMetadata,
@@ -165,6 +165,13 @@ function IllustrationWorkspace({ fund }: { fund: FundEstimateView }) {
         })
         .catch((caught: unknown) => {
           if (caught instanceof DOMException && caught.name === "AbortError") return;
+          if (isMissingNavError(caught)) {
+            setUnit(AMOUNT_UNITS.per_share);
+            setResult(null);
+            setError(null);
+            setLoading(false);
+            return;
+          }
           setResult(null);
           setError(caught instanceof Error ? caught.message : "Illustration failed");
           setLoading(false);
@@ -282,7 +289,11 @@ function IllustrationWorkspace({ fund }: { fund: FundEstimateView }) {
         ) : result ? (
           <div className="space-y-4">
             {portfolio ? <PortfolioCoverageCard result={portfolio} /> : null}
-            <IllustrationResults result={result} fund={fund} />
+            <IllustrationResults
+              result={result}
+              fund={fund}
+              holdingDollars={holding}
+            />
           </div>
         ) : null}
       </div>

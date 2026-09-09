@@ -8,6 +8,7 @@ import {
   GrowthAndTaxDragModule,
 } from "@/components/illustrate/GrowthAndTaxDragModule";
 import { TickerField } from "@/components/illustrate/portfolio-compare/TickerField";
+import { NeedFundPricePrompt } from "@/components/illustrate/NeedFundPricePrompt";
 import { UpcomingTable } from "@/components/illustrate/portfolio-compare/UpcomingTable";
 import { NoticeToast, useNoticeToast } from "@/components/NoticeToast";
 import { postIllustrateCompare } from "@/lib/illustrate/compare-client";
@@ -37,6 +38,7 @@ import {
   upcomingRowsFromCompareTickers,
 } from "@/lib/illustrate/compare-workspace";
 import { resolveFundView } from "@/lib/illustrate/fund-history";
+import { isMissingNavError } from "@/lib/illustrate/illustrate-error";
 import { toUpcomingSummary } from "@/lib/illustrate/tax-drag-chart";
 import type { PortfolioFundOption } from "@/lib/illustrate/portfolio-compare-types";
 
@@ -44,6 +46,7 @@ type LoadedTicker = {
   ticker: string;
   fund: FundEstimateView | null;
   tax: CompareResponse | null;
+  needsNav?: boolean;
 };
 
 export function CompareWorkspace({
@@ -81,6 +84,8 @@ export function CompareWorkspace({
     rows: LoadedTicker[];
   }>({ holdingDollars: COMPARE_DEFAULT_HOLDING_DOLLARS, rows: [] });
   const [historyError, setHistoryError] = useState<string | null>(null);
+  const [navOverrides, setNavOverrides] = useState<Record<string, number>>({});
+  const [navNeededTickers, setNavNeededTickers] = useState<string[]>([]);
   const [pairMetrics, setPairMetrics] = useState<{
     holdingDollars: number;
     metrics: ReturnType<typeof toTaxDeltaCardModel>["metrics"];
@@ -107,24 +112,35 @@ export function CompareWorkspace({
               fundFamily: fund?.family,
               fundName: fund?.fundName,
               holdingDollars,
-              navPerShare: fund && fund.nav > 0 ? fund.nav : undefined,
+              navPerShare:
+                navOverrides[ticker] ??
+                (fund && fund.nav > 0 ? fund.nav : undefined),
               periods,
             }),
             { signal: controller.signal },
           );
-          return { ticker, fund, tax };
+          return { ticker, fund, tax, needsNav: false };
         } catch (caught) {
           if (caught instanceof DOMException && caught.name === "AbortError") {
             throw caught;
           }
-          return { ticker, fund, tax: null };
+          return {
+            ticker,
+            fund,
+            tax: null,
+            needsNav: isMissingNavError(caught),
+          };
         }
       }),
     )
       .then((rows) => {
         setLoaded({ holdingDollars, rows });
+        setNavNeededTickers(
+          rows.filter((row) => row.needsNav).map((row) => row.ticker),
+        );
         setHistoryError(
-          rows.every((row) => row.tax == null)
+          rows.every((row) => row.tax == null) &&
+            !rows.some((row) => row.needsNav)
             ? "Calendar-year history is unavailable for these tickers."
             : null,
         );
@@ -145,7 +161,7 @@ export function CompareWorkspace({
       });
 
     return () => controller.abort();
-  }, [filledKey, funds, holdingDollars]);
+  }, [filledKey, funds, holdingDollars, navOverrides]);
 
   useEffect(() => {
     const tickers = filledKey ? filledKey.split(",") : [];
@@ -166,14 +182,14 @@ export function CompareWorkspace({
           ticker: leftTicker,
           fundName: leftFund?.fundName,
           family: leftFund?.family,
-          nav: leftFund?.nav,
+          nav: navOverrides[leftTicker] ?? leftFund?.nav,
           fundIdentifier: leftFund?.ticker ?? leftTicker,
         }),
         right: compareSideFromFund({
           ticker: rightTicker,
           fundName: rightFund?.fundName,
           family: rightFund?.family,
-          nav: rightFund?.nav,
+          nav: navOverrides[rightTicker] ?? rightFund?.nav,
           fundIdentifier: rightFund?.ticker ?? rightTicker,
         }),
         periods: trailingCalendarPeriods(),
@@ -189,10 +205,15 @@ export function CompareWorkspace({
       })
       .catch((caught: unknown) => {
         if (caught instanceof DOMException && caught.name === "AbortError") return;
+        if (isMissingNavError(caught)) {
+          setNavNeededTickers((current) =>
+            Array.from(new Set([...current, leftTicker, rightTicker])),
+          );
+        }
         setPairMetrics(null);
       });
     return () => controller.abort();
-  }, [filledKey, funds, holdingDollars]);
+  }, [filledKey, funds, holdingDollars, navOverrides]);
 
   const historyMatchesHolding = loaded.holdingDollars === holdingDollars;
   const activeLoaded = useMemo(
@@ -209,12 +230,13 @@ export function CompareWorkspace({
         activeLoaded.map((item) => ({
           ticker: item.ticker,
           fund: item.fund,
+          holdingDollars,
           upcoming: item.tax
             ? toUpcomingSummary(item.tax.summary.upcoming_taxable_distribution, "left")
             : null,
         })),
       ),
-    [activeLoaded],
+    [activeLoaded, holdingDollars],
   );
   const activeHistoryError = filledKey ? historyError : null;
   const pairReady = filledKey.split(",").filter(Boolean).length >= 2;
@@ -346,6 +368,23 @@ export function CompareWorkspace({
       </div>
 
       <div className="mt-10 w-full">
+        {navNeededTickers.length > 0 ? (
+          <NeedFundPricePrompt
+            className="mb-4"
+            holdings={navNeededTickers.map((ticker) => ({
+              key: ticker,
+              ticker,
+              nav: navOverrides[ticker] ?? resolveFundView(funds, ticker)?.nav ?? null,
+            }))}
+            onNavChange={(key, nav) => {
+              if (nav == null) return;
+              setNavOverrides((current) => ({ ...current, [key]: nav }));
+              setNavNeededTickers((current) =>
+                current.filter((ticker) => ticker !== key),
+              );
+            }}
+          />
+        ) : null}
         <UpcomingTable
           rows={upcomingRows}
           headingId="compare-upcoming"

@@ -6,15 +6,23 @@ import { NoticeToast, useNoticeToast } from "@/components/NoticeToast";
 import { AllocationColumn } from "@/components/illustrate/portfolio-compare/AllocationColumn";
 import { CalendarYearTaxTable } from "@/components/illustrate/portfolio-compare/CalendarYearTaxTable";
 import { SummaryStrip } from "@/components/illustrate/portfolio-compare/SummaryStrip";
+import { NeedFundPricePrompt } from "@/components/illustrate/NeedFundPricePrompt";
 import { UpcomingTable } from "@/components/illustrate/portfolio-compare/UpcomingTable";
 import { navFromFundMetadata } from "@/lib/illustrate/compare-request";
+import {
+  isMissingNavError,
+  NEED_FUND_PRICE_COPY,
+} from "@/lib/illustrate/illustrate-error";
 import { catalogFunds } from "@/lib/illustrate/portfolio-compare-catalog";
 import {
   smokeCurrentHoldings,
   smokeProposedHoldings,
 } from "@/lib/illustrate/portfolio-compare-catalog";
 import { postIllustratePortfolioCompare } from "@/lib/illustrate/portfolio-compare-client";
-import { upcomingHoldingsForSide } from "@/lib/illustrate/portfolio-compare-map";
+import {
+  upcomingHoldingsForSide,
+  withUpcomingNav,
+} from "@/lib/illustrate/portfolio-compare-map";
 import type {
   AllocationUnit,
   PortfolioCompareResponse,
@@ -99,6 +107,7 @@ export function PortfolioCompare({
   const [retry, setRetry] = useState(0);
   const [result, setResult] = useState<PortfolioCompareResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [navNeeded, setNavNeeded] = useState(false);
   const [loading, setLoading] = useState(true);
   const { notice, onNotice, dismissNotice } = useNoticeToast();
 
@@ -161,11 +170,19 @@ export function PortfolioCompare({
         .then((payloadResult) => {
           setResult(payloadResult);
           setError(null);
+          setNavNeeded(false);
           setLoading(false);
         })
         .catch((caught: unknown) => {
           if (caught instanceof DOMException && caught.name === "AbortError") return;
+          if (isMissingNavError(caught)) {
+            setNavNeeded(true);
+            setError(NEED_FUND_PRICE_COPY);
+            setLoading(false);
+            return;
+          }
           setResult(null);
+          setNavNeeded(false);
           setError(caught instanceof Error ? caught.message : "Portfolio compare failed");
           setLoading(false);
         });
@@ -177,13 +194,31 @@ export function PortfolioCompare({
     };
   }, [canFetch, requestKey]);
 
+  const navByTicker = Object.fromEntries(
+    [...current, ...proposed]
+      .filter((holding) => holding.ticker.trim() && holding.nav != null && holding.nav > 0)
+      .map((holding) => [holding.ticker.trim().toUpperCase(), holding.nav]),
+  );
   const currentUpcomingHoldings = result
-    ? upcomingHoldingsForSide(result.current, "current")
+    ? withUpcomingNav(upcomingHoldingsForSide(result.current, "current"), navByTicker)
     : [];
   const proposedUpcomingHoldings = result
-    ? upcomingHoldingsForSide(result.proposed, "proposed")
+    ? withUpcomingNav(upcomingHoldingsForSide(result.proposed, "proposed"), navByTicker)
     : [];
   const yearTax = result ? calendarYearTaxTable(result) : null;
+  const uniqueNavPrompt = navNeeded
+    ? [...current, ...proposed]
+        .filter((holding) => holding.ticker.trim() && holding.weightPct > 0)
+        .map((holding) => ({
+          key: holding.id,
+          ticker: holding.ticker.trim().toUpperCase(),
+          nav: holding.nav ?? null,
+        }))
+        .filter(
+          (holding, index, list) =>
+            list.findIndex((item) => item.ticker === holding.ticker) === index,
+        )
+    : [];
 
   return (
     <article className={`portfolio-compare w-full ${className}`}>
@@ -230,6 +265,25 @@ export function PortfolioCompare({
           </label>
         </div>
       </header>
+
+      {navNeeded && uniqueNavPrompt.length > 0 ? (
+        <NeedFundPricePrompt
+          className="mb-4"
+          holdings={uniqueNavPrompt}
+          onNavChange={(key, nav) => {
+            const ticker = uniqueNavPrompt.find((item) => item.key === key)?.ticker;
+            const apply = (rows: PortfolioHoldingDraft[]) =>
+              rows.map((row) =>
+                row.id === key ||
+                (ticker != null && row.ticker.trim().toUpperCase() === ticker)
+                  ? { ...row, nav }
+                  : row,
+              );
+            setCurrent(apply);
+            setProposed(apply);
+          }}
+        />
+      ) : null}
 
       <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-2 lg:grid-rows-[auto_auto] lg:[grid-template-areas:'holdings-c_holdings-p'_'upcoming-c_upcoming-p']">
         <AllocationColumn
@@ -310,7 +364,7 @@ export function PortfolioCompare({
             aria-busy
             aria-label="Loading portfolio tax summary"
           />
-        ) : error ? (
+        ) : navNeeded ? null : error ? (
           <div className="rounded-2xl border border-tax-more/20 bg-tax-more-soft px-5 py-4">
             <p className="font-serif text-lg text-tax-more">Compare unavailable</p>
             <p className="mt-1 text-sm text-ink">{error}</p>

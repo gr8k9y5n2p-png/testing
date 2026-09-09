@@ -6,6 +6,7 @@ import type {
   CompareResponse,
 } from "@/lib/illustrate/compare-types";
 import { IllustrateRequestError } from "@/lib/illustrate/client";
+import { userFacingIllustrateError } from "@/lib/illustrate/illustrate-error";
 import { gateCompareUpcoming } from "@/lib/illustrate/upcoming-compare";
 
 export function getCompareEndpoint(): string {
@@ -252,16 +253,22 @@ export async function postIllustrateCompare(
   }
 
   if (!response.ok) {
-    let detail = `Compare failed (${response.status})`;
-    let code: string | undefined;
+    let mapped = userFacingIllustrateError(
+      null,
+      `Compare failed (${response.status})`,
+    );
     try {
-      const body = (await response.json()) as { detail?: string; code?: string };
-      if (body.detail) detail = body.detail;
-      code = body.code;
+      const body = (await response.json()) as Record<string, unknown>;
+      mapped = userFacingIllustrateError(
+        body,
+        typeof body.detail === "string" && body.detail
+          ? body.detail
+          : mapped.message,
+      );
     } catch {
       /* ignore */
     }
-    throw new IllustrateRequestError(detail, response.status, code);
+    throw new IllustrateRequestError(mapped.message, response.status, mapped.code);
   }
 
   const raw = (await response.json()) as Record<string, unknown>;

@@ -1,10 +1,21 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  ANNOUNCED_COLUMN,
+  DIST_AMOUNT_COLUMN,
+  DOLLAR_IMPACT_COLUMN,
   EST_DISTRIBUTION_LINE_LABEL,
   ESTIMATED_TAX_LINE_LABEL,
+  EX_COLUMN,
+  PCT_OF_NAV_COLUMN,
+  RECORD_COLUMN,
+  UPCOMING_AMOUNT_UNAVAILABLE,
+  upcomingDistributionAmount,
   upcomingDistributionLine,
+  upcomingDollarImpactAmount,
   upcomingEstimatedTaxLine,
+  upcomingPctOfNavAmount,
+  upcomingPerShareAmount,
   PAID_HISTORY_DETAIL,
   PAID_HISTORY_EMPTY,
   PAID_HISTORY_HEADING,
@@ -41,15 +52,24 @@ describe("PortfolioCompare upcoming module copy", () => {
   it("labels sell-before-record Upcoming without looking like $0", () => {
     assert.match(UPCOMING_MODULE_HEADING, /upcoming/i);
     assert.match(UPCOMING_MODULE_DETAIL, /sell before record/i);
+    assert.match(UPCOMING_MODULE_DETAIL, /all funds/i);
+    assert.match(UPCOMING_MODULE_DETAIL, /never invent/i);
     assert.doesNotMatch(UPCOMING_MODULE_DETAIL, /\$0|0\.00/);
     assert.notEqual(UPCOMING_MODULE_HEADING, PAID_HISTORY_HEADING);
+    assert.equal(UPCOMING_AMOUNT_UNAVAILABLE, "Undisclosed");
+    assert.equal(DIST_AMOUNT_COLUMN, "Dist $");
+    assert.equal(PCT_OF_NAV_COLUMN, "% of NAV");
+    assert.equal(DOLLAR_IMPACT_COLUMN, "$ impact");
+    assert.equal(ANNOUNCED_COLUMN, "Announced");
+    assert.equal(RECORD_COLUMN, "Record");
+    assert.equal(EX_COLUMN, "Ex");
     assert.equal(EST_DISTRIBUTION_LINE_LABEL, "Est. Distribution");
     assert.equal(ESTIMATED_TAX_LINE_LABEL, "Estimated Tax");
     assert.doesNotMatch(EST_DISTRIBUTION_LINE_LABEL, /\$0|0\.00/);
     assert.doesNotMatch(ESTIMATED_TAX_LINE_LABEL, /\$0|0\.00/);
     assert.equal(
       upcomingDistributionLine({ available: false, distributionDollars: null }),
-      "Est. Distribution: Not available / undisclosed",
+      "Est. Distribution: Undisclosed",
     );
     assert.equal(
       upcomingEstimatedTaxLine({
@@ -58,6 +78,57 @@ describe("PortfolioCompare upcoming module copy", () => {
         estimatedTax: null,
       }),
       "Estimated Tax: N/A",
+    );
+    assert.equal(
+      upcomingDistributionAmount({ available: false, distributionDollars: null }),
+      "Undisclosed",
+    );
+    assert.equal(
+      upcomingPctOfNavAmount({ available: false, pctOfNav: null }),
+      "Undisclosed",
+    );
+    assert.equal(
+      upcomingPctOfNavAmount({ available: true, pctOfNav: 1.28 }),
+      "1.28%",
+    );
+    assert.equal(
+      upcomingDollarImpactAmount({
+        available: true,
+        covered: true,
+        estimatedTax: 1120,
+      }),
+      "$1,120",
+    );
+    assert.doesNotMatch(
+      upcomingPctOfNavAmount({ available: false, pctOfNav: null }),
+      /\$0|0\.00/,
+    );
+    assert.equal(
+      upcomingPerShareAmount({
+        available: true,
+        distributionDollars: 3200,
+        holdingDollars: 250_000,
+        navPerShare: 41.22,
+      }),
+      "$0.5276 / sh",
+    );
+    assert.equal(
+      upcomingPerShareAmount({
+        available: true,
+        distributionDollars: 3200,
+        holdingDollars: 250_000,
+        navPerShare: null,
+      }),
+      null,
+    );
+    assert.equal(
+      upcomingDistributionAmount({
+        available: true,
+        distributionDollars: 3200,
+        distributionDollarsMin: 3000,
+        distributionDollarsMax: 3600,
+      }),
+      "$3,000–$3,600",
     );
   });
 });

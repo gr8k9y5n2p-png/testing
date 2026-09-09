@@ -1,20 +1,21 @@
+import { DistributionDateStrip } from "@/components/DistributionDateStrip";
 import { TickerHistoryLink } from "@/components/illustrate/TickerHistoryLink";
-import { formatOptionalDate } from "@/lib/format";
+import { ENTER_NAV_COPY } from "@/lib/illustrate/illustrate-error";
 import {
+  DIST_AMOUNT_COLUMN,
+  DOLLAR_IMPACT_COLUMN,
+  PCT_OF_NAV_COLUMN,
+  UPCOMING_AMOUNT_UNAVAILABLE,
   UPCOMING_MODULE_DETAIL,
   UPCOMING_MODULE_HEADING,
   UPCOMING_UNAVAILABLE_DETAIL,
   UPCOMING_UNAVAILABLE_HEADLINE,
+  upcomingDistributionAmount,
+  upcomingDollarImpactAmount,
+  upcomingPctOfNavAmount,
+  upcomingPerShareAmount,
 } from "@/lib/illustrate/portfolio-compare-copy";
-import {
-  upcomingDistributionLine,
-  upcomingEstimatedTaxLine,
-  type UpcomingRow,
-} from "@/lib/illustrate/portfolio-compare-map";
-
-function dateCell(value: string | null): string {
-  return formatOptionalDate(value);
-}
+import type { UpcomingRow } from "@/lib/illustrate/portfolio-compare-map";
 
 function SectionHeader({
   headingId,
@@ -37,17 +38,48 @@ function SectionHeader({
 
 function TickerCell({ row }: { row: UpcomingRow }) {
   return (
-    <div className="min-w-[11rem]">
+    <div className="min-w-[8rem] max-w-[16rem]">
       <div className="font-mono text-[13px] font-medium text-ink">
         <TickerHistoryLink ticker={row.ticker} />
       </div>
-      <p className="mt-1 text-[11px] leading-snug text-muted">
-        {upcomingDistributionLine(row)}
-      </p>
-      <p className="text-[11px] leading-snug text-muted">
-        {upcomingEstimatedTaxLine(row)}
-      </p>
+      {row.fundName && row.fundName !== row.ticker ? (
+        <p className="mt-0.5 truncate text-[11px] leading-snug text-muted">
+          {row.fundName}
+        </p>
+      ) : null}
+      <DistributionDateStrip
+        fund={{
+          asOfDate: row.announcedDate ?? "",
+          recordDate: row.recordDate,
+          exDate: row.exDate,
+          payableDate: row.payableDate,
+          publicationStage: row.stage,
+          bucket: "upcoming",
+        }}
+        showPayable={Boolean(row.payableDate)}
+        className="mt-1"
+      />
     </div>
+  );
+}
+
+function MetricCell({
+  value,
+  undisclosed,
+}: {
+  value: string;
+  undisclosed: boolean;
+}) {
+  return (
+    <span
+      className={`block font-mono tabular-nums ${
+        undisclosed
+          ? "text-[11px] leading-snug text-muted"
+          : "text-[13px] font-medium text-ink"
+      }`}
+    >
+      {value}
+    </span>
   );
 }
 
@@ -94,30 +126,64 @@ export function UpcomingTable({
             <thead className="text-[10px] font-semibold uppercase tracking-[0.12em] text-faint">
               <tr className="border-b border-line">
                 <th className="py-1.5 pr-2 text-left">Ticker</th>
-                <th className="px-2 py-1.5 text-right">Record</th>
-                <th className="py-1.5 pl-2 text-right">Ex-div</th>
+                <th className="px-2 py-1.5 text-right">{DIST_AMOUNT_COLUMN}</th>
+                <th className="px-2 py-1.5 text-right">{PCT_OF_NAV_COLUMN}</th>
+                <th className="py-1.5 pl-2 text-right">{DOLLAR_IMPACT_COLUMN}</th>
               </tr>
             </thead>
             <tbody>
-              {rows.map((row) => (
-                <tr key={row.key} className="border-b border-line last:border-0">
-                  <td className="py-2 pr-3 align-top">
-                    <TickerCell row={row} />
-                  </td>
-                  <td className="px-2 py-2 align-top text-right font-mono text-[11px] tabular-nums text-muted">
-                    {dateCell(row.recordDate)}
-                  </td>
-                  <td className="py-2 pl-2 align-top text-right font-mono text-[11px] tabular-nums text-muted">
-                    {dateCell(row.exDate)}
-                  </td>
-                </tr>
-              ))}
+              {rows.map((row) => {
+                const dist = upcomingDistributionAmount(row);
+                const perShare = upcomingPerShareAmount(row);
+                const pct = upcomingPctOfNavAmount(row);
+                const impact = upcomingDollarImpactAmount(row);
+                const needNav =
+                  row.available &&
+                  row.distributionDollars != null &&
+                  perShare == null;
+                return (
+                  <tr key={row.key} className="border-b border-line last:border-0">
+                    <td className="py-2 pr-3 align-top">
+                      <TickerCell row={row} />
+                    </td>
+                    <td className="px-2 py-2 align-top text-right">
+                      <MetricCell
+                        value={dist}
+                        undisclosed={dist === UPCOMING_AMOUNT_UNAVAILABLE}
+                      />
+                      {perShare ? (
+                        <span className="mt-0.5 block font-mono text-[11px] tabular-nums text-muted">
+                          {perShare}
+                        </span>
+                      ) : needNav ? (
+                        <span className="mt-0.5 block text-[10px] leading-snug text-muted">
+                          {ENTER_NAV_COPY}
+                        </span>
+                      ) : null}
+                    </td>
+                    <td className="px-2 py-2 align-top text-right">
+                      <MetricCell
+                        value={pct}
+                        undisclosed={pct === UPCOMING_AMOUNT_UNAVAILABLE}
+                      />
+                    </td>
+                    <td className="py-2 pl-2 align-top text-right">
+                      <MetricCell
+                        value={impact}
+                        undisclosed={impact === "N/A"}
+                      />
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
       </div>
       <p className="mt-2 text-[10px] text-faint">
-        every fund · empty upcoming is undisclosed, not $0 · dates include year
+        every fund · Dist $ + $ / share · issuer % of NAV · $ impact ·
+        empty upcoming is undisclosed, not $0 · Announced / Record / Ex /
+        Payable include year
         {sideLabel ? ` · ${sideLabel}` : ""}
       </p>
     </section>

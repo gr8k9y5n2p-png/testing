@@ -1,19 +1,26 @@
 import { formatOptionalDate, formatUsd } from "@/lib/format";
 import {
+  ANNOUNCED_COLUMN,
+  DIST_AMOUNT_COLUMN,
+  DOLLAR_IMPACT_COLUMN,
+  EX_COLUMN,
+  PCT_OF_NAV_COLUMN,
+  RECORD_COLUMN,
   TAX_DRAG_CARD_DETAIL,
   TAX_IMPACT_DELTA_DETAIL,
   UPCOMING_UNAVAILABLE_HEADLINE,
   YEAR_TAX_DETAIL,
   YEAR_TAX_EMPTY,
   YEAR_TAX_HEADING,
+  upcomingDistributionAmount,
+  upcomingDollarImpactAmount,
+  upcomingPctOfNavAmount,
 } from "@/lib/illustrate/portfolio-compare-copy";
 import {
   formatMoreLessTax,
   formatStageLabel,
   formatTaxDragPct,
   totalUpcomingTax,
-  upcomingDistributionLine,
-  upcomingEstimatedTaxLine,
   upcomingHoldingsForSide,
   type TaxPolarity,
 } from "@/lib/illustrate/portfolio-compare-map";
@@ -35,6 +42,7 @@ export type PortfolioCompareExportHolding = {
 export type PortfolioCompareExportUpcoming = {
   ticker: string;
   distributionDollars: number | null;
+  pctOfNav: number | null;
   estimatedTax: number | null;
   available: boolean;
   covered: boolean;
@@ -88,6 +96,7 @@ function sideModel(
     upcoming: upcomingHoldingsForSide(allocation, side).map((row) => ({
       ticker: row.ticker,
       distributionDollars: row.distributionDollars,
+      pctOfNav: row.pctOfNav,
       estimatedTax: row.estimatedTax,
       available: row.available,
       covered: row.covered,
@@ -169,8 +178,8 @@ function sideHtml(side: PortfolioCompareExportSide): string {
       </table>
       <h3>Upcoming / announced</h3>
       <table>
-        <thead><tr><th>Ticker</th><th>Record</th><th>Ex-div</th></tr></thead>
-        <tbody>${upcoming || `<tr><td colspan="3" class="muted">${UPCOMING_UNAVAILABLE_HEADLINE}</td></tr>`}</tbody>
+        <thead><tr><th>Ticker</th><th>${DIST_AMOUNT_COLUMN}</th><th>${PCT_OF_NAV_COLUMN}</th><th>${DOLLAR_IMPACT_COLUMN}</th><th>${ANNOUNCED_COLUMN}</th><th>${RECORD_COLUMN}</th><th>${EX_COLUMN}</th></tr></thead>
+        <tbody>${upcoming || `<tr><td colspan="7" class="muted">${UPCOMING_UNAVAILABLE_HEADLINE}</td></tr>`}</tbody>
       </table>
     </section>`;
 }
@@ -218,11 +227,11 @@ function distributionRowsHtml(rows: PortfolioCompareExportUpcoming[]): string {
     .map(
       (row) => `
         <tr>
-          <td>
-            <div class="mono">${escapeHtml(row.ticker)}</div>
-            <div class="muted">${escapeHtml(upcomingDistributionLine(row))}</div>
-            <div class="muted">${escapeHtml(upcomingEstimatedTaxLine(row))}</div>
-          </td>
+          <td class="mono">${escapeHtml(row.ticker)}</td>
+          <td class="num">${escapeHtml(upcomingDistributionAmount(row))}</td>
+          <td class="num">${escapeHtml(upcomingPctOfNavAmount(row))}</td>
+          <td class="num">${escapeHtml(upcomingDollarImpactAmount(row))}</td>
+          <td class="muted">${dateCell(row.announcedDate)}</td>
           <td class="muted">${dateCell(row.recordDate)}</td>
           <td class="muted">${dateCell(row.exDate)}</td>
         </tr>`,

@@ -1,4 +1,4 @@
-import { formatUsd } from "../format.ts";
+import { formatPct, formatUsd, formatUsdRange } from "../format.ts";
 import { TAX_DRAG_NA_LABEL } from "./tax-drag-map.ts";
 
 /**
@@ -7,40 +7,124 @@ import { TAX_DRAG_NA_LABEL } from "./tax-drag-map.ts";
  */
 
 export const UPCOMING_UNAVAILABLE_HEADLINE = "Not available / undisclosed";
+/** Short cell label so Dist $ / % of NAV stay scannable. Never $0. */
+export const UPCOMING_AMOUNT_UNAVAILABLE = "Undisclosed";
 export const UPCOMING_UNAVAILABLE_DETAIL =
   "No unpaid announced estimates for these holdings.";
 export const UPCOMING_MODULE_HEADING = "Upcoming / announced";
-export const UPCOMING_MODULE_DETAIL = "sell before record · unpaid announced";
-/** Stacked under each ticker so Est. Distribution / Estimated Tax are not buried in columns. */
+export const UPCOMING_MODULE_DETAIL =
+  "sell before record · unpaid announced · all funds · never invent";
+/** Scannable Upcoming columns — Dist $, % of NAV, $ impact. */
+export const DIST_AMOUNT_COLUMN = "Dist $";
+export const PCT_OF_NAV_COLUMN = "% of NAV";
+export const DOLLAR_IMPACT_COLUMN = "$ impact";
+export const ANNOUNCED_COLUMN = "Announced";
+export const RECORD_COLUMN = "Record";
+export const EX_COLUMN = "Ex";
 export const EST_DISTRIBUTION_LINE_LABEL = "Est. Distribution";
 export const ESTIMATED_TAX_LINE_LABEL = "Estimated Tax";
+export const PCT_OF_NAV_LINE_LABEL = "% of NAV";
 
-/** Advisor-facing Est. Distribution line under the ticker. Empty upcoming is undisclosed, never $0. */
+/** $ / share from Dist $ ÷ (holding ÷ NAV). Null when NAV is missing — never invent. */
+export function upcomingPerShareAmount(row: {
+  available: boolean;
+  distributionDollars: number | null;
+  holdingDollars: number | null;
+  navPerShare: number | null;
+}): string | null {
+  if (!row.available || row.distributionDollars == null) return null;
+  if (
+    row.navPerShare == null ||
+    !(row.navPerShare > 0) ||
+    row.holdingDollars == null ||
+    !(row.holdingDollars > 0)
+  ) {
+    return null;
+  }
+  const shares = row.holdingDollars / row.navPerShare;
+  if (!(shares > 0)) return null;
+  return `${formatUsd(row.distributionDollars / shares, 4)} / sh`;
+}
+
+/** Dist $ cell. Empty upcoming is undisclosed, never $0. */
+export function upcomingDistributionAmount(row: {
+  available: boolean;
+  distributionDollars: number | null;
+  distributionDollarsMin?: number | null;
+  distributionDollarsMax?: number | null;
+}): string {
+  if (
+    !row.available ||
+    (row.distributionDollars == null &&
+      row.distributionDollarsMin == null &&
+      row.distributionDollarsMax == null)
+  ) {
+    return UPCOMING_AMOUNT_UNAVAILABLE;
+  }
+  if (
+    row.distributionDollarsMin != null &&
+    row.distributionDollarsMax != null &&
+    row.distributionDollarsMin !== row.distributionDollarsMax
+  ) {
+    return formatUsdRange(
+      row.distributionDollars,
+      row.distributionDollarsMin,
+      row.distributionDollarsMax,
+      0,
+    );
+  }
+  if (row.distributionDollars == null) return UPCOMING_AMOUNT_UNAVAILABLE;
+  return formatUsd(row.distributionDollars, 0);
+}
+
+/** % of NAV cell. Missing Dist $ or holding $ stays undisclosed — never invent. */
+export function upcomingPctOfNavAmount(row: {
+  available: boolean;
+  pctOfNav: number | null;
+}): string {
+  if (!row.available || row.pctOfNav == null) {
+    return UPCOMING_AMOUNT_UNAVAILABLE;
+  }
+  return formatPct(row.pctOfNav);
+}
+
+/** Dollar impact to holder (estimated tax). Empty / uncovered is N/A, never $0. */
+export function upcomingDollarImpactAmount(row: {
+  available: boolean;
+  covered: boolean;
+  estimatedTax: number | null;
+}): string {
+  if (!row.available || !row.covered || row.estimatedTax == null) {
+    return TAX_DRAG_NA_LABEL;
+  }
+  return Math.abs(row.estimatedTax) < 0.5
+    ? formatUsd(0, 0)
+    : formatUsd(row.estimatedTax, 0);
+}
+
+/** Advisor-facing Est. Distribution line. Empty upcoming is undisclosed, never $0. */
 export function upcomingDistributionLine(row: {
   available: boolean;
   distributionDollars: number | null;
 }): string {
-  const value =
-    !row.available || row.distributionDollars == null
-      ? UPCOMING_UNAVAILABLE_HEADLINE
-      : formatUsd(row.distributionDollars, 0);
-  return `${EST_DISTRIBUTION_LINE_LABEL}: ${value}`;
+  return `${EST_DISTRIBUTION_LINE_LABEL}: ${upcomingDistributionAmount(row)}`;
 }
 
-/** Advisor-facing Estimated Tax line under the ticker. Empty / uncovered is N/A, never $0. */
+/** Advisor-facing Estimated Tax line. Empty / uncovered is N/A, never $0. */
 export function upcomingEstimatedTaxLine(row: {
   available: boolean;
   covered: boolean;
   estimatedTax: number | null;
 }): string {
-  let value = TAX_DRAG_NA_LABEL;
-  if (row.available && row.covered && row.estimatedTax != null) {
-    value =
-      Math.abs(row.estimatedTax) < 0.5
-        ? formatUsd(0, 0)
-        : formatUsd(row.estimatedTax, 0);
-  }
-  return `${ESTIMATED_TAX_LINE_LABEL}: ${value}`;
+  return `${ESTIMATED_TAX_LINE_LABEL}: ${upcomingDollarImpactAmount(row)}`;
+}
+
+/** Advisor-facing % of NAV line. Missing inputs stay undisclosed. */
+export function upcomingPctOfNavLine(row: {
+  available: boolean;
+  pctOfNav: number | null;
+}): string {
+  return `${PCT_OF_NAV_LINE_LABEL}: ${upcomingPctOfNavAmount(row)}`;
 }
 
 export const PAID_HISTORY_HEADING = "Paid history";

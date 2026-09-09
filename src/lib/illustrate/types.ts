@@ -117,8 +117,11 @@ export type IllustrateErrorBody = {
 };
 
 export {
+  ENTER_NAV_COPY,
+  ENTER_NAV_DETAIL,
   NEED_FUND_PRICE_COPY,
   NAV_OR_SHARES_REQUIRED_DETAIL,
+  isMissingNavError,
 } from "./illustrate-error";
 
 /**
