@@ -28,9 +28,9 @@ import { UI_DEFAULT_TAX_RATES } from "@/lib/illustrate/types";
 export type PortfolioCompareProps = {
   /** Defaults to $1,000,000. */
   bookDollars?: number;
-  /** Defaults to GTM history-covered Current: AGTHX / DODIX / AMCAP / DODGX @ 25%. */
+  /** Defaults to an empty Current book. Advisors add tickers via + Add holding. */
   current?: PortfolioHoldingDraft[];
-  /** Defaults to GTM history-covered Proposed: AMCPX / CGHM / AGTHX / AMCAP @ 25%. */
+  /** Defaults to an empty Proposed book. Advisors add tickers via + Add holding. */
   proposed?: PortfolioHoldingDraft[];
   funds?: PortfolioFundOption[];
   taxRates?: Partial<TaxRates>;
@@ -303,7 +303,7 @@ export function PortfolioCompare({
       <div className="mt-4">
         {!canFetch ? (
           <p className="rounded-2xl border border-dashed border-line-strong bg-surface px-5 py-4 text-sm text-muted">
-            Add at least one weighted holding on each side.
+            Add at least one weighted holding on each side with + Add holding.
           </p>
         ) : loading && !result ? (
           <div

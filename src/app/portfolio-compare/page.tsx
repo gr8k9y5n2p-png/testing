@@ -34,8 +34,7 @@ export default async function PortfolioCompareDemoPage() {
           POST /illustrate/portfolio/compare
         </code>{" "}
         and falls back to the sketch fixture when the Data API is unreachable.
-        Defaults are GTM’s history-covered smoke books (Current AGTHX / DODIX /
-        AMCAP / DODGX, Proposed AMCPX / CGHM / AGTHX / AMCAP, 25% each at $1M).
+        Current and Proposed start empty — add tickers with + Add holding.
         POSTs periods for calendar years 2021 through 2025. Calendar-year tax
         is the ticker × year matrix (2025–2021; unmatched / uncovered = N/A,
         never $0). Upcoming stays unpaid-announced. Paid History is not shown
@@ -62,7 +61,7 @@ export default async function PortfolioCompareDemoPage() {
 exportToPdf(toPortfolioCompareExportModel(result, bookDollars));
 
 // Optional: pass book size, funds for autocomplete, or tax rates.
-// Omit current/proposed to use GTM history-covered smoke books.
+// Omit current/proposed to start empty (friends beta).
 <PortfolioCompare
   bookDollars={1_000_000}
   taxRates={{ state: 0.05 }}

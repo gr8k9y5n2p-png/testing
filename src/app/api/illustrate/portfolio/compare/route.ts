@@ -10,8 +10,8 @@ export const dynamic = "force-dynamic";
 /**
  * MOCK POST /illustrate/portfolio/compare.
  * Production math lives on the Data team FastAPI (PR #2). This route returns
- * fixture math for the GTM history-covered smoke books so the module
- * still demos on localhost.
+ * fixture math for any Current / Proposed books the UI POSTs so the
+ * module still demos on localhost. Initial books are empty.
  */
 export async function POST(request: Request) {
   let body: PortfolioCompareRequest;
