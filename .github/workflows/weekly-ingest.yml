@@ -2,7 +2,8 @@ name: Weekly ingest refresh
 
 on:
   schedule:
-    # Monday 14:00 UTC ≈ 9am America/Chicago
+    # Sunday scrape (NAV + estimates) and Monday follow-up, 14:00 UTC ≈ 9am America/Chicago
+    - cron: "0 14 * * 0"
     - cron: "0 14 * * 1"
   workflow_dispatch:
     inputs:
@@ -56,6 +57,14 @@ jobs:
             --output refresh-summary.json \
             --markdown refresh-summary.md
 
+      - name: Refresh weekly NAV for every listed ticker
+        env:
+          REFRESH_MODE: ${{ github.event.inputs.refresh_mode || 'auto' }}
+        run: |
+          python -m app.cli refresh-nav \
+            --output nav-summary.json \
+            --markdown nav-summary.md
+
       - name: Pick up queued ticker requests
         env:
           REFRESH_MODE: ${{ github.event.inputs.refresh_mode || 'auto' }}
@@ -70,6 +79,10 @@ jobs:
             cat refresh-summary.md >> "$GITHUB_STEP_SUMMARY"
           else
             echo "Refresh did not write a Markdown summary." >> "$GITHUB_STEP_SUMMARY"
+          fi
+          if [ -f nav-summary.md ]; then
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            cat nav-summary.md >> "$GITHUB_STEP_SUMMARY"
           fi
           if [ -f ticker-request-summary.json ]; then
             echo "" >> "$GITHUB_STEP_SUMMARY"
@@ -88,5 +101,7 @@ jobs:
           path: |
             refresh-summary.json
             refresh-summary.md
+            nav-summary.json
+            nav-summary.md
             ticker-request-summary.json
           if-no-files-found: warn

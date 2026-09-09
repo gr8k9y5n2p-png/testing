@@ -76,6 +76,20 @@ def _seed_fixture_if_empty() -> None:
                     created_total += int(result.created or 0)
             except Exception:
                 logger.exception("Fixture seed failed for %s; continuing", source.slug)
+        try:
+            from app.services.nav import refresh_navs
+
+            with app_db.SessionLocal() as session:
+                nav = refresh_navs(session, mode=mode if mode in {"fixture", "live", "auto"} else "fixture")
+                session.commit()
+            logger.info(
+                "Fixture NAV seed created=%s updated=%s unknown=%s",
+                nav.created,
+                nav.updated,
+                nav.unknown,
+            )
+        except Exception:
+            logger.exception("Fixture NAV seed failed; continuing with null NAV")
         _seed_state["created"] = created_total
         _seed_state["status"] = "complete"
         logger.info("Fixture seed complete created=%s", created_total)

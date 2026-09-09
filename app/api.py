@@ -54,6 +54,12 @@ from app.schemas import (
     WebsiteTickerRequestOut,
 )
 from app.services.coverage import coverage_snapshot, family_to_out, record_gap
+from app.services.nav import (
+    apply_distribution_day_nav,
+    get_nav_map,
+    listed_ticker,
+    nav_on_distribution_day_map,
+)
 from app.services.performance import growth_of_x
 from app.services.ticker_requests import (
     list_ticker_requests,
@@ -165,12 +171,14 @@ def list_distributions(
         page=page,
         page_size=page_size,
     )
+    day_navs = nav_on_distribution_day_map(session, rows)
     items = []
     for row in rows:
         item = DistributionOut.model_validate(row)
         item.ticker = display_ticker(item.ticker, item.fund_identifier)
         item.cusip = display_cusip(item.cusip, item.fund_identifier)
         item.category = category_for_row(item)
+        apply_distribution_day_nav(item, day_navs.get(row.id))
         if not include_raw:
             item.raw_payload = None
         items.append(item)
@@ -217,18 +225,28 @@ def list_funds(
     rows, total = search_funds(
         session, q=q, fund_family=fund_family, category=category, limit=limit, offset=offset
     )
-    items = [
-        FundOut(
-            ticker=display_ticker(row.ticker, row.fund_identifier),
-            fund_name=row.fund_name,
-            fund_family=row.fund_family,
-            fund_identifier=row.fund_identifier,
-            category=row.category,
-            latest_as_of=row.latest_as_of,
-            has_estimate=row.has_estimate,
+    navs = get_nav_map(
+        session,
+        [listed_ticker(row.ticker, row.fund_identifier) for row in rows],
+    )
+    items = []
+    for row in rows:
+        ticker = display_ticker(row.ticker, row.fund_identifier)
+        nav = navs.get(listed_ticker(row.ticker, row.fund_identifier) or "")
+        items.append(
+            FundOut(
+                ticker=ticker,
+                fund_name=row.fund_name,
+                fund_family=row.fund_family,
+                fund_identifier=row.fund_identifier,
+                category=row.category,
+                latest_as_of=row.latest_as_of,
+                has_estimate=row.has_estimate,
+                nav_per_share=nav.nav_per_share if nav else None,
+                nav_as_of=nav.nav_as_of if nav else None,
+                nav_source=nav.source if nav else None,
+            )
         )
-        for row in rows
-    ]
     return FundListOut(items=items, limit=limit, offset=offset, total=total)
 
 
@@ -241,6 +259,8 @@ def get_distribution(distribution_id: str, session: Session = Depends(get_sessio
     item.ticker = display_ticker(item.ticker, item.fund_identifier)
     item.cusip = display_cusip(item.cusip, item.fund_identifier)
     item.category = category_for_row(item)
+    day_navs = nav_on_distribution_day_map(session, [row])
+    apply_distribution_day_nav(item, day_navs.get(row.id))
     return item
 
 
