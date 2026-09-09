@@ -258,6 +258,16 @@ describe("growthLinesFromRows", () => {
   });
 });
 
+describe("loadGrowthAndTaxDrag performance mode", () => {
+  it("does not hardcode fixture on the PerformanceQuery", () => {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const source = readFileSync(join(here, "growth-tax-load.ts"), "utf8");
+    assert.match(source, /mode:\s*defaultPerformanceMode\(\)/);
+    assert.doesNotMatch(source, /mode:\s*"fixture"/);
+    assert.match(source, /defaultPerformanceMode/);
+  });
+});
+
 describe("loadGrowthAndTaxDrag tax rates", () => {
   it("forwards Compare rates through fund_vs_fund and YoY bodies", () => {
     const here = dirname(fileURLToPath(import.meta.url));

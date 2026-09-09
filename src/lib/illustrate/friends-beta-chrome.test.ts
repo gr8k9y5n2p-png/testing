@@ -38,6 +38,8 @@ describe("friends-beta Portfolio / Compare chrome", () => {
     const portfolio = read("portfolio-compare-client.ts");
     const illustrate = read("client.ts");
     const coverage = read("portfolio.ts");
+    const performance = read("../performance/client.ts");
+    const growth = read("growth-tax-load.ts");
     assert.doesNotMatch(
       compare,
       /if \(remote && response\.status >= 500\) \{\s*response = await post\("\/api\/illustrate\/compare"\)/,
@@ -46,6 +48,20 @@ describe("friends-beta Portfolio / Compare chrome", () => {
     assert.match(portfolio, /Portfolio compare is unavailable from the Data API/);
     assert.doesNotMatch(illustrate, /post\("\/api\/illustrate", request\)/);
     assert.doesNotMatch(coverage, /post\("\/api\/illustrate\/portfolio"\)/);
+    assert.doesNotMatch(growth, /mode:\s*"fixture"/);
+    assert.match(growth, /defaultPerformanceMode\(\)/);
+    assert.doesNotMatch(
+      performance,
+      /params\.set\("mode", request\.mode\?\.trim\(\) \|\| "fixture"\)/,
+    );
+    assert.doesNotMatch(
+      performance,
+      /mode: request\.mode \?\? "fixture"/,
+    );
+    assert.doesNotMatch(
+      performance,
+      /if \(remote && response\.status >= 500\) \{\s*response = await fetch\(fallback/,
+    );
   });
 
   it("never renders MOCK / seed-math banners in Search illustrate chrome", () => {

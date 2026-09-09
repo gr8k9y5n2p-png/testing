@@ -14,6 +14,7 @@ import {
 import { normalizePortfolioComparePeriods } from "@/lib/illustrate/portfolio-period-map";
 import { ensurePortfolioComparePeriods } from "@/lib/illustrate/portfolio-year-tax";
 import { seedFundNameLookup, seedNavLookup } from "@/lib/illustrate/seed-nav";
+import { lockedTaxRates } from "@/lib/illustrate/types";
 import type {
   PortfolioAllocationOut,
   PortfolioCompareRequest,
@@ -145,7 +146,7 @@ export function toPortfolioCompareRequestBody(
   const body: Record<string, unknown> = {
     current: withSideNav(request.current, navLookup),
     proposed: withSideNav(request.proposed, navLookup),
-    tax_rates: request.tax_rates ?? {},
+    tax_rates: lockedTaxRates(request.tax_rates),
     combine_state_with_federal: request.combine_state_with_federal !== false,
     periods: ensurePortfolioComparePeriods(request.periods),
   };
@@ -418,7 +419,7 @@ async function postPortfolioSide(
   const endpoint = dataApiUrl("/illustrate/portfolio");
   const body = {
     ...toPortfolioIllustrateBody(side),
-    tax_rates: taxRates ?? {},
+    tax_rates: lockedTaxRates(taxRates),
     combine_state_with_federal: combine !== false,
   };
 

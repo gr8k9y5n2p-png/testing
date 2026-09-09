@@ -9,6 +9,10 @@ import {
   mockPerformanceResponse,
   PerformanceMockError,
 } from "@/lib/performance/mock";
+import {
+  defaultPerformanceMode,
+  resolvePerformanceMode,
+} from "@/lib/performance/mode";
 import type {
   PerformanceGrowthRequest,
   PerformancePoint,
@@ -16,6 +20,8 @@ import type {
   PerformanceResponse,
   PerformanceSeriesOut,
 } from "@/lib/performance/types";
+
+export { defaultPerformanceMode, resolvePerformanceMode } from "@/lib/performance/mode";
 
 export function getPerformanceEndpoint(): string {
   return dataApiUrl("/performance");
@@ -85,7 +91,7 @@ export function normalizePerformanceResponse(
     end_date: String(raw.end_date ?? ""),
     as_of: String(raw.as_of ?? raw.end_date ?? ""),
     frequency: "monthly",
-    mode: String(raw.mode ?? "fixture"),
+    mode: String(raw.mode ?? defaultPerformanceMode()),
     source: String(raw.source ?? "live"),
     source_urls: Array.isArray(raw.source_urls) ? raw.source_urls.map(String) : [],
     benchmark_id: benchId,
@@ -124,7 +130,7 @@ function queryString(request: PerformanceQuery): string {
   if (request.start_dollars != null) params.set("start_dollars", String(request.start_dollars));
   if (request.start_date) params.set("start_date", request.start_date);
   if (request.end_date) params.set("end_date", request.end_date);
-  params.set("mode", request.mode?.trim() || "fixture");
+  params.set("mode", resolvePerformanceMode(request.mode));
   return params.toString();
 }
 
@@ -136,7 +142,6 @@ async function loadPerformance(
   const remote = isRemoteDataApi();
   const path = method === "POST" ? "/performance/growth" : `/performance?${queryString(request)}`;
   const endpoint = dataApiUrl(path);
-  const fallback = method === "POST" ? "/api/performance/growth" : `/api/performance?${queryString(request)}`;
 
   const fetchInit: RequestInit = {
     method,
@@ -144,23 +149,25 @@ async function loadPerformance(
       Accept: "application/json",
       ...(method === "POST" ? { "Content-Type": "application/json" } : {}),
     },
-    body: method === "POST" ? JSON.stringify({ ...request, mode: request.mode ?? "fixture" }) : undefined,
+    body:
+      method === "POST"
+        ? JSON.stringify({ ...request, mode: resolvePerformanceMode(request.mode) })
+        : undefined,
     signal: init?.signal,
   };
 
   let response: Response;
-  let usedMock = !remote;
+  const usedMock = !remote;
   try {
     response = await fetch(endpoint, fetchInit);
     if (remote && response.status >= 500) {
-      response = await fetch(fallback, fetchInit);
-      usedMock = true;
+      throw new IllustrateRequestError(
+        `Performance failed (${response.status})`,
+        response.status,
+      );
     }
   } catch (error) {
-    if (remote && !init?.signal?.aborted) {
-      response = await fetch(fallback, fetchInit);
-      usedMock = true;
-    } else if (!remote) {
+    if (!remote) {
       try {
         return mockPerformanceResponse(request);
       } catch (caught) {
@@ -169,9 +176,8 @@ async function loadPerformance(
         }
         throw caught;
       }
-    } else {
-      throw error;
     }
+    throw error;
   }
 
   if (!response.ok) {

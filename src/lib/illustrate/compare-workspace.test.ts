@@ -10,6 +10,7 @@ import {
   COMPARE_DEFAULT_HOLDING_DOLLARS,
   COMPARE_DEFAULT_TAX_RATES,
   COMPARE_SLOT_COUNT,
+  compareHistoryYears,
   compareTickersPath,
   buildCompareAnnualTable,
   compareInputsMatch,
@@ -266,6 +267,20 @@ describe("compare workspace slots (filled)", () => {
 });
 
 describe("compare annual table", () => {
+  it("uses the locked 2021–2025 axis so matched AGTHX years are not blanked", () => {
+    assert.deepEqual(compareHistoryYears(2026), [2025, 2024, 2023, 2022, 2021]);
+    const tax = yoy([
+      period(2022, side("AGTHX", true, 82, 210), side("AGTHX", true, 71, 180)),
+      period(2023, side("AGTHX", true, 71, 180), side("AGTHX", true, 118, 240)),
+      period(2024, side("AGTHX", true, 118, 240), side("AGTHX", true, 96, 220)),
+      period(2025, side("AGTHX", true, 96, 220), side("AGTHX", true, 88, 210)),
+    ]);
+    const model = buildCompareAnnualTable([{ ticker: "AGTHX", tax }], compareHistoryYears(2026));
+    const taxRow = model.groups[0]?.rows.find((row) => row.kind === "tax");
+    assert.deepEqual(taxRow?.cells, [88, 96, 118, 71, 82]);
+    assert.ok(taxRow?.cells.every((cell) => cell != null));
+  });
+
   it("keeps unmatched years as N/A and matched published $0 as zero", () => {
     const tax = yoy([
       period(
@@ -528,6 +543,29 @@ describe("Compare workspace Upcoming + NAV soft path", () => {
     assert.doesNotMatch(workspace, /tax_rates:\s*\{\}/);
     assert.doesNotMatch(request, /tax_rates:\s*\{\}/);
     assert.doesNotMatch(load, /tax_rates:\s*\{\}/);
+    const rail = readFileSync(
+      join(here, "../../components/illustrate/FundCompareRail.tsx"),
+      "utf8",
+    );
+    const homepage = readFileSync(
+      join(here, "../../components/illustrate/HomepagePortfolioCompare.tsx"),
+      "utf8",
+    );
+    const card = readFileSync(
+      join(here, "../../components/illustrate/FundTaxDeltaCompare.tsx"),
+      "utf8",
+    );
+    assert.doesNotMatch(rail, /\{ state: UI_DEFAULT_TAX_RATES\.state \}/);
+    assert.doesNotMatch(homepage, /\{ state: UI_DEFAULT_TAX_RATES\.state \}/);
+    assert.doesNotMatch(card, /tax_rates: next\.taxRates \?\? \{\}/);
+    const fundDemo = readFileSync(join(here, "../../app/fund-compare/page.tsx"), "utf8");
+    const portfolioDemo = readFileSync(
+      join(here, "../../app/portfolio-compare/page.tsx"),
+      "utf8",
+    );
+    assert.doesNotMatch(fundDemo, /taxRates=\{\{ state:/);
+    assert.doesNotMatch(portfolioDemo, /taxRates=\{\{ state:/);
+    assert.match(card, /compareTaxRequestFields/);
     assert.match(growth, /taxRates/);
     assert.match(growth, /combineStateWithFederal/);
     assert.match(fields, /Federal ordinary income/);

@@ -17,7 +17,7 @@ import {
   withPortfolioHoldingNav,
   yoyTaxDragCompareRequest,
 } from "./compare-request.ts";
-import { UI_DEFAULT_TAX_RATES } from "./types.ts";
+import { LOCKED_TAX_RATE_KEYS, lockedTaxRates, UI_DEFAULT_TAX_RATES } from "./types.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -293,7 +293,42 @@ describe("compare-request NAV / Data body", () => {
     );
   });
 
+  it("expands abbreviated tax_rates to the locked five keys", () => {
+    assert.deepEqual([...LOCKED_TAX_RATE_KEYS], [
+      "ordinary_income",
+      "long_term_capital_gains",
+      "short_term_capital_gains",
+      "qualified_dividend",
+      "state",
+    ]);
+    const expanded = lockedTaxRates({ state: 0.05 });
+    assert.deepEqual(expanded, UI_DEFAULT_TAX_RATES);
+    const body = toDataApiCompareBody({
+      mode: "yoy",
+      holding_dollars: 10_000,
+      tax_rates: { state: 0.05 },
+      selectors: { ticker: "AGTHX", fund_identifier: "AGTHX" },
+      periods: trailingCalendarPeriods(),
+    });
+    assert.deepEqual(body.tax_rates, UI_DEFAULT_TAX_RATES);
+    assert.deepEqual(
+      body.periods?.map((period) => period.year),
+      [2021, 2022, 2023, 2024, 2025],
+    );
+    for (const key of LOCKED_TAX_RATE_KEYS) {
+      assert.equal(typeof body.tax_rates?.[key], "number");
+    }
+  });
+
   it("defaults compare tax fields to the locked top-bracket UI set", () => {
+    assert.deepEqual(compareTaxRequestFields({ taxRates: { state: 0.05 } }), {
+      tax_rates: UI_DEFAULT_TAX_RATES,
+      combine_state_with_federal: true,
+    });
+    assert.deepEqual(compareTaxRequestFields({ taxRates: {} }), {
+      tax_rates: UI_DEFAULT_TAX_RATES,
+      combine_state_with_federal: true,
+    });
     assert.deepEqual(compareTaxRequestFields(), {
       tax_rates: UI_DEFAULT_TAX_RATES,
       combine_state_with_federal: true,
@@ -344,10 +379,14 @@ describe("compare-request NAV / Data body", () => {
     assert.equal(body.selectors?.fund_family, "American Funds");
   });
 
-  it("uses 2022–2026 as the trailing window in 2026", () => {
+  it("POSTs the locked 2021–2025 paid-history window for AGTHX / AMCPX", () => {
     assert.deepEqual(
       trailingCalendarPeriods(2026).map((period) => period.year),
-      [2022, 2023, 2024, 2025, 2026],
+      [2021, 2022, 2023, 2024, 2025],
+    );
+    assert.deepEqual(
+      trailingCalendarPeriods().map((period) => period.year),
+      [2021, 2022, 2023, 2024, 2025],
     );
   });
 
@@ -389,7 +428,7 @@ describe("compare-request NAV / Data body", () => {
     assert.equal(body.right?.nav_per_share, 72.14);
     assert.deepEqual(
       body.periods?.map((period) => period.year),
-      [2022, 2023, 2024, 2025, 2026],
+      [2021, 2022, 2023, 2024, 2025],
     );
   });
 });

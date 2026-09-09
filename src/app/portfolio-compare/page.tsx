@@ -61,6 +61,7 @@ export default async function PortfolioCompareDemoPage() {
   requestTicker,
   toPortfolioCompareExportModel,
 } from "@/components/illustrate";
+import { UI_DEFAULT_TAX_RATES } from "@/lib/illustrate/types";
 // or: import { requestTicker } from "@/lib/request-ticker";
 // source: "web" | "search_miss" | "portfolio"
 // await requestTicker({ ticker, note, source: "portfolio" });
@@ -77,7 +78,7 @@ exportToPdf(toPortfolioCompareExportModel(result, bookDollars));
 // (friends beta). Modules owns component smoke defaults.
 <PortfolioCompare
   bookDollars={1_000_000}
-  taxRates={{ state: 0.05 }}
+  taxRates={UI_DEFAULT_TAX_RATES}
   funds={funds}
   current={WEBSITE_PORTFOLIO_HOLDINGS}
   proposed={WEBSITE_PORTFOLIO_HOLDINGS}
