@@ -112,6 +112,7 @@ export function AllocationColumn({
                 funds={funds}
                 inputId={`${inputIdPrefix}-ticker-${holding.id}`}
                 autoFocus={holding.id === focusHoldingId}
+                allowEmpty
                 onNotice={onNotice}
                 onSelect={(fund) => {
                   updateAt(index, {
