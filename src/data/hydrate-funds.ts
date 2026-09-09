@@ -114,7 +114,9 @@ export function mergeFundWithDistributions(
     };
   }
 
-  const hasUpcoming = fromDists.bucket === "upcoming";
+  // Every fund: catalog `has_estimate: false` means unpaid Upcoming = none.
+  // Do not let paid/final YE rows or illustration math flip any ticker.
+  const hasUpcoming = fromDists.bucket === "upcoming" && fund.hasEstimate !== false;
   return {
     ...fund,
     cusip: fund.cusip || fromDists.cusip,
@@ -130,7 +132,7 @@ export function mergeFundWithDistributions(
     exDate: fromDists.exDate,
     payableDate: fromDists.payableDate,
     publicationStage: fromDists.publicationStage,
-    bucket: fromDists.bucket,
+    bucket: hasUpcoming ? "upcoming" : "paid",
     paidHistory: fromDists.paidHistory,
     distributionYear: fromDists.distributionYear,
     hasEstimate: hasUpcoming,

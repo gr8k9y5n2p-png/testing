@@ -84,6 +84,33 @@ export function navFromFundMetadata(
   return positiveNav(lookup?.(key));
 }
 
+export const PER_SHARE_NAV_REQUIRED =
+  "Enter NAV per share to illustrate $ / share amounts.";
+
+/**
+ * Dollar Illustration NAV for every fund: typed input first, then
+ * search/fund metadata (catalog NAV or ticker lookup). Live `/funds`
+ * often hydrates `nav: 0` — that is not a price; fall through to lookup.
+ */
+export function illustrationRequestNav(
+  typedInput: unknown,
+  ticker?: string | null,
+  fundNav?: unknown,
+  lookup?: NavLookup,
+): number | undefined {
+  return positiveNav(typedInput) ?? navFromFundMetadata(ticker, fundNav, lookup);
+}
+
+/** `$ / share` only errors when NAV is genuinely unavailable. */
+export function perShareNavError(
+  unit: string,
+  requestNav: number | undefined,
+): string | null {
+  return unit === "per_share" && requestNav == null
+    ? PER_SHARE_NAV_REQUIRED
+    : null;
+}
+
 export function compareSideFromFund(
   fund: {
     ticker: string;

@@ -4,7 +4,12 @@ import { useEffect, useMemo, useState } from "react";
 import type { FundEstimateView } from "@/data/types";
 import { useCoverage } from "@/components/coverage/CoverageProvider";
 import { isMockIllustrate, postIllustrate } from "@/lib/illustrate/client";
-import { navFromFundMetadata, positiveNav } from "@/lib/illustrate/compare-request";
+import {
+  illustrationRequestNav,
+  navFromFundMetadata,
+  perShareNavError,
+} from "@/lib/illustrate/compare-request";
+import { seedNavLookup } from "@/lib/illustrate/seed-nav";
 import { distributionIdsForFund } from "@/lib/illustrate/ids";
 import {
   postIllustratePortfolio,
@@ -104,8 +109,11 @@ function IllustrationWorkspace({ fund }: { fund: FundEstimateView }) {
   );
   const [rates, setRates] = useState<TaxRates>(UI_DEFAULT_TAX_RATES);
   const [combine, setCombine] = useState(true);
+  const metadataNav = navFromFundMetadata(fund.ticker, fund.nav, seedNavLookup);
   const [unit, setUnit] = useState<AmountUnit>(AMOUNT_UNITS.percent_of_nav);
-  const [navInput, setNavInput] = useState(String(fund.nav));
+  const [navInput, setNavInput] = useState(
+    metadataNav != null ? String(metadataNav) : fund.nav > 0 ? String(fund.nav) : "",
+  );
   const [result, setResult] = useState<IllustrateResponse | null>(null);
   const [portfolio, setPortfolio] = useState<PortfolioIllustrateResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -117,13 +125,13 @@ function IllustrationWorkspace({ fund }: { fund: FundEstimateView }) {
   );
 
   const needsNav = unit === AMOUNT_UNITS.per_share;
-  const nav = Number(navInput);
-  const metadataNav = navFromFundMetadata(fund.ticker, fund.nav);
-  const requestNav = needsNav ? positiveNav(nav) : metadataNav;
-  const navError =
-    needsNav && requestNav == null
-      ? "Enter NAV per share to illustrate $ / share amounts."
-      : null;
+  const requestNav = illustrationRequestNav(
+    navInput,
+    fund.ticker,
+    fund.nav,
+    seedNavLookup,
+  );
+  const navError = perShareNavError(unit, requestNav);
   const mock = isMockIllustrate();
   const useIds = mock && !fund.id.startsWith("api:");
   const canFetch = !navError && (useIds ? distributionIds.length > 0 : Boolean(fund.ticker));

@@ -140,7 +140,7 @@ test("past final with only as_of (no ex/payable) is paid history, not upcoming",
   );
 });
 
-test("future unpaid announced final stays upcoming", () => {
+test("final is paid history even when event dates are still ahead", () => {
   assert.equal(
     distributionBucket(
       {
@@ -152,7 +152,49 @@ test("future unpaid announced final stays upcoming", () => {
       },
       TODAY,
     ),
-    "upcoming",
+    "paid",
+  );
+});
+
+test("finals-only rows never become Upcoming for any fund (future YE dates or missing stages)", () => {
+  assert.equal(
+    distributionBucket(
+      {
+        asOfDate: "2026-01-22",
+        recordDate: "2026-12-15",
+        exDate: "2026-12-15",
+        payableDate: "2026-12-16",
+        publicationStage: "final",
+      },
+      TODAY,
+    ),
+    "paid",
+  );
+  assert.equal(
+    distributionBucket(
+      {
+        asOfDate: "2026-01-22",
+        recordDate: null,
+        exDate: null,
+        payableDate: null,
+        publicationStage: "final",
+      },
+      TODAY,
+    ),
+    "paid",
+  );
+  assert.equal(
+    distributionBucket(
+      {
+        asOfDate: "2026-12-31",
+        recordDate: "2026-12-15",
+        exDate: "2026-12-15",
+        payableDate: "2026-12-16",
+        publicationStage: null,
+      },
+      TODAY,
+    ),
+    "paid",
   );
 });
 

@@ -111,18 +111,24 @@ function isPastPaidEvent(row: PortfolioDistributionRow, today = utcToday()): boo
 
 /**
  * Locked split vs Data `paid_history[]` / unpaid `upcoming`:
- * Upcoming = announced but not yet paid.
+ * Upcoming = unpaid prelim/estimate only (not `final`).
  * If record (else ex, else payable) is already past, the row is Paid history
  * even when publication_stage is still preliminary_estimate / updated_estimate.
- * as_of is announcement only — never invent a day.
+ * as_of is announcement only — never invent a day. Never invent Upcoming from
+ * paid/final YE history or illustration / tax-on-holding math.
  */
 export function publicationBucket(
   row: PortfolioDistributionRow,
   today = utcToday(),
 ): DistributionBucket | null {
   const stage = normalizePublicationStage(row.publication_stage);
-  if (stage === "paid" || isPastPaidEvent(row, today)) return "paid_history";
-  if (isUpcomingPublicationStage(stage) || stage === "final") return "upcoming";
+  if (
+    isPaidHistoryPublicationStage(stage) ||
+    isPastPaidEvent(row, today)
+  ) {
+    return "paid_history";
+  }
+  if (isUpcomingPublicationStage(stage)) return "upcoming";
   // latest_as_of / identity-only — never invent Upcoming from paid YE dates.
   return null;
 }
