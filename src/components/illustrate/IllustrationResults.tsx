@@ -8,6 +8,11 @@ import {
   splitIllustrationComponents,
   upcomingIllustrationTotals,
 } from "@/lib/illustrate/illustration-upcoming";
+import {
+  annualHistoricalDistributionBars,
+  formatAnnualHistoricalBar,
+} from "@/lib/illustrate/annual-historical-distribution";
+import { YoYTaxChart } from "@/components/illustrate/YoYTaxChart";
 import { DistributionDateStrip } from "@/components/DistributionDateStrip";
 import { Disclaimer } from "@/components/Disclaimer";
 import {
@@ -42,9 +47,10 @@ export function IllustrationResults({
     splitIllustrationComponents(components, fund);
   const upcomingTotals = upcomingIllustrationTotals(upcomingComponents);
   const hasUpcoming = upcomingTotals != null;
+  const annualBars = annualHistoricalDistributionBars(fund);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div className="grid gap-3 sm:grid-cols-2">
         <StatCard
           label="Estimated distribution"
@@ -57,6 +63,8 @@ export function IllustrationResults({
                 )
               : UPCOMING_UNAVAILABLE_HEADLINE
           }
+          hint={hasUpcoming ? undefined : UPCOMING_UNAVAILABLE_DETAIL}
+          compact={!hasUpcoming}
         />
         <StatCard
           label="Estimated tax"
@@ -69,6 +77,8 @@ export function IllustrationResults({
                 )
               : UPCOMING_UNAVAILABLE_HEADLINE
           }
+          hint={hasUpcoming ? undefined : UPCOMING_UNAVAILABLE_DETAIL}
+          compact={!hasUpcoming}
           emphasize
         />
       </div>
@@ -89,6 +99,16 @@ export function IllustrationResults({
           </div>
         }
       />
+
+      {annualBars.length > 0 ? (
+        <YoYTaxChart
+          headingId="annual-historical-distribution"
+          title="Annual historical distribution"
+          bars={annualBars}
+          valueFormat={(value) => `${formatAnnualHistoricalBar(value)} / sh`}
+        />
+      ) : null}
+
       {paidComponents.length > 0 ? (
         <ComponentTable
           heading="Paid history"
@@ -270,10 +290,14 @@ function StatCard({
   label,
   value,
   emphasize = false,
+  hint,
+  compact = false,
 }: {
   label: string;
   value: string;
   emphasize?: boolean;
+  hint?: string;
+  compact?: boolean;
 }) {
   return (
     <div
@@ -289,12 +313,13 @@ function StatCard({
         {label}
       </p>
       <p
-        className={`mt-1 font-serif text-2xl tracking-tight ${
-          emphasize ? "text-accent" : "text-ink"
-        }`}
+        className={`mt-1 font-serif tracking-tight ${
+          compact ? "text-xl" : "text-2xl"
+        } ${emphasize ? "text-accent" : "text-ink"}`}
       >
         {value}
       </p>
+      {hint ? <p className="mt-1 text-xs leading-snug text-muted">{hint}</p> : null}
     </div>
   );
 }
