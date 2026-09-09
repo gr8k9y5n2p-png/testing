@@ -55,7 +55,7 @@ export function TaxDeltaCompareCard({
             aria-hidden
             className="inline-block size-1.5 rounded-full bg-tax-less"
           />
-          Aftertax · {model.sample ? "Sample" : "Live"}
+          Aftertax
         </p>
 
         <div className="mt-3 grid grid-cols-[1fr_auto_1fr] items-start gap-2">
@@ -74,7 +74,6 @@ export function TaxDeltaCompareCard({
         showBarLabels={model.taxSeries.length <= 2}
         layout="flush"
         className="mt-4"
-        sample={model.sample}
         emptyLabel="No overlapping tax-drag years"
       />
 
@@ -189,8 +188,8 @@ export function TaxDeltaCompareCard({
       </dl>
 
       <p className="mt-4 text-center text-[10px] leading-relaxed text-faint">
-        Demo data · illustrative only · tax cost to holder · red = more tax ·
-        green = less
+        Tax cost to holder · red = more tax · green = less. Unmatched years stay
+        N/A.
       </p>
       <CompactDisclaimer className="mt-1 text-center text-[10px] leading-relaxed text-faint" />
     </article>

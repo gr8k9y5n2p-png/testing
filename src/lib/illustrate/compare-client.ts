@@ -239,18 +239,16 @@ export async function postIllustrateCompare(
   try {
     response = await post(endpoint);
     if (remote && response.status >= 500) {
-      response = await post("/api/illustrate/compare");
-      usedMock = true;
+      throw new IllustrateRequestError(
+        `Compare failed (${response.status})`,
+        response.status,
+      );
     }
   } catch (error) {
-    if (remote && !init?.signal?.aborted) {
-      response = await post("/api/illustrate/compare");
-      usedMock = true;
-    } else if (!remote) {
+    if (!remote) {
       return mockCompareResponse(payload);
-    } else {
-      throw error;
     }
+    throw error;
   }
 
   if (!response.ok) {

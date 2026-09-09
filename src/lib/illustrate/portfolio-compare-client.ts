@@ -105,10 +105,11 @@ function withSideNav(
   side: PortfolioCompareSideIn,
   lookup: NavLookup,
 ): PortfolioCompareSideIn {
+  const nameLookup = isRemoteDataApi() ? () => undefined : seedFundNameLookup;
   return {
     ...side,
     holdings: side.holdings.map((holding) =>
-      withPortfolioHoldingNav(holding, lookup, seedFundNameLookup),
+      withPortfolioHoldingNav(holding, lookup, nameLookup),
     ),
   };
 }
@@ -122,9 +123,10 @@ export function toPortfolioCompareRequestBody(
   request: PortfolioCompareRequest,
   lookup: NavLookup = seedNavLookup,
 ): Record<string, unknown> {
+  const navLookup: NavLookup = isRemoteDataApi() ? () => undefined : lookup;
   const body: Record<string, unknown> = {
-    current: withSideNav(request.current, lookup),
-    proposed: withSideNav(request.proposed, lookup),
+    current: withSideNav(request.current, navLookup),
+    proposed: withSideNav(request.proposed, navLookup),
     tax_rates: request.tax_rates ?? {},
     combine_state_with_federal: request.combine_state_with_federal !== false,
     periods: ensurePortfolioComparePeriods(request.periods),
@@ -410,14 +412,11 @@ async function postPortfolioSide(
   try {
     response = await post(endpoint);
     if (isRemoteDataApi() && (response.status >= 500 || response.status === 404)) {
-      response = await post("/api/illustrate/portfolio");
+      return null;
     }
   } catch (error) {
-    if (isRemoteDataApi() && !signal?.aborted) {
-      response = await post("/api/illustrate/portfolio");
-    } else {
-      throw error;
-    }
+    if (isRemoteDataApi()) return null;
+    throw error;
   }
 
   if (!response.ok) return null;
@@ -501,21 +500,12 @@ export async function postIllustratePortfolioCompare(
     if (init?.signal?.aborted) throw error;
   }
 
-  if (remote) {
-    try {
-      const fallback = await jsonPost(
-        "/api/illustrate/portfolio/compare",
-        toPortfolioCompareRequestBody(request),
-        init?.signal,
-      );
-      if (fallback.ok) {
-        const raw = (await fallback.json()) as Record<string, unknown>;
-        return normalizePortfolioCompareResponse(raw, "mock");
-      }
-    } catch {
-      /* use in-memory fixture */
-    }
+  if (!remote) {
+    return mockPortfolioCompareResponse(request);
   }
 
-  return mockPortfolioCompareResponse(request);
+  throw new IllustrateRequestError(
+    "Portfolio compare is unavailable from the Data API.",
+    response?.status ?? 503,
+  );
 }

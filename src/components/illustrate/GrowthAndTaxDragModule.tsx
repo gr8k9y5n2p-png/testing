@@ -215,7 +215,7 @@ export function GrowthAndTaxDragModule({
         <div>
           <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-faint">
             <span aria-hidden className="inline-block size-1.5 rounded-full bg-tax-less" />
-            Aftertax · Sample
+            Aftertax
           </p>
           <h2 className="mt-1 font-serif text-xl tracking-tight text-ink">
             Growth & tax drag

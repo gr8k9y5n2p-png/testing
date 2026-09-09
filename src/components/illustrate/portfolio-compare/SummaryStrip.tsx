@@ -26,10 +26,6 @@ export function SummaryStrip({
   const currentDrag = result.current.totals.effective_tax_on_holding;
   const proposedDrag = result.proposed.totals.effective_tax_on_holding;
   const impact = formatMoreLessTax(result.deltas.estimated_tax);
-  const sample =
-    result.source === "mock" ||
-    result.notes.some((note) => /mock|demo|illustrative/i.test(note));
-  const demo = sample ? " · demo" : "";
   const deltaPanel =
     impact.polarity === "less"
       ? "bg-tax-less-soft"
@@ -57,7 +53,6 @@ export function SummaryStrip({
           </p>
           <p className="mt-1 text-[11px] text-muted">
             {TAX_DRAG_CARD_DETAIL}
-            {demo}
           </p>
         </div>
         <div className="rounded-xl border border-line bg-surface px-3 py-2">
@@ -69,7 +64,6 @@ export function SummaryStrip({
           </p>
           <p className="mt-1 text-[11px] text-muted">
             {TAX_DRAG_CARD_DETAIL}
-            {demo}
           </p>
         </div>
         <div className={`rounded-xl border border-line px-3 py-2 ${deltaPanel}`}>
@@ -83,7 +77,6 @@ export function SummaryStrip({
           </p>
           <p className="mt-1 text-[11px] text-muted">
             {TAX_IMPACT_DELTA_DETAIL} · on {compactBookLabel(bookDollars)}
-            {demo}
           </p>
         </div>
       </div>

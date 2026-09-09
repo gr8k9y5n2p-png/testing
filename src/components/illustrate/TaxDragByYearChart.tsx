@@ -68,7 +68,7 @@ export function TaxDragByYearChart({
   emptyLabel = "No calendar-year tax-drag rows",
   emptyHint = `Missing years stay ${TAX_DRAG_NA_LABEL} — Aftertax does not invent tax-drag rows.`,
   className = "",
-  sample = false,
+  sample: _sample = false,
   orientation = "up",
   showBarLabels = false,
   layout = "card",
@@ -403,7 +403,7 @@ export function TaxDragByYearChart({
         <div>
           <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-faint">
             <span aria-hidden className="inline-block size-1.5 rounded-full bg-tax-less" />
-            Aftertax{sample ? " · Sample" : ""}
+            Aftertax
           </p>
           <h3 className="mt-2 font-serif text-lg tracking-tight text-ink">{title}</h3>
         </div>
@@ -413,7 +413,6 @@ export function TaxDragByYearChart({
       <p className="mt-2 text-[10px] leading-relaxed text-faint">
         Calendar years · {metric === "tax_dollars" ? "tax $" : "effective tax %"} ·{" "}
         {TAX_DRAG_NA_LABEL} = unmatched year · 0 = no tax drag
-        {sample ? " · demo" : ""}
       </p>
     </article>
   );
