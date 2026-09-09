@@ -18,6 +18,12 @@ export function EmptyState({
     <div className="rounded-lg border border-dashed border-line-strong bg-surface px-6 py-16 text-center">
       <p className="font-serif text-lg text-ink">{headline}</p>
       <p className="mx-auto mt-2 max-w-md text-sm text-muted">{detail}</p>
+      <p className="mx-auto mt-2 max-w-md text-sm text-muted">
+        <a href="#request-a-fund" className="text-accent underline">
+          Request a fund
+        </a>{" "}
+        if you want us to look for issuer sources.
+      </p>
       {hasActiveFilters && !universeEmpty ? (
         <button
           type="button"

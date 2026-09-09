@@ -84,7 +84,7 @@ The browser **does not** compute tax. Aftertax calls the Data API when `NEXT_PUB
 
 | Mode | How |
 | --- | --- |
-| Demo (default) | Local mocks: `POST /api/illustrate`, `POST /api/illustrate/compare`, `GET /api/performance`, `POST /api/performance/growth`, `POST /api/illustrate/portfolio`, `POST /api/illustrate/portfolio/compare`, `GET /api/coverage`, `GET /api/fund-families` |
+| Demo (default) | Local mocks: `POST /api/illustrate`, `POST /api/illustrate/compare`, `GET /api/performance`, `POST /api/performance/growth`, `POST /api/illustrate/portfolio`, `POST /api/illustrate/portfolio/compare`, `GET /api/coverage`, `GET /api/fund-families`, `POST /api/request/ticker` |
 | Data team FastAPI (PR #2) | `NEXT_PUBLIC_DATA_API_URL=http://localhost:8000` |
 
 Wired endpoints:
@@ -97,6 +97,24 @@ Wired endpoints:
 - `GET /distributions` — aggregated into Search / Sample Estimates / highlights. Empty or missing tickers stay empty — `seed.ts` is not merged in.
 - `GET /coverage`, `GET /fund-families` — `coverage_tier`, `aum_rank`, `priority` (Live vs Gap in picker / results / illustrate).
 - `POST /coverage/gaps` — logged when a gap ticker is selected.
+- `POST /request/ticker` — beta ticker intake (no auth). Body `{ ticker, note?, source }`. One client: `requestTicker({ ticker, note?, source })` from `@/lib/request-ticker` (also `@/components/illustrate`). Do not duplicate the fetch. 201 queued / 200 already in universe / 422 invalid. Local mock: `POST /api/request/ticker`.
+
+### `requestTicker` source enum (locked)
+
+```ts
+import { requestTicker, TICKER_REQUEST_SOURCES } from "@/lib/request-ticker";
+// or: import { requestTicker } from "@/components/illustrate";
+
+await requestTicker({ ticker: "ABCDX", note: "optional", source: "portfolio" });
+```
+
+| `source` | Who sends it |
+| --- | --- |
+| `web` | Request a fund form on Search |
+| `search_miss` | Search typed an exact ticker with no match |
+| `portfolio` | Portfolio import / Compare slot miss (Modules) |
+
+`TICKER_REQUEST_SOURCES` is `["web", "search_miss", "portfolio"]`. Search already uses `web` and `search_miss`. Modules should import this helper for slot misses — never invent fund data while queued.
 
 ### Run UI + Data API side by side
 

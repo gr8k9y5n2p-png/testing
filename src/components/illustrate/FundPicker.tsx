@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import type { FundEstimateView } from "@/data/types";
 import { searchFunds, splitFundsByBucket } from "@/data/queries";
 import { COPY } from "@/lib/copy";
+import { useSearchMissRequest } from "@/lib/data-api/use-search-miss";
 import { DistributionDateStrip } from "@/components/DistributionDateStrip";
 import { useCoverage } from "@/components/coverage/CoverageProvider";
 
@@ -14,6 +15,8 @@ export function FundPicker({
   inputId = "fund-search",
   autoFocus = false,
   label = COPY.searchCta,
+  reportSearchMiss = false,
+  onNotice,
 }: {
   funds: FundEstimateView[];
   selected: FundEstimateView | null;
@@ -21,6 +24,9 @@ export function FundPicker({
   inputId?: string;
   autoFocus?: boolean;
   label?: string;
+  /** Search tab only — Compare / Portfolio leave this off. */
+  reportSearchMiss?: boolean;
+  onNotice?: (message: string) => void;
 }) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
@@ -31,6 +37,13 @@ export function FundPicker({
     const { upcoming, paid } = splitFundsByBucket(found);
     return [...upcoming, ...paid].slice(0, 8);
   }, [funds, query]);
+
+  useSearchMissRequest(
+    reportSearchMiss ? query : "",
+    matches.length,
+    false,
+    onNotice,
+  );
 
   function showSuggestions(value: string) {
     setOpen(value.trim().length > 0);

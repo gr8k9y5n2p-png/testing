@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Facets, FundEstimateView, HighlightSets } from "@/data/types";
 import { Dashboard } from "@/components/Dashboard";
@@ -11,6 +11,7 @@ import { IllustratePanel } from "@/components/illustrate/IllustratePanel";
 import { PaywallDialog } from "@/components/paywall/PaywallDialog";
 import { CoverageProvider, useCoverage } from "@/components/coverage/CoverageProvider";
 import { Disclaimer } from "@/components/Disclaimer";
+import { NoticeToast } from "@/components/NoticeToast";
 import { STRIPE } from "@/lib/copy";
 import type { FundFamilyCoverage } from "@/lib/coverage";
 import { reportCoverageGap } from "@/lib/coverage";
@@ -89,9 +90,15 @@ function AftertaxAppInner({
   const [paywallOpen, setPaywallOpen] = useState(
     checkout === "cancel" && !isFreemiumDisabled(),
   );
-  const [unlockMessage, setUnlockMessage] = useState<string | null>(
+  const [notice, setNotice] = useState<string | null>(
     checkout === "success" ? CHECKOUT_SUCCESS_MESSAGE : null,
   );
+  const onNotice = useCallback((message: string) => {
+    setNotice(message);
+  }, []);
+  const dismissNotice = useCallback(() => {
+    setNotice(null);
+  }, []);
   const freemium = useFreemium();
   const coverage = useCoverage();
 
@@ -162,11 +169,11 @@ function AftertaxAppInner({
         return;
       }
       setPaywallOpen(false);
-      setUnlockMessage(
+      setNotice(
         `${body.detail ?? "Checkout is stubbed."} Price ${body.price_id ?? STRIPE.priceId}.`,
       );
     } catch {
-      setUnlockMessage("Checkout is unavailable in this demo.");
+      setNotice("Checkout is unavailable in this demo.");
     }
   }
 
@@ -178,6 +185,7 @@ function AftertaxAppInner({
         remaining={freemium.remaining}
         unlimited={freemium.unlimited}
         onSelect={selectFund}
+        onNotice={onNotice}
       />
 
       {selected ? (
@@ -211,7 +219,12 @@ function AftertaxAppInner({
         </div>
         <div className="mt-8">
           <HighlightsSection highlights={highlights} />
-          <Dashboard funds={funds} facets={facets} onIllustrate={selectFund} />
+          <Dashboard
+            funds={funds}
+            facets={facets}
+            onIllustrate={selectFund}
+            onNotice={onNotice}
+          />
         </div>
       </section>
 
@@ -224,18 +237,7 @@ function AftertaxAppInner({
           void unlock();
         }}
       />
-      {unlockMessage ? (
-        <p className="fixed bottom-4 left-1/2 z-50 w-[min(32rem,calc(100%-2rem))] -translate-x-1/2 rounded-md border border-line bg-surface px-4 py-3 text-sm text-ink shadow-lg">
-          {unlockMessage}
-          <button
-            type="button"
-            className="ml-3 text-xs text-accent underline"
-            onClick={() => setUnlockMessage(null)}
-          >
-            Dismiss
-          </button>
-        </p>
-      ) : null}
+      <NoticeToast message={notice} onDismiss={dismissNotice} />
     </>
   );
 }

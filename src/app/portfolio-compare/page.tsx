@@ -53,8 +53,12 @@ export default async function PortfolioCompareDemoPage() {
         {`import {
   PortfolioCompare,
   exportToPdf,
+  requestTicker,
   toPortfolioCompareExportModel,
 } from "@/components/illustrate";
+// or: import { requestTicker } from "@/lib/request-ticker";
+// source: "web" | "search_miss" | "portfolio"
+// await requestTicker({ ticker, note, source: "portfolio" });
 
 <PortfolioCompare />
 
