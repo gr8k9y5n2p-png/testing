@@ -2,8 +2,12 @@ import { formatUsd } from "@/lib/format";
 import type { PortfolioAllocationOut } from "@/lib/illustrate/portfolio-compare-types";
 
 export {
+  upcomingDistributionAmount,
   upcomingDistributionLine,
+  upcomingDollarImpactAmount,
   upcomingEstimatedTaxLine,
+  upcomingPctOfNavAmount,
+  upcomingPctOfNavLine,
 } from "@/lib/illustrate/portfolio-compare-copy";
 
 export type { DistributionBucket, UpcomingRow } from "@/lib/illustrate/publication-stage";
@@ -19,6 +23,7 @@ export {
   PAID_HISTORY_CAP,
   paidHistoryDateOf,
   paidHistoryRowsForSide,
+  pctOfNavFromDist,
   publicationBucket,
   totalUpcomingTax,
   upcomingFromHolding,

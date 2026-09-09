@@ -1,10 +1,19 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  ANNOUNCED_COLUMN,
+  DIST_AMOUNT_COLUMN,
+  DOLLAR_IMPACT_COLUMN,
   EST_DISTRIBUTION_LINE_LABEL,
   ESTIMATED_TAX_LINE_LABEL,
+  EX_COLUMN,
+  PCT_OF_NAV_COLUMN,
+  RECORD_COLUMN,
+  upcomingDistributionAmount,
   upcomingDistributionLine,
+  upcomingDollarImpactAmount,
   upcomingEstimatedTaxLine,
+  upcomingPctOfNavAmount,
   PAID_HISTORY_DETAIL,
   PAID_HISTORY_EMPTY,
   PAID_HISTORY_HEADING,
@@ -43,6 +52,12 @@ describe("PortfolioCompare upcoming module copy", () => {
     assert.match(UPCOMING_MODULE_DETAIL, /sell before record/i);
     assert.doesNotMatch(UPCOMING_MODULE_DETAIL, /\$0|0\.00/);
     assert.notEqual(UPCOMING_MODULE_HEADING, PAID_HISTORY_HEADING);
+    assert.equal(DIST_AMOUNT_COLUMN, "Dist $");
+    assert.equal(PCT_OF_NAV_COLUMN, "% of NAV");
+    assert.equal(DOLLAR_IMPACT_COLUMN, "$ impact");
+    assert.equal(ANNOUNCED_COLUMN, "Announced");
+    assert.equal(RECORD_COLUMN, "Record");
+    assert.equal(EX_COLUMN, "Ex");
     assert.equal(EST_DISTRIBUTION_LINE_LABEL, "Est. Distribution");
     assert.equal(ESTIMATED_TAX_LINE_LABEL, "Estimated Tax");
     assert.doesNotMatch(EST_DISTRIBUTION_LINE_LABEL, /\$0|0\.00/);
@@ -58,6 +73,30 @@ describe("PortfolioCompare upcoming module copy", () => {
         estimatedTax: null,
       }),
       "Estimated Tax: N/A",
+    );
+    assert.equal(
+      upcomingDistributionAmount({ available: false, distributionDollars: null }),
+      "Not available / undisclosed",
+    );
+    assert.equal(
+      upcomingPctOfNavAmount({ available: false, pctOfNav: null }),
+      "Not available / undisclosed",
+    );
+    assert.equal(
+      upcomingPctOfNavAmount({ available: true, pctOfNav: 1.28 }),
+      "1.28%",
+    );
+    assert.equal(
+      upcomingDollarImpactAmount({
+        available: true,
+        covered: true,
+        estimatedTax: 1120,
+      }),
+      "$1,120",
+    );
+    assert.doesNotMatch(
+      upcomingPctOfNavAmount({ available: false, pctOfNav: null }),
+      /\$0|0\.00/,
     );
   });
 });

@@ -14,7 +14,7 @@ import {
   UPCOMING_UNAVAILABLE_DETAIL,
   UPCOMING_UNAVAILABLE_HEADLINE,
 } from "@/lib/copy";
-import { formatRatePct, formatUsd, formatUsdRange } from "@/lib/format";
+import { formatPct, formatRatePct, formatUsd, formatUsdRange } from "@/lib/format";
 
 const ESTIMATE_LABELS: Record<string, string> = {
   ordinary_income: "Ordinary income",
@@ -30,9 +30,12 @@ const ESTIMATE_LABELS: Record<string, string> = {
 export function IllustrationResults({
   result,
   fund,
+  holdingDollars,
 }: {
   result: IllustrateResponse;
   fund?: FundEstimate | null;
+  /** Holding $ so Upcoming can show % of NAV without inventing a rate. */
+  holdingDollars?: number | null;
 }) {
   const { components, warnings } = result;
   const { upcoming: upcomingComponents, paid: paidComponents } =
@@ -76,6 +79,7 @@ export function IllustrationResults({
         wellClassName="bg-surface"
         components={upcomingComponents}
         fund={fund}
+        holdingDollars={holdingDollars}
         empty={
           <div className="px-3 py-5">
             <p className="font-serif text-base tracking-tight text-ink">
@@ -92,6 +96,7 @@ export function IllustrationResults({
           wellClassName="bg-paper"
           components={paidComponents}
           fund={fund}
+          holdingDollars={holdingDollars}
         />
       ) : null}
 
@@ -143,6 +148,20 @@ export function IllustrationResults({
   );
 }
 
+function componentPctOfNav(
+  component: IllustrationComponent,
+  holdingDollars?: number | null,
+): string {
+  if (
+    component.distribution_dollars == null ||
+    holdingDollars == null ||
+    !(holdingDollars > 0)
+  ) {
+    return UPCOMING_UNAVAILABLE_HEADLINE;
+  }
+  return formatPct((component.distribution_dollars / holdingDollars) * 100);
+}
+
 function ComponentTable({
   heading,
   kicker,
@@ -150,6 +169,7 @@ function ComponentTable({
   components,
   fund,
   empty,
+  holdingDollars,
 }: {
   heading: string;
   kicker: string;
@@ -157,6 +177,7 @@ function ComponentTable({
   components: IllustrationComponent[];
   fund?: FundEstimate | null;
   empty?: ReactNode;
+  holdingDollars?: number | null;
 }) {
   return (
     <div className={`overflow-hidden rounded-xl border border-line ${wellClassName}`}>
@@ -174,8 +195,9 @@ function ComponentTable({
           <tr>
             <th className="px-3 py-2 text-left">Component</th>
             <th className="px-3 py-2 text-right">Distribution</th>
+            <th className="px-3 py-2 text-right">% of NAV</th>
             <th className="px-3 py-2 text-right">Effective rate</th>
-            <th className="px-3 py-2 text-right">Est. tax</th>
+            <th className="px-3 py-2 text-right">$ impact</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-line">
@@ -201,7 +223,6 @@ function ComponentTable({
                       publicationStage: component.publication_stage,
                       bucket: illustrationComponentBucket(component, fund),
                     }}
-                    compact
                     showPayable={Boolean(component.payable_date)}
                     className="mt-1"
                   />
@@ -213,6 +234,9 @@ function ComponentTable({
                   component.distribution_dollars_min,
                   component.distribution_dollars_max,
                 )}
+              </td>
+              <td className="px-3 py-2 text-right font-mono">
+                {componentPctOfNav(component, holdingDollars)}
               </td>
               <td className="px-3 py-2 text-right font-mono text-muted">
                 {formatRatePct(component.effective_rate)}

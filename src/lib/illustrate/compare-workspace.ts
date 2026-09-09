@@ -295,6 +295,7 @@ export function upcomingRowsFromCompareTickers(
     ticker: string;
     fund?: FundEstimateView | null;
     upcoming?: CompareUpcomingHint | null;
+    holdingDollars?: number | null;
   }>,
 ): UpcomingRow[] {
   return loaded.map((item, index) =>
@@ -302,6 +303,7 @@ export function upcomingRowsFromCompareTickers(
       ticker: item.ticker,
       fund: item.fund,
       upcoming: item.upcoming,
+      holdingDollars: item.holdingDollars,
       index,
     }),
   );
@@ -312,12 +314,17 @@ export function upcomingRowForCompareTicker(input: {
   fund?: FundEstimateView | null;
   upcoming?: CompareUpcomingHint | null;
   index: number;
+  holdingDollars?: number | null;
 }): UpcomingRow {
   const ticker = normalizeTicker(input.ticker) || input.ticker;
   const fund = input.fund ?? null;
   const catalogUpcoming = catalogIsUnpaidAnnounced(fund);
   const announced = Boolean(input.upcoming?.announced);
   const available = announced || catalogUpcoming;
+  const holdingDollars =
+    input.holdingDollars != null && input.holdingDollars > 0
+      ? input.holdingDollars
+      : null;
 
   return {
     key: `compare-${ticker}-${input.index}`,
@@ -325,7 +332,10 @@ export function upcomingRowForCompareTicker(input: {
     fundName: fund?.fundName || ticker,
     side: "current",
     sideLabel: "Compare",
+    // Compare API sends upcoming tax $, not Dist $. Never invent from catalog.
     distributionDollars: null,
+    holdingDollars,
+    pctOfNav: null,
     estimatedTax: announced ? (input.upcoming?.dollars ?? null) : null,
     asOf: catalogUpcoming ? fund?.asOfDate ?? null : input.upcoming?.asOf ?? null,
     announcedDate: catalogUpcoming

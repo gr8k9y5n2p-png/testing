@@ -8,12 +8,14 @@ import type {
 import {
   upcomingDistributionLine,
   upcomingEstimatedTaxLine,
+  upcomingPctOfNavAmount,
 } from "./portfolio-compare-copy.ts";
 import {
   announcedDateOf,
   PAID_HISTORY_CAP,
   paidHistoryDateOf,
   paidHistoryRowsForSide,
+  pctOfNavFromDist,
   publicationBucket,
   totalUpcomingTax,
   upcomingFromHolding,
@@ -793,6 +795,9 @@ describe("PortfolioCompare distribution tables", () => {
     assert.equal(rows[2]?.available, true);
     assert.equal(rows[2]?.distributionDollars, 3200);
     assert.equal(rows[2]?.estimatedTax, 1120);
+    assert.equal(rows[2]?.holdingDollars, 250_000);
+    assert.ok(rows[2]?.pctOfNav != null);
+    assert.equal(Number(rows[2]?.pctOfNav?.toFixed(2)), 1.28);
     assert.equal(rows[2]?.recordDate, "2026-09-19");
     assert.equal(rows[2]?.exDate, "2026-09-20");
     assert.equal(rows[3]?.available, false);
@@ -865,5 +870,51 @@ describe("PortfolioCompare distribution tables", () => {
       }),
       "Estimated Tax: N/A",
     );
+    assert.equal(
+      upcomingPctOfNavAmount({ available: true, pctOfNav: 1.28 }),
+      "1.28%",
+    );
+    assert.equal(
+      upcomingPctOfNavAmount({ available: false, pctOfNav: null }),
+      "Not available / undisclosed",
+    );
+  });
+
+  it("keeps announced rows with dates when Dist $ is still undisclosed", () => {
+    const book = allocation([
+      holding({
+        ticker: "AMCPX",
+        upcoming: {
+          publication_stage: "preliminary_estimate",
+          announced_date: "2026-09-01",
+          record_date: "2026-12-16",
+          ex_date: "2026-12-17",
+          distribution_dollars: null,
+          estimated_tax: null,
+        },
+      }),
+    ]);
+    const rows = upcomingHoldingsForSide(book, "current", TODAY);
+    assert.equal(rows[0]?.available, true);
+    assert.equal(rows[0]?.distributionDollars, null);
+    assert.equal(rows[0]?.pctOfNav, null);
+    assert.equal(rows[0]?.announcedDate, "2026-09-01");
+    assert.equal(rows[0]?.recordDate, "2026-12-16");
+    assert.equal(rows[0]?.exDate, "2026-12-17");
+    assert.doesNotMatch(
+      upcomingDistributionLine({
+        available: true,
+        distributionDollars: rows[0]?.distributionDollars ?? null,
+      }),
+      /\$0/,
+    );
+  });
+
+  it("uses Data percent_of_nav and otherwise Dist $ / holding $", () => {
+    assert.equal(pctOfNavFromDist(3200, 250_000), 1.28);
+    assert.equal(pctOfNavFromDist(3200, 250_000, 2.5), 2.5);
+    assert.equal(pctOfNavFromDist(null, 250_000), null);
+    assert.equal(pctOfNavFromDist(3200, null), null);
+    assert.equal(pctOfNavFromDist(3200, 0), null);
   });
 });

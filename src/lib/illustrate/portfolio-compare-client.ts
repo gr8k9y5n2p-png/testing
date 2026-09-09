@@ -1,5 +1,6 @@
 import { dataApiUrl, isRemoteDataApi } from "@/lib/data-api/config";
 import { IllustrateRequestError } from "@/lib/illustrate/client";
+import { userFacingIllustrateError } from "@/lib/illustrate/illustrate-error";
 import {
   positiveNav,
   withPortfolioHoldingNav,
@@ -68,6 +69,9 @@ function normalizeDistributionRow(raw: unknown): PortfolioDistributionRow | null
       row.distribution_dollars ?? row.distributionDollars,
     ),
     estimated_tax: numOrNull(row.estimated_tax ?? row.estimated_tax_dollars),
+    percent_of_nav: numOrNull(
+      row.percent_of_nav ?? row.pct_of_nav ?? row.distribution_pct_nav,
+    ),
     as_of: isoOrNull(row.as_of),
     announced_date: isoOrNull(row.announced_date ?? row.announcedDate),
     record_date: isoOrNull(row.record_date ?? row.recordDate),
@@ -459,16 +463,22 @@ export async function postIllustratePortfolioCompare(
   }
 
   if (response && response.status >= 400 && response.status < 500 && response.status !== 404) {
-    let detail = `Portfolio compare failed (${response.status})`;
-    let code: string | undefined;
+    let mapped = userFacingIllustrateError(
+      null,
+      `Portfolio compare failed (${response.status})`,
+    );
     try {
-      const body = (await response.json()) as { detail?: string; code?: string };
-      if (body.detail) detail = body.detail;
-      code = body.code;
+      const body = (await response.json()) as Record<string, unknown>;
+      mapped = userFacingIllustrateError(
+        body,
+        typeof body.detail === "string" && body.detail
+          ? body.detail
+          : mapped.message,
+      );
     } catch {
       /* ignore */
     }
-    throw new IllustrateRequestError(detail, response.status, code);
+    throw new IllustrateRequestError(mapped.message, response.status, mapped.code);
   }
 
   try {

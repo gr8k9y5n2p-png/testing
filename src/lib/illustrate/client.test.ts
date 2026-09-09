@@ -5,6 +5,8 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { toDataApiIllustrateBody } from "./compare-request.ts";
 import {
+  ENTER_NAV_COPY,
+  isMissingNavError,
   NEED_FUND_PRICE_COPY,
   NAV_OR_SHARES_REQUIRED_DETAIL,
   userFacingIllustrateError,
@@ -111,5 +113,16 @@ describe("userFacingIllustrateError nav/shares", () => {
     );
     assert.equal(mapped.message, "holding_dollars must be greater than 0");
     assert.equal(mapped.code, "invalid");
+  });
+
+  it("soft-detects missing NAV so UI can prompt instead of crashing", () => {
+    const mapped = userFacingIllustrateError(
+      { code: "needs_nav_or_shares" },
+      "raw",
+    );
+    assert.equal(isMissingNavError(mapped), true);
+    assert.equal(isMissingNavError(new Error(NEED_FUND_PRICE_COPY)), true);
+    assert.equal(isMissingNavError(new Error(ENTER_NAV_COPY)), true);
+    assert.equal(isMissingNavError(new Error("holding_dollars must be greater than 0")), false);
   });
 });

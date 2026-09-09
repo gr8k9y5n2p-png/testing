@@ -85,8 +85,14 @@ describe("portfolio compare periods wiring", () => {
     assert.doesNotMatch(compare, /PaidHistoryTable/);
     assert.doesNotMatch(compare, /paidHistoryRowsForSide/);
     assert.match(table, /UPCOMING_MODULE_DETAIL/);
-    assert.match(table, /upcomingDistributionLine/);
-    assert.match(table, /upcomingEstimatedTaxLine/);
+    assert.match(table, /upcomingDistributionAmount/);
+    assert.match(table, /upcomingPctOfNavAmount/);
+    assert.match(table, /upcomingDollarImpactAmount/);
+    assert.match(table, /DIST_AMOUNT_COLUMN/);
+    assert.match(table, /PCT_OF_NAV_COLUMN/);
+    assert.match(table, /DOLLAR_IMPACT_COLUMN/);
+    assert.match(table, /ANNOUNCED_COLUMN/);
+    assert.match(table, /dates include year|Announced \/ Record \/ Ex include year/);
     assert.doesNotMatch(table, /Est\. dist \$/);
     assert.doesNotMatch(table, /export function PaidHistoryTable/);
     assert.doesNotMatch(table, /Paid history/);
@@ -146,6 +152,9 @@ describe("portfolio compare nav_per_share wiring", () => {
     assert.match(client, /seedFundNameLookup/);
     assert.match(client, /positiveNav\(holding\.nav_per_share\)/);
     assert.match(compare, /navFromFundMetadata\(ticker, holding\.nav\)/);
+    assert.match(compare, /NeedFundPricePrompt/);
+    assert.match(compare, /isMissingNavError/);
+    assert.match(client, /userFacingIllustrateError/);
     assert.doesNotMatch(compare, /seedNavLookup/);
     assert.match(seed, /DODIX:\s*12\.8/);
     assert.match(seed, /DODGX:\s*273\.16/);

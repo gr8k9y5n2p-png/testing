@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import type { FundEstimateView } from "../../data/types.ts";
 import type { CompareIllustration, ComparePeriodOut, CompareResponse } from "./compare-types.ts";
 import {
@@ -302,5 +305,63 @@ describe("compare upcoming rows", () => {
     assert.equal(row.recordDate, "2026-12-16");
     assert.equal(row.exDate, "2026-12-17");
     assert.equal(row.distributionDollars, null);
+    assert.equal(row.pctOfNav, null);
+    assert.equal(row.holdingDollars, null);
+  });
+
+  it("does not invent Dist $ or % of NAV from catalog prelims", () => {
+    const row = upcomingRowForCompareTicker({
+      ticker: "AMCPX",
+      fund: view("AMCPX"),
+      upcoming: {
+        dollars: 185,
+        announced: true,
+        asOf: "2026-08-29",
+        publicationStage: "preliminary_estimate",
+      },
+      holdingDollars: 10_000,
+      index: 0,
+    });
+    assert.equal(row.holdingDollars, 10_000);
+    assert.equal(row.distributionDollars, null);
+    assert.equal(row.pctOfNav, null);
+    assert.equal(row.estimatedTax, 185);
+  });
+});
+
+describe("Compare workspace Upcoming + NAV soft path", () => {
+  const here = dirname(fileURLToPath(import.meta.url));
+
+  it("surfaces Dist $ / % NAV / $ impact columns and prompts for missing NAV", () => {
+    const workspace = readFileSync(
+      join(here, "../../components/illustrate/CompareWorkspace.tsx"),
+      "utf8",
+    );
+    const table = readFileSync(
+      join(here, "../../components/illustrate/portfolio-compare/UpcomingTable.tsx"),
+      "utf8",
+    );
+    const panel = readFileSync(
+      join(here, "../../components/illustrate/IllustratePanel.tsx"),
+      "utf8",
+    );
+    const results = readFileSync(
+      join(here, "../../components/illustrate/IllustrationResults.tsx"),
+      "utf8",
+    );
+    assert.match(workspace, /NeedFundPricePrompt/);
+    assert.match(workspace, /isMissingNavError/);
+    assert.match(workspace, /holdingDollars/);
+    assert.match(table, /DIST_AMOUNT_COLUMN/);
+    assert.match(table, /PCT_OF_NAV_COLUMN/);
+    assert.match(table, /DOLLAR_IMPACT_COLUMN/);
+    assert.match(table, /ANNOUNCED_COLUMN/);
+    assert.match(table, /formatOptionalDate\(value\)/);
+    assert.doesNotMatch(table, /formatOptionalDate\(value, true\)/);
+    assert.match(panel, /ENTER_NAV_COPY/);
+    assert.match(panel, /isMissingNavError/);
+    assert.match(results, /% of NAV/);
+    assert.match(results, /\$ impact/);
+    assert.doesNotMatch(results, /compact\n\s+showPayable=\{Boolean\(component\.payable_date\)\}/);
   });
 });

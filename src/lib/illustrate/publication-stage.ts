@@ -15,6 +15,13 @@ export type UpcomingRow = {
   sideLabel: string;
   /** Null when upcoming is undisclosed — never coerce to $0. */
   distributionDollars: number | null;
+  /** Holding $ used to derive % of NAV. Null when unknown. */
+  holdingDollars: number | null;
+  /**
+   * Dist $ / holding $ × 100, or Data `percent_of_nav`.
+   * Null when either input is missing — never invent.
+   */
+  pctOfNav: number | null;
   estimatedTax: number | null;
   asOf: string | null;
   announcedDate: string | null;
@@ -159,6 +166,7 @@ function hasDistributionSignal(row: PortfolioDistributionRow): boolean {
   return (
     num(row.distribution_dollars) != null ||
     num(row.estimated_tax) != null ||
+    num(row.percent_of_nav) != null ||
     Boolean(
       announcedDateOf(row) ||
         row.record_date ||
@@ -167,6 +175,23 @@ function hasDistributionSignal(row: PortfolioDistributionRow): boolean {
         row.publication_stage,
     )
   );
+}
+
+/** % of NAV from Data, else Dist $ / holding $. Never invent a rate. */
+export function pctOfNavFromDist(
+  distributionDollars: number | null,
+  holdingDollars: number | null | undefined,
+  explicit?: number | null,
+): number | null {
+  if (explicit != null && Number.isFinite(explicit)) return explicit;
+  if (
+    distributionDollars == null ||
+    holdingDollars == null ||
+    !(holdingDollars > 0)
+  ) {
+    return null;
+  }
+  return (distributionDollars / holdingDollars) * 100;
 }
 
 function coalesceUpcomingRows(
@@ -306,8 +331,9 @@ function toTableRow(
   eventIndex: number,
   bucket: DistributionBucket,
 ): UpcomingRow | null {
+  if (!hasDistributionSignal(event)) return null;
   const dist = num(event.distribution_dollars);
-  if (dist == null) return null;
+  const holdingDollars = num(holding.holding_dollars);
   const ticker = holdingTicker(holding);
   return {
     key: `${side}-${holding.holding_index}-${ticker}-${index}-${bucket}-${eventIndex}`,
@@ -316,6 +342,8 @@ function toTableRow(
     side,
     sideLabel: side === "current" ? "Current" : "Proposed",
     distributionDollars: dist,
+    holdingDollars,
+    pctOfNav: pctOfNavFromDist(dist, holdingDollars, num(event.percent_of_nav)),
     estimatedTax: num(event.estimated_tax),
     asOf: isoDate(event.as_of),
     announcedDate: announcedDateOf(event),
@@ -343,6 +371,8 @@ function undisclosedUpcomingRow(
     side,
     sideLabel: side === "current" ? "Current" : "Proposed",
     distributionDollars: null,
+    holdingDollars: num(holding.holding_dollars),
+    pctOfNav: null,
     estimatedTax: null,
     asOf: null,
     announcedDate: null,

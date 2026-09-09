@@ -1,6 +1,12 @@
 /** Advisor-facing copy when Data cannot convert a holding without NAV/shares. */
 export const NEED_FUND_PRICE_COPY = "Need fund price to convert this holding.";
 
+/** Soft path — enter NAV instead of treating a missing price as a hard crash. */
+export const ENTER_NAV_COPY = "Enter NAV per share to convert $ / share amounts.";
+
+export const ENTER_NAV_DETAIL =
+  "Upcoming amounts stay undisclosed until Data can convert per_share rows. Enter a fund price — do not invent an estimate.";
+
 /** Data API detail when a per_share snapshot is illustrated without NAV or shares. */
 export const NAV_OR_SHARES_REQUIRED_DETAIL =
   "nav_per_share or shares is required when illustrating per_share distributions";
@@ -54,4 +60,19 @@ export function userFacingIllustrateError(
     };
   }
   return { message: detail, code };
+}
+
+/** True when Data asked for NAV/shares. Soft-handle — never hard-crash the UI. */
+export function isMissingNavError(error: unknown): boolean {
+  const rec = asRecord(error);
+  const code = errorCode(rec?.code) ?? "";
+  const message = error instanceof Error ? error.message : "";
+  return (
+    code === "needs_nav_or_shares" ||
+    code === "nav_required" ||
+    message === NEED_FUND_PRICE_COPY ||
+    message === ENTER_NAV_COPY ||
+    message.includes(NAV_OR_SHARES_REQUIRED_DETAIL) ||
+    /nav_per_share is required when illustrating per_share/.test(message)
+  );
 }
