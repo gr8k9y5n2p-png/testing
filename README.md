@@ -209,18 +209,22 @@ The command is the `POST /ingest/fetch` `fund_family=all` path with per-family e
 
 `$/share` tax math needs NAV universe-wide:
 
-- Dist $ = est $/share × (holding $ / NAV)
-- % of NAV = est $/share ÷ NAV
+- Dist $ (live estimate) = est $/share × (holding $ / **latest weekly NAV**)
+- Historical % of NAV = est $/share ÷ **NAV on the distribution day**
+- Live-estimate % of NAV = est $/share ÷ latest weekly NAV
 
-Never invent estimate amounts or NAV.
+**Distribution day** is `ex_date` when present, else `payable_date`. The print is the last regular close **on or before** that day (≤7 calendar days, for weekends / holidays). Never use today’s NAV for a past distribution. Null when unknown — never invent NAV or estimate amounts.
 
 | Field | Where | Meaning |
 | --- | --- | --- |
-| `nav_per_share` | `GET /funds` items; `POST /illustrate` request/response | Latest liquid close / mutual-fund NAV (USD per share). Null when unknown. |
-| `nav_as_of` | `GET /funds` items | As-of date of that print. |
-| `nav_source` | `GET /funds` items | `yahoo_last_close` (preferred live daily **regular close**, not `adjclose`), `issuer` (when a family quote exists), `fixture` / `fixture_fallback`. |
+| `nav_per_share` | `GET /funds` items; `POST /illustrate` request/response | Latest liquid close / mutual-fund NAV (USD per share) for **live** estimate math. Null when unknown. |
+| `nav_as_of` | `GET /funds` items | As-of date of that weekly print. |
+| `nav_source` | `GET /funds` items | `yahoo_last_close` (preferred live daily **regular close**, not `adjclose`), `issuer`, `fixture` / `fixture_fallback`. |
+| `nav_on_distribution_day` | `GET /distributions` items; illustrate `components[]` | NAV on the distribution day (ex, else payable). **Not** today’s weekly NAV. Null when unknown. |
+| `nav_on_distribution_day_as_of` | same | Print date actually used (may be a few days before a weekend/holiday ex). |
+| `nav_on_distribution_day_source` | same | Source of that historical print. |
 
-`POST /illustrate` (and portfolio / compare) uses the stored weekly NAV when the request omits `nav_per_share` and `shares`. A request-supplied NAV still wins. Per-share rows without a request NAV **and** without a stored print still return HTTP 422 `needs_nav_or_shares`. When NAV is known, each component also includes derived `percent_of_nav` (same units as `amount_unit=percent_of_nav`: `4` = 4% of NAV).
+`POST /illustrate` (and portfolio / compare) uses the stored weekly NAV when the request omits `nav_per_share` and `shares` so live Dist $ can run. A request-supplied NAV still wins for Dist $ / shares. Historical `percent_of_nav` on a component uses `nav_on_distribution_day` when the row is past-dated or `final`/`paid`; it stays **null** if that day’s print is missing (does **not** fall back to today). Live prelim/updated rows without a past distribution day still use latest weekly NAV for `% of NAV`.
 
 ```bash
 python -m app.cli refresh-nav --mode fixture   # offline catalog + performance last close

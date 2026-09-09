@@ -157,6 +157,28 @@ class FundNav(Base):
     )
 
 
+class FundNavHistory(Base):
+    """Daily regular close / NAV print, joinable by ticker + date. Never invented."""
+
+    __tablename__ = "fund_nav_history"
+    __table_args__ = (
+        UniqueConstraint("ticker", "nav_as_of", name="uq_fund_nav_history_ticker_as_of"),
+        Index("ix_nav_hist_ticker_as_of", "ticker", "nav_as_of"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    ticker: Mapped[str] = mapped_column(String(32), nullable=False)
+    nav_per_share: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
+    nav_as_of: Mapped[date] = mapped_column(Date, nullable=False)
+    source: Mapped[str] = mapped_column(String(64), nullable=False)
+    source_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+
+
 class IngestRun(Base):
     __tablename__ = "ingest_runs"
     __table_args__ = (Index("ix_ingest_family_started", "fund_family", "started_at"),)

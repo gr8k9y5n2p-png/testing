@@ -11,10 +11,14 @@ from app.services.nav import (
     NavQuote,
     fixture_quote,
     listed_ticker,
+    lookup_nav_on_day,
     parse_yahoo_chart,
+    parse_yahoo_daily_points,
     refresh_navs,
     unique_fund_nav_coverage,
     upsert_nav,
+    upsert_nav_history,
+    uses_distribution_day_nav,
 )
 
 
@@ -196,6 +200,260 @@ def test_cli_refresh_nav_fixture(engine, capsys) -> None:
     out = capsys.readouterr().out
     assert "Weekly NAV refresh" in out
     assert "VFIAX" in out
+
+
+def test_historical_percent_of_nav_uses_distribution_day_not_today(
+    client: TestClient, session
+) -> None:
+    ingested = client.post(
+        "/ingest/distributions",
+        json={
+            "records": [
+                {
+                    "fund_family": "Vanguard",
+                    "fund_name": "Vanguard 500 Index Fund",
+                    "ticker": "VFIAX",
+                    "estimate_type": "long_term_capital_gains",
+                    "amount": "2.00",
+                    "amount_unit": "per_share",
+                    "as_of": "2025-12-24",
+                    "ex_date": "2025-12-23",
+                    "payable_date": "2025-12-24",
+                    "publication_stage": "paid",
+                }
+            ]
+        },
+    )
+    assert ingested.status_code == 200
+    upsert_nav(
+        session,
+        NavQuote(
+            ticker="VFIAX",
+            nav_per_share=Decimal("100"),
+            nav_as_of=date(2026, 9, 8),
+            source=SOURCE_YAHOO,
+            source_url="https://example.invalid/latest",
+            fund_identifier="VFIAX",
+        ),
+    )
+    upsert_nav_history(
+        session,
+        NavQuote(
+            ticker="VFIAX",
+            nav_per_share=Decimal("50"),
+            nav_as_of=date(2025, 12, 23),
+            source=SOURCE_YAHOO,
+            source_url="https://example.invalid/ex-day",
+        ),
+    )
+    session.commit()
+
+    listed = client.get("/distributions", params={"ticker": "VFIAX"}).json()["items"][0]
+    assert Decimal(listed["nav_on_distribution_day"]) == Decimal("50")
+    assert listed["nav_on_distribution_day_as_of"] == "2025-12-23"
+    assert listed["nav_on_distribution_day_source"] == SOURCE_YAHOO
+    by_id = client.get(f"/distributions/{listed['id']}").json()
+    assert Decimal(by_id["nav_on_distribution_day"]) == Decimal("50")
+
+    body = client.post(
+        "/illustrate",
+        json={"holding_dollars": 1000, "selectors": {"ticker": "VFIAX"}},
+    ).json()
+    # Live Dist $ still uses latest weekly NAV: $2 × ($1000 / $100) = $20
+    assert Decimal(body["nav_per_share"]) == Decimal("100")
+    assert Decimal(body["components"][0]["distribution_dollars"]) == Decimal("20.00")
+    # Historical % of NAV uses NAV on ex_date, not today: $2 ÷ $50 = 4%
+    assert Decimal(body["components"][0]["nav_on_distribution_day"]) == Decimal("50")
+    assert Decimal(body["components"][0]["percent_of_nav"]) == Decimal("4.000000")
+    assert body["components"][0]["percent_of_nav"] != "2.000000"
+
+
+def test_historical_percent_stays_null_without_distribution_day_nav(
+    client: TestClient, session
+) -> None:
+    ingested = client.post(
+        "/ingest/distributions",
+        json={
+            "records": [
+                {
+                    "fund_family": "Vanguard",
+                    "fund_name": "Vanguard 500 Index Fund",
+                    "ticker": "VFIAX",
+                    "estimate_type": "long_term_capital_gains",
+                    "amount": "2.00",
+                    "amount_unit": "per_share",
+                    "as_of": "2025-12-24",
+                    "ex_date": "2025-12-23",
+                    "publication_stage": "paid",
+                }
+            ]
+        },
+    )
+    assert ingested.status_code == 200
+    upsert_nav(
+        session,
+        NavQuote(
+            ticker="VFIAX",
+            nav_per_share=Decimal("100"),
+            nav_as_of=date(2026, 9, 8),
+            source=SOURCE_YAHOO,
+            source_url="https://example.invalid/latest",
+        ),
+    )
+    session.commit()
+
+    listed = client.get("/distributions", params={"ticker": "VFIAX"}).json()["items"][0]
+    assert listed["nav_on_distribution_day"] is None
+    assert listed["nav_on_distribution_day_as_of"] is None
+
+    body = client.post(
+        "/illustrate",
+        json={"holding_dollars": 1000, "selectors": {"ticker": "VFIAX"}},
+    ).json()
+    assert Decimal(body["nav_per_share"]) == Decimal("100")
+    assert Decimal(body["components"][0]["distribution_dollars"]) == Decimal("20.00")
+    assert body["components"][0]["percent_of_nav"] is None
+    assert body["components"][0]["nav_on_distribution_day"] is None
+
+
+def test_weekend_ex_uses_prior_close_within_lookback(client: TestClient, session) -> None:
+    ingested = client.post(
+        "/ingest/distributions",
+        json={
+            "records": [
+                {
+                    "fund_family": "State Street",
+                    "fund_name": "SPDR S&P 500 ETF Trust",
+                    "ticker": "SPY",
+                    "estimate_type": "ordinary_income",
+                    "amount": "1.00",
+                    "amount_unit": "per_share",
+                    "as_of": "2025-12-22",
+                    "ex_date": "2025-12-21",
+                    "publication_stage": "paid",
+                }
+            ]
+        },
+    )
+    assert ingested.status_code == 200
+    # 2025-12-21 was a Sunday. Friday 2025-12-19 is within 7 days.
+    upsert_nav_history(
+        session,
+        NavQuote(
+            ticker="SPY",
+            nav_per_share=Decimal("580"),
+            nav_as_of=date(2025, 12, 19),
+            source=SOURCE_YAHOO,
+            source_url="https://example.invalid/friday",
+        ),
+    )
+    session.commit()
+    listed = client.get("/distributions", params={"ticker": "SPY"}).json()["items"][0]
+    assert Decimal(listed["nav_on_distribution_day"]) == Decimal("580")
+    assert listed["nav_on_distribution_day_as_of"] == "2025-12-19"
+
+
+def test_uses_distribution_day_nav_rules() -> None:
+    class Row:
+        def __init__(self, ex=None, payable=None, stage=None):
+            self.ex_date = ex
+            self.payable_date = payable
+            self.publication_stage = stage
+
+    today = date(2026, 9, 9)
+    assert uses_distribution_day_nav(Row(ex=date(2025, 12, 23)), today=today) is True
+    assert uses_distribution_day_nav(Row(payable=date(2025, 12, 24)), today=today) is True
+    assert uses_distribution_day_nav(Row(stage="paid"), today=today) is True
+    assert uses_distribution_day_nav(Row(ex=date(2026, 12, 15), stage="preliminary_estimate"), today=today) is False
+    assert uses_distribution_day_nav(Row(stage="preliminary_estimate"), today=today) is False
+
+
+def test_later_close_is_never_used_for_distribution_day(session) -> None:
+    upsert_nav_history(
+        session,
+        NavQuote(
+            ticker="ABALX",
+            nav_per_share=Decimal("99"),
+            nav_as_of=date(2025, 12, 24),
+            source=SOURCE_YAHOO,
+            source_url="https://example.invalid/after",
+        ),
+    )
+    session.flush()
+    assert lookup_nav_on_day(session, "ABALX", date(2025, 12, 23), catalog={}) is None
+
+
+def test_print_older_than_lookback_stays_null(session) -> None:
+    upsert_nav_history(
+        session,
+        NavQuote(
+            ticker="ABALX",
+            nav_per_share=Decimal("38"),
+            nav_as_of=date(2025, 12, 10),
+            source=SOURCE_YAHOO,
+            source_url="https://example.invalid/old",
+        ),
+    )
+    session.flush()
+    # 2025-12-23 minus 2025-12-10 = 13 days > 7
+    assert lookup_nav_on_day(session, "ABALX", date(2025, 12, 23), catalog={}) is None
+
+
+def test_payable_date_used_when_ex_date_missing(client: TestClient, session) -> None:
+    ingested = client.post(
+        "/ingest/distributions",
+        json={
+            "records": [
+                {
+                    "fund_family": "American Funds",
+                    "fund_name": "American Balanced Fund",
+                    "ticker": "ABALX",
+                    "estimate_type": "ordinary_income",
+                    "amount": "0.50",
+                    "amount_unit": "per_share",
+                    "as_of": "2025-12-24",
+                    "payable_date": "2025-12-22",
+                    "publication_stage": "paid",
+                }
+            ]
+        },
+    )
+    assert ingested.status_code == 200
+    upsert_nav_history(
+        session,
+        NavQuote(
+            ticker="ABALX",
+            nav_per_share=Decimal("36.25"),
+            nav_as_of=date(2025, 12, 22),
+            source=SOURCE_YAHOO,
+            source_url="https://example.invalid/payable",
+        ),
+    )
+    session.commit()
+    listed = client.get("/distributions", params={"ticker": "ABALX"}).json()["items"][0]
+    assert listed["ex_date"] is None
+    assert listed["payable_date"] == "2025-12-22"
+    assert Decimal(listed["nav_on_distribution_day"]) == Decimal("36.25")
+
+
+def test_parse_yahoo_daily_points_skips_null_closes() -> None:
+    points = parse_yahoo_daily_points(
+        {
+            "chart": {
+                "result": [
+                    {
+                        "timestamp": [1766448000, 1766534400],
+                        "indicators": {"quote": [{"close": [None, 50.5]}]},
+                    }
+                ]
+            }
+        },
+        "VFIAX",
+        "https://example.invalid/history",
+    )
+    assert len(points) == 1
+    assert points[0].nav_per_share == Decimal("50.500000")
+    assert points[0].source == SOURCE_YAHOO
 
 
 def test_older_nav_does_not_overwrite_newer(session) -> None:

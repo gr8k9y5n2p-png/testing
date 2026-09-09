@@ -119,6 +119,22 @@ class DistributionOut(BaseModel):
     source_url: str | None
     raw_payload: dict[str, Any] | None = None
     ingested_at: datetime
+    nav_on_distribution_day: Decimal | None = Field(
+        default=None,
+        description=(
+            "NAV / last regular close on the distribution day (ex_date, else payable_date). "
+            "Last print on or before that day (≤7 days) for weekends/holidays. "
+            "Null when unknown — never invented. Not today's weekly NAV."
+        ),
+    )
+    nav_on_distribution_day_as_of: date | None = Field(
+        default=None,
+        description="As-of date of nav_on_distribution_day (the print date used).",
+    )
+    nav_on_distribution_day_source: str | None = Field(
+        default=None,
+        description="yahoo_last_close, issuer, fixture, or fixture_fallback. Null when unknown.",
+    )
 
 
 class DistributionListOut(BaseModel):
@@ -560,10 +576,21 @@ class IllustrationComponent(BaseModel):
         default=None,
         description=(
             "Estimate as percent of NAV (3.5 = 3.5%). For amount_unit=percent_of_nav "
-            "this is the published amount. For per_share this is est $/share ÷ NAV × 100 "
-            "when NAV is known. Null when NAV is missing — never invented."
+            "this is the published amount. For historical per_share rows this is "
+            "est $/share ÷ nav_on_distribution_day × 100. For live estimates it is "
+            "est $/share ÷ latest weekly NAV × 100. Null when the required NAV is "
+            "missing — never invented, never today's NAV for a past distribution day."
         ),
     )
+    nav_on_distribution_day: Decimal | None = Field(
+        default=None,
+        description=(
+            "NAV on the distribution day (ex_date, else payable_date). "
+            "Null when unknown — never invented."
+        ),
+    )
+    nav_on_distribution_day_as_of: date | None = None
+    nav_on_distribution_day_source: str | None = None
 
 
 class IllustrationTotals(BaseModel):

@@ -1,0 +1,6 @@
+{
+  "field": "regular_close",
+  "field_notes": "Daily liquid close / mutual-fund NAV on or before a distribution day (ex_date, else payable_date). Not today's NAV. Never invented. Weekly live ingest fills fund_nav_history; this file is the offline seed.",
+  "count": 0,
+  "items": []
+}

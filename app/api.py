@@ -54,7 +54,12 @@ from app.schemas import (
     WebsiteTickerRequestOut,
 )
 from app.services.coverage import coverage_snapshot, family_to_out, record_gap
-from app.services.nav import get_nav_map, listed_ticker
+from app.services.nav import (
+    apply_distribution_day_nav,
+    get_nav_map,
+    listed_ticker,
+    nav_on_distribution_day_map,
+)
 from app.services.performance import growth_of_x
 from app.services.ticker_requests import (
     list_ticker_requests,
@@ -166,12 +171,14 @@ def list_distributions(
         page=page,
         page_size=page_size,
     )
+    day_navs = nav_on_distribution_day_map(session, rows)
     items = []
     for row in rows:
         item = DistributionOut.model_validate(row)
         item.ticker = display_ticker(item.ticker, item.fund_identifier)
         item.cusip = display_cusip(item.cusip, item.fund_identifier)
         item.category = category_for_row(item)
+        apply_distribution_day_nav(item, day_navs.get(row.id))
         if not include_raw:
             item.raw_payload = None
         items.append(item)
@@ -252,6 +259,8 @@ def get_distribution(distribution_id: str, session: Session = Depends(get_sessio
     item.ticker = display_ticker(item.ticker, item.fund_identifier)
     item.cusip = display_cusip(item.cusip, item.fund_identifier)
     item.category = category_for_row(item)
+    day_navs = nav_on_distribution_day_map(session, [row])
+    apply_distribution_day_nav(item, day_navs.get(row.id))
     return item
 
 

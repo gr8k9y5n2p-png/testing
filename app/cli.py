@@ -10,7 +10,13 @@ from app.db import configure_engine, get_engine, init_db
 from app import db as app_db
 from app.schemas import DistributionIn, IngestRequest
 from app.services.ingest import fetch_and_ingest, ingest_records
-from app.services.nav import NAV_MODES, refresh_navs, unique_fund_nav_coverage, write_fixture_catalog
+from app.services.nav import (
+    NAV_MODES,
+    refresh_navs,
+    unique_fund_nav_coverage,
+    write_fixture_catalog,
+    write_history_catalog,
+)
 from app.services.refresh import REFRESH_MODES, refresh_families
 from app.services.ticker_requests import process_ticker_requests
 from app.sources.registry import list_sources, resolve_slug
@@ -125,7 +131,9 @@ def cmd_refresh_nav(args: argparse.Namespace) -> int:
             coverage = unique_fund_nav_coverage(session)
             if args.write_fixture:
                 dest = write_fixture_catalog(session, Path(args.write_fixture) if args.write_fixture != "1" else None)
+                hist = write_history_catalog(session)
                 print(f"Wrote fixture catalog {dest}")
+                print(f"Wrote history catalog {hist}")
             session.commit()
         except ValueError as exc:
             session.rollback()

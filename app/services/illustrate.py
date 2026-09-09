@@ -11,7 +11,11 @@ from app.aliases import TICKER_LOOKUP_ALIASES, display_ticker
 from app.categories import category_for_row, resolve_category
 from app.crud import get_by_ids, list_matching
 from app.models import AmountUnit, DistributionEstimate, EstimateType, PublicationStage
-from app.services.nav import resolve_nav_per_share
+from app.services.nav import (
+    nav_on_distribution_day_map,
+    resolve_nav_per_share,
+    uses_distribution_day_nav,
+)
 from app.schemas import (
     CompareCommonInception,
     CompareDeltas,
@@ -160,7 +164,7 @@ def _percent_of_nav(
     amount: Decimal | None,
     nav_per_share: Decimal | None,
 ) -> Decimal | None:
-    """Eric lock: % of NAV = est $/share ÷ NAV. Same units as amount_unit=percent_of_nav."""
+    """% of NAV = est $/share ÷ NAV. Historical rows must use distribution-day NAV."""
     if amount is None:
         return None
     if unit == AmountUnit.percent_of_nav.value:
@@ -170,6 +174,18 @@ def _percent_of_nav(
             Decimal("0.000001"), rounding=ROUND_HALF_UP
         )
     return None
+
+
+def _nav_for_percent_of_nav(
+    row: DistributionEstimate, *, latest: Decimal | None, on_day
+) -> Decimal | None:
+    """Historical % of NAV uses NAV on ex/payable. Live estimates use weekly NAV.
+
+    Never fall back from a missing distribution-day print to today's NAV.
+    """
+    if uses_distribution_day_nav(row):
+        return on_day.nav_per_share if on_day is not None else None
+    return latest
 
 
 def _distribution_dollars(
@@ -198,6 +214,7 @@ def _illustrate_row(
     rates: TaxRates,
     combine: bool,
     nav_per_share: Decimal | None = None,
+    nav_on_day=None,
 ) -> IllustrationComponent:
     unit = row.amount_unit
     point = _point_amount(row)
@@ -206,7 +223,11 @@ def _illustrate_row(
     rate_key = RATE_MAPPING.get(row.estimate_type, "ordinary_income")
     federal = getattr(rates, rate_key)
     state = rates.state
-    pct = _percent_of_nav(unit=unit, amount=point, nav_per_share=nav_per_share)
+    pct_nav = _nav_for_percent_of_nav(row, latest=nav_per_share, on_day=nav_on_day)
+    pct = _percent_of_nav(unit=unit, amount=point, nav_per_share=pct_nav)
+    day_nav = nav_on_day.nav_per_share if nav_on_day is not None else None
+    day_as_of = nav_on_day.nav_as_of if nav_on_day is not None else None
+    day_source = nav_on_day.source if nav_on_day is not None else None
 
     if unit == AmountUnit.per_share.value and shares is None:
         return IllustrationComponent(
@@ -240,6 +261,9 @@ def _illustrate_row(
             included_in_totals=False,
             skip_reason=NEEDS_NAV_OR_SHARES_MESSAGE,
             percent_of_nav=pct,
+            nav_on_distribution_day=day_nav,
+            nav_on_distribution_day_as_of=day_as_of,
+            nav_on_distribution_day_source=day_source,
         )
 
     if unit == AmountUnit.percent.value:
@@ -274,6 +298,9 @@ def _illustrate_row(
             included_in_totals=False,
             skip_reason=PERCENT_SKIP_REASON,
             percent_of_nav=None,
+            nav_on_distribution_day=day_nav,
+            nav_on_distribution_day_as_of=day_as_of,
+            nav_on_distribution_day_source=day_source,
         )
 
     applied = federal + state if combine else federal
@@ -326,6 +353,9 @@ def _illustrate_row(
         included_in_totals=dist_m is not None,
         skip_reason=None if dist_m is not None else "No numeric amount on this estimate row.",
         percent_of_nav=pct,
+        nav_on_distribution_day=day_nav,
+        nav_on_distribution_day_as_of=day_as_of,
+        nav_on_distribution_day_source=day_source,
     )
 
 
@@ -417,6 +447,7 @@ def illustrate(
         combine=body.combine_state_with_federal,
         extra_notes=extra,
         require_nav_for_per_share=True,
+        nav_on_day=nav_on_distribution_day_map(session, rows),
     )
 
 
@@ -453,6 +484,7 @@ def illustrate_from_rows(
     combine: bool,
     extra_notes: list[str] | None = None,
     require_nav_for_per_share: bool = True,
+    nav_on_day: dict | None = None,
 ) -> IllustrateResponse:
     needs_shares = any(row.amount_unit == AmountUnit.per_share.value for row in rows)
     resolved = shares
@@ -471,6 +503,7 @@ def illustrate_from_rows(
             rates=rates,
             combine=combine,
             nav_per_share=nav_per_share,
+            nav_on_day=(nav_on_day or {}).get(row.id),
         )
         for row in rows
     ]
@@ -705,6 +738,7 @@ def _paid_history_item_from_rows(
     rates: TaxRates,
     combine: bool,
     publication_stage: str | None,
+    nav_on_day: dict | None = None,
 ) -> PortfolioHoldingPaidHistoryItem | None:
     illustration = illustrate_from_rows(
         rows,
@@ -715,6 +749,7 @@ def _paid_history_item_from_rows(
         combine=combine,
         extra_notes=[],
         require_nav_for_per_share=False,
+        nav_on_day=nav_on_day,
     )
     dist = illustration.totals.distribution_dollars
     if dist is None or dist <= 0:
@@ -744,6 +779,7 @@ def _holding_paid_history(
     shares: Decimal | None,
     rates: TaxRates,
     combine: bool,
+    nav_on_day: dict | None = None,
 ) -> list[PortfolioHoldingPaidHistoryItem]:
     today = _utc_today()
     eligible = [row for row in rows if _row_in_paid_history(row, today)]
@@ -761,6 +797,7 @@ def _holding_paid_history(
             rates=rates,
             combine=combine,
             publication_stage=key[0],
+            nav_on_day=nav_on_day,
         )
         if item is not None:
             items.append(item)
@@ -810,6 +847,7 @@ def illustrate_portfolio(session: Session, body: PortfolioIllustrateRequest) -> 
         )
         if nav_note:
             warnings.append(nav_note)
+        day_navs = nav_on_distribution_day_map(session, history_rows or rows)
         paid_history = _holding_paid_history(
             history_rows,
             holding=dollars,
@@ -817,6 +855,7 @@ def illustrate_portfolio(session: Session, body: PortfolioIllustrateRequest) -> 
             shares=holding.shares,
             rates=body.tax_rates,
             combine=body.combine_state_with_federal,
+            nav_on_day=day_navs,
         )
         if not rows:
             reason = "No matching distribution estimates for this holding."
@@ -888,6 +927,7 @@ def illustrate_portfolio(session: Session, body: PortfolioIllustrateRequest) -> 
             combine=body.combine_state_with_federal,
             extra_notes=[],
             require_nav_for_per_share=False,
+            nav_on_day=day_navs,
         )
         if any(c.skip_reason and "nav_per_share" in (c.skip_reason or "") for c in illustration.components):
             warnings.append(
@@ -1515,6 +1555,7 @@ def _upcoming_side(
         combine=body.combine_state_with_federal,
         extra_notes=[],
         require_nav_for_per_share=False,
+        nav_on_day=nav_on_distribution_day_map(session, chosen),
     )
     return (
         _scale_to_summary(illustration.totals.distribution_dollars, body.holding_dollars),

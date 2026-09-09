@@ -2,10 +2,12 @@
 
 Eric lock (2026-09-09): $/share tax math needs NAV universe-wide.
 
-- Dist $ = est $/share × (holding $ / NAV)
-- % of NAV = est $/share ÷ NAV
+- Dist $ (live) = est $/share × (holding $ / latest weekly NAV)
+- Historical % of NAV = est $/share ÷ NAV on the distribution day
+  (ex_date, else payable_date — never today's NAV)
+- Live-estimate % of NAV = est $/share ÷ latest weekly NAV
 
-Never invent NAV or estimate amounts. Unknown tickers stay null.
+Never invent NAV or estimate amounts. Unknown tickers / days stay null.
 
 Source preference:
 
@@ -22,7 +24,7 @@ import logging
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal, ROUND_HALF_EVEN
 from pathlib import Path
 from typing import Any, Iterable
@@ -33,7 +35,7 @@ from sqlalchemy.orm import Session
 
 from app.aliases import display_ticker
 from app.config import settings
-from app.models import DistributionEstimate, FundNav
+from app.models import DistributionEstimate, FundNav, FundNavHistory, PublicationStage
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +52,18 @@ YAHOO_DAILY = (
 YAHOO_SPARK = (
     "https://query1.finance.yahoo.com/v8/finance/spark"
     "?symbols={symbols}&range=10d&interval=1d"
+)
+YAHOO_HISTORY = (
+    "https://query1.finance.yahoo.com/v8/finance/chart/{ticker}"
+    "?interval=1d&period1={period1}&period2={period2}"
+)
+
+# Last regular close on or before ex/payable, for weekends / market holidays.
+# A print older than this is not "NAV on the distribution day" — leave null.
+DISTRIBUTION_DAY_LOOKBACK_DAYS = 7
+HISTORICAL_STAGES = (
+    PublicationStage.final.value,
+    PublicationStage.paid.value,
 )
 
 NAV_PLACES = Decimal("0.000001")
@@ -90,6 +104,10 @@ class NavRefreshSummary:
     errors: list[str] = field(default_factory=list)
     live_count: int = 0
     fixture_count: int = 0
+    history_pairs: int = 0
+    history_created: int = 0
+    history_updated: int = 0
+    history_unknown: int = 0
     sample: dict[str, dict[str, Any]] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -103,6 +121,10 @@ class NavRefreshSummary:
             "errors": list(self.errors),
             "live_count": self.live_count,
             "fixture_count": self.fixture_count,
+            "history_pairs": self.history_pairs,
+            "history_created": self.history_created,
+            "history_updated": self.history_updated,
+            "history_unknown": self.history_unknown,
             "sample": dict(self.sample),
         }
 
@@ -115,6 +137,11 @@ class NavRefreshSummary:
             f"  unchanged: {self.unchanged}",
             f"  unknown (null, not invented): {self.unknown}",
             f"  live={self.live_count} fixture={self.fixture_count}",
+            (
+                f"  history (ex/payable day): pairs={self.history_pairs} "
+                f"created={self.history_created} updated={self.history_updated} "
+                f"unknown={self.history_unknown}"
+            ),
         ]
         if self.errors:
             lines.append("  errors: " + ", ".join(self.errors[:8]))
@@ -136,6 +163,10 @@ class NavRefreshSummary:
             f"- Unchanged: **{self.unchanged}**",
             f"- Unknown (left null, never invented): **{self.unknown}**",
             f"- live={self.live_count}, fixture={self.fixture_count}",
+            (
+                f"- History (NAV on ex/payable day): pairs={self.history_pairs}, "
+                f"created={self.history_created}, unknown={self.history_unknown}"
+            ),
             "",
         ]
         if self.sample:
@@ -685,6 +716,11 @@ def refresh_navs(
             summary.fixture_count += 1
 
     session.flush()
+    history = refresh_nav_history(session, mode=requested, tickers=[row.ticker for row in targets])
+    summary.history_pairs = history["pairs"]
+    summary.history_created = history["created"]
+    summary.history_updated = history["updated"]
+    summary.history_unknown = history["unknown"]
     stored = get_nav_map(session, list(sample_tickers))
     for ticker in sample_tickers:
         row = stored.get(ticker)
@@ -746,3 +782,330 @@ def unique_fund_nav_coverage(session: Session) -> dict[str, Any]:
         "unknown": total - with_nav,
         "coverage_pct": round(100.0 * with_nav / total, 1) if total else 0.0,
     }
+
+
+def distribution_day(row: Any) -> date | None:
+    """Prefer ex_date, else payable_date. Null when the source published neither."""
+    return getattr(row, "ex_date", None) or getattr(row, "payable_date", None)
+
+
+def uses_distribution_day_nav(row: Any, *, today: date | None = None) -> bool:
+    """Historical % of NAV uses the print on ex/payable, never today's NAV."""
+    when = today or date.today()
+    day = distribution_day(row)
+    if day is not None and day <= when:
+        return True
+    stage = getattr(row, "publication_stage", None)
+    return stage in HISTORICAL_STAGES
+
+
+def _fixtures_history_path() -> Path:
+    return Path(settings.fixtures_dir) / "nav" / "history.json"
+
+
+def load_history_catalog() -> dict[tuple[str, date], NavQuote]:
+    """Offline daily prints. Never invents a date that is not in the file."""
+    catalog: dict[tuple[str, date], NavQuote] = {}
+    path = _fixtures_history_path()
+    if not path.exists():
+        return catalog
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    items = payload.get("items") if isinstance(payload, dict) else payload
+    for row in items or []:
+        quote = _quote_from_mapping(row, default_source=SOURCE_FIXTURE)
+        if quote:
+            catalog[(quote.ticker, quote.nav_as_of)] = quote
+    return catalog
+
+
+def parse_yahoo_daily_points(
+    payload: dict[str, Any], ticker: str, source_url: str
+) -> list[NavQuote]:
+    results = (payload.get("chart") or {}).get("result") or []
+    if not results:
+        return []
+    result = results[0]
+    timestamps = result.get("timestamp") or []
+    quote = ((result.get("indicators") or {}).get("quote") or [{}])[0]
+    closes = quote.get("close") or []
+    points: list[NavQuote] = []
+    for ts, value in zip(timestamps, closes):
+        if value is None or ts is None:
+            continue
+        try:
+            when = datetime.fromtimestamp(int(ts), tz=timezone.utc).date()
+            price = _money_nav(Decimal(str(value)))
+        except (ArithmeticError, ValueError, TypeError, OSError):
+            continue
+        if price <= 0:
+            continue
+        points.append(
+            NavQuote(
+                ticker=ticker.upper(),
+                nav_per_share=price,
+                nav_as_of=when,
+                source=SOURCE_YAHOO,
+                source_url=source_url,
+            )
+        )
+    return points
+
+
+def fetch_yahoo_history(
+    ticker: str,
+    start: date,
+    end: date,
+    *,
+    client: httpx.Client | None = None,
+) -> list[NavQuote]:
+    """Daily regular closes in [start, end]. Empty when Yahoo has no print."""
+    symbol = ticker.strip().upper()
+    start_ts = int(datetime(start.year, start.month, start.day, tzinfo=timezone.utc).timestamp())
+    # period2 is exclusive in practice; include the end session.
+    stop = end + timedelta(days=1)
+    end_ts = int(datetime(stop.year, stop.month, stop.day, tzinfo=timezone.utc).timestamp())
+    url = YAHOO_HISTORY.format(ticker=symbol, period1=start_ts, period2=end_ts)
+    owns = client is None
+    http = client or httpx.Client(timeout=settings.http_timeout_seconds, follow_redirects=True)
+    try:
+        response = http.get(url, headers=_yahoo_headers())
+        response.raise_for_status()
+        return parse_yahoo_daily_points(response.json(), symbol, url)
+    except Exception as exc:
+        logger.debug("Yahoo history miss for %s %s..%s: %s", symbol, start, end, exc)
+        return []
+    finally:
+        if owns:
+            http.close()
+
+
+def upsert_nav_history(session: Session, quote: NavQuote) -> str:
+    if quote.nav_per_share <= 0:
+        return "unknown"
+    existing = session.scalar(
+        select(FundNavHistory).where(
+            FundNavHistory.ticker == quote.ticker,
+            FundNavHistory.nav_as_of == quote.nav_as_of,
+        )
+    )
+    now = datetime.now(timezone.utc)
+    if existing:
+        same = existing.nav_per_share == quote.nav_per_share and existing.source == quote.source
+        existing.nav_per_share = quote.nav_per_share
+        existing.source = quote.source
+        existing.source_url = quote.source_url
+        existing.updated_at = now
+        session.add(existing)
+        session.flush()
+        return "unchanged" if same else "updated"
+    session.add(
+        FundNavHistory(
+            ticker=quote.ticker,
+            nav_per_share=quote.nav_per_share,
+            nav_as_of=quote.nav_as_of,
+            source=quote.source,
+            source_url=quote.source_url,
+            updated_at=now,
+        )
+    )
+    session.flush()
+    return "created"
+
+
+def _pick_on_or_before(
+    points: list[FundNavHistory] | list[NavQuote],
+    on: date,
+) -> Any | None:
+    eligible = [row for row in points if row.nav_as_of <= on]
+    if not eligible:
+        return None
+    best = max(eligible, key=lambda row: row.nav_as_of)
+    if (on - best.nav_as_of).days > DISTRIBUTION_DAY_LOOKBACK_DAYS:
+        return None
+    return best
+
+
+def lookup_nav_on_day(
+    session: Session,
+    ticker: str | None,
+    on: date | None,
+    *,
+    catalog: dict[tuple[str, date], NavQuote] | None = None,
+) -> NavQuote | None:
+    """NAV on the distribution day (last regular close on or before, ≤7 days)."""
+    listed = listed_ticker(ticker, ticker)
+    if not listed or on is None:
+        return None
+    rows = list(
+        session.scalars(
+            select(FundNavHistory)
+            .where(
+                FundNavHistory.ticker == listed,
+                FundNavHistory.nav_as_of <= on,
+                FundNavHistory.nav_as_of >= on - timedelta(days=DISTRIBUTION_DAY_LOOKBACK_DAYS),
+            )
+            .order_by(FundNavHistory.nav_as_of.desc())
+        ).all()
+    )
+    picked = _pick_on_or_before(rows, on)
+    if picked is not None:
+        return NavQuote(
+            ticker=picked.ticker,
+            nav_per_share=picked.nav_per_share,
+            nav_as_of=picked.nav_as_of,
+            source=picked.source,
+            source_url=picked.source_url,
+        )
+    fixtures = catalog if catalog is not None else load_history_catalog()
+    nearby = [quote for (sym, when), quote in fixtures.items() if sym == listed and when <= on]
+    picked_fx = _pick_on_or_before(nearby, on)
+    return picked_fx
+
+
+def apply_distribution_day_nav(item: Any, quote: NavQuote | None) -> Any:
+    """Attach joinable NAV-on-distribution-day fields. Leaves them null when unknown."""
+    if quote is None:
+        item.nav_on_distribution_day = None
+        item.nav_on_distribution_day_as_of = None
+        item.nav_on_distribution_day_source = None
+        return item
+    item.nav_on_distribution_day = quote.nav_per_share
+    item.nav_on_distribution_day_as_of = quote.nav_as_of
+    item.nav_on_distribution_day_source = quote.source
+    return item
+
+
+def nav_on_distribution_day_map(
+    session: Session, rows: Iterable[Any]
+) -> dict[str, NavQuote | None]:
+    """Join stored history onto distribution rows. Missing days stay None."""
+    catalog = load_history_catalog()
+    out: dict[str, NavQuote | None] = {}
+    for row in rows:
+        row_id = getattr(row, "id", None)
+        if not row_id:
+            continue
+        ticker = listed_ticker(getattr(row, "ticker", None), getattr(row, "fund_identifier", None))
+        out[row_id] = lookup_nav_on_day(
+            session, ticker, distribution_day(row), catalog=catalog
+        )
+    return out
+
+
+def list_distribution_day_targets(
+    session: Session, *, tickers: list[str] | None = None
+) -> dict[str, list[date]]:
+    """Distinct listed ticker → distribution days (ex_date else payable_date)."""
+    wanted = {item.strip().upper() for item in tickers} if tickers else None
+    rows = session.execute(
+        select(
+            DistributionEstimate.ticker,
+            DistributionEstimate.fund_identifier,
+            DistributionEstimate.ex_date,
+            DistributionEstimate.payable_date,
+        )
+    ).all()
+    by_ticker: dict[str, set[date]] = {}
+    for ticker, ident, ex_date, payable in rows:
+        listed = listed_ticker(ticker, ident)
+        if not listed:
+            continue
+        if wanted is not None and listed not in wanted:
+            continue
+        day = ex_date or payable
+        if day is None:
+            continue
+        by_ticker.setdefault(listed, set()).add(day)
+    return {ticker: sorted(days) for ticker, days in sorted(by_ticker.items())}
+
+
+def refresh_nav_history(
+    session: Session,
+    *,
+    mode: str = "auto",
+    tickers: list[str] | None = None,
+) -> dict[str, int]:
+    """Persist daily prints needed for NAV on each distribution day. Never invents."""
+    requested = (mode or "auto").strip().lower()
+    if requested not in NAV_MODES:
+        requested = "auto"
+    targets = list_distribution_day_targets(session, tickers=tickers)
+    pair_count = sum(len(days) for days in targets.values())
+    created = updated = unknown = 0
+    catalog = load_history_catalog()
+
+    live_points: dict[str, list[NavQuote]] = {}
+    if requested in {"auto", "live"} and targets:
+
+        def _one(ticker: str) -> tuple[str, list[NavQuote]]:
+            days = targets[ticker]
+            start = min(days) - timedelta(days=DISTRIBUTION_DAY_LOOKBACK_DAYS)
+            end = max(days)
+            return ticker, fetch_yahoo_history(ticker, start, end)
+
+        workers = min(_LIVE_WORKERS, max(1, len(targets)))
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            futures = [pool.submit(_one, ticker) for ticker in targets]
+            for future in as_completed(futures):
+                ticker, points = future.result()
+                if points:
+                    live_points[ticker] = points
+                    for quote in points:
+                        action = upsert_nav_history(session, quote)
+                        if action == "created":
+                            created += 1
+                        elif action == "updated":
+                            updated += 1
+
+    for ticker, days in targets.items():
+        points = live_points.get(ticker, [])
+        if requested == "fixture" or not points:
+            for (sym, when), quote in catalog.items():
+                if sym == ticker:
+                    action = upsert_nav_history(session, quote)
+                    if action == "created":
+                        created += 1
+                    elif action == "updated":
+                        updated += 1
+        for day in days:
+            found = lookup_nav_on_day(session, ticker, day, catalog=catalog)
+            if found is None:
+                unknown += 1
+
+    session.flush()
+    return {
+        "pairs": pair_count,
+        "created": created,
+        "updated": updated,
+        "unknown": unknown,
+    }
+
+
+def write_history_catalog(session: Session, path: Path | None = None) -> Path:
+    dest = path or _fixtures_history_path()
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    rows = list(
+        session.scalars(
+            select(FundNavHistory).order_by(FundNavHistory.ticker.asc(), FundNavHistory.nav_as_of.asc())
+        ).all()
+    )
+    payload = {
+        "field": "regular_close",
+        "field_notes": (
+            "Daily liquid close / mutual-fund NAV on or before a distribution day "
+            "(ex_date, else payable_date). Not today's NAV. Never invented."
+        ),
+        "count": len(rows),
+        "items": [
+            {
+                "ticker": row.ticker,
+                "nav_per_share": str(row.nav_per_share),
+                "nav_as_of": row.nav_as_of.isoformat(),
+                "source": SOURCE_YAHOO if row.source == SOURCE_YAHOO else SOURCE_FIXTURE,
+                "source_url": row.source_url,
+            }
+            for row in rows
+        ],
+    }
+    dest.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    return dest
