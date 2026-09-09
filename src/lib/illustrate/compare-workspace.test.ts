@@ -22,6 +22,8 @@ import {
   upcomingRowsFromCompareTickers,
 } from "./compare-workspace.ts";
 
+const here = dirname(fileURLToPath(import.meta.url));
+
 function view(
   ticker: string,
   patch: Partial<FundEstimateView> = {},
@@ -310,6 +312,18 @@ describe("compare upcoming rows", () => {
     assert.equal(row.navPerShare, 41.22);
   });
 
+  it("never copies catalog Dist $ / % of NAV as manager prelims", () => {
+    const source = readFileSync(join(here, "compare-workspace.ts"), "utf8");
+    assert.match(source, /distributionDollars:\s*null/);
+    assert.match(source, /pctOfNav:\s*null/);
+    assert.doesNotMatch(source, /distributionDollars:\s*fund\??\./);
+    assert.doesNotMatch(source, /pctOfNav:\s*fund\??\./);
+    assert.doesNotMatch(source, /ticker === ["']ABALX["']/);
+    const stage = readFileSync(join(here, "publication-stage.ts"), "utf8");
+    assert.doesNotMatch(stage, /ticker === ["']ABALX["']/);
+    assert.doesNotMatch(stage, /estimatedDistributionAmount/);
+  });
+
   it("treats has_estimate-false finals as Undisclosed for every ticker, not only ABALX", () => {
     for (const ticker of ["ABALX", "VFIAX", "FXAIX", "DODIX"]) {
       const row = upcomingRowForCompareTicker({
@@ -359,8 +373,6 @@ describe("compare upcoming rows", () => {
 });
 
 describe("Compare workspace Upcoming + NAV soft path", () => {
-  const here = dirname(fileURLToPath(import.meta.url));
-
   it("surfaces Dist $ / % NAV / $ impact columns and prompts for missing NAV", () => {
     const workspace = readFileSync(
       join(here, "../../components/illustrate/CompareWorkspace.tsx"),

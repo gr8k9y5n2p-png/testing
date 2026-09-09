@@ -216,7 +216,8 @@ function coalesceUpcomingRows(
 /**
  * Upcoming $ only from non-null unpaid `holdings[].upcoming`.
  * Omitted / null / paid / historical illustration totals → undisclosed.
- * Never invent or pull forward annual tax as a future announce.
+ * Universe-wide: never invent Fund Manager Estimated Distributions
+ * for any ticker (ABALX is an example, not a special case).
  */
 export function upcomingFromHolding(
   holding: PortfolioHoldingOut,

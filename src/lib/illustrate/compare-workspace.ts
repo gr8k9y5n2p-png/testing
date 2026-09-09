@@ -332,8 +332,8 @@ export function upcomingRowForCompareTicker(input: {
     fundName: fund?.fundName || ticker,
     side: "current",
     sideLabel: "Compare",
-    // Compare API sends upcoming tax $, not Dist $. Never invent prelim $
-    // for any ticker (ABALX is an example, not a special case).
+    // Compare API sends upcoming tax $, not Dist $. Never copy catalog
+    // estimatedDistributionAmount / % of NAV — any ticker, no allowlist.
     distributionDollars: null,
     distributionDollarsMin: null,
     distributionDollarsMax: null,
@@ -358,7 +358,7 @@ export function upcomingRowForCompareTicker(input: {
   };
 }
 
-/** Universe-wide: has_estimate false (e.g. ABALX finals-only) is never Upcoming. */
+/** has_estimate false is never Upcoming — every fund, not a per-ticker exception. */
 function catalogIsUnpaidAnnounced(fund?: FundEstimateView | null): boolean {
   if (!fund || fund.hasEstimate === false || fund.bucket !== "upcoming") {
     return false;
