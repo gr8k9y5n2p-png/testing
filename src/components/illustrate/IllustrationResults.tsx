@@ -25,6 +25,7 @@ import {
   upcomingPctOfNav,
   usesDistributionDayNav,
 } from "@/lib/illustrate/nav-math";
+import { userFacingNotes } from "@/lib/illustrate/user-facing-notes";
 
 const ESTIMATE_LABELS: Record<string, string> = {
   ordinary_income: "Ordinary income",
@@ -47,7 +48,8 @@ export function IllustrationResults({
   /** Holding $ so Upcoming can show % of NAV without inventing a rate. */
   holdingDollars?: number | null;
 }) {
-  const { components, warnings } = result;
+  const { components } = result;
+  const warnings = userFacingNotes(result.warnings);
   const { upcoming: upcomingComponents } = splitIllustrationComponents(
     components,
     fund,

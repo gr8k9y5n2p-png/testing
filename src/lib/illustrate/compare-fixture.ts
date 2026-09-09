@@ -5,6 +5,7 @@ import {
   type CompareResponse,
   type CompareSideIn,
 } from "@/lib/illustrate/compare-types";
+import { demoEngineNotes } from "@/lib/illustrate/user-facing-notes";
 
 /**
  * Sketch-locked localhost fixture (Aftertax sample card).
@@ -202,7 +203,9 @@ function mockYoyResponse(request: CompareRequest): CompareResponse {
       upcoming_taxable_distribution: null,
     },
     notes: [
-      "MOCK /illustrate/compare mode=yoy — calendar-year tax drag for GrowthAndTaxDragModule.",
+      ...demoEngineNotes(
+        "MOCK /illustrate/compare mode=yoy — calendar-year tax drag for GrowthAndTaxDragModule.",
+      ),
       "Period totals.estimated_tax scale with request holding_dollars. summary.*_difference stays at $10,000.",
       "Unmatched years: matched=false + null tax totals (Data PR #2 5d02120). Published $0 stays 0.00.",
     ],
@@ -288,7 +291,9 @@ export function mockCompareResponse(request: CompareRequest): CompareResponse {
     notes: [
       "Deltas are right − left (B − A). Interactive Modules charts deltas.effective_tax_on_holding.",
       "summary dollar fields are scaled linearly to $10,000 (value × 10000 / holding_dollars).",
-      "MOCK /illustrate/compare — sketch fixture so localhost still demos when the Data API is down.",
+      ...demoEngineNotes(
+        "MOCK /illustrate/compare — sketch fixture so localhost still demos when the Data API is down.",
+      ),
     ],
   };
 }

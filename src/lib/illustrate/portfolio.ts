@@ -1,4 +1,5 @@
 import { getDataApiBaseUrl, dataApiUrl, isRemoteDataApi } from "@/lib/data-api/config";
+import { userFacingNotes } from "@/lib/illustrate/user-facing-notes";
 import type { TaxRates } from "@/lib/illustrate/types";
 
 export type PortfolioHoldingIn = {
@@ -47,10 +48,10 @@ export function normalizePortfolioResponse(
 ): PortfolioIllustrateResponse {
   const coverageRaw = (raw.coverage ?? {}) as Record<string, unknown>;
   const gapsRaw = Array.isArray(raw.gaps) ? raw.gaps : [];
-  const warnings = [
+  const warnings = userFacingNotes([
     ...(Array.isArray(raw.warnings) ? raw.warnings : []),
     ...(Array.isArray(raw.notes) ? raw.notes : []),
-  ].map(String);
+  ]);
 
   return {
     coverage: {
@@ -88,18 +89,9 @@ export async function postIllustratePortfolio(
     });
   }
 
-  let response: Response;
-  try {
-    response = await post(endpoint);
-    if (remote && response.status >= 500) {
-      response = await post("/api/illustrate/portfolio");
-    }
-  } catch (error) {
-    if (remote && !init?.signal?.aborted) {
-      response = await post("/api/illustrate/portfolio");
-    } else {
-      throw error;
-    }
+  const response = await post(endpoint);
+  if (remote && response.status >= 500) {
+    throw new Error(`Portfolio illustrate failed (${response.status})`);
   }
 
   if (!response.ok) {

@@ -1,12 +1,14 @@
 import { formatPct, formatUsd } from "@/lib/format";
 import type { PortfolioIllustrateResponse } from "@/lib/illustrate/portfolio";
+import { userFacingNotes } from "@/lib/illustrate/user-facing-notes";
 
 export function PortfolioCoverageCard({
   result,
 }: {
   result: PortfolioIllustrateResponse;
 }) {
-  const { coverage, gaps, warnings } = result;
+  const { coverage, gaps } = result;
+  const warnings = userFacingNotes(result.warnings);
   const uncovered = coverage.dollars_uncovered > 0 || gaps.length > 0;
 
   return (

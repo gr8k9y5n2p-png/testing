@@ -20,6 +20,7 @@ import {
   AMOUNT_UNITS,
   DEFAULT_HOLDING_DOLLARS,
   UI_DEFAULT_TAX_RATES,
+  emptyIllustrateResponse,
   type AmountUnit,
   type IllustrateRequest,
   type IllustrateResponse,
@@ -177,8 +178,10 @@ function IllustrationWorkspace({ fund }: { fund: FundEstimateView }) {
             setLoading(false);
             return;
           }
-          setResult(null);
-          setError(caught instanceof Error ? caught.message : "Illustration failed");
+          // Live miss: soft empty (Upcoming undisclosed, Paid from /distributions).
+          // Never invent seed math or show a MOCK banner.
+          setResult(emptyIllustrateResponse(rates));
+          setError(null);
           setLoading(false);
         });
 
@@ -190,7 +193,7 @@ function IllustrationWorkspace({ fund }: { fund: FundEstimateView }) {
               ticker: fund.ticker,
               fund_family: fund.family,
               fund_identifier: fund.ticker,
-              fund_name: fund.fundName,
+              ...(mock ? { fund_name: fund.fundName } : {}),
               ...(requestNav != null ? { nav_per_share: requestNav } : {}),
             },
           ],

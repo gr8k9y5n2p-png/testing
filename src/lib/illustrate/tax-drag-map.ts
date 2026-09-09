@@ -243,7 +243,7 @@ export function calendarYearFromUnknown(value: unknown): number {
   return 0;
 }
 
-function illustrationCalendarYear(
+export function illustrationVintageYear(
   illustration: CompareIllustration | null | undefined,
 ): number {
   if (!illustration) return 0;
@@ -278,8 +278,8 @@ export function comparePeriodCalendarYear(period: {
     calendarYearFromUnknown(period.year) ||
     calendarYearFromUnknown(period.as_of) ||
     calendarYearFromUnknown(period.label) ||
-    illustrationCalendarYear(period.right) ||
-    illustrationCalendarYear(period.left)
+    illustrationVintageYear(period.right) ||
+    illustrationVintageYear(period.left)
   );
 }
 
@@ -342,8 +342,8 @@ export function toTaxDragPeriods(
     const periodYear = comparePeriodCalendarYear(period);
 
     if (yoy) {
-      const olderFromLabel = illustrationCalendarYear(period.left);
-      const newerFromLabel = illustrationCalendarYear(period.right);
+      const olderFromLabel = illustrationVintageYear(period.left);
+      const newerFromLabel = illustrationVintageYear(period.right);
       // Zip pairs: Data sets period.year to the newer vintage; left is prior.
       // Calendar-year rows (both sides tickers, or both already that year)
       // must not shift a matched left onto year-1 when the caller asks for

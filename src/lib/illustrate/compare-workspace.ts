@@ -14,6 +14,7 @@ import {
 import {
   comparePeriodCalendarYear,
   illustrationIsUnmatched,
+  illustrationVintageYear,
   toTaxDragPeriods,
 } from "./tax-drag-map.ts";
 
@@ -225,12 +226,7 @@ function numericOrNull(value: unknown): number | null {
 }
 
 function illustrationCalendarYear(illustration: CompareIllustration | null | undefined): number {
-  if (!illustration) return 0;
-  const extra = illustration as CompareIllustration & { year?: unknown; as_of?: unknown };
-  return (
-    comparePeriodCalendarYear({ year: extra.year, as_of: extra.as_of, label: illustration.label }) ||
-    0
-  );
+  return illustrationVintageYear(illustration);
 }
 
 function distributionFromIllustration(
@@ -264,10 +260,20 @@ export function toDistributionPeriods(response: CompareResponse | null): Array<{
     }
     const olderFromLabel = illustrationCalendarYear(period.left);
     const newerFromLabel = illustrationCalendarYear(period.right);
+    // Same zip / calendar-row rules as toTaxDragPeriods so Dist $ years
+    // match Tax $ (ticker-labeled live AGTHX pairs included).
     const calendarRow =
-      periodYear > 0 && olderFromLabel === periodYear && newerFromLabel === periodYear;
-    if (calendarRow) {
+      periodYear > 0 &&
+      ((olderFromLabel === 0 && newerFromLabel === 0) ||
+        (olderFromLabel === periodYear && newerFromLabel === periodYear));
+    if (calendarRow && olderFromLabel === periodYear && newerFromLabel === periodYear) {
       write(periodYear, rightValue ?? leftValue);
+      continue;
+    }
+    if (calendarRow && olderFromLabel === 0 && newerFromLabel === 0) {
+      const olderYear = periodYear > 1 ? periodYear - 1 : 0;
+      if (olderYear > 0) write(olderYear, leftValue);
+      if (periodYear > 0) write(periodYear, rightValue);
       continue;
     }
     const olderYear = olderFromLabel || (periodYear > 1 ? periodYear - 1 : 0);

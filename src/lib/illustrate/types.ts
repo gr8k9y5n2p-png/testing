@@ -122,6 +122,23 @@ export type IllustrateResponse = {
   nav_per_share?: number | null;
 };
 
+/** Soft empty when live illustrate fails. No components, no MOCK banners, never invent $. */
+export function emptyIllustrateResponse(rates: TaxRates): IllustrateResponse {
+  return {
+    tax_rates_applied: rates,
+    components: [],
+    totals: {
+      distribution_dollars: 0,
+      distribution_dollars_min: null,
+      distribution_dollars_max: null,
+      estimated_tax_dollars: 0,
+      estimated_tax_dollars_min: null,
+      estimated_tax_dollars_max: null,
+    },
+    warnings: [],
+  };
+}
+
 export type IllustrateErrorBody = {
   detail?: string | Record<string, unknown>;
   code?: string;
