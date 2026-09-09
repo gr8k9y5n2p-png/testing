@@ -90,6 +90,17 @@ export function normalizeIllustrateResponse(raw: Record<string, unknown>): Illus
           : row.skip_reason == null
             ? null
             : String(row.skip_reason),
+      amount: num(row.amount),
+      percent_of_nav: num(row.percent_of_nav ?? row.pct_of_nav),
+      nav_on_distribution_day: num(row.nav_on_distribution_day),
+      nav_on_distribution_day_as_of:
+        row.nav_on_distribution_day_as_of == null
+          ? null
+          : String(row.nav_on_distribution_day_as_of),
+      nav_on_distribution_day_source:
+        row.nav_on_distribution_day_source == null
+          ? null
+          : String(row.nav_on_distribution_day_source),
     };
   });
 
@@ -119,6 +130,7 @@ export function normalizeIllustrateResponse(raw: Record<string, unknown>): Illus
       ),
     },
     warnings,
+    nav_per_share: num(raw.nav_per_share),
   };
 }
 

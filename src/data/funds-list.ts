@@ -1,3 +1,5 @@
+import { parsePositiveNav } from "../lib/illustrate/nav-math.ts";
+import { isoDate } from "./distribution-bucket.ts";
 import type { FundEstimateView } from "./types.ts";
 
 /** GET /funds item. Unique fund, not a raw distribution row. */
@@ -13,17 +15,12 @@ export type FundsApiItem = {
   category?: string | null;
   cusip?: string | null;
   share_class?: string | null;
-  /** Weekly NAV from Data #74. Soft-null when absent. */
+  /** Weekly NAV from Data #74 / GET /funds. Soft-null when absent. */
   nav_per_share?: number | string | null;
   nav?: number | string | null;
   nav_as_of?: string | null;
+  nav_source?: string | null;
 };
-
-function positiveNav(value: unknown): number | undefined {
-  if (value == null || value === "") return undefined;
-  const parsed = Number(value);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
-}
 
 export function mapFundsApiItem(row: FundsApiItem): FundEstimateView {
   const ticker = (row.ticker ?? "").trim().toUpperCase();
@@ -41,8 +38,9 @@ export function mapFundsApiItem(row: FundsApiItem): FundEstimateView {
     family: (row.fund_family ?? row.family ?? "—").trim() || "—",
     category: (row.category ?? "—").trim() || "—",
     shareClass: row.share_class ?? "",
-    nav: positiveNav(row.nav_per_share) ?? positiveNav(row.nav) ?? 0,
-    navAsOf: row.nav_as_of?.slice(0, 10) || null,
+    nav: parsePositiveNav(row.nav_per_share) ?? parsePositiveNav(row.nav) ?? 0,
+    navAsOf: isoDate(row.nav_as_of),
+    navSource: row.nav_source ?? null,
     estimatedDistributionAmount: 0,
     estimatedOrdinaryIncome: 0,
     estimatedCapitalGains: 0,

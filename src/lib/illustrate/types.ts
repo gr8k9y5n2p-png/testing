@@ -91,6 +91,17 @@ export type IllustrationComponent = {
   estimated_tax_dollars_min: number | null;
   estimated_tax_dollars_max: number | null;
   notes: string | null;
+  /** Published per-share amount when Data sends it. Null when unknown. */
+  amount?: number | null;
+  /**
+   * Data-computed % of NAV (published unit, or $/share ÷ the correct NAV).
+   * Null when the required NAV is missing — never invent.
+   */
+  percent_of_nav?: number | null;
+  /** NAV on ex/payable. Historical % of NAV only — never weekly NAV. */
+  nav_on_distribution_day?: number | null;
+  nav_on_distribution_day_as_of?: string | null;
+  nav_on_distribution_day_source?: string | null;
 };
 
 export type IllustrationTotals = {
@@ -107,6 +118,8 @@ export type IllustrateResponse = {
   components: IllustrationComponent[];
   totals: IllustrationTotals;
   warnings: string[];
+  /** Weekly NAV Data used for Dist $ / live % of NAV. Null when unknown. */
+  nav_per_share?: number | null;
 };
 
 export type IllustrateErrorBody = {

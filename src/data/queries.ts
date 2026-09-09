@@ -1,3 +1,4 @@
+import { pctOfNavForFund } from "../lib/illustrate/nav-math.ts";
 import { splitFundsByBucket } from "./distribution-bucket.ts";
 import { preferFinalPaidEvents } from "./hydrate-funds.ts";
 import type {
@@ -30,9 +31,11 @@ export function computeCategoryAverages(
   const buckets = new Map<string, { sum: number; count: number }>();
 
   for (const fund of funds) {
+    const pct = pctOfNavForFund(fund);
+    if (pct == null) continue;
     const key = categoryPeerKey(fund);
     const bucket = buckets.get(key) ?? { sum: 0, count: 0 };
-    bucket.sum += fund.estimatedDistributionPctNav;
+    bucket.sum += pct;
     bucket.count += 1;
     buckets.set(key, bucket);
   }
@@ -47,12 +50,14 @@ export function computeCategoryAverages(
 export function withPeerContext(funds: FundEstimate[]): FundEstimateView[] {
   const averages = computeCategoryAverages(funds);
   return funds.map((fund) => {
+    const pct = pctOfNavForFund(fund);
     const categoryAveragePctNav = averages.get(categoryPeerKey(fund)) ?? 0;
     return {
       ...fund,
+      estimatedDistributionPctNav: pct ?? fund.estimatedDistributionPctNav,
       categoryAveragePctNav: roundTo(categoryAveragePctNav, 4),
       vsCategoryPctNav: roundTo(
-        fund.estimatedDistributionPctNav - categoryAveragePctNav,
+        (pct ?? fund.estimatedDistributionPctNav) - categoryAveragePctNav,
         4,
       ),
     };
@@ -148,6 +153,10 @@ export function fundFromPaidEvent(
     estimatedOrdinaryIncome: event.estimatedOrdinaryIncome,
     estimatedCapitalGains: event.estimatedCapitalGains,
     estimatedDistributionPctNav: event.estimatedDistributionPctNav,
+    publishedPctOfNav: event.publishedPctOfNav ?? null,
+    navOnDistributionDay: event.navOnDistributionDay ?? null,
+    navOnDistributionDayAsOf: event.navOnDistributionDayAsOf ?? null,
+    navOnDistributionDaySource: event.navOnDistributionDaySource ?? null,
     distributionYear: event.distributionYear,
     paidHistory: [],
   };
@@ -172,7 +181,9 @@ export function getHighlights(
 
   const largest = [...pool]
     .sort((a, b) => {
-      const byPct = b.estimatedDistributionPctNav - a.estimatedDistributionPctNav;
+      const byPct =
+        (pctOfNavForFund(b) ?? Number.NEGATIVE_INFINITY) -
+        (pctOfNavForFund(a) ?? Number.NEGATIVE_INFINITY);
       if (byPct !== 0) return byPct;
       return a.fundName.localeCompare(b.fundName);
     })

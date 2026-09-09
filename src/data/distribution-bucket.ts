@@ -11,6 +11,12 @@ export type PaidDistributionEvent = {
   estimatedCapitalGains: number;
   estimatedDistributionPctNav: number;
   distributionYear: number;
+  /** Issuer-published percent_of_nav characters only. Null when none. */
+  publishedPctOfNav?: number | null;
+  /** NAV on ex/payable. Historical % of NAV only — never weekly NAV. */
+  navOnDistributionDay?: number | null;
+  navOnDistributionDayAsOf?: string | null;
+  navOnDistributionDaySource?: string | null;
 };
 
 export const UPCOMING_STAGES = new Set(["preliminary_estimate", "updated_estimate"]);
@@ -133,6 +139,10 @@ export function toPaidEvent(
     estimatedCapitalGains: number;
     estimatedDistributionPctNav: number;
     distributionYear: number;
+    publishedPctOfNav?: number | null;
+    navOnDistributionDay?: number | null;
+    navOnDistributionDayAsOf?: string | null;
+    navOnDistributionDaySource?: string | null;
   },
 ): PaidDistributionEvent {
   return {
@@ -146,6 +156,10 @@ export function toPaidEvent(
     estimatedCapitalGains: row.estimatedCapitalGains,
     estimatedDistributionPctNav: row.estimatedDistributionPctNav,
     distributionYear: row.distributionYear,
+    publishedPctOfNav: row.publishedPctOfNav ?? null,
+    navOnDistributionDay: row.navOnDistributionDay ?? null,
+    navOnDistributionDayAsOf: row.navOnDistributionDayAsOf ?? null,
+    navOnDistributionDaySource: row.navOnDistributionDaySource ?? null,
   };
 }
 

@@ -14,6 +14,9 @@ describe("Search / Sample Estimates fund page", () => {
     assert.match(source, /mergeFundWithDistributions/);
     assert.match(source, /has_estimate/);
     assert.doesNotMatch(source, /SAMPLE_FUNDS|from ["']@\/data\/seed["']/);
+    const fundsList = readFileSync(join(here, "../../data/funds-list.ts"), "utf8");
+    assert.match(fundsList, /nav_per_share/);
+    assert.match(fundsList, /nav_as_of/);
   });
 
   it("hydrates a browse page prefix instead of skipping all ticker GETs", () => {
@@ -52,6 +55,7 @@ describe("Search / Sample Estimates fund page", () => {
     assert.match(results, /upcomingIllustrationTotals/);
     assert.match(results, /splitIllustrationComponents/);
     assert.match(results, /paidEventsForFund/);
+    assert.match(results, /pctOfNavForFund|historicalPctOfNav/);
     assert.doesNotMatch(results, /totals\.distribution_dollars/);
     assert.doesNotMatch(results, /paidComponents/);
     assert.doesNotMatch(results, /components=\{paid/);

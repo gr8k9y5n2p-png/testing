@@ -55,6 +55,17 @@ export {
   toDataApiCompareBody,
   withPortfolioHoldingNav,
 } from "@/lib/illustrate/compare-request";
+export {
+  formatSoftNav,
+  formatSoftPct,
+  formatWeeklyNavLabel,
+  historicalPctOfNav,
+  parsePositiveNav,
+  pctOfNavForFund,
+  resolvePctOfNav,
+  upcomingDistDollars,
+  upcomingPctOfNav,
+} from "@/lib/illustrate/nav-math";
 export { seedNavLookup } from "@/lib/illustrate/seed-nav";
 export type {
   CompareRequest,
