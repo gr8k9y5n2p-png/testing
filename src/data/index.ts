@@ -2,6 +2,12 @@ export { getDistributionRepository, SeedDistributionRepository } from "./reposit
 export { aggregateDistributions } from "./aggregate-distributions";
 export type { DataDistribution } from "./aggregate-distributions";
 export {
+  hideUpcomingAmounts,
+  mergeFundLists,
+  mergeFundWithDistributions,
+  paidEventsForFund,
+} from "./hydrate-funds";
+export {
   computeCategoryAverages,
   fundFromPaidEvent,
   getFacets,

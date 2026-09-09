@@ -1,4 +1,5 @@
 import type { FundEstimateView } from "@/data/types";
+import { hideUpcomingAmounts } from "@/data/hydrate-funds";
 import { deltaTone, formatSignedPp } from "@/lib/format";
 
 export function DeltaBadge({
@@ -8,7 +9,7 @@ export function DeltaBadge({
   fund: FundEstimateView;
   compact?: boolean;
 }) {
-  if (fund.hasEstimate === false) {
+  if (hideUpcomingAmounts(fund)) {
     return (
       <span className="inline-flex items-center rounded-sm bg-paper px-1.5 py-0.5 font-mono text-[11px] font-medium text-muted">
         —

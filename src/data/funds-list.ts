@@ -20,6 +20,7 @@ export function mapFundsApiItem(row: FundsApiItem): FundEstimateView {
   const identifier = (row.fund_identifier ?? ticker ?? "").trim();
   const asOf = (row.latest_as_of ?? "").slice(0, 10);
   const year = Number(asOf.slice(0, 4)) || new Date().getUTCFullYear();
+  // Unpaid Upcoming only. Paid / final YE history hydrates from /distributions.
   const hasEstimate = Boolean(row.has_estimate);
   return {
     id: `fund:${identifier || ticker || row.fund_name || "unknown"}`,

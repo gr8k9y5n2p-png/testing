@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { FundEstimateView } from "@/data/types";
+import { mergeFundLists } from "@/data/hydrate-funds";
 import { searchFunds, splitFundsByBucket } from "@/data/queries";
 import { COPY } from "@/lib/copy";
 import {
@@ -12,6 +13,26 @@ import { usePortfolioMissRequest } from "@/lib/data-api/use-portfolio-miss";
 import { useSearchMissRequest } from "@/lib/data-api/use-search-miss";
 import { DistributionDateStrip } from "@/components/DistributionDateStrip";
 import { useCoverage } from "@/components/coverage/CoverageProvider";
+
+const REMOTE_SEARCH_DEBOUNCE_MS = 220;
+
+async function fetchRemoteFunds(query: string): Promise<FundEstimateView[]> {
+  const params = new URLSearchParams();
+  params.set("q", query);
+  params.set("limit", "20");
+  params.set("offset", "0");
+  const response = await fetch(`/api/funds?${params.toString()}`);
+  if (!response.ok) return [];
+  const body = (await response.json()) as {
+    items?: FundEstimateView[];
+    data?: FundEstimateView[];
+  };
+  return Array.isArray(body.items)
+    ? body.items
+    : Array.isArray(body.data)
+      ? body.data
+      : [];
+}
 
 export function FundPicker({
   funds,
@@ -43,24 +64,57 @@ export function FundPicker({
 }) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
+  const [remoteFunds, setRemoteFunds] = useState<FundEstimateView[]>([]);
+  const [remotePending, setRemotePending] = useState(false);
   const coverage = useCoverage();
 
+  useEffect(() => {
+    const q = query.trim();
+    if (!reportSearchMiss || !q) {
+      setRemoteFunds([]);
+      setRemotePending(false);
+      return;
+    }
+    let cancelled = false;
+    setRemotePending(true);
+    const handle = window.setTimeout(() => {
+      void fetchRemoteFunds(q)
+        .then((items) => {
+          if (!cancelled) setRemoteFunds(items);
+        })
+        .catch(() => {
+          if (!cancelled) setRemoteFunds([]);
+        })
+        .finally(() => {
+          if (!cancelled) setRemotePending(false);
+        });
+    }, REMOTE_SEARCH_DEBOUNCE_MS);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(handle);
+    };
+  }, [query, reportSearchMiss]);
+
   const matches = useMemo(() => {
-    const found = searchFunds(funds, { query });
+    const found = mergeFundLists(searchFunds(funds, { query }), remoteFunds);
     const { upcoming, paid } = splitFundsByBucket(found);
     return [...upcoming, ...paid].slice(0, 8);
-  }, [funds, query]);
+  }, [funds, query, remoteFunds]);
 
   const tickerInUniverse = useMemo(() => {
     const key = query.trim().toUpperCase();
     if (!key) return false;
-    return funds.some((fund) => fund.ticker.toUpperCase() === key);
-  }, [funds, query]);
+    return (
+      remotePending ||
+      funds.some((fund) => fund.ticker.toUpperCase() === key) ||
+      remoteFunds.some((fund) => fund.ticker.toUpperCase() === key)
+    );
+  }, [funds, query, remoteFunds, remotePending]);
 
   useSearchMissRequest(
     reportSearchMiss ? query : "",
     matches.length,
-    false,
+    tickerInUniverse,
     onNotice,
   );
 

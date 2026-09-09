@@ -18,8 +18,8 @@ import { isRemoteDataApi } from "@/lib/data-api/config";
 import { loadFundPageFromDataApi } from "@/lib/data-api/funds-page";
 
 /**
- * In-memory repository over a fund list. Live Search / Sample Estimates /
- * highlights load this from GET /distributions only — never from seed.ts.
+ * In-memory repository over a fund list. Live Search / Sample Estimates
+ * unique-fund pages use GET /funds + /distributions hydrate — never seed.ts.
  */
 export class SeedDistributionRepository implements DistributionRepository {
   private readonly views: FundEstimateView[];
@@ -70,7 +70,8 @@ export function repositoryFromApiFunds(
 
 /**
  * Live Search / Sample Estimates / homepage highlights.
- * Uses GET /distributions (`NEXT_PUBLIC_DATA_API_URL`) only.
+ * Highlights still aggregate GET /distributions (`NEXT_PUBLIC_DATA_API_URL`).
+ * Search / Sample Estimates pages hydrate via GET /funds + ticker rows.
  * Down, empty, or uncovered → empty list. Never merge or fall back to seed.ts.
  */
 export async function getDistributionRepository(): Promise<DistributionRepository> {

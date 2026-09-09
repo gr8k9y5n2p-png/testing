@@ -2,9 +2,9 @@ import {
   distributionBucket,
   isoDate,
   toPaidEvent,
-} from "./distribution-bucket";
-import type { PaidDistributionEvent } from "./distribution-bucket";
-import type { FundEstimate } from "./types";
+} from "./distribution-bucket.ts";
+import type { PaidDistributionEvent } from "./distribution-bucket.ts";
+import type { FundEstimate } from "./types.ts";
 
 export type DataDistribution = {
   id: string;
@@ -116,7 +116,13 @@ function summarizeSnapshot(rows: DataDistribution[]): SnapshotTotals {
 }
 
 function snapshotRank(snapshot: SnapshotTotals): string {
-  return `${snapshot.asOf ?? ""}|${snapshot.exDate ?? ""}|${snapshot.payableDate ?? ""}`;
+  const asOf = snapshot.asOf ?? "0000-00-00";
+  const event =
+    snapshot.payableDate ?? snapshot.exDate ?? snapshot.recordDate ?? "";
+  // Undated as_of-only rows (QD %, specials) must not outrank a dated YE event
+  // on the same as_of — string `|` otherwise sorts above `2` in 2025-12-15.
+  const hasEvent = event ? "1" : "0";
+  return `${asOf}|${hasEvent}|${event}`;
 }
 
 function pickLatest(snapshots: SnapshotTotals[]): SnapshotTotals | null {
