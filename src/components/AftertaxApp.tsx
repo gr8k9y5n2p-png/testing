@@ -226,7 +226,7 @@ function AftertaxAppInner({
           <DemoBanner />
         </div>
         <div className="mt-8">
-          <HighlightsSection highlights={highlights} />
+          <HighlightsSection highlights={highlights} onSelect={selectFund} />
           <Dashboard
             funds={funds}
             facets={facets}

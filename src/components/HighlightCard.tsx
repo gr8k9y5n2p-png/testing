@@ -2,7 +2,7 @@ import type { FundEstimateView } from "@/data/types";
 import { hideUpcomingAmounts } from "@/data/hydrate-funds";
 import { DeltaBadge } from "@/components/DeltaBadge";
 import { DistributionDateStrip } from "@/components/DistributionDateStrip";
-import { CompareTickerLink } from "@/components/illustrate/CompareTickerLink";
+import { SearchTickerButton } from "@/components/SearchTickerButton";
 import { UPCOMING_UNAVAILABLE_HEADLINE } from "@/lib/copy";
 import { formatCompactDate, formatUsd } from "@/lib/format";
 import { formatSoftPct, pctOfNavForFund } from "@/lib/illustrate/nav-math";
@@ -21,6 +21,7 @@ export function HighlightCard({
   above = [],
   below = [],
   wide = false,
+  onSelect,
 }: {
   title: string;
   metricLabel: string;
@@ -30,6 +31,7 @@ export function HighlightCard({
   above?: FundEstimateView[];
   below?: FundEstimateView[];
   wide?: boolean;
+  onSelect?: (fund: FundEstimateView) => void;
 }) {
   return (
     <article
@@ -53,12 +55,14 @@ export function HighlightCard({
             tone="above"
             funds={above}
             split={wide}
+            onSelect={onSelect}
           />
           <OutlierGroup
             label="Well below category"
             tone="below"
             funds={below}
             split={wide}
+            onSelect={onSelect}
           />
         </div>
       ) : funds.length === 0 ? (
@@ -72,10 +76,12 @@ export function HighlightCard({
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-ink">
-                    <CompareTickerLink ticker={fund.ticker}>{fund.fundName}</CompareTickerLink>
+                    <SearchTickerButton fund={fund} onSelect={onSelect}>
+                      {fund.fundName}
+                    </SearchTickerButton>
                   </p>
                   <p className="mt-0.5 font-mono text-[11px] text-faint">
-                    <CompareTickerLink ticker={fund.ticker} />
+                    <SearchTickerButton fund={fund} onSelect={onSelect} />
                     <span className="mx-1.5 text-line-strong">·</span>
                     {fund.family}
                   </p>
@@ -112,11 +118,13 @@ function OutlierGroup({
   tone,
   funds,
   split,
+  onSelect,
 }: {
   label: string;
   tone: "above" | "below";
   funds: FundEstimateView[];
   split: boolean;
+  onSelect?: (fund: FundEstimateView) => void;
 }) {
   // Eric: above category avg = more tax (red); below = less tax (green/teal).
   const bar =
@@ -149,10 +157,12 @@ function OutlierGroup({
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-ink">
-                      <CompareTickerLink ticker={fund.ticker}>{fund.fundName}</CompareTickerLink>
+                      <SearchTickerButton fund={fund} onSelect={onSelect}>
+                        {fund.fundName}
+                      </SearchTickerButton>
                     </p>
                     <p className="mt-0.5 font-mono text-[11px] text-faint">
-                      <CompareTickerLink ticker={fund.ticker} />
+                      <SearchTickerButton fund={fund} onSelect={onSelect} />
                       <span className="mx-1.5 text-line-strong">·</span>
                       {fund.category}
                     </p>

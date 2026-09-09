@@ -1,8 +1,14 @@
-import type { HighlightSets } from "@/data/types";
+import type { FundEstimateView, HighlightSets } from "@/data/types";
 import { OUTLIER_THRESHOLD_PP } from "@/data/queries";
 import { HighlightCard } from "@/components/HighlightCard";
 
-export function HighlightsSection({ highlights }: { highlights: HighlightSets }) {
+export function HighlightsSection({
+  highlights,
+  onSelect,
+}: {
+  highlights: HighlightSets;
+  onSelect?: (fund: FundEstimateView) => void;
+}) {
   return (
     <section aria-labelledby="highlights-heading" className="mb-10">
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
@@ -31,6 +37,7 @@ export function HighlightsSection({ highlights }: { highlights: HighlightSets })
           description="Highest estimated taxable distribution as a percent of NAV."
           funds={highlights.largest}
           variant="largest"
+          onSelect={onSelect}
         />
         <HighlightCard
           title="Most recent"
@@ -38,6 +45,7 @@ export function HighlightsSection({ highlights }: { highlights: HighlightSets })
           description="Newest announced (as_of) upcoming estimates — record and ex-div on each row."
           funds={highlights.mostRecent}
           variant="recent"
+          onSelect={onSelect}
         />
       </div>
       <div className="mt-4">
@@ -50,6 +58,7 @@ export function HighlightsSection({ highlights }: { highlights: HighlightSets })
           above={highlights.aboveCategory}
           below={highlights.belowCategory}
           wide
+          onSelect={onSelect}
         />
       </div>
     </section>

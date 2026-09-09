@@ -7,6 +7,14 @@ import { fileURLToPath } from "node:url";
 const here = dirname(fileURLToPath(import.meta.url));
 const source = readFileSync(join(here, "ResultsTable.tsx"), "utf8");
 
+describe("ResultsTable Search ticker clicks", () => {
+  it("selects ticker/name into Search a fund instead of routing to Compare", () => {
+    assert.match(source, /SearchTickerButton/);
+    assert.match(source, /onSelect=\{onIllustrate\}/);
+    assert.doesNotMatch(source, /CompareTickerLink|compareTickersPath|\/compare\?tickers=/);
+  });
+});
+
 describe("ResultsTable EstimateRow props", () => {
   it("does not pass showPayable into EstimateRow (Vercel typecheck)", () => {
     const start = source.indexOf("<EstimateRow");
