@@ -27,12 +27,17 @@ export function TickerField({
   onNotice,
   autoFocus = false,
   allowEmpty = false,
+  placeholder = "Ticker",
+  hideSubtitle = false,
 }: {
   ticker: string;
   fundName: string;
   funds: PortfolioFundOption[];
   inputId: string;
   allowEmpty?: boolean;
+  placeholder?: string;
+  /** Compare slots: number lives in the placeholder, not a label above/below. */
+  hideSubtitle?: boolean;
   onSelect: (fund: {
     ticker: string;
     fundName: string;
@@ -48,7 +53,9 @@ export function TickerField({
   const pickedRef = useRef(false);
   const hasSelection = Boolean((ticker || fundName) && !cleared);
   const display = tickerFieldDisplay({ open, query, ticker, cleared });
-  const subtitle = tickerFieldSubtitle({ fundName, cleared });
+  const subtitle = hideSubtitle
+    ? ""
+    : tickerFieldSubtitle({ fundName, cleared });
   const canClear = Boolean(display || hasSelection);
 
   function commitUnknown(typed: string) {
@@ -87,8 +94,9 @@ export function TickerField({
           value={display}
           autoComplete="off"
           spellCheck={false}
-          placeholder="Ticker"
+          placeholder={placeholder}
           autoFocus={autoFocus}
+          aria-label={placeholder}
           aria-autocomplete="list"
           aria-expanded={open}
           aria-controls={`${inputId}-list`}
@@ -207,9 +215,11 @@ export function TickerField({
           </button>
         ) : null}
       </div>
-      <p className="mt-1 truncate text-[11px] leading-snug text-muted">
-        {subtitle}
-      </p>
+      {hideSubtitle ? null : (
+        <p className="mt-1 truncate text-[11px] leading-snug text-muted">
+          {subtitle}
+        </p>
+      )}
       {open ? (
         <ul
           id={`${inputId}-list`}
