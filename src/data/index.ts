@@ -20,6 +20,15 @@ export {
   publicationStageLabel,
 } from "./distribution-bucket";
 export { SAMPLE_FUNDS } from "./seed";
+export {
+  FUND_PAGE_SIZE,
+  FUND_PAGE_SIZE_MAX,
+  clampOffset,
+  clampPageSize,
+  paginateViews,
+  parseFundPageQuery,
+} from "./pagination";
+export type { FundPageQuery, FundPageResult } from "./pagination";
 export type {
   DistributionBucket,
   DistributionRepository,

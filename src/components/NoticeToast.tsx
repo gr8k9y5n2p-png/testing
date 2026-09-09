@@ -1,6 +1,22 @@
 "use client";
 
-import { useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
+
+/** Website Search toast state. Portfolio / Compare reuse the same surface. */
+export function useNoticeToast(): {
+  notice: string | null;
+  onNotice: (message: string) => void;
+  dismissNotice: () => void;
+} {
+  const [notice, setNotice] = useState<string | null>(null);
+  const onNotice = useCallback((message: string) => {
+    setNotice(message);
+  }, []);
+  const dismissNotice = useCallback(() => {
+    setNotice(null);
+  }, []);
+  return { notice, onNotice, dismissNotice };
+}
 
 export function NoticeToast({
   message,

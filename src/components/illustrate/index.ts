@@ -115,6 +115,9 @@ export type {
 } from "@/lib/performance/types";
 export {
   requestTicker,
+  requestTickerOnPortfolioMiss,
+  notifyPortfolioTickerMiss,
+  shouldReportPortfolioMiss,
   TICKER_REQUEST_SOURCES,
   noticeForTickerRequest,
 } from "@/lib/request-ticker";
