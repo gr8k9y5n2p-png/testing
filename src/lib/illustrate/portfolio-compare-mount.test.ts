@@ -12,6 +12,22 @@ describe("Website PortfolioCompare mounts", () => {
     assert.deepEqual(WEBSITE_PORTFOLIO_HOLDINGS, []);
   });
 
+  it("titles the Portfolio tab Portfolio, not Portfolio comparison", () => {
+    const compare = readFileSync(
+      join(here, "../../components/illustrate/PortfolioCompare.tsx"),
+      "utf8",
+    );
+    const homepage = readFileSync(
+      join(here, "../../components/illustrate/HomepagePortfolioCompare.tsx"),
+      "utf8",
+    );
+    const page = readFileSync(join(here, "../../app/portfolio/page.tsx"), "utf8");
+    assert.match(compare, />\s*Portfolio\s*</);
+    assert.doesNotMatch(compare, /Portfolio comparison/);
+    assert.match(homepage, /aria-label="Portfolio"/);
+    assert.match(page, /Aftertax — Portfolio/);
+  });
+
   it("does not inject smoke tickers from Website mounts", () => {
     const homepage = readFileSync(
       join(here, "../../components/illustrate/HomepagePortfolioCompare.tsx"),

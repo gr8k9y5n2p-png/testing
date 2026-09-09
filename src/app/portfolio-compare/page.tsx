@@ -5,7 +5,7 @@ import { COPY } from "@/lib/copy";
 import { WEBSITE_PORTFOLIO_HOLDINGS } from "@/lib/illustrate/portfolio-compare-mount";
 
 export const metadata: Metadata = {
-  title: "Aftertax — portfolio comparison",
+  title: "Aftertax — Portfolio",
   description:
     "Current vs proposed allocation tax drag. Mount PortfolioCompare in the illustrate flow.",
   robots: { index: false, follow: false },

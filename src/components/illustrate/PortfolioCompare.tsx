@@ -235,7 +235,7 @@ export function PortfolioCompare({
             Aftertax · Portfolio
           </p>
           <Heading className="mt-1 font-serif text-3xl tracking-tight text-ink">
-            Portfolio comparison
+            Portfolio
           </Heading>
         </div>
         <div className="flex flex-wrap items-end gap-3">
