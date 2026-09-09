@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 import { AccountPanel } from "@/components/AccountPanel";
@@ -59,14 +58,6 @@ export function AccountMenu() {
           className="absolute right-0 z-40 mt-2 w-72 rounded-lg border border-line bg-surface p-4 shadow-lg"
         >
           <AccountPanel compact />
-          <p className="mt-3 border-t border-line pt-3">
-            <Link
-              href="/account"
-              className="text-xs text-accent underline decoration-accent/40 underline-offset-2 hover:decoration-accent"
-            >
-              Open account
-            </Link>
-          </p>
         </div>
       ) : null}
     </div>
