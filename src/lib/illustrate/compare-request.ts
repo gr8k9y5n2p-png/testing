@@ -4,7 +4,9 @@ import type {
   CompareSelectors,
   CompareSideIn,
 } from "./compare-types.ts";
+import { PORTFOLIO_COMPARE_YEARS } from "./portfolio-compare-years.ts";
 import {
+  lockedTaxRates,
   UI_DEFAULT_TAX_RATES,
   type IllustrateRequest,
   type TaxRates,
@@ -12,14 +14,14 @@ import {
 
 /** Locked Compare tax payload. Empty `{}` is never sent — UI always posts rates. */
 export function compareTaxRequestFields(input?: {
-  taxRates?: TaxRates;
+  taxRates?: Partial<TaxRates> | Record<string, never> | null;
   combineStateWithFederal?: boolean;
 }): {
   tax_rates: TaxRates;
   combine_state_with_federal: boolean;
 } {
   return {
-    tax_rates: input?.taxRates ?? UI_DEFAULT_TAX_RATES,
+    tax_rates: lockedTaxRates(input?.taxRates),
     combine_state_with_federal: input?.combineStateWithFederal ?? true,
   };
 }
@@ -147,13 +149,15 @@ export function compareSideFromFund(
 }
 
 /**
- * Last five calendar years through today (2022–2026 in 2026).
- * Live compare covers this window for AMCPX / AGTHX; do not hardcode 2021–2025.
+ * Locked paid-history window for POST /illustrate/compare.
+ * Data AGTHX / AMCPX YoY finals are 2021–2025 — same years as Portfolio.
+ * Do not roll into the current calendar year (2026) or the request can 422
+ * / return no matched rows while the table axis looks empty.
  */
 export function trailingCalendarPeriods(
-  nowYear = new Date().getUTCFullYear(),
+  _nowYear = new Date().getUTCFullYear(),
 ): ComparePeriodIn[] {
-  return [0, 1, 2, 3, 4].map((offset) => ({ year: nowYear - 4 + offset }));
+  return PORTFOLIO_COMPARE_YEARS.map((year) => ({ year }));
 }
 
 /**
@@ -258,6 +262,8 @@ export function toDataApiCompareBody(
 
   return {
     ...rest,
+    tax_rates: lockedTaxRates(rest.tax_rates),
+    combine_state_with_federal: rest.combine_state_with_federal !== false,
     ...(left ? { left } : {}),
     ...(right ? { right } : {}),
     ...(topNav != null ? { nav_per_share: topNav } : {}),

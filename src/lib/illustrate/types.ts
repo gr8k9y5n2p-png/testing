@@ -30,6 +30,38 @@ export type TaxRates = {
   state: number;
 };
 
+/** Locked Data tax_rates keys. Never POST `{}` or `{ state }` alone. */
+export const LOCKED_TAX_RATE_KEYS = [
+  "ordinary_income",
+  "long_term_capital_gains",
+  "short_term_capital_gains",
+  "qualified_dividend",
+  "state",
+] as const satisfies ReadonlyArray<keyof TaxRates>;
+
+/**
+ * Expand a partial / abbreviated rate bag to the full locked contract.
+ * Missing keys fall back to UI_DEFAULT_TAX_RATES — never omit a key.
+ */
+export function lockedTaxRates(
+  incoming?: Partial<TaxRates> | Record<string, never> | null,
+): TaxRates {
+  const src = incoming && typeof incoming === "object" ? incoming : {};
+  const pick = (key: keyof TaxRates): number => {
+    const value = src[key];
+    return typeof value === "number" && Number.isFinite(value)
+      ? value
+      : UI_DEFAULT_TAX_RATES[key];
+  };
+  return {
+    ordinary_income: pick("ordinary_income"),
+    long_term_capital_gains: pick("long_term_capital_gains"),
+    short_term_capital_gains: pick("short_term_capital_gains"),
+    qualified_dividend: pick("qualified_dividend"),
+    state: pick("state"),
+  };
+}
+
 export type IllustrateSelector = {
   fund_family?: string;
   fund_identifier?: string;

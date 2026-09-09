@@ -13,7 +13,7 @@ import {
 } from "@/lib/illustrate/compare-types";
 import { UI_DEFAULT_TAX_RATES } from "@/lib/illustrate/types";
 
-const COMPARE_TAX_RATES = { state: UI_DEFAULT_TAX_RATES.state };
+const COMPARE_TAX_RATES = UI_DEFAULT_TAX_RATES;
 
 function sideFromFund(fund: FundEstimateView): CompareSideIn {
   return compareSideFromFund(fund);

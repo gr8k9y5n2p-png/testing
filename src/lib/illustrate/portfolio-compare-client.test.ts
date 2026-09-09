@@ -60,6 +60,14 @@ describe("paid_history contract wiring", () => {
 });
 
 describe("portfolio compare periods wiring", () => {
+  it("POSTs locked tax_rates keys, never {} or { state }", () => {
+    const client = readFileSync(join(here, "portfolio-compare-client.ts"), "utf8");
+    assert.match(client, /lockedTaxRates\(request\.tax_rates\)/);
+    assert.match(client, /lockedTaxRates\(taxRates\)/);
+    assert.doesNotMatch(client, /tax_rates: request\.tax_rates \?\? \{\}/);
+    assert.doesNotMatch(client, /tax_rates: taxRates \?\? \{\}/);
+  });
+
   it("POSTs periods 2021–2025 on portfolio compare", () => {
     const client = readFileSync(join(here, "portfolio-compare-client.ts"), "utf8");
     assert.match(client, /periods:/);

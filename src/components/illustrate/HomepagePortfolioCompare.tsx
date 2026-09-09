@@ -11,7 +11,7 @@ import { WEBSITE_PORTFOLIO_HOLDINGS } from "@/lib/illustrate/portfolio-compare-m
 import { PORTFOLIO_COMPARE_BOOK_DOLLARS } from "@/lib/illustrate/portfolio-compare-types";
 import { UI_DEFAULT_TAX_RATES } from "@/lib/illustrate/types";
 
-const HOMEPAGE_TAX_RATES = { state: UI_DEFAULT_TAX_RATES.state };
+const HOMEPAGE_TAX_RATES = UI_DEFAULT_TAX_RATES;
 
 export function HomepagePortfolioCompare({
   funds,
