@@ -35,8 +35,8 @@ export default async function PortfolioCompareDemoPage() {
           POST /illustrate/portfolio/compare
         </code>{" "}
         and falls back to the sketch fixture when the Data API is unreachable.
-        Website mounts start Current / Proposed empty ($1M book stays). Modules
-        owns PortfolioCompare smoke defaults — do not re-seed demo tickers here.
+        Current and Proposed start empty — add tickers with + Add holding.
+        Website mounts start Current / Proposed empty ($1M book stays).
         POSTs periods for calendar years 2021 through 2025. Calendar-year tax
         is the ticker × year matrix (2025–2021; unmatched / uncovered = N/A,
         never $0). Upcoming stays unpaid-announced. Paid History is not shown
@@ -73,7 +73,8 @@ export default async function PortfolioCompareDemoPage() {
 // Website wires the Export button + freemium gate, then:
 exportToPdf(toPortfolioCompareExportModel(result, bookDollars));
 
-// Website mounts pass empty books. Modules owns component smoke defaults.
+// Website mounts pass empty books. Omit current/proposed to start empty
+// (friends beta). Modules owns component smoke defaults.
 <PortfolioCompare
   bookDollars={1_000_000}
   taxRates={{ state: 0.05 }}

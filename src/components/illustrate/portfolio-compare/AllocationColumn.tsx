@@ -93,6 +93,12 @@ export function AllocationColumn({
         </div>
       </header>
 
+      {holdings.length === 0 ? (
+        <p className="rounded-xl border border-dashed border-line bg-paper/40 px-3 py-5 text-center text-sm text-muted">
+          No holdings yet — use + Add holding to start.
+        </p>
+      ) : null}
+
       <ul className="flex flex-col gap-2.5">
         {holdings.map((holding, index) => (
           <li
