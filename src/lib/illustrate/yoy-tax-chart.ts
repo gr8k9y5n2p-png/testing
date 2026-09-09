@@ -8,6 +8,8 @@ export type YoYTaxChartPoint = {
   year: number;
   /** Null = no coverage that year. Still occupies a calendar slot. */
   value: number | null;
+  /** Dollar Illustration annual hist: paid = green, estimate = red. */
+  tone?: "paid" | "estimate";
 };
 
 export type YoYTaxChartModel = {

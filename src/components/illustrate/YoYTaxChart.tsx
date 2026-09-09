@@ -14,7 +14,29 @@ export type YoYTaxChartProps = {
   title?: string;
   className?: string;
   valueFormat?: (value: number) => string;
+  /** Override the default “calendar year” / YoY kicker. */
+  kicker?: string;
 };
+
+function barToneClass(tone?: YoYTaxChartPoint["tone"]): string {
+  if (tone === "estimate") return "bg-tax-more";
+  if (tone === "paid") return "bg-above";
+  return "bg-ink/80";
+}
+
+function defaultKicker(bars: YoYTaxChartPoint[], showLine: boolean): string {
+  const hasPaid = bars.some((point) => point.tone === "paid");
+  const hasEstimate = bars.some((point) => point.tone === "estimate");
+  if (hasPaid || hasEstimate) {
+    return [
+      hasPaid ? "green = paid / final" : null,
+      hasEstimate ? "red = unpaid estimate" : null,
+    ]
+      .filter(Boolean)
+      .join(" · ");
+  }
+  return showLine ? "bars = tax · line = YoY Δ" : "calendar year";
+}
 
 function defaultFormat(value: number): string {
   return formatUsd(Math.round(value), 0);
@@ -27,10 +49,12 @@ export function YoYTaxChart({
   title = "Tax by calendar year",
   className = "",
   valueFormat = defaultFormat,
+  kicker,
 }: YoYTaxChartProps) {
   const series = sortYoYPoints(bars);
   const yoyLine = line === true ? computeYoyLine(series) : line ? sortYoYPoints(line) : [];
   const showLine = yoyLine.some((point) => point.value != null);
+  const kickerText = kicker ?? defaultKicker(series, showLine);
   const maxBar = series.reduce((peak, point) => Math.max(peak, point.value ?? 0), 0);
   const lineValues = yoyLine.map((point) => point.value).filter((value): value is number => value != null);
   const maxLine = lineValues.reduce((peak, value) => Math.max(peak, Math.abs(value)), 0);
@@ -57,11 +81,7 @@ export function YoYTaxChart({
         >
           {title}
         </h2>
-        {showLine ? (
-          <p className="text-[10px] text-muted">bars = tax · line = YoY Δ</p>
-        ) : (
-          <p className="text-[10px] text-muted">calendar year</p>
-        )}
+        <p className="text-[10px] text-muted">{kickerText}</p>
       </header>
 
       {series.length === 0 ? (
@@ -91,11 +111,19 @@ export function YoYTaxChart({
             className="relative flex h-40 items-end gap-1.5 sm:gap-2"
             role="img"
             aria-label={series
-              .map((point) =>
-                point.value == null
-                  ? `${point.year}: ${TAX_DRAG_NA_LABEL}`
-                  : `${point.year}: ${valueFormat(point.value)}`,
-              )
+              .map((point) => {
+                const amount =
+                  point.value == null
+                    ? TAX_DRAG_NA_LABEL
+                    : valueFormat(point.value);
+                const kind =
+                  point.tone === "estimate"
+                    ? " unpaid estimate"
+                    : point.tone === "paid"
+                      ? " paid"
+                      : "";
+                return `${point.year}: ${amount}${kind}`;
+              })
               .join(". ")}
           >
             {series.map((point) => {
@@ -120,7 +148,7 @@ export function YoYTaxChart({
                       </span>
                     ) : (
                       <div
-                        className="w-[68%] max-w-9 rounded-t-sm bg-ink/80"
+                        className={`w-[68%] max-w-9 rounded-t-sm ${barToneClass(point.tone)}`}
                         style={{ height: `${heightPct}%` }}
                       />
                     )}

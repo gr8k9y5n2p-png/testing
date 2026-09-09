@@ -26,6 +26,14 @@ export {
 } from "@/lib/illustrate/yoy-tax-chart";
 export type { YoYTaxChartModel, YoYTaxChartPoint } from "@/lib/illustrate/yoy-tax-chart";
 export {
+  annualHistoricalDistributionBars,
+  formatAnnualHistoricalBar,
+} from "@/lib/illustrate/annual-historical-distribution";
+export type {
+  AnnualHistoricalBar,
+  AnnualHistoricalFund,
+} from "@/lib/illustrate/annual-historical-distribution";
+export {
   TAX_DRAG_NA_LABEL,
   alignTaxDragYears,
   comparePeriodIsCovered,
