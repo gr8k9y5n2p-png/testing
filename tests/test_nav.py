@@ -11,6 +11,7 @@ from app.services.nav import (
     NavQuote,
     fixture_quote,
     listed_ticker,
+    load_history_catalog,
     lookup_nav_on_day,
     parse_yahoo_chart,
     parse_yahoo_daily_points,
@@ -51,6 +52,20 @@ def test_fixture_quote_sample_tickers() -> None:
         assert quote.nav_as_of is not None
         assert quote.source in {SOURCE_FIXTURE, "fixture_fallback"}
     assert fixture_quote("NOTAREALTICKER") is None
+
+
+def test_history_catalog_has_sample_distribution_days() -> None:
+    catalog = load_history_catalog()
+    for ticker, when in (
+        ("ABALX", date(2025, 12, 15)),
+        ("VFIAX", date(2025, 12, 23)),
+        ("SPY", date(2025, 12, 19)),
+        ("DBEF", date(2025, 12, 19)),
+    ):
+        quote = catalog.get((ticker, when))
+        assert quote is not None, (ticker, when)
+        assert quote.nav_per_share > 0
+        assert quote.source == SOURCE_FIXTURE
 
 
 def test_parse_yahoo_chart_uses_regular_close_not_adjclose() -> None:
@@ -276,9 +291,9 @@ def test_historical_percent_stays_null_without_distribution_day_nav(
         json={
             "records": [
                 {
-                    "fund_family": "Vanguard",
-                    "fund_name": "Vanguard 500 Index Fund",
-                    "ticker": "VFIAX",
+                    "fund_family": "Example",
+                    "fund_name": "No History NAV Fund",
+                    "ticker": "NAVUKN",
                     "estimate_type": "long_term_capital_gains",
                     "amount": "2.00",
                     "amount_unit": "per_share",
@@ -293,7 +308,7 @@ def test_historical_percent_stays_null_without_distribution_day_nav(
     upsert_nav(
         session,
         NavQuote(
-            ticker="VFIAX",
+            ticker="NAVUKN",
             nav_per_share=Decimal("100"),
             nav_as_of=date(2026, 9, 8),
             source=SOURCE_YAHOO,
@@ -302,13 +317,13 @@ def test_historical_percent_stays_null_without_distribution_day_nav(
     )
     session.commit()
 
-    listed = client.get("/distributions", params={"ticker": "VFIAX"}).json()["items"][0]
+    listed = client.get("/distributions", params={"ticker": "NAVUKN"}).json()["items"][0]
     assert listed["nav_on_distribution_day"] is None
     assert listed["nav_on_distribution_day_as_of"] is None
 
     body = client.post(
         "/illustrate",
-        json={"holding_dollars": 1000, "selectors": {"ticker": "VFIAX"}},
+        json={"holding_dollars": 1000, "selectors": {"ticker": "NAVUKN"}},
     ).json()
     assert Decimal(body["nav_per_share"]) == Decimal("100")
     assert Decimal(body["components"][0]["distribution_dollars"]) == Decimal("20.00")

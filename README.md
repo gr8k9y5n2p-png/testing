@@ -252,6 +252,22 @@ Sample prints from that walk (`nav_source=yahoo_last_close`):
 | SPY | 762.400024 | 2026-09-09 |
 | DBEF | 54.730000 | 2026-09-09 |
 
+**NAV on the distribution day** (same book, Yahoo daily history, 2026-09-09):
+
+| Stage | Distinct (ticker, ex/payable) pairs | Coverage |
+| --- | ---: | ---: |
+| Before | 0 / 10,100 | **0%** |
+| After live Yahoo daily history | 9,550 / 10,100 | **94.6%** |
+
+550 pairs stay **null** (Yahoo miss or no print within 7 days — never invented). Offline seed: `fixtures/nav/history.json`.
+
+| Ticker | Distribution day | `nav_on_distribution_day` | Print as-of |
+| --- | --- | ---: | --- |
+| ABALX | 2025-12-15 (ex) | 37.090000 | 2025-12-15 |
+| VFIAX | 2025-12-23 (ex) | 637.650024 | 2025-12-23 |
+| SPY | 2025-12-19 (ex) | 680.590027 | 2025-12-19 |
+| DBEF | 2025-12-19 (ex) | 47.990002 | 2025-12-19 |
+
 The JSON / Markdown summary breaks out **midyear vs year-end** created/updated when a row is detectable from the source URL (`midyear`, `mid-year`, `interim`, `semi-annual`, `year-end`) or from `as_of` / `ex_date` month (May–August vs October–January). Unclassified months (for example September) are counted only in the overall created/updated totals.
 
 Live pages often 403, challenge, or render as a JS/SPA shell and parse 0 rows. That is expected for a large share of the top 110 — fixture fallback is the documented recovery, not a job failure.

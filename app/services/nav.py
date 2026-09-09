@@ -957,9 +957,12 @@ def lookup_nav_on_day(
             source_url=picked.source_url,
         )
     fixtures = catalog if catalog is not None else load_history_catalog()
-    nearby = [quote for (sym, when), quote in fixtures.items() if sym == listed and when <= on]
-    picked_fx = _pick_on_or_before(nearby, on)
-    return picked_fx
+    nearby = [
+        quote
+        for delta in range(0, DISTRIBUTION_DAY_LOOKBACK_DAYS + 1)
+        if (quote := fixtures.get((listed, on - timedelta(days=delta)))) is not None
+    ]
+    return _pick_on_or_before(nearby, on)
 
 
 def apply_distribution_day_nav(item: Any, quote: NavQuote | None) -> Any:
@@ -1033,6 +1036,9 @@ def refresh_nav_history(
     pair_count = sum(len(days) for days in targets.values())
     created = updated = unknown = 0
     catalog = load_history_catalog()
+    catalog_by_ticker: dict[str, list[NavQuote]] = {}
+    for (sym, _when), quote in catalog.items():
+        catalog_by_ticker.setdefault(sym, []).append(quote)
 
     live_points: dict[str, list[NavQuote]] = {}
     if requested in {"auto", "live"} and targets:
@@ -1069,13 +1075,12 @@ def refresh_nav_history(
     for ticker, days in targets.items():
         points = live_points.get(ticker, [])
         if requested == "fixture" or not points:
-            for (sym, when), quote in catalog.items():
-                if sym == ticker:
-                    action = upsert_nav_history(session, quote)
-                    if action == "created":
-                        created += 1
-                    elif action == "updated":
-                        updated += 1
+            for quote in catalog_by_ticker.get(ticker, []):
+                action = upsert_nav_history(session, quote)
+                if action == "created":
+                    created += 1
+                elif action == "updated":
+                    updated += 1
         for day in days:
             found = lookup_nav_on_day(session, ticker, day, catalog=catalog)
             if found is None:
