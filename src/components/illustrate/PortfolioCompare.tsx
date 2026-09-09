@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { NoticeToast, useNoticeToast } from "@/components/NoticeToast";
 import { AllocationColumn } from "@/components/illustrate/portfolio-compare/AllocationColumn";
 import { CalendarYearTaxTable } from "@/components/illustrate/portfolio-compare/CalendarYearTaxTable";
 import { SummaryStrip } from "@/components/illustrate/portfolio-compare/SummaryStrip";
@@ -99,6 +100,7 @@ export function PortfolioCompare({
   const [result, setResult] = useState<PortfolioCompareResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const { notice, onNotice, dismissNotice } = useNoticeToast();
 
   function commitBook(raw: string) {
     const parsed = Number(raw.replace(/,/g, ""));
@@ -244,6 +246,7 @@ export function PortfolioCompare({
           inputIdPrefix="current"
           onUnitChange={setCurrentUnit}
           onChange={setCurrent}
+          onNotice={onNotice}
           className="h-full lg:[grid-area:holdings-c]"
         />
         {!canFetch ? null : loading && !result ? (
@@ -270,6 +273,7 @@ export function PortfolioCompare({
           inputIdPrefix="proposed"
           onUnitChange={setProposedUnit}
           onChange={setProposed}
+          onNotice={onNotice}
           className="h-full lg:[grid-area:holdings-p]"
         />
         {!canFetch ? null : loading && !result ? (
@@ -333,6 +337,7 @@ export function PortfolioCompare({
       <p className="mt-5 text-center text-[10px] leading-relaxed text-faint">
         Demo data · weights × Portfolio Value → dollars · tax from Data API TBD
       </p>
+      <NoticeToast message={notice} onDismiss={dismissNotice} />
     </article>
   );
 }

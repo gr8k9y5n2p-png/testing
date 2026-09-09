@@ -6,7 +6,7 @@ import { firstSearchParam, growthFundFromTicker } from "@/lib/illustrate/fund-hi
 export const metadata: Metadata = {
   title: "Aftertax — growth of $X and tax drag",
   description:
-    "Stacked cumulative growth and annual tax-drag module. The homepage already mounts GrowthAndTaxDragModule as the illustrate hero.",
+    "Stacked cumulative growth and annual tax-drag module. Search no longer mounts this; Compare and this demo page keep GrowthAndTaxDragModule.",
   robots: { index: false, follow: false },
 };
 
@@ -32,11 +32,11 @@ export default async function GrowthTaxDemoPage({
         Growth of $X + tax drag
       </h1>
       <p className="mt-2 max-w-2xl text-sm text-muted">
-        Drop{" "}
+        Standalone demo of{" "}
         <code className="font-mono text-[13px] text-ink">
           GrowthAndTaxDragModule
-        </code>{" "}
-        into the homepage (already the illustrate hero). Top chart is{" "}
+        </code>
+        . Search no longer mounts it. Top chart is{" "}
         <code className="font-mono text-[13px] text-ink">GET /performance</code>{" "}
         (or{" "}
         <code className="font-mono text-[13px] text-ink">
@@ -47,11 +47,11 @@ export default async function GrowthTaxDemoPage({
           POST /illustrate/compare
         </code>{" "}
         periods, drawn negative and side-by-side, with a % / $ toggle. Localhost
-        uses mock fallbacks. Portfolio review links use{" "}
+        uses mock fallbacks. Search ticker links open{" "}
         <code className="font-mono text-[13px] text-ink">
-          /?ticker=AMCAP#growth-and-tax
-        </code>
-        ; this demo also accepts{" "}
+          /?ticker=AMCAP#illustrate
+        </code>{" "}
+        (historical + upcoming tables). This demo accepts{" "}
         <code className="font-mono text-[13px] text-ink">?ticker=</code>.
       </p>
 

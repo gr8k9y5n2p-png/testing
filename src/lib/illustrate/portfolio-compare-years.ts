@@ -46,8 +46,9 @@ function isExplicitFalse(value: unknown): boolean {
 }
 
 /**
- * Portfolio period illustrations may omit `matched`.
- * Miss = covered:false / gap_reason / unmatched / null totals. Never $0.
+ * Historical tax drag is separate from Upcoming coverage.
+ * Explicit `matched: false` or uncovered $0 / null (CGHM) stay N/A.
+ * Published nonzero tax densifies even when Upcoming left the holding uncovered.
  */
 export function portfolioPeriodTaxIsUnmatched(input: {
   matched?: unknown;
@@ -55,8 +56,11 @@ export function portfolioPeriodTaxIsUnmatched(input: {
   gapReason?: unknown;
   estimatedTax?: number | null;
 }): boolean {
-  if (isExplicitFalse(input.matched) || isExplicitFalse(input.covered) || input.gapReason) {
-    return true;
-  }
-  return input.matched == null && input.estimatedTax == null;
+  if (isExplicitFalse(input.matched)) return true;
+  const tax = input.estimatedTax;
+  const published = tax != null && Number.isFinite(tax);
+  const uncovered = isExplicitFalse(input.covered) || Boolean(input.gapReason);
+  if (published && !(tax === 0 && uncovered)) return false;
+  if (uncovered) return true;
+  return !published;
 }

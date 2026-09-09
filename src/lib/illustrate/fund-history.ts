@@ -1,20 +1,19 @@
 import type { GrowthFundInput } from "@/components/illustrate/GrowthAndTaxDragModule";
 import type { FundEstimateView } from "@/data/types";
 
-/** Homepage Growth + tax-drag section. */
-export const FUND_HISTORY_HASH = "growth-and-tax";
+/** Search-tab historical + upcoming tables (`IllustratePanel`). */
+export const FUND_HISTORY_HASH = "illustrate";
 
 /**
- * Homepage GrowthAndTaxDragModule initial series. Empty so first visit does
- * not fetch missing fixtures (FCNTX) and error. Search / Add Fund seeds the list.
+ * Empty initial series for GrowthAndTaxDragModule consumers (Compare /
+ * /growth-tax). Search no longer mounts that module.
  */
 export const HOMEPAGE_GROWTH_FUNDS: GrowthFundInput[] = [];
 
 /**
- * Deep-link into the existing homepage fund-vs-benchmark module.
- * `ticker` is the only navigation param — benchmark stays unspecified so
- * GET /performance uses the same default the homepage Growth module already
- * uses (fund asset class → SPY / AGG / VXUS).
+ * Deep-link into Search for a ticker's historical distribution table and
+ * Upcoming / announced estimates. Growth & tax drag lives on Compare /
+ * `/growth-tax`, not the Search homepage.
  */
 export function fundHistoryPath(ticker: string): string {
   const key = normalizeTicker(ticker);

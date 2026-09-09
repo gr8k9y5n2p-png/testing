@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { PortfolioCompare } from "@/components/illustrate/PortfolioCompare";
 import { getDistributionRepository } from "@/data";
 import { COPY } from "@/lib/copy";
+import { WEBSITE_PORTFOLIO_HOLDINGS } from "@/lib/illustrate/portfolio-compare-mount";
 
 export const metadata: Metadata = {
   title: "Aftertax — portfolio comparison",
@@ -35,6 +36,7 @@ export default async function PortfolioCompareDemoPage() {
         </code>{" "}
         and falls back to the sketch fixture when the Data API is unreachable.
         Current and Proposed start empty — add tickers with + Add holding.
+        Website mounts start Current / Proposed empty ($1M book stays).
         POSTs periods for calendar years 2021 through 2025. Calendar-year tax
         is the ticker × year matrix (2025–2021; unmatched / uncovered = N/A,
         never $0). Upcoming stays unpaid-announced. Paid History is not shown
@@ -42,7 +44,11 @@ export default async function PortfolioCompareDemoPage() {
       </p>
 
       <div className="mt-8">
-        <PortfolioCompare funds={funds} />
+        <PortfolioCompare
+          funds={funds}
+          current={WEBSITE_PORTFOLIO_HOLDINGS}
+          proposed={WEBSITE_PORTFOLIO_HOLDINGS}
+        />
       </div>
 
       <pre
@@ -52,20 +58,29 @@ export default async function PortfolioCompareDemoPage() {
         {`import {
   PortfolioCompare,
   exportToPdf,
+  requestTicker,
   toPortfolioCompareExportModel,
 } from "@/components/illustrate";
+// or: import { requestTicker } from "@/lib/request-ticker";
+// source: "web" | "search_miss" | "portfolio"
+// await requestTicker({ ticker, note, source: "portfolio" });
 
-<PortfolioCompare />
+<PortfolioCompare
+  current={WEBSITE_PORTFOLIO_HOLDINGS}
+  proposed={WEBSITE_PORTFOLIO_HOLDINGS}
+/>
 
 // Website wires the Export button + freemium gate, then:
 exportToPdf(toPortfolioCompareExportModel(result, bookDollars));
 
-// Optional: pass book size, funds for autocomplete, or tax rates.
-// Omit current/proposed to start empty (friends beta).
+// Website mounts pass empty books. Omit current/proposed to start empty
+// (friends beta). Modules owns component smoke defaults.
 <PortfolioCompare
   bookDollars={1_000_000}
   taxRates={{ state: 0.05 }}
   funds={funds}
+  current={WEBSITE_PORTFOLIO_HOLDINGS}
+  proposed={WEBSITE_PORTFOLIO_HOLDINGS}
 />`}
       </pre>
 

@@ -1,4 +1,4 @@
-import { splitFundsByBucket } from "./distribution-bucket";
+import { splitFundsByBucket } from "./distribution-bucket.ts";
 import type {
   DistributionBucket,
   Facets,
@@ -9,7 +9,7 @@ import type {
   SearchFilters,
 } from "./types";
 
-export { splitFundsByBucket } from "./distribution-bucket";
+export { splitFundsByBucket } from "./distribution-bucket.ts";
 
 /** Absolute percentage-point gap vs. category average to qualify as an outlier. */
 export const OUTLIER_THRESHOLD_PP = 2.25;
@@ -149,13 +149,16 @@ export function getHighlights(
 ): HighlightSets {
   const { upcoming } = splitFundsByBucket(funds);
   const pool = upcoming;
+  // Largest / Most Recent live in a fixed-height scroller. Keep enough
+  // same-day weekly filings to scroll; Versus-category stays at `limit`.
+  const scrollerLimit = Math.max(limit, 60);
   const mostRecent = [...pool]
     .sort((a, b) => {
       const byPublished = b.asOfDate.localeCompare(a.asOfDate);
       if (byPublished !== 0) return byPublished;
       return a.fundName.localeCompare(b.fundName);
     })
-    .slice(0, limit);
+    .slice(0, scrollerLimit);
 
   const largest = [...pool]
     .sort((a, b) => {
@@ -163,7 +166,7 @@ export function getHighlights(
       if (byPct !== 0) return byPct;
       return a.fundName.localeCompare(b.fundName);
     })
-    .slice(0, limit);
+    .slice(0, scrollerLimit);
 
   const aboveCategory = pool
     .filter((fund) => fund.vsCategoryPctNav >= OUTLIER_THRESHOLD_PP)

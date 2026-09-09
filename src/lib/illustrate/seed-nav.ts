@@ -5,7 +5,7 @@ import { positiveNav, type NavLookup } from "@/lib/illustrate/compare-request";
  * Share-class aliases onto SAMPLE_FUNDS tickers. AMCAP (F-2) uses AMCPX NAV
  * when search metadata does not send its own price.
  */
-const TICKER_NAV_ALIASES: Record<string, string> = {
+export const TICKER_NAV_ALIASES: Record<string, string> = {
   AMCAP: "AMCPX",
 };
 
@@ -36,3 +36,25 @@ export const seedNavLookup: NavLookup = (ticker) => {
     seedNavForTicker(TICKER_NAV_ALIASES[key] ?? "")
   );
 };
+
+function seedFundNameForTicker(ticker: string): string | undefined {
+  const fund = SAMPLE_FUNDS.find(
+    (row) => row.ticker.toUpperCase() === ticker.toUpperCase(),
+  );
+  const name = fund?.fundName?.trim();
+  return name || undefined;
+}
+
+/**
+ * Search/seed product name by ticker. Data ANDs `fund_name` onto the match —
+ * catalog labels like "American Funds Growth Fund of America" miss
+ * "The Growth Fund of America" and return unmatched / N/A for every year.
+ */
+export function seedFundNameLookup(ticker: string): string | undefined {
+  const key = ticker.trim().toUpperCase();
+  if (!key) return undefined;
+  return (
+    seedFundNameForTicker(key) ??
+    seedFundNameForTicker(TICKER_NAV_ALIASES[key] ?? "")
+  );
+}

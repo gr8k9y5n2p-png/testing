@@ -1,8 +1,8 @@
 /**
  * Domain model for estimated taxable fund distributions.
  *
- * This layer is intentionally persistence-agnostic so a database or
- * manager-API ingest can replace the in-module seed later.
+ * Live Search / Sample Estimates read GET /distributions only.
+ * `seed.ts` is test/mock scoped and must not backfill those UI paths.
  */
 
 export const FUND_FAMILIES = [
@@ -79,6 +79,11 @@ export interface FundEstimate {
   /** Paid / final-past snapshots for this ticker. Never mixed into upcoming. */
   paidHistory: PaidDistributionEvent[];
   distributionYear: number;
+  /**
+   * False when GET /funds says has_estimate=false (or amounts are unknown).
+   * UI must show "—" — never invent $0 / 0%.
+   */
+  hasEstimate?: boolean;
 }
 
 export interface FundEstimateView extends FundEstimate {
@@ -108,17 +113,32 @@ export interface HighlightSets {
   belowCategory: FundEstimateView[];
 }
 
+export interface FundPage {
+  items: FundEstimateView[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
 export interface DistributionRepository {
   search(filters?: SearchFilters): Promise<FundEstimateView[]>;
+  searchPage?(
+    query?: SearchFilters & {
+      limit?: number;
+      offset?: number;
+      sort?: string;
+      direction?: "asc" | "desc";
+    },
+  ): Promise<FundPage>;
   highlights(limit?: number): Promise<HighlightSets>;
   facets(): Promise<Facets>;
   getById(id: string): Promise<FundEstimateView | null>;
 }
 
-/** Sample-data marker used in API payloads and UI copy. */
+/** Live Data API marker used in Search / Sample Estimates payloads and UI copy. */
 export const DATA_SOURCE = {
-  kind: "sample" as const,
-  label: "Sample / demo data",
+  kind: "live" as const,
+  label: "Live Data API",
   notice:
-    "Figures are illustrative seed data for product development. They are not live fund-manager filings and should not be used for tax, trading, or client reporting.",
+    "Search and Sample Estimates use GET /distributions only. Missing or uncovered values stay empty, N/A, or Undisclosed — they are not filled from seed or demo math.",
 };

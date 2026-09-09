@@ -1,7 +1,16 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import {
+  looksLikeExactTicker,
+  notifyPortfolioTickerMiss,
+} from "@/lib/data-api/request-ticker";
 import type { PortfolioFundOption } from "@/lib/illustrate/portfolio-compare-types";
+
+function findExactFund(funds: PortfolioFundOption[], ticker: string) {
+  const key = ticker.trim().toUpperCase();
+  return funds.find((fund) => fund.ticker.toUpperCase() === key);
+}
 
 export function TickerField({
   ticker,
@@ -9,21 +18,33 @@ export function TickerField({
   funds,
   inputId,
   onSelect,
+  onNotice,
+  autoFocus = false,
+  allowEmpty = false,
 }: {
   ticker: string;
   fundName: string;
   funds: PortfolioFundOption[];
   inputId: string;
+  allowEmpty?: boolean;
   onSelect: (fund: {
     ticker: string;
     fundName: string;
     family?: string;
     nav?: number | null;
   }) => void;
+  onNotice?: (message: string) => void;
+  autoFocus?: boolean;
 }) {
   const [query, setQuery] = useState(ticker);
   const [open, setOpen] = useState(false);
+  const pickedRef = useRef(false);
   const display = open ? query : ticker;
+
+  function commitUnknown(typed: string) {
+    onSelect({ ticker: typed, fundName: "", nav: null });
+    notifyPortfolioTickerMiss(typed, false, onNotice);
+  }
 
   const matches = useMemo(() => {
     const needle = (open ? query : ticker).trim().toLowerCase();
@@ -47,6 +68,7 @@ export function TickerField({
         autoComplete="off"
         spellCheck={false}
         placeholder="Ticker"
+        autoFocus={autoFocus}
         aria-autocomplete="list"
         aria-expanded={open}
         aria-controls={`${inputId}-list`}
@@ -63,14 +85,33 @@ export function TickerField({
         onBlur={() => {
           window.setTimeout(() => {
             setOpen(false);
+            if (pickedRef.current) {
+              pickedRef.current = false;
+              return;
+            }
             const typed = query.trim().toUpperCase();
-            if (typed && typed !== ticker) {
-              const match = funds.find((fund) => fund.ticker.toUpperCase() === typed);
+            if (!typed) {
+              if (allowEmpty && ticker) {
+                onSelect({ ticker: "", fundName: "", nav: null });
+              } else {
+                setQuery(ticker);
+              }
+              return;
+            }
+            if (typed !== ticker) {
+              const match = findExactFund(funds, typed);
+              if (match) {
+                onSelect(match);
+                return;
+              }
+              if (looksLikeExactTicker(typed)) {
+                commitUnknown(typed);
+                return;
+              }
               onSelect({
                 ticker: typed,
-                fundName: match?.fundName || "",
-                family: match?.family,
-                nav: match?.nav,
+                fundName: "",
+                nav: null,
               });
             } else {
               setQuery(ticker);
@@ -82,13 +123,16 @@ export function TickerField({
             event.preventDefault();
             const typed = query.trim().toUpperCase();
             if (!typed) return;
-            const match = funds.find((fund) => fund.ticker.toUpperCase() === typed) ?? matches[0];
+            const exact = findExactFund(funds, typed);
+            const match = exact ?? matches[0];
             if (match) {
+              pickedRef.current = true;
               onSelect(match);
               setQuery(match.ticker);
               setOpen(false);
-            } else {
-              onSelect({ ticker: typed, fundName: "", nav: null });
+            } else if (looksLikeExactTicker(typed)) {
+              pickedRef.current = true;
+              commitUnknown(typed);
               setOpen(false);
             }
           }
@@ -117,6 +161,7 @@ export function TickerField({
                   className="flex w-full items-start justify-between gap-3 px-3 py-2 text-left hover:bg-paper"
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => {
+                    pickedRef.current = true;
                     onSelect(fund);
                     setQuery(fund.ticker);
                     setOpen(false);

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { formatUsd } from "@/lib/format";
 import type {
   AllocationUnit,
@@ -28,6 +29,7 @@ export function AllocationColumn({
   inputIdPrefix,
   onUnitChange,
   onChange,
+  onNotice,
   className = "",
 }: {
   title: string;
@@ -38,8 +40,10 @@ export function AllocationColumn({
   inputIdPrefix: string;
   onUnitChange: (unit: AllocationUnit) => void;
   onChange: (holdings: PortfolioHoldingDraft[]) => void;
+  onNotice?: (message: string) => void;
   className?: string;
 }) {
+  const [focusHoldingId, setFocusHoldingId] = useState<string | null>(null);
   const totalDollars = holdings.reduce((sum, holding) => sum + holding.holdingDollars, 0);
   const totalWeight = holdings.reduce((sum, holding) => sum + holding.weightPct, 0);
 
@@ -107,6 +111,8 @@ export function AllocationColumn({
                 fundName={holding.fundName}
                 funds={funds}
                 inputId={`${inputIdPrefix}-ticker-${holding.id}`}
+                autoFocus={holding.id === focusHoldingId}
+                onNotice={onNotice}
                 onSelect={(fund) => {
                   updateAt(index, {
                     ticker: fund.ticker,
@@ -181,10 +187,12 @@ export function AllocationColumn({
           type="button"
           onClick={() => {
             const option = funds[0];
+            const id = `${inputIdPrefix}-${Date.now()}`;
+            setFocusHoldingId(id);
             onChange([
               ...holdings,
               {
-                id: `${inputIdPrefix}-${Date.now()}`,
+                id,
                 ticker: "",
                 fundName: "",
                 family: option?.family,

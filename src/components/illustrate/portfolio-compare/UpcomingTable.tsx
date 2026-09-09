@@ -59,10 +59,13 @@ export function UpcomingTable({
 }: {
   rows: UpcomingRow[];
   headingId: string;
-  sideLabel: "Current" | "Proposed";
+  sideLabel?: string;
   className?: string;
 }) {
   const anyAvailable = rows.some((row) => row.available);
+  const legend = sideLabel
+    ? `${UPCOMING_MODULE_DETAIL} · ${sideLabel}`
+    : UPCOMING_MODULE_DETAIL;
 
   return (
     <section
@@ -72,7 +75,7 @@ export function UpcomingTable({
       <SectionHeader
         headingId={headingId}
         title={UPCOMING_MODULE_HEADING}
-        legend={`${UPCOMING_MODULE_DETAIL} · ${sideLabel}`}
+        legend={legend}
       />
 
       <div className="rounded-xl border border-line bg-surface px-3 py-2">
@@ -114,7 +117,8 @@ export function UpcomingTable({
         </div>
       </div>
       <p className="mt-2 text-[10px] text-faint">
-        every fund · empty upcoming is undisclosed, not $0 · dates include year · {sideLabel}
+        every fund · empty upcoming is undisclosed, not $0 · dates include year
+        {sideLabel ? ` · ${sideLabel}` : ""}
       </p>
     </section>
   );

@@ -88,4 +88,12 @@ describe("PortfolioCompare smoke books", () => {
     assert.match(column, /No holdings yet — use \+ Add holding to start/);
     assert.match(column, /Add holding/);
   });
+
+  it("keeps AGTHX fundName aligned with SAMPLE_FUNDS so Data can AND fund_name", () => {
+    const catalog = readFileSync(join(here, "portfolio-compare-catalog.ts"), "utf8");
+    const seed = readFileSync(join(here, "../../data/seed.ts"), "utf8");
+    assert.match(catalog, /AGTHX:\s*\{[\s\S]*?fundName:\s*"The Growth Fund of America"/);
+    assert.match(seed, /fundName:\s*"The Growth Fund of America"[\s\S]*?ticker:\s*"AGTHX"/);
+    assert.doesNotMatch(catalog, /American Funds Growth Fund of America/);
+  });
 });
