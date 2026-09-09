@@ -13,8 +13,7 @@ export default function AccountPage() {
     <main className="mx-auto w-full max-w-xl px-4 pb-16 pt-8 sm:px-6 lg:px-8">
       <h1 className="font-serif text-3xl tracking-tight text-ink">Account</h1>
       <p className="mt-2 text-sm text-muted">
-        Friends beta. Legal pages are public. Billing stays off until Checkout is
-        enabled.
+        Friends beta. Billing stays off until Checkout is enabled.
       </p>
       <div className="mt-8 rounded-lg border border-line bg-surface p-5">
         <AccountPanel />
