@@ -12,15 +12,6 @@ describe("Website PortfolioCompare mounts", () => {
     assert.deepEqual(WEBSITE_PORTFOLIO_HOLDINGS, []);
   });
 
-  it("titles the Portfolio pages Portfolio, not portfolio comparison", () => {
-    const page = readFileSync(join(here, "../../app/portfolio/page.tsx"), "utf8");
-    const demo = readFileSync(join(here, "../../app/portfolio-compare/page.tsx"), "utf8");
-    for (const source of [page, demo]) {
-      assert.match(source, /title: "Aftertax — Portfolio"/);
-      assert.doesNotMatch(source, /portfolio comparison/i);
-    }
-  });
-
   it("does not inject smoke tickers from Website mounts", () => {
     const homepage = readFileSync(
       join(here, "../../components/illustrate/HomepagePortfolioCompare.tsx"),

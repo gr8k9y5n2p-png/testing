@@ -32,7 +32,6 @@ import type {
 import { PORTFOLIO_COMPARE_BOOK_DOLLARS } from "@/lib/illustrate/portfolio-compare-types";
 import {
   EMPTY_BOOK_INVITE,
-  PORTFOLIO_HEADING,
   UPCOMING_MODULE_HEADING,
 } from "@/lib/illustrate/portfolio-compare-copy";
 import { calendarYearTaxTable, defaultPortfolioComparePeriods } from "@/lib/illustrate/portfolio-year-tax";
@@ -236,7 +235,7 @@ export function PortfolioCompare({
             Aftertax · Portfolio
           </p>
           <Heading className="mt-1 font-serif text-3xl tracking-tight text-ink">
-            {PORTFOLIO_HEADING}
+            Portfolio comparison
           </Heading>
         </div>
         <div className="flex flex-wrap items-end gap-3">

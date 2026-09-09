@@ -6,7 +6,6 @@ import {
   EMPTY_BOOK_INVITE,
   EX_COLUMN,
   PCT_OF_NAV_COLUMN,
-  PORTFOLIO_HEADING,
   RECORD_COLUMN,
   SINGLE_BOOK_DELTA_DETAIL,
   TAX_DRAG_CARD_DETAIL,
@@ -126,7 +125,7 @@ export function toPortfolioCompareExportModel(
     ? formatMoreLessTax(result.deltas.estimated_tax)
     : { headline: TAX_DRAG_NA_LABEL, polarity: "even" as TaxPolarity };
   return {
-    title: PORTFOLIO_HEADING,
+    title: "Portfolio comparison",
     bookDollars,
     generatedAt: new Date().toISOString(),
     source: result.source ?? "unknown",

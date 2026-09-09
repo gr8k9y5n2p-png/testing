@@ -20,7 +20,6 @@ import {
   PAID_HISTORY_DETAIL,
   PAID_HISTORY_EMPTY,
   PAID_HISTORY_HEADING,
-  PORTFOLIO_HEADING,
   SINGLE_BOOK_DELTA_DETAIL,
   TAX_DRAG_CARD_DETAIL,
   TAX_IMPACT_DELTA_DETAIL,
@@ -147,9 +146,7 @@ describe("PortfolioCompare tax drag copy", () => {
     assert.notEqual(TAX_IMPACT_DELTA_DETAIL, PAID_HISTORY_EMPTY);
   });
 
-  it("labels the page Portfolio and does not invent a single-book delta", () => {
-    assert.equal(PORTFOLIO_HEADING, "Portfolio");
-    assert.doesNotMatch(PORTFOLIO_HEADING, /comparison/i);
+  it("does not invent a single-book delta", () => {
     assert.match(EMPTY_BOOK_INVITE, /Add holding/);
     assert.doesNotMatch(EMPTY_BOOK_INVITE, /\$0|0\.00/);
     assert.match(SINGLE_BOOK_DELTA_DETAIL, /both sides/i);

@@ -6,7 +6,6 @@ import { TAX_DRAG_NA_LABEL } from "./tax-drag-map.ts";
  * Do not invent dates or dollars.
  */
 
-export const PORTFOLIO_HEADING = "Portfolio";
 export const EMPTY_BOOK_INVITE = "No holdings yet — use + Add holding to start.";
 export const SINGLE_BOOK_DELTA_DETAIL =
   "Add holdings on both sides to compare · not Upcoming";

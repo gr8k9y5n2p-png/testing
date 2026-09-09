@@ -7,10 +7,7 @@ import {
   canComparePortfolioBooks,
   portfolioBookFilled,
 } from "./portfolio-compare-books.ts";
-import {
-  EMPTY_BOOK_INVITE,
-  PORTFOLIO_HEADING,
-} from "./portfolio-compare-copy.ts";
+import { EMPTY_BOOK_INVITE } from "./portfolio-compare-copy.ts";
 import { isPortfolioCompareRequestValid } from "./portfolio-compare-request.ts";
 import type {
   PortfolioAllocationOut,
@@ -182,19 +179,6 @@ describe("PortfolioCompare single-book fetch gate", () => {
     assert.match(client, /request\.current\.holdings\.length > 0/);
     assert.match(client, /request\.proposed\.holdings\.length > 0/);
     assert.match(client, /mockIllustratePortfolioSide/);
-  });
-
-  it("titles Modules-owned UI Portfolio, not Portfolio comparison", () => {
-    const compare = read("../../components/illustrate/PortfolioCompare.tsx");
-    const homepage = read("../../components/illustrate/HomepagePortfolioCompare.tsx");
-    const exported = read("portfolio-compare-export.ts");
-    assert.match(compare, /PORTFOLIO_HEADING/);
-    assert.doesNotMatch(compare, /Portfolio comparison/);
-    assert.match(homepage, /aria-label="Portfolio"/);
-    assert.doesNotMatch(homepage, /Portfolio comparison/);
-    assert.match(exported, /title: PORTFOLIO_HEADING/);
-    assert.doesNotMatch(exported, /title: "Portfolio comparison"/);
-    assert.equal(PORTFOLIO_HEADING, "Portfolio");
   });
 });
 
