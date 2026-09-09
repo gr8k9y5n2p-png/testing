@@ -558,6 +558,13 @@ describe("Compare workspace Upcoming + NAV soft path", () => {
     assert.doesNotMatch(rail, /\{ state: UI_DEFAULT_TAX_RATES\.state \}/);
     assert.doesNotMatch(homepage, /\{ state: UI_DEFAULT_TAX_RATES\.state \}/);
     assert.doesNotMatch(card, /tax_rates: next\.taxRates \?\? \{\}/);
+    const fundDemo = readFileSync(join(here, "../../app/fund-compare/page.tsx"), "utf8");
+    const portfolioDemo = readFileSync(
+      join(here, "../../app/portfolio-compare/page.tsx"),
+      "utf8",
+    );
+    assert.doesNotMatch(fundDemo, /taxRates=\{\{ state:/);
+    assert.doesNotMatch(portfolioDemo, /taxRates=\{\{ state:/);
     assert.match(card, /compareTaxRequestFields/);
     assert.match(growth, /taxRates/);
     assert.match(growth, /combineStateWithFederal/);

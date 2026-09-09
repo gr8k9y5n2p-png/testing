@@ -136,6 +136,7 @@ export default function FundCompareDemoPage() {
   YoYTaxChart,
   requestTicker,
 } from "@/components/illustrate";
+import { UI_DEFAULT_TAX_RATES } from "@/lib/illustrate/types";
 // or: import { requestTicker } from "@/lib/request-ticker";
 // source: "web" | "search_miss" | "portfolio"
 // await requestTicker({ ticker, note, source: "portfolio" });
@@ -150,7 +151,7 @@ export default function FundCompareDemoPage() {
     selectors: { ticker: "AGTHX", fund_identifier: "AGTHX" },
   }}
   holdingDollars={10000}
-  taxRates={{ state: 0.05 }}
+  taxRates={UI_DEFAULT_TAX_RATES}
 />
 
 <YoYTaxChart
