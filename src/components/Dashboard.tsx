@@ -10,7 +10,11 @@ import type { Facets, FundEstimateView, SearchFilters } from "@/data/types";
 import { EmptyState } from "@/components/EmptyState";
 import { ResultsTable } from "@/components/ResultsTable";
 import { SearchToolbar } from "@/components/SearchToolbar";
-import type { SortDirection, SortKey } from "@/lib/format";
+import {
+  defaultPaidHistoryYear,
+  paidHistoryYearOptions,
+} from "@/data/paid-history-year";
+import { announcedSortKey, type SortDirection, type SortKey } from "@/lib/format";
 import {
   looksLikeExactTicker,
   normalizeTickerSymbol,
@@ -23,6 +27,7 @@ async function fetchFundPage(query: {
   direction: SortDirection;
   limit: number;
   offset: number;
+  paidYear?: number;
 }): Promise<FundPageResult> {
   const params = new URLSearchParams();
   params.set("limit", String(query.limit));
@@ -33,6 +38,7 @@ async function fetchFundPage(query: {
   if (query.filters.family) params.set("family", query.filters.family);
   if (query.filters.category) params.set("category", query.filters.category);
   if (query.filters.year) params.set("year", String(query.filters.year));
+  if (query.paidYear) params.set("paid_year", String(query.paidYear));
 
   const response = await fetch(`/api/funds?${params.toString()}`);
   if (!response.ok) {
@@ -64,12 +70,14 @@ function pageRequestKey(
   sort: SortKey,
   direction: SortDirection,
   offset: number,
+  paidYear?: number,
 ) {
   return JSON.stringify({
     q: filters.query ?? "",
     family: filters.family ?? "",
     category: filters.category ?? "",
     year: filters.year ?? "",
+    paidYear: paidYear ?? "",
     sort,
     direction,
     offset,
@@ -92,11 +100,13 @@ export function Dashboard({
   const [sortKey, setSortKey] = useState<SortKey>("fundName");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [offset, setOffset] = useState(0);
+  const [paidYear, setPaidYear] = useState(() => defaultPaidHistoryYear(funds));
+  const [paidYearLocked, setPaidYearLocked] = useState(false);
   const [page, setPage] = useState<FundPageResult>(() =>
     paginateViews(funds, { limit: FUND_PAGE_SIZE, offset: 0 }),
   );
   const [appliedKey, setAppliedKey] = useState(() =>
-    pageRequestKey({}, "fundName", "asc", 0),
+    pageRequestKey({}, "fundName", "asc", 0, defaultPaidHistoryYear(funds)),
   );
 
   const requestKey = pageRequestKey(
@@ -104,6 +114,7 @@ export function Dashboard({
     sortKey,
     sortDirection,
     offset,
+    paidYear,
   );
 
   useEffect(() => {
@@ -114,6 +125,7 @@ export function Dashboard({
       direction: sortDirection,
       limit: FUND_PAGE_SIZE,
       offset,
+      paidYear,
     })
       .then((next) => {
         if (cancelled) return;
@@ -136,7 +148,17 @@ export function Dashboard({
     return () => {
       cancelled = true;
     };
-  }, [deferredFilters, funds, offset, requestKey, sortDirection, sortKey]);
+  }, [deferredFilters, funds, offset, paidYear, requestKey, sortDirection, sortKey]);
+
+  const [paidYearReady, setPaidYearReady] = useState(false);
+
+  useEffect(() => {
+    if (paidYearLocked || paidYearReady) return;
+    if (!page.items.length) return;
+    const next = defaultPaidHistoryYear(page.items);
+    setPaidYearReady(true);
+    if (next !== paidYear) setPaidYear(next);
+  }, [page.items, paidYear, paidYearLocked, paidYearReady]);
 
   const isPending = filters !== deferredFilters || appliedKey !== requestKey;
   const settledQuery = deferredFilters.query ?? "";
@@ -170,7 +192,7 @@ export function Dashboard({
   }
 
   function toggleSort(key: SortKey) {
-    if (key === sortKey) {
+    if (announcedSortKey(key) === announcedSortKey(sortKey)) {
       setSortDirection((current) => (current === "asc" ? "desc" : "asc"));
       setOffset(0);
       return;
@@ -181,6 +203,16 @@ export function Dashboard({
     );
     setOffset(0);
   }
+
+  function applyPaidYear(year: number) {
+    setPaidYearLocked(true);
+    setPaidYear(year);
+  }
+
+  const paidYears = useMemo(
+    () => paidHistoryYearOptions(page.items),
+    [page.items],
+  );
 
   return (
     <section aria-labelledby="results-heading">
@@ -226,6 +258,9 @@ export function Dashboard({
               offset: page.offset,
               onOffset: setOffset,
             }}
+            paidYear={paidYear}
+            paidYears={paidYears}
+            onPaidYear={applyPaidYear}
           />
         )}
       </div>

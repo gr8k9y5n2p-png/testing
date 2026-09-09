@@ -16,9 +16,11 @@ export type DistributionRowQuery = {
   ticker?: string;
   fundIdentifier?: string;
   fundFamily?: string;
+  asOfFrom?: string;
+  asOfTo?: string;
 };
 
-function dedupeRows(rows: DataDistribution[]): DataDistribution[] {
+export function dedupeRows(rows: DataDistribution[]): DataDistribution[] {
   const seen = new Set<string>();
   const out: DataDistribution[] = [];
   for (const row of rows) {
@@ -55,6 +57,8 @@ export async function loadDistributionRows(
     if (query.fundFamily?.trim()) {
       params.set("fund_family", query.fundFamily.trim());
     }
+    if (query.asOfFrom?.trim()) params.set("as_of_from", query.asOfFrom.trim());
+    if (query.asOfTo?.trim()) params.set("as_of_to", query.asOfTo.trim());
     const response = await fetchDataApi(`/distributions?${params.toString()}`);
     if (!response.ok) break;
     const payload = (await response.json()) as {
@@ -98,13 +102,19 @@ export async function loadDistributionsForFundPage(input: {
   family?: string;
   tickers?: string[];
   fundIdentifiers?: string[];
+  asOfFrom?: string;
+  asOfTo?: string;
 }): Promise<DataDistribution[]> {
   const rows: DataDistribution[] = [];
   const q = input.q?.trim();
+  const asOf = {
+    asOfFrom: input.asOfFrom,
+    asOfTo: input.asOfTo,
+  };
   if (q) {
-    rows.push(...(await loadDistributionRows({ q, fundFamily: input.family })));
+    rows.push(...(await loadDistributionRows({ q, fundFamily: input.family, ...asOf })));
     if (looksLikeExactTicker(q)) {
-      rows.push(...(await loadDistributionRows({ ticker: q })));
+      rows.push(...(await loadDistributionRows({ ticker: q, ...asOf })));
     }
   }
 
@@ -126,7 +136,7 @@ export async function loadDistributionsForFundPage(input: {
     const extra = await mapPool(
       tickersToFetch,
       TICKER_FETCH_CONCURRENCY,
-      (ticker) => loadDistributionRows({ ticker }),
+      (ticker) => loadDistributionRows({ ticker, ...asOf }),
     );
     for (const batch of extra) rows.push(...batch);
   }
@@ -141,7 +151,7 @@ export async function loadDistributionsForFundPage(input: {
     const extra = await mapPool(
       identsToFetch,
       TICKER_FETCH_CONCURRENCY,
-      (fundIdentifier) => loadDistributionRows({ fundIdentifier }),
+      (fundIdentifier) => loadDistributionRows({ fundIdentifier, ...asOf }),
     );
     for (const batch of extra) rows.push(...batch);
   }

@@ -102,4 +102,25 @@ describe("sortFunds date columns", () => {
       ["EARLY", "LATE", "MID"],
     );
   });
+
+  it("sorts Announced descending by real date (Dec 31 before Dec 24)", () => {
+    const funds = [
+      row("VFIAX", "2025-12-24", "2025-12-22", "2025-12-23"),
+      row("FXAIX", "2025-12-31", null, "2025-12-19"),
+      row("AUTAX", "2025-10-31", "2025-12-11", "2025-12-12"),
+    ];
+
+    assert.deepEqual(
+      sortFunds(funds, "asOfDate", "desc").map((fund) => fund.ticker),
+      ["FXAIX", "VFIAX", "AUTAX"],
+    );
+    assert.deepEqual(
+      sortFunds(funds, "publishedAt", "desc").map((fund) => fund.ticker),
+      ["FXAIX", "VFIAX", "AUTAX"],
+    );
+    assert.deepEqual(
+      sortFunds(funds, "asOfDate", "asc").map((fund) => fund.ticker),
+      ["AUTAX", "VFIAX", "FXAIX"],
+    );
+  });
 });

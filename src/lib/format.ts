@@ -98,6 +98,11 @@ export type SortKey =
 
 export type SortDirection = "asc" | "desc";
 
+/** Announced column is `as_of`. Older clients may still send publishedAt. */
+export function announcedSortKey(key: SortKey): SortKey {
+  return key === "publishedAt" ? "asOfDate" : key;
+}
+
 /** ISO calendar dates only. Invalid / missing values sort after real dates. */
 export function compareOptionalIsoDates(
   a: string | null | undefined,
@@ -126,8 +131,9 @@ function compareFunds(
     case "fundName":
     case "family":
     case "category":
-    case "publishedAt":
       return a[key].localeCompare(b[key]);
+    case "publishedAt":
+      return compareOptionalIsoDates(a.publishedAt, b.publishedAt);
     case "asOfDate":
       return compareOptionalIsoDates(a.asOfDate, b.asOfDate);
     case "recordDate":
