@@ -16,7 +16,8 @@ import {
   missingPerformanceTickers,
 } from "@/lib/illustrate/growth-tax-series";
 import { seedNavLookup } from "@/lib/illustrate/seed-nav";
-import { defaultPerformanceMode, fetchPerformanceIfAvailable } from "@/lib/performance/client";
+import { fetchPerformanceIfAvailable } from "@/lib/performance/client";
+import { defaultPerformanceMode } from "@/lib/performance/mode";
 import {
   DEFAULT_START_DOLLARS,
   type PerformanceQuery,
