@@ -3,6 +3,7 @@ import { IllustrateRequestError } from "@/lib/illustrate/client";
 import { userFacingIllustrateError } from "@/lib/illustrate/illustrate-error";
 import {
   positiveNav,
+  toDataApiTaxRates,
   withPortfolioHoldingNav,
   type NavLookup,
 } from "@/lib/illustrate/compare-request";
@@ -14,7 +15,6 @@ import {
 import { normalizePortfolioComparePeriods } from "@/lib/illustrate/portfolio-period-map";
 import { ensurePortfolioComparePeriods } from "@/lib/illustrate/portfolio-year-tax";
 import { seedFundNameLookup, seedNavLookup } from "@/lib/illustrate/seed-nav";
-import { lockedTaxRates } from "@/lib/illustrate/types";
 import type {
   PortfolioAllocationOut,
   PortfolioCompareRequest,
@@ -30,10 +30,20 @@ import type {
 import { userFacingNotes } from "@/lib/illustrate/user-facing-notes";
 
 export function getPortfolioCompareEndpoint(): string {
-  if (process.env.NEXT_PUBLIC_PORTFOLIO_COMPARE_URL?.trim()) {
-    return process.env.NEXT_PUBLIC_PORTFOLIO_COMPARE_URL.replace(/\/$/, "");
+  // Browser POSTs must stay same-origin. The live Data API does not send
+  // Access-Control-Allow-Origin, so a direct fetch fails and the UI shows
+  // "Portfolio compare is unavailable from the Data API."
+  return "/api/illustrate/portfolio/compare";
+}
+
+/** Server-side Data API host. Never used from the browser. */
+export function getPortfolioCompareUpstream(): string | null {
+  const override = process.env.NEXT_PUBLIC_PORTFOLIO_COMPARE_URL?.trim();
+  if (override && /^https?:\/\//i.test(override) && !override.startsWith("/")) {
+    return override.replace(/\/$/, "");
   }
-  return dataApiUrl("/illustrate/portfolio/compare");
+  const base = process.env.NEXT_PUBLIC_DATA_API_URL?.trim();
+  return base ? `${base.replace(/\/$/, "")}/illustrate/portfolio/compare` : null;
 }
 
 export function isMockPortfolioCompareEndpoint(
@@ -146,7 +156,7 @@ export function toPortfolioCompareRequestBody(
   const body: Record<string, unknown> = {
     current: withSideNav(request.current, navLookup),
     proposed: withSideNav(request.proposed, navLookup),
-    tax_rates: lockedTaxRates(request.tax_rates),
+    tax_rates: toDataApiTaxRates(request.tax_rates),
     combine_state_with_federal: request.combine_state_with_federal !== false,
     periods: ensurePortfolioComparePeriods(request.periods),
   };
@@ -419,7 +429,7 @@ async function postPortfolioSide(
   const endpoint = dataApiUrl("/illustrate/portfolio");
   const body = {
     ...toPortfolioIllustrateBody(side),
-    tax_rates: lockedTaxRates(taxRates),
+    tax_rates: toDataApiTaxRates(taxRates),
     combine_state_with_federal: combine !== false,
   };
 
@@ -452,7 +462,7 @@ export async function postIllustratePortfolioCompare(
   init?: { signal?: AbortSignal },
 ): Promise<PortfolioCompareResponse> {
   const endpoint = getPortfolioCompareEndpoint();
-  const remote = !isMockPortfolioCompareEndpoint(endpoint);
+  const remote = isRemoteDataApi() || !isMockPortfolioCompareEndpoint(endpoint);
 
   let response: Response | undefined;
   try {
@@ -470,10 +480,7 @@ export async function postIllustratePortfolioCompare(
 
   if (response?.ok) {
     const raw = (await response.json()) as Record<string, unknown>;
-    const source =
-      !remote || raw.source === "mock" || isMockPortfolioCompareEndpoint(endpoint)
-        ? "mock"
-        : "live";
+    const source = !remote || raw.source === "mock" ? "mock" : "live";
     return normalizePortfolioCompareResponse(raw, source);
   }
 
