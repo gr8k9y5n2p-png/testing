@@ -398,7 +398,8 @@ describe("Compare workspace Upcoming + NAV soft path", () => {
     assert.match(table, /DOLLAR_IMPACT_COLUMN/);
     assert.match(table, /DistributionDateStrip/);
     assert.match(table, /showPayable=\{Boolean\(row\.payableDate\)\}/);
-    assert.match(panel, /ENTER_NAV_COPY/);
+    assert.match(panel, /illustrationRequestNav/);
+    assert.match(panel, /perShareNavError/);
     assert.match(panel, /isMissingNavError/);
     assert.match(results, /% of NAV/);
     assert.match(results, /\$ impact/);
