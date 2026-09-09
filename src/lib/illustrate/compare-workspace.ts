@@ -2,6 +2,7 @@ import type { FundEstimateView } from "../../data/types.ts";
 import { MAX_GROWTH_FUNDS } from "../charts/series-colors.ts";
 import { trailingCalendarPeriods } from "./compare-request.ts";
 import type { CompareIllustration, CompareResponse } from "./compare-types.ts";
+import { UI_DEFAULT_TAX_RATES, type TaxRates } from "./types.ts";
 import {
   publicationBucket,
   type UpcomingRow,
@@ -46,6 +47,35 @@ export function parseCompareHoldingDollars(
   const parsed = Number(String(raw).replace(/[$,\s]/g, ""));
   if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
   return Math.round(parsed * 100) / 100;
+}
+
+/** Locked Compare starting rates — same top-bracket set as Dollar Illustration. */
+export const COMPARE_DEFAULT_TAX_RATES: TaxRates = UI_DEFAULT_TAX_RATES;
+
+export const COMPARE_DEFAULT_COMBINE_STATE = true;
+
+export function taxRatesEqual(left: TaxRates, right: TaxRates): boolean {
+  return (
+    left.ordinary_income === right.ordinary_income &&
+    left.long_term_capital_gains === right.long_term_capital_gains &&
+    left.short_term_capital_gains === right.short_term_capital_gains &&
+    left.qualified_dividend === right.qualified_dividend &&
+    left.state === right.state
+  );
+}
+
+/** True when calendar-year / pair fetches still match the on-screen holding + rates. */
+export function compareInputsMatch(
+  loaded: { holdingDollars: number; taxRates: TaxRates; combine: boolean },
+  holdingDollars: number,
+  taxRates: TaxRates,
+  combine: boolean,
+): boolean {
+  return (
+    loaded.holdingDollars === holdingDollars &&
+    loaded.combine === combine &&
+    taxRatesEqual(loaded.taxRates, taxRates)
+  );
 }
 
 function normalizeTicker(value: string | null | undefined): string {

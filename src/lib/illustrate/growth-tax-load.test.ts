@@ -257,3 +257,16 @@ describe("growthLinesFromRows", () => {
     assert.ok(lines[0]?.points.every((point) => point.value > 0));
   });
 });
+
+describe("loadGrowthAndTaxDrag tax rates", () => {
+  it("forwards Compare rates through fund_vs_fund and YoY bodies", () => {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const source = readFileSync(join(here, "growth-tax-load.ts"), "utf8");
+    assert.match(source, /compareTaxRequestFields/);
+    assert.match(source, /taxRates:\s*options\.taxRates/);
+    assert.match(source, /combineStateWithFederal:\s*options\.combineStateWithFederal/);
+    assert.match(source, /taxRates:\s*taxFields\.tax_rates/);
+    assert.match(source, /combineStateWithFederal:\s*taxFields\.combine_state_with_federal/);
+    assert.doesNotMatch(source, /tax_rates:\s*\{\}/);
+  });
+});
