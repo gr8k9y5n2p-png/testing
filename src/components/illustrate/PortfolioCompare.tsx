@@ -30,6 +30,10 @@ import type {
   PortfolioHoldingDraft,
 } from "@/lib/illustrate/portfolio-compare-types";
 import { PORTFOLIO_COMPARE_BOOK_DOLLARS } from "@/lib/illustrate/portfolio-compare-types";
+import {
+  EMPTY_BOOK_INVITE,
+  UPCOMING_MODULE_HEADING,
+} from "@/lib/illustrate/portfolio-compare-copy";
 import { calendarYearTaxTable, defaultPortfolioComparePeriods } from "@/lib/illustrate/portfolio-year-tax";
 import type { TaxRates } from "@/lib/illustrate/types";
 import { UI_DEFAULT_TAX_RATES } from "@/lib/illustrate/types";
@@ -125,7 +129,9 @@ export function PortfolioCompare({
 
   const currentApi = toApiHoldings(current);
   const proposedApi = toApiHoldings(proposed);
-  const canFetch = currentApi.length > 0 && proposedApi.length > 0;
+  const currentFilled = currentApi.length > 0;
+  const proposedFilled = proposedApi.length > 0;
+  const canFetch = currentFilled || proposedFilled;
   const requestKey = JSON.stringify({
     bookDollars,
     current: currentApi,
@@ -298,20 +304,17 @@ export function PortfolioCompare({
           onNotice={onNotice}
           className="h-full lg:[grid-area:holdings-c]"
         />
-        {!canFetch ? null : loading && !result ? (
-          <div
-            className="h-48 min-h-48 animate-pulse rounded-2xl border border-line bg-surface lg:h-full lg:[grid-area:upcoming-c]"
-            aria-busy
-            aria-label="Loading current upcoming distributions"
-          />
-        ) : result ? (
-          <UpcomingTable
-            headingId="upcoming-current"
-            rows={currentUpcomingHoldings}
-            sideLabel="Current"
-            className="h-full lg:[grid-area:upcoming-c]"
-          />
-        ) : null}
+        {upcomingPanel({
+          canFetch,
+          sideFilled: currentFilled,
+          loading,
+          result,
+          rows: currentUpcomingHoldings,
+          headingId: "upcoming-current",
+          sideLabel: "Current",
+          gridAreaClass: "lg:[grid-area:upcoming-c]",
+          loadingLabel: "Loading current upcoming distributions",
+        })}
 
         <AllocationColumn
           title="Proposed allocation"
@@ -325,20 +328,17 @@ export function PortfolioCompare({
           onNotice={onNotice}
           className="h-full lg:[grid-area:holdings-p]"
         />
-        {!canFetch ? null : loading && !result ? (
-          <div
-            className="h-48 min-h-48 animate-pulse rounded-2xl border border-line bg-surface lg:h-full lg:[grid-area:upcoming-p]"
-            aria-busy
-            aria-label="Loading proposed upcoming distributions"
-          />
-        ) : result ? (
-          <UpcomingTable
-            headingId="upcoming-proposed"
-            rows={proposedUpcomingHoldings}
-            sideLabel="Proposed"
-            className="h-full lg:[grid-area:upcoming-p]"
-          />
-        ) : null}
+        {upcomingPanel({
+          canFetch,
+          sideFilled: proposedFilled,
+          loading,
+          result,
+          rows: proposedUpcomingHoldings,
+          headingId: "upcoming-proposed",
+          sideLabel: "Proposed",
+          gridAreaClass: "lg:[grid-area:upcoming-p]",
+          loadingLabel: "Loading proposed upcoming distributions",
+        })}
       </div>
 
       <div className="mt-4">
@@ -356,7 +356,7 @@ export function PortfolioCompare({
       <div className="mt-4">
         {!canFetch ? (
           <p className="rounded-2xl border border-dashed border-line-strong bg-surface px-5 py-4 text-sm text-muted">
-            Add at least one weighted holding on each side with + Add holding.
+            Add at least one weighted holding with + Add holding.
           </p>
         ) : loading && !result ? (
           <div
@@ -390,5 +390,81 @@ export function PortfolioCompare({
       <CompactDisclaimer className="mt-1 text-center text-[10px] leading-relaxed text-faint" />
       <NoticeToast message={notice} onDismiss={dismissNotice} />
     </article>
+  );
+}
+
+function upcomingPanel({
+  canFetch,
+  sideFilled,
+  loading,
+  result,
+  rows,
+  headingId,
+  sideLabel,
+  gridAreaClass,
+  loadingLabel,
+}: {
+  canFetch: boolean;
+  sideFilled: boolean;
+  loading: boolean;
+  result: PortfolioCompareResponse | null;
+  rows: ReturnType<typeof upcomingHoldingsForSide>;
+  headingId: string;
+  sideLabel: "Current" | "Proposed";
+  gridAreaClass: string;
+  loadingLabel: string;
+}) {
+  if (!canFetch) return null;
+  if (!sideFilled) {
+    return (
+      <EmptyBookUpcoming
+        headingId={headingId}
+        sideLabel={sideLabel}
+        className={`h-full ${gridAreaClass}`}
+      />
+    );
+  }
+  if (loading && !result) {
+    return (
+      <div
+        className={`h-48 min-h-48 animate-pulse rounded-2xl border border-line bg-surface lg:h-full ${gridAreaClass}`}
+        aria-busy
+        aria-label={loadingLabel}
+      />
+    );
+  }
+  if (!result) return null;
+  return (
+    <UpcomingTable
+      headingId={headingId}
+      rows={rows}
+      sideLabel={sideLabel}
+      className={`h-full ${gridAreaClass}`}
+    />
+  );
+}
+
+function EmptyBookUpcoming({
+  headingId,
+  sideLabel,
+  className = "",
+}: {
+  headingId: string;
+  sideLabel: "Current" | "Proposed";
+  className?: string;
+}) {
+  return (
+    <section
+      aria-labelledby={headingId}
+      className={`flex flex-col rounded-2xl border border-dashed border-line-strong bg-surface p-3 shadow-[0_8px_24px_rgba(26,29,26,0.06)] sm:p-4 ${className}`}
+    >
+      <h2 id={headingId} className="font-serif text-lg tracking-tight text-ink">
+        {UPCOMING_MODULE_HEADING}
+      </h2>
+      <p className="mt-3 rounded-xl border border-dashed border-line bg-paper/40 px-3 py-5 text-center text-sm text-muted">
+        {EMPTY_BOOK_INVITE}
+      </p>
+      <p className="mt-2 text-[10px] text-faint">{sideLabel}</p>
+    </section>
   );
 }

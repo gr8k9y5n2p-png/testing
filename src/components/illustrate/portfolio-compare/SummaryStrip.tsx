@@ -1,14 +1,18 @@
 import {
+  SINGLE_BOOK_DELTA_DETAIL,
   TAX_DRAG_CARD_DETAIL,
   TAX_IMPACT_DELTA_DETAIL,
 } from "@/lib/illustrate/portfolio-compare-copy";
 import {
+  canComparePortfolioBooks,
   compactBookLabel,
   formatMoreLessTax,
   formatTaxDragPct,
+  portfolioBookFilled,
   type TaxPolarity,
 } from "@/lib/illustrate/portfolio-compare-map";
 import type { PortfolioCompareResponse } from "@/lib/illustrate/portfolio-compare-types";
+import { TAX_DRAG_NA_LABEL } from "@/lib/illustrate/tax-drag-chart";
 
 const POLARITY_TEXT: Record<TaxPolarity, string> = {
   more: "text-tax-more",
@@ -23,15 +27,24 @@ export function SummaryStrip({
   result: PortfolioCompareResponse;
   bookDollars: number;
 }) {
-  const currentDrag = result.current.totals.effective_tax_on_holding;
-  const proposedDrag = result.proposed.totals.effective_tax_on_holding;
-  const impact = formatMoreLessTax(result.deltas.estimated_tax);
+  const canCompare = canComparePortfolioBooks(result);
+  const currentDrag = portfolioBookFilled(result.current)
+    ? formatTaxDragPct(result.current.totals.effective_tax_on_holding)
+    : TAX_DRAG_NA_LABEL;
+  const proposedDrag = portfolioBookFilled(result.proposed)
+    ? formatTaxDragPct(result.proposed.totals.effective_tax_on_holding)
+    : TAX_DRAG_NA_LABEL;
+  const impact = canCompare
+    ? formatMoreLessTax(result.deltas.estimated_tax)
+    : { headline: TAX_DRAG_NA_LABEL, polarity: "even" as TaxPolarity };
   const deltaPanel =
-    impact.polarity === "less"
-      ? "bg-tax-less-soft"
-      : impact.polarity === "more"
-        ? "bg-tax-more-soft"
-        : "bg-paper";
+    !canCompare
+      ? "bg-paper"
+      : impact.polarity === "less"
+        ? "bg-tax-less-soft"
+        : impact.polarity === "more"
+          ? "bg-tax-more-soft"
+          : "bg-paper";
 
   return (
     <section
@@ -40,7 +53,9 @@ export function SummaryStrip({
     >
       <header className="mb-3 flex flex-wrap items-end justify-between gap-2">
         <h2 className="font-serif text-lg tracking-tight text-ink">Total tax impact</h2>
-        <p className="text-[10px] text-muted">Current vs Proposed · Δ</p>
+        <p className="text-[10px] text-muted">
+          {canCompare ? "Current vs Proposed · Δ" : "Single book · Δ N/A"}
+        </p>
       </header>
 
       <div className="grid gap-3 md:grid-cols-3">
@@ -49,7 +64,7 @@ export function SummaryStrip({
             Current tax drag
           </p>
           <p className="mt-1 font-serif text-[28px] leading-tight tracking-tight text-ink">
-            {formatTaxDragPct(currentDrag)}
+            {currentDrag}
           </p>
           <p className="mt-1 text-[11px] text-muted">
             {TAX_DRAG_CARD_DETAIL}
@@ -60,7 +75,7 @@ export function SummaryStrip({
             Proposed tax drag
           </p>
           <p className="mt-1 font-serif text-[28px] leading-tight tracking-tight text-ink">
-            {formatTaxDragPct(proposedDrag)}
+            {proposedDrag}
           </p>
           <p className="mt-1 text-[11px] text-muted">
             {TAX_DRAG_CARD_DETAIL}
@@ -76,7 +91,9 @@ export function SummaryStrip({
             {impact.headline}
           </p>
           <p className="mt-1 text-[11px] text-muted">
-            {TAX_IMPACT_DELTA_DETAIL} · on {compactBookLabel(bookDollars)}
+            {canCompare
+              ? `${TAX_IMPACT_DELTA_DETAIL} · on ${compactBookLabel(bookDollars)}`
+              : SINGLE_BOOK_DELTA_DETAIL}
           </p>
         </div>
       </div>

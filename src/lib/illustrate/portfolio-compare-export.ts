@@ -3,9 +3,11 @@ import {
   ANNOUNCED_COLUMN,
   DIST_AMOUNT_COLUMN,
   DOLLAR_IMPACT_COLUMN,
+  EMPTY_BOOK_INVITE,
   EX_COLUMN,
   PCT_OF_NAV_COLUMN,
   RECORD_COLUMN,
+  SINGLE_BOOK_DELTA_DETAIL,
   TAX_DRAG_CARD_DETAIL,
   TAX_IMPACT_DELTA_DETAIL,
   UPCOMING_UNAVAILABLE_HEADLINE,
@@ -17,9 +19,11 @@ import {
   upcomingPctOfNavAmount,
 } from "@/lib/illustrate/portfolio-compare-copy";
 import {
+  canComparePortfolioBooks,
   formatMoreLessTax,
   formatStageLabel,
   formatTaxDragPct,
+  portfolioBookFilled,
   totalUpcomingTax,
   upcomingHoldingsForSide,
   type TaxPolarity,
@@ -82,10 +86,13 @@ function sideModel(
   side: "current" | "proposed",
 ): PortfolioCompareExportSide {
   const allocation = result[side];
+  const filled = portfolioBookFilled(allocation);
   return {
     label: allocation.label,
     taxDrag: allocation.totals.effective_tax_on_holding,
-    taxDragLabel: formatTaxDragPct(allocation.totals.effective_tax_on_holding),
+    taxDragLabel: filled
+      ? formatTaxDragPct(allocation.totals.effective_tax_on_holding)
+      : TAX_DRAG_NA_LABEL,
     totalUpcomingTax: totalUpcomingTax(allocation),
     holdings: allocation.holdings.map((holding) => ({
       ticker: (holding.ticker || holding.fund_identifier || "—").toUpperCase(),
@@ -113,7 +120,10 @@ export function toPortfolioCompareExportModel(
   result: PortfolioCompareResponse,
   bookDollars: number,
 ): PortfolioCompareExportModel {
-  const impact = formatMoreLessTax(result.deltas.estimated_tax);
+  const canCompare = canComparePortfolioBooks(result);
+  const impact = canCompare
+    ? formatMoreLessTax(result.deltas.estimated_tax)
+    : { headline: TAX_DRAG_NA_LABEL, polarity: "even" as TaxPolarity };
   return {
     title: "Portfolio comparison",
     bookDollars,
@@ -123,7 +133,7 @@ export function toPortfolioCompareExportModel(
     proposed: sideModel(result, "proposed"),
     yearTax: calendarYearTaxTable(result),
     delta: {
-      estimatedTax: result.deltas.estimated_tax,
+      estimatedTax: canCompare ? result.deltas.estimated_tax : 0,
       headline: impact.headline,
       polarity: impact.polarity,
     },
@@ -179,7 +189,7 @@ function sideHtml(side: PortfolioCompareExportSide): string {
       <h3>Upcoming / announced</h3>
       <table>
         <thead><tr><th>Ticker</th><th>${DIST_AMOUNT_COLUMN}</th><th>${PCT_OF_NAV_COLUMN}</th><th>${DOLLAR_IMPACT_COLUMN}</th><th>${ANNOUNCED_COLUMN}</th><th>${RECORD_COLUMN}</th><th>${EX_COLUMN}</th></tr></thead>
-        <tbody>${upcoming || `<tr><td colspan="7" class="muted">${UPCOMING_UNAVAILABLE_HEADLINE}</td></tr>`}</tbody>
+        <tbody>${upcoming || `<tr><td colspan="7" class="muted">${escapeHtml(side.holdings.length ? UPCOMING_UNAVAILABLE_HEADLINE : EMPTY_BOOK_INVITE)}</td></tr>`}</tbody>
       </table>
     </section>`;
 }
@@ -315,7 +325,11 @@ export function renderPortfolioComparePrintHtml(
     <div class="delta">
       <span>Tax impact Δ</span>
       <strong>${escapeHtml(model.delta.headline)}</strong>
-      <span class="muted">${escapeHtml(TAX_IMPACT_DELTA_DETAIL)}</span>
+      <span class="muted">${escapeHtml(
+        model.current.holdings.length > 0 && model.proposed.holdings.length > 0
+          ? TAX_IMPACT_DELTA_DETAIL
+          : SINGLE_BOOK_DELTA_DETAIL,
+      )}</span>
     </div>
   </section>
   <p class="foot">Aftertax · estimates / illustrative only · not tax advice · weights × portfolio value → dollars</p>

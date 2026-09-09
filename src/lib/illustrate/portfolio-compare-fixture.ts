@@ -7,6 +7,10 @@ import {
   PORTFOLIO_COMPARE_YEARS,
   portfolioYearTaxRate,
 } from "@/lib/illustrate/portfolio-compare-years";
+import {
+  isPortfolioCompareRequestValid,
+  resolveHoldingDollars,
+} from "@/lib/illustrate/portfolio-compare-request";
 import type {
   PortfolioAllocationOut,
   PortfolioComparePeriodOut,
@@ -21,6 +25,8 @@ import type {
   PortfolioPeriodHoldingTax,
 } from "@/lib/illustrate/portfolio-compare-types";
 import { PORTFOLIO_COMPARE_BOOK_DOLLARS } from "@/lib/illustrate/portfolio-compare-types";
+
+export { isPortfolioCompareRequestValid, resolveHoldingDollars };
 
 const SUMMARY_HOLDING = 10_000;
 
@@ -73,48 +79,8 @@ export function mockCalendarYearPeriods(
   }));
 }
 
-export function resolveHoldingDollars(
-  holding: PortfolioHoldingIn,
-  sideBook: number | null | undefined,
-): number | null {
-  if (holding.holding_dollars != null && holding.holding_dollars > 0) {
-    return holding.holding_dollars;
-  }
-  if (holding.weight_pct == null || !(holding.weight_pct > 0)) return null;
-  const book = sideBook ?? holding.book_dollars ?? null;
-  if (book == null || !(book > 0)) return null;
-  return (holding.weight_pct / 100) * book;
-}
-
 function tickerOf(holding: PortfolioHoldingIn): string {
   return (holding.ticker || holding.fund_identifier || "").trim().toUpperCase();
-}
-
-export function isPortfolioCompareRequestValid(body: PortfolioCompareRequest): string | null {
-  if (!body.current?.holdings?.length) return "current.holdings is required";
-  if (!body.proposed?.holdings?.length) return "proposed.holdings is required";
-
-  for (const [sideName, side] of [
-    ["current", body.current],
-    ["proposed", body.proposed],
-  ] as const) {
-    for (const [index, holding] of side.holdings.entries()) {
-      const hasLookup = Boolean(
-        holding.ticker ||
-          holding.fund_identifier ||
-          holding.fund_name ||
-          holding.distribution_ids?.length,
-      );
-      if (!hasLookup) {
-        return `${sideName}.holdings[${index}] needs ticker and/or fund_identifier`;
-      }
-      const dollars = resolveHoldingDollars(holding, side.book_dollars);
-      if (dollars == null || !(dollars > 0)) {
-        return `${sideName}.holdings[${index}] needs holding_dollars, or weight_pct with book_dollars`;
-      }
-    }
-  }
-  return null;
 }
 
 function mockHoldingOut(

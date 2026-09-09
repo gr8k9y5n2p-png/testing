@@ -6,6 +6,10 @@ import { TAX_DRAG_NA_LABEL } from "./tax-drag-map.ts";
  * Do not invent dates or dollars.
  */
 
+export const EMPTY_BOOK_INVITE = "No holdings yet — use + Add holding to start.";
+export const SINGLE_BOOK_DELTA_DETAIL =
+  "Add holdings on both sides to compare · not Upcoming";
+
 export const UPCOMING_UNAVAILABLE_HEADLINE = "Not available / undisclosed";
 /** Short cell label so Dist $ / % of NAV stay scannable. Never $0. */
 export const UPCOMING_AMOUNT_UNAVAILABLE = "Undisclosed";
