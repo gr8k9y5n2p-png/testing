@@ -119,7 +119,6 @@ export function ResultsTable({
 
   return (
     <div className="space-y-6">
-      {page ? <PaginationBar {...page} /> : null}
       <FundSection
         title="Upcoming / announced"
         description="Announced distributions that have not paid out yet. Past record/ex/payable dates stay in history below."
@@ -135,6 +134,7 @@ export function ResultsTable({
         empty={UPCOMING_UNAVAILABLE_DETAIL}
         showPayable
       />
+      {page ? <PaginationBar {...page} /> : null}
       <FundSection
         title="Paid history"
         description="Paid, final-past, and estimates whose record/ex/payable date is already past. These never appear in Upcoming."
