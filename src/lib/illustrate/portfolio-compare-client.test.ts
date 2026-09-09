@@ -62,8 +62,8 @@ describe("paid_history contract wiring", () => {
 describe("portfolio compare periods wiring", () => {
   it("POSTs locked tax_rates keys, never {} or { state }", () => {
     const client = readFileSync(join(here, "portfolio-compare-client.ts"), "utf8");
-    assert.match(client, /lockedTaxRates\(request\.tax_rates\)/);
-    assert.match(client, /lockedTaxRates\(taxRates\)/);
+    assert.match(client, /toDataApiTaxRates\(request\.tax_rates\)/);
+    assert.match(client, /toDataApiTaxRates\(taxRates\)/);
     assert.doesNotMatch(client, /tax_rates: request\.tax_rates \?\? \{\}/);
     assert.doesNotMatch(client, /tax_rates: taxRates \?\? \{\}/);
   });
@@ -150,6 +150,30 @@ describe("portfolio compare periods wiring", () => {
     const fixture = readFileSync(join(here, "portfolio-compare-fixture.ts"), "utf8");
     assert.match(fixture, /mockCalendarYearPeriods/);
     assert.match(fixture, /portfolioYearTaxRate/);
+  });
+});
+
+describe("portfolio compare tax_rates + same-origin proxy", () => {
+  it("maps rate-strip aliases and posts same-origin so CORS cannot hide 422s", () => {
+    const client = readFileSync(join(here, "portfolio-compare-client.ts"), "utf8");
+    const route = readFileSync(
+      join(here, "../../app/api/illustrate/portfolio/compare/route.ts"),
+      "utf8",
+    );
+    const compare = readFileSync(
+      join(here, "../../components/illustrate/PortfolioCompare.tsx"),
+      "utf8",
+    );
+    assert.match(client, /toDataApiTaxRates/);
+    assert.match(client, /return "\/api\/illustrate\/portfolio\/compare"/);
+    assert.match(client, /getPortfolioCompareUpstream/);
+    assert.match(client, /isRemoteDataApi\(\) \|\| !isMockPortfolioCompareEndpoint/);
+    assert.doesNotMatch(client, /dataApiUrl\("\/illustrate\/portfolio\/compare"\)/);
+    assert.match(route, /getPortfolioCompareUpstream/);
+    assert.match(route, /toDataApiTaxRates/);
+    assert.match(route, /toPortfolioCompareRequestBody/);
+    assert.match(compare, /tax_rates: payload\.taxRates/);
+    assert.match(compare, /appliedTaxRates/);
   });
 });
 

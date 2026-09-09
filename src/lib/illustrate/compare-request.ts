@@ -6,22 +6,82 @@ import type {
 } from "./compare-types.ts";
 import { PORTFOLIO_COMPARE_YEARS } from "./portfolio-compare-years.ts";
 import {
-  lockedTaxRates,
   UI_DEFAULT_TAX_RATES,
   type IllustrateRequest,
   type TaxRates,
 } from "./types.ts";
 
+/**
+ * Data `TaxRates` (`additionalProperties: false`).
+ * UI rate-strip aliases ordinary/ltcg/stcg/qdi 422 the live API.
+ */
+export const DATA_API_TAX_RATE_KEYS = [
+  "ordinary_income",
+  "long_term_capital_gains",
+  "short_term_capital_gains",
+  "qualified_dividend",
+  "state",
+] as const;
+
+const TAX_RATE_ALIASES: Record<string, keyof TaxRates> = {
+  ordinary_income: "ordinary_income",
+  ordinary: "ordinary_income",
+  long_term_capital_gains: "long_term_capital_gains",
+  ltcg: "long_term_capital_gains",
+  long_term: "long_term_capital_gains",
+  short_term_capital_gains: "short_term_capital_gains",
+  stcg: "short_term_capital_gains",
+  short_term: "short_term_capital_gains",
+  qualified_dividend: "qualified_dividend",
+  qdi: "qualified_dividend",
+  qualified: "qualified_dividend",
+  state: "state",
+};
+
+function rateNumber(value: unknown): number | undefined {
+  if (value == null || value === "") return undefined;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+/**
+ * Map UI rate-strip fields onto the Data API schema and drop extra keys.
+ * Long names win when both an alias and the schema key are present.
+ */
+export function toDataApiTaxRates(
+  incoming?: Partial<TaxRates> | Record<string, unknown> | null,
+): TaxRates {
+  const rates: TaxRates = { ...UI_DEFAULT_TAX_RATES };
+  if (!incoming || typeof incoming !== "object") return rates;
+
+  const apply = (canonicalOnly: boolean) => {
+    for (const [key, value] of Object.entries(incoming)) {
+      const mapped = TAX_RATE_ALIASES[key];
+      if (!mapped) continue;
+      const isCanonical = DATA_API_TAX_RATE_KEYS.includes(
+        key as (typeof DATA_API_TAX_RATE_KEYS)[number],
+      );
+      if (canonicalOnly !== isCanonical) continue;
+      const parsed = rateNumber(value);
+      if (parsed == null) continue;
+      rates[mapped] = parsed;
+    }
+  };
+  apply(false);
+  apply(true);
+  return rates;
+}
+
 /** Locked Compare tax payload. Empty `{}` is never sent — UI always posts rates. */
 export function compareTaxRequestFields(input?: {
-  taxRates?: Partial<TaxRates> | Record<string, never> | null;
+  taxRates?: Partial<TaxRates> | Record<string, unknown> | null;
   combineStateWithFederal?: boolean;
 }): {
   tax_rates: TaxRates;
   combine_state_with_federal: boolean;
 } {
   return {
-    tax_rates: lockedTaxRates(input?.taxRates),
+    tax_rates: toDataApiTaxRates(input?.taxRates),
     combine_state_with_federal: input?.combineStateWithFederal ?? true,
   };
 }
@@ -262,7 +322,7 @@ export function toDataApiCompareBody(
 
   return {
     ...rest,
-    tax_rates: lockedTaxRates(rest.tax_rates),
+    tax_rates: toDataApiTaxRates(rest.tax_rates),
     combine_state_with_federal: rest.combine_state_with_federal !== false,
     ...(left ? { left } : {}),
     ...(right ? { right } : {}),

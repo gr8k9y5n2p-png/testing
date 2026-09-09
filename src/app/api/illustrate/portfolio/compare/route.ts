@@ -1,40 +1,63 @@
 import { NextResponse } from "next/server";
+import { toDataApiTaxRates } from "@/lib/illustrate/compare-request";
 import {
-  getLiveIllustrateUrl,
-  proxyLiveDataApiPost,
-} from "@/lib/data-api/config";
+  getPortfolioCompareUpstream,
+  toPortfolioCompareRequestBody,
+} from "@/lib/illustrate/portfolio-compare-client";
 import {
   isPortfolioCompareRequestValid,
   mockPortfolioCompareResponse,
 } from "@/lib/illustrate/portfolio-compare-fixture";
-import { toPortfolioCompareRequestBody } from "@/lib/illustrate/portfolio-compare-client";
 import type { PortfolioCompareRequest } from "@/lib/illustrate/portfolio-compare-types";
 
 export const dynamic = "force-dynamic";
 
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
 /**
- * POST /api/illustrate/portfolio/compare.
- * Live Data API when configured. Never seed-math + MOCK banners on Production.
+ * Same-origin Portfolio Compare. Maps UI tax_rates aliases, then proxies to
+ * the Data API when configured. Localhost without an upstream stays on the
+ * sketch fixture — never seed-math + MOCK banners on Production.
  */
 export async function POST(request: Request) {
-  let body: PortfolioCompareRequest;
+  let raw: unknown;
   try {
-    body = (await request.json()) as PortfolioCompareRequest;
+    raw = await request.json();
   } catch {
     return NextResponse.json({ detail: "Invalid JSON body" }, { status: 400 });
   }
 
-  const live = getLiveIllustrateUrl("/illustrate/portfolio/compare");
-  if (live) {
+  const incoming = asRecord(raw);
+  const body = toPortfolioCompareRequestBody({
+    ...(incoming as unknown as PortfolioCompareRequest),
+    tax_rates: toDataApiTaxRates(
+      incoming.tax_rates as Record<string, unknown> | undefined,
+    ),
+  });
+
+  const invalid = isPortfolioCompareRequestValid(body as PortfolioCompareRequest);
+  if (invalid) {
+    return NextResponse.json({ detail: invalid }, { status: 422 });
+  }
+
+  const upstream = getPortfolioCompareUpstream();
+  if (upstream) {
     try {
-      const upstream = await proxyLiveDataApiPost(
-        live,
-        toPortfolioCompareRequestBody(body),
-      );
-      const text = await upstream.text();
+      const response = await fetch(upstream, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify(body),
+        cache: "no-store",
+      });
+      const text = await response.text();
+      const contentType = response.headers.get("content-type") ?? "application/json";
       return new NextResponse(text, {
-        status: upstream.status,
-        headers: { "Content-Type": "application/json" },
+        status: response.status,
+        headers: { "Content-Type": contentType },
       });
     } catch {
       return NextResponse.json(
@@ -44,10 +67,7 @@ export async function POST(request: Request) {
     }
   }
 
-  const invalid = isPortfolioCompareRequestValid(body);
-  if (invalid) {
-    return NextResponse.json({ detail: invalid }, { status: 422 });
-  }
-
-  return NextResponse.json(mockPortfolioCompareResponse(body));
+  return NextResponse.json(
+    mockPortfolioCompareResponse(body as PortfolioCompareRequest),
+  );
 }

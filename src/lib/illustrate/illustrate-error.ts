@@ -25,6 +25,42 @@ function errorCode(value: unknown): string | undefined {
   return typeof value === "string" && value.trim() ? value.trim() : undefined;
 }
 
+function formatLoc(loc: unknown): string {
+  if (!Array.isArray(loc)) return "";
+  return loc
+    .filter((part) => part !== "body" && part !== "")
+    .map(String)
+    .join(".");
+}
+
+function formatValidationItem(item: unknown): string | null {
+  const rec = asRecord(item);
+  if (!rec) return typeof item === "string" && item.trim() ? item.trim() : null;
+  const loc = formatLoc(rec.loc);
+  const msg =
+    typeof rec.msg === "string" && rec.msg.trim()
+      ? rec.msg.trim()
+      : typeof rec.message === "string" && rec.message.trim()
+        ? rec.message.trim()
+        : "";
+  if (!msg) return loc || null;
+  return loc ? `${loc}: ${msg}` : msg;
+}
+
+/** FastAPI 422 `errors[]` / `detail[]` — prefer field paths over "Validation failed". */
+export function formatIllustrateValidationErrors(body: unknown): string | null {
+  const rec = asRecord(body);
+  if (!rec) return null;
+  const lists = [rec.errors, rec.detail].filter(Array.isArray) as unknown[][];
+  for (const list of lists) {
+    const parts = list
+      .map(formatValidationItem)
+      .filter((part): part is string => Boolean(part));
+    if (parts.length) return parts.join("; ");
+  }
+  return null;
+}
+
 /**
  * Map Data's nav/shares 422s to advisor copy. Keys `needs_nav_or_shares` /
  * `nav_required` win; otherwise match the locked detail string.
@@ -36,12 +72,14 @@ export function userFacingIllustrateError(
   const rec = asRecord(body) ?? {};
   const nested = asRecord(rec.detail);
   const code = errorCode(rec.code) ?? errorCode(nested?.code);
+  const validation = formatIllustrateValidationErrors(rec);
   const detail =
-    typeof rec.detail === "string" && rec.detail.trim()
+    validation ??
+    (typeof rec.detail === "string" && rec.detail.trim()
       ? rec.detail.trim()
       : typeof nested?.detail === "string" && nested.detail.trim()
         ? nested.detail.trim()
-        : fallback;
+        : fallback);
 
   const flagged =
     truthyFlag(rec.needs_nav_or_shares) ||

@@ -13,6 +13,7 @@ import {
   perShareNavError,
   positiveNav,
   toDataApiCompareBody,
+  toDataApiTaxRates,
   trailingCalendarPeriods,
   withPortfolioHoldingNav,
   yoyTaxDragCompareRequest,
@@ -318,6 +319,41 @@ describe("compare-request NAV / Data body", () => {
     for (const key of LOCKED_TAX_RATE_KEYS) {
       assert.equal(typeof body.tax_rates?.[key], "number");
     }
+  });
+
+  it("maps rate-strip aliases onto Data API tax_rates keys", () => {
+    assert.deepEqual(
+      toDataApiTaxRates({
+        ordinary: 0.24,
+        ltcg: 0.15,
+        stcg: 0.32,
+        qdi: 0.18,
+        state: 0.1,
+      }),
+      {
+        ordinary_income: 0.24,
+        long_term_capital_gains: 0.15,
+        short_term_capital_gains: 0.32,
+        qualified_dividend: 0.18,
+        state: 0.1,
+      },
+    );
+    assert.deepEqual(
+      toDataApiTaxRates({
+        ordinary: 0.1,
+        ordinary_income: 0.37,
+        extra: 0.99,
+      }),
+      {
+        ...UI_DEFAULT_TAX_RATES,
+        ordinary_income: 0.37,
+      },
+    );
+    assert.deepEqual(toDataApiTaxRates({}), UI_DEFAULT_TAX_RATES);
+    assert.equal(
+      Object.keys(toDataApiTaxRates({ ordinary: 0.24, ltcg: 0.15 })).join(","),
+      "ordinary_income,long_term_capital_gains,short_term_capital_gains,qualified_dividend,state",
+    );
   });
 
   it("defaults compare tax fields to the locked top-bracket UI set", () => {
