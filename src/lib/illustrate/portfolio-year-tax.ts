@@ -5,8 +5,15 @@ import {
 import type {
   PortfolioComparePeriodOut,
   PortfolioCompareResponse,
+  PortfolioHoldingOut,
   PortfolioPeriodHoldingTax,
 } from "./portfolio-compare-types.ts";
+
+/** Share-class aliases so AMCAP period rows still fill an AMCPX holding (and vice versa). */
+const TICKER_PERIOD_ALIASES: Record<string, string> = {
+  AMCAP: "AMCPX",
+  AMCPX: "AMCAP",
+};
 
 export type YearTaxCell = number | null;
 
@@ -36,32 +43,85 @@ export function calendarYearColumns(
   return [...fallback].sort((a, b) => b - a);
 }
 
+type PeriodTaxLookup = {
+  byTicker: Map<string, Map<number, YearTaxCell>>;
+  byIndex: Map<number, Map<number, YearTaxCell>>;
+};
+
+function tickerAliases(ticker: string): string[] {
+  const key = ticker.trim().toUpperCase();
+  if (!key) return [];
+  const alias = TICKER_PERIOD_ALIASES[key];
+  return [key, alias].filter(
+    (value, index, list): value is string => Boolean(value) && list.indexOf(value) === index,
+  );
+}
+
 function taxLookup(
   periods: PortfolioComparePeriodOut[],
   side: "current" | "proposed",
-): Map<string, Map<number, YearTaxCell>> {
+): PeriodTaxLookup {
   const byTicker = new Map<string, Map<number, YearTaxCell>>();
+  const byIndex = new Map<number, Map<number, YearTaxCell>>();
   for (const period of periods) {
     for (const holding of period[side]) {
+      const cell = periodHoldingTax(holding);
       const ticker = holding.ticker.trim().toUpperCase();
-      if (!ticker) continue;
-      let byYear = byTicker.get(ticker);
-      if (!byYear) {
-        byYear = new Map();
-        byTicker.set(ticker, byYear);
+      if (ticker) {
+        let byYear = byTicker.get(ticker);
+        if (!byYear) {
+          byYear = new Map();
+          byTicker.set(ticker, byYear);
+        }
+        byYear.set(period.year, cell);
       }
-      byYear.set(period.year, periodHoldingTax(holding));
+      if (holding.holding_index != null) {
+        let byYear = byIndex.get(holding.holding_index);
+        if (!byYear) {
+          byYear = new Map();
+          byIndex.set(holding.holding_index, byYear);
+        }
+        byYear.set(period.year, cell);
+      }
     }
   }
-  return byTicker;
+  return { byTicker, byIndex };
 }
 
-/** Unmatched / uncovered / null totals → N/A. Published $0 stays 0. */
+function cellsHavePublishedTax(
+  map: Map<number, YearTaxCell> | undefined,
+  years: number[],
+): boolean {
+  return Boolean(map && years.some((year) => map.get(year) != null));
+}
+
+function yearCellsForHolding(
+  holding: PortfolioHoldingOut,
+  years: number[],
+  lookup: PeriodTaxLookup,
+): YearTaxCell[] {
+  const ticker = (holding.ticker || holding.fund_identifier || "—").toUpperCase();
+  const aliases = tickerAliases(ticker);
+  const tickerMaps = aliases
+    .map((key) => lookup.byTicker.get(key))
+    .filter((map): map is Map<number, YearTaxCell> => map != null);
+  const tickerWithValues = tickerMaps.find((map) => cellsHavePublishedTax(map, years));
+  const byIndex =
+    holding.holding_index != null ? lookup.byIndex.get(holding.holding_index) : undefined;
+  const byYear =
+    tickerWithValues ??
+    (cellsHavePublishedTax(byIndex, years) ? byIndex : tickerMaps[0] ?? byIndex);
+  return years.map((year) => byYear?.get(year) ?? null);
+}
+
+/** Unmatched / uncovered $0 / null totals → N/A. Published tax (incl. $0) stays. */
 export function periodHoldingTax(holding: PortfolioPeriodHoldingTax): YearTaxCell {
   if (holding.matched === false) return null;
-  if (holding.covered === false) return null;
-  if (holding.gap_reason) return null;
-  return holding.estimated_tax;
+  const tax = holding.estimated_tax;
+  const uncovered = holding.covered === false || Boolean(holding.gap_reason);
+  if (tax != null && Number.isFinite(tax) && !(tax === 0 && uncovered)) return tax;
+  if (uncovered) return null;
+  return tax ?? null;
 }
 
 function uniqueHoldings(
@@ -82,25 +142,21 @@ function rowsForSide(
   result: PortfolioCompareResponse,
   side: "current" | "proposed",
   years: number[],
-  lookup: Map<string, Map<number, YearTaxCell>>,
+  lookup: PeriodTaxLookup,
 ): YearTaxRow[] {
   const allocation = result[side];
   const sideLabel = side === "current" ? "Current" : "Proposed";
   return uniqueHoldings(allocation.holdings).map((holding, index) => {
     const ticker = (holding.ticker || holding.fund_identifier || "—").toUpperCase();
-    const byYear = lookup.get(ticker);
     return {
       key: `${side}-${holding.holding_index}-${ticker}-${index}`,
       side,
       sideLabel,
       ticker,
       fundName: holding.fund_name || ticker,
-      cells: years.map((year) => {
-        if (holding.covered === false || holding.gap_reason) return null;
-        if (!byYear || !byYear.has(year)) return null;
-        const value = byYear.get(year);
-        return value ?? null;
-      }),
+      // Period matched/unmatched wins. Holding-level covered is the upcoming
+      // snapshot, not calendar-year tax — Search already proves AGTHX history.
+      cells: yearCellsForHolding(holding, years, lookup),
     };
   });
 }
