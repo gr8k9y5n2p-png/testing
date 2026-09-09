@@ -15,7 +15,10 @@
 
 export {
   noticeForTickerRequest,
+  notifyPortfolioTickerMiss,
   requestTicker,
+  requestTickerOnPortfolioMiss,
+  shouldReportPortfolioMiss,
   TICKER_REQUEST_PATH,
   TICKER_REQUEST_SOURCES,
 } from "./data-api/request-ticker.ts";

@@ -114,7 +114,7 @@ await requestTicker({ ticker: "ABCDX", note: "optional", source: "portfolio" });
 | `search_miss` | Search typed an exact ticker with no match |
 | `portfolio` | Portfolio import / Compare slot miss (Modules) |
 
-`TICKER_REQUEST_SOURCES` is `["web", "search_miss", "portfolio"]`. Search already uses `web` and `search_miss`. Modules should import this helper for slot misses — never invent fund data while queued.
+`TICKER_REQUEST_SOURCES` is `["web", "search_miss", "portfolio"]`. Search uses `web` and `search_miss`. Portfolio import and Compare slots call `requestTickerOnPortfolioMiss` / `notifyPortfolioTickerMiss` (`source: "portfolio"`) — never invent fund data while queued. Toast copy matches Search miss: “We’ll work on ingesting this.”
 
 ### Run UI + Data API side by side
 

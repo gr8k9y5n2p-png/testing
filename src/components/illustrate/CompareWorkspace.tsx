@@ -9,6 +9,7 @@ import {
 } from "@/components/illustrate/GrowthAndTaxDragModule";
 import { TickerField } from "@/components/illustrate/portfolio-compare/TickerField";
 import { UpcomingTable } from "@/components/illustrate/portfolio-compare/UpcomingTable";
+import { NoticeToast, useNoticeToast } from "@/components/NoticeToast";
 import { postIllustrateCompare } from "@/lib/illustrate/compare-client";
 import { toTaxDeltaCardModel } from "@/lib/illustrate/compare-map";
 import {
@@ -54,6 +55,7 @@ export function CompareWorkspace({
   headingAs?: "h1" | "h2";
 }) {
   const [slots, setSlots] = useState(() => padCompareSlots(initialTickers));
+  const { notice, onNotice, dismissNotice } = useNoticeToast();
   const [holdingDollars, setHoldingDollars] = useState(COMPARE_DEFAULT_HOLDING_DOLLARS);
   const [holdingDraft, setHoldingDraft] = useState(() =>
     formatHoldingInput(COMPARE_DEFAULT_HOLDING_DOLLARS),
@@ -303,6 +305,7 @@ export function CompareWorkspace({
                 funds={catalog}
                 inputId={`compare-slot-${index}`}
                 allowEmpty
+                onNotice={onNotice}
                 onSelect={(fund) => {
                   setSlots((current) => setCompareSlot(current, index, fund.ticker));
                 }}
@@ -348,6 +351,7 @@ export function CompareWorkspace({
           headingId="compare-upcoming"
         />
       </div>
+      <NoticeToast message={notice} onDismiss={dismissNotice} />
     </section>
   );
 }
