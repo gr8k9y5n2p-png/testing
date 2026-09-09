@@ -1,18 +1,39 @@
 import { NextResponse } from "next/server";
 import { SAMPLE_FUNDS } from "@/data/seed";
+import {
+  getLiveIllustrateUrl,
+  proxyLiveDataApiPost,
+} from "@/lib/data-api/config";
 import { isLiveCoveredFamily } from "@/lib/coverage";
 import type { PortfolioIllustrateRequest } from "@/lib/illustrate/portfolio";
 import { demoEngineNotes } from "@/lib/illustrate/user-facing-notes";
 
 export const dynamic = "force-dynamic";
 
-/** MOCK POST /illustrate/portfolio — coverage-aware stub until Data API is running. */
+/** POST /api/illustrate/portfolio — live Data API when configured; localhost stub otherwise. */
 export async function POST(request: Request) {
   let body: PortfolioIllustrateRequest;
   try {
     body = (await request.json()) as PortfolioIllustrateRequest;
   } catch {
     return NextResponse.json({ detail: "Invalid JSON body" }, { status: 400 });
+  }
+
+  const live = getLiveIllustrateUrl("/illustrate/portfolio");
+  if (live) {
+    try {
+      const upstream = await proxyLiveDataApiPost(live, body);
+      const text = await upstream.text();
+      return new NextResponse(text, {
+        status: upstream.status,
+        headers: { "Content-Type": "application/json" },
+      });
+    } catch {
+      return NextResponse.json(
+        { detail: "Portfolio illustrate is unavailable from the Data API." },
+        { status: 503 },
+      );
+    }
   }
 
   const holdings = body.holdings ?? [];

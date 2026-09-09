@@ -26,6 +26,9 @@ describe("user-facing MOCK chrome", () => {
       ),
       true,
     );
+    const productionFooter =
+      "MOCK /illustrate — sample seed math, not the Data team service. Set NEXT_PUBLIC_ILLUSTRATE_URL to swap.";
+    assert.deepEqual(userFacingNotes([productionFooter]), []);
     assert.deepEqual(
       userFacingNotes([
         "MOCK /illustrate — sample seed math, not the Data team service.",

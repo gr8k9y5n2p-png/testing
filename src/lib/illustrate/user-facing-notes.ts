@@ -23,6 +23,7 @@ export function userFacingNotes(notes: unknown): string[] {
  */
 export function demoEngineNotes(...messages: string[]): string[] {
   if (process.env.NEXT_PUBLIC_DATA_API_URL?.trim()) return [];
+  if (process.env.NEXT_PUBLIC_ILLUSTRATE_URL?.trim()) return [];
   if (process.env.NODE_ENV === "production") return [];
   return messages.filter((message) => message.trim());
 }

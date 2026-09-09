@@ -52,9 +52,31 @@ describe("friends-beta Portfolio / Compare chrome", () => {
     const results = read("../../components/illustrate/IllustrationResults.tsx");
     const card = read("../../components/illustrate/PortfolioCoverageCard.tsx");
     const notes = read("user-facing-notes.ts");
+    const footer =
+      "MOCK /illustrate — sample seed math, not the Data team service. Set NEXT_PUBLIC_ILLUSTRATE_URL to swap.";
     assert.match(results, /userFacingNotes/);
     assert.match(card, /userFacingNotes/);
     assert.match(notes, /sample seed math/);
     assert.match(notes, /NODE_ENV === "production"/);
+    assert.match(notes, /MOCK\\s\*\\\/illustrate/);
+    assert.doesNotMatch(results, /Set NEXT_PUBLIC_ILLUSTRATE_URL to swap/);
+    assert.ok(
+      new RegExp(String.raw`MOCK\s*/illustrate|sample seed math`).test(footer),
+    );
+  });
+
+  it("proxies /api/illustrate to the live Data API when Vercel env is set", () => {
+    const illustrate = read("../../app/api/illustrate/route.ts");
+    const portfolio = read("../../app/api/illustrate/portfolio/route.ts");
+    const panel = read("../../components/illustrate/IllustratePanel.tsx");
+    assert.match(illustrate, /getLiveIllustrateUrl\("\/illustrate"\)/);
+    assert.match(illustrate, /proxyLiveDataApiPost/);
+    assert.match(illustrate, /Illustrate is unavailable from the Data API/);
+    assert.ok(
+      illustrate.indexOf("getLiveIllustrateUrl") < illustrate.indexOf("mockIllustrate"),
+      "live proxy must run before the localhost mock engine",
+    );
+    assert.match(portfolio, /getLiveIllustrateUrl\("\/illustrate\/portfolio"\)/);
+    assert.match(panel, /emptyIllustrateResponse/);
   });
 });
