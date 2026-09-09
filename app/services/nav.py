@@ -1041,7 +1041,16 @@ def refresh_nav_history(
             days = targets[ticker]
             start = min(days) - timedelta(days=DISTRIBUTION_DAY_LOOKBACK_DAYS)
             end = max(days)
-            return ticker, fetch_yahoo_history(ticker, start, end)
+            points = fetch_yahoo_history(ticker, start, end)
+            # Persist only the print used for each distribution day, not every daily bar.
+            keep: list[NavQuote] = []
+            seen: set[date] = set()
+            for day in days:
+                picked = _pick_on_or_before(points, day)
+                if picked is not None and picked.nav_as_of not in seen:
+                    keep.append(picked)
+                    seen.add(picked.nav_as_of)
+            return ticker, keep
 
         workers = min(_LIVE_WORKERS, max(1, len(targets)))
         with ThreadPoolExecutor(max_workers=workers) as pool:
