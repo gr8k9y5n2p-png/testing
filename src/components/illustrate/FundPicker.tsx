@@ -13,6 +13,7 @@ import { usePortfolioMissRequest } from "@/lib/data-api/use-portfolio-miss";
 import { useSearchMissRequest } from "@/lib/data-api/use-search-miss";
 import { DistributionDateStrip } from "@/components/DistributionDateStrip";
 import { useCoverage } from "@/components/coverage/CoverageProvider";
+import { shouldClearFundPickerSelection } from "@/components/illustrate/fund-picker-clear";
 
 const REMOTE_SEARCH_DEBOUNCE_MS = 220;
 
@@ -45,6 +46,7 @@ export function FundPicker({
   reportPortfolioMiss = false,
   pendingTicker = null,
   onUnknownTicker,
+  onClear,
   onNotice,
 }: {
   funds: FundEstimateView[];
@@ -60,6 +62,8 @@ export function FundPicker({
   /** Unknown slot ticker kept without inventing fund data. */
   pendingTicker?: string | null;
   onUnknownTicker?: (ticker: string) => void;
+  /** Empty the chip / query and drop the selected ticker. */
+  onClear?: () => void;
   onNotice?: (message: string) => void;
 }) {
   const [query, setQuery] = useState("");
@@ -129,58 +133,101 @@ export function FundPicker({
     setOpen(value.trim().length > 0);
   }
 
+  const hasSelection = Boolean(selected || pendingTicker);
+  const displayValue = open
+    ? query
+    : pendingTicker
+      ? pendingTicker
+      : selected
+        ? `${selected.ticker} · ${selected.fundName}`
+        : query;
+  const canClear = Boolean(displayValue || hasSelection);
+
+  function clearSelection() {
+    setQuery("");
+    setOpen(false);
+    onClear?.();
+  }
+
   return (
     <div className="relative">
       <label htmlFor={inputId} className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.12em] text-faint">
         {label}
       </label>
-      <input
-        id={inputId}
-        type="search"
-        value={
-          open
-            ? query
-            : pendingTicker
-              ? pendingTicker
-              : selected
-                ? `${selected.ticker} · ${selected.fundName}`
-                : query
-        }
-        onChange={(event) => {
-          const next = event.target.value;
-          setQuery(next);
-          showSuggestions(next);
-        }}
-        onFocus={() => {
-          if (selected || pendingTicker) {
-            setQuery("");
-            setOpen(false);
-            return;
-          }
-          showSuggestions(query);
-        }}
-        onBlur={() => {
-          window.setTimeout(() => setOpen(false), 120);
-        }}
-        onKeyDown={(event) => {
-          if (event.key === "Escape") {
-            event.preventDefault();
-            setOpen(false);
-          }
-          if (event.key === "Enter" && reportPortfolioMiss) {
-            const typed = query.trim().toUpperCase();
-            if (!looksLikeExactTicker(typed) || matches.length > 0) return;
-            event.preventDefault();
-            notifyPortfolioTickerMiss(typed, tickerInUniverse, onNotice);
-            onUnknownTicker?.(typed);
-            setOpen(false);
-          }
-        }}
-        placeholder="Ticker, name, CUSIP, or family"
-        className="h-12 w-full rounded-md border border-line bg-surface px-3 text-base text-ink placeholder:text-faint"
-        autoComplete="off"
-        autoFocus={autoFocus}
-      />
+      <div className="relative">
+        <input
+          id={inputId}
+          type="search"
+          value={displayValue}
+          onChange={(event) => {
+            const next = event.target.value;
+            if (
+              shouldClearFundPickerSelection({
+                nextValue: next,
+                hasSelection,
+                suggestionsOpen: open,
+              })
+            ) {
+              clearSelection();
+              return;
+            }
+            setQuery(next);
+            showSuggestions(next);
+          }}
+          onFocus={() => {
+            if (selected || pendingTicker) {
+              setQuery("");
+              setOpen(false);
+              return;
+            }
+            showSuggestions(query);
+          }}
+          onBlur={() => {
+            window.setTimeout(() => setOpen(false), 120);
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Escape") {
+              event.preventDefault();
+              setOpen(false);
+              return;
+            }
+            if (
+              shouldClearFundPickerSelection({
+                key: event.key,
+                hasSelection,
+                suggestionsOpen: open,
+              })
+            ) {
+              event.preventDefault();
+              clearSelection();
+              return;
+            }
+            if (event.key === "Enter" && reportPortfolioMiss) {
+              const typed = query.trim().toUpperCase();
+              if (!looksLikeExactTicker(typed) || matches.length > 0) return;
+              event.preventDefault();
+              notifyPortfolioTickerMiss(typed, tickerInUniverse, onNotice);
+              onUnknownTicker?.(typed);
+              setOpen(false);
+            }
+          }}
+          placeholder="Ticker, name, CUSIP, or family"
+          className="h-12 w-full rounded-md border border-line bg-surface px-3 pr-11 text-base text-ink placeholder:text-faint [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden"
+          autoComplete="off"
+          autoFocus={autoFocus}
+        />
+        {canClear ? (
+          <button
+            type="button"
+            aria-label="Clear search"
+            className="absolute top-1/2 right-2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full bg-ink/70 text-[11px] leading-none text-white hover:bg-ink"
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={clearSelection}
+          >
+            ×
+          </button>
+        ) : null}
+      </div>
       {open ? (
         <ul className="absolute z-20 mt-1 max-h-72 w-full overflow-auto rounded-md border border-line bg-surface shadow-lg">
           {matches.length === 0 ? (
