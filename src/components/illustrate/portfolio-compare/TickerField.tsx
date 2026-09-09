@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import { shouldClearFundPickerSelection } from "@/components/illustrate/fund-picker-clear";
+import { shouldOpenFundSuggestions } from "@/components/illustrate/fund-picker-suggestions";
 import {
   looksLikeExactTicker,
   notifyPortfolioTickerMiss,
@@ -67,15 +68,18 @@ export function TickerField({
 
   const matches = useMemo(() => {
     const needle = (open ? query : cleared ? "" : ticker).trim().toLowerCase();
-    const pool = funds;
-    if (!needle) return pool.slice(0, 8);
-    return pool
+    if (!needle) return [];
+    return funds
       .filter((fund) => {
         const haystack = `${fund.ticker} ${fund.fundName} ${fund.family ?? ""}`.toLowerCase();
         return haystack.includes(needle);
       })
       .slice(0, 8);
   }, [cleared, funds, open, query, ticker]);
+
+  function showSuggestions(value: string) {
+    setOpen(shouldOpenFundSuggestions(value));
+  }
 
   return (
     <div className="relative min-w-0 flex-1">
@@ -107,7 +111,7 @@ export function TickerField({
             }
             setCleared(false);
             setQuery(next);
-            setOpen(true);
+            showSuggestions(next);
           }}
           onFocus={() => {
             if (hasSelection || cleared) {
@@ -115,8 +119,8 @@ export function TickerField({
               setOpen(false);
               return;
             }
-            setOpen(true);
             setQuery(ticker);
+            showSuggestions(ticker);
           }}
           onBlur={() => {
             window.setTimeout(() => {

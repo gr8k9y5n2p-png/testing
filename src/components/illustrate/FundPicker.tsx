@@ -14,6 +14,7 @@ import { useSearchMissRequest } from "@/lib/data-api/use-search-miss";
 import { DistributionDateStrip } from "@/components/DistributionDateStrip";
 import { useCoverage } from "@/components/coverage/CoverageProvider";
 import { shouldClearFundPickerSelection } from "@/components/illustrate/fund-picker-clear";
+import { shouldOpenFundSuggestions } from "@/components/illustrate/fund-picker-suggestions";
 
 const REMOTE_SEARCH_DEBOUNCE_MS = 220;
 
@@ -100,6 +101,7 @@ export function FundPicker({
   }, [query, reportSearchMiss]);
 
   const matches = useMemo(() => {
+    if (!query.trim()) return [];
     const found = mergeFundLists(searchFunds(funds, { query }), remoteFunds);
     const { upcoming, paid } = splitFundsByBucket(found);
     return [...upcoming, ...paid].slice(0, 8);
@@ -130,7 +132,7 @@ export function FundPicker({
   );
 
   function showSuggestions(value: string) {
-    setOpen(value.trim().length > 0);
+    setOpen(shouldOpenFundSuggestions(value));
   }
 
   const hasSelection = Boolean(selected || pendingTicker);

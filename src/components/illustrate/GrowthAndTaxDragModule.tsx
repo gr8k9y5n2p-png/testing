@@ -29,6 +29,7 @@ import {
   PERFORMANCE_UNAVAILABLE_HINT,
   PERFORMANCE_UNAVAILABLE_LABEL,
 } from "@/lib/performance/coverage";
+import { shouldOpenFundSuggestions } from "@/components/illustrate/fund-picker-suggestions";
 import { DEFAULT_START_DOLLARS, PERFORMANCE_FIXTURE_TICKERS } from "@/lib/performance/types";
 
 export type { GrowthFundInput } from "@/lib/illustrate/growth-tax-load";
@@ -274,9 +275,17 @@ export function GrowthAndTaxDragModule({
                   autoFocus
                 />
                 <datalist id="growth-tax-funds">
-                  {remaining.map((ticker) => (
-                    <option key={ticker} value={ticker} />
-                  ))}
+                  {shouldOpenFundSuggestions(addTicker)
+                    ? remaining
+                        .filter((ticker) =>
+                          ticker
+                            .toLowerCase()
+                            .includes(addTicker.trim().toLowerCase()),
+                        )
+                        .map((ticker) => (
+                          <option key={ticker} value={ticker} />
+                        ))
+                    : null}
                 </datalist>
                 <button
                   type="submit"
