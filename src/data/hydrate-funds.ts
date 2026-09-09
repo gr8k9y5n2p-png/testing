@@ -1,4 +1,8 @@
-import { toPaidEvent } from "./distribution-bucket.ts";
+import {
+  normalizePublicationStage,
+  toPaidEvent,
+  UPCOMING_STAGES,
+} from "./distribution-bucket.ts";
 import type { PaidDistributionEvent } from "./distribution-bucket.ts";
 import type { FundEstimate, FundEstimateView } from "./types.ts";
 
@@ -12,7 +16,57 @@ export function hideUpcomingAmounts(
   return fund.bucket !== "paid" && fund.hasEstimate === false;
 }
 
-/** Paid / final rows plus extras. Upcoming-only funds return paidHistory as-is. */
+function isFinalOrPaidStage(stage: string | null | undefined): boolean {
+  const key = normalizePublicationStage(stage);
+  return key === "final" || key === "paid";
+}
+
+function isEstimateStage(stage: string | null | undefined): boolean {
+  const key = normalizePublicationStage(stage);
+  return Boolean(key && UPCOMING_STAGES.has(key));
+}
+
+function hasPaidEventSignal(
+  event: Pick<
+    PaidDistributionEvent,
+    | "estimatedDistributionAmount"
+    | "recordDate"
+    | "exDate"
+    | "payableDate"
+    | "publicationStage"
+  >,
+): boolean {
+  if (event.estimatedDistributionAmount) return true;
+  if (event.recordDate || event.exDate || event.payableDate) return true;
+  return isFinalOrPaidStage(event.publicationStage);
+}
+
+/** Event year for YE collapse: payable, else ex, else record, else as_of year. */
+function paidEventYear(event: PaidDistributionEvent): number {
+  const eventDate = event.payableDate ?? event.exDate ?? event.recordDate ?? event.asOfDate;
+  const year = Number((eventDate ?? "").slice(0, 4));
+  return year || event.distributionYear;
+}
+
+/**
+ * Same-year Paid history: keep `final` / `paid`. Drop prelim/updated rows
+ * once a final exists for that year. Past-dated estimates stay when no final.
+ */
+export function preferFinalPaidEvents(
+  events: PaidDistributionEvent[],
+): PaidDistributionEvent[] {
+  const yearsWithFinal = new Set(
+    events
+      .filter((event) => isFinalOrPaidStage(event.publicationStage))
+      .map(paidEventYear),
+  );
+  return events.filter((event) => {
+    if (!isEstimateStage(event.publicationStage)) return true;
+    return !yearsWithFinal.has(paidEventYear(event));
+  });
+}
+
+/** Paid / final rows from `/distributions`. Never illustration / tax-on-holding $. */
 export function paidEventsForFund(
   fund: Pick<
     FundEstimate,
@@ -31,7 +85,7 @@ export function paidEventsForFund(
   >,
 ): PaidDistributionEvent[] {
   const extras = fund.paidHistory ?? [];
-  if (fund.bucket !== "paid") return extras;
+  if (fund.bucket !== "paid") return preferFinalPaidEvents(extras);
   const own = toPaidEvent({
     asOfDate: fund.asOfDate,
     recordDate: fund.recordDate,
@@ -44,6 +98,7 @@ export function paidEventsForFund(
     estimatedDistributionPctNav: fund.estimatedDistributionPctNav,
     distributionYear: fund.distributionYear,
   });
+  if (!hasPaidEventSignal(own)) return preferFinalPaidEvents(extras);
   const seen = new Set(
     extras.map(
       (event) =>
@@ -51,7 +106,7 @@ export function paidEventsForFund(
     ),
   );
   const ownKey = `${own.asOfDate}|${own.exDate ?? ""}|${own.payableDate ?? ""}|${own.estimatedDistributionAmount}`;
-  return seen.has(ownKey) ? extras : [own, ...extras];
+  return preferFinalPaidEvents(seen.has(ownKey) ? extras : [own, ...extras]);
 }
 
 function indexKey(fund: Pick<FundEstimate, "ticker" | "id">): string[] {

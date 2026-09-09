@@ -11,6 +11,7 @@ import {
 import { DistributionDateStrip } from "@/components/DistributionDateStrip";
 import { Disclaimer } from "@/components/Disclaimer";
 import {
+  PAID_HISTORY_EMPTY,
   UPCOMING_UNAVAILABLE_DETAIL,
   UPCOMING_UNAVAILABLE_HEADLINE,
 } from "@/lib/copy";
@@ -38,10 +39,14 @@ export function IllustrationResults({
   holdingDollars?: number | null;
 }) {
   const { components, warnings } = result;
-  const { upcoming: upcomingComponents, paid: paidComponents } =
-    splitIllustrationComponents(components, fund);
+  const { upcoming: upcomingComponents } = splitIllustrationComponents(
+    components,
+    fund,
+  );
   const upcomingTotals = upcomingIllustrationTotals(upcomingComponents);
   const hasUpcoming = upcomingTotals != null;
+  // Paid history is GET /distributions only — never illustration component $.
+  const paidEvents = fund ? paidEventsForFund(fund) : [];
 
   return (
     <div className="space-y-4">
@@ -89,27 +94,20 @@ export function IllustrationResults({
           </div>
         }
       />
-      {paidComponents.length > 0 ? (
-        <ComponentTable
-          heading="Paid history"
-          kicker="past · not upcoming"
-          wellClassName="bg-paper"
-          components={paidComponents}
-          fund={fund}
-          holdingDollars={holdingDollars}
-        />
-      ) : null}
-
-      {fund && paidEventsForFund(fund).length > 0 && paidComponents.length === 0 ? (
-        <section className="rounded-xl border border-line bg-paper px-3 py-2">
-          <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
-            <h3 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-ink">
-              Paid history
-            </h3>
-            <p className="text-[10px] text-muted">past · not upcoming</p>
-          </div>
+      <section className="rounded-xl border border-line bg-paper px-3 py-2">
+        <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
+          <h3 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-ink">
+            Paid history
+          </h3>
+          <p className="text-[10px] text-muted">past · not upcoming</p>
+        </div>
+        {paidEvents.length === 0 ? (
+          <p className="rounded-lg border border-dashed border-line px-4 py-6 text-sm text-muted">
+            {PAID_HISTORY_EMPTY}
+          </p>
+        ) : (
           <ul className="divide-y divide-line overflow-hidden rounded-md border border-line bg-surface">
-            {paidEventsForFund(fund).map((event) => (
+            {paidEvents.map((event) => (
               <li
                 key={`${event.asOfDate}-${event.exDate ?? ""}-${event.distributionYear}`}
                 className="flex flex-wrap items-start justify-between gap-3 px-3 py-2.5"
@@ -132,8 +130,8 @@ export function IllustrationResults({
               </li>
             ))}
           </ul>
-        </section>
-      ) : null}
+        )}
+      </section>
 
       {warnings.length > 0 ? (
         <ul className="space-y-1 text-xs text-muted">

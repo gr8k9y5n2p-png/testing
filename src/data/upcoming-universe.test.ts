@@ -203,8 +203,14 @@ describe("universe Upcoming / Fund Manager Estimated Distributions", () => {
     const table = readFileSync(join(here, "../components/ResultsTable.tsx"), "utf8");
     const highlights = readFileSync(join(here, "queries.ts"), "utf8");
     const badges = readFileSync(join(here, "../components/DeltaBadge.tsx"), "utf8");
+    const results = readFileSync(
+      join(here, "../components/illustrate/IllustrationResults.tsx"),
+      "utf8",
+    );
     assert.match(table, /splitFundsByBucket/);
     assert.match(highlights, /splitFundsByBucket/);
     assert.match(badges, /hideUpcomingAmounts/);
+    assert.match(results, /paidEventsForFund/);
+    assert.doesNotMatch(results, /paidComponents/);
   });
 });
