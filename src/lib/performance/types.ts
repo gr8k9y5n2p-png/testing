@@ -53,6 +53,8 @@ export type PerformanceResponse = {
   benchmark_label: string;
   benchmark_tracks: string;
   is_proxy: boolean;
+  /** Explicit Data miss. Omitted / true is covered; false is uncovered → N/A. */
+  covered?: boolean;
   fund: PerformanceSeriesOut;
   benchmark: PerformanceSeriesOut;
   disclaimers: string[];

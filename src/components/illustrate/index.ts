@@ -102,8 +102,13 @@ export type {
 } from "@/lib/illustrate/portfolio-compare-types";
 export {
   fetchPerformance,
+  fetchPerformanceIfAvailable,
   postPerformanceGrowth,
 } from "@/lib/performance/client";
+export {
+  PERFORMANCE_UNAVAILABLE_HINT,
+  PERFORMANCE_UNAVAILABLE_LABEL,
+} from "@/lib/performance/coverage";
 export {
   isPerformanceUnavailable,
   performanceHasFundSeries,
