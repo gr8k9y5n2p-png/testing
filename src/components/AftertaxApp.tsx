@@ -7,10 +7,6 @@ import { Dashboard } from "@/components/Dashboard";
 import { DemoBanner } from "@/components/DemoBanner";
 import { HighlightsSection } from "@/components/HighlightsSection";
 import { Hero } from "@/components/landing/Hero";
-import {
-  GrowthAndTaxDragModule,
-  type GrowthFundInput,
-} from "@/components/illustrate/GrowthAndTaxDragModule";
 import { IllustratePanel } from "@/components/illustrate/IllustratePanel";
 import { PaywallDialog } from "@/components/paywall/PaywallDialog";
 import { CoverageProvider, useCoverage } from "@/components/coverage/CoverageProvider";
@@ -21,15 +17,12 @@ import { reportCoverageGap } from "@/lib/coverage";
 import { isFreemiumDisabled, useFreemium } from "@/lib/freemium";
 import {
   FUND_HISTORY_HASH,
-  HOMEPAGE_GROWTH_FUNDS,
-  growthFundFromTicker,
   resolveFundView,
 } from "@/lib/illustrate/fund-history";
 import {
   compareTickersPath,
   parseCompareQueryTickers,
 } from "@/lib/illustrate/compare-workspace";
-import { DEFAULT_START_DOLLARS } from "@/lib/performance/types";
 
 function scrollToId(id: string) {
   requestAnimationFrame(() => {
@@ -57,7 +50,7 @@ export function AftertaxApp({
   facets: Facets;
   coverageFamilies: FundFamilyCoverage[];
   checkout?: CheckoutReturn;
-  /** Portfolio review drill-in. Preselects Growth + tax-drag for this ticker. */
+  /** Portfolio review drill-in. Preselects this ticker's historical + upcoming tables. */
   ticker?: string | null;
 }) {
   return (
@@ -122,8 +115,8 @@ function AftertaxAppInner({
       );
       return;
     }
-    if (id === "illustrate" || id === FUND_HISTORY_HASH) {
-      scrollToId(id);
+    if (id === "illustrate" || id === FUND_HISTORY_HASH || id === "growth-and-tax") {
+      scrollToId("illustrate");
     }
   }, [router]);
 
@@ -136,19 +129,8 @@ function AftertaxAppInner({
         fund_family: focusedFund.family,
       });
     }
-    scrollToId(FUND_HISTORY_HASH);
+    scrollToId("illustrate");
   }, [coverage, focusedFund, ticker]);
-
-  const drillInFund = useMemo(
-    () => (ticker ? growthFundFromTicker(ticker, funds) : undefined),
-    [funds, ticker],
-  );
-
-  const seedFunds = useMemo(() => {
-    if (picked) return [toGrowthFund(picked)];
-    if (drillInFund) return [drillInFund];
-    return selected ? [toGrowthFund(selected)] : undefined;
-  }, [drillInFund, picked, selected]);
 
   function selectFund(fund: FundEstimateView) {
     const result = freemium.trySearch(fund.ticker);
@@ -164,7 +146,7 @@ function AftertaxAppInner({
         fund_family: fund.family,
       });
     }
-    scrollToId("growth-and-tax");
+    scrollToId("illustrate");
   }
 
   async function unlock() {
@@ -198,19 +180,6 @@ function AftertaxAppInner({
         onSelect={selectFund}
       />
 
-      <section
-        id="growth-and-tax"
-        aria-label="Growth of dollars and tax drag"
-        className="mb-10 scroll-mt-20"
-      >
-        <GrowthAndTaxDragModule
-          key={drillInFund?.ticker ?? "homepage"}
-          funds={drillInFund ? [drillInFund] : HOMEPAGE_GROWTH_FUNDS}
-          seedFunds={seedFunds}
-          startDollars={DEFAULT_START_DOLLARS}
-        />
-      </section>
-
       {selected ? (
         <div className="mb-10">
           <IllustratePanel selected={selected} />
@@ -231,8 +200,10 @@ function AftertaxAppInner({
           Estimates behind the search
         </h2>
         <p className="mt-2 max-w-2xl text-sm text-muted">
-          Search and Sample Estimates read GET /distributions only. Upcoming /
-          announced stay separate from paid history. Missing or uncovered
+          Search a fund to open that ticker&apos;s historical distribution table
+          and Upcoming / announced estimates. Search and Sample Estimates read
+          GET /distributions only. Upcoming stays unpaid announced only —
+          undisclosed is never invented from paid history. Missing or uncovered
           values stay empty, N/A, or Undisclosed.
         </p>
         <div className="mt-5">
@@ -267,15 +238,4 @@ function AftertaxAppInner({
       ) : null}
     </>
   );
-}
-
-function toGrowthFund(fund: FundEstimateView): GrowthFundInput {
-  return {
-    ticker: fund.ticker,
-    label: fund.ticker,
-    fundIdentifier: fund.ticker,
-    fundFamily: fund.family,
-    fundName: fund.fundName,
-    navPerShare: fund.nav > 0 ? fund.nav : undefined,
-  };
 }
