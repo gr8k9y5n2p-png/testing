@@ -5,6 +5,7 @@ import type {
   CompareSummary,
   CompareUpcomingDistribution,
 } from "@/lib/illustrate/compare-types";
+import { gateCompareUpcoming, sideIsAnnounced } from "@/lib/illustrate/upcoming-compare";
 import {
   comparePeriodIsCovered,
   toCompareTaxDragSeries,
@@ -146,7 +147,7 @@ export function upcomingSideStatus(
   dollars: number | null | undefined,
   stage?: string | null,
 ): UpcomingSideStatus {
-  if (dollars == null) {
+  if (!sideIsAnnounced(dollars, stage)) {
     return {
       dollars: null,
       display: "—",
@@ -159,8 +160,8 @@ export function upcomingSideStatus(
     ? stageKey.replace(/_/g, " ")
     : "announced";
   return {
-    dollars,
-    display: formatUsd(Math.round(dollars), 0),
+    dollars: dollars ?? null,
+    display: dollars != null ? formatUsd(Math.round(dollars), 0) : "—",
     statusLabel,
     announced: true,
   };
@@ -240,9 +241,11 @@ export function toTaxDeltaCardModel(
     Number(summary.distribution_dollars_difference ?? 0),
     EVEN_DOLLARS,
   );
-  const upcomingSides = upcomingSidesFromSummary(
+  const gatedUpcoming = gateCompareUpcoming(
     summary.upcoming_taxable_distribution,
+    response.periods,
   );
+  const upcomingSides = upcomingSidesFromSummary(gatedUpcoming);
 
   const window = inceptionLabel(summary);
   const demo = sample ? " · demo" : "";
@@ -271,7 +274,7 @@ export function toTaxDeltaCardModel(
     },
     upcomingMetric(
       upcomingSides,
-      summary.upcoming_taxable_distribution?.delta_dollars,
+      gatedUpcoming?.delta_dollars,
       demo,
     ),
   ];
