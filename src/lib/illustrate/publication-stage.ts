@@ -122,7 +122,9 @@ export function publicationBucket(
 ): DistributionBucket | null {
   const stage = normalizePublicationStage(row.publication_stage);
   if (stage === "paid" || isPastPaidEvent(row, today)) return "paid_history";
-  return "upcoming";
+  if (isUpcomingPublicationStage(stage) || stage === "final") return "upcoming";
+  // latest_as_of / identity-only — never invent Upcoming from paid YE dates.
+  return null;
 }
 
 function asDistributionRows(

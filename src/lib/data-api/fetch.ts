@@ -16,14 +16,26 @@ export async function fetchDataApi(
   };
 
   try {
-    const response = await fetch(endpoint, { ...fetchInit, headers });
+    const response = await fetch(endpoint, {
+      ...fetchInit,
+      headers,
+      cache: fetchInit.cache ?? "no-store",
+    });
     if (remote && !response.ok && response.status >= 500 && fallback !== endpoint) {
-      return fetch(fallback, { ...fetchInit, headers });
+      return fetch(fallback, {
+        ...fetchInit,
+        headers,
+        cache: fetchInit.cache ?? "no-store",
+      });
     }
     return response;
   } catch (error) {
     if (remote && fallback !== endpoint && !fetchInit.signal?.aborted) {
-      return fetch(fallback, { ...fetchInit, headers });
+      return fetch(fallback, {
+        ...fetchInit,
+        headers,
+        cache: fetchInit.cache ?? "no-store",
+      });
     }
     throw error;
   }

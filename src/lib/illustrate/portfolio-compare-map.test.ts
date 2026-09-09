@@ -160,6 +160,23 @@ describe("publicationBucket", () => {
     );
   });
 
+  it("does not invent Upcoming from latest_as_of / identity-only rows", () => {
+    assert.equal(
+      publicationBucket(
+        { as_of: "2025-12-31", publication_stage: null },
+        TODAY,
+      ),
+      null,
+    );
+    assert.equal(
+      publicationBucket(
+        { as_of: "2025-12-24", publication_stage: "" },
+        TODAY,
+      ),
+      null,
+    );
+  });
+
   it("does not treat as_of as an event date, so an August announcement of December still upcoming", () => {
     assert.equal(
       publicationBucket(

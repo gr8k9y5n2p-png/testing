@@ -68,6 +68,10 @@ export function normalizePublicationStage(stage: string | null | undefined): str
   return key;
 }
 
+function isUnpaidAnnouncedStage(stage: string | null): boolean {
+  return Boolean(stage && (UPCOMING_STAGES.has(stage) || stage === "final"));
+}
+
 /**
  * Upcoming / announced: preliminary_estimate, updated_estimate, or a truly
  * future unpaid announced row (including `final` whose event dates are still
@@ -75,6 +79,8 @@ export function normalizePublicationStage(stage: string | null | undefined): str
  * Paid history: `paid`, any stage whose event date is past, or past `final`
  * (as_of fallback when event dates are missing). Past rows must not sit in
  * upcoming, even if publication_stage is still preliminary/updated.
+ * Identity / `latest_as_of`-only rows (no unpaid stage, no event date) are
+ * paid history — never invent Upcoming from a YE as_of.
  */
 export function distributionBucket(
   dates: DistributionDateFields,
@@ -84,7 +90,18 @@ export function distributionBucket(
   if ((stage && PAID_STAGES.has(stage)) || isPastDistribution(dates, today)) {
     return "paid";
   }
-  return "upcoming";
+  if (isUnpaidAnnouncedStage(stage) || eventDateOf(dates)) {
+    return "upcoming";
+  }
+  return "paid";
+}
+
+/** Search / Sample Estimates Upcoming: unpaid announced only. */
+export function isUpcomingFund<
+  T extends { bucket: DistributionBucket; hasEstimate?: boolean },
+>(fund: T): boolean {
+  if (fund.hasEstimate === false) return false;
+  return fund.bucket === "upcoming";
 }
 
 export function publicationStageLabel(stage: string | null | undefined): string {
@@ -127,14 +144,14 @@ export function toPaidEvent(
   };
 }
 
-export function splitFundsByBucket<T extends { bucket: DistributionBucket }>(
-  funds: T[],
-): { upcoming: T[]; paid: T[] } {
+export function splitFundsByBucket<
+  T extends { bucket: DistributionBucket; hasEstimate?: boolean },
+>(funds: T[]): { upcoming: T[]; paid: T[] } {
   const upcoming: T[] = [];
   const paid: T[] = [];
   for (const fund of funds) {
-    if (fund.bucket === "paid") paid.push(fund);
-    else upcoming.push(fund);
+    if (isUpcomingFund(fund)) upcoming.push(fund);
+    else paid.push(fund);
   }
   return { upcoming, paid };
 }

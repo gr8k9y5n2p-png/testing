@@ -16,6 +16,15 @@ describe("Search / Sample Estimates fund page", () => {
     assert.doesNotMatch(source, /SAMPLE_FUNDS|from ["']@\/data\/seed["']/);
   });
 
+  it("hydrates a browse page prefix instead of skipping all ticker GETs", () => {
+    const source = readFileSync(join(here, "distributions.ts"), "utf8");
+    assert.match(source, /missingTickers\.slice\(0, 8\)/);
+    assert.doesNotMatch(
+      source,
+      /Boolean\(q\) \|\| missingTickers\.length <= 8/,
+    );
+  });
+
   it("keeps paid/final history off the has_estimate Upcoming gate", () => {
     const table = readFileSync(
       join(here, "../../components/ResultsTable.tsx"),
