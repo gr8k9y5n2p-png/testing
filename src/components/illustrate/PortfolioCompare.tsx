@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { CompactDisclaimer } from "@/components/CompactDisclaimer";
 import { NoticeToast, useNoticeToast } from "@/components/NoticeToast";
 import { AllocationColumn } from "@/components/illustrate/portfolio-compare/AllocationColumn";
 import { CalendarYearTaxTable } from "@/components/illustrate/portfolio-compare/CalendarYearTaxTable";
@@ -337,6 +338,7 @@ export function PortfolioCompare({
       <p className="mt-5 text-center text-[10px] leading-relaxed text-faint">
         Demo data · weights × Portfolio Value → dollars · tax from Data API TBD
       </p>
+      <CompactDisclaimer className="mt-1 text-center text-[10px] leading-relaxed text-faint" />
       <NoticeToast message={notice} onDismiss={dismissNotice} />
     </article>
   );

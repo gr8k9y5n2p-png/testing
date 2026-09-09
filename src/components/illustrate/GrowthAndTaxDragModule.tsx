@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { CompactDisclaimer } from "@/components/CompactDisclaimer";
 import { GrowthOfXChart } from "@/components/illustrate/GrowthOfXChart";
 import { TaxDragByYearChart } from "@/components/illustrate/TaxDragByYearChart";
 import {
@@ -391,6 +392,7 @@ export function GrowthAndTaxDragModule({
       <p className="mt-4 text-[10px] leading-relaxed text-faint">
         {SKETCH_DISCLAIMER}
       </p>
+      <CompactDisclaimer className="mt-1 text-[10px] leading-relaxed text-faint" />
     </article>
   );
 }

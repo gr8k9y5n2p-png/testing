@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { AccountMenu } from "@/components/AccountMenu";
 import { AppNav } from "@/components/AppNav";
 import { HOST } from "@/lib/copy";
 
@@ -24,10 +25,13 @@ export function AppHeader() {
           </Link>
           <AppNav />
         </div>
-        <p className="hidden text-right text-xs text-muted sm:block">
-          Taxable impact in dollars
-          <span className="mt-0.5 block text-faint">{HOST}</span>
-        </p>
+        <div className="flex shrink-0 items-center gap-3">
+          <p className="hidden text-right text-xs text-muted sm:block">
+            Taxable impact in dollars
+            <span className="mt-0.5 block text-faint">{HOST}</span>
+          </p>
+          <AccountMenu />
+        </div>
       </div>
     </header>
   );

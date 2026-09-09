@@ -1,8 +1,16 @@
 /**
  * Locked GTM copy for Aftertax. Do not paraphrase in the UI.
- * Disclaimer is QA-final unless Eric edits.
+ * Disclaimer and legal chrome are user-facing. Do not paraphrase.
  */
 export { HOST, PRODUCTION_HOST, STAGING_HOST } from "@/lib/hosts";
+export { CONTACT_EMAIL } from "./legal-copy";
+
+import {
+  CONTACT_EMAIL,
+  LEGAL_BETA,
+  LEGAL_COMPACT,
+  LEGAL_DISCLAIMER,
+} from "./legal-copy";
 
 export const COPY = {
   hero: "See the taxable impact in dollars — before the meeting ends.",
@@ -17,8 +25,10 @@ export const COPY = {
   paywallPrice: "$39 / user / month. Cancel anytime.",
   paywallCta: "Unlock Aftertax",
   continueFree: "Continue with free searches",
-  disclaimer:
-    "Illustrative estimates only. Not tax, legal, or investment advice. Figures may omit state, local, AMT, wash-sale, holding-period, and other rules. Consult a qualified tax professional. Aftertax is not a broker-dealer or RIA.",
+  disclaimer: LEGAL_DISCLAIMER,
+  compactDisclaimer: LEGAL_COMPACT,
+  betaBanner: LEGAL_BETA,
+  contactEmail: CONTACT_EMAIL,
 } as const;
 
 /** Aftertax website owns Stripe Checkout. Test mode later; do not block on live keys. */
