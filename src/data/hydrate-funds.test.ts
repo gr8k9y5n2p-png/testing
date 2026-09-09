@@ -7,6 +7,7 @@ import {
   mergeFundLists,
   mergeFundWithDistributions,
   paidEventsForFund,
+  preferFinalPaidEvents,
 } from "./hydrate-funds.ts";
 import { paidHistoryViews, splitFundsByBucket, withPeerContext } from "./queries.ts";
 
@@ -239,6 +240,69 @@ describe("Search hydrate from /distributions", () => {
         (event) => Math.abs(event.estimatedDistributionAmount - 2.125) < 1e-6,
       ),
     );
+  });
+
+  it("prefers YE finals over same-year prelim rows in Paid history", () => {
+    const prelim = {
+      asOfDate: "2025-10-01",
+      recordDate: "2025-12-15",
+      exDate: "2025-12-15",
+      payableDate: "2025-12-16",
+      publicationStage: "preliminary_estimate",
+      estimatedDistributionAmount: 1.8,
+      estimatedOrdinaryIncome: 0,
+      estimatedCapitalGains: 1.8,
+      estimatedDistributionPctNav: 0,
+      distributionYear: 2025,
+    };
+    const final = {
+      ...prelim,
+      asOfDate: "2026-01-22",
+      publicationStage: "final",
+      estimatedDistributionAmount: 2.125,
+      estimatedCapitalGains: 2.125,
+      distributionYear: 2026,
+    };
+    const preferred = preferFinalPaidEvents([prelim, final]);
+    assert.equal(preferred.length, 1);
+    assert.equal(preferred[0].estimatedDistributionAmount, 2.125);
+    assert.equal(preferred[0].publicationStage, "final");
+
+    const catalog = mapFundsApiItem({
+      ticker: "ABALX",
+      fund_name: "American Balanced Fund",
+      fund_family: "American Funds",
+      has_estimate: false,
+    });
+    const merged = mergeFundWithDistributions(catalog, {
+      ...aggregateDistributions(ABALX_ROWS, "2026-09-09")[0],
+      paidHistory: [prelim, final],
+    });
+    const events = paidEventsForFund(merged);
+    assert.ok(
+      events.every(
+        (event) =>
+          (event.publicationStage ?? "").toLowerCase() !== "preliminary_estimate",
+      ),
+      "same-year prelim must not label Paid history when a final exists",
+    );
+    assert.ok(
+      events.some((event) => Math.abs(event.estimatedDistributionAmount - 2.125) < 1e-6),
+    );
+    assert.ok(
+      events.every((event) => event.estimatedDistributionAmount < 100),
+      "Paid history stays per-share from /distributions, not illustration $",
+    );
+  });
+
+  it("does not invent a $0 Paid history row from an unhydrated catalog", () => {
+    const catalog = mapFundsApiItem({
+      ticker: "ZZZZX",
+      fund_name: "Unknown",
+      fund_family: "Unknown",
+      has_estimate: false,
+    });
+    assert.equal(paidEventsForFund(catalog).length, 0);
   });
 
   it("hides Upcoming $ amounts only — not paid history", () => {

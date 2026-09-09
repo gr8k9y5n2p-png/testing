@@ -1,4 +1,5 @@
 import { splitFundsByBucket } from "./distribution-bucket.ts";
+import { preferFinalPaidEvents } from "./hydrate-funds.ts";
 import type {
   DistributionBucket,
   Facets,
@@ -108,14 +109,15 @@ function hasPaidHistorySignal(fund: FundEstimateView): boolean {
 export function paidHistoryViews(funds: FundEstimateView[]): FundEstimateView[] {
   const rows: FundEstimateView[] = [];
   for (const fund of funds) {
+    const extras = preferFinalPaidEvents(fund.paidHistory ?? []);
     if (fund.bucket === "paid") {
       if (hasPaidHistorySignal(fund)) rows.push(fund);
-      for (const event of fund.paidHistory) {
+      for (const event of extras) {
         rows.push(fundFromPaidEvent(fund, event));
       }
       continue;
     }
-    for (const event of fund.paidHistory) {
+    for (const event of extras) {
       rows.push(fundFromPaidEvent(fund, event));
     }
   }

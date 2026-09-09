@@ -6,6 +6,7 @@ export {
   mergeFundLists,
   mergeFundWithDistributions,
   paidEventsForFund,
+  preferFinalPaidEvents,
 } from "./hydrate-funds";
 export {
   computeCategoryAverages,

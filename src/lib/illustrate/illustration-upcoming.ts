@@ -10,7 +10,8 @@ export type IllustrationFundGate = Pick<FundEstimate, "hasEstimate"> | null | un
 /**
  * Dollar Illustration Upcoming for every fund: unpaid prelim/estimate
  * components only. `has_estimate: false` and `final` / paid YE rows stay
- * Paid history. Never treat holding-scaled illustration totals as Upcoming.
+ * out of Upcoming. Never treat holding-scaled illustration totals as
+ * Upcoming — and never as Paid history (Paid history is `/distributions`).
  */
 export function illustrationComponentBucket(
   component: Pick<
