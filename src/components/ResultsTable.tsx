@@ -33,6 +33,13 @@ const TABLE_VIEWPORT = 448;
 const TABLE_ROW_HEIGHT = 76;
 const TABLE_OVERSCAN = 4;
 
+type SamplePage = {
+  total: number;
+  limit: number;
+  offset: number;
+  onOffset: (offset: number) => void;
+};
+
 function estimatePct(fund: FundEstimateView): string {
   if (hideUpcomingAmounts(fund)) return "—";
   return formatPct(fund.estimatedDistributionPctNav);
@@ -70,12 +77,7 @@ export function ResultsTable({
   sortKey?: SortKey;
   sortDirection?: SortDirection;
   onSort?: (key: SortKey) => void;
-  page?: {
-    total: number;
-    limit: number;
-    offset: number;
-    onOffset: (offset: number) => void;
-  };
+  page?: SamplePage;
 }) {
   const [localSortKey, setLocalSortKey] = useState<SortKey>("fundName");
   const [localSortDirection, setLocalSortDirection] = useState<SortDirection>("asc");
@@ -133,8 +135,8 @@ export function ResultsTable({
         emptyHeadline={UPCOMING_UNAVAILABLE_HEADLINE}
         empty={UPCOMING_UNAVAILABLE_DETAIL}
         showPayable
+        page={page}
       />
-      {page ? <PaginationBar {...page} /> : null}
       <FundSection
         title="Paid history"
         description="Paid, final-past, and estimates whose record/ex/payable date is already past. These never appear in Upcoming."
@@ -148,8 +150,8 @@ export function ResultsTable({
         coverage={coverage}
         empty={PAID_HISTORY_EMPTY}
         showPayable
+        page={page}
       />
-      {page ? <PaginationBar {...page} /> : null}
     </div>
   );
 }
@@ -168,6 +170,7 @@ function FundSection({
   emptyHeadline,
   empty,
   showPayable,
+  page,
 }: {
   title: string;
   description: string;
@@ -182,6 +185,7 @@ function FundSection({
   emptyHeadline?: string;
   empty: string;
   showPayable: boolean;
+  page?: SamplePage;
 }) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
@@ -196,18 +200,23 @@ function FundSection({
       </header>
 
       {funds.length === 0 ? (
-        emptyHeadline ? (
-          <div className="px-1 py-5">
-            <p className="font-serif text-base tracking-tight text-ink">
-              {emptyHeadline}
+        <>
+          {emptyHeadline ? (
+            <div className="px-1 py-5">
+              <p className="font-serif text-base tracking-tight text-ink">
+                {emptyHeadline}
+              </p>
+              <p className="mt-1 text-sm text-muted">{empty}</p>
+            </div>
+          ) : (
+            <p className="rounded-lg border border-dashed border-line px-4 py-6 text-sm text-muted">
+              {empty}
             </p>
-            <p className="mt-1 text-sm text-muted">{empty}</p>
-          </div>
-        ) : (
-          <p className="rounded-lg border border-dashed border-line px-4 py-6 text-sm text-muted">
-            {empty}
-          </p>
-        )
+          )}
+          {page ? (
+            <PaginationBar {...page} label={`${title} pages`} />
+          ) : null}
+        </>
       ) : (
         <>
           <div className="hidden overflow-hidden rounded-lg border border-line bg-surface shadow-[0_1px_2px_rgba(26,29,26,0.04)] md:block">
@@ -279,6 +288,9 @@ function FundSection({
                 />
               )}
             />
+            {page ? (
+              <PaginationBar {...page} label={`${title} pages`} />
+            ) : null}
           </div>
 
           <div className="max-h-[28rem] space-y-3 overflow-y-auto md:hidden">
@@ -346,6 +358,11 @@ function FundSection({
               </article>
             ))}
           </div>
+          {page ? (
+            <div className="mt-2 md:hidden">
+              <PaginationBar {...page} label={`${title} pages`} />
+            </div>
+          ) : null}
         </>
       )}
     </section>
@@ -516,41 +533,37 @@ function PaginationBar({
   limit,
   offset,
   onOffset,
-}: {
-  total: number;
-  limit: number;
-  offset: number;
-  onOffset: (offset: number) => void;
-}) {
+  label = "Sample estimates pages",
+}: SamplePage & { label?: string }) {
   const page = Math.floor(offset / limit) + 1;
   const pages = Math.max(1, Math.ceil(total / limit));
   const from = total === 0 ? 0 : offset + 1;
   const to = Math.min(offset + limit, total);
   return (
     <nav
-      aria-label="Sample estimates pages"
-      className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line bg-surface px-3 py-2.5"
+      aria-label={label}
+      className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 border-t border-line bg-paper/70 px-2.5 py-1"
     >
-      <p className="font-mono text-xs text-faint">
+      <p className="font-mono text-[10px] tabular-nums text-faint">
         {from}–{to} of {total}
       </p>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1">
         <button
           type="button"
           disabled={offset <= 0}
           onClick={() => onOffset(Math.max(0, offset - limit))}
-          className="h-9 rounded-md border border-line px-3 text-sm text-ink disabled:cursor-not-allowed disabled:text-faint"
+          className="h-6 rounded border border-line px-1.5 text-[11px] leading-none text-ink disabled:cursor-not-allowed disabled:text-faint"
         >
           Previous
         </button>
-        <p className="min-w-[7rem] text-center text-sm text-muted">
-          Page {page} of {pages}
+        <p className="min-w-[4.75rem] text-center text-[10px] tabular-nums text-muted">
+          {page}/{pages}
         </p>
         <button
           type="button"
           disabled={offset + limit >= total}
           onClick={() => onOffset(offset + limit)}
-          className="h-9 rounded-md border border-line px-3 text-sm text-ink disabled:cursor-not-allowed disabled:text-faint"
+          className="h-6 rounded border border-line px-1.5 text-[11px] leading-none text-ink disabled:cursor-not-allowed disabled:text-faint"
         >
           Next
         </button>

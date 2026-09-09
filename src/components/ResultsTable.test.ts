@@ -22,23 +22,45 @@ describe("ResultsTable EstimateRow props", () => {
 });
 
 describe("ResultsTable Search pager placement", () => {
-  it("puts the hybrid pager directly below Upcoming / Announced, not above it", () => {
+  it("puts the hybrid pager inside each FundSection card, not as a strip between modules", () => {
     const start = source.indexOf("return (");
     const layout = source.slice(start, source.indexOf("function FundSection"));
     const upcoming = layout.indexOf('title="Upcoming / Announced"');
-    const pager = layout.indexOf("<PaginationBar");
     const paid = layout.indexOf('title="Paid history"');
     assert.ok(upcoming >= 0, "Upcoming / Announced section");
-    assert.ok(pager >= 0, "hybrid PaginationBar");
     assert.ok(paid >= 0, "Paid history section");
-    assert.ok(
-      upcoming < pager && pager < paid,
-      "pager must sit between Upcoming / Announced and Paid history",
-    );
+    assert.doesNotMatch(layout, /<PaginationBar/, "no inter-module pager strip");
+    assert.match(layout, /page=\{page\}/);
     assert.equal(
-      layout.indexOf("<PaginationBar"),
-      pager,
-      "first pager is the one under Upcoming",
+      (layout.match(/page=\{page\}/g) ?? []).length,
+      2,
+      "Upcoming and Paid history both receive the same hybrid page controls",
     );
+
+    const fundSection = source.slice(
+      source.indexOf("function FundSection"),
+      source.indexOf("function EstimateRow"),
+    );
+    assert.match(fundSection, /<PaginationBar/);
+    assert.match(fundSection, /VirtualizedTable/);
+    const tableCard = fundSection.indexOf("md:block");
+    const desktopPager = fundSection.indexOf("<PaginationBar", tableCard);
+    const mobileCards = fundSection.indexOf("md:hidden");
+    assert.ok(tableCard >= 0 && desktopPager >= 0 && mobileCards >= 0);
+    assert.ok(
+      tableCard < desktopPager && desktopPager < mobileCards,
+      "desktop pager sits in the table card chrome, before the mobile list",
+    );
+  });
+
+  it("keeps PaginationBar compact table chrome, not a chunky standalone strip", () => {
+    const start = source.indexOf("function PaginationBar");
+    const pager = source.slice(start, source.indexOf("function VirtualizedTable"));
+    assert.match(pager, /border-t border-line/);
+    assert.match(pager, /h-6 /);
+    assert.match(pager, /text-\[11px\]/);
+    assert.doesNotMatch(pager, /rounded-lg border border-line bg-surface/);
+    assert.doesNotMatch(pager, /h-9 /);
+    assert.doesNotMatch(pager, /py-2\.5/);
   });
 });
