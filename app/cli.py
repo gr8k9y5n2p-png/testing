@@ -10,6 +10,7 @@ from app.db import configure_engine, get_engine, init_db
 from app import db as app_db
 from app.schemas import DistributionIn, IngestRequest
 from app.services.ingest import fetch_and_ingest, ingest_records
+from app.services.nav import NAV_MODES, refresh_navs, unique_fund_nav_coverage, write_fixture_catalog
 from app.services.refresh import REFRESH_MODES, refresh_families
 from app.services.ticker_requests import process_ticker_requests
 from app.sources.registry import list_sources, resolve_slug
@@ -107,6 +108,52 @@ def cmd_refresh(args: argparse.Namespace) -> int:
     return 1 if summary.hard_failure else 0
 
 
+def cmd_refresh_nav(args: argparse.Namespace) -> int:
+    """Weekly NAV for every listed ticker in the stored book. Never invents prices."""
+    _ensure_db()
+    assert app_db.SessionLocal is not None
+    mode = (args.mode or settings.refresh_mode or "auto").strip().lower()
+    if mode not in NAV_MODES:
+        print(f"error: NAV mode must be one of {', '.join(NAV_MODES)}", file=sys.stderr)
+        return 2
+    tickers = None
+    if args.ticker:
+        tickers = [part.strip() for part in args.ticker.split(",") if part.strip()]
+    with app_db.SessionLocal() as session:
+        try:
+            summary = refresh_navs(session, mode=mode, tickers=tickers)
+            coverage = unique_fund_nav_coverage(session)
+            if args.write_fixture:
+                dest = write_fixture_catalog(session, Path(args.write_fixture) if args.write_fixture != "1" else None)
+                print(f"Wrote fixture catalog {dest}")
+            session.commit()
+        except ValueError as exc:
+            session.rollback()
+            print(f"error: {exc}", file=sys.stderr)
+            return 2
+        except Exception:
+            session.rollback()
+            raise
+    print(summary.format_text())
+    print(
+        "NAV coverage: "
+        f"{coverage['with_nav']}/{coverage['unique_funds']} unique funds "
+        f"({coverage['coverage_pct']}%)"
+    )
+    if args.output:
+        path = Path(args.output)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        payload = {**summary.to_dict(), "coverage": coverage}
+        path.write_text(json.dumps(payload, indent=2, default=str) + "\n", encoding="utf-8")
+        print(f"Wrote {path}")
+    if args.markdown:
+        md_path = Path(args.markdown)
+        md_path.parent.mkdir(parents=True, exist_ok=True)
+        md_path.write_text(summary.format_markdown(), encoding="utf-8")
+        print(f"Wrote {md_path}")
+    return 0
+
+
 def cmd_ticker_requests(args: argparse.Namespace) -> int:
     """Pick up queued Website ticker requests. Fetch matched adapters. Never invent amounts."""
     _ensure_db()
@@ -175,6 +222,32 @@ def main(argv: list[str] | None = None) -> int:
         help="Write Markdown summary to this path (GitHub job summary)",
     )
     p_refresh.set_defaults(func=cmd_refresh)
+
+    p_nav = sub.add_parser(
+        "refresh-nav",
+        help="Weekly NAV / last close for every listed ticker (Yahoo, fixture fallback)",
+    )
+    p_nav.add_argument(
+        "--mode",
+        default=None,
+        choices=list(NAV_MODES),
+        help="Override REFRESH_MODE (default auto: Yahoo then fixture)",
+    )
+    p_nav.add_argument(
+        "--ticker",
+        default=None,
+        help="Comma-separated tickers (default: every listed ticker in the book)",
+    )
+    p_nav.add_argument("--output", default=None, help="Write JSON summary to this path")
+    p_nav.add_argument("--markdown", default=None, help="Write Markdown summary to this path")
+    p_nav.add_argument(
+        "--write-fixture",
+        nargs="?",
+        const="1",
+        default=None,
+        help="Dump stored NAVs to fixtures/nav/latest.json (or this path)",
+    )
+    p_nav.set_defaults(func=cmd_refresh_nav)
 
     p_tr = sub.add_parser(
         "ticker-requests",

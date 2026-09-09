@@ -37,6 +37,13 @@ def test_cli_refresh_fixture_writes_summary(engine, tmp_path: Path, capsys) -> N
     assert payload["errors"] == []
     assert payload["live_vs_fixture"]["live"] == 0
     assert payload["live_vs_fixture"]["fixture"] == 113
+    assert payload["nav"]["mode"] == "fixture"
+    assert payload["nav"]["tickers_attempted"] > 0
+    assert payload["nav"]["created"] + payload["nav"]["updated"] + payload["nav"]["unchanged"] > 0
+    for ticker in ("ABALX", "VFIAX", "SPY", "DBEF"):
+        assert payload["nav"]["sample"][ticker]["nav_per_share"] is not None
+    assert "Weekly NAV refresh" in md
+    assert "Weekly NAV refresh" in out
     assert payload["midyear_created"] > 0
     assert payload["year_end_created"] > 0
     md = md_path.read_text(encoding="utf-8")

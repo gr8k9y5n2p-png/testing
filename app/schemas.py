@@ -145,6 +145,24 @@ class FundOut(BaseModel):
     )
     latest_as_of: date | None = None
     has_estimate: bool = False
+    nav_per_share: Decimal | None = Field(
+        default=None,
+        description=(
+            "Latest liquid close / mutual-fund NAV in USD per share. "
+            "Null when unknown — never invented."
+        ),
+    )
+    nav_as_of: date | None = Field(
+        default=None,
+        description="As-of date of nav_per_share. Null when NAV is unknown.",
+    )
+    nav_source: str | None = Field(
+        default=None,
+        description=(
+            "yahoo_last_close (preferred live print), issuer, fixture, or "
+            "fixture_fallback. Null when NAV is unknown."
+        ),
+    )
 
 
 class FundListOut(BaseModel):
@@ -469,8 +487,10 @@ class IllustrateRequest(BaseModel):
         default=None,
         gt=0,
         description=(
-            "Required (unless shares is set) when any selected row uses amount_unit=per_share. "
-            "Missing both returns HTTP 422 with code=needs_nav_or_shares."
+            "Required (unless shares is set or a weekly NAV is stored for the fund) "
+            "when any selected row uses amount_unit=per_share. "
+            "Request value wins over stored weekly NAV. "
+            "Missing both request and stored NAV returns HTTP 422 with code=needs_nav_or_shares."
         ),
     )
     shares: Decimal | None = Field(
@@ -536,6 +556,14 @@ class IllustrationComponent(BaseModel):
     state_tax: Decimal | None
     included_in_totals: bool
     skip_reason: str | None = None
+    percent_of_nav: Decimal | None = Field(
+        default=None,
+        description=(
+            "Estimate as percent of NAV (3.5 = 3.5%). For amount_unit=percent_of_nav "
+            "this is the published amount. For per_share this is est $/share ÷ NAV × 100 "
+            "when NAV is known. Null when NAV is missing — never invented."
+        ),
+    )
 
 
 class IllustrationTotals(BaseModel):

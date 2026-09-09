@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from app.crud import record_ingest_run, upsert_records
 from app.models import DistributionEstimate, IngestRun
 from app.services.ingest import normalized_to_in
+from app.services.nav import NavRefreshSummary, refresh_navs
 from app.sources.base import FetchResult, FundSource
 from app.sources.registry import resolve_families
 
@@ -106,6 +107,7 @@ class RefreshSummary:
     errors: list[str]
     live_vs_fixture: dict[str, int]
     families: list[FamilyRefreshResult] = field(default_factory=list)
+    nav: NavRefreshSummary | None = None
 
     @property
     def hard_failure(self) -> bool:
@@ -124,6 +126,7 @@ class RefreshSummary:
             "errors": list(self.errors),
             "live_vs_fixture": dict(self.live_vs_fixture),
             "families": [asdict(row) for row in self.families],
+            "nav": self.nav.to_dict() if self.nav else None,
         }
 
     def format_text(self) -> str:
@@ -147,6 +150,8 @@ class RefreshSummary:
                 f"fixture={self.live_vs_fixture.get('fixture', 0)}"
             ),
         ]
+        if self.nav:
+            lines.append(self.nav.format_text())
         if self.errors:
             lines.append("  failed: " + ", ".join(self.errors))
         for row in self.families:
@@ -198,6 +203,8 @@ class RefreshSummary:
                 f"| {row.year_end_created}/{row.year_end_updated} |"
             )
         lines.append("")
+        if self.nav:
+            lines.append(self.nav.format_markdown())
         return "\n".join(lines)
 
 
@@ -457,6 +464,7 @@ def refresh_families(
     errors = [row.slug for row in rows if row.status == "error"]
     live_count = sum(1 for row in rows if row.mode_used == "live")
     fixture_count = sum(1 for row in rows if row.mode_used == "fixture")
+    nav_summary = refresh_navs(session, mode=requested)
     return RefreshSummary(
         mode=requested,
         families_attempted=len(rows),
@@ -469,4 +477,5 @@ def refresh_families(
         errors=errors,
         live_vs_fixture={"live": live_count, "fixture": fixture_count},
         families=rows,
+        nav=nav_summary,
     )

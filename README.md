@@ -21,10 +21,11 @@ Vanguard is the first-choice ICI book: official Primary Layout PDFs on the advis
 - Normalized data model for distribution estimates (family, fund, ticker, share class, type, amount + unit, tax dates, source URL, raw JSON audit payload)
 - `POST /ingest/distributions` for partner/manual feeds
 - `POST /ingest/fetch` to run a pluggable `FundSource` adapter (`fixture` or `live`)
-- `python -m app.cli refresh` for weekly all-family ingest (`REFRESH_MODE=auto`: live then fixture)
+- `python -m app.cli refresh` for weekly all-family ingest (`REFRESH_MODE=auto`: live then fixture), including weekly NAV for every listed ticker
+- `python -m app.cli refresh-nav` to refresh NAV / last liquid close only (Yahoo, fixture fallback)
 - Idempotent upserts on `(fund_family, fund identifier, share class, estimate type, as_of, ex-date)`
 - Search API with filters, text search, and pagination
-- `GET /funds` — paginated **unique funds** from the stored book (`limit`/`offset`/`total`/`category`) for Website Search / Sample Estimates / Versus Category. Does not invent funds or categories.
+- `GET /funds` — paginated **unique funds** from the stored book (`limit`/`offset`/`total`/`category`, plus weekly `nav_per_share` / `nav_as_of` / `nav_source`) for Website Search / Sample Estimates / Versus Category. Does not invent funds, categories, or NAV.
 - `GET /funds/categories` — distinct Morningstar-style categories with stored-fund counts (plus `uncategorized` / `coverage_pct`)
 - `POST /illustrate` — server-side tax-impact math for a dollar holding (Website Engineering owns the UI)
 - `POST /illustrate/portfolio` — book-level review with coverage % and explicit gaps
@@ -202,7 +203,31 @@ python -m app.cli refresh --output refresh-summary.json --markdown refresh-summa
 | `live` | Try live first for every family, then fixture on failure. |
 | `fixture` | Bundled HTML only (no outbound HTTP). |
 
-The command is the `POST /ingest/fetch` `fund_family=all` path with per-family error isolation. Upserts stay **idempotent**: the same document (`as_of` + ex-date + estimate type) updates the existing row; a new `as_of` inserts a new snapshot. Exit code is `0` on partial live fallbacks. Exit `1` only when **every** attempted family hard-fails (live and fixture both error).
+The command is the `POST /ingest/fetch` `fund_family=all` path with per-family error isolation, then a **weekly NAV walk** of every listed ticker in the stored book. Upserts stay **idempotent**: the same document (`as_of` + ex-date + estimate type) updates the existing row; a new `as_of` inserts a new snapshot. Exit code is `0` on partial live fallbacks. Exit `1` only when **every** attempted family hard-fails (live and fixture both error). NAV misses stay **null** (never invented) and do not fail the job.
+
+### Weekly NAV (Eric 2026-09-09)
+
+`$/share` tax math needs NAV universe-wide:
+
+- Dist $ = est $/share × (holding $ / NAV)
+- % of NAV = est $/share ÷ NAV
+
+Never invent estimate amounts or NAV.
+
+| Field | Where | Meaning |
+| --- | --- | --- |
+| `nav_per_share` | `GET /funds` items; `POST /illustrate` request/response | Latest liquid close / mutual-fund NAV (USD per share). Null when unknown. |
+| `nav_as_of` | `GET /funds` items | As-of date of that print. |
+| `nav_source` | `GET /funds` items | `yahoo_last_close` (preferred live daily **regular close**, not `adjclose`), `issuer` (when a family quote exists), `fixture` / `fixture_fallback`. |
+
+`POST /illustrate` (and portfolio / compare) uses the stored weekly NAV when the request omits `nav_per_share` and `shares`. A request-supplied NAV still wins. Per-share rows without a request NAV **and** without a stored print still return HTTP 422 `needs_nav_or_shares`. When NAV is known, each component also includes derived `percent_of_nav` (same units as `amount_unit=percent_of_nav`: `4` = 4% of NAV).
+
+```bash
+python -m app.cli refresh-nav --mode fixture   # offline catalog + performance last close
+python -m app.cli refresh-nav                  # Yahoo last close, fixture fallback
+```
+
+Sunday and Monday weekly jobs both run `refresh` (families + NAV) and an explicit `refresh-nav` step so the Sunday scrape always includes NAV.
 
 The JSON / Markdown summary breaks out **midyear vs year-end** created/updated when a row is detectable from the source URL (`midyear`, `mid-year`, `interim`, `semi-annual`, `year-end`) or from `as_of` / `ex_date` month (May–August vs October–January). Unclassified months (for example September) are counted only in the overall created/updated totals.
 
@@ -212,10 +237,11 @@ Live pages often 403, challenge, or render as a JS/SPA shell and parse 0 rows. T
 
 `.github/workflows/weekly-ingest.yml`:
 
-- Schedule: Mondays at **14:00 UTC** (about 9am America/Chicago)
+- Schedule: **Sundays and Mondays** at **14:00 UTC** (about 9am America/Chicago). Sunday scrape includes NAV.
 - Manual: **Actions → Weekly ingest refresh → Run workflow** (`workflow_dispatch`), optional `refresh_mode`
 - Installs `requirements-dev.txt`, uses SQLite unless a `DATABASE_URL` repo secret is set (then Postgres + `psycopg2-binary`)
-- Writes `refresh-summary.json` / `refresh-summary.md`, appends the Markdown to the job summary, and uploads both as the `weekly-ingest-summary` artifact
+- Runs `python -m app.cli refresh` (families + NAV) then `python -m app.cli refresh-nav` then ticker-request pickup
+- Writes `refresh-summary.json` / `refresh-summary.md` and `nav-summary.json` / `nav-summary.md`, appends both Markdown files to the job summary, and uploads them as the `weekly-ingest-summary` artifact
 
 ## Tax illustration (`POST /illustrate`)
 
@@ -256,7 +282,7 @@ The mapping is also echoed on the response as `rate_mapping`.
 | `amount_unit` | Dollar math |
 | --- | --- |
 | `percent_of_nav` | `distribution_dollars = holding_dollars * (amount / 100)`; `amount_min` / `amount_max` produce range fields |
-| `per_share` | `shares = shares` or `holding_dollars / nav_per_share`; `distribution_dollars = shares * amount`. **HTTP 422** `{ "code": "needs_nav_or_shares", "detail": "nav_per_share or shares is required when illustrating per_share distributions" }` if neither `nav_per_share` nor `shares` is provided. Same body on `POST /illustrate/compare` when a selected side cannot be priced. |
+| `per_share` | `shares = shares` or `holding_dollars / nav_per_share`; `distribution_dollars = shares * amount` (Eric: est $/share × holding $ / NAV). `percent_of_nav` on the component is est $/share ÷ NAV × 100 when NAV is known. Request `nav_per_share` / `shares` win; otherwise the stored weekly NAV is used. **HTTP 422** `{ "code": "needs_nav_or_shares", "detail": "nav_per_share or shares is required when illustrating per_share distributions" }` if neither the request nor a stored weekly NAV can price the row. Same body on `POST /illustrate/compare` when a selected side cannot be priced. |
 | `percent` | **Not a dollar distribution** (e.g. QDI % of income on 1099-DIV). Component is returned with `estimated_tax: null`, `included_in_totals: false`, and `skip_reason` |
 
 Selector queries default to `latest_as_of_only=true` so September estimates and January finals are not double-counted. Pass `as_of` or explicit IDs to pin a snapshot.
@@ -536,7 +562,7 @@ If neither side has current-year upcoming data the object is `null` and a note i
 
 ## Growth of $X (`GET /performance`, `POST /performance/growth`)
 
-Interactive Modules can mount a **fund vs benchmark line chart** without calling tax endpoints. Tax YoY bars stay on `POST /illustrate/compare`. Weekly `python -m app.cli refresh` still ingests **distribution estimates only** — it does not refresh performance series.
+Interactive Modules can mount a **fund vs benchmark line chart** without calling tax endpoints. Tax YoY bars stay on `POST /illustrate/compare`. Weekly `python -m app.cli refresh` ingests **distribution estimates plus weekly NAV** (Yahoo last regular close). It does not refresh Growth of $X monthly performance series — those stay on `GET /performance`.
 
 **Hero seed (fixture + live Yahoo chart):** `AGTHX` vs **S&P 500 via SPY**. Same source also covers `AMCPX`, `FBGRX`, `VFIAX`, `DODIX`, and `VTIAX`. Default benchmarks are **ETFs only** (no licensed S&P / Bloomberg / MSCI index feeds):
 
@@ -811,11 +837,14 @@ Response: `{ "items", "limit", "offset", "total" }`. Each item is a stored fund 
   "fund_identifier": "amcap-fund",
   "category": "Large Growth",
   "latest_as_of": "2025-12-15",
-  "has_estimate": true
+  "has_estimate": true,
+  "nav_per_share": "45.700000",
+  "nav_as_of": "2026-09-08",
+  "nav_source": "yahoo_last_close"
 }
 ```
 
-`ticker` is null when the stored book is name-keyed and no Class A / Investor A alias exists. `category` is null when no trusted Morningstar-style category is known — **null > wrong**. `has_estimate` is true when any stored row is `preliminary_estimate` or `updated_estimate`. `total` is the unique-fund count, not the distribution-row count.
+`ticker` is null when the stored book is name-keyed and no Class A / Investor A alias exists. `category` is null when no trusted Morningstar-style category is known — **null > wrong**. `nav_per_share` / `nav_as_of` / `nav_source` are the latest weekly NAV print (Yahoo last regular close preferred). They stay **null** when unknown — never invented. Website Search / Sample Estimates / illustrate should read these instead of asking the advisor for NAV. `has_estimate` is true when any stored row is `preliminary_estimate` or `updated_estimate`. `total` is the unique-fund count, not the distribution-row count.
 
 `GET /funds/categories` returns `{ items: [{ category, fund_count }], uncategorized, total_funds, categorized, coverage_pct }` so Website can populate a Versus Category picker and compute averages / +/- vs category from `GET /funds?category=…` (average the illustrated tax fields of funds that share `category`).
 

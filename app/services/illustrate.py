@@ -11,6 +11,7 @@ from app.aliases import TICKER_LOOKUP_ALIASES, display_ticker
 from app.categories import category_for_row, resolve_category
 from app.crud import get_by_ids, list_matching
 from app.models import AmountUnit, DistributionEstimate, EstimateType, PublicationStage
+from app.services.nav import resolve_nav_per_share
 from app.schemas import (
     CompareCommonInception,
     CompareDeltas,
@@ -153,6 +154,24 @@ def filter_latest_as_of(rows: list[DistributionEstimate]) -> list[DistributionEs
     return kept
 
 
+def _percent_of_nav(
+    *,
+    unit: str,
+    amount: Decimal | None,
+    nav_per_share: Decimal | None,
+) -> Decimal | None:
+    """Eric lock: % of NAV = est $/share ÷ NAV. Same units as amount_unit=percent_of_nav."""
+    if amount is None:
+        return None
+    if unit == AmountUnit.percent_of_nav.value:
+        return amount
+    if unit == AmountUnit.per_share.value and nav_per_share and nav_per_share > 0:
+        return ((amount / nav_per_share) * Decimal("100")).quantize(
+            Decimal("0.000001"), rounding=ROUND_HALF_UP
+        )
+    return None
+
+
 def _distribution_dollars(
     *,
     unit: str,
@@ -178,6 +197,7 @@ def _illustrate_row(
     shares: Decimal | None,
     rates: TaxRates,
     combine: bool,
+    nav_per_share: Decimal | None = None,
 ) -> IllustrationComponent:
     unit = row.amount_unit
     point = _point_amount(row)
@@ -186,6 +206,7 @@ def _illustrate_row(
     rate_key = RATE_MAPPING.get(row.estimate_type, "ordinary_income")
     federal = getattr(rates, rate_key)
     state = rates.state
+    pct = _percent_of_nav(unit=unit, amount=point, nav_per_share=nav_per_share)
 
     if unit == AmountUnit.per_share.value and shares is None:
         return IllustrationComponent(
@@ -218,6 +239,7 @@ def _illustrate_row(
             state_tax=None,
             included_in_totals=False,
             skip_reason=NEEDS_NAV_OR_SHARES_MESSAGE,
+            percent_of_nav=pct,
         )
 
     if unit == AmountUnit.percent.value:
@@ -251,6 +273,7 @@ def _illustrate_row(
             state_tax=None,
             included_in_totals=False,
             skip_reason=PERCENT_SKIP_REASON,
+            percent_of_nav=None,
         )
 
     applied = federal + state if combine else federal
@@ -302,6 +325,7 @@ def _illustrate_row(
         state_tax=state_tax,
         included_in_totals=dist_m is not None,
         skip_reason=None if dist_m is not None else "No numeric amount on this estimate row.",
+        percent_of_nav=pct,
     )
 
 
@@ -375,10 +399,19 @@ def illustrate(
     extra = []
     if body.latest_as_of_only and not body.distribution_ids:
         extra.append("selectors used latest_as_of_only=true (newest as_of per fund). Pass as_of or IDs to pin a snapshot.")
+    nav, _stored, nav_note = resolve_nav_per_share(
+        session,
+        requested=body.nav_per_share,
+        ticker=body.selectors.ticker if body.selectors else None,
+        fund_identifier=body.selectors.fund_identifier if body.selectors else None,
+        rows=rows,
+    )
+    if nav_note:
+        extra.append(nav_note)
     return illustrate_from_rows(
         rows,
         holding=body.holding_dollars,
-        nav_per_share=body.nav_per_share,
+        nav_per_share=nav,
         shares=body.shares,
         rates=body.tax_rates,
         combine=body.combine_state_with_federal,
@@ -431,7 +464,14 @@ def illustrate_from_rows(
         resolved = holding / nav_per_share
 
     components = [
-        _illustrate_row(row, holding=holding, shares=resolved, rates=rates, combine=combine)
+        _illustrate_row(
+            row,
+            holding=holding,
+            shares=resolved,
+            rates=rates,
+            combine=combine,
+            nav_per_share=nav_per_share,
+        )
         for row in rows
     ]
     notes = list(ILLUSTRATION_NOTES)
@@ -761,10 +801,19 @@ def illustrate_portfolio(session: Session, body: PortfolioIllustrateRequest) -> 
             )
         rows, warnings, stage_used = _select_holding_rows(session, holding, body.snapshot)
         history_rows = _lookup_identity_rows(session, holding) or rows
+        nav, _stored, nav_note = resolve_nav_per_share(
+            session,
+            requested=holding.nav_per_share,
+            ticker=holding.ticker,
+            fund_identifier=holding.fund_identifier,
+            rows=rows or history_rows,
+        )
+        if nav_note:
+            warnings.append(nav_note)
         paid_history = _holding_paid_history(
             history_rows,
             holding=dollars,
-            nav_per_share=holding.nav_per_share,
+            nav_per_share=nav,
             shares=holding.shares,
             rates=body.tax_rates,
             combine=body.combine_state_with_federal,
@@ -833,7 +882,7 @@ def illustrate_portfolio(session: Session, body: PortfolioIllustrateRequest) -> 
         illustration = illustrate_from_rows(
             rows,
             holding=dollars,
-            nav_per_share=holding.nav_per_share,
+            nav_per_share=nav,
             shares=holding.shares,
             rates=body.tax_rates,
             combine=body.combine_state_with_federal,
@@ -1449,10 +1498,18 @@ def _upcoming_side(
         stage_used = PublicationStage.updated_estimate.value
     else:
         stage_used = chosen[0].publication_stage
+    requested_nav = side.nav_per_share if side and side.nav_per_share is not None else body.nav_per_share
+    nav, _stored, _note = resolve_nav_per_share(
+        session,
+        requested=requested_nav,
+        ticker=unbound.ticker,
+        fund_identifier=unbound.fund_identifier,
+        rows=chosen,
+    )
     illustration = illustrate_from_rows(
         chosen,
         holding=body.holding_dollars,
-        nav_per_share=(side.nav_per_share if side and side.nav_per_share is not None else body.nav_per_share),
+        nav_per_share=nav,
         shares=side.shares if side and side.shares is not None else body.shares,
         rates=body.tax_rates,
         combine=body.combine_state_with_federal,

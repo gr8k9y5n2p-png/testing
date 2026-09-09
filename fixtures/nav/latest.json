@@ -1,0 +1,664 @@
+{
+  "field": "regular_close",
+  "field_notes": "Last liquid close / mutual-fund NAV. Yahoo daily close preferred; this starter catalog uses the last regular close from fixtures/performance/*.json (monthly snapshot). Weekly live ingest overwrites with the latest daily print. Never invented.",
+  "count": 73,
+  "items": [
+    {
+      "ticker": "AADEX",
+      "nav_per_share": "30.709999",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AADEX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "American Beacon Large Cap Value R5",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "ABALX",
+      "nav_per_share": "40.930000",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/ABALX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "American Funds American Balanced A",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "AGG",
+      "nav_per_share": "97.000000",
+      "nav_as_of": "2026-09-04",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AGG?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "iShares Core U.S. Aggregate Bond ETF",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "AGTHX",
+      "nav_per_share": "88.690002",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AGTHX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "American Funds Growth Fd of Amer A",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "ALLW",
+      "nav_per_share": "30.035000",
+      "nav_as_of": "2026-09-08",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/ALLW?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "State Street Bridgewater All Weather ETF",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "AMCPX",
+      "nav_per_share": "45.700001",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AMCPX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "American Funds AMCAP A",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "AQGIX",
+      "nav_per_share": "14.670000",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AQGIX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "AQR Global Equity I",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "BAFFX",
+      "nav_per_share": "46.980000",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/BAFFX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "Brown Advisory Flexible Equity Institutional",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "BGAKX",
+      "nav_per_share": "13.820000",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/BGAKX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "Baillie Gifford Global Alpha Equities K",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "BGFIX",
+      "nav_per_share": "11.830000",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/BGFIX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "William Blair Growth I",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "BGLD",
+      "nav_per_share": "16.760000",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/BGLD?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "FT Vest Gold Strategy Quarterly Buffer ETF",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "BGVIX",
+      "nav_per_share": "38.189999",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/BGVIX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "Brandes Global Equity I",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "BSVIX",
+      "nav_per_share": "15.530000",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/BSVIX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "Baird Equity Opportunity Institutional",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "CHUSX",
+      "nav_per_share": "29.139999",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/CHUSX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "Alger Global Equity A",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "CIVIX",
+      "nav_per_share": "25.799999",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/CIVIX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "Causeway International Value Institutional",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "CPEAX",
+      "nav_per_share": "25.950001",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/CPEAX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "Catalyst Dynamic Alpha A",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "DBEF",
+      "nav_per_share": "55.480000",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/DBEF?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "Xtrackers MSCI EAFE Hedged Equity ETF",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "DHLAX",
+      "nav_per_share": "34.709999",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/DHLAX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "Diamond Hill Large Cap Investor",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "DMCRX",
+      "nav_per_share": "19.010000",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/DMCRX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "Driehaus Micro Cap Growth",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "DODGX",
+      "nav_per_share": "18.270000",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/DODGX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "Dodge & Cox Stock I",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "DODIX",
+      "nav_per_share": "12.530000",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/DODIX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "Dodge & Cox Income I",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "FAMVX",
+      "nav_per_share": "107.860001",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/FAMVX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "FAM Value Investor",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "FBGRX",
+      "nav_per_share": "312.839996",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/FBGRX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "Fidelity Blue Chip Growth",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "FEFAX",
+      "nav_per_share": "33.099998",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/FEFAX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "First Eagle Rising Dividend Fund A",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "FEGE",
+      "nav_per_share": "52.520000",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/FEGE?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "First Eagle Global Equity ETF",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "FEOE",
+      "nav_per_share": "55.849998",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/FEOE?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "First Eagle Overseas Equity ETF",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "FEVAX",
+      "nav_per_share": "25.820000",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/FEVAX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "First Eagle US A",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "FVD",
+      "nav_per_share": "49.689999",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/FVD?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "First Trust Value Line Dividend Index Fund",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "GABGX",
+      "nav_per_share": "132.130005",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/GABGX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "Gabelli Growth AAA",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "GDX",
+      "nav_per_share": "98.400002",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/GDX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "VanEck Gold Miners ETF",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "GGEZX",
+      "nav_per_share": "26.500000",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/GGEZX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "GuideStone Growth Equity Investor",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "GQEIX",
+      "nav_per_share": "21.559999",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/GQEIX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "GQG Partners US Select Quality Equity Institutional",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "GTR",
+      "nav_per_share": "27.797899",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/GTR?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "WisdomTree Target Range Fund",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "HACAX",
+      "nav_per_share": "125.959999",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/HACAX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "Harbor Capital Appreciation Institutional",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "HAVLX",
+      "nav_per_share": "20.889999",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/HAVLX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "Harbor Large Cap Value Institutional",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "HFCSX",
+      "nav_per_share": "35.740002",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/HFCSX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "Hennessy Focus Investor",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "HLMNX",
+      "nav_per_share": "32.290001",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/HLMNX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "Harding Loevner International Equity Investor",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "INIVX",
+      "nav_per_share": "31.490000",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/INIVX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "VanEck International Investors Gold A",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "JDCAX",
+      "nav_per_share": "59.380001",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/JDCAX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "Janus Henderson Forty A",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "JENSX",
+      "nav_per_share": "45.470001",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/JENSX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "Jensen Quality Growth J",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "LSVEX",
+      "nav_per_share": "32.270000",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/LSVEX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "LSV Value Equity Institutional",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "LZIEX",
+      "nav_per_share": "20.770000",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/LZIEX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "Lazard International Equity Institutional",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "MAPTX",
+      "nav_per_share": "28.080000",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/MAPTX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "Matthews Pacific Tiger Investor",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "MDDVX",
+      "nav_per_share": "22.700001",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/MDDVX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "BlackRock Equity Dividend Inv A",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "MERDX",
+      "nav_per_share": "31.639999",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/MERDX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "Meridian Growth Legacy",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "MFOCX",
+      "nav_per_share": "30.100000",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/MFOCX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "Marsico Focus Investor",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "MMEAX",
+      "nav_per_share": "58.990002",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/MMEAX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "Victory Integrity Discovery A",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "MWMIX",
+      "nav_per_share": "35.160000",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/MWMIX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "VanEck Morningstar Wide Moat I",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "NLCAX",
+      "nav_per_share": "51.470001",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/NLCAX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "Voya Large-Cap Growth A",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "NOSIX",
+      "nav_per_share": "76.980003",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/NOSIX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "Northern Stock Index",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "NWHOX",
+      "nav_per_share": "32.669998",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/NWHOX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "Nationwide Bailard Technology & Science A",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "OAKMX",
+      "nav_per_share": "191.639999",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/OAKMX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "Oakmark Fund Investor",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "PIGFX",
+      "nav_per_share": "35.299999",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PIGFX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "Victory Pioneer Fundamental Growth A",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "PIODX",
+      "nav_per_share": "48.910000",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PIODX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "Victory Pioneer A",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "RYTRX",
+      "nav_per_share": "7.840000",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/RYTRX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "Royce Small-Cap Total Return Investment",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "SGENX",
+      "nav_per_share": "90.639999",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/SGENX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "First Eagle Global A",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "SMH",
+      "nav_per_share": "573.729980",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/SMH?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "VanEck Semiconductor ETF",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "SPY",
+      "nav_per_share": "770.190002",
+      "nav_as_of": "2026-09-04",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/SPY?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "State Street SPDR S&P 500 ETF Trust",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "SWANX",
+      "nav_per_share": "26.840000",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/SWANX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "Schwab Core Equity",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "SWTSX",
+      "nav_per_share": "18.680000",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/SWTSX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "Schwab Total Stock Market Index",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "TBGVX",
+      "nav_per_share": "32.689999",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/TBGVX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "Tweedy, Browne International Value",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "TGDIX",
+      "nav_per_share": "17.650000",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/TGDIX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "TCW Relative Value Large Cap I",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "TRBCX",
+      "nav_per_share": "214.929993",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/TRBCX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "T. Rowe Price Blue Chip Growth",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "VBIAX",
+      "nav_per_share": "54.990002",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VBIAX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "Vanguard Balanced Index Adm",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "VETAX",
+      "nav_per_share": "51.480000",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VETAX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "Victory Sycamore Established Value A",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "VFIAX",
+      "nav_per_share": "713.559998",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VFIAX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "Vanguard 500 Index Admiral",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "VIGAX",
+      "nav_per_share": "273.160004",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VIGAX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "Vanguard MStar Growth Index Admiral",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "VTIAX",
+      "nav_per_share": "47.380001",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VTIAX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "Vanguard Total Intl Stock Index Admiral",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "VXUS",
+      "nav_per_share": "88.410004",
+      "nav_as_of": "2026-09-04",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VXUS?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "Vanguard Total International Stock Index Fund ETF Shares",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "WTPI",
+      "nav_per_share": "32.990002",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/WTPI?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "WisdomTree Equity Premium Income Fund",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "WWNPX",
+      "nav_per_share": "125.309998",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/WWNPX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "Kinetics Paradigm No Load",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "XC",
+      "nav_per_share": "32.790001",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/XC?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "WisdomTree True Emerging Markets Fund",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    },
+    {
+      "ticker": "YACKX",
+      "nav_per_share": "27.660000",
+      "nav_as_of": "2026-09-01",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/YACKX?interval=1mo&range=10y&events=div%2Csplit",
+      "fund_name": "AMG Yacktman Fund I",
+      "notes": "Last regular close from the performance Yahoo snapshot (not adjclose)."
+    }
+  ]
+}

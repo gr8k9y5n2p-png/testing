@@ -54,6 +54,7 @@ from app.schemas import (
     WebsiteTickerRequestOut,
 )
 from app.services.coverage import coverage_snapshot, family_to_out, record_gap
+from app.services.nav import get_nav_map, listed_ticker
 from app.services.performance import growth_of_x
 from app.services.ticker_requests import (
     list_ticker_requests,
@@ -217,18 +218,28 @@ def list_funds(
     rows, total = search_funds(
         session, q=q, fund_family=fund_family, category=category, limit=limit, offset=offset
     )
-    items = [
-        FundOut(
-            ticker=display_ticker(row.ticker, row.fund_identifier),
-            fund_name=row.fund_name,
-            fund_family=row.fund_family,
-            fund_identifier=row.fund_identifier,
-            category=row.category,
-            latest_as_of=row.latest_as_of,
-            has_estimate=row.has_estimate,
+    navs = get_nav_map(
+        session,
+        [listed_ticker(row.ticker, row.fund_identifier) for row in rows],
+    )
+    items = []
+    for row in rows:
+        ticker = display_ticker(row.ticker, row.fund_identifier)
+        nav = navs.get(listed_ticker(row.ticker, row.fund_identifier) or "")
+        items.append(
+            FundOut(
+                ticker=ticker,
+                fund_name=row.fund_name,
+                fund_family=row.fund_family,
+                fund_identifier=row.fund_identifier,
+                category=row.category,
+                latest_as_of=row.latest_as_of,
+                has_estimate=row.has_estimate,
+                nav_per_share=nav.nav_per_share if nav else None,
+                nav_as_of=nav.nav_as_of if nav else None,
+                nav_source=nav.source if nav else None,
+            )
         )
-        for row in rows
-    ]
     return FundListOut(items=items, limit=limit, offset=offset, total=total)
 
 
