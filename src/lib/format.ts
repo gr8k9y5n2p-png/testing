@@ -69,6 +69,7 @@ export function formatSignedPp(value: number, digits = 2): string {
   return `${(0).toFixed(digits)} pp`;
 }
 
+/** vs category: above = more tax (style red), below = less tax (style green). */
 export function deltaTone(value: number): "above" | "below" | "neutral" {
   if (value >= 1) return "above";
   if (value <= -1) return "below";
@@ -90,9 +91,31 @@ export type SortKey =
   | "category"
   | "estimatedDistributionPctNav"
   | "publishedAt"
+  | "asOfDate"
+  | "recordDate"
+  | "exDate"
   | "vsCategoryPctNav";
 
 export type SortDirection = "asc" | "desc";
+
+/** ISO calendar dates only. Invalid / missing values sort after real dates. */
+export function compareOptionalIsoDates(
+  a: string | null | undefined,
+  b: string | null | undefined,
+): number {
+  const left = sortableIsoDate(a);
+  const right = sortableIsoDate(b);
+  if (!left && !right) return 0;
+  if (!left) return 1;
+  if (!right) return -1;
+  return left.localeCompare(right);
+}
+
+function sortableIsoDate(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const parsed = new Date(`${value}T00:00:00Z`);
+  return Number.isNaN(parsed.getTime()) ? null : value;
+}
 
 function compareFunds(
   a: FundEstimateView,
@@ -105,6 +128,12 @@ function compareFunds(
     case "category":
     case "publishedAt":
       return a[key].localeCompare(b[key]);
+    case "asOfDate":
+      return compareOptionalIsoDates(a.asOfDate, b.asOfDate);
+    case "recordDate":
+      return compareOptionalIsoDates(a.recordDate, b.recordDate);
+    case "exDate":
+      return compareOptionalIsoDates(a.exDate, b.exDate);
     default:
       return a[key] - b[key];
   }

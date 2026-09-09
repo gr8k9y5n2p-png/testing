@@ -1,12 +1,20 @@
 "use client";
 
-import { useState, type KeyboardEvent, type MouseEvent } from "react";
+import {
+  useState,
+  type KeyboardEvent,
+  type MouseEvent,
+  type ReactNode,
+  type UIEvent,
+} from "react";
 import type { FundEstimateView } from "@/data/types";
 import { paidHistoryViews, splitFundsByBucket } from "@/data/queries";
+import { publicationStageLabel } from "@/data/distribution-bucket";
 import { DistributionDateStrip } from "@/components/DistributionDateStrip";
 import { DeltaBadge } from "@/components/DeltaBadge";
 import { useCoverage } from "@/components/coverage/CoverageProvider";
 import {
+  formatOptionalDate,
   formatPct,
   formatUsd,
   sortFunds,
@@ -18,6 +26,21 @@ import {
   UPCOMING_UNAVAILABLE_DETAIL,
   UPCOMING_UNAVAILABLE_HEADLINE,
 } from "@/lib/copy";
+import { CompareTickerLink } from "@/components/illustrate/CompareTickerLink";
+
+const TABLE_VIEWPORT = 448;
+const TABLE_ROW_HEIGHT = 76;
+const TABLE_OVERSCAN = 4;
+
+function estimatePct(fund: FundEstimateView): string {
+  if (fund.hasEstimate === false) return "—";
+  return formatPct(fund.estimatedDistributionPctNav);
+}
+
+function estimateUsd(fund: FundEstimateView): string {
+  if (fund.hasEstimate === false) return "—";
+  return `${formatUsd(fund.estimatedDistributionAmount, 4)} / sh`;
+}
 
 function isNestedControl(target: EventTarget | null) {
   const element =
@@ -36,23 +59,45 @@ function toggleExpandedId(current: string | null, fundId: string) {
 export function ResultsTable({
   funds,
   onIllustrate,
+  sortKey: sortKeyProp,
+  sortDirection: sortDirectionProp,
+  onSort,
+  page,
 }: {
   funds: FundEstimateView[];
   onIllustrate?: (fund: FundEstimateView) => void;
+  sortKey?: SortKey;
+  sortDirection?: SortDirection;
+  onSort?: (key: SortKey) => void;
+  page?: {
+    total: number;
+    limit: number;
+    offset: number;
+    onOffset: (offset: number) => void;
+  };
 }) {
-  const [sortKey, setSortKey] = useState<SortKey>("fundName");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+  const [localSortKey, setLocalSortKey] = useState<SortKey>("fundName");
+  const [localSortDirection, setLocalSortDirection] = useState<SortDirection>("asc");
+  const sortKey = sortKeyProp ?? localSortKey;
+  const sortDirection = sortDirectionProp ?? localSortDirection;
   const coverage = useCoverage();
   const { upcoming } = splitFundsByBucket(funds);
   const paid = paidHistoryViews(funds);
+  const serverSorted = Boolean(onSort);
 
   function toggleSort(key: SortKey) {
-    if (key === sortKey) {
-      setSortDirection((current) => (current === "asc" ? "desc" : "asc"));
+    if (onSort) {
+      onSort(key);
       return;
     }
-    setSortKey(key);
-    setSortDirection(key === "fundName" || key === "family" || key === "category" ? "asc" : "desc");
+    if (key === localSortKey) {
+      setLocalSortDirection((current) => (current === "asc" ? "desc" : "asc"));
+      return;
+    }
+    setLocalSortKey(key);
+    setLocalSortDirection(
+      key === "fundName" || key === "family" || key === "category" ? "asc" : "desc",
+    );
   }
 
   const sourceByHistoryId = new Map<string, FundEstimateView>();
@@ -73,12 +118,13 @@ export function ResultsTable({
 
   return (
     <div className="space-y-6">
+      {page ? <PaginationBar {...page} /> : null}
       <FundSection
         title="Upcoming / announced"
         description="Announced distributions that have not paid out yet. Past record/ex/payable dates stay in history below."
         kicker="unpaid announced · not paid history"
         wellClassName="bg-surface"
-        funds={sortFunds(upcoming, sortKey, sortDirection)}
+        funds={serverSorted ? upcoming : sortFunds(upcoming, sortKey, sortDirection)}
         sortKey={sortKey}
         sortDirection={sortDirection}
         onSort={toggleSort}
@@ -93,7 +139,7 @@ export function ResultsTable({
         description="Paid, final-past, and estimates whose record/ex/payable date is already past. These never appear in Upcoming."
         kicker="past · not upcoming"
         wellClassName="bg-paper"
-        funds={sortFunds(paid, sortKey, sortDirection)}
+        funds={serverSorted ? paid : sortFunds(paid, sortKey, sortDirection)}
         sortKey={sortKey}
         sortDirection={sortDirection}
         onSort={toggleSort}
@@ -102,6 +148,7 @@ export function ResultsTable({
         empty={PAID_HISTORY_EMPTY}
         showPayable
       />
+      {page ? <PaginationBar {...page} /> : null}
     </div>
   );
 }
@@ -163,79 +210,78 @@ function FundSection({
       ) : (
         <>
           <div className="hidden overflow-hidden rounded-lg border border-line bg-surface shadow-[0_1px_2px_rgba(26,29,26,0.04)] md:block">
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-left text-sm">
-                <thead className="border-b border-line bg-paper text-[11px] font-semibold uppercase tracking-[0.1em] text-faint">
-                  <tr>
-                    <SortHeader
-                      label="Fund"
-                      column="fundName"
-                      active={sortKey}
-                      direction={sortDirection}
-                      onSort={onSort}
-                    />
-                    <SortHeader
-                      label="Family"
-                      column="family"
-                      active={sortKey}
-                      direction={sortDirection}
-                      onSort={onSort}
-                    />
-                    <SortHeader
-                      label="Category"
-                      column="category"
-                      active={sortKey}
-                      direction={sortDirection}
-                      onSort={onSort}
-                    />
-                    <SortHeader
-                      label="Est. distribution"
-                      column="estimatedDistributionPctNav"
-                      active={sortKey}
-                      direction={sortDirection}
-                      onSort={onSort}
-                      align="right"
-                    />
-                    <SortHeader
-                      label="Announced"
-                      column="publishedAt"
-                      active={sortKey}
-                      direction={sortDirection}
-                      onSort={onSort}
-                    />
-                    <SortHeader
-                      label="vs category avg"
-                      column="vsCategoryPctNav"
-                      active={sortKey}
-                      direction={sortDirection}
-                      onSort={onSort}
-                      align="right"
-                    />
-                    {onIllustrate ? <th className="px-3 py-2.5"> </th> : null}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-line">
-                  {funds.map((fund) => (
-                    <EstimateRow
-                      key={fund.id}
-                      fund={fund}
-                      open={expandedId === fund.id}
-                      coverageGap={!coverage.isLive(fund.family)}
-                      showPayable={showPayable}
-                      onToggle={() =>
-                        setExpandedId((current) =>
-                          toggleExpandedId(current, fund.id),
-                        )
-                      }
-                      onIllustrate={onIllustrate}
-                    />
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <VirtualizedTable
+              funds={funds}
+              expandedId={expandedId}
+              columnCount={onIllustrate ? 7 : 6}
+              header={
+                <tr>
+                  <SortHeader
+                    label="Fund"
+                    column="fundName"
+                    active={sortKey}
+                    direction={sortDirection}
+                    onSort={onSort}
+                  />
+                  <SortHeader
+                    label="Family"
+                    column="family"
+                    active={sortKey}
+                    direction={sortDirection}
+                    onSort={onSort}
+                  />
+                  <SortHeader
+                    label="Category"
+                    column="category"
+                    active={sortKey}
+                    direction={sortDirection}
+                    onSort={onSort}
+                  />
+                  <SortHeader
+                    label="Est. distribution"
+                    column="estimatedDistributionPctNav"
+                    active={sortKey}
+                    direction={sortDirection}
+                    onSort={onSort}
+                    align="right"
+                  />
+                  <SortHeader
+                    label="Announced"
+                    column="publishedAt"
+                    active={sortKey}
+                    direction={sortDirection}
+                    onSort={onSort}
+                  />
+                  <SortHeader
+                    label="vs category avg"
+                    column="vsCategoryPctNav"
+                    active={sortKey}
+                    direction={sortDirection}
+                    onSort={onSort}
+                    align="right"
+                  />
+                  {onIllustrate ? <th className="px-3 py-2.5"> </th> : null}
+                </tr>
+              }
+              renderRow={(fund) => (
+                <EstimateRow
+                  key={fund.id}
+                  fund={fund}
+                  open={expandedId === fund.id}
+                  coverageGap={!coverage.isLive(fund.family)}
+                  showPayable={showPayable}
+                  onToggle={() =>
+                    setExpandedId((current) =>
+                      toggleExpandedId(current, fund.id),
+                    )
+                  }
+                  onIllustrate={onIllustrate}
+                />
+              )}
+            />
           </div>
 
-          <div className="space-y-3 md:hidden">
+          <div className="max-h-[28rem] space-y-3 overflow-y-auto md:hidden">
             {funds.map((fund) => (
               <article
                 key={fund.id}
@@ -245,8 +291,9 @@ function FundSection({
                   <div>
                     <h3 className="font-medium text-ink">{fund.fundName}</h3>
                     <p className="mt-0.5 font-mono text-[11px] text-faint">
-                      {fund.ticker} · {fund.family}
+                      <CompareTickerLink ticker={fund.ticker} /> · {fund.family}
                     </p>
+                    <StageBadge fund={fund} />
                     {!coverage.isLive(fund.family) ? (
                       <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">
                         Coverage gap
@@ -255,26 +302,28 @@ function FundSection({
                   </div>
                   <DeltaBadge fund={fund} compact />
                 </div>
-                <DistributionDateStrip
-                  fund={fund}
-                  compact
-                  showPayable={showPayable}
-                  showStage
-                  className="mt-2"
-                />
                 <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
+                  <Field label="Announced" value={formatOptionalDate(fund.asOfDate)} />
+                  <Field label="Record" value={formatOptionalDate(fund.recordDate)} />
+                  <Field label="Ex-div" value={formatOptionalDate(fund.exDate)} />
+                  {showPayable ? (
+                    <Field
+                      label="Payable"
+                      value={formatOptionalDate(fund.payableDate)}
+                    />
+                  ) : null}
                   <Field label="Category" value={fund.category} />
                   <Field
                     label="% of NAV"
-                    value={formatPct(fund.estimatedDistributionPctNav)}
+                    value={estimatePct(fund)}
                   />
                   <Field
                     label="$ / share"
-                    value={formatUsd(fund.estimatedDistributionAmount, 4)}
+                    value={fund.hasEstimate === false ? "—" : formatUsd(fund.estimatedDistributionAmount, 4)}
                   />
                   <Field
                     label="Category avg"
-                    value={formatPct(fund.categoryAveragePctNav)}
+                    value={fund.hasEstimate === false ? "—" : formatPct(fund.categoryAveragePctNav)}
                   />
                 </dl>
                 {onIllustrate ? (
@@ -299,14 +348,12 @@ function EstimateRow({
   fund,
   open,
   coverageGap,
-  showPayable,
   onToggle,
   onIllustrate,
 }: {
   fund: FundEstimateView;
   open: boolean;
   coverageGap: boolean;
-  showPayable: boolean;
   onToggle: () => void;
   onIllustrate?: (fund: FundEstimateView) => void;
 }) {
@@ -331,12 +378,15 @@ function EstimateRow({
       onKeyDown={onRowKeyDown}
     >
       <td className="px-3 py-3">
-        <span className="block font-medium text-ink">{fund.fundName}</span>
+        <span className="block font-medium text-ink">
+          <CompareTickerLink ticker={fund.ticker}>{fund.fundName}</CompareTickerLink>
+        </span>
         <span className="mt-0.5 block font-mono text-[11px] text-faint">
-          {fund.ticker}
+          <CompareTickerLink ticker={fund.ticker} />
           <span className="mx-1.5">·</span>
           {fund.shareClass}
         </span>
+        <StageBadge fund={fund} />
         {open ? <ExpandedDetails fund={fund} /> : null}
       </td>
       <td className="px-3 py-3 text-muted">
@@ -350,25 +400,26 @@ function EstimateRow({
       <td className="px-3 py-3 text-muted">{fund.category}</td>
       <td className="px-3 py-3 text-right">
         <span className="block font-mono text-ink">
-          {formatPct(fund.estimatedDistributionPctNav)}
+          {estimatePct(fund)}
         </span>
         <span className="mt-0.5 block font-mono text-[11px] text-faint">
-          {formatUsd(fund.estimatedDistributionAmount, 4)} / sh
+          {estimateUsd(fund)}
         </span>
       </td>
-      <td className="px-3 py-3">
-        <DistributionDateStrip
-          fund={fund}
-          compact
-          showPayable={showPayable}
-          showStage
-        />
+      <td className="whitespace-nowrap px-3 py-3 font-mono text-sm text-ink">
+        {formatOptionalDate(fund.asOfDate)}
+      </td>
+      <td className="whitespace-nowrap px-3 py-3 font-mono text-sm text-ink">
+        {formatOptionalDate(fund.recordDate)}
+      </td>
+      <td className="whitespace-nowrap px-3 py-3 font-mono text-sm text-ink">
+        {formatOptionalDate(fund.exDate)}
       </td>
       <td className="px-3 py-3 text-right">
         <div className="flex flex-col items-end gap-1">
           <DeltaBadge fund={fund} compact />
           <span className="font-mono text-[11px] text-faint">
-            Cat. {formatPct(fund.categoryAveragePctNav)}
+            Cat. {fund.hasEstimate === false ? "—" : formatPct(fund.categoryAveragePctNav)}
           </span>
         </div>
       </td>
@@ -387,6 +438,16 @@ function EstimateRow({
         </td>
       ) : null}
     </tr>
+  );
+}
+
+function StageBadge({ fund }: { fund: FundEstimateView }) {
+  const stage = publicationStageLabel(fund.publicationStage);
+  if (!stage) return null;
+  return (
+    <span className="mt-1 block text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">
+      {fund.bucket === "paid" ? "Paid history" : "Upcoming"} · {stage}
+    </span>
   );
 }
 
@@ -439,6 +500,111 @@ function ExpandedDetails({ fund }: { fund: FundEstimateView }) {
         </div>
       ) : null}
     </dl>
+  );
+}
+
+function PaginationBar({
+  total,
+  limit,
+  offset,
+  onOffset,
+}: {
+  total: number;
+  limit: number;
+  offset: number;
+  onOffset: (offset: number) => void;
+}) {
+  const page = Math.floor(offset / limit) + 1;
+  const pages = Math.max(1, Math.ceil(total / limit));
+  const from = total === 0 ? 0 : offset + 1;
+  const to = Math.min(offset + limit, total);
+  return (
+    <nav
+      aria-label="Sample estimates pages"
+      className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line bg-surface px-3 py-2.5"
+    >
+      <p className="font-mono text-xs text-faint">
+        {from}–{to} of {total}
+      </p>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          disabled={offset <= 0}
+          onClick={() => onOffset(Math.max(0, offset - limit))}
+          className="h-9 rounded-md border border-line px-3 text-sm text-ink disabled:cursor-not-allowed disabled:text-faint"
+        >
+          Previous
+        </button>
+        <p className="min-w-[7rem] text-center text-sm text-muted">
+          Page {page} of {pages}
+        </p>
+        <button
+          type="button"
+          disabled={offset + limit >= total}
+          onClick={() => onOffset(offset + limit)}
+          className="h-9 rounded-md border border-line px-3 text-sm text-ink disabled:cursor-not-allowed disabled:text-faint"
+        >
+          Next
+        </button>
+      </div>
+    </nav>
+  );
+}
+
+function VirtualizedTable({
+  funds,
+  expandedId,
+  columnCount,
+  header,
+  renderRow,
+}: {
+  funds: FundEstimateView[];
+  expandedId: string | null;
+  columnCount: number;
+  header: ReactNode;
+  renderRow: (fund: FundEstimateView) => ReactNode;
+}) {
+  const [scrollTop, setScrollTop] = useState(0);
+  const expanded = Boolean(expandedId);
+  const windowed = !expanded && funds.length > 12;
+  const start = windowed
+    ? Math.max(0, Math.floor(scrollTop / TABLE_ROW_HEIGHT) - TABLE_OVERSCAN)
+    : 0;
+  const visible = windowed
+    ? Math.ceil(TABLE_VIEWPORT / TABLE_ROW_HEIGHT) + TABLE_OVERSCAN * 2
+    : funds.length;
+  const end = Math.min(funds.length, start + visible);
+  const topPad = windowed ? start * TABLE_ROW_HEIGHT : 0;
+  const bottomPad = windowed ? Math.max(0, (funds.length - end) * TABLE_ROW_HEIGHT) : 0;
+
+  function onScroll(event: UIEvent<HTMLDivElement>) {
+    setScrollTop(event.currentTarget.scrollTop);
+  }
+
+  return (
+    <div
+      className="max-h-[28rem] overflow-auto"
+      onScroll={windowed ? onScroll : undefined}
+    >
+      <table className="min-w-full text-left text-sm">
+        <thead className="sticky top-0 z-10 border-b border-line bg-paper text-[11px] font-semibold uppercase tracking-[0.1em] text-faint">
+          {header}
+        </thead>
+        <tbody className="divide-y divide-line">
+          {topPad > 0 ? (
+            <tr aria-hidden="true">
+              <td colSpan={columnCount} style={{ height: topPad, padding: 0 }} />
+            </tr>
+          ) : null}
+          {(windowed ? funds.slice(start, end) : funds).map((fund) => renderRow(fund))}
+          {bottomPad > 0 ? (
+            <tr aria-hidden="true">
+              <td colSpan={columnCount} style={{ height: bottomPad, padding: 0 }} />
+            </tr>
+          ) : null}
+        </tbody>
+      </table>
+    </div>
   );
 }
 

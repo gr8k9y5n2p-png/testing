@@ -20,11 +20,13 @@ export function TickerField({
   onSelect,
   onNotice,
   autoFocus = false,
+  allowEmpty = false,
 }: {
   ticker: string;
   fundName: string;
   funds: PortfolioFundOption[];
   inputId: string;
+  allowEmpty?: boolean;
   onSelect: (fund: {
     ticker: string;
     fundName: string;
@@ -88,7 +90,15 @@ export function TickerField({
               return;
             }
             const typed = query.trim().toUpperCase();
-            if (typed && typed !== ticker) {
+            if (!typed) {
+              if (allowEmpty && ticker) {
+                onSelect({ ticker: "", fundName: "", nav: null });
+              } else {
+                setQuery(ticker);
+              }
+              return;
+            }
+            if (typed !== ticker) {
               const match = findExactFund(funds, typed);
               if (match) {
                 onSelect(match);
@@ -98,8 +108,14 @@ export function TickerField({
                 commitUnknown(typed);
                 return;
               }
+              onSelect({
+                ticker: typed,
+                fundName: "",
+                nav: null,
+              });
+            } else {
+              setQuery(ticker);
             }
-            setQuery(ticker);
           }, 120);
         }}
         onKeyDown={(event) => {

@@ -20,13 +20,6 @@ describe("portfolioPeriodTaxIsUnmatched", () => {
     );
     assert.equal(
       portfolioPeriodTaxIsUnmatched({
-        gapReason: "uncovered",
-        estimatedTax: 12,
-      }),
-      true,
-    );
-    assert.equal(
-      portfolioPeriodTaxIsUnmatched({
         estimatedTax: null,
       }),
       true,
@@ -37,6 +30,24 @@ describe("portfolioPeriodTaxIsUnmatched", () => {
         estimatedTax: 0,
       }),
       true,
+    );
+  });
+
+  it("densifies published tax even when Upcoming left the holding uncovered", () => {
+    assert.equal(
+      portfolioPeriodTaxIsUnmatched({
+        covered: false,
+        gapReason: "no unpaid announce",
+        estimatedTax: 2140,
+      }),
+      false,
+    );
+    assert.equal(
+      portfolioPeriodTaxIsUnmatched({
+        gapReason: "uncovered",
+        estimatedTax: 12,
+      }),
+      false,
     );
   });
 

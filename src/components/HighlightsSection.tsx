@@ -14,8 +14,8 @@ export function HighlightsSection({ highlights }: { highlights: HighlightSets })
             Highlights
           </h2>
           <p className="mt-1 text-sm text-muted">
-            Snapshot of unpaid announced estimates: newest filings, largest
-            payouts, and peers that sit well away from their category average.
+            Snapshot of unpaid announced estimates: largest payouts, newest
+            filings, and peers that sit well away from their category average.
             Paid history is not mixed in.
           </p>
         </div>
@@ -24,14 +24,7 @@ export function HighlightsSection({ highlights }: { highlights: HighlightSets })
           average (% of NAV)
         </p>
       </div>
-      <div className="grid gap-4 lg:grid-cols-3">
-        <HighlightCard
-          title="Most recent"
-          metricLabel="Announced"
-          description="Newest announced (as_of) upcoming estimates — record and ex-div on each row."
-          funds={highlights.mostRecent}
-          variant="recent"
-        />
+      <div className="grid gap-4 md:grid-cols-2">
         <HighlightCard
           title="Largest"
           metricLabel="% of NAV"
@@ -40,13 +33,23 @@ export function HighlightsSection({ highlights }: { highlights: HighlightSets })
           variant="largest"
         />
         <HighlightCard
-          title="vs category average"
+          title="Most recent"
+          metricLabel="Announced"
+          description="Newest announced (as_of) upcoming estimates — record and ex-div on each row."
+          funds={highlights.mostRecent}
+          variant="recent"
+        />
+      </div>
+      <div className="mt-4">
+        <HighlightCard
+          title="Versus category"
           metricLabel="Δ pp"
           description={`Well above or below the same-category mean by at least ${OUTLIER_THRESHOLD_PP} pp.`}
           funds={[...highlights.aboveCategory, ...highlights.belowCategory]}
           variant="outliers"
           above={highlights.aboveCategory}
           below={highlights.belowCategory}
+          wide
         />
       </div>
     </section>

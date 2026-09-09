@@ -3,6 +3,10 @@ import { AftertaxApp, type CheckoutReturn } from "@/components/AftertaxApp";
 import { getDistributionRepository } from "@/data";
 import { loadCoverageSnapshot } from "@/lib/data-api/coverage";
 import { firstSearchParam } from "@/lib/illustrate/fund-history";
+import {
+  compareTickersPath,
+  parseCompareQueryTickers,
+} from "@/lib/illustrate/compare-workspace";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +29,9 @@ export default async function Home({
     checkout?: string | string[];
     tab?: string | string[];
     ticker?: string | string[];
+    tickers?: string | string[];
+    left?: string | string[];
+    right?: string | string[];
   }>;
 }) {
   const params = await searchParams;
@@ -32,7 +39,7 @@ export default async function Home({
     redirect("/portfolio");
   }
   if (firstParam(params.tab) === "compare") {
-    redirect("/compare");
+    redirect(compareTickersPath(parseCompareQueryTickers(params)));
   }
   const repository = await getDistributionRepository();
   const [funds, highlights, facets, coverage] = await Promise.all([

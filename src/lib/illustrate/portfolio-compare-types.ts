@@ -121,9 +121,9 @@ export type PortfolioHoldingOut = {
   illustration?: PortfolioHoldingIllustration | null;
   /**
    * Prefer this for bar charts + heat tables.
-   * `null` = no upcoming (do not derive). Omitted = older payload; derive from illustration.
+   * `null` or omitted = undisclosed (do not derive from illustration / annual tax).
    * Array form is accepted when Data sends more than one snapshot.
-   * Unpaid announced only — never a paid-history source.
+   * Unpaid announced only — never a paid-history or calendar-year source.
    */
   upcoming?: PortfolioUpcoming | PortfolioUpcoming[] | null;
   /**

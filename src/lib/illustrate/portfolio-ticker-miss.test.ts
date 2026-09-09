@@ -37,17 +37,15 @@ describe("Portfolio / Compare slot ticker miss wiring", () => {
   it("Compare slots report source portfolio, not a second fetch or search_miss", () => {
     const picker = read("../../components/illustrate/FundPicker.tsx");
     const homepage = read("../../components/illustrate/HomepageFundCompare.tsx");
+    const workspace = read("../../components/illustrate/CompareWorkspace.tsx");
     const rail = read("../../components/illustrate/FundCompareRail.tsx");
     const hook = read("../data-api/use-portfolio-miss.ts");
     assert.match(picker, /usePortfolioMissRequest/);
     assert.match(picker, /notifyPortfolioTickerMiss/);
     assert.match(picker, /reportPortfolioMiss/);
-    assert.match(homepage, /reportPortfolioMiss/);
-    assert.match(homepage, /compareSideFromFund\(\{ ticker: leftPending \}\)/);
-    assert.match(
-      homepage,
-      /left && right && !leftPending && !rightPending/,
-    );
+    assert.match(homepage, /CompareWorkspace as HomepageFundCompare/);
+    assert.match(workspace, /onNotice=\{onNotice\}/);
+    assert.match(workspace, /NoticeToast/);
     assert.match(rail, /reportPortfolioMiss/);
     assert.match(rail, /pendingPeer \?/);
     assert.match(hook, /requestTickerOnPortfolioMiss/);
@@ -61,10 +59,12 @@ describe("Portfolio / Compare slot ticker miss wiring", () => {
   it("does not invent pillar dollars in pending slot or holding rows", () => {
     const field = read("../../components/illustrate/portfolio-compare/TickerField.tsx");
     const homepage = read("../../components/illustrate/HomepageFundCompare.tsx");
+    const workspace = read("../../components/illustrate/CompareWorkspace.tsx");
     assert.match(field, /fundName: ""/);
     assert.match(field, /nav: null/);
-    assert.match(homepage, /compareSideFromFund\(\{ ticker: leftPending \}\)/);
-    assert.match(homepage, /compareSideFromFund\(\{ ticker: rightPending \}\)/);
+    assert.match(field, /notifyPortfolioTickerMiss/);
+    assert.match(homepage, /CompareWorkspace as HomepageFundCompare/);
+    assert.doesNotMatch(workspace, /estimatedDistributionAmount:\s*[1-9]/);
     assert.doesNotMatch(homepage, /estimatedDistributionAmount:\s*[1-9]/);
     assert.doesNotMatch(homepage, /nav:\s*[1-9]/);
   });
