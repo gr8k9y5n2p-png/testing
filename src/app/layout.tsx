@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { IBM_Plex_Mono, Source_Sans_3, Source_Serif_4 } from "next/font/google";
 import { AppHeader } from "@/components/AppHeader";
 import { AppFooter } from "@/components/AppFooter";
+import { FriendsBetaBanner } from "@/components/FriendsBetaBanner";
 import { COPY } from "@/lib/copy";
 import { publicOrigin } from "@/lib/hosts";
 import "./globals.css";
@@ -58,6 +59,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-paper text-ink font-sans">
         <AppHeader />
+        <FriendsBetaBanner />
         <div className="flex-1">{children}</div>
         <AppFooter />
       </body>

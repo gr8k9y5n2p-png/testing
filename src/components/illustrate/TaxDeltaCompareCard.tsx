@@ -1,3 +1,4 @@
+import { CompactDisclaimer } from "@/components/CompactDisclaimer";
 import { TaxDragByYearChart } from "@/components/illustrate/TaxDragByYearChart";
 import {
   chartScalePct,
@@ -186,6 +187,7 @@ export function TaxDeltaCompareCard({
         Demo data · illustrative only · tax cost to holder · red = more tax ·
         green = less
       </p>
+      <CompactDisclaimer className="mt-1 text-center text-[10px] leading-relaxed text-faint" />
     </article>
   );
 }
