@@ -11,6 +11,11 @@ import { EmptyState } from "@/components/EmptyState";
 import { ResultsTable } from "@/components/ResultsTable";
 import { SearchToolbar } from "@/components/SearchToolbar";
 import type { SortDirection, SortKey } from "@/lib/format";
+import {
+  looksLikeExactTicker,
+  normalizeTickerSymbol,
+} from "@/lib/data-api/request-ticker";
+import { useSearchMissRequest } from "@/lib/data-api/use-search-miss";
 
 async function fetchFundPage(query: {
   filters: SearchFilters;
@@ -75,10 +80,12 @@ export function Dashboard({
   funds,
   facets,
   onIllustrate,
+  onNotice,
 }: {
   funds: FundEstimateView[];
   facets: Facets;
   onIllustrate?: (fund: FundEstimateView) => void;
+  onNotice?: (message: string) => void;
 }) {
   const [filters, setFilters] = useState<SearchFilters>({});
   const deferredFilters = useDeferredValue(filters);
@@ -132,6 +139,15 @@ export function Dashboard({
   }, [deferredFilters, funds, offset, requestKey, sortDirection, sortKey]);
 
   const isPending = filters !== deferredFilters || appliedKey !== requestKey;
+  const settledQuery = deferredFilters.query ?? "";
+  const inUniverse = useMemo(() => {
+    if (!looksLikeExactTicker(settledQuery)) return false;
+    const key = normalizeTickerSymbol(settledQuery);
+    return funds.some((fund) => fund.ticker.toUpperCase() === key);
+  }, [funds, settledQuery]);
+
+  useSearchMissRequest(settledQuery, page.total, inUniverse, onNotice);
+
   const hasActiveFilters = Boolean(
     filters.query?.trim() || filters.family || filters.category || filters.year,
   );
@@ -189,6 +205,7 @@ export function Dashboard({
         {page.total === 0 ? (
           <EmptyState
             hasActiveFilters={hasActiveFilters}
+            universeEmpty={funds.length === 0}
             onClear={() => applyFilters({})}
           />
         ) : (

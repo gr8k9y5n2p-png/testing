@@ -6,6 +6,7 @@ import {
   type ChartPad,
   type YearLayout,
 } from "@/lib/charts/shared-axis";
+import { isRemovableGrowthSeries } from "@/lib/illustrate/growth-selection";
 import {
   TAX_DRAG_NA_LABEL,
   formatTaxDragPoint,
@@ -47,6 +48,8 @@ export type TaxDragByYearChartProps = {
   axis?: YearLayout;
   /** Locked-sketch % / $ control on the tax-drag panel. */
   onUnitChange?: (metric: TaxDragMetric) => void;
+  /** Remove a user-added fund. Benchmark series stay non-removable. */
+  onRemoveSeries?: (id: string) => void;
 };
 
 const CARD_W = 360;
@@ -75,6 +78,7 @@ export function TaxDragByYearChart({
   years: yearsProp,
   axis: axisProp,
   onUnitChange,
+  onRemoveSeries,
 }: TaxDragByYearChartProps) {
   const flush = layout === "flush";
   const chartW = width ?? (flush ? SHARED_CHART_WIDTH : CARD_W);
@@ -337,6 +341,16 @@ export function TaxDragByYearChart({
                       style={{ background: row.color }}
                     />
                     <span className="text-ink">{row.label}</span>
+                    {onRemoveSeries && isRemovableGrowthSeries(row.id) ? (
+                      <button
+                        type="button"
+                        onClick={() => onRemoveSeries(row.id)}
+                        className="rounded px-0.5 text-faint hover:bg-surface hover:text-ink"
+                        aria-label={`Remove ${row.label}`}
+                      >
+                        ×
+                      </button>
+                    ) : null}
                   </li>
                 ))}
                 <li className="text-faint">

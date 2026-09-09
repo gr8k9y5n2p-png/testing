@@ -9,10 +9,12 @@ import {
 } from "react";
 import type { FundEstimateView } from "@/data/types";
 import { paidHistoryViews, splitFundsByBucket } from "@/data/queries";
+import { publicationStageLabel } from "@/data/distribution-bucket";
 import { DistributionDateStrip } from "@/components/DistributionDateStrip";
 import { DeltaBadge } from "@/components/DeltaBadge";
 import { useCoverage } from "@/components/coverage/CoverageProvider";
 import {
+  formatOptionalDate,
   formatPct,
   formatUsd,
   sortFunds,
@@ -24,6 +26,7 @@ import {
   UPCOMING_UNAVAILABLE_DETAIL,
   UPCOMING_UNAVAILABLE_HEADLINE,
 } from "@/lib/copy";
+import { CompareTickerLink } from "@/components/illustrate/CompareTickerLink";
 
 const TABLE_VIEWPORT = 448;
 const TABLE_ROW_HEIGHT = 76;
@@ -288,8 +291,9 @@ function FundSection({
                   <div>
                     <h3 className="font-medium text-ink">{fund.fundName}</h3>
                     <p className="mt-0.5 font-mono text-[11px] text-faint">
-                      {fund.ticker} · {fund.family}
+                      <CompareTickerLink ticker={fund.ticker} /> · {fund.family}
                     </p>
+                    <StageBadge fund={fund} />
                     {!coverage.isLive(fund.family) ? (
                       <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">
                         Coverage gap
@@ -298,14 +302,16 @@ function FundSection({
                   </div>
                   <DeltaBadge fund={fund} compact />
                 </div>
-                <DistributionDateStrip
-                  fund={fund}
-                  compact
-                  showPayable={showPayable}
-                  showStage
-                  className="mt-2"
-                />
                 <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
+                  <Field label="Announced" value={formatOptionalDate(fund.asOfDate)} />
+                  <Field label="Record" value={formatOptionalDate(fund.recordDate)} />
+                  <Field label="Ex-div" value={formatOptionalDate(fund.exDate)} />
+                  {showPayable ? (
+                    <Field
+                      label="Payable"
+                      value={formatOptionalDate(fund.payableDate)}
+                    />
+                  ) : null}
                   <Field label="Category" value={fund.category} />
                   <Field
                     label="% of NAV"
@@ -342,14 +348,12 @@ function EstimateRow({
   fund,
   open,
   coverageGap,
-  showPayable,
   onToggle,
   onIllustrate,
 }: {
   fund: FundEstimateView;
   open: boolean;
   coverageGap: boolean;
-  showPayable: boolean;
   onToggle: () => void;
   onIllustrate?: (fund: FundEstimateView) => void;
 }) {
@@ -374,12 +378,15 @@ function EstimateRow({
       onKeyDown={onRowKeyDown}
     >
       <td className="px-3 py-3">
-        <span className="block font-medium text-ink">{fund.fundName}</span>
+        <span className="block font-medium text-ink">
+          <CompareTickerLink ticker={fund.ticker}>{fund.fundName}</CompareTickerLink>
+        </span>
         <span className="mt-0.5 block font-mono text-[11px] text-faint">
-          {fund.ticker}
+          <CompareTickerLink ticker={fund.ticker} />
           <span className="mx-1.5">·</span>
           {fund.shareClass}
         </span>
+        <StageBadge fund={fund} />
         {open ? <ExpandedDetails fund={fund} /> : null}
       </td>
       <td className="px-3 py-3 text-muted">
@@ -399,13 +406,14 @@ function EstimateRow({
           {estimateUsd(fund)}
         </span>
       </td>
-      <td className="px-3 py-3">
-        <DistributionDateStrip
-          fund={fund}
-          compact
-          showPayable={showPayable}
-          showStage
-        />
+      <td className="whitespace-nowrap px-3 py-3 font-mono text-sm text-ink">
+        {formatOptionalDate(fund.asOfDate)}
+      </td>
+      <td className="whitespace-nowrap px-3 py-3 font-mono text-sm text-ink">
+        {formatOptionalDate(fund.recordDate)}
+      </td>
+      <td className="whitespace-nowrap px-3 py-3 font-mono text-sm text-ink">
+        {formatOptionalDate(fund.exDate)}
       </td>
       <td className="px-3 py-3 text-right">
         <div className="flex flex-col items-end gap-1">
@@ -430,6 +438,16 @@ function EstimateRow({
         </td>
       ) : null}
     </tr>
+  );
+}
+
+function StageBadge({ fund }: { fund: FundEstimateView }) {
+  const stage = publicationStageLabel(fund.publicationStage);
+  if (!stage) return null;
+  return (
+    <span className="mt-1 block text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">
+      {fund.bucket === "paid" ? "Paid history" : "Upcoming"} · {stage}
+    </span>
   );
 }
 

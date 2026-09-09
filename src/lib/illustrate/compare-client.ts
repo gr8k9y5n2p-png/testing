@@ -1,12 +1,12 @@
 import { dataApiUrl } from "@/lib/data-api/config";
 import { mockCompareResponse } from "@/lib/illustrate/compare-fixture";
 import { toDataApiCompareBody } from "@/lib/illustrate/compare-request";
-import { seedNavLookup } from "@/lib/illustrate/seed-nav";
 import type {
   CompareRequest,
   CompareResponse,
 } from "@/lib/illustrate/compare-types";
 import { IllustrateRequestError } from "@/lib/illustrate/client";
+import { gateCompareUpcoming } from "@/lib/illustrate/upcoming-compare";
 
 export function getCompareEndpoint(): string {
   if (process.env.NEXT_PUBLIC_COMPARE_URL?.trim()) {
@@ -155,6 +155,16 @@ export function normalizeCompareResponse(
       ? asRecord(upcomingRaw)
       : null;
   const notes = Array.isArray(raw.notes) ? raw.notes.map(String) : [];
+  const periods = periodsRaw.map((item) => {
+    const row = asRecord(item);
+    return {
+      year: calendarYear(row.year) || calendarYear(row.as_of) || 0,
+      as_of: row.as_of == null ? null : String(row.as_of),
+      left: normalizeIllustration(row.left, "Fund A"),
+      right: normalizeIllustration(row.right, "Fund B"),
+      deltas: normalizeDeltas(row.deltas),
+    };
+  });
 
   return {
     mode: raw.mode === "yoy" ? "yoy" : "fund_vs_fund",
@@ -162,16 +172,7 @@ export function normalizeCompareResponse(
     left: raw.left ? normalizeIllustration(raw.left, "Fund A") : null,
     right: raw.right ? normalizeIllustration(raw.right, "Fund B") : null,
     deltas: raw.deltas ? normalizeDeltas(raw.deltas) : null,
-    periods: periodsRaw.map((item) => {
-      const row = asRecord(item);
-      return {
-        year: calendarYear(row.year) || calendarYear(row.as_of) || 0,
-        as_of: row.as_of == null ? null : String(row.as_of),
-        left: normalizeIllustration(row.left, "Fund A"),
-        right: normalizeIllustration(row.right, "Fund B"),
-        deltas: normalizeDeltas(row.deltas),
-      };
-    }),
+    periods,
     summary: {
       normalized_holding_dollars: num(
         summaryRaw.normalized_holding_dollars,
@@ -189,25 +190,28 @@ export function normalizeCompareResponse(
         from_as_of: inception.from_as_of == null ? null : String(inception.from_as_of),
         to_as_of: inception.to_as_of == null ? null : String(inception.to_as_of),
       },
-      upcoming_taxable_distribution: upcoming
-        ? {
-            left_dollars: numOrNull(upcoming.left_dollars),
-            right_dollars: numOrNull(upcoming.right_dollars),
-            delta_dollars: numOrNull(upcoming.delta_dollars),
-            left_as_of:
-              upcoming.left_as_of == null ? null : String(upcoming.left_as_of),
-            right_as_of:
-              upcoming.right_as_of == null ? null : String(upcoming.right_as_of),
-            left_publication_stage:
-              upcoming.left_publication_stage == null
-                ? null
-                : String(upcoming.left_publication_stage),
-            right_publication_stage:
-              upcoming.right_publication_stage == null
-                ? null
-                : String(upcoming.right_publication_stage),
-          }
-        : null,
+      upcoming_taxable_distribution: gateCompareUpcoming(
+        upcoming
+          ? {
+              left_dollars: numOrNull(upcoming.left_dollars),
+              right_dollars: numOrNull(upcoming.right_dollars),
+              delta_dollars: numOrNull(upcoming.delta_dollars),
+              left_as_of:
+                upcoming.left_as_of == null ? null : String(upcoming.left_as_of),
+              right_as_of:
+                upcoming.right_as_of == null ? null : String(upcoming.right_as_of),
+              left_publication_stage:
+                upcoming.left_publication_stage == null
+                  ? null
+                  : String(upcoming.left_publication_stage),
+              right_publication_stage:
+                upcoming.right_publication_stage == null
+                  ? null
+                  : String(upcoming.right_publication_stage),
+            }
+          : null,
+        periods,
+      ),
     },
     notes,
   };
@@ -219,7 +223,7 @@ export async function postIllustrateCompare(
 ): Promise<CompareResponse> {
   const endpoint = getCompareEndpoint();
   const remote = !isMockCompareEndpoint(endpoint);
-  const payload = toDataApiCompareBody(request, seedNavLookup);
+  const payload = toDataApiCompareBody(request);
 
   async function post(url: string) {
     return fetch(url, {

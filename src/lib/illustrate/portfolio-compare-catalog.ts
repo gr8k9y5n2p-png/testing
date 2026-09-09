@@ -33,7 +33,7 @@ export type PortfolioTickerRates = {
  */
 export const PORTFOLIO_TICKER_RATES: Record<string, PortfolioTickerRates> = {
   AGTHX: {
-    fundName: "American Funds Growth Fund of America",
+    fundName: "The Growth Fund of America",
     family: "American Funds",
     taxDrag: 0.0068,
     distRate: 0.0194,
