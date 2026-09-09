@@ -22,18 +22,18 @@ describe("ResultsTable EstimateRow props", () => {
 });
 
 describe("ResultsTable Search pager placement", () => {
-  it("puts the hybrid pager directly below Upcoming / announced, not above it", () => {
+  it("puts the hybrid pager directly below Upcoming / Announced, not above it", () => {
     const start = source.indexOf("return (");
     const layout = source.slice(start, source.indexOf("function FundSection"));
-    const upcoming = layout.indexOf('title="Upcoming / announced"');
+    const upcoming = layout.indexOf('title="Upcoming / Announced"');
     const pager = layout.indexOf("<PaginationBar");
     const paid = layout.indexOf('title="Paid history"');
-    assert.ok(upcoming >= 0, "Upcoming / announced section");
+    assert.ok(upcoming >= 0, "Upcoming / Announced section");
     assert.ok(pager >= 0, "hybrid PaginationBar");
     assert.ok(paid >= 0, "Paid history section");
     assert.ok(
       upcoming < pager && pager < paid,
-      "pager must sit between Upcoming / announced and Paid history",
+      "pager must sit between Upcoming / Announced and Paid history",
     );
     assert.equal(
       layout.indexOf("<PaginationBar"),

@@ -3,8 +3,26 @@ import type {
   CompareRequest,
   CompareSelectors,
   CompareSideIn,
-} from "@/lib/illustrate/compare-types";
-import type { IllustrateRequest } from "@/lib/illustrate/types";
+} from "./compare-types.ts";
+import {
+  UI_DEFAULT_TAX_RATES,
+  type IllustrateRequest,
+  type TaxRates,
+} from "./types.ts";
+
+/** Locked Compare tax payload. Empty `{}` is never sent — UI always posts rates. */
+export function compareTaxRequestFields(input?: {
+  taxRates?: TaxRates;
+  combineStateWithFederal?: boolean;
+}): {
+  tax_rates: TaxRates;
+  combine_state_with_federal: boolean;
+} {
+  return {
+    tax_rates: input?.taxRates ?? UI_DEFAULT_TAX_RATES,
+    combine_state_with_federal: input?.combineStateWithFederal ?? true,
+  };
+}
 
 export type NavLookup = (ticker: string) => number | undefined;
 export type FundNameLookup = (ticker: string) => string | undefined;
@@ -155,6 +173,8 @@ export function yoyTaxDragCompareRequest(input: {
   holdingDollars: number;
   navPerShare?: number | null;
   periods: ComparePeriodIn[];
+  taxRates?: TaxRates;
+  combineStateWithFederal?: boolean;
 }): CompareRequest {
   const ticker = input.ticker.trim().toUpperCase();
   const selectors = compareSelectorsFromFund({
@@ -167,7 +187,7 @@ export function yoyTaxDragCompareRequest(input: {
   return {
     mode: "yoy",
     holding_dollars: input.holdingDollars,
-    combine_state_with_federal: true,
+    ...compareTaxRequestFields(input),
     latest_as_of_only: true,
     ...(nav != null ? { nav_per_share: nav } : {}),
     selectors,
@@ -178,7 +198,6 @@ export function yoyTaxDragCompareRequest(input: {
       selectors,
     },
     periods: input.periods,
-    tax_rates: {},
   };
 }
 

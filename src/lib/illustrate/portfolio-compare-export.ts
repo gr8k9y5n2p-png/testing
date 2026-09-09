@@ -10,11 +10,12 @@ import {
   SINGLE_BOOK_DELTA_DETAIL,
   TAX_DRAG_CARD_DETAIL,
   TAX_IMPACT_DELTA_DETAIL,
+  UPCOMING_MODULE_HEADING,
   UPCOMING_UNAVAILABLE_HEADLINE,
   YEAR_TAX_DETAIL,
   YEAR_TAX_EMPTY,
   YEAR_TAX_HEADING,
-  upcomingDistributionAmount,
+  upcomingDistributionPerShareAmount,
   upcomingDollarImpactAmount,
   upcomingPctOfNavAmount,
 } from "@/lib/illustrate/portfolio-compare-copy";
@@ -46,6 +47,9 @@ export type PortfolioCompareExportHolding = {
 export type PortfolioCompareExportUpcoming = {
   ticker: string;
   distributionDollars: number | null;
+  distributionPerShare: number | null;
+  holdingDollars: number | null;
+  navPerShare: number | null;
   pctOfNav: number | null;
   estimatedTax: number | null;
   available: boolean;
@@ -103,6 +107,9 @@ function sideModel(
     upcoming: upcomingHoldingsForSide(allocation, side).map((row) => ({
       ticker: row.ticker,
       distributionDollars: row.distributionDollars,
+      distributionPerShare: row.distributionPerShare,
+      holdingDollars: row.holdingDollars,
+      navPerShare: row.navPerShare,
       pctOfNav: row.pctOfNav,
       estimatedTax: row.estimatedTax,
       available: row.available,
@@ -186,7 +193,7 @@ function sideHtml(side: PortfolioCompareExportSide): string {
         <thead><tr><th>Ticker</th><th>Fund</th><th>Weight</th><th>Dollars</th></tr></thead>
         <tbody>${holdings}</tbody>
       </table>
-      <h3>Upcoming / announced</h3>
+      <h3>${UPCOMING_MODULE_HEADING}</h3>
       <table>
         <thead><tr><th>Ticker</th><th>${DIST_AMOUNT_COLUMN}</th><th>${PCT_OF_NAV_COLUMN}</th><th>${DOLLAR_IMPACT_COLUMN}</th><th>${ANNOUNCED_COLUMN}</th><th>${RECORD_COLUMN}</th><th>${EX_COLUMN}</th></tr></thead>
         <tbody>${upcoming || `<tr><td colspan="7" class="muted">${escapeHtml(side.holdings.length ? UPCOMING_UNAVAILABLE_HEADLINE : EMPTY_BOOK_INVITE)}</td></tr>`}</tbody>
@@ -238,7 +245,7 @@ function distributionRowsHtml(rows: PortfolioCompareExportUpcoming[]): string {
       (row) => `
         <tr>
           <td class="mono">${escapeHtml(row.ticker)}</td>
-          <td class="num">${escapeHtml(upcomingDistributionAmount(row))}</td>
+          <td class="num">${escapeHtml(upcomingDistributionPerShareAmount(row))}</td>
           <td class="num">${escapeHtml(upcomingPctOfNavAmount(row))}</td>
           <td class="num">${escapeHtml(upcomingDollarImpactAmount(row))}</td>
           <td class="muted">${dateCell(row.announcedDate)}</td>

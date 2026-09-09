@@ -6,10 +6,13 @@ import { fileURLToPath } from "node:url";
 import type { FundEstimateView } from "../../data/types.ts";
 import type { CompareIllustration, ComparePeriodOut, CompareResponse } from "./compare-types.ts";
 import {
+  COMPARE_DEFAULT_COMBINE_STATE,
   COMPARE_DEFAULT_HOLDING_DOLLARS,
+  COMPARE_DEFAULT_TAX_RATES,
   COMPARE_SLOT_COUNT,
   compareTickersPath,
   buildCompareAnnualTable,
+  compareInputsMatch,
   compareSlotPlaceholder,
   emptyCompareSlots,
   filledCompareTickers,
@@ -18,9 +21,11 @@ import {
   parseCompareHoldingDollars,
   parseCompareQueryTickers,
   setCompareSlot,
+  taxRatesEqual,
   upcomingRowForCompareTicker,
   upcomingRowsFromCompareTickers,
 } from "./compare-workspace.ts";
+import { UI_DEFAULT_TAX_RATES } from "./types.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -178,6 +183,52 @@ describe("compare shared holding", () => {
   });
 });
 
+describe("compare shared tax rates", () => {
+  it("defaults to the locked Dollar Illustration top-bracket set", () => {
+    assert.deepEqual(COMPARE_DEFAULT_TAX_RATES, UI_DEFAULT_TAX_RATES);
+    assert.equal(COMPARE_DEFAULT_COMBINE_STATE, true);
+    assert.equal(UI_DEFAULT_TAX_RATES.ordinary_income, 0.37);
+    assert.equal(UI_DEFAULT_TAX_RATES.long_term_capital_gains, 0.2);
+    assert.equal(UI_DEFAULT_TAX_RATES.short_term_capital_gains, 0.37);
+    assert.equal(UI_DEFAULT_TAX_RATES.qualified_dividend, 0.2);
+    assert.equal(UI_DEFAULT_TAX_RATES.state, 0.05);
+    assert.equal(taxRatesEqual(COMPARE_DEFAULT_TAX_RATES, UI_DEFAULT_TAX_RATES), true);
+    assert.equal(
+      taxRatesEqual(COMPARE_DEFAULT_TAX_RATES, { ...UI_DEFAULT_TAX_RATES, state: 0 }),
+      false,
+    );
+  });
+
+  it("treats a rate or holding edit as a stale calendar-year fetch", () => {
+    const loaded = {
+      holdingDollars: 10_000,
+      taxRates: UI_DEFAULT_TAX_RATES,
+      combine: true,
+    };
+    assert.equal(
+      compareInputsMatch(loaded, 10_000, UI_DEFAULT_TAX_RATES, true),
+      true,
+    );
+    assert.equal(
+      compareInputsMatch(loaded, 25_000, UI_DEFAULT_TAX_RATES, true),
+      false,
+    );
+    assert.equal(
+      compareInputsMatch(
+        loaded,
+        10_000,
+        { ...UI_DEFAULT_TAX_RATES, ordinary_income: 0.24 },
+        true,
+      ),
+      false,
+    );
+    assert.equal(
+      compareInputsMatch(loaded, 10_000, UI_DEFAULT_TAX_RATES, false),
+      false,
+    );
+  });
+});
+
 describe("compare workspace slots (filled)", () => {
   it("clears a slot and drops it from the filled list", () => {
     const slots = setCompareSlot(padCompareSlots(["AMCPX", "AGTHX"]), 0, "");
@@ -288,6 +339,7 @@ describe("compare upcoming rows", () => {
     assert.equal(row.exDate, null);
     assert.equal(row.estimatedTax, null);
     assert.equal(row.distributionDollars, null);
+    assert.equal(row.distributionPerShare, null);
   });
 
   it("keeps unpaid announced catalog dates and live upcoming tax dollars", () => {
@@ -306,22 +358,22 @@ describe("compare upcoming rows", () => {
     assert.equal(row.estimatedTax, 185);
     assert.equal(row.recordDate, "2026-12-16");
     assert.equal(row.exDate, "2026-12-17");
+    assert.equal(row.distributionPerShare, 2.6);
     assert.equal(row.distributionDollars, null);
-    assert.equal(row.pctOfNav, null);
+    assert.ok(row.pctOfNav != null);
+    assert.equal(Number(row.pctOfNav?.toFixed(2)), 6.31);
     assert.equal(row.holdingDollars, null);
     assert.equal(row.navPerShare, 41.22);
   });
 
-  it("never copies catalog Dist $ / % of NAV as manager prelims", () => {
+  it("uses unpaid manager $/share only and never copies paid/final catalog amounts", () => {
     const source = readFileSync(join(here, "compare-workspace.ts"), "utf8");
-    assert.match(source, /distributionDollars:\s*null/);
-    assert.match(source, /pctOfNav:\s*null/);
-    assert.doesNotMatch(source, /distributionDollars:\s*fund\??\./);
-    assert.doesNotMatch(source, /pctOfNav:\s*fund\??\./);
+    assert.match(source, /catalogUpcoming && fund && Number.isFinite\(fund\.estimatedDistributionAmount\)/);
+    assert.match(source, /upcomingPctOfNavFromPerShare/);
+    assert.doesNotMatch(source, /estimatedDistributionPctNav/);
     assert.doesNotMatch(source, /ticker === ["'][A-Z0-9]+["']/);
     const stage = readFileSync(join(here, "publication-stage.ts"), "utf8");
     assert.doesNotMatch(stage, /ticker === ["'][A-Z0-9]+["']/);
-    assert.doesNotMatch(stage, /estimatedDistributionAmount/);
   });
 
   it("treats has_estimate-false finals as Undisclosed for every ticker, not only ABALX", () => {
@@ -345,13 +397,14 @@ describe("compare upcoming rows", () => {
       });
       assert.equal(row.available, false, ticker);
       assert.equal(row.distributionDollars, null, ticker);
+      assert.equal(row.distributionPerShare, null, ticker);
       assert.equal(row.pctOfNav, null, ticker);
       assert.equal(row.estimatedTax, null, ticker);
       assert.equal(row.recordDate, null, ticker);
     }
   });
 
-  it("does not invent Dist $ or % of NAV from catalog prelims", () => {
+  it("computes Dist $ and % of NAV from unpaid $/share ÷ weekly NAV", () => {
     const row = upcomingRowForCompareTicker({
       ticker: "AMCPX",
       fund: view("AMCPX"),
@@ -365,15 +418,17 @@ describe("compare upcoming rows", () => {
       index: 0,
     });
     assert.equal(row.holdingDollars, 10_000);
-    assert.equal(row.distributionDollars, null);
-    assert.equal(row.pctOfNav, null);
+    assert.equal(row.distributionPerShare, 2.6);
     assert.equal(row.navPerShare, 41.22);
+    assert.ok(row.distributionDollars != null);
+    assert.equal(Math.round(row.distributionDollars ?? 0), Math.round(2.6 * (10_000 / 41.22)));
+    assert.equal(Number(row.pctOfNav?.toFixed(2)), 6.31);
     assert.equal(row.estimatedTax, 185);
   });
 });
 
 describe("Compare workspace Upcoming + NAV soft path", () => {
-  it("surfaces Dist $ / % NAV / $ impact columns and prompts for missing NAV", () => {
+  it("locks Upcoming / Announced six columns and prompts for missing NAV", () => {
     const workspace = readFileSync(
       join(here, "../../components/illustrate/CompareWorkspace.tsx"),
       "utf8",
@@ -396,13 +451,51 @@ describe("Compare workspace Upcoming + NAV soft path", () => {
     assert.match(table, /DIST_AMOUNT_COLUMN/);
     assert.match(table, /PCT_OF_NAV_COLUMN/);
     assert.match(table, /DOLLAR_IMPACT_COLUMN/);
-    assert.match(table, /DistributionDateStrip/);
-    assert.match(table, /showPayable=\{Boolean\(row\.payableDate\)\}/);
+    assert.match(table, /ANNOUNCED_COLUMN/);
+    assert.match(table, /RECORD_COLUMN/);
+    assert.match(table, /EX_COLUMN/);
+    assert.match(table, /taxRates/);
+    assert.match(table, /combineStateWithFederal/);
+    assert.doesNotMatch(table, /DistributionDateStrip/);
+    assert.doesNotMatch(table, /showPayable/);
     assert.match(panel, /illustrationRequestNav/);
     assert.match(panel, /perShareNavError/);
     assert.match(panel, /isMissingNavError/);
     assert.match(results, /% of NAV/);
     assert.match(results, /\$ impact/);
     assert.doesNotMatch(results, /compact\n\s+showPayable=\{Boolean\(component\.payable_date\)\}/);
+  });
+
+  it("wires editable Dollar Illustration rates into Compare fetches", () => {
+    const workspace = readFileSync(
+      join(here, "../../components/illustrate/CompareWorkspace.tsx"),
+      "utf8",
+    );
+    const fields = readFileSync(
+      join(here, "../../components/illustrate/TaxRateFields.tsx"),
+      "utf8",
+    );
+    const request = readFileSync(join(here, "compare-request.ts"), "utf8");
+    const load = readFileSync(join(here, "growth-tax-load.ts"), "utf8");
+    const growth = readFileSync(
+      join(here, "../../components/illustrate/GrowthAndTaxDragModule.tsx"),
+      "utf8",
+    );
+    assert.match(workspace, /TaxRateFields/);
+    assert.match(workspace, /COMPARE_DEFAULT_TAX_RATES/);
+    assert.match(workspace, /taxRates/);
+    assert.match(workspace, /combineStateWithFederal/);
+    assert.match(workspace, /<TaxRateFields[\s\S]*compact/);
+    assert.doesNotMatch(workspace, /tax_rates:\s*\{\}/);
+    assert.doesNotMatch(request, /tax_rates:\s*\{\}/);
+    assert.doesNotMatch(load, /tax_rates:\s*\{\}/);
+    assert.match(growth, /taxRates/);
+    assert.match(growth, /combineStateWithFederal/);
+    assert.match(fields, /Federal ordinary income/);
+    assert.match(fields, /Federal LTCG/);
+    assert.match(fields, /Federal STCG/);
+    assert.match(fields, /Qualified dividend \(QDI\)/);
+    assert.match(fields, /label="State"/);
+    assert.match(fields, /Combine state with federal \(effective rate = federal \+ state\)/);
   });
 });

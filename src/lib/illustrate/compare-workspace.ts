@@ -2,6 +2,11 @@ import type { FundEstimateView } from "../../data/types.ts";
 import { MAX_GROWTH_FUNDS } from "../charts/series-colors.ts";
 import { trailingCalendarPeriods } from "./compare-request.ts";
 import type { CompareIllustration, CompareResponse } from "./compare-types.ts";
+import { UI_DEFAULT_TAX_RATES, type TaxRates } from "./types.ts";
+import {
+  upcomingDistDollarsFromPerShare,
+  upcomingPctOfNavFromPerShare,
+} from "./portfolio-compare-copy.ts";
 import {
   publicationBucket,
   type UpcomingRow,
@@ -46,6 +51,35 @@ export function parseCompareHoldingDollars(
   const parsed = Number(String(raw).replace(/[$,\s]/g, ""));
   if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
   return Math.round(parsed * 100) / 100;
+}
+
+/** Locked Compare starting rates — same top-bracket set as Dollar Illustration. */
+export const COMPARE_DEFAULT_TAX_RATES: TaxRates = UI_DEFAULT_TAX_RATES;
+
+export const COMPARE_DEFAULT_COMBINE_STATE = true;
+
+export function taxRatesEqual(left: TaxRates, right: TaxRates): boolean {
+  return (
+    left.ordinary_income === right.ordinary_income &&
+    left.long_term_capital_gains === right.long_term_capital_gains &&
+    left.short_term_capital_gains === right.short_term_capital_gains &&
+    left.qualified_dividend === right.qualified_dividend &&
+    left.state === right.state
+  );
+}
+
+/** True when calendar-year / pair fetches still match the on-screen holding + rates. */
+export function compareInputsMatch(
+  loaded: { holdingDollars: number; taxRates: TaxRates; combine: boolean },
+  holdingDollars: number,
+  taxRates: TaxRates,
+  combine: boolean,
+): boolean {
+  return (
+    loaded.holdingDollars === holdingDollars &&
+    loaded.combine === combine &&
+    taxRatesEqual(loaded.taxRates, taxRates)
+  );
 }
 
 function normalizeTicker(value: string | null | undefined): string {
@@ -296,6 +330,7 @@ export function upcomingRowsFromCompareTickers(
     fund?: FundEstimateView | null;
     upcoming?: CompareUpcomingHint | null;
     holdingDollars?: number | null;
+    navPerShare?: number | null;
   }>,
 ): UpcomingRow[] {
   return loaded.map((item, index) =>
@@ -304,6 +339,7 @@ export function upcomingRowsFromCompareTickers(
       fund: item.fund,
       upcoming: item.upcoming,
       holdingDollars: item.holdingDollars,
+      navPerShare: item.navPerShare,
       index,
     }),
   );
@@ -315,6 +351,7 @@ export function upcomingRowForCompareTicker(input: {
   upcoming?: CompareUpcomingHint | null;
   index: number;
   holdingDollars?: number | null;
+  navPerShare?: number | null;
 }): UpcomingRow {
   const ticker = normalizeTicker(input.ticker) || input.ticker;
   const fund = input.fund ?? null;
@@ -325,6 +362,26 @@ export function upcomingRowForCompareTicker(input: {
     input.holdingDollars != null && input.holdingDollars > 0
       ? input.holdingDollars
       : null;
+  const nav =
+    input.navPerShare != null && input.navPerShare > 0
+      ? input.navPerShare
+      : fund != null && fund.nav > 0
+        ? fund.nav
+        : null;
+  // Manager unpaid prelim $/share only. Paid/final catalog amounts stay off Upcoming.
+  const perShare =
+    catalogUpcoming && fund && Number.isFinite(fund.estimatedDistributionAmount)
+      ? fund.estimatedDistributionAmount
+      : null;
+  const ordinaryPerShare =
+    catalogUpcoming && fund && Number.isFinite(fund.estimatedOrdinaryIncome)
+      ? fund.estimatedOrdinaryIncome
+      : null;
+  const capitalGainsPerShare =
+    catalogUpcoming && fund && Number.isFinite(fund.estimatedCapitalGains)
+      ? fund.estimatedCapitalGains
+      : null;
+  const distDollars = upcomingDistDollarsFromPerShare(perShare, holdingDollars, nav);
 
   return {
     key: `compare-${ticker}-${input.index}`,
@@ -332,14 +389,16 @@ export function upcomingRowForCompareTicker(input: {
     fundName: fund?.fundName || ticker,
     side: "current",
     sideLabel: "Compare",
-    // Compare API sends upcoming tax $, not Dist $. Never copy catalog
-    // estimatedDistributionAmount / % of NAV — any ticker, no allowlist.
-    distributionDollars: null,
+    distributionDollars: distDollars,
     distributionDollarsMin: null,
     distributionDollarsMax: null,
     holdingDollars,
-    pctOfNav: null,
-    navPerShare: fund != null && fund.nav > 0 ? fund.nav : null,
+    pctOfNav: upcomingPctOfNavFromPerShare(perShare, nav),
+    navPerShare: nav,
+    navAsOf: fund?.navAsOf ?? null,
+    distributionPerShare: perShare,
+    ordinaryPerShare,
+    capitalGainsPerShare,
     estimatedTax: announced ? (input.upcoming?.dollars ?? null) : null,
     asOf: catalogUpcoming ? fund?.asOfDate ?? null : input.upcoming?.asOf ?? null,
     announcedDate: catalogUpcoming

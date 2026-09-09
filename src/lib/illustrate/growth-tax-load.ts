@@ -3,12 +3,14 @@ import { yearEndGrowth } from "@/lib/charts/shared-axis";
 import { postIllustrateCompare } from "@/lib/illustrate/compare-client";
 import {
   compareSideFromFund,
+  compareTaxRequestFields,
   navFromFundMetadata,
   positiveNav,
   trailingCalendarPeriods,
   yoyTaxDragCompareRequest,
 } from "@/lib/illustrate/compare-request";
 import type { ComparePeriodIn, CompareRequest, CompareResponse } from "@/lib/illustrate/compare-types";
+import type { TaxRates } from "@/lib/illustrate/types";
 import {
   mapFundsWithOptionalPerformance,
   missingPerformanceTickers,
@@ -71,14 +73,25 @@ const defaultLoaders: GrowthTaxLoaders = {
   loadCompare: postIllustrateCompare,
 };
 
+export type GrowthTaxLoadOptions = {
+  loaders?: GrowthTaxLoaders;
+  taxRates?: TaxRates;
+  combineStateWithFederal?: boolean;
+};
+
 export async function loadGrowthAndTaxDrag(
   funds: GrowthFundInput[],
   principal: number,
   benchmark: string | null,
   periods: ComparePeriodIn[] | undefined,
   signal: AbortSignal,
-  loaders: GrowthTaxLoaders = defaultLoaders,
+  options: GrowthTaxLoadOptions = {},
 ): Promise<GrowthTaxLoadResult> {
+  const loaders = options.loaders ?? defaultLoaders;
+  const taxFields = compareTaxRequestFields({
+    taxRates: options.taxRates,
+    combineStateWithFederal: options.combineStateWithFederal,
+  });
   const mapped = await mapFundsWithOptionalPerformance(funds, async (input) => {
     const ticker = input.ticker.trim().toUpperCase();
     const usePost = principal !== DEFAULT_START_DOLLARS;
@@ -130,7 +143,7 @@ export async function loadGrowthAndTaxDrag(
         {
           mode: "fund_vs_fund",
           holding_dollars: principal,
-          combine_state_with_federal: true,
+          ...taxFields,
           latest_as_of_only: true,
           ...(left.nav != null ? { nav_per_share: left.nav } : {}),
           left: {
@@ -156,7 +169,6 @@ export async function loadGrowthAndTaxDrag(
             holding_dollars: principal,
           },
           periods: usablePeriods,
-          tax_rates: {},
         },
         { signal },
       );
@@ -182,6 +194,8 @@ export async function loadGrowthAndTaxDrag(
               holdingDollars: principal,
               navPerShare: row.nav,
               periods: usablePeriods,
+              taxRates: taxFields.tax_rates,
+              combineStateWithFederal: taxFields.combine_state_with_federal,
             }),
             { signal },
           );

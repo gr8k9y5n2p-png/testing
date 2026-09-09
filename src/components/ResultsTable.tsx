@@ -120,7 +120,7 @@ export function ResultsTable({
   return (
     <div className="space-y-6">
       <FundSection
-        title="Upcoming / announced"
+        title="Upcoming / Announced"
         description="Announced distributions that have not paid out yet. Past record/ex/payable dates stay in history below."
         kicker="unpaid announced · not paid history"
         wellClassName="bg-surface"

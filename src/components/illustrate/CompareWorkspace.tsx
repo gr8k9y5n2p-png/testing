@@ -9,12 +9,14 @@ import {
 } from "@/components/illustrate/GrowthAndTaxDragModule";
 import { TickerField } from "@/components/illustrate/portfolio-compare/TickerField";
 import { NeedFundPricePrompt } from "@/components/illustrate/NeedFundPricePrompt";
+import { TaxRateFields } from "@/components/illustrate/TaxRateFields";
 import { UpcomingTable } from "@/components/illustrate/portfolio-compare/UpcomingTable";
 import { NoticeToast, useNoticeToast } from "@/components/NoticeToast";
 import { postIllustrateCompare } from "@/lib/illustrate/compare-client";
 import { toTaxDeltaCardModel } from "@/lib/illustrate/compare-map";
 import {
   compareSideFromFund,
+  compareTaxRequestFields,
   trailingCalendarPeriods,
   yoyTaxDragCompareRequest,
 } from "@/lib/illustrate/compare-request";
@@ -25,10 +27,13 @@ import {
   reservedDeltaStrip,
 } from "@/lib/illustrate/compare-delta-strip";
 import {
+  COMPARE_DEFAULT_COMBINE_STATE,
   COMPARE_DEFAULT_HOLDING_DOLLARS,
+  COMPARE_DEFAULT_TAX_RATES,
   COMPARE_SLOT_COUNT,
   buildCompareAnnualTable,
   compareHistoryYears,
+  compareInputsMatch,
   compareSlotPlaceholder,
   filledCompareTickers,
   growthFundsFromSlots,
@@ -40,6 +45,7 @@ import {
 import { resolveFundView } from "@/lib/illustrate/fund-history";
 import { isMissingNavError } from "@/lib/illustrate/illustrate-error";
 import { toUpcomingSummary } from "@/lib/illustrate/tax-drag-chart";
+import type { TaxRates } from "@/lib/illustrate/types";
 import type { PortfolioFundOption } from "@/lib/illustrate/portfolio-compare-types";
 
 type LoadedTicker = {
@@ -64,6 +70,8 @@ export function CompareWorkspace({
   const [holdingDraft, setHoldingDraft] = useState(() =>
     formatHoldingInput(COMPARE_DEFAULT_HOLDING_DOLLARS),
   );
+  const [taxRates, setTaxRates] = useState<TaxRates>(COMPARE_DEFAULT_TAX_RATES);
+  const [combineState, setCombineState] = useState(COMPARE_DEFAULT_COMBINE_STATE);
   const catalog = useMemo<PortfolioFundOption[]>(
     () =>
       funds.map((fund) => ({
@@ -81,13 +89,22 @@ export function CompareWorkspace({
   const filledKey = filledCompareTickers(slots).join(",");
   const [loaded, setLoaded] = useState<{
     holdingDollars: number;
+    taxRates: TaxRates;
+    combine: boolean;
     rows: LoadedTicker[];
-  }>({ holdingDollars: COMPARE_DEFAULT_HOLDING_DOLLARS, rows: [] });
+  }>({
+    holdingDollars: COMPARE_DEFAULT_HOLDING_DOLLARS,
+    taxRates: COMPARE_DEFAULT_TAX_RATES,
+    combine: COMPARE_DEFAULT_COMBINE_STATE,
+    rows: [],
+  });
   const [historyError, setHistoryError] = useState<string | null>(null);
   const [navOverrides, setNavOverrides] = useState<Record<string, number>>({});
   const [navNeededTickers, setNavNeededTickers] = useState<string[]>([]);
   const [pairMetrics, setPairMetrics] = useState<{
     holdingDollars: number;
+    taxRates: TaxRates;
+    combine: boolean;
     metrics: ReturnType<typeof toTaxDeltaCardModel>["metrics"];
   } | null>(null);
 
@@ -99,69 +116,77 @@ export function CompareWorkspace({
 
     const controller = new AbortController();
     const periods = trailingCalendarPeriods();
-
-    void Promise.all(
-      tickers.map(async (ticker) => {
-        const fund = resolveFundView(funds, ticker) ?? null;
-        try {
-          const tax = await postIllustrateCompare(
-            yoyTaxDragCompareRequest({
+    const timer = window.setTimeout(() => {
+      void Promise.all(
+        tickers.map(async (ticker) => {
+          const fund = resolveFundView(funds, ticker) ?? null;
+          try {
+            const tax = await postIllustrateCompare(
+              yoyTaxDragCompareRequest({
+                ticker,
+                label: ticker,
+                fundIdentifier: fund?.ticker ?? ticker,
+                fundFamily: fund?.family,
+                fundName: fund?.fundName,
+                holdingDollars,
+                navPerShare:
+                  navOverrides[ticker] ??
+                  (fund && fund.nav > 0 ? fund.nav : undefined),
+                periods,
+                taxRates,
+                combineStateWithFederal: combineState,
+              }),
+              { signal: controller.signal },
+            );
+            return { ticker, fund, tax, needsNav: false };
+          } catch (caught) {
+            if (caught instanceof DOMException && caught.name === "AbortError") {
+              throw caught;
+            }
+            return {
               ticker,
-              label: ticker,
-              fundIdentifier: fund?.ticker ?? ticker,
-              fundFamily: fund?.family,
-              fundName: fund?.fundName,
-              holdingDollars,
-              navPerShare:
-                navOverrides[ticker] ??
-                (fund && fund.nav > 0 ? fund.nav : undefined),
-              periods,
-            }),
-            { signal: controller.signal },
-          );
-          return { ticker, fund, tax, needsNav: false };
-        } catch (caught) {
-          if (caught instanceof DOMException && caught.name === "AbortError") {
-            throw caught;
+              fund,
+              tax: null,
+              needsNav: isMissingNavError(caught),
+            };
           }
-          return {
-            ticker,
-            fund,
-            tax: null,
-            needsNav: isMissingNavError(caught),
-          };
-        }
-      }),
-    )
-      .then((rows) => {
-        setLoaded({ holdingDollars, rows });
-        setNavNeededTickers(
-          rows.filter((row) => row.needsNav).map((row) => row.ticker),
-        );
-        setHistoryError(
-          rows.every((row) => row.tax == null) &&
-            !rows.some((row) => row.needsNav)
-            ? "Calendar-year history is unavailable for these tickers."
-            : null,
-        );
-      })
-      .catch((caught: unknown) => {
-        if (caught instanceof DOMException && caught.name === "AbortError") return;
-        setLoaded({
-          holdingDollars,
-          rows: tickers.map((ticker) => ({
-            ticker,
-            fund: resolveFundView(funds, ticker) ?? null,
-            tax: null,
-          })),
+        }),
+      )
+        .then((rows) => {
+          setLoaded({ holdingDollars, taxRates, combine: combineState, rows });
+          setNavNeededTickers(
+            rows.filter((row) => row.needsNav).map((row) => row.ticker),
+          );
+          setHistoryError(
+            rows.every((row) => row.tax == null) &&
+              !rows.some((row) => row.needsNav)
+              ? "Calendar-year history is unavailable for these tickers."
+              : null,
+          );
+        })
+        .catch((caught: unknown) => {
+          if (caught instanceof DOMException && caught.name === "AbortError") return;
+          setLoaded({
+            holdingDollars,
+            taxRates,
+            combine: combineState,
+            rows: tickers.map((ticker) => ({
+              ticker,
+              fund: resolveFundView(funds, ticker) ?? null,
+              tax: null,
+            })),
+          });
+          setHistoryError(
+            caught instanceof Error ? caught.message : "Calendar-year history failed",
+          );
         });
-        setHistoryError(
-          caught instanceof Error ? caught.message : "Calendar-year history failed",
-        );
-      });
+    }, 250);
 
-    return () => controller.abort();
-  }, [filledKey, funds, holdingDollars, navOverrides]);
+    return () => {
+      controller.abort();
+      window.clearTimeout(timer);
+    };
+  }, [filledKey, funds, holdingDollars, navOverrides, taxRates, combineState]);
 
   useEffect(() => {
     const tickers = filledKey ? filledKey.split(",") : [];
@@ -172,53 +197,67 @@ export function CompareWorkspace({
     const leftFund = resolveFundView(funds, leftTicker);
     const rightFund = resolveFundView(funds, rightTicker);
     const controller = new AbortController();
-    void postIllustrateCompare(
-      {
-        mode: "fund_vs_fund",
-        holding_dollars: holdingDollars,
-        combine_state_with_federal: true,
-        latest_as_of_only: true,
-        left: compareSideFromFund({
-          ticker: leftTicker,
-          fundName: leftFund?.fundName,
-          family: leftFund?.family,
-          nav: navOverrides[leftTicker] ?? leftFund?.nav,
-          fundIdentifier: leftFund?.ticker ?? leftTicker,
-        }),
-        right: compareSideFromFund({
-          ticker: rightTicker,
-          fundName: rightFund?.fundName,
-          family: rightFund?.family,
-          nav: navOverrides[rightTicker] ?? rightFund?.nav,
-          fundIdentifier: rightFund?.ticker ?? rightTicker,
-        }),
-        periods: trailingCalendarPeriods(),
-        tax_rates: {},
-      },
-      { signal: controller.signal },
-    )
-      .then((payload) => {
-        setPairMetrics({
-          holdingDollars,
-          metrics: toTaxDeltaCardModel(payload, undefined, { holdingDollars }).metrics,
+    const timer = window.setTimeout(() => {
+      void postIllustrateCompare(
+        {
+          mode: "fund_vs_fund",
+          holding_dollars: holdingDollars,
+          ...compareTaxRequestFields({
+            taxRates,
+            combineStateWithFederal: combineState,
+          }),
+          latest_as_of_only: true,
+          left: compareSideFromFund({
+            ticker: leftTicker,
+            fundName: leftFund?.fundName,
+            family: leftFund?.family,
+            nav: navOverrides[leftTicker] ?? leftFund?.nav,
+            fundIdentifier: leftFund?.ticker ?? leftTicker,
+          }),
+          right: compareSideFromFund({
+            ticker: rightTicker,
+            fundName: rightFund?.fundName,
+            family: rightFund?.family,
+            nav: navOverrides[rightTicker] ?? rightFund?.nav,
+            fundIdentifier: rightFund?.ticker ?? rightTicker,
+          }),
+          periods: trailingCalendarPeriods(),
+        },
+        { signal: controller.signal },
+      )
+        .then((payload) => {
+          setPairMetrics({
+            holdingDollars,
+            taxRates,
+            combine: combineState,
+            metrics: toTaxDeltaCardModel(payload, undefined, { holdingDollars }).metrics,
+          });
+        })
+        .catch((caught: unknown) => {
+          if (caught instanceof DOMException && caught.name === "AbortError") return;
+          if (isMissingNavError(caught)) {
+            setNavNeededTickers((current) =>
+              Array.from(new Set([...current, leftTicker, rightTicker])),
+            );
+          }
+          setPairMetrics(null);
         });
-      })
-      .catch((caught: unknown) => {
-        if (caught instanceof DOMException && caught.name === "AbortError") return;
-        if (isMissingNavError(caught)) {
-          setNavNeededTickers((current) =>
-            Array.from(new Set([...current, leftTicker, rightTicker])),
-          );
-        }
-        setPairMetrics(null);
-      });
-    return () => controller.abort();
-  }, [filledKey, funds, holdingDollars, navOverrides]);
+    }, 250);
+    return () => {
+      controller.abort();
+      window.clearTimeout(timer);
+    };
+  }, [filledKey, funds, holdingDollars, navOverrides, taxRates, combineState]);
 
-  const historyMatchesHolding = loaded.holdingDollars === holdingDollars;
+  const historyMatchesInputs = compareInputsMatch(
+    loaded,
+    holdingDollars,
+    taxRates,
+    combineState,
+  );
   const activeLoaded = useMemo(
-    () => (filledKey && historyMatchesHolding ? loaded.rows : []),
-    [filledKey, historyMatchesHolding, loaded.rows],
+    () => (filledKey && historyMatchesInputs ? loaded.rows : []),
+    [filledKey, historyMatchesInputs, loaded.rows],
   );
   const annualModel = useMemo(
     () => buildCompareAnnualTable(activeLoaded, compareHistoryYears()),
@@ -231,17 +270,24 @@ export function CompareWorkspace({
           ticker: item.ticker,
           fund: item.fund,
           holdingDollars,
+          navPerShare:
+            navOverrides[item.ticker] ??
+            (item.fund && item.fund.nav > 0 ? item.fund.nav : null),
           upcoming: item.tax
             ? toUpcomingSummary(item.tax.summary.upcoming_taxable_distribution, "left")
             : null,
         })),
       ),
-    [activeLoaded, holdingDollars],
+    [activeLoaded, holdingDollars, navOverrides],
   );
   const activeHistoryError = filledKey ? historyError : null;
   const pairReady = filledKey.split(",").filter(Boolean).length >= 2;
   const stripItems = useMemo(() => {
-    if (pairReady && pairMetrics && pairMetrics.holdingDollars === holdingDollars) {
+    if (
+      pairReady &&
+      pairMetrics &&
+      compareInputsMatch(pairMetrics, holdingDollars, taxRates, combineState)
+    ) {
       return deltaStripFromPairMetrics(pairMetrics.metrics, holdingDollars);
     }
     if (activeLoaded.length === 1) {
@@ -256,7 +302,7 @@ export function CompareWorkspace({
       );
     }
     return reservedDeltaStrip(holdingDollars);
-  }, [activeLoaded, holdingDollars, pairMetrics, pairReady]);
+  }, [activeLoaded, combineState, holdingDollars, pairMetrics, pairReady, taxRates]);
 
   function commitHolding(raw: string) {
     const next = parseCompareHoldingDollars(raw, holdingDollars);
@@ -279,8 +325,9 @@ export function CompareWorkspace({
             Start with one ticker — growth, calendar-year history, and upcoming all
             populate for that fund. Each additional filled slot (up to{" "}
             {COMPARE_SLOT_COUNT}) joins every module. Empty slots are ignored.
-            Dollars invested is shared — one holding for growth, tax $, history,
-            delta, and upcoming. Upcoming is never filled from paid history.
+            Dollars invested and tax rates are shared — Tax $ and tax-drag
+            recompute from the same holding and rates. Upcoming is never filled
+            from paid history.
           </p>
         </div>
         <label className="block shrink-0">
@@ -337,6 +384,16 @@ export function CompareWorkspace({
         })}
       </div>
 
+      <div className="mt-4 rounded-xl border border-line bg-paper/50 px-3 py-3 sm:px-4">
+        <TaxRateFields
+          compact
+          rates={taxRates}
+          combine={combineState}
+          onRatesChange={setTaxRates}
+          onCombineChange={setCombineState}
+        />
+      </div>
+
       <div className="mt-8 w-full">
         <CompareDeltaStrip items={stripItems} />
       </div>
@@ -354,6 +411,8 @@ export function CompareWorkspace({
           allowAddFund={false}
           editablePrincipal={false}
           startDollars={holdingDollars}
+          taxRates={taxRates}
+          combineStateWithFederal={combineState}
         />
       </section>
 
@@ -363,7 +422,7 @@ export function CompareWorkspace({
         ) : null}
         <CompareAnnualTable
           model={annualModel}
-          loading={Boolean(filledKey) && (!historyMatchesHolding || loaded.rows.length === 0)}
+          loading={Boolean(filledKey) && (!historyMatchesInputs || loaded.rows.length === 0)}
         />
       </div>
 
@@ -388,6 +447,8 @@ export function CompareWorkspace({
         <UpcomingTable
           rows={upcomingRows}
           headingId="compare-upcoming"
+          taxRates={taxRates}
+          combineStateWithFederal={combineState}
         />
       </div>
       <NoticeToast message={notice} onDismiss={dismissNotice} />

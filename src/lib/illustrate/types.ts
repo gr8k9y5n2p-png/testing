@@ -122,7 +122,7 @@ export {
   NEED_FUND_PRICE_COPY,
   NAV_OR_SHARES_REQUIRED_DETAIL,
   isMissingNavError,
-} from "./illustrate-error";
+} from "./illustrate-error.ts";
 
 /**
  * estimate_type → TaxRates key (locked mapping).

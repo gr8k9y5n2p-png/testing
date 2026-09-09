@@ -25,6 +25,7 @@ import {
   type LoadedGrowthFund,
 } from "@/lib/illustrate/growth-tax-load";
 import { type TaxDragMetric } from "@/lib/illustrate/tax-drag-chart";
+import { UI_DEFAULT_TAX_RATES, type TaxRates } from "@/lib/illustrate/types";
 import {
   PERFORMANCE_UNAVAILABLE_HINT,
   PERFORMANCE_UNAVAILABLE_LABEL,
@@ -48,6 +49,9 @@ export type GrowthAndTaxDragModuleProps = {
   editablePrincipal?: boolean;
   /** Compare slots: replace the series when seedFunds change. */
   lockToSeed?: boolean;
+  /** Compare / illustration rates. Defaults to locked top-bracket UI set. */
+  taxRates?: TaxRates;
+  combineStateWithFederal?: boolean;
 };
 
 const SKETCH_DISCLAIMER =
@@ -64,6 +68,8 @@ export function GrowthAndTaxDragModule({
   allowAddFund = true,
   editablePrincipal = true,
   lockToSeed = false,
+  taxRates = UI_DEFAULT_TAX_RATES,
+  combineStateWithFederal = true,
 }: GrowthAndTaxDragModuleProps) {
   const [selected, setSelected] = useState<GrowthFundInput[]>(() =>
     funds.slice(0, MAX_GROWTH_FUNDS),
@@ -84,6 +90,8 @@ export function GrowthAndTaxDragModule({
     principal,
     benchmark: benchmark ?? null,
     periods: periods ?? null,
+    taxRates,
+    combineStateWithFederal,
   });
   const fetchKey = `${requestKey}:${retry}`;
   const loading = selected.length > 0 && settledKey !== fetchKey;
@@ -98,7 +106,6 @@ export function GrowthAndTaxDragModule({
     }
     if (seeds.length === 0) return;
     // Homepage remounts pass a new funds[] seed; merge without dropping user adds.
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- sync selected to funds prop
     setSelected((current) => mergeSeedFunds(current, seeds));
   }, [seedKey, lockToSeed]);
 
@@ -115,6 +122,8 @@ export function GrowthAndTaxDragModule({
       funds: GrowthFundInput[];
       principal: number;
       benchmark: string | null;
+      taxRates: TaxRates;
+      combineStateWithFederal: boolean;
     };
 
     if (next.funds.length === 0) {
@@ -126,24 +135,39 @@ export function GrowthAndTaxDragModule({
       return;
     }
 
-    void loadGrowthAndTaxDrag(next.funds, next.principal, next.benchmark, periods, controller.signal)
-      .then((loaded) => {
-        setRows(loaded.rows);
-        setMissingTickers(loaded.missingTickers);
-        setError(null);
-        setSettledKey(fetchKey);
-      })
-      .catch((caught: unknown) => {
-        if (caught instanceof DOMException && caught.name === "AbortError") return;
-        // Keep last rows so tax-drag / historical bars are not blanked.
-        setMissingTickers(
-          next.funds.map((fund) => fund.ticker.trim().toUpperCase()).filter(Boolean),
-        );
-        setError(caught instanceof Error ? caught.message : "Growth chart failed");
-        setSettledKey(fetchKey);
-      });
+    const timer = window.setTimeout(() => {
+      void loadGrowthAndTaxDrag(
+        next.funds,
+        next.principal,
+        next.benchmark,
+        periods,
+        controller.signal,
+        {
+          taxRates: next.taxRates,
+          combineStateWithFederal: next.combineStateWithFederal,
+        },
+      )
+        .then((loaded) => {
+          setRows(loaded.rows);
+          setMissingTickers(loaded.missingTickers);
+          setError(null);
+          setSettledKey(fetchKey);
+        })
+        .catch((caught: unknown) => {
+          if (caught instanceof DOMException && caught.name === "AbortError") return;
+          // Keep last rows so tax-drag / historical bars are not blanked.
+          setMissingTickers(
+            next.funds.map((fund) => fund.ticker.trim().toUpperCase()).filter(Boolean),
+          );
+          setError(caught instanceof Error ? caught.message : "Growth chart failed");
+          setSettledKey(fetchKey);
+        });
+    }, 250);
 
-    return () => controller.abort();
+    return () => {
+      controller.abort();
+      window.clearTimeout(timer);
+    };
   }, [requestKey, fetchKey, periods]);
 
   const years = useMemo(

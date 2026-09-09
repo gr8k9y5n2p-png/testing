@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import {
   compareSelectorsFromFund,
   compareSideFromFund,
+  compareTaxRequestFields,
   illustrationRequestNav,
   navFromFundMetadata,
   PER_SHARE_NAV_REQUIRED,
@@ -16,6 +17,7 @@ import {
   withPortfolioHoldingNav,
   yoyTaxDragCompareRequest,
 } from "./compare-request.ts";
+import { UI_DEFAULT_TAX_RATES } from "./types.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -275,10 +277,45 @@ describe("compare-request NAV / Data body", () => {
     assert.equal(body.selectors?.fund_name, undefined);
     assert.equal(body.left?.selectors?.fund_name, undefined);
     assert.equal(body.nav_per_share, 41.22);
+    assert.deepEqual(request.tax_rates, UI_DEFAULT_TAX_RATES);
+    assert.equal(request.combine_state_with_federal, true);
     assert.deepEqual(
       body.periods?.map((period) => period.year),
       years,
     );
+  });
+
+  it("defaults compare tax fields to the locked top-bracket UI set", () => {
+    assert.deepEqual(compareTaxRequestFields(), {
+      tax_rates: UI_DEFAULT_TAX_RATES,
+      combine_state_with_federal: true,
+    });
+    assert.equal(UI_DEFAULT_TAX_RATES.ordinary_income, 0.37);
+    assert.equal(UI_DEFAULT_TAX_RATES.long_term_capital_gains, 0.2);
+    assert.equal(UI_DEFAULT_TAX_RATES.short_term_capital_gains, 0.37);
+    assert.equal(UI_DEFAULT_TAX_RATES.qualified_dividend, 0.2);
+    assert.equal(UI_DEFAULT_TAX_RATES.state, 0.05);
+  });
+
+  it("includes edited tax rates on YoY compare requests", () => {
+    const taxRates = {
+      ...UI_DEFAULT_TAX_RATES,
+      ordinary_income: 0.24,
+      state: 0.1,
+    };
+    const request = yoyTaxDragCompareRequest({
+      ticker: "ABALX",
+      holdingDollars: 25_000,
+      periods: [{ year: 2025 }],
+      taxRates,
+      combineStateWithFederal: false,
+    });
+    assert.deepEqual(request.tax_rates, taxRates);
+    assert.equal(request.combine_state_with_federal, false);
+    assert.notDeepEqual(request.tax_rates, {});
+    const body = toDataApiCompareBody(request);
+    assert.deepEqual(body.tax_rates, taxRates);
+    assert.equal(body.combine_state_with_federal, false);
   });
 
   it("builds an AGTHX YoY body with a real fund_name and NAV", () => {

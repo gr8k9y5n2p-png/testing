@@ -52,8 +52,10 @@ export interface FundEstimate {
   family: string;
   category: string;
   shareClass: string;
-  /** Latest reported NAV used for the % of NAV estimate. */
+  /** Latest reported / weekly NAV (`nav_per_share` from Data when live). */
   nav: number;
+  /** `nav_as_of` from Data #74. Soft-null when weekly NAV is absent. */
+  navAsOf?: string | null;
   /** Combined estimated taxable distribution, $ per share. */
   estimatedDistributionAmount: number;
   /** Ordinary income / dividend portion, $ per share. */

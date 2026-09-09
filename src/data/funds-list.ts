@@ -13,7 +13,17 @@ export type FundsApiItem = {
   category?: string | null;
   cusip?: string | null;
   share_class?: string | null;
+  /** Weekly NAV from Data #74. Soft-null when absent. */
+  nav_per_share?: number | string | null;
+  nav?: number | string | null;
+  nav_as_of?: string | null;
 };
+
+function positiveNav(value: unknown): number | undefined {
+  if (value == null || value === "") return undefined;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
+}
 
 export function mapFundsApiItem(row: FundsApiItem): FundEstimateView {
   const ticker = (row.ticker ?? "").trim().toUpperCase();
@@ -31,7 +41,8 @@ export function mapFundsApiItem(row: FundsApiItem): FundEstimateView {
     family: (row.fund_family ?? row.family ?? "—").trim() || "—",
     category: (row.category ?? "—").trim() || "—",
     shareClass: row.share_class ?? "",
-    nav: 0,
+    nav: positiveNav(row.nav_per_share) ?? positiveNav(row.nav) ?? 0,
+    navAsOf: row.nav_as_of?.slice(0, 10) || null,
     estimatedDistributionAmount: 0,
     estimatedOrdinaryIncome: 0,
     estimatedCapitalGains: 0,
