@@ -36,7 +36,8 @@ class CatalystSource(HtmlTableSource):
     live_limitations = (
         "Family book is PDF. Weekly walk uses the homepage product list, "
         "literature hub (SPA / admin-ajax Other/Misc), catalyst-fund-data.js, "
-        "and the 2025 annual CG PDF. Empty/PDF-bytes/403 pages are no-op success. "
+        "and the 2025 annual CG PDF. Ingest User-Agent GETs 403 this session; "
+        "empty/PDF-bytes/403 pages are no-op success (fixture fallback). "
         "2024–2026 estimate / ICI sibling URLs 404. Do not invent amounts from "
         "the advisor-guide date schedule or all-dash PDF rows."
     )
