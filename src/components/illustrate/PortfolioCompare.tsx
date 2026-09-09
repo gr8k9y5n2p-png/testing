@@ -19,7 +19,10 @@ import {
   smokeProposedHoldings,
 } from "@/lib/illustrate/portfolio-compare-catalog";
 import { postIllustratePortfolioCompare } from "@/lib/illustrate/portfolio-compare-client";
-import { upcomingHoldingsForSide } from "@/lib/illustrate/portfolio-compare-map";
+import {
+  upcomingHoldingsForSide,
+  withUpcomingNav,
+} from "@/lib/illustrate/portfolio-compare-map";
 import type {
   AllocationUnit,
   PortfolioCompareResponse,
@@ -191,11 +194,16 @@ export function PortfolioCompare({
     };
   }, [canFetch, requestKey]);
 
+  const navByTicker = Object.fromEntries(
+    [...current, ...proposed]
+      .filter((holding) => holding.ticker.trim() && holding.nav != null && holding.nav > 0)
+      .map((holding) => [holding.ticker.trim().toUpperCase(), holding.nav]),
+  );
   const currentUpcomingHoldings = result
-    ? upcomingHoldingsForSide(result.current, "current")
+    ? withUpcomingNav(upcomingHoldingsForSide(result.current, "current"), navByTicker)
     : [];
   const proposedUpcomingHoldings = result
-    ? upcomingHoldingsForSide(result.proposed, "proposed")
+    ? withUpcomingNav(upcomingHoldingsForSide(result.proposed, "proposed"), navByTicker)
     : [];
   const yearTax = result ? calendarYearTaxTable(result) : null;
   const uniqueNavPrompt = navNeeded

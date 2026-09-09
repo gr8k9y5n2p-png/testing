@@ -191,6 +191,7 @@ function mockHoldingOut(
           ex_date: upcomingRow.ex_date,
           payable_date: upcomingRow.payable_date,
           publication_stage: upcomingRow.publication_stage,
+          percent_of_nav: dollars > 0 ? rate((dist / dollars) * 100) : null,
         }
       : null,
     paid_history: paidHistory,

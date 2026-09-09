@@ -307,6 +307,7 @@ describe("compare upcoming rows", () => {
     assert.equal(row.distributionDollars, null);
     assert.equal(row.pctOfNav, null);
     assert.equal(row.holdingDollars, null);
+    assert.equal(row.navPerShare, 41.22);
   });
 
   it("does not invent Dist $ or % of NAV from catalog prelims", () => {
@@ -325,6 +326,7 @@ describe("compare upcoming rows", () => {
     assert.equal(row.holdingDollars, 10_000);
     assert.equal(row.distributionDollars, null);
     assert.equal(row.pctOfNav, null);
+    assert.equal(row.navPerShare, 41.22);
     assert.equal(row.estimatedTax, 185);
   });
 });
@@ -356,7 +358,7 @@ describe("Compare workspace Upcoming + NAV soft path", () => {
     assert.match(table, /PCT_OF_NAV_COLUMN/);
     assert.match(table, /DOLLAR_IMPACT_COLUMN/);
     assert.match(table, /DistributionDateStrip/);
-    assert.match(table, /showPayable=\{false\}/);
+    assert.match(table, /showPayable=\{Boolean\(row\.payableDate\)\}/);
     assert.match(panel, /ENTER_NAV_COPY/);
     assert.match(panel, /isMissingNavError/);
     assert.match(results, /% of NAV/);

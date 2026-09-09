@@ -15,6 +15,7 @@ import {
   upcomingDollarImpactAmount,
   upcomingEstimatedTaxLine,
   upcomingPctOfNavAmount,
+  upcomingPerShareAmount,
   PAID_HISTORY_DETAIL,
   PAID_HISTORY_EMPTY,
   PAID_HISTORY_HEADING,
@@ -51,6 +52,8 @@ describe("PortfolioCompare upcoming module copy", () => {
   it("labels sell-before-record Upcoming without looking like $0", () => {
     assert.match(UPCOMING_MODULE_HEADING, /upcoming/i);
     assert.match(UPCOMING_MODULE_DETAIL, /sell before record/i);
+    assert.match(UPCOMING_MODULE_DETAIL, /all funds/i);
+    assert.match(UPCOMING_MODULE_DETAIL, /never invent/i);
     assert.doesNotMatch(UPCOMING_MODULE_DETAIL, /\$0|0\.00/);
     assert.notEqual(UPCOMING_MODULE_HEADING, PAID_HISTORY_HEADING);
     assert.equal(UPCOMING_AMOUNT_UNAVAILABLE, "Undisclosed");
@@ -99,6 +102,24 @@ describe("PortfolioCompare upcoming module copy", () => {
     assert.doesNotMatch(
       upcomingPctOfNavAmount({ available: false, pctOfNav: null }),
       /\$0|0\.00/,
+    );
+    assert.equal(
+      upcomingPerShareAmount({
+        available: true,
+        distributionDollars: 3200,
+        holdingDollars: 250_000,
+        navPerShare: 41.22,
+      }),
+      "$0.5276 / sh",
+    );
+    assert.equal(
+      upcomingPerShareAmount({
+        available: true,
+        distributionDollars: 3200,
+        holdingDollars: 250_000,
+        navPerShare: null,
+      }),
+      null,
     );
   });
 });

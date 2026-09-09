@@ -12,7 +12,8 @@ export const UPCOMING_AMOUNT_UNAVAILABLE = "Undisclosed";
 export const UPCOMING_UNAVAILABLE_DETAIL =
   "No unpaid announced estimates for these holdings.";
 export const UPCOMING_MODULE_HEADING = "Upcoming / announced";
-export const UPCOMING_MODULE_DETAIL = "sell before record · unpaid announced";
+export const UPCOMING_MODULE_DETAIL =
+  "sell before record · unpaid announced · all funds · never invent";
 /** Scannable Upcoming columns — Dist $, % of NAV, $ impact. */
 export const DIST_AMOUNT_COLUMN = "Dist $";
 export const PCT_OF_NAV_COLUMN = "% of NAV";
@@ -23,6 +24,27 @@ export const EX_COLUMN = "Ex";
 export const EST_DISTRIBUTION_LINE_LABEL = "Est. Distribution";
 export const ESTIMATED_TAX_LINE_LABEL = "Estimated Tax";
 export const PCT_OF_NAV_LINE_LABEL = "% of NAV";
+
+/** $ / share from Dist $ ÷ (holding ÷ NAV). Null when NAV is missing — never invent. */
+export function upcomingPerShareAmount(row: {
+  available: boolean;
+  distributionDollars: number | null;
+  holdingDollars: number | null;
+  navPerShare: number | null;
+}): string | null {
+  if (!row.available || row.distributionDollars == null) return null;
+  if (
+    row.navPerShare == null ||
+    !(row.navPerShare > 0) ||
+    row.holdingDollars == null ||
+    !(row.holdingDollars > 0)
+  ) {
+    return null;
+  }
+  const shares = row.holdingDollars / row.navPerShare;
+  if (!(shares > 0)) return null;
+  return `${formatUsd(row.distributionDollars / shares, 4)} / sh`;
+}
 
 /** Dist $ cell. Empty upcoming is undisclosed, never $0. */
 export function upcomingDistributionAmount(row: {

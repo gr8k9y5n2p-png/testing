@@ -152,12 +152,15 @@ function componentPctOfNav(
   component: IllustrationComponent,
   holdingDollars?: number | null,
 ): string {
+  if (component.amount_unit !== "percent_of_nav") {
+    return "Undisclosed";
+  }
   if (
     component.distribution_dollars == null ||
     holdingDollars == null ||
     !(holdingDollars > 0)
   ) {
-    return UPCOMING_UNAVAILABLE_HEADLINE;
+    return "Undisclosed";
   }
   return formatPct((component.distribution_dollars / holdingDollars) * 100);
 }

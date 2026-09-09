@@ -8,6 +8,7 @@ export {
   upcomingEstimatedTaxLine,
   upcomingPctOfNavAmount,
   upcomingPctOfNavLine,
+  upcomingPerShareAmount,
 } from "@/lib/illustrate/portfolio-compare-copy";
 
 export type { DistributionBucket, UpcomingRow } from "@/lib/illustrate/publication-stage";
@@ -30,6 +31,7 @@ export {
   upcomingHoldingsForSide,
   upcomingRowsForSide,
   utcToday,
+  withUpcomingNav,
 } from "@/lib/illustrate/publication-stage";
 
 export type TaxPolarity = "more" | "less" | "even";

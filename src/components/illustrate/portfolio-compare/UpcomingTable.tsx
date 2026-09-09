@@ -1,5 +1,6 @@
 import { DistributionDateStrip } from "@/components/DistributionDateStrip";
 import { TickerHistoryLink } from "@/components/illustrate/TickerHistoryLink";
+import { ENTER_NAV_COPY } from "@/lib/illustrate/illustrate-error";
 import {
   DIST_AMOUNT_COLUMN,
   DOLLAR_IMPACT_COLUMN,
@@ -12,6 +13,7 @@ import {
   upcomingDistributionAmount,
   upcomingDollarImpactAmount,
   upcomingPctOfNavAmount,
+  upcomingPerShareAmount,
 } from "@/lib/illustrate/portfolio-compare-copy";
 import type { UpcomingRow } from "@/lib/illustrate/portfolio-compare-map";
 
@@ -54,7 +56,7 @@ function TickerCell({ row }: { row: UpcomingRow }) {
           publicationStage: row.stage,
           bucket: "upcoming",
         }}
-        showPayable={false}
+        showPayable={Boolean(row.payableDate)}
         className="mt-1"
       />
     </div>
@@ -132,8 +134,13 @@ export function UpcomingTable({
             <tbody>
               {rows.map((row) => {
                 const dist = upcomingDistributionAmount(row);
+                const perShare = upcomingPerShareAmount(row);
                 const pct = upcomingPctOfNavAmount(row);
                 const impact = upcomingDollarImpactAmount(row);
+                const needNav =
+                  row.available &&
+                  row.distributionDollars != null &&
+                  perShare == null;
                 return (
                   <tr key={row.key} className="border-b border-line last:border-0">
                     <td className="py-2 pr-3 align-top">
@@ -144,6 +151,15 @@ export function UpcomingTable({
                         value={dist}
                         undisclosed={dist === UPCOMING_AMOUNT_UNAVAILABLE}
                       />
+                      {perShare ? (
+                        <span className="mt-0.5 block font-mono text-[11px] tabular-nums text-muted">
+                          {perShare}
+                        </span>
+                      ) : needNav ? (
+                        <span className="mt-0.5 block text-[10px] leading-snug text-muted">
+                          {ENTER_NAV_COPY}
+                        </span>
+                      ) : null}
                     </td>
                     <td className="px-2 py-2 align-top text-right">
                       <MetricCell
@@ -165,8 +181,9 @@ export function UpcomingTable({
         </div>
       </div>
       <p className="mt-2 text-[10px] text-faint">
-        every fund · Dist $, % of NAV, $ impact · empty upcoming is
-        undisclosed, not $0 · Announced / Record / Ex include year
+        every fund · Dist $ + $ / share · issuer % of NAV · $ impact ·
+        empty upcoming is undisclosed, not $0 · Announced / Record / Ex /
+        Payable include year
         {sideLabel ? ` · ${sideLabel}` : ""}
       </p>
     </section>

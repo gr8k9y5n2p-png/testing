@@ -777,6 +777,7 @@ describe("PortfolioCompare distribution tables", () => {
           publication_stage: "preliminary_estimate",
           distribution_dollars: 3200,
           estimated_tax: 1120,
+          percent_of_nav: 1.28,
           record_date: "2026-09-19",
           ex_date: "2026-09-20",
         },
@@ -911,7 +912,7 @@ describe("PortfolioCompare distribution tables", () => {
   });
 
   it("uses Data percent_of_nav and otherwise Dist $ / holding $", () => {
-    assert.equal(pctOfNavFromDist(3200, 250_000), 1.28);
+    assert.equal(pctOfNavFromDist(3200, 250_000), null);
     assert.equal(pctOfNavFromDist(3200, 250_000, 2.5), 2.5);
     assert.equal(pctOfNavFromDist(null, 250_000), null);
     assert.equal(pctOfNavFromDist(3200, null), null);

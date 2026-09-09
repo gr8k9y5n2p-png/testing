@@ -88,12 +88,15 @@ describe("portfolio compare periods wiring", () => {
     assert.match(table, /upcomingDistributionAmount/);
     assert.match(table, /upcomingPctOfNavAmount/);
     assert.match(table, /upcomingDollarImpactAmount/);
+    assert.match(table, /upcomingPerShareAmount/);
+    assert.match(table, /ENTER_NAV_COPY/);
     assert.match(table, /DIST_AMOUNT_COLUMN/);
     assert.match(table, /PCT_OF_NAV_COLUMN/);
     assert.match(table, /DOLLAR_IMPACT_COLUMN/);
     assert.match(table, /DistributionDateStrip/);
     assert.match(table, /announcedDate/);
-    assert.match(table, /Announced \/ Record \/ Ex include year/);
+    assert.match(table, /Announced \/ Record \/ Ex/);
+    assert.match(table, /Payable include year/);
     assert.doesNotMatch(table, /Est\. dist \$/);
     assert.doesNotMatch(table, /export function PaidHistoryTable/);
     assert.doesNotMatch(table, /Paid history/);

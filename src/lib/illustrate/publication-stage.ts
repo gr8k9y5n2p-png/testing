@@ -18,10 +18,12 @@ export type UpcomingRow = {
   /** Holding $ used to derive % of NAV. Null when unknown. */
   holdingDollars: number | null;
   /**
-   * Dist $ / holding $ × 100, or Data `percent_of_nav`.
-   * Null when either input is missing — never invent.
+   * Issuer-published % of NAV only (`percent_of_nav` from Data).
+   * Never derive from Dist $ / holding $ — that invents a rate.
    */
   pctOfNav: number | null;
+  /** Search/seed NAV when known. Used for $ / share presentation only. */
+  navPerShare: number | null;
   estimatedTax: number | null;
   asOf: string | null;
   announcedDate: string | null;
@@ -177,21 +179,17 @@ function hasDistributionSignal(row: PortfolioDistributionRow): boolean {
   );
 }
 
-/** % of NAV from Data, else Dist $ / holding $. Never invent a rate. */
+/**
+ * Issuer-published % of NAV only. Dist $ / holding $ is not a published rate —
+ * never invent % of NAV for any ticker.
+ */
 export function pctOfNavFromDist(
-  distributionDollars: number | null,
-  holdingDollars: number | null | undefined,
+  _distributionDollars: number | null,
+  _holdingDollars: number | null | undefined,
   explicit?: number | null,
 ): number | null {
   if (explicit != null && Number.isFinite(explicit)) return explicit;
-  if (
-    distributionDollars == null ||
-    holdingDollars == null ||
-    !(holdingDollars > 0)
-  ) {
-    return null;
-  }
-  return (distributionDollars / holdingDollars) * 100;
+  return null;
 }
 
 function coalesceUpcomingRows(
@@ -344,6 +342,7 @@ function toTableRow(
     distributionDollars: dist,
     holdingDollars,
     pctOfNav: pctOfNavFromDist(dist, holdingDollars, num(event.percent_of_nav)),
+    navPerShare: null,
     estimatedTax: num(event.estimated_tax),
     asOf: isoDate(event.as_of),
     announcedDate: announcedDateOf(event),
@@ -373,6 +372,7 @@ function undisclosedUpcomingRow(
     distributionDollars: null,
     holdingDollars: num(holding.holding_dollars),
     pctOfNav: null,
+    navPerShare: null,
     estimatedTax: null,
     asOf: null,
     announcedDate: null,
@@ -495,6 +495,25 @@ export function distributionHasPayable(rows: UpcomingRow[]): boolean {
  * Sum of unpaid announced tax. Null estimated_tax is skipped (not $0).
  * No upcoming rows → 0; the UI uses `hasUpcoming` so a miss is undisclosed.
  */
+/** Attach known NAV for $ / share. Never invent a price. */
+export function withUpcomingNav(
+  rows: UpcomingRow[],
+  navByTicker: Record<string, number | null | undefined> | Map<string, number | null | undefined>,
+): UpcomingRow[] {
+  const lookup =
+    navByTicker instanceof Map
+      ? navByTicker
+      : new Map(Object.entries(navByTicker));
+  return rows.map((row) => {
+    if (row.navPerShare != null && row.navPerShare > 0) return row;
+    const nav = lookup.get(row.ticker) ?? lookup.get(row.ticker.toUpperCase());
+    return {
+      ...row,
+      navPerShare: nav != null && nav > 0 ? nav : row.navPerShare,
+    };
+  });
+}
+
 export function totalUpcomingTax(
   allocation: PortfolioAllocationOut,
   today = utcToday(),
