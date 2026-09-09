@@ -8,9 +8,9 @@ import type { IllustrationComponent, IllustrationTotals } from "./types.ts";
 export type IllustrationFundGate = Pick<FundEstimate, "hasEstimate"> | null | undefined;
 
 /**
- * Dollar Illustration Upcoming = unpaid prelim/estimate components only.
- * `has_estimate: false` and `final` / paid YE rows stay Paid history.
- * Never treat holding-scaled illustration totals as Upcoming.
+ * Dollar Illustration Upcoming for every fund: unpaid prelim/estimate
+ * components only. `has_estimate: false` and `final` / paid YE rows stay
+ * Paid history. Never treat holding-scaled illustration totals as Upcoming.
  */
 export function illustrationComponentBucket(
   component: Pick<

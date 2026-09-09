@@ -156,7 +156,7 @@ test("final is paid history even when event dates are still ahead", () => {
   );
 });
 
-test("ABALX-style finals never become Upcoming from future YE dates or missing stages", () => {
+test("finals-only rows never become Upcoming for any fund (future YE dates or missing stages)", () => {
   assert.equal(
     distributionBucket(
       {

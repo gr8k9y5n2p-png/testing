@@ -114,8 +114,8 @@ export function mergeFundWithDistributions(
     };
   }
 
-  // Catalog `has_estimate: false` is unpaid Upcoming = none. Do not let
-  // paid/final YE rows or illustration math flip the fund into Upcoming.
+  // Every fund: catalog `has_estimate: false` means unpaid Upcoming = none.
+  // Do not let paid/final YE rows or illustration math flip any ticker.
   const hasUpcoming = fromDists.bucket === "upcoming" && fund.hasEstimate !== false;
   return {
     ...fund,

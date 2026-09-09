@@ -73,10 +73,11 @@ function isUnpaidPrelimStage(stage: string | null): boolean {
 }
 
 /**
- * Upcoming / Fund Manager Announced: unpaid preliminary_estimate or
- * updated_estimate only, and only when payable/ex/record are not already past.
- * `final` and `paid` are Paid history — never Upcoming, even with future
- * event dates or holding-scaled illustration dollars.
+ * Shared Upcoming / Fund Manager Estimated Distributions classifier for
+ * every fund (not ticker-specific). Upcoming = unpaid preliminary_estimate
+ * or updated_estimate only, and only when payable/ex/record are not already
+ * past. `final` and `paid` are Paid history — never Upcoming, even with
+ * future event dates or holding-scaled illustration dollars.
  * A future event date without a prelim/estimate stage does not invent Upcoming.
  * Identity / `latest_as_of`-only rows stay paid history.
  */
@@ -96,7 +97,11 @@ export function distributionBucket(
   return "paid";
 }
 
-/** Search / Sample Estimates Upcoming: unpaid announced only. */
+/**
+ * Universe Upcoming gate for Search Sample Estimates, fund detail, and badges.
+ * Every fund: `has_estimate: false` OR no unpaid prelim/estimate → not Upcoming.
+ * Never invent from paid/final history, illustration, or tax-on-holding math.
+ */
 export function isUpcomingFund<
   T extends { bucket: DistributionBucket; hasEstimate?: boolean },
 >(fund: T): boolean {

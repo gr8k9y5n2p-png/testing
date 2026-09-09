@@ -86,7 +86,7 @@ const ABALX_ILLUSTRATION: IllustrationComponent[] = [
 ];
 
 describe("Dollar Illustration Upcoming gate", () => {
-  it("keeps ABALX finals in paid history — no invented $15k Upcoming", () => {
+  it("keeps finals-only illustration (ABALX smoke fixture) out of Upcoming", () => {
     const fund = { hasEstimate: false as const };
     const { upcoming, paid } = splitIllustrationComponents(ABALX_ILLUSTRATION, fund);
     assert.equal(upcoming.length, 0);
