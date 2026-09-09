@@ -274,11 +274,30 @@ def test_full_book_artisan_ici_and_first_eagle() -> None:
     assert not any("New Germany" in name for name in dws_funds)
 
     catalyst_funds, catalyst_tickers = _funds_and_tickers(CatalystSource())
-    assert {"CPEAX", "CPEIX", "CLTAX", "CLTIX", "CAXIX", "CLPAX", "MLXAX", "CASIX", "SHIIX", "CWXIX"} <= catalyst_tickers
-    assert len(catalyst_tickers) == 24
+    assert {
+        "CPEAX",
+        "CPEIX",
+        "CLTAX",
+        "CLTIX",
+        "CAXIX",
+        "CLPAX",
+        "MLXAX",
+        "CASIX",
+        "SHIIX",
+        "CWXIX",
+        "MBXAX",
+        "MBXIX",
+        "EIXAX",
+        "ATRAX",
+        "CWEAX",
+        "SHIEX",
+        "CASAX",
+        "CWXAX",
+    } <= catalyst_tickers
+    assert len(catalyst_tickers) == 54
     assert "CSIOX" not in catalyst_tickers
-    assert "MBXIX" not in catalyst_tickers
-    assert "CWEIX" not in catalyst_tickers
+    assert "MBXFX" not in catalyst_tickers
+    assert "CFRFX" not in catalyst_tickers
 
 
 def test_full_book_ranks_41_plus_thin_family_harvest() -> None:

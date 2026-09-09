@@ -3746,7 +3746,74 @@ def test_catalyst_annual_distribution_fixtures() -> None:
         if r.ticker == "CASIX" and r.estimate_type == EstimateType.long_term_capital_gains
     )
     assert casix.amount == Decimal("0.2419")
+    mbxax_lt = next(
+        r
+        for r in catalyst
+        if r.ticker == "MBXAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert mbxax_lt.amount == Decimal("0.00")
+    eixax_lt = next(
+        r
+        for r in catalyst
+        if r.ticker == "EIXAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert eixax_lt.amount == Decimal("0.00")
+    atrax_lt = next(
+        r
+        for r in catalyst
+        if r.ticker == "ATRAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert atrax_lt.amount == Decimal("0.00")
+    cweax_lt = next(
+        r
+        for r in catalyst
+        if r.ticker == "CWEAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert cweax_lt.amount == Decimal("0.00")
+    shiex = next(
+        r
+        for r in catalyst
+        if r.ticker == "SHIEX" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert shiex.amount == Decimal("0.3004")
+    cwxax = next(
+        r
+        for r in catalyst
+        if r.ticker == "CWXAX" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert cwxax.amount == Decimal("0.2115")
     tickers = {r.ticker for r in catalyst if r.ticker}
-    assert len(tickers) == 24
-    assert {"CPEAX", "CPEIX", "CPECX", "CLTAX", "CLTIX", "CLTCX", "CAXAX", "CAXIX", "CAXCX"} <= tickers
-    assert not any(r.ticker in {"MBXIX", "EIXIX", "CSIOX", "CWEIX"} for r in catalyst)
+    assert len(tickers) == 54
+    assert {
+        "CPEAX",
+        "CPEIX",
+        "CPECX",
+        "CLTAX",
+        "CLTIX",
+        "CLTCX",
+        "CAXAX",
+        "CAXIX",
+        "CAXCX",
+        "MBXAX",
+        "MBXCX",
+        "MBXIX",
+        "EIXAX",
+        "EIXCX",
+        "EIXIX",
+        "ATRAX",
+        "CWEAX",
+        "SHIEX",
+        "CASAX",
+        "CWXAX",
+        "CLPAX",
+        "INSAX",
+        "IIXAX",
+        "CFRAX",
+        "TRXAX",
+        "HIIFX",
+        "TRIFX",
+    } <= tickers
+    assert not any(r.ticker in {"CSIOX", "MBXFX", "CFRFX"} for r in catalyst)
+    assert not any(
+        r.ticker == "MBXAX" and r.estimate_type == EstimateType.ordinary_income for r in catalyst
+    )
