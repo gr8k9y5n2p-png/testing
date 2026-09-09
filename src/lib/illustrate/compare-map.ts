@@ -9,6 +9,7 @@ import type {
   CompareSummary,
   CompareUpcomingDistribution,
 } from "@/lib/illustrate/compare-types";
+import { gateCompareUpcoming, sideIsAnnounced } from "@/lib/illustrate/upcoming-compare";
 import {
   comparePeriodIsCovered,
   toCompareTaxDragSeries,
@@ -150,7 +151,7 @@ export function upcomingSideStatus(
   dollars: number | null | undefined,
   stage?: string | null,
 ): UpcomingSideStatus {
-  if (dollars == null) {
+  if (!sideIsAnnounced(dollars, stage)) {
     return {
       dollars: null,
       display: "—",
@@ -163,8 +164,8 @@ export function upcomingSideStatus(
     ? stageKey.replace(/_/g, " ")
     : "announced";
   return {
-    dollars,
-    display: formatUsd(Math.round(dollars), 0),
+    dollars: dollars ?? null,
+    display: dollars != null ? formatUsd(Math.round(dollars), 0) : "—",
     statusLabel,
     announced: true,
   };
@@ -250,14 +251,14 @@ export function toTaxDeltaCardModel(
     displayHolding != null
       ? scaleNormalizedHoldingDollars(value, displayHolding, normalized)
       : value;
+  const gatedUpcoming = gateCompareUpcoming(
+    summary.upcoming_taxable_distribution,
+    response.periods,
+  );
   const upcoming =
     displayHolding != null
-      ? scaleUpcomingToHolding(
-          summary.upcoming_taxable_distribution,
-          displayHolding,
-          normalized,
-        )
-      : summary.upcoming_taxable_distribution;
+      ? scaleUpcomingToHolding(gatedUpcoming, displayHolding, normalized)
+      : gatedUpcoming;
   const tax = fundACost(scaleDollars(Number(summary.total_tax_difference ?? 0)), EVEN_DOLLARS);
   const drag = fundACost(
     Number(summary.annualized_tax_drag_delta ?? 0),

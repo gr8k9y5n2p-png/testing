@@ -162,6 +162,41 @@ describe("compare-request NAV / Data body", () => {
     );
   });
 
+  it("replaces a catalog AGTHX fund_name with the seed product name Data can AND", () => {
+    const names: Record<string, string> = {
+      AGTHX: "The Growth Fund of America",
+      AMCPX: "AMCAP Fund",
+    };
+    const nameLookup = (ticker: string) => names[ticker.toUpperCase()];
+    assert.equal(
+      withPortfolioHoldingNav(
+        { ticker: "AGTHX", fund_name: "American Funds Growth Fund of America" },
+        seedLookup,
+        nameLookup,
+      ).fund_name,
+      "The Growth Fund of America",
+    );
+    assert.equal(
+      withPortfolioHoldingNav(
+        { ticker: "AMCPX", fund_name: "AMCPX" },
+        seedLookup,
+        nameLookup,
+      ).fund_name,
+      "AMCAP Fund",
+    );
+    assert.equal(
+      withPortfolioHoldingNav({ ticker: "DODIX", fund_name: "DODIX" }, seedLookup).fund_name,
+      undefined,
+    );
+    assert.equal(
+      withPortfolioHoldingNav(
+        { ticker: "DODIX", fund_name: "Dodge & Cox Income Fund" },
+        seedLookup,
+      ).fund_name,
+      "Dodge & Cox Income Fund",
+    );
+  });
+
   it("omits fund_name when it is just the ticker (Data ANDs fund_name)", () => {
     assert.equal(
       compareSelectorsFromFund({ ticker: "AMCPX", fundName: "AMCPX" }).fund_name,

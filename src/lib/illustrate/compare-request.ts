@@ -7,6 +7,7 @@ import type {
 import type { IllustrateRequest } from "@/lib/illustrate/types";
 
 export type NavLookup = (ticker: string) => number | undefined;
+export type FundNameLookup = (ticker: string) => string | undefined;
 
 /**
  * Data `_filter_stmt` ANDs every populated selector. `fund_name=AMCPX`
@@ -248,26 +249,48 @@ export function toDataApiIllustrateBody(
 }
 
 /**
- * Portfolio holding NAV for POST /illustrate/portfolio/compare.
+ * Data `_filter_stmt` ANDs `fund_name`. Prefer the search/seed product name
+ * (AGTHX → "The Growth Fund of America") and never send the ticker as the name.
+ */
+export function sanitizeHoldingFundName(
+  ticker?: string | null,
+  fundName?: string | null,
+  lookup?: FundNameLookup,
+): string | undefined {
+  const key = ticker?.trim().toUpperCase();
+  const seed = key ? lookup?.(key)?.trim() : undefined;
+  if (seed) return seed;
+  const given = fundName?.trim();
+  if (!given || (key && given.toUpperCase() === key)) return undefined;
+  return given;
+}
+
+/**
+ * Portfolio holding NAV + selector for POST /illustrate/portfolio/compare.
  * Same rules as fund compare: search/seed metadata, never send 0.
  */
 export function withPortfolioHoldingNav<T extends {
   ticker?: string | null;
   fund_identifier?: string | null;
+  fund_name?: string | null;
   nav_per_share?: number | null;
   shares?: number | null;
-}>(holding: T, lookup?: NavLookup): T {
-  const nav = navFromFundMetadata(
-    holding.ticker || holding.fund_identifier,
-    holding.nav_per_share,
-    lookup,
-  );
+}>(holding: T, lookup?: NavLookup, fundNameLookup?: FundNameLookup): T {
+  const ticker = holding.ticker || holding.fund_identifier;
+  const nav = navFromFundMetadata(ticker, holding.nav_per_share, lookup);
   const shares = positiveNav(holding.shares);
+  const fundName = sanitizeHoldingFundName(
+    ticker,
+    holding.fund_name,
+    fundNameLookup,
+  );
   const rest = { ...holding };
   delete rest.nav_per_share;
   delete rest.shares;
+  delete rest.fund_name;
   return {
     ...rest,
+    ...(fundName ? { fund_name: fundName } : {}),
     ...(nav != null ? { nav_per_share: nav } : {}),
     ...(shares != null ? { shares } : {}),
   };

@@ -32,7 +32,6 @@ import {
   alignTaxDragYears,
   toNegativeTaxDrag,
   toTaxDragPeriods,
-  toUpcomingSummary,
   type TaxDragFundSeries,
   type TaxDragMetric,
 } from "@/lib/illustrate/tax-drag-chart";
@@ -287,9 +286,7 @@ export function GrowthAndTaxDragModule({
 
   function removeFund(ticker: string) {
     setSelected((current) =>
-      current.length <= 1
-        ? current
-        : current.filter((fund) => fundKey(fund).ticker !== ticker),
+      current.filter((fund) => fundKey(fund).ticker !== ticker),
     );
   }
 
@@ -301,12 +298,6 @@ export function GrowthAndTaxDragModule({
   const remaining = PERFORMANCE_FIXTURE_TICKERS.filter(
     (ticker) => !selected.some((fund) => fundKey(fund).ticker === ticker),
   );
-
-  const upcomingSummary = useMemo(() => {
-    const row = rows?.find((item) => item.tax?.summary.upcoming_taxable_distribution);
-    if (!row?.tax) return null;
-    return toUpcomingSummary(row.tax.summary.upcoming_taxable_distribution, "left");
-  }, [rows]);
 
   return (
     <article
@@ -321,19 +312,6 @@ export function GrowthAndTaxDragModule({
           <h2 className="mt-1 font-serif text-xl tracking-tight text-ink">
             Growth & tax drag
           </h2>
-          {upcomingSummary ? (
-            <p className="mt-2">
-              <span
-                className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-medium ${
-                  upcomingSummary.announced
-                    ? "bg-tax-more-soft text-tax-more"
-                    : "bg-paper text-muted ring-1 ring-line"
-                }`}
-              >
-                {upcomingSummary.label}
-              </span>
-            </p>
-          ) : null}
         </div>
 
         <div className="flex flex-wrap items-end gap-2">
@@ -487,6 +465,7 @@ export function GrowthAndTaxDragModule({
                     ? "GET /performance returned 404 or no monthly points for these tickers."
                     : "GET /performance returned no overlapping monthly points."
               }
+              onRemoveSeries={removeFund}
             />
           </div>
           <div className="rounded-xl border border-line bg-paper/40 px-3 py-3 sm:px-4">
@@ -499,8 +478,8 @@ export function GrowthAndTaxDragModule({
               showBarLabels={selected.length <= 2}
               layout="flush"
               title="Estimated annual tax drag"
-              upcomingSummary={upcomingSummary}
               loading={loading}
+              onRemoveSeries={removeFund}
               axis={axis}
               emptyLabel={
                 selected.length === 0

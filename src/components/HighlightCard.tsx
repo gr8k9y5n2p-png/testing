@@ -114,7 +114,7 @@ function OutlierGroup({
         {label}
       </p>
       {funds.length === 0 ? (
-        <p className="px-4 pb-3 text-sm text-muted">None in this sample.</p>
+        <p className="px-4 pb-3 text-sm text-muted">None available.</p>
       ) : (
         <ul>
           {funds.slice(0, 3).map((fund) => (
