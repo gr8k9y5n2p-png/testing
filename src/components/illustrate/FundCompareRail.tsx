@@ -6,7 +6,6 @@ import { FundPicker } from "@/components/illustrate/FundPicker";
 import { FundTaxDeltaCompare } from "@/components/illustrate/FundTaxDeltaCompare";
 import { compareSideFromFund } from "@/lib/illustrate/compare-request";
 import { defaultComparePeer } from "@/lib/illustrate/fund-compare-defaults";
-import { seedNavLookup } from "@/lib/illustrate/seed-nav";
 import {
   COMPARE_SUMMARY_HOLDING_DOLLARS,
   type CompareSideIn,
@@ -16,7 +15,7 @@ import { UI_DEFAULT_TAX_RATES } from "@/lib/illustrate/types";
 const COMPARE_TAX_RATES = { state: UI_DEFAULT_TAX_RATES.state };
 
 function sideFromFund(fund: FundEstimateView): CompareSideIn {
-  return compareSideFromFund(fund, seedNavLookup);
+  return compareSideFromFund(fund);
 }
 
 export function FundCompareRail({

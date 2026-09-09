@@ -9,7 +9,6 @@ import {
   findFundByTicker,
 } from "@/lib/illustrate/fund-compare-defaults";
 import { compareSideFromFund } from "@/lib/illustrate/compare-request";
-import { seedNavLookup } from "@/lib/illustrate/seed-nav";
 import {
   COMPARE_SUMMARY_HOLDING_DOLLARS,
   type CompareSideIn,
@@ -18,12 +17,12 @@ import { UI_DEFAULT_TAX_RATES } from "@/lib/illustrate/types";
 
 const COMPARE_TAX_RATES = { state: UI_DEFAULT_TAX_RATES.state };
 
-/** Seed-catalog pair: golden AMCPX vs same-category other-family VIGAX. */
+/** Default pair when both tickers exist in the live Data API list. */
 const DEFAULT_LEFT_TICKER = "AMCPX";
 const DEFAULT_RIGHT_TICKER = "VIGAX";
 
 function sideFromFund(fund: FundEstimateView): CompareSideIn {
-  return compareSideFromFund(fund, seedNavLookup);
+  return compareSideFromFund(fund);
 }
 
 function defaultLeft(funds: FundEstimateView[]): FundEstimateView | null {
