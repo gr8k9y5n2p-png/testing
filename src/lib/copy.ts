@@ -31,8 +31,10 @@ export const STRIPE = {
 /** Sample Estimates Upcoming empty state. Never present a miss as $0. */
 export const UPCOMING_UNAVAILABLE_HEADLINE = "Not available / undisclosed";
 export const UPCOMING_UNAVAILABLE_DETAIL =
-  "No unpaid announced estimates in this sample.";
-export const PAID_HISTORY_EMPTY = "No paid history in this sample.";
+  "No unpaid announced estimates from the Data API.";
+export const PAID_HISTORY_EMPTY = "No paid history from the Data API.";
+
+export { TICKER_REQUEST } from "@/lib/data-api/request-ticker";
 
 export const FREE_SEARCH_LIMIT = 3;
 

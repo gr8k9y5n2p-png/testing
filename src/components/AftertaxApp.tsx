@@ -1,31 +1,29 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Facets, FundEstimateView, HighlightSets } from "@/data/types";
 import { Dashboard } from "@/components/Dashboard";
 import { DemoBanner } from "@/components/DemoBanner";
 import { HighlightsSection } from "@/components/HighlightsSection";
 import { Hero } from "@/components/landing/Hero";
-import {
-  GrowthAndTaxDragModule,
-  type GrowthFundInput,
-} from "@/components/illustrate/GrowthAndTaxDragModule";
 import { IllustratePanel } from "@/components/illustrate/IllustratePanel";
 import { PaywallDialog } from "@/components/paywall/PaywallDialog";
 import { CoverageProvider, useCoverage } from "@/components/coverage/CoverageProvider";
 import { Disclaimer } from "@/components/Disclaimer";
+import { NoticeToast } from "@/components/NoticeToast";
 import { STRIPE } from "@/lib/copy";
 import type { FundFamilyCoverage } from "@/lib/coverage";
 import { reportCoverageGap } from "@/lib/coverage";
 import { isFreemiumDisabled, useFreemium } from "@/lib/freemium";
 import {
   FUND_HISTORY_HASH,
-  HOMEPAGE_GROWTH_FUNDS,
-  growthFundFromTicker,
   resolveFundView,
 } from "@/lib/illustrate/fund-history";
-import { DEFAULT_START_DOLLARS } from "@/lib/performance/types";
+import {
+  compareTickersPath,
+  parseCompareQueryTickers,
+} from "@/lib/illustrate/compare-workspace";
 
 function scrollToId(id: string) {
   requestAnimationFrame(() => {
@@ -53,7 +51,7 @@ export function AftertaxApp({
   facets: Facets;
   coverageFamilies: FundFamilyCoverage[];
   checkout?: CheckoutReturn;
-  /** Portfolio review drill-in. Preselects Growth + tax-drag for this ticker. */
+  /** Portfolio review drill-in. Preselects this ticker's historical + upcoming tables. */
   ticker?: string | null;
 }) {
   return (
@@ -92,9 +90,15 @@ function AftertaxAppInner({
   const [paywallOpen, setPaywallOpen] = useState(
     checkout === "cancel" && !isFreemiumDisabled(),
   );
-  const [unlockMessage, setUnlockMessage] = useState<string | null>(
+  const [notice, setNotice] = useState<string | null>(
     checkout === "success" ? CHECKOUT_SUCCESS_MESSAGE : null,
   );
+  const onNotice = useCallback((message: string) => {
+    setNotice(message);
+  }, []);
+  const dismissNotice = useCallback(() => {
+    setNotice(null);
+  }, []);
   const freemium = useFreemium();
   const coverage = useCoverage();
 
@@ -105,11 +109,21 @@ function AftertaxAppInner({
       return;
     }
     if (id === "fund-compare") {
-      router.replace("/compare");
+      const search = new URLSearchParams(window.location.search);
+      router.replace(
+        compareTickersPath(
+          parseCompareQueryTickers({
+            tickers: search.getAll("tickers"),
+            ticker: search.get("ticker") ?? undefined,
+            left: search.get("left") ?? undefined,
+            right: search.get("right") ?? undefined,
+          }),
+        ),
+      );
       return;
     }
-    if (id === "illustrate" || id === FUND_HISTORY_HASH) {
-      scrollToId(id);
+    if (id === "illustrate" || id === FUND_HISTORY_HASH || id === "growth-and-tax") {
+      scrollToId("illustrate");
     }
   }, [router]);
 
@@ -122,19 +136,8 @@ function AftertaxAppInner({
         fund_family: focusedFund.family,
       });
     }
-    scrollToId(FUND_HISTORY_HASH);
+    scrollToId("illustrate");
   }, [coverage, focusedFund, ticker]);
-
-  const drillInFund = useMemo(
-    () => (ticker ? growthFundFromTicker(ticker, funds) : undefined),
-    [funds, ticker],
-  );
-
-  const seedFunds = useMemo(() => {
-    if (picked) return [toGrowthFund(picked)];
-    if (drillInFund) return [drillInFund];
-    return selected ? [toGrowthFund(selected)] : undefined;
-  }, [drillInFund, picked, selected]);
 
   function selectFund(fund: FundEstimateView) {
     const result = freemium.trySearch(fund.ticker);
@@ -150,7 +153,7 @@ function AftertaxAppInner({
         fund_family: fund.family,
       });
     }
-    scrollToId("growth-and-tax");
+    scrollToId("illustrate");
   }
 
   async function unlock() {
@@ -166,11 +169,11 @@ function AftertaxAppInner({
         return;
       }
       setPaywallOpen(false);
-      setUnlockMessage(
+      setNotice(
         `${body.detail ?? "Checkout is stubbed."} Price ${body.price_id ?? STRIPE.priceId}.`,
       );
     } catch {
-      setUnlockMessage("Checkout is unavailable in this demo.");
+      setNotice("Checkout is unavailable in this demo.");
     }
   }
 
@@ -182,20 +185,8 @@ function AftertaxAppInner({
         remaining={freemium.remaining}
         unlimited={freemium.unlimited}
         onSelect={selectFund}
+        onNotice={onNotice}
       />
-
-      <section
-        id="growth-and-tax"
-        aria-label="Growth of dollars and tax drag"
-        className="mb-10 scroll-mt-20"
-      >
-        <GrowthAndTaxDragModule
-          key={drillInFund?.ticker ?? "homepage"}
-          funds={drillInFund ? [drillInFund] : HOMEPAGE_GROWTH_FUNDS}
-          seedFunds={seedFunds}
-          startDollars={DEFAULT_START_DOLLARS}
-        />
-      </section>
 
       {selected ? (
         <div className="mb-10">
@@ -208,7 +199,7 @@ function AftertaxAppInner({
         aria-labelledby="universe-heading"
       >
         <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-faint">
-          Sample universe
+          Live estimates
         </p>
         <h2
           id="universe-heading"
@@ -217,16 +208,23 @@ function AftertaxAppInner({
           Estimates behind the search
         </h2>
         <p className="mt-2 max-w-2xl text-sm text-muted">
-          The dollar illustration is the product. This table is the sample
-          dataset search reads from — upcoming / announced estimates stay
-          separate from paid history.
+          Search a fund to open that ticker&apos;s historical distribution table
+          and Upcoming / announced estimates. Search and Sample Estimates read
+          GET /distributions only. Upcoming stays unpaid announced only —
+          undisclosed is never invented from paid history. Missing or uncovered
+          values stay empty, N/A, or Undisclosed.
         </p>
         <div className="mt-5">
           <DemoBanner />
         </div>
         <div className="mt-8">
           <HighlightsSection highlights={highlights} />
-          <Dashboard funds={funds} facets={facets} onIllustrate={selectFund} />
+          <Dashboard
+            funds={funds}
+            facets={facets}
+            onIllustrate={selectFund}
+            onNotice={onNotice}
+          />
         </div>
       </section>
 
@@ -239,29 +237,7 @@ function AftertaxAppInner({
           void unlock();
         }}
       />
-      {unlockMessage ? (
-        <p className="fixed bottom-4 left-1/2 z-50 w-[min(32rem,calc(100%-2rem))] -translate-x-1/2 rounded-md border border-line bg-surface px-4 py-3 text-sm text-ink shadow-lg">
-          {unlockMessage}
-          <button
-            type="button"
-            className="ml-3 text-xs text-accent underline"
-            onClick={() => setUnlockMessage(null)}
-          >
-            Dismiss
-          </button>
-        </p>
-      ) : null}
+      <NoticeToast message={notice} onDismiss={dismissNotice} />
     </>
   );
-}
-
-function toGrowthFund(fund: FundEstimateView): GrowthFundInput {
-  return {
-    ticker: fund.ticker,
-    label: fund.ticker,
-    fundIdentifier: fund.ticker,
-    fundFamily: fund.family,
-    fundName: fund.fundName,
-    navPerShare: fund.nav > 0 ? fund.nav : undefined,
-  };
 }

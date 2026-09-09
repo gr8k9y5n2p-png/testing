@@ -23,7 +23,7 @@ import {
   type GrowthFundInput,
   type LoadedGrowthFund,
 } from "@/lib/illustrate/growth-tax-load";
-import { toUpcomingSummary, type TaxDragMetric } from "@/lib/illustrate/tax-drag-chart";
+import { type TaxDragMetric } from "@/lib/illustrate/tax-drag-chart";
 import {
   PERFORMANCE_UNAVAILABLE_HINT,
   PERFORMANCE_UNAVAILABLE_LABEL,
@@ -44,6 +44,8 @@ export type GrowthAndTaxDragModuleProps = {
   showAnnualized?: boolean;
   allowAddFund?: boolean;
   editablePrincipal?: boolean;
+  /** Compare slots: replace the series when seedFunds change. */
+  lockToSeed?: boolean;
 };
 
 const SKETCH_DISCLAIMER =
@@ -59,6 +61,7 @@ export function GrowthAndTaxDragModule({
   showAnnualized = true,
   allowAddFund = true,
   editablePrincipal = true,
+  lockToSeed = false,
 }: GrowthAndTaxDragModuleProps) {
   const [selected, setSelected] = useState<GrowthFundInput[]>(() =>
     funds.slice(0, MAX_GROWTH_FUNDS),
@@ -86,11 +89,23 @@ export function GrowthAndTaxDragModule({
 
   useEffect(() => {
     const seeds = JSON.parse(seedKey) as GrowthFundInput[];
+    if (lockToSeed) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Compare slots own the series
+      setSelected(seeds.slice(0, MAX_GROWTH_FUNDS));
+      return;
+    }
     if (seeds.length === 0) return;
     // Homepage remounts pass a new funds[] seed; merge without dropping user adds.
     // eslint-disable-next-line react-hooks/set-state-in-effect -- sync selected to funds prop
     setSelected((current) => mergeSeedFunds(current, seeds));
-  }, [seedKey]);
+  }, [seedKey, lockToSeed]);
+
+  useEffect(() => {
+    if (editablePrincipal) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Compare owns the shared holding
+    setPrincipal(startDollars);
+    setPrincipalDraft(formatPrincipal(startDollars));
+  }, [editablePrincipal, startDollars]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -101,6 +116,11 @@ export function GrowthAndTaxDragModule({
     };
 
     if (next.funds.length === 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- empty selection must drop stale series
+      setRows([]);
+      setMissingTickers([]);
+      setError(null);
+      setSettledKey(fetchKey);
       return;
     }
 
@@ -173,9 +193,7 @@ export function GrowthAndTaxDragModule({
 
   function removeFund(ticker: string) {
     setSelected((current) =>
-      current.length <= 1
-        ? current
-        : current.filter((fund) => fundKey(fund).ticker !== ticker),
+      current.filter((fund) => fundKey(fund).ticker !== ticker),
     );
   }
 
@@ -187,12 +205,6 @@ export function GrowthAndTaxDragModule({
   const remaining = PERFORMANCE_FIXTURE_TICKERS.filter(
     (ticker) => !selected.some((fund) => fundKey(fund).ticker === ticker),
   );
-
-  const upcomingSummary = useMemo(() => {
-    const row = rows?.find((item) => item.tax?.summary.upcoming_taxable_distribution);
-    if (!row?.tax) return null;
-    return toUpcomingSummary(row.tax.summary.upcoming_taxable_distribution, "left");
-  }, [rows]);
 
   return (
     <article
@@ -207,19 +219,6 @@ export function GrowthAndTaxDragModule({
           <h2 className="mt-1 font-serif text-xl tracking-tight text-ink">
             Growth & tax drag
           </h2>
-          {upcomingSummary ? (
-            <p className="mt-2">
-              <span
-                className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-medium ${
-                  upcomingSummary.announced
-                    ? "bg-tax-more-soft text-tax-more"
-                    : "bg-paper text-muted ring-1 ring-line"
-                }`}
-              >
-                {upcomingSummary.label}
-              </span>
-            </p>
-          ) : null}
         </div>
 
         <div className="flex flex-wrap items-end gap-2">
@@ -356,6 +355,7 @@ export function GrowthAndTaxDragModule({
                   selected.length === 0 ? "No fund series" : PERFORMANCE_UNAVAILABLE_LABEL
                 }
                 emptyHint={selected.length === 0 ? "" : PERFORMANCE_UNAVAILABLE_HINT}
+                onRemoveSeries={removeFund}
               />
               {missingTickers.length > 0 && growthSeries.some((row) => !row.dashed) ? (
                 <p className="mt-2 text-[11px] text-faint">
@@ -375,8 +375,8 @@ export function GrowthAndTaxDragModule({
             showBarLabels={selected.length <= 2}
             layout="flush"
             title="Estimated annual tax drag"
-            upcomingSummary={upcomingSummary}
             loading={loading}
+            onRemoveSeries={removeFund}
             axis={axis}
             emptyLabel={
               selected.length === 0

@@ -11,6 +11,7 @@ import {
   type YearLayout,
 } from "@/lib/charts/shared-axis";
 import { formatUsd } from "@/lib/format";
+import { isRemovableGrowthSeries } from "@/lib/illustrate/growth-selection";
 
 export type ChartUnit = "dollars" | "percent";
 
@@ -37,6 +38,7 @@ export function GrowthOfXChart({
   unit = "dollars",
   annualized,
   showAnnualized = true,
+  onRemoveSeries,
   loading = false,
   className = "",
   width = SHARED_CHART_WIDTH,
@@ -53,6 +55,8 @@ export function GrowthOfXChart({
   unit?: ChartUnit;
   annualized?: AnnualizedRow[];
   showAnnualized?: boolean;
+  /** Remove a user-added fund. Benchmark / dashed series stay non-removable. */
+  onRemoveSeries?: (id: string) => void;
   loading?: boolean;
   className?: string;
   width?: number;
@@ -146,6 +150,16 @@ export function GrowthOfXChart({
                   }}
                 />
                 <span className="font-medium">{row.label}</span>
+                {onRemoveSeries && isRemovableGrowthSeries(row.id, row.dashed) ? (
+                  <button
+                    type="button"
+                    onClick={() => onRemoveSeries(row.id)}
+                    className="rounded px-0.5 text-faint hover:bg-surface hover:text-ink"
+                    aria-label={`Remove ${row.label}`}
+                  >
+                    ×
+                  </button>
+                ) : null}
                 {showAnnualized && !row.dashed && ann?.value != null ? (
                   <span
                     className="inline-flex items-center gap-1 rounded-full bg-paper px-2 py-0.5 text-[10px] font-medium"

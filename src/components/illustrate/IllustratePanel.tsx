@@ -6,7 +6,6 @@ import { useCoverage } from "@/components/coverage/CoverageProvider";
 import { isMockIllustrate, postIllustrate } from "@/lib/illustrate/client";
 import { navFromFundMetadata, positiveNav } from "@/lib/illustrate/compare-request";
 import { distributionIdsForFund } from "@/lib/illustrate/ids";
-import { seedNavLookup } from "@/lib/illustrate/seed-nav";
 import {
   postIllustratePortfolio,
   type PortfolioIllustrateResponse,
@@ -119,7 +118,7 @@ function IllustrationWorkspace({ fund }: { fund: FundEstimateView }) {
 
   const needsNav = unit === AMOUNT_UNITS.per_share;
   const nav = Number(navInput);
-  const metadataNav = navFromFundMetadata(fund.ticker, fund.nav, seedNavLookup);
+  const metadataNav = navFromFundMetadata(fund.ticker, fund.nav);
   const requestNav = needsNav ? positiveNav(nav) : metadataNav;
   const navError =
     needsNav && requestNav == null
