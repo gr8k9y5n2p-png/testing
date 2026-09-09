@@ -147,6 +147,25 @@ def test_website_queued_dws_mf_ticker_picks_up_retail_book(client: TestClient) -
     assert found.json()["total"] >= 1
 
 
+def test_website_queued_catalyst_ticker_picks_up_annual_book(client: TestClient) -> None:
+    queued = client.post(
+        "/request/ticker",
+        json={"ticker": "CPEAX", "note": "advisor requested Catalyst Dynamic Alpha Fund"},
+    )
+    assert queued.status_code == 201, queued.text
+    assert queued.json()["status"] == "queued"
+
+    pickup = client.post("/ingest/ticker-requests", params={"mode": "fixture"})
+    assert pickup.status_code == 200, pickup.text
+    covered = next(item for item in pickup.json()["items"] if item["ticker"] == "CPEAX")
+    assert covered["status"] == "already_covered"
+    assert covered["adapter_slug"] == "catalyst"
+
+    found = client.get("/distributions", params={"ticker": "CPEAX", "page_size": 10})
+    assert found.status_code == 200
+    assert found.json()["total"] >= 1
+
+
 def test_submit_amundi_ticker_is_matched_and_covered(client: TestClient) -> None:
     fetched = client.post("/ingest/fetch", json={"fund_family": "amundi", "mode": "fixture"})
     assert fetched.status_code == 200, fetched.text

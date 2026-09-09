@@ -3702,3 +3702,118 @@ def test_dws_xtrackers_fixtures() -> None:
         if r.ticker == "BTIEX" and r.estimate_type == EstimateType.long_term_capital_gains
     )
     assert btiex_mid.amount == Decimal("6.1523")
+
+
+def test_catalyst_annual_distribution_fixtures() -> None:
+    catalyst = parse_distribution_html(
+        (ROOT / "catalyst" / "2025_annual_distributions.html").read_text(encoding="utf-8"),
+        source_url="fixture://catalyst-2025",
+        fund_family="Catalyst Funds",
+    )
+    cpeax = next(
+        r
+        for r in catalyst
+        if r.ticker == "CPEAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert cpeax.amount == Decimal("3.4499")
+    cltax = next(
+        r
+        for r in catalyst
+        if r.ticker == "CLTAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert cltax.amount == Decimal("1.5946")
+    caxix_inc = next(
+        r
+        for r in catalyst
+        if r.ticker == "CAXIX" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert caxix_inc.amount == Decimal("0.2482")
+    caxix_lt = next(
+        r
+        for r in catalyst
+        if r.ticker == "CAXIX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert caxix_lt.amount == Decimal("1.0636")
+    shiix = next(
+        r
+        for r in catalyst
+        if r.ticker == "SHIIX" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert shiix.amount == Decimal("0.3285")
+    casix = next(
+        r
+        for r in catalyst
+        if r.ticker == "CASIX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert casix.amount == Decimal("0.2419")
+    mbxax_lt = next(
+        r
+        for r in catalyst
+        if r.ticker == "MBXAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert mbxax_lt.amount == Decimal("0.00")
+    eixax_lt = next(
+        r
+        for r in catalyst
+        if r.ticker == "EIXAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert eixax_lt.amount == Decimal("0.00")
+    atrax_lt = next(
+        r
+        for r in catalyst
+        if r.ticker == "ATRAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert atrax_lt.amount == Decimal("0.00")
+    cweax_lt = next(
+        r
+        for r in catalyst
+        if r.ticker == "CWEAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert cweax_lt.amount == Decimal("0.00")
+    shiex = next(
+        r
+        for r in catalyst
+        if r.ticker == "SHIEX" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert shiex.amount == Decimal("0.3004")
+    cwxax = next(
+        r
+        for r in catalyst
+        if r.ticker == "CWXAX" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert cwxax.amount == Decimal("0.2115")
+    tickers = {r.ticker for r in catalyst if r.ticker}
+    assert len(tickers) == 54
+    assert {
+        "CPEAX",
+        "CPEIX",
+        "CPECX",
+        "CLTAX",
+        "CLTIX",
+        "CLTCX",
+        "CAXAX",
+        "CAXIX",
+        "CAXCX",
+        "MBXAX",
+        "MBXCX",
+        "MBXIX",
+        "EIXAX",
+        "EIXCX",
+        "EIXIX",
+        "ATRAX",
+        "CWEAX",
+        "SHIEX",
+        "CASAX",
+        "CWXAX",
+        "CLPAX",
+        "INSAX",
+        "IIXAX",
+        "CFRAX",
+        "TRXAX",
+        "HIIFX",
+        "TRIFX",
+    } <= tickers
+    assert not any(r.ticker in {"CSIOX", "MBXFX", "CFRFX"} for r in catalyst)
+    assert not any(
+        r.ticker == "MBXAX" and r.estimate_type == EstimateType.ordinary_income for r in catalyst
+    )

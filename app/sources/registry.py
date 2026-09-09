@@ -123,6 +123,7 @@ from app.sources.tenth_tier import (
     WestwoodSource,
 )
 from app.sources.dws import DwsSource
+from app.sources.catalyst import CatalystSource
 from app.sources.eleventh_tier import (
     AmgSource,
     ConestogaSource,
@@ -288,6 +289,12 @@ _ALIASES = {
     "dbx_advisors": "dws",
     "dws_funds": "dws",
     "dws_mutual_funds": "dws",
+    "catalyst": "catalyst",
+    "catalyst_funds": "catalyst",
+    "catalystmf": "catalyst",
+    "catalyst_mutual_funds": "catalyst",
+    "catalyst_mf": "catalyst",
+    "catalyst_millburn": "catalyst",
     "aqr": "aqr",
     "causeway": "causeway",
     "alger": "alger",
@@ -456,6 +463,7 @@ def _sources() -> dict[str, FundSource]:
         WisdomtreeSource(),
         FirstTrustSource(),
         DwsSource(),
+        CatalystSource(),
         AqrSource(),
         CausewaySource(),
         AlgerSource(),
