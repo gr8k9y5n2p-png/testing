@@ -213,7 +213,7 @@ function FundSection({
           <h3 className="font-serif text-lg tracking-tight text-ink">{title}</h3>
           <p className="mt-0.5 text-sm text-muted">{description}</p>
         </div>
-        <div className="flex flex-wrap items-center justify-end gap-3">
+        <div className="flex flex-col items-end gap-1.5">
           {yearToggle}
           <p className="text-[10px] text-muted">{kicker}</p>
         </div>
@@ -653,7 +653,7 @@ function PaidHistoryYearToggle({
     <div
       role="group"
       aria-label="Paid history calendar year"
-      className="flex items-center gap-1 rounded-md border border-line bg-surface p-0.5"
+      className="flex max-w-full flex-wrap items-center gap-1 rounded-md border border-line bg-surface p-0.5"
     >
       {years.map((option) => {
         const active = option === year;
