@@ -136,6 +136,19 @@ describe("Dollar Illustration Upcoming gate", () => {
     assert.equal(totals?.estimated_tax_dollars, 800);
   });
 
+  it("Dollar Illustration $/share auto-attaches metadata NAV and only errors when missing", () => {
+    const panel = readFileSync(
+      join(here, "../../components/illustrate/IllustratePanel.tsx"),
+      "utf8",
+    );
+    const seed = readFileSync(join(here, "../../data/seed.ts"), "utf8");
+    assert.match(panel, /seedNavLookup/);
+    assert.match(panel, /navFromFundMetadata/);
+    assert.match(panel, /typedNav \?\? metadataNav/);
+    assert.match(panel, /needsNav && requestNav == null/);
+    assert.match(seed, /ticker:\s*"ABALX"[\s\S]*?nav:\s*34\.52/);
+  });
+
   it("IllustrationResults reads the unpaid-only helper instead of result.totals", () => {
     const source = readFileSync(join(here, "../../components/illustrate/IllustrationResults.tsx"), "utf8");
     assert.match(source, /splitIllustrationComponents/);
