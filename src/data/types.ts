@@ -1,7 +1,8 @@
 /**
  * Domain model for estimated taxable fund distributions.
  *
- * Live Search / Sample Estimates read GET /distributions only.
+ * Live Search / Sample Estimates read GET /funds for identity plus
+ * GET /distributions for paid / final history and unpaid Upcoming amounts.
  * `seed.ts` is test/mock scoped and must not backfill those UI paths.
  */
 
@@ -80,8 +81,10 @@ export interface FundEstimate {
   paidHistory: PaidDistributionEvent[];
   distributionYear: number;
   /**
-   * False when GET /funds says has_estimate=false (or amounts are unknown).
-   * UI must show "—" — never invent $0 / 0%.
+   * Unpaid Upcoming / manager prelim only (`GET /funds.has_estimate`).
+   * False is correct when the fund has paid/final YE history but no unpaid
+   * estimate. Paid history must still render those distribution rows.
+   * Upcoming UI shows "—" / Undisclosed — never invent $0 from history.
    */
   hasEstimate?: boolean;
 }
@@ -140,5 +143,5 @@ export const DATA_SOURCE = {
   kind: "live" as const,
   label: "Live Data API",
   notice:
-    "Search and Sample Estimates use GET /distributions only. Missing or uncovered values stay empty, N/A, or Undisclosed — they are not filled from seed or demo math.",
+    "Search and Sample Estimates use GET /funds for identity and GET /distributions for paid/final history and unpaid Upcoming. Missing or uncovered values stay empty, N/A, or Undisclosed — they are not filled from seed or demo math.",
 };

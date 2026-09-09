@@ -1,4 +1,5 @@
 import type { FundEstimateView } from "@/data/types";
+import { hideUpcomingAmounts } from "@/data/hydrate-funds";
 import { DeltaBadge } from "@/components/DeltaBadge";
 import { DistributionDateStrip } from "@/components/DistributionDateStrip";
 import { CompareTickerLink } from "@/components/illustrate/CompareTickerLink";
@@ -81,7 +82,7 @@ export function HighlightCard({
                 <p className="shrink-0 text-right font-mono text-sm text-ink">
                   {variant === "recent"
                     ? formatCompactDate(fund.asOfDate)
-                    : fund.hasEstimate === false
+                    : hideUpcomingAmounts(fund)
                       ? "—"
                       : formatPct(fund.estimatedDistributionPctNav)}
                 </p>

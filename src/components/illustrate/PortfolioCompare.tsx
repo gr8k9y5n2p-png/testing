@@ -8,7 +8,6 @@ import { CalendarYearTaxTable } from "@/components/illustrate/portfolio-compare/
 import { SummaryStrip } from "@/components/illustrate/portfolio-compare/SummaryStrip";
 import { UpcomingTable } from "@/components/illustrate/portfolio-compare/UpcomingTable";
 import { navFromFundMetadata } from "@/lib/illustrate/compare-request";
-import { seedNavLookup } from "@/lib/illustrate/seed-nav";
 import { catalogFunds } from "@/lib/illustrate/portfolio-compare-catalog";
 import {
   smokeCurrentHoldings,
@@ -49,7 +48,7 @@ function toApiHoldings(holdings: PortfolioHoldingDraft[]) {
     .filter((holding) => holding.ticker.trim() && holding.weightPct > 0)
     .map((holding) => {
       const ticker = holding.ticker.trim().toUpperCase();
-      const nav = navFromFundMetadata(ticker, holding.nav, seedNavLookup);
+      const nav = navFromFundMetadata(ticker, holding.nav);
       return {
         ticker,
         fund_identifier: ticker,
@@ -184,11 +183,6 @@ export function PortfolioCompare({
   const proposedUpcomingHoldings = result
     ? upcomingHoldingsForSide(result.proposed, "proposed")
     : [];
-  const sample = Boolean(
-    result &&
-      (result.source === "mock" ||
-        result.notes.some((note) => /mock|demo|illustrative/i.test(note))),
-  );
   const yearTax = result ? calendarYearTaxTable(result) : null;
 
   return (
@@ -197,7 +191,7 @@ export function PortfolioCompare({
         <div>
           <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-faint">
             <span aria-hidden className="inline-block size-1.5 rounded-full bg-tax-less" />
-            Aftertax · {sample || !result ? "Sample" : "Live"}
+            Aftertax · Portfolio
           </p>
           <Heading className="mt-1 font-serif text-3xl tracking-tight text-ink">
             Portfolio comparison
@@ -336,7 +330,8 @@ export function PortfolioCompare({
       </div>
 
       <p className="mt-5 text-center text-[10px] leading-relaxed text-faint">
-        Demo data · weights × Portfolio Value → dollars · tax from Data API TBD
+        Weights × Portfolio Value → dollars. Missing or uncovered values stay
+        N/A or Undisclosed.
       </p>
       <CompactDisclaimer className="mt-1 text-center text-[10px] leading-relaxed text-faint" />
       <NoticeToast message={notice} onDismiss={dismissNotice} />

@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import { AftertaxApp, type CheckoutReturn } from "@/components/AftertaxApp";
-import { getDistributionRepository } from "@/data";
+import { getDistributionRepository, mergeFundLists } from "@/data";
 import { loadCoverageSnapshot } from "@/lib/data-api/coverage";
+import { loadFundPageFromDataApi } from "@/lib/data-api/funds-page";
 import { firstSearchParam } from "@/lib/illustrate/fund-history";
 import {
   compareTickersPath,
@@ -42,12 +43,17 @@ export default async function Home({
     redirect(compareTickersPath(parseCompareQueryTickers(params)));
   }
   const repository = await getDistributionRepository();
-  const [funds, highlights, facets, coverage] = await Promise.all([
+  const ticker = firstSearchParam(params.ticker);
+  const [catalog, focused, highlights, facets, coverage] = await Promise.all([
     repository.search(),
+    ticker
+      ? loadFundPageFromDataApi({ query: ticker, limit: 10, offset: 0 })
+      : Promise.resolve(null),
     repository.highlights(5),
     repository.facets(),
     loadCoverageSnapshot(),
   ]);
+  const funds = mergeFundLists(catalog, focused?.items ?? []);
 
   return (
     <main className="mx-auto w-full max-w-7xl px-4 pb-16 pt-6 sm:px-6 lg:px-8">
@@ -57,7 +63,7 @@ export default async function Home({
         facets={facets}
         coverageFamilies={coverage.families}
         checkout={checkoutFromSearchParams(params.checkout)}
-        ticker={firstSearchParam(params.ticker)}
+        ticker={ticker}
       />
     </main>
   );

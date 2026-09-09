@@ -187,7 +187,6 @@ function holdingPhrase(holdingDollars: number | undefined): string {
 function upcomingMetric(
   sides: UpcomingSides,
   deltaDollars: number | null | undefined,
-  demo: string,
   holdingLabel: string,
 ): TaxDeltaMetric {
   const both = sides.left.announced && sides.right.announced;
@@ -204,8 +203,8 @@ function upcomingMetric(
       ? moreLessTaxHeadline(upcoming.costToA)
       : `${sides.left.display} · ${sides.right.display}`,
     detail: neither
-      ? `Not announced · this year · ${holdingLabel}${demo}`
-      : `A ${sides.left.statusLabel} · B ${sides.right.statusLabel} · ${holdingLabel}${demo}`,
+      ? `Not announced · this year · ${holdingLabel}`
+      : `A ${sides.left.statusLabel} · B ${sides.right.statusLabel} · ${holdingLabel}`,
     polarity: upcoming?.polarity ?? "even",
   };
 }
@@ -223,9 +222,7 @@ export function toTaxDeltaCardModel(
   fallbacks?: { left?: string; right?: string },
   options?: { holdingDollars?: number },
 ): TaxDeltaCardModel {
-  const sample =
-    response.source === "mock" ||
-    response.notes.some((note) => /mock|demo|illustrative/i.test(note));
+  const sample = response.source === "mock";
 
   const first = response.periods[0];
   const leftLabel = pickLabel(
@@ -272,36 +269,30 @@ export function toTaxDeltaCardModel(
   const onHolding = holdingPhrase(displayHolding);
 
   const window = inceptionLabel(summary);
-  const demo = sample ? " · demo" : "";
 
   const metrics: TaxDeltaMetric[] = [
     {
       key: "tax_difference",
       label: "Tax difference",
       headline: moreLessTaxHeadline(tax.costToA),
-      detail: `${onHolding} · ${window}${demo}`,
+      detail: `${onHolding} · ${window}`,
       polarity: tax.polarity,
     },
     {
       key: "tax_drag",
       label: "Tax drag Δ",
       headline: dragHeadline(drag.costToA),
-      detail: `annualized${demo}`,
+      detail: "annualized",
       polarity: drag.polarity,
     },
     {
       key: "distributions",
       label: "Distributions Δ",
       headline: moreLessTaxHeadline(dist.costToA),
-      detail: `from distributions · ${onHolding} · window${demo}`,
+      detail: `from distributions · ${onHolding} · window`,
       polarity: dist.polarity,
     },
-    upcomingMetric(
-      upcomingSides,
-      upcoming?.delta_dollars,
-      demo,
-      onHolding,
-    ),
+    upcomingMetric(upcomingSides, upcoming?.delta_dollars, onHolding),
   ];
 
   return {

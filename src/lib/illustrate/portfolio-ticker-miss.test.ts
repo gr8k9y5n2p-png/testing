@@ -51,7 +51,9 @@ describe("Portfolio / Compare slot ticker miss wiring", () => {
     assert.match(hook, /requestTickerOnPortfolioMiss/);
     assert.match(hook, /source=portfolio/);
     assert.doesNotMatch(hook, /source=search_miss/);
-    assert.doesNotMatch(picker, /fetch\(/);
+    assert.match(picker, /reportSearchMiss \|\| !q/);
+    assert.match(picker, /\/api\/funds/);
+    assert.doesNotMatch(picker, /\/request\/ticker/);
     assert.doesNotMatch(homepage, /fetch\(/);
     assert.doesNotMatch(rail, /\/request\/ticker/);
   });

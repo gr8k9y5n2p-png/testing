@@ -146,7 +146,12 @@ export function Dashboard({
     return funds.some((fund) => fund.ticker.toUpperCase() === key);
   }, [funds, settledQuery]);
 
-  useSearchMissRequest(settledQuery, page.total, inUniverse, onNotice);
+  useSearchMissRequest(
+    settledQuery,
+    page.total,
+    inUniverse || isPending,
+    onNotice,
+  );
 
   const hasActiveFilters = Boolean(
     filters.query?.trim() || filters.family || filters.category || filters.year,

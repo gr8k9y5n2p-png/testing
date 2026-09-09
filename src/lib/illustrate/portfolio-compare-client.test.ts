@@ -145,7 +145,8 @@ describe("portfolio compare nav_per_share wiring", () => {
     assert.match(client, /seedNavLookup/);
     assert.match(client, /seedFundNameLookup/);
     assert.match(client, /positiveNav\(holding\.nav_per_share\)/);
-    assert.match(compare, /navFromFundMetadata\(ticker, holding\.nav, seedNavLookup\)/);
+    assert.match(compare, /navFromFundMetadata\(ticker, holding\.nav\)/);
+    assert.doesNotMatch(compare, /seedNavLookup/);
     assert.match(seed, /DODIX:\s*12\.8/);
     assert.match(seed, /DODGX:\s*273\.16/);
     assert.match(seed, /CGHM:\s*25\.18/);

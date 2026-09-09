@@ -8,6 +8,7 @@ import {
   type UIEvent,
 } from "react";
 import type { FundEstimateView } from "@/data/types";
+import { hideUpcomingAmounts, paidEventsForFund } from "@/data/hydrate-funds";
 import { paidHistoryViews, splitFundsByBucket } from "@/data/queries";
 import { publicationStageLabel } from "@/data/distribution-bucket";
 import { DistributionDateStrip } from "@/components/DistributionDateStrip";
@@ -33,12 +34,12 @@ const TABLE_ROW_HEIGHT = 76;
 const TABLE_OVERSCAN = 4;
 
 function estimatePct(fund: FundEstimateView): string {
-  if (fund.hasEstimate === false) return "—";
+  if (hideUpcomingAmounts(fund)) return "—";
   return formatPct(fund.estimatedDistributionPctNav);
 }
 
 function estimateUsd(fund: FundEstimateView): string {
-  if (fund.hasEstimate === false) return "—";
+  if (hideUpcomingAmounts(fund)) return "—";
   return `${formatUsd(fund.estimatedDistributionAmount, 4)} / sh`;
 }
 
@@ -318,11 +319,19 @@ function FundSection({
                   />
                   <Field
                     label="$ / share"
-                    value={fund.hasEstimate === false ? "—" : formatUsd(fund.estimatedDistributionAmount, 4)}
+                    value={
+                      hideUpcomingAmounts(fund)
+                        ? "—"
+                        : formatUsd(fund.estimatedDistributionAmount, 4)
+                    }
                   />
                   <Field
                     label="Category avg"
-                    value={fund.hasEstimate === false ? "—" : formatPct(fund.categoryAveragePctNav)}
+                    value={
+                      hideUpcomingAmounts(fund)
+                        ? "—"
+                        : formatPct(fund.categoryAveragePctNav)
+                    }
                   />
                 </dl>
                 {onIllustrate ? (
@@ -418,7 +427,7 @@ function EstimateRow({
         <div className="flex flex-col items-end gap-1">
           <DeltaBadge fund={fund} compact />
           <span className="font-mono text-[11px] text-faint">
-            Cat. {fund.hasEstimate === false ? "—" : formatPct(fund.categoryAveragePctNav)}
+            Cat. {hideUpcomingAmounts(fund) ? "—" : formatPct(fund.categoryAveragePctNav)}
           </span>
         </div>
       </td>
@@ -476,13 +485,13 @@ function ExpandedDetails({ fund }: { fund: FundEstimateView }) {
       />
       <Field label="Year" value={String(fund.distributionYear)} />
       <Field label="Share class" value={fund.shareClass} />
-      {fund.paidHistory.length > 0 ? (
+      {paidEventsForFund(fund).length > 0 ? (
         <div className="col-span-2">
           <dt className="text-[11px] uppercase tracking-[0.1em] text-faint">
             Paid history
           </dt>
           <dd className="mt-1 space-y-1.5">
-            {fund.paidHistory.map((event) => (
+            {paidEventsForFund(fund).map((event) => (
               <DistributionDateStrip
                 key={`${event.asOfDate}-${event.exDate ?? ""}`}
                 fund={{

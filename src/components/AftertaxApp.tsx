@@ -210,9 +210,10 @@ function AftertaxAppInner({
         <p className="mt-2 max-w-2xl text-sm text-muted">
           Search a fund to open that ticker&apos;s historical distribution table
           and Upcoming / announced estimates. Search and Sample Estimates read
-          GET /distributions only. Upcoming stays unpaid announced only —
-          undisclosed is never invented from paid history. Missing or uncovered
-          values stay empty, N/A, or Undisclosed.
+          GET /funds for identity and GET /distributions for paid / final
+          history. Upcoming stays unpaid announced only — undisclosed is never
+          invented from paid history. Missing or uncovered values stay empty,
+          N/A, or Undisclosed.
         </p>
         <div className="mt-5">
           <DemoBanner />

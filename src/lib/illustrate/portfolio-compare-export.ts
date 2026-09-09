@@ -282,7 +282,7 @@ export function renderPortfolioComparePrintHtml(
 </head>
 <body>
   <h1>${escapeHtml(model.title)}</h1>
-  <p class="meta">Portfolio value ${escapeHtml(money(model.bookDollars))} · ${escapeHtml(generated)}${model.source === "mock" ? " · demo data" : ""}</p>
+  <p class="meta">Portfolio value ${escapeHtml(money(model.bookDollars))} · ${escapeHtml(generated)}</p>
   <div class="grid">
     ${sideHtml(model.current)}
     ${sideHtml(model.proposed)}
