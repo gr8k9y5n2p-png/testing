@@ -335,6 +335,8 @@ export function upcomingRowForCompareTicker(input: {
     // Compare API sends upcoming tax $, not Dist $. Never invent prelim $
     // for any ticker (ABALX is an example, not a special case).
     distributionDollars: null,
+    distributionDollarsMin: null,
+    distributionDollarsMax: null,
     holdingDollars,
     pctOfNav: null,
     navPerShare: fund != null && fund.nav > 0 ? fund.nav : null,

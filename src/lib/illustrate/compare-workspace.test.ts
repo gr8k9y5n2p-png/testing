@@ -310,6 +310,33 @@ describe("compare upcoming rows", () => {
     assert.equal(row.navPerShare, 41.22);
   });
 
+  it("treats has_estimate-false finals as Undisclosed for every ticker, not only ABALX", () => {
+    for (const ticker of ["ABALX", "VFIAX", "FXAIX", "DODIX"]) {
+      const row = upcomingRowForCompareTicker({
+        ticker,
+        fund: view(ticker, {
+          bucket: "paid",
+          hasEstimate: false,
+          publicationStage: "final",
+          asOfDate: "2025-12-15",
+          publishedAt: "2025-12-15",
+          recordDate: "2025-12-16",
+          exDate: "2025-12-17",
+          payableDate: "2025-12-18",
+          estimatedDistributionAmount: 1.25,
+          estimatedDistributionPctNav: 2.4,
+        }),
+        upcoming: { dollars: null, announced: false, asOf: null },
+        index: 0,
+      });
+      assert.equal(row.available, false, ticker);
+      assert.equal(row.distributionDollars, null, ticker);
+      assert.equal(row.pctOfNav, null, ticker);
+      assert.equal(row.estimatedTax, null, ticker);
+      assert.equal(row.recordDate, null, ticker);
+    }
+  });
+
   it("does not invent Dist $ or % of NAV from catalog prelims", () => {
     const row = upcomingRowForCompareTicker({
       ticker: "AMCPX",

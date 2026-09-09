@@ -121,6 +121,15 @@ describe("PortfolioCompare upcoming module copy", () => {
       }),
       null,
     );
+    assert.equal(
+      upcomingDistributionAmount({
+        available: true,
+        distributionDollars: 3200,
+        distributionDollarsMin: 3000,
+        distributionDollarsMax: 3600,
+      }),
+      "$3,000–$3,600",
+    );
   });
 });
 

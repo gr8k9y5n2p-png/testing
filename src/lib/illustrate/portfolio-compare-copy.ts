@@ -1,4 +1,4 @@
-import { formatPct, formatUsd } from "../format.ts";
+import { formatPct, formatUsd, formatUsdRange } from "../format.ts";
 import { TAX_DRAG_NA_LABEL } from "./tax-drag-map.ts";
 
 /**
@@ -50,10 +50,30 @@ export function upcomingPerShareAmount(row: {
 export function upcomingDistributionAmount(row: {
   available: boolean;
   distributionDollars: number | null;
+  distributionDollarsMin?: number | null;
+  distributionDollarsMax?: number | null;
 }): string {
-  if (!row.available || row.distributionDollars == null) {
+  if (
+    !row.available ||
+    (row.distributionDollars == null &&
+      row.distributionDollarsMin == null &&
+      row.distributionDollarsMax == null)
+  ) {
     return UPCOMING_AMOUNT_UNAVAILABLE;
   }
+  if (
+    row.distributionDollarsMin != null &&
+    row.distributionDollarsMax != null &&
+    row.distributionDollarsMin !== row.distributionDollarsMax
+  ) {
+    return formatUsdRange(
+      row.distributionDollars,
+      row.distributionDollarsMin,
+      row.distributionDollarsMax,
+      0,
+    );
+  }
+  if (row.distributionDollars == null) return UPCOMING_AMOUNT_UNAVAILABLE;
   return formatUsd(row.distributionDollars, 0);
 }
 

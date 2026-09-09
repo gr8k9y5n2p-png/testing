@@ -15,6 +15,8 @@ export type UpcomingRow = {
   sideLabel: string;
   /** Null when upcoming is undisclosed — never coerce to $0. */
   distributionDollars: number | null;
+  distributionDollarsMin: number | null;
+  distributionDollarsMax: number | null;
   /** Holding $ used to derive % of NAV. Null when unknown. */
   holdingDollars: number | null;
   /**
@@ -340,6 +342,8 @@ function toTableRow(
     side,
     sideLabel: side === "current" ? "Current" : "Proposed",
     distributionDollars: dist,
+    distributionDollarsMin: num(event.distribution_dollars_min),
+    distributionDollarsMax: num(event.distribution_dollars_max),
     holdingDollars,
     pctOfNav: pctOfNavFromDist(dist, holdingDollars, num(event.percent_of_nav)),
     navPerShare: null,
@@ -370,6 +374,8 @@ function undisclosedUpcomingRow(
     side,
     sideLabel: side === "current" ? "Current" : "Proposed",
     distributionDollars: null,
+    distributionDollarsMin: null,
+    distributionDollarsMax: null,
     holdingDollars: num(holding.holding_dollars),
     pctOfNav: null,
     navPerShare: null,

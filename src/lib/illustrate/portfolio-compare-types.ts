@@ -78,6 +78,8 @@ export type PortfolioDistributionDates = {
 
 export type PortfolioDistributionRow = PortfolioDistributionDates & {
   distribution_dollars?: number | null;
+  distribution_dollars_min?: number | null;
+  distribution_dollars_max?: number | null;
   estimated_tax?: number | null;
   /** Data-provided % of NAV. Never invent when omitted. */
   percent_of_nav?: number | null;

@@ -68,6 +68,12 @@ function normalizeDistributionRow(raw: unknown): PortfolioDistributionRow | null
     distribution_dollars: numOrNull(
       row.distribution_dollars ?? row.distributionDollars,
     ),
+    distribution_dollars_min: numOrNull(
+      row.distribution_dollars_min ?? row.distributionDollarsMin,
+    ),
+    distribution_dollars_max: numOrNull(
+      row.distribution_dollars_max ?? row.distributionDollarsMax,
+    ),
     estimated_tax: numOrNull(row.estimated_tax ?? row.estimated_tax_dollars),
     percent_of_nav: numOrNull(
       row.percent_of_nav ?? row.pct_of_nav ?? row.distribution_pct_nav,
