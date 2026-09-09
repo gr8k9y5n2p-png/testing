@@ -26,15 +26,8 @@ import {
   trailingCalendarPeriods,
   yoyTaxDragCompareRequest,
 } from "@/lib/illustrate/compare-request";
+import { seedNavLookup } from "@/lib/illustrate/seed-nav";
 import type { ComparePeriodIn, CompareResponse } from "@/lib/illustrate/compare-types";
-import {
-  growthFundKey,
-  mergeSeedFunds,
-  removeGrowthFund,
-  type GrowthFundInput,
-} from "@/lib/illustrate/growth-selection";
-
-export type { GrowthFundInput };
 import {
   alignTaxDragYears,
   toNegativeTaxDrag,
@@ -44,10 +37,25 @@ import {
 } from "@/lib/illustrate/tax-drag-chart";
 import { fetchPerformance, postPerformanceGrowth } from "@/lib/performance/client";
 import {
+  performanceHasFundSeries,
+  usablePerformance,
+} from "@/lib/performance/series";
+import {
   DEFAULT_START_DOLLARS,
   PERFORMANCE_FIXTURE_TICKERS,
   type PerformanceResponse,
 } from "@/lib/performance/types";
+
+export type GrowthFundInput = {
+  ticker: string;
+  label?: string;
+  fundIdentifier?: string;
+  fundFamily?: string;
+  /** Real product name. Never the ticker — Data ANDs fund_name. */
+  fundName?: string;
+  /** Search / fund metadata NAV. Sent on YoY compare when > 0. */
+  navPerShare?: number | null;
+};
 
 export type GrowthAndTaxDragModuleProps = {
   /** Initial series. Empty / omitted starts with no funds until search or Add Fund. */
@@ -61,6 +69,8 @@ export type GrowthAndTaxDragModuleProps = {
   showAnnualized?: boolean;
   allowAddFund?: boolean;
   editablePrincipal?: boolean;
+  /** Compare slots: replace the series when seedFunds change. */
+  lockToSeed?: boolean;
 };
 
 const SKETCH_DISCLAIMER =
@@ -69,7 +79,8 @@ const SKETCH_DISCLAIMER =
 type LoadedFund = {
   input: GrowthFundInput;
   color: string;
-  performance: PerformanceResponse;
+  /** Null when /performance is 404 or empty — never invent a series. */
+  performance: PerformanceResponse | null;
   tax: CompareResponse | null;
   /** fund_vs_fund: this fund is `left` or `right`. YoY uses `auto`. */
   taxSide: "left" | "right" | "auto";
@@ -85,6 +96,7 @@ export function GrowthAndTaxDragModule({
   showAnnualized = true,
   allowAddFund = true,
   editablePrincipal = true,
+  lockToSeed = false,
 }: GrowthAndTaxDragModuleProps) {
   const [selected, setSelected] = useState<GrowthFundInput[]>(() =>
     funds.slice(0, MAX_GROWTH_FUNDS),
@@ -100,22 +112,33 @@ export function GrowthAndTaxDragModule({
   const [settledKey, setSettledKey] = useState<string | null>(null);
 
   const requestKey = JSON.stringify({
-    funds: selected.map((fund) => growthFundKey(fund)),
+    funds: selected.map((fund) => fundKey(fund)),
     principal,
     benchmark: benchmark ?? null,
     periods: periods ?? null,
   });
   const fetchKey = `${requestKey}:${retry}`;
   const loading = selected.length > 0 && settledKey !== fetchKey;
-  const seedKey = JSON.stringify((seedFunds ?? []).map(growthFundKey));
+  const seedKey = JSON.stringify((seedFunds ?? []).map(fundKey));
 
   useEffect(() => {
     const seeds = JSON.parse(seedKey) as GrowthFundInput[];
+    if (lockToSeed) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Compare slots own the series
+      setSelected(seeds.slice(0, MAX_GROWTH_FUNDS));
+      return;
+    }
     if (seeds.length === 0) return;
     // Homepage remounts pass a new funds[] seed; merge without dropping user adds.
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- sync selected to funds prop
     setSelected((current) => mergeSeedFunds(current, seeds));
-  }, [seedKey]);
+  }, [seedKey, lockToSeed]);
+
+  useEffect(() => {
+    if (editablePrincipal) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Compare owns the shared holding
+    setPrincipal(startDollars);
+    setPrincipalDraft(formatPrincipal(startDollars));
+  }, [editablePrincipal, startDollars]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -126,10 +149,6 @@ export function GrowthAndTaxDragModule({
     };
 
     if (next.funds.length === 0) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- empty selection must drop stale series
-      setRows([]);
-      setError(null);
-      setSettledKey(fetchKey);
       return;
     }
 
@@ -149,20 +168,14 @@ export function GrowthAndTaxDragModule({
     return () => controller.abort();
   }, [requestKey, fetchKey, periods]);
 
-  const visibleRows = useMemo(() => {
-    if (!rows) return null;
-    const keep = new Set(selected.map((fund) => growthFundKey(fund).ticker));
-    return rows.filter((row) =>
-      keep.has(row.performance.fund_ticker.trim().toUpperCase()),
-    );
-  }, [rows, selected]);
-
   const years = useMemo(() => {
-    if (!visibleRows) return [];
+    if (!rows) return [];
     const set = new Set<number>();
-    for (const row of visibleRows) {
-      for (const point of yearEndGrowth(row.performance.fund.points)) {
-        set.add(point.year);
+    for (const row of rows) {
+      if (row.performance && performanceHasFundSeries(row.performance)) {
+        for (const point of yearEndGrowth(row.performance.fund.points)) {
+          set.add(point.year);
+        }
       }
       if (row.tax) {
         for (const point of toTaxDragPeriods(row.tax, taxMetric, row.taxSide)) {
@@ -171,70 +184,67 @@ export function GrowthAndTaxDragModule({
       }
     }
     return sketchYears([...set].sort((a, b) => a - b));
-  }, [visibleRows, taxMetric]);
+  }, [rows, taxMetric]);
 
   const growthSeries = useMemo<GrowthLineSeries[]>(() => {
-    if (!visibleRows) return [];
-    const lines: GrowthLineSeries[] = visibleRows.map((row) => ({
-      id: row.performance.fund_ticker,
-      label: row.performance.fund_ticker,
-      color: row.color,
-      points: windowedGrowth(row.performance.fund.points, years, principal),
-    }));
-    const bench = visibleRows[0]?.performance.benchmark;
-    if (bench) {
-      lines.push({
-        id: `bench-${bench.ticker}`,
-        label: visibleRows[0].performance.benchmark_tracks || bench.ticker,
-        color: BENCHMARK_COLOR,
-        dashed: true,
-        points: windowedGrowth(bench.points, years, principal),
-      });
-    }
-    return lines;
-  }, [principal, visibleRows, years]);
-
-  const taxSeries = useMemo<TaxDragFundSeries[]>(() => {
-    if (!visibleRows) return [];
-    return visibleRows.map((row) => ({
-      id: row.performance.fund_ticker,
-      label: row.performance.fund_ticker,
-      color: row.color,
-      points: row.tax
-        ? toNegativeTaxDrag(
-            alignTaxDragYears(
-              toTaxDragPeriods(row.tax, taxMetric, row.taxSide),
-              years,
-            ),
-          )
-        : years.map((year) => ({ year, value: null })),
-    }));
-  }, [visibleRows, taxMetric, years]);
-
-  const annualized = useMemo(() => {
-    if (!visibleRows || years.length < 2) return [];
-    const span = years[years.length - 1] - years[0];
-    const dollarSeries: {
-      id: string;
-      label: string;
-      color?: string;
-      points: { year: number; value: number }[];
-    }[] =
-      visibleRows.map((row) => ({
-        id: row.performance.fund_ticker,
-        label: row.performance.fund_ticker,
+    if (!rows) return [];
+    const packed = rows.filter(
+      (row): row is LoadedFund & { performance: PerformanceResponse } =>
+        Boolean(row.performance && performanceHasFundSeries(row.performance)),
+    );
+    const lines: GrowthLineSeries[] = packed
+      .map((row) => ({
+        id: row.input.ticker,
+        label: row.input.ticker,
         color: row.color,
         points: windowedGrowth(row.performance.fund.points, years, principal),
-      }));
-    const bench = visibleRows[0]?.performance.benchmark;
-    if (bench) {
-      dollarSeries.push({
-        id: `bench-${bench.ticker}`,
-        label: visibleRows[0].performance.benchmark_tracks || bench.ticker,
-        points: windowedGrowth(bench.points, years, principal),
-      });
+      }))
+      .filter((line) => line.points.length > 0);
+    const packedFirst = packed[0];
+    const bench = packedFirst?.performance.benchmark;
+    if (bench && bench.points.some((point) => point.date)) {
+      const benchPoints = windowedGrowth(bench.points, years, principal);
+      if (benchPoints.length > 0) {
+        lines.push({
+          id: `bench-${bench.ticker}`,
+          label: packedFirst.performance.benchmark_tracks || bench.ticker,
+          color: BENCHMARK_COLOR,
+          dashed: true,
+          points: benchPoints,
+        });
+      }
     }
-    return dollarSeries.map((row) => {
+    return lines;
+  }, [principal, rows, years]);
+
+  const taxSeries = useMemo<TaxDragFundSeries[]>(() => {
+    if (!rows) return [];
+    return rows.flatMap((row) => {
+      if (!row.tax) return [];
+      return [
+        {
+          id: row.input.ticker,
+          label: row.input.ticker,
+          color: row.color,
+          points: toNegativeTaxDrag(
+            alignTaxDragYears(toTaxDragPeriods(row.tax, taxMetric, row.taxSide), years),
+          ),
+        },
+      ];
+    });
+  }, [rows, taxMetric, years]);
+
+  const missingPerformance = useMemo(() => {
+    if (!rows) return [];
+    return rows
+      .filter((row) => !row.performance || !performanceHasFundSeries(row.performance))
+      .map((row) => row.input.ticker);
+  }, [rows]);
+
+  const annualized = useMemo(() => {
+    if (!rows || years.length < 2) return [];
+    const span = years[years.length - 1] - years[0];
+    return growthSeries.map((row) => {
       const first = row.points[0];
       const last = row.points[row.points.length - 1];
       return {
@@ -245,7 +255,7 @@ export function GrowthAndTaxDragModule({
           first && last ? cagr(first.value, last.value, Math.max(span, 1)) : null,
       };
     });
-  }, [principal, visibleRows, years]);
+  }, [growthSeries, rows, years]);
 
   function commitPrincipal() {
     const parsed = Number(principalDraft.replace(/[$,\s]/g, ""));
@@ -260,7 +270,7 @@ export function GrowthAndTaxDragModule({
   function addFund(tickerRaw: string) {
     const ticker = tickerRaw.trim().toUpperCase();
     if (!ticker) return;
-    if (selected.some((fund) => growthFundKey(fund).ticker === ticker)) return;
+    if (selected.some((fund) => fundKey(fund).ticker === ticker)) return;
     if (selected.length >= MAX_GROWTH_FUNDS) return;
     setSelected((current) => [
       ...current,
@@ -275,7 +285,9 @@ export function GrowthAndTaxDragModule({
   }
 
   function removeFund(ticker: string) {
-    setSelected((current) => removeGrowthFund(current, ticker));
+    setSelected((current) =>
+      current.filter((fund) => fundKey(fund).ticker !== ticker),
+    );
   }
 
   const axis = useMemo(
@@ -284,7 +296,7 @@ export function GrowthAndTaxDragModule({
   );
 
   const remaining = PERFORMANCE_FIXTURE_TICKERS.filter(
-    (ticker) => !selected.some((fund) => growthFundKey(fund).ticker === ticker),
+    (ticker) => !selected.some((fund) => fundKey(fund).ticker === ticker),
   );
 
   return (
@@ -333,7 +345,12 @@ export function GrowthAndTaxDragModule({
               </span>
             </label>
           ) : (
-            <p className="text-sm text-muted">{formatUsd(principal, 0)}</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-faint">
+              Growth of $
+              <span className="mt-1 block font-mono text-sm font-normal normal-case tracking-normal text-ink">
+                {formatUsd(principal, 0)}
+              </span>
+            </p>
           )}
           {allowAddFund && selected.length < MAX_GROWTH_FUNDS ? (
             adding ? (
@@ -382,7 +399,7 @@ export function GrowthAndTaxDragModule({
         </div>
       </header>
 
-      {selected.length > 0 ? (
+      {selected.length > 2 ? (
         <div className="mt-3 flex flex-wrap gap-2">
           {selected.map((fund, index) => (
             <span
@@ -397,7 +414,7 @@ export function GrowthAndTaxDragModule({
               <button
                 type="button"
                 onClick={() => removeFund(fund.ticker)}
-                className="rounded px-0.5 text-faint hover:bg-surface hover:text-ink"
+                className="text-faint hover:text-ink"
                 aria-label={`Remove ${fund.ticker}`}
               >
                 ×
@@ -405,6 +422,13 @@ export function GrowthAndTaxDragModule({
             </span>
           ))}
         </div>
+      ) : null}
+
+      {missingPerformance.length > 0 && selected.length > 0 && !error ? (
+        <p className="mt-3 text-[11px] text-muted">
+          No performance series for {missingPerformance.join(", ")} — N/A, not
+          $0.
+        </p>
       ) : null}
 
       {error ? (
@@ -429,7 +453,6 @@ export function GrowthAndTaxDragModule({
               unit="dollars"
               annualized={annualized}
               showAnnualized={showAnnualized}
-              onRemoveSeries={removeFund}
               loading={loading}
               axis={axis}
               emptyLabel={
@@ -438,8 +461,11 @@ export function GrowthAndTaxDragModule({
               emptyHint={
                 selected.length === 0
                   ? ""
-                  : "GET /performance returned no overlapping monthly points."
+                  : missingPerformance.length === selected.length
+                    ? "GET /performance returned 404 or no monthly points for these tickers."
+                    : "GET /performance returned no overlapping monthly points."
               }
+              onRemoveSeries={removeFund}
             />
           </div>
           <div className="rounded-xl border border-line bg-paper/40 px-3 py-3 sm:px-4">
@@ -448,12 +474,12 @@ export function GrowthAndTaxDragModule({
               years={years}
               metric={taxMetric}
               onUnitChange={setTaxMetric}
-              onRemoveSeries={removeFund}
               orientation="down"
               showBarLabels={selected.length <= 2}
               layout="flush"
               title="Estimated annual tax drag"
               loading={loading}
+              onRemoveSeries={removeFund}
               axis={axis}
               emptyLabel={
                 selected.length === 0
@@ -488,6 +514,27 @@ function formatPrincipal(value: number): string {
   return new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(value);
 }
 
+function fundKey(fund: GrowthFundInput): GrowthFundInput {
+  return {
+    ticker: fund.ticker.trim().toUpperCase(),
+    label: fund.label,
+    fundIdentifier: fund.fundIdentifier,
+    fundFamily: fund.fundFamily,
+    fundName: fund.fundName,
+    navPerShare: fund.navPerShare,
+  };
+}
+
+function mergeSeedFunds(
+  current: GrowthFundInput[],
+  seeds: GrowthFundInput[],
+): GrowthFundInput[] {
+  const seeded = seeds.map(fundKey);
+  const seen = new Set(seeded.map((fund) => fund.ticker));
+  const rest = current.filter((fund) => !seen.has(fundKey(fund).ticker));
+  return [...seeded, ...rest].slice(0, MAX_GROWTH_FUNDS);
+}
+
 async function loadModule(
   funds: GrowthFundInput[],
   principal: number,
@@ -498,6 +545,11 @@ async function loadModule(
   const prepared = await Promise.all(
     funds.map(async (input, index) => {
       const ticker = input.ticker.trim().toUpperCase();
+      const navFromMeta = navFromFundMetadata(
+        ticker,
+        input.navPerShare,
+        seedNavLookup,
+      );
       const usePost = principal !== DEFAULT_START_DOLLARS;
       const request = {
         ticker,
@@ -506,20 +558,28 @@ async function loadModule(
         start_dollars: principal,
         mode: "fixture" as const,
       };
-      const performance = usePost
-        ? await postPerformanceGrowth(request, { signal })
-        : await fetchPerformance(request, { signal });
-      const lastClose =
-        performance.fund.points[performance.fund.points.length - 1]?.adj_close;
-      const nav =
-        navFromFundMetadata(ticker, input.navPerShare) ??
-        positiveNav(lastClose);
-      return { input, index, ticker, performance, nav };
+      try {
+        const raw = usePost
+          ? await postPerformanceGrowth(request, { signal })
+          : await fetchPerformance(request, { signal });
+        const performance = usablePerformance(raw);
+        const lastClose = performance
+          ? performance.fund.points[performance.fund.points.length - 1]?.adj_close
+          : undefined;
+        const nav = navFromMeta ?? positiveNav(lastClose);
+        return { input, index, ticker, performance, nav };
+      } catch (caught) {
+        if (caught instanceof DOMException && caught.name === "AbortError") {
+          throw caught;
+        }
+        return { input, index, ticker, performance: null, nav: navFromMeta };
+      }
     }),
   );
 
   const yearSet = new Set<number>();
   for (const row of prepared) {
+    if (!row.performance) continue;
     for (const point of yearEndGrowth(row.performance.fund.points)) {
       yearSet.add(point.year);
     }

@@ -1,6 +1,7 @@
 import type { FundEstimateView } from "@/data/types";
 import { DeltaBadge } from "@/components/DeltaBadge";
 import { DistributionDateStrip } from "@/components/DistributionDateStrip";
+import { CompareTickerLink } from "@/components/illustrate/CompareTickerLink";
 import { UPCOMING_UNAVAILABLE_HEADLINE } from "@/lib/copy";
 import { formatCompactDate, formatPct, formatUsd } from "@/lib/format";
 
@@ -56,10 +57,10 @@ export function HighlightCard({
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-ink">
-                    {fund.fundName}
+                    <CompareTickerLink ticker={fund.ticker}>{fund.fundName}</CompareTickerLink>
                   </p>
                   <p className="mt-0.5 font-mono text-[11px] text-faint">
-                    {fund.ticker}
+                    <CompareTickerLink ticker={fund.ticker} />
                     <span className="mx-1.5 text-line-strong">·</span>
                     {fund.family}
                   </p>
@@ -121,10 +122,10 @@ function OutlierGroup({
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-ink">
-                    {fund.fundName}
+                    <CompareTickerLink ticker={fund.ticker}>{fund.fundName}</CompareTickerLink>
                   </p>
                   <p className="mt-0.5 font-mono text-[11px] text-faint">
-                    {fund.ticker}
+                    <CompareTickerLink ticker={fund.ticker} />
                     <span className="mx-1.5 text-line-strong">·</span>
                     {fund.category}
                   </p>

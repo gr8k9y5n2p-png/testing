@@ -29,6 +29,8 @@ export type FundTaxDeltaCompareProps = {
   taxRates?: Partial<TaxRates> | Record<string, never>;
   periods?: ComparePeriodIn[];
   className?: string;
+  /** Dedicated Compare tab: span the page instead of the 420px card rail. */
+  fullWidth?: boolean;
 };
 
 type CompareQuery = {
@@ -46,7 +48,9 @@ export function FundTaxDeltaCompare({
   taxRates,
   periods = DEFAULT_PERIODS,
   className,
+  fullWidth = false,
 }: FundTaxDeltaCompareProps) {
+  const widthClass = fullWidth ? "w-full" : "w-full max-w-[420px]";
   const query = useMemo<CompareQuery>(
     () => ({
       left,
@@ -100,7 +104,7 @@ export function FundTaxDeltaCompare({
   if (loading) {
     return (
       <div
-        className={`min-h-[420px] w-full max-w-[420px] animate-pulse rounded-2xl border border-line bg-surface shadow-[0_8px_24px_rgba(26,29,26,0.08)] ${className ?? ""}`}
+        className={`min-h-[420px] animate-pulse rounded-2xl border border-line bg-surface shadow-[0_8px_24px_rgba(26,29,26,0.08)] ${widthClass} ${className ?? ""}`}
         aria-busy
         aria-label="Loading fund tax-delta compare"
       />
@@ -110,7 +114,7 @@ export function FundTaxDeltaCompare({
   if (error) {
     return (
       <div
-        className={`flex min-h-[420px] w-full max-w-[420px] flex-col items-start justify-center rounded-2xl border border-tax-more/20 bg-tax-more-soft px-5 py-6 ${className ?? ""}`}
+        className={`flex min-h-[420px] flex-col items-start justify-center rounded-2xl border border-tax-more/20 bg-tax-more-soft px-5 py-6 ${widthClass} ${className ?? ""}`}
       >
         <p className="font-serif text-lg text-tax-more">Compare unavailable</p>
         <p className="mt-2 text-sm text-ink">{error}</p>
@@ -128,7 +132,7 @@ export function FundTaxDeltaCompare({
   if (!result) {
     return (
       <div
-        className={`flex min-h-[420px] w-full max-w-[420px] flex-col items-start justify-center rounded-2xl border border-dashed border-line-strong bg-surface px-5 py-6 ${className ?? ""}`}
+        className={`flex min-h-[420px] flex-col items-start justify-center rounded-2xl border border-dashed border-line-strong bg-surface px-5 py-6 ${widthClass} ${className ?? ""}`}
       >
         <p className="font-serif text-lg text-ink">Compare unavailable</p>
         <p className="mt-2 text-sm text-muted">
@@ -143,5 +147,11 @@ export function FundTaxDeltaCompare({
     right: right.label,
   });
 
-  return <TaxDeltaCompareCard model={model} className={className} />;
+  return (
+    <TaxDeltaCompareCard
+      model={model}
+      className={className}
+      fullWidth={fullWidth}
+    />
+  );
 }
