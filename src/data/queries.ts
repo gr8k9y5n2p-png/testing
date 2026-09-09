@@ -1,4 +1,5 @@
 import { splitFundsByBucket } from "./distribution-bucket.ts";
+import { paidHistoryCalendarYear } from "./paid-history-year.ts";
 import type {
   DistributionBucket,
   Facets,
@@ -105,7 +106,10 @@ function hasPaidHistorySignal(fund: FundEstimateView): boolean {
   return stage === "paid" || stage === "final";
 }
 
-export function paidHistoryViews(funds: FundEstimateView[]): FundEstimateView[] {
+export function paidHistoryViews(
+  funds: FundEstimateView[],
+  year?: number,
+): FundEstimateView[] {
   const rows: FundEstimateView[] = [];
   for (const fund of funds) {
     if (fund.bucket === "paid") {
@@ -119,7 +123,11 @@ export function paidHistoryViews(funds: FundEstimateView[]): FundEstimateView[] 
       rows.push(fundFromPaidEvent(fund, event));
     }
   }
-  return rows.sort((a, b) => {
+  const scoped =
+    year == null
+      ? rows
+      : rows.filter((row) => paidHistoryCalendarYear(row) === year);
+  return scoped.sort((a, b) => {
     const byDate = (b.payableDate ?? b.exDate ?? b.asOfDate).localeCompare(
       a.payableDate ?? a.exDate ?? a.asOfDate,
     );

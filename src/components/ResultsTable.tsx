@@ -15,6 +15,7 @@ import { DistributionDateStrip } from "@/components/DistributionDateStrip";
 import { DeltaBadge } from "@/components/DeltaBadge";
 import { useCoverage } from "@/components/coverage/CoverageProvider";
 import {
+  announcedSortKey,
   formatOptionalDate,
   formatPct,
   formatUsd,
@@ -24,6 +25,7 @@ import {
 } from "@/lib/format";
 import {
   PAID_HISTORY_EMPTY,
+  paidHistoryEmptyForYear,
   UPCOMING_UNAVAILABLE_DETAIL,
   UPCOMING_UNAVAILABLE_HEADLINE,
 } from "@/lib/copy";
@@ -64,6 +66,9 @@ export function ResultsTable({
   sortDirection: sortDirectionProp,
   onSort,
   page,
+  paidYear,
+  paidYears,
+  onPaidYear,
 }: {
   funds: FundEstimateView[];
   onIllustrate?: (fund: FundEstimateView) => void;
@@ -76,6 +81,9 @@ export function ResultsTable({
     offset: number;
     onOffset: (offset: number) => void;
   };
+  paidYear?: number;
+  paidYears?: number[];
+  onPaidYear?: (year: number) => void;
 }) {
   const [localSortKey, setLocalSortKey] = useState<SortKey>("fundName");
   const [localSortDirection, setLocalSortDirection] = useState<SortDirection>("asc");
@@ -83,15 +91,15 @@ export function ResultsTable({
   const sortDirection = sortDirectionProp ?? localSortDirection;
   const coverage = useCoverage();
   const { upcoming } = splitFundsByBucket(funds);
-  const paid = paidHistoryViews(funds);
-  const serverSorted = Boolean(onSort);
+  const paid = paidHistoryViews(funds, paidYear);
+  const rowSortKey = announcedSortKey(sortKey);
 
   function toggleSort(key: SortKey) {
     if (onSort) {
       onSort(key);
       return;
     }
-    if (key === localSortKey) {
+    if (announcedSortKey(key) === announcedSortKey(localSortKey)) {
       setLocalSortDirection((current) => (current === "asc" ? "desc" : "asc"));
       return;
     }
@@ -124,7 +132,7 @@ export function ResultsTable({
         description="Announced distributions that have not paid out yet. Past record/ex/payable dates stay in history below."
         kicker="unpaid announced · not paid history"
         wellClassName="bg-surface"
-        funds={serverSorted ? upcoming : sortFunds(upcoming, sortKey, sortDirection)}
+        funds={sortFunds(upcoming, rowSortKey, sortDirection)}
         sortKey={sortKey}
         sortDirection={sortDirection}
         onSort={toggleSort}
@@ -140,14 +148,25 @@ export function ResultsTable({
         description="Paid, final-past, and estimates whose record/ex/payable date is already past. These never appear in Upcoming."
         kicker="past · not upcoming"
         wellClassName="bg-paper"
-        funds={serverSorted ? paid : sortFunds(paid, sortKey, sortDirection)}
+        funds={sortFunds(paid, rowSortKey, sortDirection)}
         sortKey={sortKey}
         sortDirection={sortDirection}
         onSort={toggleSort}
         onIllustrate={onIllustrate ? illustrate : undefined}
         coverage={coverage}
-        empty={PAID_HISTORY_EMPTY}
+        empty={
+          paidYear != null ? paidHistoryEmptyForYear(paidYear) : PAID_HISTORY_EMPTY
+        }
         showPayable
+        yearToggle={
+          paidYear != null && paidYears?.length && onPaidYear ? (
+            <PaidHistoryYearToggle
+              year={paidYear}
+              years={paidYears}
+              onChange={onPaidYear}
+            />
+          ) : undefined
+        }
       />
       {page ? <PaginationBar {...page} /> : null}
     </div>
@@ -168,6 +187,7 @@ function FundSection({
   emptyHeadline,
   empty,
   showPayable,
+  yearToggle,
 }: {
   title: string;
   description: string;
@@ -182,6 +202,7 @@ function FundSection({
   emptyHeadline?: string;
   empty: string;
   showPayable: boolean;
+  yearToggle?: ReactNode;
 }) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
@@ -192,7 +213,10 @@ function FundSection({
           <h3 className="font-serif text-lg tracking-tight text-ink">{title}</h3>
           <p className="mt-0.5 text-sm text-muted">{description}</p>
         </div>
-        <p className="text-[10px] text-muted">{kicker}</p>
+        <div className="flex flex-wrap items-center justify-end gap-3">
+          {yearToggle}
+          <p className="text-[10px] text-muted">{kicker}</p>
+        </div>
       </header>
 
       {funds.length === 0 ? (
@@ -248,8 +272,8 @@ function FundSection({
                   />
                   <SortHeader
                     label="Announced"
-                    column="publishedAt"
-                    active={sortKey}
+                    column="asOfDate"
+                    active={sortKey === "publishedAt" ? "asOfDate" : sortKey}
                     direction={sortDirection}
                     onSort={onSort}
                   />
@@ -612,6 +636,41 @@ function VirtualizedTable({
           ) : null}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+function PaidHistoryYearToggle({
+  year,
+  years,
+  onChange,
+}: {
+  year: number;
+  years: number[];
+  onChange: (year: number) => void;
+}) {
+  return (
+    <div
+      role="group"
+      aria-label="Paid history calendar year"
+      className="flex items-center gap-1 rounded-md border border-line bg-surface p-0.5"
+    >
+      {years.map((option) => {
+        const active = option === year;
+        return (
+          <button
+            key={option}
+            type="button"
+            aria-pressed={active}
+            onClick={() => onChange(option)}
+            className={`h-7 min-w-12 rounded-[5px] px-2.5 text-xs font-semibold ${
+              active ? "bg-ink text-white" : "text-muted hover:text-ink"
+            }`}
+          >
+            {option}
+          </button>
+        );
+      })}
     </div>
   );
 }

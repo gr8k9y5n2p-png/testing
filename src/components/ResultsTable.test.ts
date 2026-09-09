@@ -21,6 +21,29 @@ describe("ResultsTable EstimateRow props", () => {
   });
 });
 
+describe("ResultsTable Announced sort and Paid history year", () => {
+  it("sorts Announced by asOfDate and always client-sorts Paid history", () => {
+    assert.match(source, /column="asOfDate"/);
+    assert.match(source, /announcedSortKey/);
+    assert.match(source, /sortFunds\(paid,/);
+    assert.match(source, /sortFunds\(upcoming,/);
+    assert.doesNotMatch(source, /serverSorted \? paid/);
+    const announcedHeader = source.slice(
+      source.indexOf('label="Announced"'),
+      source.indexOf('label="Announced"') + 180,
+    );
+    assert.match(announcedHeader, /column="asOfDate"/);
+    assert.doesNotMatch(announcedHeader, /column="publishedAt"/);
+  });
+
+  it("owns a Paid history calendar-year toggle", () => {
+    assert.match(source, /Paid history calendar year/);
+    assert.match(source, /paidHistoryViews\(funds, paidYear\)/);
+    assert.match(source, /paidHistoryEmptyForYear/);
+    assert.match(source, /PaidHistoryYearToggle/);
+  });
+});
+
 describe("ResultsTable Search pager placement", () => {
   it("puts the hybrid pager directly below Upcoming / announced, not above it", () => {
     const start = source.indexOf("return (");

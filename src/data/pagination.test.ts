@@ -119,3 +119,12 @@ test("parseFundPageQuery and offsetToPage match the Data contract", () => {
   assert.equal(aliased.family, "Vanguard");
   assert.equal(aliased.query, "amc");
 });
+
+test("parseFundPageQuery reads paid_year for Paid history as_of bounds", () => {
+  const query = parseFundPageQuery(
+    new URLSearchParams("limit=50&offset=0&paid_year=2025&sort=asOfDate&direction=desc"),
+  );
+  assert.equal(query.paidYear, 2025);
+  assert.equal(query.sort, "asOfDate");
+  assert.equal(query.direction, "desc");
+});

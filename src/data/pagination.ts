@@ -1,5 +1,6 @@
 import type { FundEstimateView, SearchFilters } from "./types.ts";
 import {
+  announcedSortKey,
   sortFunds,
   type SortDirection,
   type SortKey,
@@ -16,6 +17,7 @@ export const FUND_SORT_KEYS = [
   "category",
   "estimatedDistributionPctNav",
   "publishedAt",
+  "asOfDate",
   "vsCategoryPctNav",
 ] as const satisfies readonly SortKey[];
 
@@ -24,6 +26,8 @@ export type FundPageQuery = SearchFilters & {
   offset?: number;
   sort?: SortKey;
   direction?: SortDirection;
+  /** Paid history calendar year → GET /distributions as_of_from / as_of_to. */
+  paidYear?: number;
 };
 
 export type FundPageResult = {
@@ -59,6 +63,7 @@ export function parseFundPageQuery(
   searchParams: URLSearchParams,
 ): FundPageQuery {
   const yearValue = searchParams.get("year");
+  const paidYearValue = searchParams.get("paid_year");
   const sort = searchParams.get("sort");
   const direction = searchParams.get("direction");
   const family =
@@ -79,6 +84,7 @@ export function parseFundPageQuery(
     family,
     category: searchParams.get("category") ?? undefined,
     year: yearValue ? Number(yearValue) : undefined,
+    paidYear: paidYearValue ? Number(paidYearValue) : undefined,
     sort: isSortKey(sort) ? sort : undefined,
     direction: direction === "desc" || direction === "asc" ? direction : undefined,
     limit,
@@ -100,7 +106,7 @@ export function paginateViews(
   const filtered = searchFunds(funds, query);
   const sorted = sortFunds(
     filtered,
-    query.sort ?? "fundName",
+    announcedSortKey(query.sort ?? "fundName"),
     query.direction ?? (query.sort === "fundName" || !query.sort ? "asc" : "desc"),
   );
   return {

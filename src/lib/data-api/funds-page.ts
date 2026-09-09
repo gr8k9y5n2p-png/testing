@@ -12,10 +12,15 @@ import {
   type FundPageQuery,
   type FundPageResult,
 } from "@/data/pagination";
+import { asOfYearBounds } from "@/data/paid-history-year";
 import { withPeerContext } from "@/data/queries";
 import type { FundEstimateView } from "@/data/types";
 import { isRemoteDataApi } from "@/lib/data-api/config";
-import { loadDistributionsForFundPage } from "@/lib/data-api/distributions";
+import {
+  dedupeRows,
+  loadDistributionsForFundPage,
+  type DataDistribution,
+} from "@/lib/data-api/distributions";
 import { fetchDataApi } from "@/lib/data-api/fetch";
 
 export { mapFundsApiItem, type FundsApiItem } from "@/data/funds-list";
@@ -92,7 +97,7 @@ async function hydrateFundPage(
 ): Promise<FundEstimateView[]> {
   if (!items.length) return items;
   try {
-    const rows = await loadDistributionsForFundPage({
+    const base = {
       q: query.query,
       family: query.family,
       tickers: items.map((item) => item.ticker),
@@ -101,7 +106,23 @@ async function hydrateFundPage(
           item.id.startsWith("fund:") ? item.id.slice("fund:".length) : "",
         )
         .filter((value) => value && value !== "unknown"),
-    });
+    };
+    const paidYear =
+      typeof query.paidYear === "number" && Number.isFinite(query.paidYear)
+        ? query.paidYear
+        : undefined;
+    const bounds = paidYear ? asOfYearBounds(paidYear) : undefined;
+    const [unbounded, yearBounded] = await Promise.all([
+      loadDistributionsForFundPage(base),
+      bounds
+        ? loadDistributionsForFundPage({
+            ...base,
+            asOfFrom: bounds.asOfFrom,
+            asOfTo: bounds.asOfTo,
+          })
+        : Promise.resolve([] as DataDistribution[]),
+    ]);
+    const rows = dedupeRows([...unbounded, ...yearBounded]);
     if (!rows.length) return items;
     const hydrated = withPeerContext(aggregateDistributions(rows));
     const index = indexFundsByIdentity(hydrated);

@@ -25,6 +25,17 @@ describe("Search / Sample Estimates fund page", () => {
     );
   });
 
+  it("passes as_of_from / as_of_to year bounds to GET /distributions", () => {
+    const distributions = readFileSync(join(here, "distributions.ts"), "utf8");
+    const page = readFileSync(join(here, "funds-page.ts"), "utf8");
+    assert.match(distributions, /as_of_from/);
+    assert.match(distributions, /as_of_to/);
+    assert.match(page, /asOfYearBounds/);
+    assert.match(page, /asOfFrom/);
+    assert.match(page, /asOfTo/);
+    assert.match(page, /paidYear/);
+  });
+
   it("keeps paid/final history off the has_estimate Upcoming gate", () => {
     const table = readFileSync(
       join(here, "../../components/ResultsTable.tsx"),

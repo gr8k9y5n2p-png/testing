@@ -44,6 +44,10 @@ export const UPCOMING_UNAVAILABLE_DETAIL =
   "No unpaid announced estimates from the Data API.";
 export const PAID_HISTORY_EMPTY = "No paid history from the Data API.";
 
+export function paidHistoryEmptyForYear(year: number): string {
+  return `No paid history for ${year} from the Data API.`;
+}
+
 export { TICKER_REQUEST } from "@/lib/data-api/request-ticker";
 
 export const FREE_SEARCH_LIMIT = 3;
