@@ -1,11 +1,17 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
+import { shouldClearFundPickerSelection } from "@/components/illustrate/fund-picker-clear";
 import {
   looksLikeExactTicker,
   notifyPortfolioTickerMiss,
 } from "@/lib/data-api/request-ticker";
 import type { PortfolioFundOption } from "@/lib/illustrate/portfolio-compare-types";
+import {
+  emptyTickerSelection,
+  tickerFieldDisplay,
+  tickerFieldSubtitle,
+} from "@/components/illustrate/portfolio-compare/ticker-field-clear";
 
 function findExactFund(funds: PortfolioFundOption[], ticker: string) {
   const key = ticker.trim().toUpperCase();
@@ -38,16 +44,29 @@ export function TickerField({
 }) {
   const [query, setQuery] = useState(ticker);
   const [open, setOpen] = useState(false);
+  const [cleared, setCleared] = useState(false);
   const pickedRef = useRef(false);
-  const display = open ? query : ticker;
+  const hasSelection = Boolean((ticker || fundName) && !cleared);
+  const display = tickerFieldDisplay({ open, query, ticker, cleared });
+  const subtitle = tickerFieldSubtitle({ fundName, cleared });
+  const canClear = Boolean(display || hasSelection);
 
   function commitUnknown(typed: string) {
+    setCleared(false);
     onSelect({ ticker: typed, fundName: "", nav: null });
     notifyPortfolioTickerMiss(typed, false, onNotice);
   }
 
+  function clearSelection() {
+    setQuery("");
+    setOpen(false);
+    setCleared(true);
+    pickedRef.current = true;
+    onSelect(emptyTickerSelection());
+  }
+
   const matches = useMemo(() => {
-    const needle = (open ? query : ticker).trim().toLowerCase();
+    const needle = (open ? query : cleared ? "" : ticker).trim().toLowerCase();
     const pool = funds;
     if (!needle) return pool.slice(0, 8);
     return pool
@@ -56,94 +75,140 @@ export function TickerField({
         return haystack.includes(needle);
       })
       .slice(0, 8);
-  }, [funds, open, query, ticker]);
+  }, [cleared, funds, open, query, ticker]);
 
   return (
     <div className="relative min-w-0 flex-1">
-      <input
-        id={inputId}
-        type="text"
-        role="combobox"
-        value={display}
-        autoComplete="off"
-        spellCheck={false}
-        placeholder="Ticker"
-        autoFocus={autoFocus}
-        aria-autocomplete="list"
-        aria-expanded={open}
-        aria-controls={`${inputId}-list`}
-        className="h-10 w-full rounded-md border border-line bg-paper px-2.5 font-mono text-sm font-medium uppercase tracking-wide text-ink placeholder:normal-case placeholder:tracking-normal placeholder:text-faint"
-        onChange={(event) => {
-          const next = event.target.value.toUpperCase();
-          setQuery(next);
-          setOpen(true);
-        }}
-        onFocus={() => {
-          setOpen(true);
-          setQuery(ticker);
-        }}
-        onBlur={() => {
-          window.setTimeout(() => {
-            setOpen(false);
-            if (pickedRef.current) {
-              pickedRef.current = false;
+      <div className="relative">
+        <input
+          id={inputId}
+          type="text"
+          role="combobox"
+          value={display}
+          autoComplete="off"
+          spellCheck={false}
+          placeholder="Ticker"
+          autoFocus={autoFocus}
+          aria-autocomplete="list"
+          aria-expanded={open}
+          aria-controls={`${inputId}-list`}
+          className="h-10 w-full rounded-md border border-line bg-paper px-2.5 pr-9 font-mono text-sm font-medium uppercase tracking-wide text-ink placeholder:normal-case placeholder:tracking-normal placeholder:text-faint"
+          onChange={(event) => {
+            const next = event.target.value.toUpperCase();
+            if (
+              shouldClearFundPickerSelection({
+                nextValue: next,
+                hasSelection,
+                suggestionsOpen: open,
+              })
+            ) {
+              clearSelection();
               return;
             }
-            const typed = query.trim().toUpperCase();
-            if (!typed) {
-              if (allowEmpty && ticker) {
-                onSelect({ ticker: "", fundName: "", nav: null });
+            setCleared(false);
+            setQuery(next);
+            setOpen(true);
+          }}
+          onFocus={() => {
+            if (hasSelection || cleared) {
+              setQuery("");
+              setOpen(false);
+              return;
+            }
+            setOpen(true);
+            setQuery(ticker);
+          }}
+          onBlur={() => {
+            window.setTimeout(() => {
+              setOpen(false);
+              if (pickedRef.current) {
+                pickedRef.current = false;
+                return;
+              }
+              if (cleared) {
+                setQuery("");
+                return;
+              }
+              const typed = query.trim().toUpperCase();
+              if (!typed) {
+                setQuery("");
+                if (allowEmpty || ticker || fundName) {
+                  onSelect(emptyTickerSelection());
+                }
+                return;
+              }
+              if (typed !== ticker) {
+                const match = findExactFund(funds, typed);
+                if (match) {
+                  onSelect(match);
+                  return;
+                }
+                if (looksLikeExactTicker(typed)) {
+                  commitUnknown(typed);
+                  return;
+                }
+                onSelect({
+                  ticker: typed,
+                  fundName: "",
+                  nav: null,
+                });
               } else {
                 setQuery(ticker);
               }
+            }, 120);
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Escape") {
+              event.preventDefault();
+              setOpen(false);
               return;
             }
-            if (typed !== ticker) {
-              const match = findExactFund(funds, typed);
+            if (
+              shouldClearFundPickerSelection({
+                key: event.key,
+                hasSelection,
+                suggestionsOpen: open,
+              })
+            ) {
+              event.preventDefault();
+              clearSelection();
+              return;
+            }
+            if (event.key === "Enter") {
+              event.preventDefault();
+              const typed = query.trim().toUpperCase();
+              if (!typed) return;
+              const exact = findExactFund(funds, typed);
+              const match = exact ?? matches[0];
               if (match) {
+                pickedRef.current = true;
+                setCleared(false);
                 onSelect(match);
-                return;
-              }
-              if (looksLikeExactTicker(typed)) {
+                setQuery(match.ticker);
+                setOpen(false);
+              } else if (looksLikeExactTicker(typed)) {
+                pickedRef.current = true;
                 commitUnknown(typed);
-                return;
+                setQuery(typed);
+                setOpen(false);
               }
-              onSelect({
-                ticker: typed,
-                fundName: "",
-                nav: null,
-              });
-            } else {
-              setQuery(ticker);
             }
-          }, 120);
-        }}
-        onKeyDown={(event) => {
-          if (event.key === "Enter") {
-            event.preventDefault();
-            const typed = query.trim().toUpperCase();
-            if (!typed) return;
-            const exact = findExactFund(funds, typed);
-            const match = exact ?? matches[0];
-            if (match) {
-              pickedRef.current = true;
-              onSelect(match);
-              setQuery(match.ticker);
-              setOpen(false);
-            } else if (looksLikeExactTicker(typed)) {
-              pickedRef.current = true;
-              commitUnknown(typed);
-              setOpen(false);
-            }
-          }
-          if (event.key === "Escape") {
-            setOpen(false);
-            setQuery(ticker);
-          }
-        }}
-      />
+          }}
+        />
+        {canClear ? (
+          <button
+            type="button"
+            aria-label="Clear ticker"
+            className="absolute top-1/2 right-2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full bg-ink/70 text-[11px] leading-none text-white hover:bg-ink"
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={clearSelection}
+          >
+            ×
+          </button>
+        ) : null}
+      </div>
       <p className="mt-1 truncate text-[11px] leading-snug text-muted">
-        {fundName || "Search a ticker"}
+        {subtitle}
       </p>
       {open ? (
         <ul
@@ -162,6 +227,7 @@ export function TickerField({
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => {
                     pickedRef.current = true;
+                    setCleared(false);
                     onSelect(fund);
                     setQuery(fund.ticker);
                     setOpen(false);
