@@ -295,6 +295,37 @@ describe("Search hydrate from /distributions", () => {
     );
   });
 
+  it("keeps live weekly NAV when merging a distributions-only duplicate", () => {
+    const catalog = mapFundsApiItem({
+      ticker: "ABALX",
+      fund_name: "American Balanced Fund",
+      fund_family: "American Funds",
+      latest_as_of: "2026-01-22",
+      has_estimate: false,
+      nav_per_share: 40.849998,
+      nav_as_of: "2026-09-08",
+      nav_source: "yahoo_last_close",
+    });
+    const aggregated = withPeerContext(
+      aggregateDistributions(ABALX_ROWS, "2026-09-09"),
+    )[0];
+    const hydrated = mergeFundWithDistributions(catalog, aggregated);
+    const fromDistsOnly = mergeFundWithDistributions(
+      mapFundsApiItem({
+        ticker: "ABALX",
+        fund_name: "American Balanced Fund",
+        fund_family: "American Funds",
+        has_estimate: false,
+      }),
+      aggregated,
+    );
+    assert.equal(fromDistsOnly.nav, 0);
+    const merged = mergeFundLists([hydrated], [fromDistsOnly]);
+    assert.equal(merged.length, 1);
+    assert.equal(merged[0].nav, 40.849998);
+    assert.equal(merged[0].navAsOf, "2026-09-08");
+  });
+
   it("does not invent a $0 Paid history row from an unhydrated catalog", () => {
     const catalog = mapFundsApiItem({
       ticker: "ZZZZX",
