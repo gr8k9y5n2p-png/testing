@@ -269,7 +269,6 @@ function FundSection({
                   fund={fund}
                   open={expandedId === fund.id}
                   coverageGap={!coverage.isLive(fund.family)}
-                  showPayable={showPayable}
                   onToggle={() =>
                     setExpandedId((current) =>
                       toggleExpandedId(current, fund.id),
