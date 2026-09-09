@@ -7,6 +7,8 @@ import { TAX_DRAG_NA_LABEL } from "./tax-drag-map.ts";
  */
 
 export const UPCOMING_UNAVAILABLE_HEADLINE = "Not available / undisclosed";
+/** Short cell label so Dist $ / % of NAV stay scannable. Never $0. */
+export const UPCOMING_AMOUNT_UNAVAILABLE = "Undisclosed";
 export const UPCOMING_UNAVAILABLE_DETAIL =
   "No unpaid announced estimates for these holdings.";
 export const UPCOMING_MODULE_HEADING = "Upcoming / announced";
@@ -28,7 +30,7 @@ export function upcomingDistributionAmount(row: {
   distributionDollars: number | null;
 }): string {
   if (!row.available || row.distributionDollars == null) {
-    return UPCOMING_UNAVAILABLE_HEADLINE;
+    return UPCOMING_AMOUNT_UNAVAILABLE;
   }
   return formatUsd(row.distributionDollars, 0);
 }
@@ -39,7 +41,7 @@ export function upcomingPctOfNavAmount(row: {
   pctOfNav: number | null;
 }): string {
   if (!row.available || row.pctOfNav == null) {
-    return UPCOMING_UNAVAILABLE_HEADLINE;
+    return UPCOMING_AMOUNT_UNAVAILABLE;
   }
   return formatPct(row.pctOfNav);
 }

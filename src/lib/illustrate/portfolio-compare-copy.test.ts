@@ -9,6 +9,7 @@ import {
   EX_COLUMN,
   PCT_OF_NAV_COLUMN,
   RECORD_COLUMN,
+  UPCOMING_AMOUNT_UNAVAILABLE,
   upcomingDistributionAmount,
   upcomingDistributionLine,
   upcomingDollarImpactAmount,
@@ -52,6 +53,7 @@ describe("PortfolioCompare upcoming module copy", () => {
     assert.match(UPCOMING_MODULE_DETAIL, /sell before record/i);
     assert.doesNotMatch(UPCOMING_MODULE_DETAIL, /\$0|0\.00/);
     assert.notEqual(UPCOMING_MODULE_HEADING, PAID_HISTORY_HEADING);
+    assert.equal(UPCOMING_AMOUNT_UNAVAILABLE, "Undisclosed");
     assert.equal(DIST_AMOUNT_COLUMN, "Dist $");
     assert.equal(PCT_OF_NAV_COLUMN, "% of NAV");
     assert.equal(DOLLAR_IMPACT_COLUMN, "$ impact");
@@ -64,7 +66,7 @@ describe("PortfolioCompare upcoming module copy", () => {
     assert.doesNotMatch(ESTIMATED_TAX_LINE_LABEL, /\$0|0\.00/);
     assert.equal(
       upcomingDistributionLine({ available: false, distributionDollars: null }),
-      "Est. Distribution: Not available / undisclosed",
+      "Est. Distribution: Undisclosed",
     );
     assert.equal(
       upcomingEstimatedTaxLine({
@@ -76,11 +78,11 @@ describe("PortfolioCompare upcoming module copy", () => {
     );
     assert.equal(
       upcomingDistributionAmount({ available: false, distributionDollars: null }),
-      "Not available / undisclosed",
+      "Undisclosed",
     );
     assert.equal(
       upcomingPctOfNavAmount({ available: false, pctOfNav: null }),
-      "Not available / undisclosed",
+      "Undisclosed",
     );
     assert.equal(
       upcomingPctOfNavAmount({ available: true, pctOfNav: 1.28 }),

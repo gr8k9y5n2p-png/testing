@@ -836,7 +836,7 @@ describe("PortfolioCompare distribution tables", () => {
   it("formats stacked ticker lines as undisclosed / N/A instead of $0", () => {
     assert.equal(
       upcomingDistributionLine({ available: false, distributionDollars: null }),
-      "Est. Distribution: Not available / undisclosed",
+      "Est. Distribution: Undisclosed",
     );
     assert.equal(
       upcomingEstimatedTaxLine({
@@ -876,7 +876,7 @@ describe("PortfolioCompare distribution tables", () => {
     );
     assert.equal(
       upcomingPctOfNavAmount({ available: false, pctOfNav: null }),
-      "Not available / undisclosed",
+      "Undisclosed",
     );
   });
 

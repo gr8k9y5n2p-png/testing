@@ -91,8 +91,9 @@ describe("portfolio compare periods wiring", () => {
     assert.match(table, /DIST_AMOUNT_COLUMN/);
     assert.match(table, /PCT_OF_NAV_COLUMN/);
     assert.match(table, /DOLLAR_IMPACT_COLUMN/);
-    assert.match(table, /ANNOUNCED_COLUMN/);
-    assert.match(table, /dates include year|Announced \/ Record \/ Ex include year/);
+    assert.match(table, /DistributionDateStrip/);
+    assert.match(table, /announcedDate/);
+    assert.match(table, /Announced \/ Record \/ Ex include year/);
     assert.doesNotMatch(table, /Est\. dist \$/);
     assert.doesNotMatch(table, /export function PaidHistoryTable/);
     assert.doesNotMatch(table, /Paid history/);
