@@ -51,6 +51,7 @@ For first public staging:
 - `AFTERTAX_PUBLIC_URL=https://staging.getaftertax.com`
 - Optional: `NEXT_PUBLIC_DATA_API_URL` to point at the PR #2 Data API
 - **Do not set** `STRIPE_SECRET_KEY`. Search + illustrate is enough; freemium/Checkout can stay stubbed.
+- Friends beta: set `FRIENDS_BETA_PASSWORD` (see below). Do not buy Vercel Pro Password Protection.
 
 Staging is `noindex`. Switch `AFTERTAX_PUBLIC_URL` to `https://getaftertax.com` when ads are green-lit.
 
@@ -182,6 +183,17 @@ The Aftertax **website** creates Stripe Checkout Sessions server-side (`POST /ap
 - When test-mode keys exist: set `STRIPE_SECRET_KEY` and optional `STRIPE_PRICE_ID` / `AFTERTAX_PUBLIC_URL`.
 
 Paywall copy is locked in `src/lib/copy.ts`. 3 free unique fund searches use client `localStorage` for this demo.
+
+### Friends-beta password gate
+
+In-app shared password so Production can stay off Vercel Pro Deployment Protection ($150/mo). Set **`FRIENDS_BETA_PASSWORD`** in Vercel → Project → Settings → Environment Variables for Production (and Preview if you want the same lock). `BETA_PASSWORD` is an alias. Unset the var to take the gate off when going public. Do not use a `NEXT_PUBLIC_` prefix.
+
+| Value | Behavior |
+| --- | --- |
+| set | Visiting `/`, `/portfolio`, `/compare`, and other app pages shows `/beta`. Correct password sets an httpOnly cookie (14 days). Refresh stays unlocked. |
+| unset | Gate is off. Site works as today. |
+
+`/terms` and `/privacy` stay public. Same-origin `/api/*` mocks and Render `NEXT_PUBLIC_DATA_API_URL` calls are not gated. Contact remains `operations@getaftertax.com`.
 
 ### Temporary beta unlock (revert before launch)
 

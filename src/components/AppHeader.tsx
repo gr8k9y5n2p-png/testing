@@ -1,10 +1,16 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { AccountMenu } from "@/components/AccountMenu";
 import { AppNav } from "@/components/AppNav";
 import { HOST } from "@/lib/copy";
 
 export function AppHeader() {
+  const pathname = usePathname();
+  const gate = pathname === "/beta";
+
   return (
     <header className="border-b border-line bg-surface">
       <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 py-3.5 sm:px-6 lg:px-8">
@@ -23,14 +29,14 @@ export function AppHeader() {
               Aftertax
             </p>
           </Link>
-          <AppNav />
+          {gate ? null : <AppNav />}
         </div>
         <div className="flex shrink-0 items-center gap-3">
           <p className="hidden text-right text-xs text-muted sm:block">
             Taxable impact in dollars
             <span className="mt-0.5 block text-faint">{HOST}</span>
           </p>
-          <AccountMenu />
+          {gate ? null : <AccountMenu />}
         </div>
       </div>
     </header>
