@@ -143,12 +143,7 @@ export function PortfolioCompare({
   });
 
   useEffect(() => {
-    if (!canFetch) {
-      setResult(null);
-      setError(null);
-      setLoading(false);
-      return;
-    }
+    if (!canFetch) return;
 
     const payload = JSON.parse(requestKey) as {
       bookDollars: number;
