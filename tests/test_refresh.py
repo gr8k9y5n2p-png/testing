@@ -32,11 +32,11 @@ def test_cli_refresh_fixture_writes_summary(engine, tmp_path: Path, capsys) -> N
 
     payload = json.loads(json_path.read_text(encoding="utf-8"))
     assert payload["mode"] == "fixture"
-    assert payload["families_attempted"] == 112
+    assert payload["families_attempted"] == 113
     assert payload["created"] > 0
     assert payload["errors"] == []
     assert payload["live_vs_fixture"]["live"] == 0
-    assert payload["live_vs_fixture"]["fixture"] == 112
+    assert payload["live_vs_fixture"]["fixture"] == 113
     assert payload["midyear_created"] > 0
     assert payload["year_end_created"] > 0
     md = md_path.read_text(encoding="utf-8")

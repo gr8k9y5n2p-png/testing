@@ -7,8 +7,8 @@ def test_coverage_endpoint_lists_top_110(client: TestClient) -> None:
     response = client.get("/coverage")
     assert response.status_code == 200
     body = response.json()
-    assert body["top_n"] == 112
-    assert body["implemented_count"] == 112
+    assert body["top_n"] == 113
+    assert body["implemented_count"] == 113
     assert body["stub_count"] == 0
     assert body["implemented_pct"] == 100.0
     slugs = [row["slug"] for row in body["families"]]
@@ -125,6 +125,7 @@ def test_coverage_endpoint_lists_top_110(client: TestClient) -> None:
         "tocqueville",
         "first_trust",
         "dws",
+        "catalyst",
     ]
     assert all(row["coverage_tier"] == "implemented" for row in body["families"])
     assert body["families"][0]["priority"] == 1
@@ -150,6 +151,7 @@ def test_coverage_endpoint_lists_top_110(client: TestClient) -> None:
     assert body["families"][109]["slug"] == "tocqueville"
     assert body["families"][110]["slug"] == "first_trust"
     assert body["families"][111]["slug"] == "dws"
+    assert body["families"][112]["slug"] == "catalyst"
 
 
 def test_coverage_gap_implemented_family(client: TestClient) -> None:
@@ -200,6 +202,19 @@ def test_coverage_gap_alias_xtrackers_and_dws_funds(client: TestClient) -> None:
     )
     assert funds.status_code == 200
     assert funds.json()["adapter_slug"] == "dws"
+
+
+def test_coverage_gap_alias_catalyst_funds(client: TestClient) -> None:
+    catalyst = client.post(
+        "/coverage/gaps", json={"ticker": "CPEAX", "fund_family": "catalystmf"}
+    )
+    assert catalyst.status_code == 200
+    assert catalyst.json()["adapter_slug"] == "catalyst"
+    millburn = client.post(
+        "/coverage/gaps", json={"ticker": "CLTIX", "fund_family": "catalyst_funds"}
+    )
+    assert millburn.status_code == 200
+    assert millburn.json()["adapter_slug"] == "catalyst"
 
 
 def test_coverage_gap_alias_pioneer_and_dfa(client: TestClient) -> None:

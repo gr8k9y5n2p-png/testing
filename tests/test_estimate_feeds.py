@@ -238,6 +238,16 @@ def test_coverage_exposes_estimate_feed_readiness(session) -> None:
     assert any("dividend-schedules-2026" in url for url in dws.estimate_feed_urls)
     assert any("products/mutual-funds" in url for url in dws.estimate_feed_urls)
 
+    catalyst = by_slug["catalyst"]
+    assert catalyst.estimate_feed_ready is True
+    assert catalyst.estimate_feed_status == "paid_history_only"
+    assert catalyst.history_years == [2025]
+    assert "CPEAX" in catalyst.performance_tickers
+    assert any("catalystmf.com/literature-and-forms" in url for url in catalyst.estimate_feed_urls)
+    assert any("2025%20Capital%20Gains%20Distributions.pdf" in url for url in catalyst.estimate_feed_urls)
+    assert any("catalyst-fund-data.js" in url for url in catalyst.estimate_feed_urls)
+    assert any(url.rstrip("/") == "https://catalystmf.com" for url in catalyst.estimate_feed_urls)
+
     voya = by_slug["voya"]
     assert voya.estimate_feed_ready is True
     assert voya.history_years == [2024, 2025]

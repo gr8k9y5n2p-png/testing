@@ -124,6 +124,9 @@ FUND_ALIASES: dict[str, str] = {
     "VICTORY-PIONEER-FUNDAMENTAL-GROWTH-FUND": "PIGFX",
     "DBEF": "DBEF",
     "XTRACKERS-MSCI-EAFE-HEDGED-EQUITY-ETF": "DBEF",
+    "CPEAX": "CPEAX",
+    "CATALYST-DYNAMIC-ALPHA-A": "CPEAX",
+    "CATALYST-DYNAMIC-ALPHA-FUND": "CPEAX",
 }
 
 FUND_META: dict[str, dict[str, str]] = {
@@ -202,6 +205,7 @@ FUND_META: dict[str, dict[str, str]] = {
     "PIODX": {"name": "Victory Pioneer Fund A", "asset_class": "equity"},
     "PIGFX": {"name": "Victory Pioneer Fundamental Growth Fund A", "asset_class": "equity"},
     "DBEF": {"name": "Xtrackers MSCI EAFE Hedged Equity ETF", "asset_class": "international"},
+    "CPEAX": {"name": "Catalyst Dynamic Alpha Fund Class A", "asset_class": "equity"},
 }
 
 DEFAULT_BENCHMARKS: dict[AssetClass, dict[str, str]] = {
