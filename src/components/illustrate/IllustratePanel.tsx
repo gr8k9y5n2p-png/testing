@@ -4,7 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 import type { FundEstimateView } from "@/data/types";
 import { useCoverage } from "@/components/coverage/CoverageProvider";
 import { isMockIllustrate, postIllustrate } from "@/lib/illustrate/client";
-import { navFromFundMetadata, positiveNav } from "@/lib/illustrate/compare-request";
+import {
+  illustrationRequestNav,
+  navFromFundMetadata,
+  perShareNavError,
+} from "@/lib/illustrate/compare-request";
 import { seedNavLookup } from "@/lib/illustrate/seed-nav";
 import { distributionIdsForFund } from "@/lib/illustrate/ids";
 import {
@@ -121,12 +125,13 @@ function IllustrationWorkspace({ fund }: { fund: FundEstimateView }) {
   );
 
   const needsNav = unit === AMOUNT_UNITS.per_share;
-  const typedNav = positiveNav(navInput);
-  const requestNav = typedNav ?? metadataNav;
-  const navError =
-    needsNav && requestNav == null
-      ? "Enter NAV per share to illustrate $ / share amounts."
-      : null;
+  const requestNav = illustrationRequestNav(
+    navInput,
+    fund.ticker,
+    fund.nav,
+    seedNavLookup,
+  );
+  const navError = perShareNavError(unit, requestNav);
   const mock = isMockIllustrate();
   const useIds = mock && !fund.id.startsWith("api:");
   const canFetch = !navError && (useIds ? distributionIds.length > 0 : Boolean(fund.ticker));

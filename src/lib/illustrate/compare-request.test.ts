@@ -6,7 +6,10 @@ import { fileURLToPath } from "node:url";
 import {
   compareSelectorsFromFund,
   compareSideFromFund,
+  illustrationRequestNav,
   navFromFundMetadata,
+  PER_SHARE_NAV_REQUIRED,
+  perShareNavError,
   positiveNav,
   toDataApiCompareBody,
   trailingCalendarPeriods,
@@ -41,6 +44,22 @@ describe("compare-request NAV / Data body", () => {
     assert.equal(navFromFundMetadata("AGTHX", 0, seedLookup), 72.14);
     assert.equal(navFromFundMetadata("vigax", undefined, seedLookup), 186.4);
     assert.equal(navFromFundMetadata("ZZNOPE", undefined, seedLookup), undefined);
+  });
+
+  it("auto-attaches ABALX $/share NAV from metadata when catalog nav is 0", () => {
+    const abalxLookup = (ticker: string) =>
+      ticker.toUpperCase() === "ABALX" ? 34.52 : undefined;
+    const attached = illustrationRequestNav("", "ABALX", 0, abalxLookup);
+    assert.equal(attached, 34.52);
+    assert.equal(perShareNavError("per_share", attached), null);
+    assert.equal(
+      illustrationRequestNav("36.10", "ABALX", 0, abalxLookup),
+      36.1,
+    );
+    const missing = illustrationRequestNav("", "ZZNOPE", 0);
+    assert.equal(missing, undefined);
+    assert.equal(perShareNavError("per_share", missing), PER_SHARE_NAV_REQUIRED);
+    assert.equal(perShareNavError("percent_of_nav", missing), null);
   });
 
   it("builds a compare side with nav_per_share from fund metadata", () => {

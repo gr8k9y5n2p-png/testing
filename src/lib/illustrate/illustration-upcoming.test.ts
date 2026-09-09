@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { IllustrationComponent } from "./types.ts";
+import { illustrationRequestNav, perShareNavError } from "./compare-request.ts";
 import {
   illustrationComponentBucket,
   splitIllustrationComponents,
@@ -143,10 +144,14 @@ describe("Dollar Illustration Upcoming gate", () => {
     );
     const seed = readFileSync(join(here, "../../data/seed.ts"), "utf8");
     assert.match(panel, /seedNavLookup/);
-    assert.match(panel, /navFromFundMetadata/);
-    assert.match(panel, /typedNav \?\? metadataNav/);
-    assert.match(panel, /needsNav && requestNav == null/);
+    assert.match(panel, /illustrationRequestNav/);
+    assert.match(panel, /perShareNavError/);
     assert.match(seed, /ticker:\s*"ABALX"[\s\S]*?nav:\s*34\.52/);
+    const seedLookup = (ticker: string) =>
+      ticker.toUpperCase() === "ABALX" ? 34.52 : undefined;
+    const attached = illustrationRequestNav("", "ABALX", 0, seedLookup);
+    assert.equal(attached, 34.52);
+    assert.equal(perShareNavError("per_share", attached), null);
   });
 
   it("IllustrationResults reads the unpaid-only helper instead of result.totals", () => {
