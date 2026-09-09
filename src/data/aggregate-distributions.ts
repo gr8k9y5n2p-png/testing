@@ -1,3 +1,4 @@
+import { parsePositiveNav } from "../lib/illustrate/nav-math.ts";
 import {
   distributionBucket,
   isoDate,
@@ -24,6 +25,9 @@ export type DataDistribution = {
   payable_date?: string | null;
   as_of: string | null;
   publication_stage: string | null;
+  nav_on_distribution_day?: string | number | null;
+  nav_on_distribution_day_as_of?: string | null;
+  nav_on_distribution_day_source?: string | null;
 };
 
 function num(value: string | number | null | undefined): number | null {
@@ -63,6 +67,10 @@ type SnapshotTotals = {
   perShare: number;
   ordinary: number;
   capGains: number;
+  publishedPct: number | null;
+  navOnDistributionDay: number | null;
+  navOnDistributionDayAsOf: string | null;
+  navOnDistributionDaySource: string | null;
 };
 
 function snapshotKey(row: DataDistribution): string {
@@ -84,8 +92,26 @@ function pickDate(
   return dates.sort().at(-1) ?? null;
 }
 
+function pickNavOnDistributionDay(rows: DataDistribution[]): {
+  nav: number | null;
+  asOf: string | null;
+  source: string | null;
+} {
+  for (const row of rows) {
+    const nav = parsePositiveNav(row.nav_on_distribution_day);
+    if (nav == null) continue;
+    return {
+      nav,
+      asOf: isoDate(row.nav_on_distribution_day_as_of),
+      source: row.nav_on_distribution_day_source ?? null,
+    };
+  }
+  return { nav: null, asOf: null, source: null };
+}
+
 function summarizeSnapshot(rows: DataDistribution[]): SnapshotTotals {
   let pctNav = 0;
+  let publishedPctChars = 0;
   let perShare = 0;
   let ordinary = 0;
   let capGains = 0;
@@ -93,6 +119,7 @@ function summarizeSnapshot(rows: DataDistribution[]): SnapshotTotals {
     const value = midpoint(row);
     if (row.amount_unit === "percent_of_nav") {
       pctNav += value;
+      publishedPctChars += 1;
       if (CG_TYPES.has(row.estimate_type)) capGains += value;
       else ordinary += value;
     } else if (row.amount_unit === "per_share") {
@@ -101,6 +128,7 @@ function summarizeSnapshot(rows: DataDistribution[]): SnapshotTotals {
       else ordinary += value;
     }
   }
+  const dayNav = pickNavOnDistributionDay(rows);
   return {
     rows,
     asOf: pickDate(rows, "as_of"),
@@ -112,6 +140,10 @@ function summarizeSnapshot(rows: DataDistribution[]): SnapshotTotals {
     perShare,
     ordinary,
     capGains,
+    publishedPct: publishedPctChars > 0 ? pctNav : null,
+    navOnDistributionDay: dayNav.nav,
+    navOnDistributionDayAsOf: dayNav.asOf,
+    navOnDistributionDaySource: dayNav.source,
   };
 }
 
@@ -157,6 +189,10 @@ function toFundEstimate(
     category: "—",
     shareClass: latest.share_class ?? "",
     nav: 0,
+    navOnDistributionDay: snapshot.navOnDistributionDay,
+    navOnDistributionDayAsOf: snapshot.navOnDistributionDayAsOf,
+    navOnDistributionDaySource: snapshot.navOnDistributionDaySource,
+    publishedPctOfNav: snapshot.publishedPct,
     estimatedDistributionAmount: snapshot.perShare,
     estimatedOrdinaryIncome: snapshot.ordinary,
     estimatedCapitalGains: snapshot.capGains,
@@ -240,6 +276,10 @@ export function aggregateDistributions(
           estimatedOrdinaryIncome: snapshot.ordinary,
           estimatedCapitalGains: snapshot.capGains,
           estimatedDistributionPctNav: snapshot.pctNav,
+          publishedPctOfNav: snapshot.publishedPct,
+          navOnDistributionDay: snapshot.navOnDistributionDay,
+          navOnDistributionDayAsOf: snapshot.navOnDistributionDayAsOf,
+          navOnDistributionDaySource: snapshot.navOnDistributionDaySource,
           distributionYear:
             Number((snapshot.asOf ?? snapshot.exDate ?? "").slice(0, 4)) ||
             new Date().getUTCFullYear(),

@@ -15,7 +15,16 @@ import {
   UPCOMING_UNAVAILABLE_DETAIL,
   UPCOMING_UNAVAILABLE_HEADLINE,
 } from "@/lib/copy";
-import { formatPct, formatRatePct, formatUsd, formatUsdRange } from "@/lib/format";
+import { formatRatePct, formatUsd, formatUsdRange } from "@/lib/format";
+import {
+  formatSoftPct,
+  historicalPctOfNav,
+  parseFiniteNumber,
+  parsePositiveNav,
+  pctOfNavForFund,
+  upcomingPctOfNav,
+  usesDistributionDayNav,
+} from "@/lib/illustrate/nav-math";
 
 const ESTIMATE_LABELS: Record<string, string> = {
   ordinary_income: "Ordinary income",
@@ -124,8 +133,11 @@ export function IllustrationResults({
                     className="mt-1"
                   />
                 </div>
-                <p className="font-mono text-sm text-ink">
+                <p className="text-right font-mono text-sm text-ink">
                   {formatUsd(event.estimatedDistributionAmount, 4)} / sh
+                  <span className="mt-0.5 block text-[11px] text-faint">
+                    {formatSoftPct(pctOfNavForFund(event))} of NAV
+                  </span>
                 </p>
               </li>
             ))}
@@ -148,19 +160,32 @@ export function IllustrationResults({
 
 function componentPctOfNav(
   component: IllustrationComponent,
+  fund?: FundEstimate | null,
   holdingDollars?: number | null,
 ): string {
-  if (component.amount_unit !== "percent_of_nav") {
-    return "Undisclosed";
+  const published = parseFiniteNumber(component.percent_of_nav);
+  if (published != null) return formatSoftPct(published);
+
+  const perShare = parseFiniteNumber(component.amount);
+  if (usesDistributionDayNav(component)) {
+    return formatSoftPct(
+      historicalPctOfNav(perShare, component.nav_on_distribution_day),
+    );
   }
+
+  const weekly = parsePositiveNav(fund?.nav);
+  const fromWeekly = upcomingPctOfNav(perShare, weekly);
+  if (fromWeekly != null) return formatSoftPct(fromWeekly);
+
   if (
-    component.distribution_dollars == null ||
-    holdingDollars == null ||
-    !(holdingDollars > 0)
+    component.amount_unit === "percent_of_nav" &&
+    component.distribution_dollars != null &&
+    holdingDollars != null &&
+    holdingDollars > 0
   ) {
-    return "Undisclosed";
+    return formatSoftPct((component.distribution_dollars / holdingDollars) * 100);
   }
-  return formatPct((component.distribution_dollars / holdingDollars) * 100);
+  return "—";
 }
 
 function ComponentTable({
@@ -237,7 +262,7 @@ function ComponentTable({
                 )}
               </td>
               <td className="px-3 py-2 text-right font-mono">
-                {componentPctOfNav(component, holdingDollars)}
+                {componentPctOfNav(component, fund, holdingDollars)}
               </td>
               <td className="px-3 py-2 text-right font-mono text-muted">
                 {formatRatePct(component.effective_rate)}

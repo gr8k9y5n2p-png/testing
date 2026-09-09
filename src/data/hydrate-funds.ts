@@ -80,6 +80,10 @@ export function paidEventsForFund(
     | "estimatedOrdinaryIncome"
     | "estimatedCapitalGains"
     | "estimatedDistributionPctNav"
+    | "publishedPctOfNav"
+    | "navOnDistributionDay"
+    | "navOnDistributionDayAsOf"
+    | "navOnDistributionDaySource"
     | "distributionYear"
     | "paidHistory"
   >,
@@ -96,6 +100,10 @@ export function paidEventsForFund(
     estimatedOrdinaryIncome: fund.estimatedOrdinaryIncome,
     estimatedCapitalGains: fund.estimatedCapitalGains,
     estimatedDistributionPctNav: fund.estimatedDistributionPctNav,
+    publishedPctOfNav: fund.publishedPctOfNav,
+    navOnDistributionDay: fund.navOnDistributionDay,
+    navOnDistributionDayAsOf: fund.navOnDistributionDayAsOf,
+    navOnDistributionDaySource: fund.navOnDistributionDaySource,
     distributionYear: fund.distributionYear,
   });
   if (!hasPaidEventSignal(own)) return preferFinalPaidEvents(extras);
@@ -176,8 +184,19 @@ export function mergeFundWithDistributions(
     ...fund,
     cusip: fund.cusip || fromDists.cusip,
     shareClass: fund.shareClass || fromDists.shareClass,
-    nav: fromDists.nav || fund.nav,
+    // Weekly NAV is GET /funds. Do not let a 0 from /distributions overwrite it.
+    nav: fund.nav > 0 ? fund.nav : fromDists.nav,
     navAsOf: fund.navAsOf ?? fromDists.navAsOf ?? null,
+    navSource: fund.navSource ?? fromDists.navSource ?? null,
+    navOnDistributionDay:
+      fromDists.navOnDistributionDay ?? fund.navOnDistributionDay ?? null,
+    navOnDistributionDayAsOf:
+      fromDists.navOnDistributionDayAsOf ?? fund.navOnDistributionDayAsOf ?? null,
+    navOnDistributionDaySource:
+      fromDists.navOnDistributionDaySource ??
+      fund.navOnDistributionDaySource ??
+      null,
+    publishedPctOfNav: fromDists.publishedPctOfNav ?? fund.publishedPctOfNav ?? null,
     estimatedDistributionAmount: fromDists.estimatedDistributionAmount,
     estimatedOrdinaryIncome: fromDists.estimatedOrdinaryIncome,
     estimatedCapitalGains: fromDists.estimatedCapitalGains,

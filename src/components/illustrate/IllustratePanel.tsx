@@ -9,6 +9,7 @@ import {
   navFromFundMetadata,
   perShareNavError,
 } from "@/lib/illustrate/compare-request";
+import { formatWeeklyNavLabel } from "@/lib/illustrate/nav-math";
 import { seedNavLookup } from "@/lib/illustrate/seed-nav";
 import { distributionIdsForFund } from "@/lib/illustrate/ids";
 import {
@@ -88,6 +89,9 @@ export function IllustratePanel({
             showStage
             className="mt-1.5"
           />
+          <p className="mt-1.5 font-mono text-[11px] text-faint">
+            Weekly NAV {formatWeeklyNavLabel(selected)}
+          </p>
         </div>
       ) : null}
 
@@ -109,7 +113,9 @@ function IllustrationWorkspace({ fund }: { fund: FundEstimateView }) {
   );
   const [rates, setRates] = useState<TaxRates>(UI_DEFAULT_TAX_RATES);
   const [combine, setCombine] = useState(true);
-  const metadataNav = navFromFundMetadata(fund.ticker, fund.nav, seedNavLookup);
+  const mock = isMockIllustrate();
+  const navLookup = mock ? seedNavLookup : undefined;
+  const metadataNav = navFromFundMetadata(fund.ticker, fund.nav, navLookup);
   const [unit, setUnit] = useState<AmountUnit>(AMOUNT_UNITS.percent_of_nav);
   const [navInput, setNavInput] = useState(
     metadataNav != null ? String(metadataNav) : fund.nav > 0 ? String(fund.nav) : "",
@@ -129,10 +135,9 @@ function IllustrationWorkspace({ fund }: { fund: FundEstimateView }) {
     navInput,
     fund.ticker,
     fund.nav,
-    seedNavLookup,
+    navLookup,
   );
   const navError = perShareNavError(unit, requestNav);
-  const mock = isMockIllustrate();
   const useIds = mock && !fund.id.startsWith("api:");
   const canFetch = !navError && (useIds ? distributionIds.length > 0 : Boolean(fund.ticker));
 
@@ -264,8 +269,8 @@ function IllustrationWorkspace({ fund }: { fund: FundEstimateView }) {
         ) : (
           <p className="text-xs text-faint">
             {metadataNav != null
-              ? "% of NAV sends holding dollars plus the fund's NAV so per_share snapshots can convert to shares."
-              : "% of NAV sends holding dollars. Per_share snapshots need a fund price — switch to $ / share to enter NAV."}
+              ? `% of NAV uses weekly NAV (${formatWeeklyNavLabel(fund)}) so Dist $ = est $/share × (holding ÷ NAV).`
+              : "% of NAV sends holding dollars. Missing weekly NAV stays undisclosed — never invented. Switch to $ / share to enter a price."}
           </p>
         )}
         <TaxRateFields

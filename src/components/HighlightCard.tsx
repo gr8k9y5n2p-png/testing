@@ -4,7 +4,8 @@ import { DeltaBadge } from "@/components/DeltaBadge";
 import { DistributionDateStrip } from "@/components/DistributionDateStrip";
 import { CompareTickerLink } from "@/components/illustrate/CompareTickerLink";
 import { UPCOMING_UNAVAILABLE_HEADLINE } from "@/lib/copy";
-import { formatCompactDate, formatPct, formatUsd } from "@/lib/format";
+import { formatCompactDate, formatUsd } from "@/lib/format";
+import { formatSoftPct, pctOfNavForFund } from "@/lib/illustrate/nav-math";
 
 type Variant = "recent" | "largest" | "outliers";
 
@@ -84,7 +85,7 @@ export function HighlightCard({
                     ? formatCompactDate(fund.asOfDate)
                     : hideUpcomingAmounts(fund)
                       ? "—"
-                      : formatPct(fund.estimatedDistributionPctNav)}
+                      : formatSoftPct(pctOfNavForFund(fund))}
                 </p>
               </div>
               <DistributionDateStrip

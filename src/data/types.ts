@@ -52,10 +52,27 @@ export interface FundEstimate {
   family: string;
   category: string;
   shareClass: string;
-  /** Latest reported / weekly NAV (`nav_per_share` from Data when live). */
+  /**
+   * Latest weekly NAV from GET /funds `nav_per_share`.
+   * 0 / omitted means unknown — never invent a print.
+   */
   nav: number;
-  /** `nav_as_of` from Data #74. Soft-null when weekly NAV is absent. */
+  /** GET /funds `nav_as_of`. Null when weekly NAV is unknown. */
   navAsOf?: string | null;
+  /** GET /funds `nav_source` (yahoo_last_close, issuer, fixture). */
+  navSource?: string | null;
+  /**
+   * GET /distributions `nav_on_distribution_day` for this snapshot.
+   * Historical % of NAV only. Never today's weekly NAV.
+   */
+  navOnDistributionDay?: number | null;
+  navOnDistributionDayAsOf?: string | null;
+  navOnDistributionDaySource?: string | null;
+  /**
+   * Sum of issuer-published `amount_unit=percent_of_nav` characters.
+   * Null when none were published — not the same as 0%.
+   */
+  publishedPctOfNav?: number | null;
   /** Combined estimated taxable distribution, $ per share. */
   estimatedDistributionAmount: number;
   /** Ordinary income / dividend portion, $ per share. */

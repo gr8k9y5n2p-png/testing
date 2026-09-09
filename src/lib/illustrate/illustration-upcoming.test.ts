@@ -144,6 +144,7 @@ describe("Dollar Illustration Upcoming gate", () => {
     );
     const seed = readFileSync(join(here, "../../data/seed.ts"), "utf8");
     assert.match(panel, /seedNavLookup/);
+    assert.match(panel, /mock \? seedNavLookup/);
     assert.match(panel, /illustrationRequestNav/);
     assert.match(panel, /perShareNavError/);
     assert.match(seed, /ticker:\s*"ABALX"[\s\S]*?nav:\s*34\.52/);

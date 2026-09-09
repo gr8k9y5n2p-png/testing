@@ -23,6 +23,11 @@ import {
   type SortKey,
 } from "@/lib/format";
 import {
+  formatSoftPct,
+  formatWeeklyNavLabel,
+  pctOfNavForFund,
+} from "@/lib/illustrate/nav-math";
+import {
   PAID_HISTORY_EMPTY,
   UPCOMING_UNAVAILABLE_DETAIL,
   UPCOMING_UNAVAILABLE_HEADLINE,
@@ -42,7 +47,7 @@ type SamplePage = {
 
 function estimatePct(fund: FundEstimateView): string {
   if (hideUpcomingAmounts(fund)) return "—";
-  return formatPct(fund.estimatedDistributionPctNav);
+  return formatSoftPct(pctOfNavForFund(fund));
 }
 
 function estimateUsd(fund: FundEstimateView): string {
@@ -491,7 +496,7 @@ function ExpandedDetails({ fund }: { fund: FundEstimateView }) {
   return (
     <dl className="mt-3 grid max-w-md grid-cols-2 gap-x-4 gap-y-2 rounded-md bg-paper px-3 py-2.5 text-xs text-muted">
       <Field label="CUSIP" value={fund.cusip} />
-      <Field label="NAV" value={formatUsd(fund.nav)} />
+      <Field label="NAV" value={formatWeeklyNavLabel(fund)} />
       <Field
         label="Ordinary income"
         value={formatUsd(fund.estimatedOrdinaryIncome, 4)}
