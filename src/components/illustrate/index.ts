@@ -20,6 +20,10 @@ export {
 export type { TaxDragByYearChartProps } from "@/components/illustrate/TaxDragByYearChart";
 export { toTaxDeltaCardModel } from "@/lib/illustrate/compare-map";
 export {
+  isLiveDataSource,
+  sourceEyebrowSuffix,
+} from "@/lib/illustrate/live-source-label";
+export {
   computeYoyLine,
   toYoYTaxChartModel,
   yoyBarsFromComparePeriods,

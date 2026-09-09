@@ -25,6 +25,7 @@ import type {
 import { PORTFOLIO_COMPARE_BOOK_DOLLARS } from "@/lib/illustrate/portfolio-compare-types";
 import { calendarYearTaxTable, defaultPortfolioComparePeriods } from "@/lib/illustrate/portfolio-year-tax";
 import type { TaxRates } from "@/lib/illustrate/types";
+import { sourceEyebrowSuffix } from "@/lib/illustrate/live-source-label";
 import { UI_DEFAULT_TAX_RATES } from "@/lib/illustrate/types";
 
 export type PortfolioCompareProps = {
@@ -184,11 +185,6 @@ export function PortfolioCompare({
   const proposedUpcomingHoldings = result
     ? upcomingHoldingsForSide(result.proposed, "proposed")
     : [];
-  const sample = Boolean(
-    result &&
-      (result.source === "mock" ||
-        result.notes.some((note) => /mock|demo|illustrative/i.test(note))),
-  );
   const yearTax = result ? calendarYearTaxTable(result) : null;
 
   return (
@@ -197,7 +193,7 @@ export function PortfolioCompare({
         <div>
           <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-faint">
             <span aria-hidden className="inline-block size-1.5 rounded-full bg-tax-less" />
-            Aftertax · {sample || !result ? "Sample" : "Live"}
+            Aftertax{sourceEyebrowSuffix(result?.source)}
           </p>
           <Heading className="mt-1 font-serif text-3xl tracking-tight text-ink">
             Portfolio comparison
@@ -336,7 +332,7 @@ export function PortfolioCompare({
       </div>
 
       <p className="mt-5 text-center text-[10px] leading-relaxed text-faint">
-        Demo data · weights × Portfolio Value → dollars · tax from Data API TBD
+        Weights × Portfolio Value → dollars
       </p>
       <CompactDisclaimer className="mt-1 text-center text-[10px] leading-relaxed text-faint" />
       <NoticeToast message={notice} onDismiss={dismissNotice} />

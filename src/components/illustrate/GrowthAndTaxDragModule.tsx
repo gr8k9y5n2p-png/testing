@@ -25,6 +25,7 @@ import {
   type LoadedGrowthFund,
 } from "@/lib/illustrate/growth-tax-load";
 import { type TaxDragMetric } from "@/lib/illustrate/tax-drag-chart";
+import { sourceEyebrowSuffix } from "@/lib/illustrate/live-source-label";
 import {
   PERFORMANCE_UNAVAILABLE_HINT,
   PERFORMANCE_UNAVAILABLE_LABEL,
@@ -206,6 +207,11 @@ export function GrowthAndTaxDragModule({
   const remaining = PERFORMANCE_FIXTURE_TICKERS.filter(
     (ticker) => !selected.some((fund) => fundKey(fund).ticker === ticker),
   );
+  const liveSource = rows?.some(
+    (row) => row.tax?.source === "live" || row.performance?.source === "live",
+  )
+    ? "live"
+    : null;
 
   return (
     <article
@@ -215,7 +221,7 @@ export function GrowthAndTaxDragModule({
         <div>
           <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-faint">
             <span aria-hidden className="inline-block size-1.5 rounded-full bg-tax-less" />
-            Aftertax · Sample
+            Aftertax{sourceEyebrowSuffix(liveSource)}
           </p>
           <h2 className="mt-1 font-serif text-xl tracking-tight text-ink">
             Growth & tax drag
