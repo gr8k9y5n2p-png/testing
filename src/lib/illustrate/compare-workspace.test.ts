@@ -318,14 +318,14 @@ describe("compare upcoming rows", () => {
     assert.match(source, /pctOfNav:\s*null/);
     assert.doesNotMatch(source, /distributionDollars:\s*fund\??\./);
     assert.doesNotMatch(source, /pctOfNav:\s*fund\??\./);
-    assert.doesNotMatch(source, /ticker === ["']ABALX["']/);
+    assert.doesNotMatch(source, /ticker === ["'][A-Z0-9]+["']/);
     const stage = readFileSync(join(here, "publication-stage.ts"), "utf8");
-    assert.doesNotMatch(stage, /ticker === ["']ABALX["']/);
+    assert.doesNotMatch(stage, /ticker === ["'][A-Z0-9]+["']/);
     assert.doesNotMatch(stage, /estimatedDistributionAmount/);
   });
 
   it("treats has_estimate-false finals as Undisclosed for every ticker, not only ABALX", () => {
-    for (const ticker of ["ABALX", "VFIAX", "FXAIX", "DODIX"]) {
+    for (const ticker of ["ABALX", "VFIAX", "FXAIX", "DODIX", "ZZZZX"]) {
       const row = upcomingRowForCompareTicker({
         ticker,
         fund: view(ticker, {

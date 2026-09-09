@@ -474,7 +474,7 @@ describe("PortfolioCompare distribution tables", () => {
   });
 
   it("does not invent Upcoming from omitted holdings.upcoming + illustration totals", () => {
-    for (const ticker of ["AMCPX", "ABALX", "VFIAX", "FXAIX"]) {
+    for (const ticker of ["AMCPX", "ABALX", "VFIAX", "FXAIX", "ZZZZX"]) {
       const omitted = holding({
         ticker,
         illustration: {
@@ -914,7 +914,7 @@ describe("PortfolioCompare distribution tables", () => {
     );
   });
 
-  it("uses Data percent_of_nav and otherwise Dist $ / holding $", () => {
+  it("uses issuer-published percent_of_nav only and never derives a rate", () => {
     assert.equal(pctOfNavFromDist(3200, 250_000), null);
     assert.equal(pctOfNavFromDist(3200, 250_000, 2.5), 2.5);
     assert.equal(pctOfNavFromDist(null, 250_000), null);
