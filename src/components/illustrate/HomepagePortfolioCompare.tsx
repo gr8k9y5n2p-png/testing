@@ -7,6 +7,7 @@ import {
   exportToPdf,
   toPortfolioCompareExportModel,
 } from "@/lib/illustrate/portfolio-compare-export";
+import { WEBSITE_PORTFOLIO_HOLDINGS } from "@/lib/illustrate/portfolio-compare-mount";
 import { PORTFOLIO_COMPARE_BOOK_DOLLARS } from "@/lib/illustrate/portfolio-compare-types";
 import { UI_DEFAULT_TAX_RATES } from "@/lib/illustrate/types";
 
@@ -34,7 +35,8 @@ export function HomepagePortfolioCompare({
         funds={catalog}
         bookDollars={PORTFOLIO_COMPARE_BOOK_DOLLARS}
         taxRates={HOMEPAGE_TAX_RATES}
-        // current/proposed omitted — GTM history-covered smoke books.
+        current={WEBSITE_PORTFOLIO_HOLDINGS}
+        proposed={WEBSITE_PORTFOLIO_HOLDINGS}
         headingAs="h1"
         onExport={(result, bookDollars) => {
           // Freemium gate stays stubbed on beta — export is available.
