@@ -83,6 +83,10 @@ export function FundCompareRail({
           setPendingPeer(null);
           setOverridePeer(fund);
         }}
+        onClear={() => {
+          setPendingPeer(null);
+          setOverridePeer(null);
+        }}
         onUnknownTicker={(ticker) => {
           if (ticker === selected.ticker.toUpperCase()) return;
           setOverridePeer(null);

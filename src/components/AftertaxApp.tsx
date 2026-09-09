@@ -85,8 +85,10 @@ function AftertaxAppInner({
     () => (ticker ? resolveFundView(funds, ticker) ?? null : null),
     [funds, ticker],
   );
-  const [picked, setPicked] = useState<FundEstimateView | null>(null);
-  const selected = picked ?? focusedFund;
+  const [picked, setPicked] = useState<FundEstimateView | null | undefined>(
+    undefined,
+  );
+  const selected = picked !== undefined ? picked : focusedFund;
   const [paywallOpen, setPaywallOpen] = useState(
     checkout === "cancel" && !isFreemiumDisabled(),
   );
@@ -156,6 +158,10 @@ function AftertaxAppInner({
     scrollToId("illustrate");
   }
 
+  function clearFund() {
+    setPicked(null);
+  }
+
   async function unlock() {
     try {
       const response = await fetch("/api/checkout", { method: "POST" });
@@ -185,6 +191,7 @@ function AftertaxAppInner({
         remaining={freemium.remaining}
         unlimited={freemium.unlimited}
         onSelect={selectFund}
+        onClear={clearFund}
         onNotice={onNotice}
       />
 

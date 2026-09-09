@@ -7,6 +7,7 @@ export function Hero({
   funds,
   selected,
   onSelect,
+  onClear,
   remaining,
   unlimited,
   onNotice,
@@ -14,6 +15,7 @@ export function Hero({
   funds: FundEstimateView[];
   selected: FundEstimateView | null;
   onSelect: (fund: FundEstimateView) => void;
+  onClear: () => void;
   remaining: number;
   unlimited: boolean;
   onNotice?: (message: string) => void;
@@ -28,6 +30,7 @@ export function Hero({
           funds={funds}
           selected={selected}
           onSelect={onSelect}
+          onClear={onClear}
           autoFocus
           reportSearchMiss
           onNotice={onNotice}
