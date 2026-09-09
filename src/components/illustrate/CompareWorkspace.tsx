@@ -28,6 +28,7 @@ import {
   COMPARE_SLOT_COUNT,
   buildCompareAnnualTable,
   compareHistoryYears,
+  compareSlotPlaceholder,
   filledCompareTickers,
   growthFundsFromSlots,
   padCompareSlots,
@@ -295,22 +296,21 @@ export function CompareWorkspace({
         {slots.map((ticker, index) => {
           const selected = ticker ? resolveFundView(funds, ticker) : null;
           return (
-            <label key={`compare-slot-${index}`} className="block min-w-0">
-              <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.14em] text-faint">
-                Ticker {index + 1}
-              </span>
+            <div key={`compare-slot-${index}`} className="min-w-0">
               <TickerField
                 ticker={ticker}
                 fundName={selected?.fundName || ""}
                 funds={catalog}
                 inputId={`compare-slot-${index}`}
+                placeholder={compareSlotPlaceholder(index)}
+                hideSubtitle
                 allowEmpty
                 onNotice={onNotice}
                 onSelect={(fund) => {
                   setSlots((current) => setCompareSlot(current, index, fund.ticker));
                 }}
               />
-            </label>
+            </div>
           );
         })}
       </div>

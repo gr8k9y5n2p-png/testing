@@ -4,8 +4,10 @@ import type { FundEstimateView } from "../../data/types.ts";
 import type { CompareIllustration, ComparePeriodOut, CompareResponse } from "./compare-types.ts";
 import {
   COMPARE_DEFAULT_HOLDING_DOLLARS,
+  COMPARE_SLOT_COUNT,
   compareTickersPath,
   buildCompareAnnualTable,
+  compareSlotPlaceholder,
   emptyCompareSlots,
   filledCompareTickers,
   growthFundsFromSlots,
@@ -104,6 +106,12 @@ function yoy(periods: ComparePeriodOut[]): CompareResponse {
 describe("compare workspace slots", () => {
   it("starts with six empty slots", () => {
     assert.deepEqual(emptyCompareSlots(), ["", "", "", "", "", ""]);
+  });
+
+  it("numbers placeholders from Ticker 1 with no extra chrome", () => {
+    assert.equal(compareSlotPlaceholder(0), "Ticker 1");
+    assert.equal(compareSlotPlaceholder(1), "Ticker 2");
+    assert.equal(compareSlotPlaceholder(COMPARE_SLOT_COUNT - 1), "Ticker 6");
   });
 
   it("prefills unique tickers into the first slots only", () => {

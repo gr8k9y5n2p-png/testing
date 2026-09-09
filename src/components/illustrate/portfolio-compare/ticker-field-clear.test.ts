@@ -130,4 +130,19 @@ describe("Portfolio / Compare ticker clear wiring", () => {
     assert.match(rail, /setOverridePeer\(null\)/);
     assert.match(rail, /setPendingPeer\(null\)/);
   });
+
+  it("Compare slots use numbered placeholders only — no Ticker N / Search a ticker chrome", () => {
+    const workspace = read("../CompareWorkspace.tsx");
+    const field = read("TickerField.tsx");
+    const column = read("AllocationColumn.tsx");
+    assert.doesNotMatch(workspace, /Ticker \{index \+ 1\}/);
+    assert.doesNotMatch(workspace, /Search a ticker/);
+    assert.match(workspace, /placeholder=\{compareSlotPlaceholder\(index\)\}/);
+    assert.match(workspace, /hideSubtitle/);
+    assert.match(field, /hideSubtitle/);
+    assert.match(field, /placeholder = "Ticker"/);
+    assert.match(field, /placeholder=\{placeholder\}/);
+    assert.doesNotMatch(column, /hideSubtitle/);
+    assert.doesNotMatch(column, /compareSlotPlaceholder/);
+  });
 });

@@ -30,6 +30,11 @@ export type CompareUpcomingHint = {
 
 export const COMPARE_SLOT_COUNT = MAX_GROWTH_FUNDS;
 
+/** Visible placeholder for Compare slot N (0-based). First box is "Ticker 1". */
+export function compareSlotPlaceholder(index: number): string {
+  return `Ticker ${index + 1}`;
+}
+
 /** Shared Compare holding. Default $10,000 — one input drives every $ module. */
 export const COMPARE_DEFAULT_HOLDING_DOLLARS = 10_000;
 
