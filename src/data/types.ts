@@ -1,8 +1,8 @@
 /**
  * Domain model for estimated taxable fund distributions.
  *
- * This layer is intentionally persistence-agnostic so a database or
- * manager-API ingest can replace the in-module seed later.
+ * Live Search / Sample Estimates read GET /distributions only.
+ * `seed.ts` is test/mock scoped and must not backfill those UI paths.
  */
 
 export const FUND_FAMILIES = [
@@ -115,10 +115,10 @@ export interface DistributionRepository {
   getById(id: string): Promise<FundEstimateView | null>;
 }
 
-/** Sample-data marker used in API payloads and UI copy. */
+/** Live Data API marker used in Search / Sample Estimates payloads and UI copy. */
 export const DATA_SOURCE = {
-  kind: "sample" as const,
-  label: "Sample / demo data",
+  kind: "live" as const,
+  label: "Live Data API",
   notice:
-    "Figures are illustrative seed data for product development. They are not live fund-manager filings and should not be used for tax, trading, or client reporting.",
+    "Search and Sample Estimates use GET /distributions only. Missing or uncovered values stay empty, N/A, or Undisclosed — they are not filled from seed or demo math.",
 };

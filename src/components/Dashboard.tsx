@@ -73,6 +73,7 @@ export function Dashboard({
         {results.length === 0 ? (
           <EmptyState
             hasActiveFilters={hasActiveFilters}
+            universeEmpty={funds.length === 0}
             onClear={() => setFilters({})}
           />
         ) : (

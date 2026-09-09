@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { COPY, freeSearchLabel } from "@/lib/copy";
 import type { FundEstimateView } from "@/data/types";
 import { FundPicker } from "@/components/illustrate/FundPicker";
@@ -38,24 +37,6 @@ export function Hero({
         <RequestFundForm onNotice={onNotice} className="mt-3" />
       ) : null}
       <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <Link
-            href={
-              selected
-                ? `/compare?left=${encodeURIComponent(selected.ticker)}`
-                : "/compare"
-            }
-            className="inline-flex h-10 items-center rounded-md border border-line px-4 text-sm text-ink hover:border-line-strong"
-          >
-            {COPY.compareCta}
-          </Link>
-          <Link
-            href="/portfolio"
-            className="inline-flex h-10 items-center rounded-md border border-line px-4 text-sm text-ink hover:border-line-strong"
-          >
-            {COPY.importCta}
-          </Link>
-        </div>
         <p className="font-mono text-xs text-faint" aria-live="polite">
           {unlimited ? "Unlimited searches" : freeSearchLabel(remaining)}
         </p>

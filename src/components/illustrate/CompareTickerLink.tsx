@@ -1,8 +1,9 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { fundHistoryPath, normalizeTicker } from "@/lib/illustrate/fund-history";
+import { compareTickersPath } from "@/lib/illustrate/compare-workspace";
+import { normalizeTicker } from "@/lib/illustrate/fund-history";
 
-export function TickerHistoryLink({
+export function CompareTickerLink({
   ticker,
   className = "",
   children,
@@ -16,9 +17,9 @@ export function TickerHistoryLink({
 
   return (
     <Link
-      href={fundHistoryPath(label)}
+      href={compareTickersPath([label])}
       className={`rounded-sm text-ink underline-offset-2 hover:underline ${className}`}
-      aria-label={`Open ${label} historical distributions and upcoming estimates`}
+      aria-label={`Compare ${label}`}
     >
       {children ?? label}
     </Link>
