@@ -4,7 +4,7 @@ import { Disclaimer } from "@/components/Disclaimer";
 
 export const metadata: Metadata = {
   title: "Account — Aftertax",
-  description: "Aftertax account, legal links, and billing placeholder.",
+  description: "Aftertax account and billing placeholder.",
   robots: { index: false, follow: false },
 };
 
