@@ -42,12 +42,12 @@ def test_cli_refresh_fixture_writes_summary(engine, tmp_path: Path, capsys) -> N
     assert payload["nav"]["created"] + payload["nav"]["updated"] + payload["nav"]["unchanged"] > 0
     for ticker in ("ABALX", "VFIAX", "SPY", "DBEF"):
         assert payload["nav"]["sample"][ticker]["nav_per_share"] is not None
-    assert "Weekly NAV refresh" in md
-    assert "Weekly NAV refresh" in out
     assert payload["midyear_created"] > 0
     assert payload["year_end_created"] > 0
     md = md_path.read_text(encoding="utf-8")
     assert "Weekly ingest refresh" in md
+    assert "Weekly NAV refresh" in md
+    assert "Weekly NAV refresh" in out
     assert "Midyear:" in md
     assert "Year-end:" in md
     assert "midyear:" in out

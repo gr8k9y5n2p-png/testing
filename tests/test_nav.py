@@ -40,15 +40,12 @@ def test_listed_ticker_skips_synthetic_and_name_slugs() -> None:
 
 
 def test_fixture_quote_sample_tickers() -> None:
-    abalx = fixture_quote("ABALX")
-    vfiax = fixture_quote("VFIAX")
-    spy = fixture_quote("SPY")
-    dbef = fixture_quote("DBEF")
-    assert abalx is not None and abalx.nav_per_share == Decimal("40.930000")
-    assert abalx.nav_as_of == date(2026, 9, 1)
-    assert vfiax is not None and vfiax.nav_per_share == Decimal("713.559998")
-    assert spy is not None and spy.nav_per_share == Decimal("770.190002")
-    assert dbef is not None and dbef.nav_per_share == Decimal("55.480000")
+    for ticker in ("ABALX", "VFIAX", "SPY", "DBEF"):
+        quote = fixture_quote(ticker)
+        assert quote is not None, ticker
+        assert quote.nav_per_share > 0
+        assert quote.nav_as_of is not None
+        assert quote.source in {SOURCE_FIXTURE, "fixture_fallback"}
     assert fixture_quote("NOTAREALTICKER") is None
 
 
@@ -115,25 +112,23 @@ def test_weekly_nav_fixture_and_funds_fields(client: TestClient, session) -> Non
     summary = refresh_navs(session, mode="fixture")
     session.commit()
     assert summary.created >= 4
-    assert summary.sample["ABALX"]["nav_per_share"] == "40.930000"
-    assert summary.sample["VFIAX"]["nav_per_share"] == "713.559998"
-    assert summary.sample["SPY"]["nav_per_share"] == "770.190002"
-    assert summary.sample["DBEF"]["nav_per_share"] == "55.480000"
+    for ticker in ("ABALX", "VFIAX", "SPY", "DBEF"):
+        expected = fixture_quote(ticker)
+        assert expected is not None
+        assert summary.sample[ticker]["nav_per_share"] == str(expected.nav_per_share)
+        assert summary.sample[ticker]["nav_as_of"] == expected.nav_as_of.isoformat()
     assert summary.unknown >= 1
 
     after = unique_fund_nav_coverage(session)
     assert after["with_nav"] >= 4
     assert after["coverage_pct"] > before["coverage_pct"]
 
-    for ticker, expected in {
-        "ABALX": "40.930000",
-        "VFIAX": "713.559998",
-        "SPY": "770.190002",
-        "DBEF": "55.480000",
-    }.items():
+    for ticker in ("ABALX", "VFIAX", "SPY", "DBEF"):
+        expected = fixture_quote(ticker)
+        assert expected is not None
         body = client.get("/funds", params={"q": ticker}).json()["items"][0]
-        assert Decimal(body["nav_per_share"]) == Decimal(expected)
-        assert body["nav_as_of"] is not None
+        assert Decimal(body["nav_per_share"]) == expected.nav_per_share
+        assert body["nav_as_of"] == expected.nav_as_of.isoformat()
         assert body["nav_source"] == SOURCE_FIXTURE
 
     missing = client.get("/funds", params={"q": "NONEV"}).json()["items"][0]

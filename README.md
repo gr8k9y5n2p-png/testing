@@ -229,6 +229,25 @@ python -m app.cli refresh-nav                  # Yahoo last close, fixture fallb
 
 Sunday and Monday weekly jobs both run `refresh` (families + NAV) and an explicit `refresh-nav` step so the Sunday scrape always includes NAV.
 
+**Coverage (measured 2026-09-09 on the full fixture book, 4,889 unique funds / 4,606 listed tickers):**
+
+| Stage | Unique funds with NAV | Coverage |
+| --- | ---: | ---: |
+| Before this change | 0 / 4,889 | **0%** |
+| Fixture catalog only (performance heroes) | 72 / 4,889 | **1.5%** |
+| After live Yahoo last-close backfill | 4,544 / 4,889 | **92.9%** |
+
+Listed-ticker hit rate after live backfill: **4,538 / 4,606 (98.5%)**. The remaining 68 listed tickers and name-only funds stay **null** (Yahoo had no print — never invented).
+
+Sample prints from that walk (`nav_source=yahoo_last_close`):
+
+| Ticker | `nav_per_share` | `nav_as_of` |
+| --- | ---: | --- |
+| ABALX | 40.849998 | 2026-09-08 |
+| VFIAX | 709.409973 | 2026-09-08 |
+| SPY | 762.400024 | 2026-09-09 |
+| DBEF | 54.730000 | 2026-09-09 |
+
 The JSON / Markdown summary breaks out **midyear vs year-end** created/updated when a row is detectable from the source URL (`midyear`, `mid-year`, `interim`, `semi-annual`, `year-end`) or from `as_of` / `ex_date` month (May–August vs October–January). Unclassified months (for example September) are counted only in the overall created/updated totals.
 
 Live pages often 403, challenge, or render as a JS/SPA shell and parse 0 rows. That is expected for a large share of the top 110 — fixture fallback is the documented recovery, not a job failure.

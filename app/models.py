@@ -158,6 +158,8 @@ class FundNav(Base):
 
 
 class IngestRun(Base):
+    __tablename__ = "ingest_runs"
+    __table_args__ = (Index("ix_ingest_family_started", "fund_family", "started_at"),)
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     fund_family: Mapped[str] = mapped_column(String(128), nullable=False)

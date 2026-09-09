@@ -549,6 +549,7 @@ def upsert_nav(session: Session, quote: NavQuote) -> str:
         existing.fund_name = quote.fund_name or existing.fund_name
         existing.updated_at = now
         session.add(existing)
+        session.flush()
         return "unchanged" if same else "updated"
     session.add(
         FundNav(
@@ -563,6 +564,7 @@ def upsert_nav(session: Session, quote: NavQuote) -> str:
             updated_at=now,
         )
     )
+    session.flush()
     return "created"
 
 
