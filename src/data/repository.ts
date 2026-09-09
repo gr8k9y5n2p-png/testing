@@ -1,4 +1,11 @@
 import { getFacets, getHighlights, searchFunds } from "./queries";
+import {
+  clampOffset,
+  clampPageSize,
+  paginateViews,
+  type FundPageQuery,
+  type FundPageResult,
+} from "./pagination";
 import type {
   DistributionRepository,
   Facets,
@@ -7,6 +14,8 @@ import type {
   SearchFilters,
 } from "./types";
 import { loadFundsFromDataApi } from "@/lib/data-api/distributions";
+import { isRemoteDataApi } from "@/lib/data-api/config";
+import { loadFundPageFromDataApi } from "@/lib/data-api/funds-page";
 
 /**
  * In-memory repository over a fund list. Live Search / Sample Estimates /
@@ -21,6 +30,22 @@ export class SeedDistributionRepository implements DistributionRepository {
 
   async search(filters: SearchFilters = {}): Promise<FundEstimateView[]> {
     return searchFunds(this.views, filters);
+  }
+
+  async searchPage(query: FundPageQuery = {}): Promise<FundPageResult> {
+    const live = await loadFundPageFromDataApi(query);
+    if (live) return live;
+    // Remote /funds 404 or down: empty page. Never dump /distributions rows
+    // into unique funds for Sample Estimates.
+    if (isRemoteDataApi()) {
+      return {
+        items: [],
+        total: 0,
+        limit: clampPageSize(query.limit),
+        offset: clampOffset(query.offset),
+      };
+    }
+    return paginateViews(this.views, query);
   }
 
   async highlights(limit = 5): Promise<HighlightSets> {

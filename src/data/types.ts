@@ -79,6 +79,11 @@ export interface FundEstimate {
   /** Paid / final-past snapshots for this ticker. Never mixed into upcoming. */
   paidHistory: PaidDistributionEvent[];
   distributionYear: number;
+  /**
+   * False when GET /funds says has_estimate=false (or amounts are unknown).
+   * UI must show "—" — never invent $0 / 0%.
+   */
+  hasEstimate?: boolean;
 }
 
 export interface FundEstimateView extends FundEstimate {
@@ -108,8 +113,23 @@ export interface HighlightSets {
   belowCategory: FundEstimateView[];
 }
 
+export interface FundPage {
+  items: FundEstimateView[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
 export interface DistributionRepository {
   search(filters?: SearchFilters): Promise<FundEstimateView[]>;
+  searchPage?(
+    query?: SearchFilters & {
+      limit?: number;
+      offset?: number;
+      sort?: string;
+      direction?: "asc" | "desc";
+    },
+  ): Promise<FundPage>;
   highlights(limit?: number): Promise<HighlightSets>;
   facets(): Promise<Facets>;
   getById(id: string): Promise<FundEstimateView | null>;
