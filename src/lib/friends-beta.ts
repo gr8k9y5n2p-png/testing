@@ -80,6 +80,7 @@ export function safeNextPath(value: string | null | undefined): string {
 
 export type FriendsBetaGateDecision =
   | { action: "next" }
+  | { action: "home" }
   | { action: "redirect"; next: string };
 
 export function friendsBetaGateDecision(input: {
@@ -88,7 +89,10 @@ export function friendsBetaGateDecision(input: {
   search?: string;
   cookie?: string;
 }): FriendsBetaGateDecision {
-  if (!input.password) return { action: "next" };
+  if (!input.password) {
+    if (input.pathname === FRIENDS_BETA_PATH) return { action: "home" };
+    return { action: "next" };
+  }
   if (isFriendsBetaPublicPath(input.pathname)) return { action: "next" };
   if (isFriendsBetaSessionValid(input.cookie, input.password)) {
     return { action: "next" };

@@ -25,8 +25,13 @@ export function proxy(request: NextRequest) {
   }
 
   const url = request.nextUrl.clone();
-  url.pathname = FRIENDS_BETA_PATH;
   url.search = "";
+  if (decision.action === "home") {
+    url.pathname = "/";
+    return NextResponse.redirect(url);
+  }
+
+  url.pathname = FRIENDS_BETA_PATH;
   if (decision.next && decision.next !== "/") {
     url.searchParams.set("next", decision.next);
   }
