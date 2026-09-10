@@ -125,14 +125,15 @@ export function ResultsTable({
   const sortDirection = sortDirectionProp ?? localSortDirection;
   const coverage = useCoverage();
   const { upcoming } = splitFundsByBucket(funds);
-  // paidHistoryViews date-sorts; Data /distributions has no order param.
-  // Always apply the header sort to the currently displayed Paid History rows.
+  // Client current-page sort. Data /distributions has no order param yet
+  // (`paidHistoryDataOrderParams` stays empty). Always apply the header
+  // sort to the currently displayed Paid History rows and Upcoming page.
   const paid = sortFunds(
     paidHistoryViews(paidFunds ?? funds, year),
     sortKey,
     sortDirection,
   );
-  const serverSorted = Boolean(onSort);
+  const upcomingRows = sortFunds(upcoming, sortKey, sortDirection);
 
   function toggleSort(key: SortKey) {
     if (onSort) {
@@ -172,7 +173,7 @@ export function ResultsTable({
         description={SEARCH_UPCOMING_DETAIL}
         kicker={SEARCH_UPCOMING_KICKER}
         wellClassName="bg-surface"
-        funds={serverSorted ? upcoming : sortFunds(upcoming, sortKey, sortDirection)}
+        funds={upcomingRows}
         sortKey={sortKey}
         sortDirection={sortDirection}
         onSort={toggleSort}
@@ -411,17 +412,44 @@ function FundSection({
                     onSort={onSort}
                     align="right"
                   />
-                  <th className="px-3 py-2.5 text-right">% NAV</th>
+                  <SortHeader
+                    label="% NAV"
+                    column="estimatedDistributionPctNav"
+                    active={sortKey}
+                    direction={sortDirection}
+                    onSort={onSort}
+                    align="right"
+                  />
                   <SortHeader
                     label="Announced"
-                    column="publishedAt"
+                    column="asOfDate"
                     active={sortKey}
                     direction={sortDirection}
                     onSort={onSort}
                   />
-                  <th className="px-3 py-2.5">Record</th>
-                  <th className="px-3 py-2.5">Ex-div</th>
-                  {showPayable ? <th className="px-3 py-2.5">Payable</th> : null}
+                  <SortHeader
+                    label="Record"
+                    column="recordDate"
+                    active={sortKey}
+                    direction={sortDirection}
+                    onSort={onSort}
+                  />
+                  <SortHeader
+                    label="Ex-div"
+                    column="exDate"
+                    active={sortKey}
+                    direction={sortDirection}
+                    onSort={onSort}
+                  />
+                  {showPayable ? (
+                    <SortHeader
+                      label="Payable"
+                      column="payableDate"
+                      active={sortKey}
+                      direction={sortDirection}
+                      onSort={onSort}
+                    />
+                  ) : null}
                   {onIllustrate ? <th className="px-3 py-2.5"> </th> : null}
                 </tr>
               }

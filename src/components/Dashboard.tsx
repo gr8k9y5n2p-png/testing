@@ -311,7 +311,7 @@ export function Dashboard({
   }
 
   function toggleSort(key: SortKey) {
-    // Paid History reorders the current year-window rows (Data has no order param).
+    // Current-page client sort for every column (Data has no order param).
     if (key === sortKey) {
       setSortDirection((current) => (current === "asc" ? "desc" : "asc"));
       setOffset(0);

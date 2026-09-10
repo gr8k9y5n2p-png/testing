@@ -81,8 +81,14 @@ export function sortFunds(
   key: SortKey,
   direction: SortDirection,
 ): FundEstimateView[] {
-  const sorted = [...funds].sort((a, b) => compareFunds(a, b, key));
-  return direction === "desc" ? sorted.reverse() : sorted;
+  return [...funds].sort((a, b) => {
+    const cmp = compareFunds(a, b, key);
+    if (cmp === 0) return 0;
+    // Optional comparators already send missing / — last. Keep them last
+    // on desc instead of flipping that sentinel with reverse().
+    if (sortValue(a, key) == null || sortValue(b, key) == null) return cmp;
+    return direction === "desc" ? -cmp : cmp;
+  });
 }
 
 export type SortKey =
@@ -95,6 +101,7 @@ export type SortKey =
   | "asOfDate"
   | "recordDate"
   | "exDate"
+  | "payableDate"
   | "vsCategoryPctNav";
 
 export type SortDirection = "asc" | "desc";
@@ -154,6 +161,31 @@ function distPerShareForSort(fund: FundEstimateView): number | null {
   return Number.isFinite(amount) ? amount : null;
 }
 
+function sortValue(
+  fund: FundEstimateView,
+  key: SortKey,
+): string | number | null {
+  switch (key) {
+    case "fundName":
+    case "family":
+    case "category":
+      return fund[key] || null;
+    case "publishedAt":
+    case "asOfDate":
+      return sortableIsoDate(fund[key]);
+    case "recordDate":
+    case "exDate":
+    case "payableDate":
+      return sortableIsoDate(fund[key]);
+    case "estimatedDistributionAmount":
+      return distPerShareForSort(fund);
+    case "estimatedDistributionPctNav":
+      return aftertaxPctOfNavForSort(fund);
+    default:
+      return Number.isFinite(fund[key]) ? fund[key] : null;
+  }
+}
+
 function compareFunds(
   a: FundEstimateView,
   b: FundEstimateView,
@@ -163,14 +195,17 @@ function compareFunds(
     case "fundName":
     case "family":
     case "category":
-    case "publishedAt":
       return a[key].localeCompare(b[key]);
+    case "publishedAt":
+      return compareOptionalIsoDates(a.publishedAt, b.publishedAt);
     case "asOfDate":
       return compareOptionalIsoDates(a.asOfDate, b.asOfDate);
     case "recordDate":
       return compareOptionalIsoDates(a.recordDate, b.recordDate);
     case "exDate":
       return compareOptionalIsoDates(a.exDate, b.exDate);
+    case "payableDate":
+      return compareOptionalIsoDates(a.payableDate, b.payableDate);
     case "estimatedDistributionAmount":
       return compareOptionalPct(distPerShareForSort(a), distPerShareForSort(b));
     case "estimatedDistributionPctNav":

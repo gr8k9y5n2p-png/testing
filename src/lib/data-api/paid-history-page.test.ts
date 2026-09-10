@@ -598,6 +598,97 @@ describe("Paid History year-window paging", () => {
     );
   });
 
+  it("sorts the current year-window by % NAV and Ex-div without walking the book", async () => {
+    const family = pagePaidHistoryFunds(
+      [
+        paidFund(1, {
+          ticker: "LOW",
+          family: "Fidelity",
+          estimatedDistributionAmount: 1,
+          navOnDistributionDay: 100,
+          publicationStage: "final",
+          exDate: "2026-12-15",
+        }),
+        paidFund(2, {
+          ticker: "HIGH",
+          family: "Fidelity",
+          estimatedDistributionAmount: 5,
+          navOnDistributionDay: 100,
+          publicationStage: "final",
+          exDate: "2026-09-01",
+        }),
+        paidFund(3, {
+          ticker: "MID",
+          family: "Vanguard",
+          estimatedDistributionAmount: 2.5,
+          navOnDistributionDay: 100,
+          publicationStage: "final",
+          exDate: null,
+        }),
+      ],
+      {
+        year: 2026,
+        family: "Fidelity",
+        sort: "estimatedDistributionPctNav",
+        direction: "desc",
+      },
+    );
+    assert.deepEqual(
+      family.items.map((fund) => fund.ticker),
+      ["HIGH", "LOW"],
+      "Family filter still applies before current-page % NAV sort",
+    );
+
+    const pctAsc = pagePaidHistoryFunds(family.items, {
+      year: 2026,
+      sort: "estimatedDistributionPctNav",
+      direction: "asc",
+    });
+    assert.deepEqual(
+      pctAsc.items.map((fund) => fund.ticker),
+      ["LOW", "HIGH"],
+    );
+
+    const rows = [
+      finalRow("LATE", 2026, { ex_date: "2026-12-15" }),
+      finalRow("EARLY", 2026, { ex_date: "2026-09-01" }),
+      finalRow("NONE", 2026, { ex_date: null }),
+    ];
+    const calls: number[] = [];
+    const fetchPage = async (
+      _query: unknown,
+      window: PaidHistoryFetchWindow,
+    ) => {
+      calls.push(window.offset);
+      return dataPage(rows, { filteredTotal: 3 });
+    };
+
+    const latestEx = await loadPaidHistoryPage(
+      { year: 2026, limit: 50, offset: 0, sort: "exDate", direction: "desc" },
+      { fetchPage },
+    );
+    assert.equal(calls.length, 1, "date sort must not walk extra Data pages");
+    assert.deepEqual(
+      latestEx.items.map((fund) => fund.ticker),
+      ["LATE", "EARLY", "NONE"],
+    );
+
+    const earliestEx = await loadPaidHistoryPage(
+      { year: 2026, limit: 50, offset: 0, sort: "exDate", direction: "asc" },
+      { fetchPage },
+    );
+    assert.equal(calls.length, 2);
+    assert.deepEqual(
+      earliestEx.items.map((fund) => fund.ticker),
+      ["EARLY", "LATE", "NONE"],
+    );
+    assert.deepEqual(
+      paidHistoryDataOrderParams({ sort: "exDate", direction: "desc" }),
+      {},
+      "do not send sort= to Data until that PR is on Render",
+    );
+  });
+
   it("ignores an unfiltered global row total on a thin year page", () => {
     assert.equal(isTrustworthyFilteredRowTotal(17, 50, 25515, 0), false);
     assert.equal(isTrustworthyFilteredRowTotal(17, 50, 17, 0), true);

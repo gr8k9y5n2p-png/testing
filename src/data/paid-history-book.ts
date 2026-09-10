@@ -2,9 +2,10 @@
  * Filtered Paid History fund book. `total` is unique funds after year /
  * Family / Category — never a Data `/distributions` row count.
  *
- * Column sorts reorder this in-memory window. Data is adding additive
- * `sort=amount|ex_date` + `direction=` (omit = current default). Do not
- * send those params until that PR is on Render, and do not walk the book.
+ * Column sorts (every Search header) reorder this in-memory window.
+ * Data is adding additive `sort=amount|ex_date` + `direction=` (omit =
+ * current default). Do not send those params until that PR is on Render,
+ * and do not walk the book.
  */
 
 import { isUpcomingFund } from "./distribution-bucket.ts";

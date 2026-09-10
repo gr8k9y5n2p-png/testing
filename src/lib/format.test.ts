@@ -82,16 +82,23 @@ describe("sortFunds date columns", () => {
     };
   }
 
-  it("sorts Announced / Record / Ex-div by ISO date values", () => {
+  it("sorts Announced / Record / Ex-div / Payable by ISO date values", () => {
     const funds = [
       row("LATE", "2026-12-15", "2026-12-12", "2026-12-15"),
       row("EARLY", "2026-08-29", null, "2026-09-01"),
       row("MID", "2026-09-05", "2026-09-10", null),
     ];
+    funds[0]!.payableDate = "2026-12-18";
+    funds[1]!.payableDate = null;
+    funds[2]!.payableDate = "2026-09-12";
 
     assert.deepEqual(
       sortFunds(funds, "asOfDate", "asc").map((fund) => fund.ticker),
       ["EARLY", "MID", "LATE"],
+    );
+    assert.deepEqual(
+      sortFunds(funds, "asOfDate", "desc").map((fund) => fund.ticker),
+      ["LATE", "MID", "EARLY"],
     );
     assert.deepEqual(
       sortFunds(funds, "recordDate", "asc").map((fund) => fund.ticker),
@@ -100,6 +107,18 @@ describe("sortFunds date columns", () => {
     assert.deepEqual(
       sortFunds(funds, "exDate", "asc").map((fund) => fund.ticker),
       ["EARLY", "LATE", "MID"],
+    );
+    assert.deepEqual(
+      sortFunds(funds, "exDate", "desc").map((fund) => fund.ticker),
+      ["LATE", "EARLY", "MID"],
+    );
+    assert.deepEqual(
+      sortFunds(funds, "payableDate", "asc").map((fund) => fund.ticker),
+      ["MID", "LATE", "EARLY"],
+    );
+    assert.deepEqual(
+      sortFunds(funds, "payableDate", "desc").map((fund) => fund.ticker),
+      ["LATE", "MID", "EARLY"],
     );
   });
 
@@ -146,6 +165,36 @@ describe("sortFunds date columns", () => {
         (fund) => fund.ticker,
       ),
       ["DIST", "PUB"],
+    );
+    assert.deepEqual(
+      sortFunds([publishedWins, distWins], "estimatedDistributionPctNav", "asc").map(
+        (fund) => fund.ticker,
+      ),
+      ["PUB", "DIST"],
+    );
+  });
+
+  it("keeps missing Dist $/Share and dates last in both directions", () => {
+    const dated = row("HAS", "2026-08-29", "2026-09-10", "2026-09-11");
+    dated.estimatedDistributionAmount = 2.5;
+    dated.payableDate = "2026-09-12";
+    const blank = row("NONE", "2026-08-29", null, null);
+    blank.estimatedDistributionAmount = Number.NaN;
+    blank.payableDate = null;
+
+    assert.deepEqual(
+      sortFunds([blank, dated], "estimatedDistributionAmount", "desc").map(
+        (fund) => fund.ticker,
+      ),
+      ["HAS", "NONE"],
+    );
+    assert.deepEqual(
+      sortFunds([dated, blank], "exDate", "desc").map((fund) => fund.ticker),
+      ["HAS", "NONE"],
+    );
+    assert.deepEqual(
+      sortFunds([blank, dated], "payableDate", "asc").map((fund) => fund.ticker),
+      ["HAS", "NONE"],
     );
   });
 });

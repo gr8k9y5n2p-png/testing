@@ -22,6 +22,10 @@ export const FUND_SORT_KEYS = [
   "estimatedDistributionAmount",
   "estimatedDistributionPctNav",
   "publishedAt",
+  "asOfDate",
+  "recordDate",
+  "exDate",
+  "payableDate",
   "vsCategoryPctNav",
 ] as const satisfies readonly SortKey[];
 

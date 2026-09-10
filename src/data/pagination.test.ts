@@ -159,6 +159,31 @@ test("parseFundPageQuery and offsetToPage match the Data contract", () => {
   assert.equal(distShare.sort, "estimatedDistributionAmount");
   assert.equal(distShare.direction, "desc");
   assert.equal(distShare.paidHistory, true);
+
+  const pctNav = parseFundPageQuery(
+    new URLSearchParams(
+      "paid_history=1&sort=estimatedDistributionPctNav&direction=asc",
+    ),
+  );
+  assert.equal(pctNav.sort, "estimatedDistributionPctNav");
+  assert.equal(pctNav.direction, "asc");
+
+  const exDiv = parseFundPageQuery(
+    new URLSearchParams("sort=exDate&direction=desc"),
+  );
+  assert.equal(exDiv.sort, "exDate");
+  assert.equal(
+    parseFundPageQuery(new URLSearchParams("sort=asOfDate")).sort,
+    "asOfDate",
+  );
+  assert.equal(
+    parseFundPageQuery(new URLSearchParams("sort=recordDate")).sort,
+    "recordDate",
+  );
+  assert.equal(
+    parseFundPageQuery(new URLSearchParams("sort=payableDate")).sort,
+    "payableDate",
+  );
   assert.equal(offsetToPage(100, 50), 3);
 
   const params = fundPageSearchParams({ limit: 50, offset: 0 });
