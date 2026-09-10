@@ -8,9 +8,14 @@ from sqlalchemy import create_engine, event, inspect, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
-from sqlalchemy.pool import NullPool, StaticPool
+from sqlalchemy.pool import NullPool, QueuePool, StaticPool
 
-from app.config import settings
+from app.config import is_postgres_url, is_sqlite_url, rewrite_database_url, settings
+
+# Lean QueuePool for Postgres (2 workers × 10 checkouts = 20; Basic-1gb allows 100).
+PG_POOL_SIZE = 5
+PG_MAX_OVERFLOW = 5
+PG_POOL_RECYCLE_SECONDS = 1800
 
 T = TypeVar("T")
 
@@ -24,14 +29,59 @@ SessionLocal: sessionmaker[Session] | None = None
 
 
 def _sqlite_file_url(url: str) -> bool:
-    return url.startswith("sqlite") and ":memory:" not in url
+    return is_sqlite_url(url) and ":memory:" not in url
 
 
 def _sqlite_connect_args(url: str) -> dict:
-    if url.startswith("sqlite"):
+    if is_sqlite_url(url):
         # timeout is sqlite3 busy-wait seconds; WAL lets readers proceed during seed.
         return {"check_same_thread": False, "timeout": 15.0}
     return {}
+
+
+def engine_kwargs(database_url: str) -> dict:
+    """Dialect-aware create_engine kwargs. Does not connect."""
+    database_url = rewrite_database_url(database_url)
+    kwargs: dict = {"future": True, "pool_pre_ping": True}
+    connect_args = _sqlite_connect_args(database_url)
+    if is_postgres_url(database_url):
+        kwargs.update(
+            {
+                "poolclass": QueuePool,
+                "pool_size": PG_POOL_SIZE,
+                "max_overflow": PG_MAX_OVERFLOW,
+                "pool_recycle": PG_POOL_RECYCLE_SECONDS,
+            }
+        )
+    elif connect_args:
+        kwargs["connect_args"] = connect_args
+        if database_url in {"sqlite://", "sqlite:///:memory:"}:
+            kwargs["poolclass"] = StaticPool
+        elif _sqlite_file_url(database_url):
+            # File SQLite + QueuePool deadlocks under concurrent /funds
+            # (pool wait + writer lock). One connection per checkout.
+            kwargs["poolclass"] = NullPool
+    return kwargs
+
+
+def make_engine(database_url: str) -> Engine:
+    """Create an engine without replacing the process-global SessionLocal."""
+    database_url = rewrite_database_url(database_url)
+    engine = create_engine(database_url, **engine_kwargs(database_url))
+    if is_sqlite_url(database_url):
+
+        @event.listens_for(engine, "connect")
+        def _sqlite_pragmas(dbapi_conn, _rec) -> None:  # type: ignore[no-untyped-def]
+            cursor = dbapi_conn.cursor()
+            cursor.execute("PRAGMA foreign_keys=ON")
+            if _sqlite_file_url(database_url):
+                cursor.execute("PRAGMA journal_mode=WAL")
+                cursor.execute("PRAGMA busy_timeout=15000")
+                cursor.execute("PRAGMA synchronous=NORMAL")
+                cursor.execute("PRAGMA temp_store=MEMORY")
+            cursor.close()
+
+    return engine
 
 
 def get_engine() -> Engine:
@@ -46,37 +96,15 @@ def configure_engine(database_url: str) -> Engine:
     global _engine, SessionLocal
     if _engine is not None:
         _engine.dispose()
-    kwargs: dict = {"future": True, "pool_pre_ping": True}
-    connect_args = _sqlite_connect_args(database_url)
-    if connect_args:
-        kwargs["connect_args"] = connect_args
-        if database_url in {"sqlite://", "sqlite:///:memory:"}:
-            kwargs["poolclass"] = StaticPool
-        elif _sqlite_file_url(database_url):
-            # File SQLite + QueuePool deadlocks under concurrent /funds
-            # (pool wait + writer lock). One connection per checkout.
-            kwargs["poolclass"] = NullPool
-    _engine = create_engine(database_url, **kwargs)
-
-    if database_url.startswith("sqlite"):
-
-        @event.listens_for(_engine, "connect")
-        def _sqlite_pragmas(dbapi_conn, _rec) -> None:  # type: ignore[no-untyped-def]
-            cursor = dbapi_conn.cursor()
-            cursor.execute("PRAGMA foreign_keys=ON")
-            if _sqlite_file_url(database_url):
-                cursor.execute("PRAGMA journal_mode=WAL")
-                cursor.execute("PRAGMA busy_timeout=15000")
-                cursor.execute("PRAGMA synchronous=NORMAL")
-                cursor.execute("PRAGMA temp_store=MEMORY")
-            cursor.close()
-
+    _engine = make_engine(database_url)
     SessionLocal = sessionmaker(bind=_engine, autoflush=False, expire_on_commit=False, class_=Session)
     return _engine
 
 
 def _ensure_quality_columns(engine: Engine) -> None:
     """Add review-flag columns on existing SQLite disks (create_all will not ALTER)."""
+    if engine.dialect.name != "sqlite":
+        return
     inspector = inspect(engine)
     if "distribution_estimates" not in inspector.get_table_names():
         return
@@ -99,6 +127,8 @@ def _ensure_quality_columns(engine: Engine) -> None:
 
 def _ensure_search_indexes(engine: Engine) -> None:
     """Add search indexes on existing SQLite disks (create_all will not ALTER)."""
+    if engine.dialect.name != "sqlite":
+        return
     inspector = inspect(engine)
     if "distribution_estimates" not in inspector.get_table_names():
         return
@@ -131,9 +161,13 @@ def init_db() -> None:
     from app import models  # noqa: F401
 
     engine = get_engine()
+    # Soft-beta / pytest SQLite: create_all + additive _ensure_* patches.
+    # Postgres production schema is Alembic (`alembic upgrade head` pre-deploy).
+    # create_all remains a no-op when tables already exist (local PG / tests).
     Base.metadata.create_all(engine)
-    _ensure_quality_columns(engine)
-    _ensure_search_indexes(engine)
+    if engine.dialect.name == "sqlite":
+        _ensure_quality_columns(engine)
+        _ensure_search_indexes(engine)
 
 
 def ping_db() -> str:

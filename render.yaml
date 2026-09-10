@@ -1,3 +1,7 @@
+# LIVE soft-beta Blueprint. Do not point DATABASE_URL at Postgres here.
+# Cutover is gated: docs/CUTOVER.md + docs/render.postgres-launch.example.yaml
+# (Eric Merge + Manual Deploy). Merging this file must keep SQLite + /var/data.
+#
 # Blueprint for a dedicated FastAPI service (do not attach this to the Next.js Website project).
 # Dashboard: New → Blueprint → this repo / this branch. Health path is /health.
 # Disk keeps the SQLite book across deploys (ephemeral filesystem otherwise).

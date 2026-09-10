@@ -6,10 +6,14 @@ from datetime import date, datetime
 from decimal import Decimal
 
 from sqlalchemy import Date, DateTime, Index, Numeric, String, Text, UniqueConstraint, func
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.types import JSON
 
 from app.db import Base
+
+# JSON on SQLite (soft beta); JSONB on Postgres. Search must not SELECT these.
+PortableJSON = JSON().with_variant(JSONB(), "postgresql")
 
 
 class EstimateType(str, enum.Enum):
@@ -82,7 +86,7 @@ class DistributionEstimate(Base):
     as_of: Mapped[date | None] = mapped_column(Date, nullable=True)
     publication_stage: Mapped[str | None] = mapped_column(String(64), nullable=True)
     source_url: Mapped[str | None] = mapped_column(Text, nullable=True)
-    raw_payload: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    raw_payload: Mapped[dict | None] = mapped_column(PortableJSON, nullable=True)
     ingested_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
@@ -90,7 +94,7 @@ class DistributionEstimate(Base):
     )
     needs_review: Mapped[bool] = mapped_column(default=False, nullable=False)
     review_reason: Mapped[str | None] = mapped_column(String(64), nullable=True)
-    data_quality_flags: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    data_quality_flags: Mapped[list | None] = mapped_column(PortableJSON, nullable=True)
 
 
 class CoverageGap(Base):
@@ -218,4 +222,4 @@ class IngestRun(Base):
     records_created: Mapped[int] = mapped_column(default=0)
     records_updated: Mapped[int] = mapped_column(default=0)
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
-    source_urls: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    source_urls: Mapped[list | None] = mapped_column(PortableJSON, nullable=True)
