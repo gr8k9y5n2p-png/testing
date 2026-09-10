@@ -266,6 +266,9 @@ describe("universe Upcoming / Fund Manager Estimated Distributions", () => {
     const catalog = readFileSync(join(here, "funds-list.ts"), "utf8");
     assert.match(table, /splitFundsByBucket/);
     assert.match(highlights, /splitFundsByBucket/);
+    assert.match(highlights, /pickHighlightsCalendarYear/);
+    assert.match(highlights, /highlightsCalendarYear/);
+    assert.match(highlights, /withPeerContext\(scoped\)/);
     assert.match(badges, /hideUpcomingAmounts/);
     assert.match(results, /paidEventsForFund/);
     assert.doesNotMatch(results, /paidComponents/);

@@ -1,5 +1,5 @@
 import { pctOfNavForFund } from "../lib/illustrate/nav-math.ts";
-import { splitFundsByBucket } from "./distribution-bucket.ts";
+import { isoDate, splitFundsByBucket } from "./distribution-bucket.ts";
 import { preferFinalPaidEvents } from "./hydrate-funds.ts";
 import type {
   DistributionBucket,
@@ -15,6 +15,63 @@ export { splitFundsByBucket } from "./distribution-bucket.ts";
 
 /** Absolute percentage-point gap vs. category average to qualify as an outlier. */
 export const OUTLIER_THRESHOLD_PP = 2.25;
+
+/**
+ * Minimum unpaid announced funds in one calendar year before Highlights
+ * uses that year. Fewer is a soft empty — never invent or backfill
+ * another year's paid / YE rows.
+ */
+export const HIGHLIGHTS_MIN_YEAR_PEERS = 2;
+
+export function emptyHighlightSets(): HighlightSets {
+  return {
+    mostRecent: [],
+    largest: [],
+    aboveCategory: [],
+    belowCategory: [],
+  };
+}
+
+/**
+ * Market / calendar year for Highlights scoping. Ex/record/payable are the
+ * distribution year; `as_of` and stored `distributionYear` are fallbacks.
+ * Never invent a year.
+ */
+export function highlightsCalendarYear(
+  fund: Pick<
+    FundEstimate,
+    "exDate" | "recordDate" | "payableDate" | "asOfDate" | "distributionYear"
+  >,
+): number {
+  const raw =
+    isoDate(fund.exDate) ??
+    isoDate(fund.recordDate) ??
+    isoDate(fund.payableDate) ??
+    isoDate(fund.asOfDate);
+  const year = Number((raw ?? "").slice(0, 4));
+  return year || fund.distributionYear;
+}
+
+/**
+ * Latest calendar year with enough unpaid announced peers. Years with
+ * only a singleton (or nothing) are not mixed in — callers soft-empty.
+ */
+export function pickHighlightsCalendarYear<T extends FundEstimate>(
+  funds: T[],
+  minPeers = HIGHLIGHTS_MIN_YEAR_PEERS,
+): number | null {
+  const counts = new Map<number, number>();
+  for (const fund of funds) {
+    const year = highlightsCalendarYear(fund);
+    if (!Number.isFinite(year) || year <= 0) continue;
+    counts.set(year, (counts.get(year) ?? 0) + 1);
+  }
+  const years = [...counts.keys()].sort((a, b) => b - a);
+  for (const year of years) {
+    if ((counts.get(year) ?? 0) >= minPeers) return year;
+  }
+  return null;
+}
 
 export function roundTo(value: number, decimals: number): number {
   const factor = 10 ** decimals;
@@ -162,12 +219,10 @@ export function fundFromPaidEvent(
   };
 }
 
-export function getHighlights(
-  funds: FundEstimateView[],
-  limit = 5,
+function highlightRowsFromPool(
+  pool: FundEstimateView[],
+  limit: number,
 ): HighlightSets {
-  const { upcoming } = splitFundsByBucket(funds);
-  const pool = upcoming;
   // Largest / Most Recent live in a fixed-height scroller. Keep enough
   // same-day weekly filings to scroll; Versus-category stays at `limit`.
   const scrollerLimit = Math.max(limit, 60);
@@ -200,4 +255,24 @@ export function getHighlights(
     .slice(0, limit);
 
   return { mostRecent, largest, aboveCategory, belowCategory };
+}
+
+/**
+ * Search Highlights: unpaid future announced only, one calendar year
+ * per module. Category-avg deltas are recomputed on that unpaid
+ * same-year peer set — paid history and other years never mix in.
+ */
+export function getHighlights(
+  funds: FundEstimateView[],
+  limit = 5,
+): HighlightSets {
+  const { upcoming } = splitFundsByBucket(funds);
+  const year = pickHighlightsCalendarYear(upcoming);
+  if (year == null) return emptyHighlightSets();
+  const scoped = upcoming.filter(
+    (fund) => highlightsCalendarYear(fund) === year,
+  );
+  if (scoped.length < HIGHLIGHTS_MIN_YEAR_PEERS) return emptyHighlightSets();
+  const pool = withPeerContext(scoped);
+  return highlightRowsFromPool(pool, limit);
 }

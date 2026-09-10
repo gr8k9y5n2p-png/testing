@@ -21,8 +21,8 @@ export function HighlightsSection({
           </h2>
           <p className="mt-1 text-sm text-muted">
             Snapshot of unpaid announced estimates: largest payouts, newest
-            filings, and peers that sit well away from their category average.
-            Paid history is not mixed in.
+            filings, and same-year peers that sit well away from their
+            category average. Paid history is not mixed in.
           </p>
         </div>
         <p className="text-xs text-faint">
@@ -52,7 +52,7 @@ export function HighlightsSection({
         <HighlightCard
           title="Versus category"
           metricLabel="Δ pp"
-          description={`Well above or below the same-category mean by at least ${OUTLIER_THRESHOLD_PP} pp.`}
+          description={`Well above or below the same-category, same-year mean by at least ${OUTLIER_THRESHOLD_PP} pp.`}
           funds={[...highlights.aboveCategory, ...highlights.belowCategory]}
           variant="outliers"
           above={highlights.aboveCategory}

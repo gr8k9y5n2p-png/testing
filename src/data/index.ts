@@ -10,11 +10,15 @@ export {
 } from "./hydrate-funds";
 export {
   computeCategoryAverages,
+  emptyHighlightSets,
   fundFromPaidEvent,
   getFacets,
   getHighlights,
+  highlightsCalendarYear,
+  HIGHLIGHTS_MIN_YEAR_PEERS,
   OUTLIER_THRESHOLD_PP,
   paidHistoryViews,
+  pickHighlightsCalendarYear,
   searchFunds,
   splitFundsByBucket,
   withPeerContext,
