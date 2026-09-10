@@ -263,5 +263,8 @@ describe("Dollar Illustration prior-year Paid History", () => {
     assert.match(paid, /illustrationPaidTypeRows/);
     assert.match(paid, /ILLUSTRATION_PAID_HISTORY_KICKER/);
     assert.match(paid, /ILLUSTRATION_PAID_HISTORY_DETAIL/);
+    assert.match(paid, /fetchTickerDistributions/);
+    assert.match(paid, /\/api\/funds/);
+    assert.doesNotMatch(paid, /params\.set\("nav_only"/);
   });
 });

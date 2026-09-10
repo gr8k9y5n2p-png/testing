@@ -1,4 +1,7 @@
-import type { FundEstimate } from "@/data/types";
+"use client";
+
+import { useEffect, useState } from "react";
+import type { FundEstimate, FundEstimateView } from "@/data/types";
 import { publicationStageLabel } from "@/data/distribution-bucket";
 import {
   ILLUSTRATION_PAID_HISTORY_DETAIL,
@@ -23,9 +26,50 @@ const ESTIMATE_LABELS: Record<string, string> = {
   return_of_capital: "Return of capital",
 };
 
+/** Full ticker hydrate so prior-year finals come from GET /distributions. */
+async function fetchTickerDistributions(
+  ticker: string,
+): Promise<FundEstimateView | null> {
+  const params = new URLSearchParams();
+  params.set("q", ticker);
+  params.set("limit", "5");
+  const response = await fetch(`/api/funds?${params.toString()}`);
+  if (!response.ok) return null;
+  const body = (await response.json()) as {
+    items?: FundEstimateView[];
+    data?: FundEstimateView[];
+  };
+  const items = Array.isArray(body.items)
+    ? body.items
+    : Array.isArray(body.data)
+      ? body.data
+      : [];
+  return (
+    items.find((row) => row.ticker.trim().toUpperCase() === ticker) ?? null
+  );
+}
+
 export function IllustrationPaidHistory({ fund }: { fund: FundEstimate }) {
+  const [hydrated, setHydrated] = useState<FundEstimateView | null>(null);
+
+  useEffect(() => {
+    const ticker = fund.ticker.trim().toUpperCase();
+    setHydrated(null);
+    if (!ticker || ticker === "—") {
+      return;
+    }
+    let cancelled = false;
+    void fetchTickerDistributions(ticker).then((match) => {
+      if (!cancelled) setHydrated(match);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [fund.ticker]);
+
+  const source = hydrated ?? fund;
   const year = illustrationPaidHistoryYear();
-  const rows = illustrationPaidTypeRows(fund);
+  const rows = illustrationPaidTypeRows(source);
 
   return (
     <section
