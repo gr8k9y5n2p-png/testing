@@ -164,7 +164,11 @@ describe("universe Upcoming / Fund Manager Estimated Distributions", () => {
       assert.equal(fund.hasEstimate, false, `${fund.ticker} hasEstimate`);
       assert.equal(fund.bucket, "paid", `${fund.ticker} bucket`);
       assert.equal(isUpcomingFund(fund), false, `${fund.ticker} isUpcomingFund`);
-      assert.equal(hideUpcomingAmounts(fund), false, `${fund.ticker} paid $ visible`);
+      assert.equal(
+        hideUpcomingAmounts(fund),
+        true,
+        `${fund.ticker} Upcoming chrome hidden — paid $ stays on Paid History`,
+      );
       const { upcoming, paid } = splitFundsByBucket([fund]);
       assert.equal(upcoming.length, 0, `${fund.ticker} Search Upcoming`);
       assert.equal(paid.length, 1, `${fund.ticker} Paid history`);

@@ -176,7 +176,7 @@ function EstimateLeadCard({ fund }: { fund: FundEstimateView }) {
         <LeadField
           label="Estimate types"
           value={
-            lines.length === 0
+            hideAmounts || lines.length === 0
               ? "—"
               : lines
                   .map((line) => {
@@ -191,9 +191,18 @@ function EstimateLeadCard({ fund }: { fund: FundEstimateView }) {
                   .join(" · ")
           }
         />
-        <LeadField label="Announced" value={formatOptionalDate(fund.asOfDate)} />
-        <LeadField label="Record" value={formatOptionalDate(fund.recordDate)} />
-        <LeadField label="Ex-date" value={formatOptionalDate(fund.exDate)} />
+        <LeadField
+          label="Announced"
+          value={hideAmounts ? "—" : formatOptionalDate(fund.asOfDate)}
+        />
+        <LeadField
+          label="Record"
+          value={hideAmounts ? "—" : formatOptionalDate(fund.recordDate)}
+        />
+        <LeadField
+          label="Ex-date"
+          value={hideAmounts ? "—" : formatOptionalDate(fund.exDate)}
+        />
       </dl>
     </div>
   );
