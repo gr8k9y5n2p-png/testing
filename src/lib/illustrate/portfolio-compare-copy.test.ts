@@ -10,8 +10,12 @@ import {
   EX_COLUMN,
   PCT_OF_NAV_COLUMN,
   RECORD_COLUMN,
+  UPCOMING_ADD_TO_UNIVERSE,
   UPCOMING_AMOUNT_UNAVAILABLE,
+  UPCOMING_AWAITING_ESTIMATE,
   upcomingDistributionAmount,
+  upcomingEmptyHeadline,
+  upcomingEmptyLabel,
   upcomingDistributionLine,
   upcomingDollarImpactAmount,
   upcomingEstimatedTaxLine,
@@ -38,11 +42,28 @@ import {
 
 describe("PortfolioCompare empty upcoming copy", () => {
   it("does not look like a $0 estimate", () => {
-    assert.match(UPCOMING_UNAVAILABLE_HEADLINE, /not available/i);
-    assert.match(UPCOMING_UNAVAILABLE_HEADLINE, /undisclosed/i);
+    assert.equal(UPCOMING_UNAVAILABLE_HEADLINE, "Awaiting Estimate");
+    assert.equal(UPCOMING_AWAITING_ESTIMATE, "Awaiting Estimate");
+    assert.equal(UPCOMING_ADD_TO_UNIVERSE, "Add to universe");
     assert.doesNotMatch(UPCOMING_UNAVAILABLE_HEADLINE, /\$0|0\.00/);
     assert.doesNotMatch(UPCOMING_UNAVAILABLE_DETAIL, /\$0|0\.00/);
     assert.match(UPCOMING_UNAVAILABLE_DETAIL, /unpaid announced/i);
+    assert.doesNotMatch(UPCOMING_UNAVAILABLE_HEADLINE, /undisclosed/i);
+    assert.doesNotMatch(UPCOMING_UNAVAILABLE_HEADLINE, /no funds match/i);
+  });
+
+  it("uses Awaiting Estimate in-universe and Add to universe off-catalog", () => {
+    assert.equal(upcomingEmptyLabel(true), "Awaiting Estimate");
+    assert.equal(upcomingEmptyLabel(false), "Add to universe");
+    assert.equal(upcomingEmptyHeadline([{ inUniverse: true }]), "Awaiting Estimate");
+    assert.equal(
+      upcomingEmptyHeadline([{ inUniverse: false }, { inUniverse: false }]),
+      "Add to universe",
+    );
+    assert.equal(
+      upcomingEmptyHeadline([{ inUniverse: true }, { inUniverse: false }]),
+      "Awaiting Estimate",
+    );
   });
 
   it("keeps paid-history empty copy distinct from upcoming", () => {
@@ -63,6 +84,7 @@ describe("PortfolioCompare upcoming module copy", () => {
     assert.doesNotMatch(UPCOMING_MODULE_DETAIL, /\$0|0\.00/);
     assert.notEqual(UPCOMING_MODULE_HEADING, PAID_HISTORY_HEADING);
     assert.equal(UPCOMING_AMOUNT_UNAVAILABLE, "Undisclosed");
+    assert.equal(UPCOMING_AWAITING_ESTIMATE, "Awaiting Estimate");
     assert.equal(UPCOMING_MODULE_HEADING, "Upcoming / Announced");
     assert.equal(DIST_AMOUNT_COLUMN, "$ Distribution / share");
     assert.equal(PCT_OF_NAV_COLUMN, "Distribution % of NAV");
@@ -76,7 +98,7 @@ describe("PortfolioCompare upcoming module copy", () => {
     assert.doesNotMatch(ESTIMATED_TAX_LINE_LABEL, /\$0|0\.00/);
     assert.equal(
       upcomingDistributionLine({ available: false, distributionDollars: null }),
-      "Est. Distribution: Undisclosed",
+      "Est. Distribution: Awaiting Estimate",
     );
     assert.equal(
       upcomingEstimatedTaxLine({
@@ -84,15 +106,23 @@ describe("PortfolioCompare upcoming module copy", () => {
         covered: true,
         estimatedTax: null,
       }),
-      "Estimated Tax: Undisclosed",
+      "Estimated Tax: Awaiting Estimate",
     );
     assert.equal(
       upcomingDistributionAmount({ available: false, distributionDollars: null }),
-      "Undisclosed",
+      "Awaiting Estimate",
+    );
+    assert.equal(
+      upcomingDistributionAmount({
+        available: false,
+        inUniverse: false,
+        distributionDollars: null,
+      }),
+      "Add to universe",
     );
     assert.equal(
       upcomingPctOfNavAmount({ available: false, pctOfNav: null }),
-      "Undisclosed",
+      "Awaiting Estimate",
     );
     assert.equal(
       upcomingPctOfNavAmount({ available: true, pctOfNav: 1.28 }),

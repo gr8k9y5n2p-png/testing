@@ -10,11 +10,22 @@ export const EMPTY_BOOK_INVITE = "No holdings yet — use + Add holding to start
 export const SINGLE_BOOK_DELTA_DETAIL =
   "Add holdings on both sides to compare · not Upcoming";
 
-export const UPCOMING_UNAVAILABLE_HEADLINE = "Not available / undisclosed";
-/** Short cell label so Dist $ / % of NAV stay scannable. Never $0. */
+/**
+ * Eric lock — Compare / Portfolio Upcoming empty estimate:
+ * in-universe, no unpaid announced estimate → Awaiting Estimate.
+ * Not in universe → Add to universe (intake / requestTicker).
+ * Undisclosed stays for other matched=false amount gaps. Never invent $.
+ */
+export const UPCOMING_AWAITING_ESTIMATE = "Awaiting Estimate";
+export const UPCOMING_ADD_TO_UNIVERSE = "Add to universe";
+export const UPCOMING_UNAVAILABLE_HEADLINE = UPCOMING_AWAITING_ESTIMATE;
+/** Short cell label for other amount gaps (not the no-estimate empty state). */
 export const UPCOMING_AMOUNT_UNAVAILABLE = "Undisclosed";
-export const UPCOMING_UNAVAILABLE_DETAIL =
+export const UPCOMING_AWAITING_ESTIMATE_DETAIL =
   "No unpaid announced estimates for these holdings.";
+export const UPCOMING_ADD_TO_UNIVERSE_DETAIL =
+  "Not in the universe yet — request this ticker for ingest.";
+export const UPCOMING_UNAVAILABLE_DETAIL = UPCOMING_AWAITING_ESTIMATE_DETAIL;
 export const UPCOMING_MODULE_HEADING = "Upcoming / Announced";
 export const UPCOMING_MODULE_DETAIL =
   "sell before record · unpaid announced · all funds · never invent";
@@ -158,9 +169,46 @@ export function resolveUpcomingTaxImpact(
   });
 }
 
-/** $ / share cell. Missing unpaid prelim or NAV conversion stays undisclosed. */
+export type UpcomingEmptyInputs = {
+  available?: boolean;
+  inUniverse?: boolean | null;
+};
+
+/** In-universe miss → Awaiting Estimate. Catalog miss → Add to universe. */
+export function upcomingEmptyLabel(inUniverse: boolean | null | undefined = true): string {
+  return inUniverse === false ? UPCOMING_ADD_TO_UNIVERSE : UPCOMING_AWAITING_ESTIMATE;
+}
+
+export function upcomingEmptyHeadline(
+  rows: Array<Pick<UpcomingEmptyInputs, "inUniverse">> = [],
+): string {
+  if (rows.length > 0 && rows.every((row) => row.inUniverse === false)) {
+    return UPCOMING_ADD_TO_UNIVERSE;
+  }
+  return UPCOMING_AWAITING_ESTIMATE;
+}
+
+export function upcomingEmptyDetail(
+  rows: Array<Pick<UpcomingEmptyInputs, "inUniverse">> = [],
+): string {
+  if (rows.length > 0 && rows.every((row) => row.inUniverse === false)) {
+    return UPCOMING_ADD_TO_UNIVERSE_DETAIL;
+  }
+  return UPCOMING_AWAITING_ESTIMATE_DETAIL;
+}
+
+export function isUpcomingEmptyAmount(value: string): boolean {
+  return (
+    value === UPCOMING_AWAITING_ESTIMATE ||
+    value === UPCOMING_ADD_TO_UNIVERSE ||
+    value === UPCOMING_AMOUNT_UNAVAILABLE ||
+    value === UPCOMING_SOFT_DASH
+  );
+}
+
 export function upcomingPerShareAmount(row: {
   available: boolean;
+  inUniverse?: boolean | null;
   distributionPerShare?: number | null;
   distributionDollars: number | null;
   holdingDollars: number | null;
@@ -173,28 +221,30 @@ export function upcomingPerShareAmount(row: {
 
 export function upcomingDistributionPerShareAmount(row: {
   available: boolean;
+  inUniverse?: boolean | null;
   distributionPerShare?: number | null;
   distributionDollars: number | null;
   holdingDollars: number | null;
   navPerShare: number | null;
 }): string {
-  if (!row.available) return UPCOMING_AMOUNT_UNAVAILABLE;
+  if (!row.available) return upcomingEmptyLabel(row.inUniverse);
   const formatted = upcomingPerShareAmount(row);
   return formatted ?? UPCOMING_SOFT_DASH;
 }
 
-/** Dist $ cell. Empty upcoming is undisclosed, never $0. */
+/** Dist $ cell. No unpaid estimate is Awaiting / Add to universe, never $0. */
 export function upcomingDistributionAmount(row: {
   available: boolean;
+  inUniverse?: boolean | null;
   distributionDollars: number | null;
   distributionDollarsMin?: number | null;
   distributionDollarsMax?: number | null;
 }): string {
+  if (!row.available) return upcomingEmptyLabel(row.inUniverse);
   if (
-    !row.available ||
-    (row.distributionDollars == null &&
-      row.distributionDollarsMin == null &&
-      row.distributionDollarsMax == null)
+    row.distributionDollars == null &&
+    row.distributionDollarsMin == null &&
+    row.distributionDollarsMax == null
   ) {
     return UPCOMING_AMOUNT_UNAVAILABLE;
   }
@@ -217,13 +267,14 @@ export function upcomingDistributionAmount(row: {
 /** % of NAV cell. Prefer $/share ÷ weekly NAV; never invent a manager rate. */
 export function upcomingPctOfNavAmount(row: {
   available: boolean;
+  inUniverse?: boolean | null;
   pctOfNav: number | null;
   distributionPerShare?: number | null;
   distributionDollars?: number | null;
   holdingDollars?: number | null;
   navPerShare?: number | null;
 }): string {
-  if (!row.available) return UPCOMING_AMOUNT_UNAVAILABLE;
+  if (!row.available) return upcomingEmptyLabel(row.inUniverse);
   const computed =
     upcomingPctOfNavFromPerShare(resolveUpcomingPerShare(row), row.navPerShare ?? null) ??
     row.pctOfNav;
@@ -235,6 +286,7 @@ export function upcomingPctOfNavAmount(row: {
 export function upcomingDollarImpactAmount(
   row: {
     available: boolean;
+    inUniverse?: boolean | null;
     covered: boolean;
     estimatedTax: number | null;
     distributionPerShare?: number | null;
@@ -246,7 +298,7 @@ export function upcomingDollarImpactAmount(
   },
   rates?: { taxRates: TaxRates; combine: boolean },
 ): string {
-  if (!row.available) return UPCOMING_AMOUNT_UNAVAILABLE;
+  if (!row.available) return upcomingEmptyLabel(row.inUniverse);
   if (rates) {
     const tax = resolveUpcomingTaxImpact(row, rates);
     if (tax == null) return UPCOMING_SOFT_DASH;
@@ -258,26 +310,29 @@ export function upcomingDollarImpactAmount(
     : formatUsd(row.estimatedTax, 0);
 }
 
-/** Advisor-facing Est. Distribution line. Empty upcoming is undisclosed, never $0. */
+/** Advisor-facing Est. Distribution line. Empty upcoming is Awaiting / Add, never $0. */
 export function upcomingDistributionLine(row: {
   available: boolean;
+  inUniverse?: boolean | null;
   distributionDollars: number | null;
 }): string {
   return `${EST_DISTRIBUTION_LINE_LABEL}: ${upcomingDistributionAmount(row)}`;
 }
 
-/** Advisor-facing Estimated Tax line. Empty / uncovered is N/A, never $0. */
+/** Advisor-facing Estimated Tax line. Empty / uncovered is Awaiting / Add, never $0. */
 export function upcomingEstimatedTaxLine(row: {
   available: boolean;
+  inUniverse?: boolean | null;
   covered: boolean;
   estimatedTax: number | null;
 }): string {
   return `${ESTIMATED_TAX_LINE_LABEL}: ${upcomingDollarImpactAmount(row)}`;
 }
 
-/** Advisor-facing % of NAV line. Missing inputs stay undisclosed. */
+/** Advisor-facing % of NAV line. Empty upcoming is Awaiting / Add. */
 export function upcomingPctOfNavLine(row: {
   available: boolean;
+  inUniverse?: boolean | null;
   pctOfNav: number | null;
 }): string {
   return `${PCT_OF_NAV_LINE_LABEL}: ${upcomingPctOfNavAmount(row)}`;

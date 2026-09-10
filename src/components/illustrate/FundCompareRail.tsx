@@ -98,8 +98,7 @@ export function FundCompareRail({
       <div className="mt-5 flex justify-center xl:justify-start">
         {pendingPeer ? (
           <p className="text-sm text-muted">
-            Not available / undisclosed. Compare stays empty until this ticker is
-            ingested.
+            Add to universe. Compare stays empty until this ticker is ingested.
           </p>
         ) : (
           <FundTaxDeltaCompare

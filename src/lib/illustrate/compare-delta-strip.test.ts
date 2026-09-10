@@ -29,7 +29,7 @@ describe("compare delta strip", () => {
     assert.equal(items[0]?.headline, null);
     assert.equal(items[1]?.headline, null);
     assert.equal(items[2]?.headline, null);
-    assert.match(items[3]?.headline ?? "", /undisclosed/i);
+    assert.match(items[3]?.headline ?? "", /awaiting estimate/i);
     assert.equal(
       items.some((item) => item.headline === "$0" || item.headline === "$0.00"),
       false,
@@ -38,11 +38,17 @@ describe("compare delta strip", () => {
     assert.equal(reservedDeltaStrip(25_000)[0]?.detail, "on $25,000");
   });
 
-  it("keeps pair Δ reserved for one fund and uses unpaid upcoming or Undisclosed", () => {
+  it("keeps pair Δ reserved for one fund and uses unpaid upcoming or Awaiting Estimate", () => {
     const empty = deltaStripFromSingleUpcoming({ announced: false, dollars: null });
     assert.equal(empty[0]?.reserved, true);
     assert.equal(empty[0]?.headline, null);
-    assert.match(empty[3]?.headline ?? "", /undisclosed/i);
+    assert.match(empty[3]?.headline ?? "", /awaiting estimate/i);
+    const offCatalog = deltaStripFromSingleUpcoming(
+      { announced: false, dollars: null },
+      10_000,
+      false,
+    );
+    assert.equal(offCatalog[3]?.headline, "Add to universe");
 
     const announced = deltaStripFromSingleUpcoming({ announced: true, dollars: 185 });
     assert.equal(announced[0]?.headline, null);
@@ -67,7 +73,7 @@ describe("compare delta strip", () => {
     assert.equal(items[0]?.headline, "$120 more tax");
     assert.equal(items[0]?.reserved, false);
     assert.equal(items[1]?.reserved, true);
-    assert.match(items[3]?.headline ?? "", /undisclosed/i);
+    assert.match(items[3]?.headline ?? "", /awaiting estimate/i);
   });
 
   it("rescales $10k-normalized pair dollars to the shared holding", () => {

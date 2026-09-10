@@ -285,6 +285,7 @@ export function upcomingRowForCompareTicker(input: {
     heat: 0,
     available,
     covered: announced && input.upcoming?.dollars != null,
+    inUniverse: Boolean(fund),
   };
 }
 
@@ -292,7 +293,8 @@ export function upcomingRowForCompareTicker(input: {
  * Unpaid future announcement only. Do not use `isUpcomingFund` here — that
  * gate drops manager-published $0 as a catalog leftover. Advisors want
  * announced zeros. Identity / paid / final / past-event rows still fail
- * `publicationBucket`. Undisclosed only when there is no unpaid publish.
+ * `publicationBucket`. Awaiting Estimate when there is no unpaid publish
+ * and the ticker is in universe; Add to universe when it is not.
  */
 function catalogDistributionRow(fund: FundEstimateView) {
   return {

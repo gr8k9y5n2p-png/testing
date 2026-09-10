@@ -45,9 +45,11 @@ export type UpcomingRow = {
   stage: string | null;
   bucket: DistributionBucket;
   heat: number;
-  /** False = empty/null upcoming for this fund (undisclosed, not $0). */
+  /** False = empty/null upcoming for this fund (Awaiting Estimate, not $0). */
   available: boolean;
   covered: boolean;
+  /** Catalog identity. False → Add to universe, not Awaiting Estimate. */
+  inUniverse: boolean;
 };
 
 function num(value: unknown): number | null {
@@ -240,9 +242,10 @@ function coalesceUpcomingRows(
 
 /**
  * Upcoming $ only from non-null unpaid `holdings[].upcoming`.
- * Omitted / null / paid / historical illustration totals → undisclosed.
- * Universe-wide: never invent Fund Manager Estimated Distributions
- * for any ticker (ABALX is an example, not a special case).
+ * Omitted / null / paid / historical illustration totals → Awaiting Estimate
+ * when the ticker is in universe (Add to universe when it is not).
+ * Never invent Fund Manager Estimated Distributions for any ticker
+ * (ABALX is an example, not a special case).
  */
 export function upcomingFromHolding(
   holding: PortfolioHoldingOut,
@@ -257,8 +260,9 @@ export function upcomingFromHolding(
 }
 
 /**
- * Unpaid announced rows only. Omitted or `upcoming: null` is undisclosed —
- * do not derive from illustration, distributions, history, or annual tax.
+ * Unpaid announced rows only. Omitted or `upcoming: null` is Awaiting
+ * Estimate in-universe — do not derive from illustration, distributions,
+ * history, or annual tax.
  */
 function upcomingEventsFromHolding(
   holding: PortfolioHoldingOut,
@@ -349,6 +353,18 @@ function holdingTicker(holding: PortfolioHoldingOut): string {
   return (holding.ticker || holding.fund_identifier || "—").toUpperCase();
 }
 
+/**
+ * Catalog membership for empty Upcoming copy.
+ * Prefer Awaiting Estimate unless the ticker is known to be outside the universe.
+ */
+export function holdingInUniverse(
+  holding: Pick<PortfolioHoldingOut, "ticker" | "fund_identifier">,
+  universeTickers?: ReadonlySet<string>,
+): boolean {
+  if (!universeTickers) return true;
+  return universeTickers.has(holdingTicker(holding));
+}
+
 function toTableRow(
   holding: PortfolioHoldingOut,
   side: "current" | "proposed",
@@ -356,6 +372,7 @@ function toTableRow(
   event: PortfolioDistributionRow,
   eventIndex: number,
   bucket: DistributionBucket,
+  universeTickers?: ReadonlySet<string>,
 ): UpcomingRow | null {
   if (!hasDistributionSignal(event)) return null;
   const dist = num(event.distribution_dollars);
@@ -401,17 +418,19 @@ function toTableRow(
     heat: 0,
     available: true,
     covered: holding.covered !== false && !holding.gap_reason,
+    inUniverse: holdingInUniverse(holding, universeTickers),
   };
 }
 
-function undisclosedUpcomingRow(
+function emptyUpcomingRow(
   holding: PortfolioHoldingOut,
   side: "current" | "proposed",
   index: number,
+  universeTickers?: ReadonlySet<string>,
 ): UpcomingRow {
   const ticker = holdingTicker(holding);
   return {
-    key: `${side}-${holding.holding_index}-${ticker}-${index}-upcoming-undisclosed`,
+    key: `${side}-${holding.holding_index}-${ticker}-${index}-upcoming-empty`,
     ticker,
     fundName: holding.fund_name || ticker,
     side,
@@ -437,6 +456,7 @@ function undisclosedUpcomingRow(
     heat: 0,
     available: false,
     covered: holding.covered !== false && !holding.gap_reason,
+    inUniverse: holdingInUniverse(holding, universeTickers),
   };
 }
 
@@ -445,6 +465,7 @@ function rowsForSide(
   side: "current" | "proposed",
   bucket: DistributionBucket,
   today = utcToday(),
+  universeTickers?: ReadonlySet<string>,
 ): UpcomingRow[] {
   return allocation.holdings.flatMap((holding, index) => {
     const events =
@@ -452,7 +473,15 @@ function rowsForSide(
         ? paidHistoryEventsFromHolding(holding)
         : upcomingEventsFromHolding(holding, today);
     return events.flatMap((event, eventIndex) => {
-      const row = toTableRow(holding, side, index, event, eventIndex, bucket);
+      const row = toTableRow(
+        holding,
+        side,
+        index,
+        event,
+        eventIndex,
+        bucket,
+        universeTickers,
+      );
       return row ? [row] : [];
     });
   });
@@ -498,30 +527,43 @@ export function upcomingRowsForSide(
   allocation: PortfolioAllocationOut,
   side: "current" | "proposed",
   today = utcToday(),
+  universeTickers?: ReadonlySet<string>,
 ): UpcomingRow[] {
   return withHeat(
-    sortDistributionRows(rowsForSide(allocation, side, "upcoming", today), "upcoming"),
+    sortDistributionRows(
+      rowsForSide(allocation, side, "upcoming", today, universeTickers),
+      "upcoming",
+    ),
   );
 }
 
 /**
  * One row per Current/Proposed holding for the Upcoming module.
  * Extra unpaid events on the same fund collapse to the first row.
- * Empty/null upcoming stays undisclosed — never $0.
+ * Empty/null upcoming is Awaiting Estimate in-universe — never $0.
  */
 export function upcomingHoldingsForSide(
   allocation: PortfolioAllocationOut,
   side: "current" | "proposed",
   today = utcToday(),
+  universeTickers?: ReadonlySet<string>,
 ): UpcomingRow[] {
   const rows = allocation.holdings.flatMap((holding, index) => {
     const events = upcomingEventsFromHolding(holding, today);
     const eventRows = events.flatMap((event, eventIndex) => {
-      const row = toTableRow(holding, side, index, event, eventIndex, "upcoming");
+      const row = toTableRow(
+        holding,
+        side,
+        index,
+        event,
+        eventIndex,
+        "upcoming",
+        universeTickers,
+      );
       return row ? [row] : [];
     });
     if (eventRows.length) return [eventRows[0]];
-    return [undisclosedUpcomingRow(holding, side, index)];
+    return [emptyUpcomingRow(holding, side, index, universeTickers)];
   });
   return withHeat(rows);
 }

@@ -295,6 +295,7 @@ export function CompareWorkspace({
             )
           : null,
         holdingDollars,
+        Boolean(activeLoaded[0]?.fund),
       );
     }
     return reservedDeltaStrip(holdingDollars);

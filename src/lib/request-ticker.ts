@@ -19,6 +19,8 @@ export {
   requestTicker,
   requestTickerOnPortfolioMiss,
   shouldReportPortfolioMiss,
+  tickerMissEmptyLabel,
+  TICKER_REQUEST,
   TICKER_REQUEST_PATH,
   TICKER_REQUEST_SOURCES,
 } from "./data-api/request-ticker.ts";

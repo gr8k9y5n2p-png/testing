@@ -284,7 +284,7 @@ describe("compare upcoming rows", () => {
     assert.doesNotMatch(stage, /ticker === ["'][A-Z0-9]+["']/);
   });
 
-  it("treats has_estimate-false finals as Undisclosed for every ticker, not only ABALX", () => {
+  it("treats has_estimate-false finals as Awaiting Estimate for every in-universe ticker, not only ABALX", () => {
     for (const ticker of ["ABALX", "VFIAX", "FXAIX", "DODIX", "ZZZZX"]) {
       const row = upcomingRowForCompareTicker({
         ticker,
@@ -304,12 +304,26 @@ describe("compare upcoming rows", () => {
         index: 0,
       });
       assert.equal(row.available, false, ticker);
+      assert.equal(row.inUniverse, true, ticker);
       assert.equal(row.distributionDollars, null, ticker);
       assert.equal(row.distributionPerShare, null, ticker);
       assert.equal(row.pctOfNav, null, ticker);
       assert.equal(row.estimatedTax, null, ticker);
       assert.equal(row.recordDate, null, ticker);
     }
+  });
+
+  it("marks a Compare ticker with no catalog fund as not in universe", () => {
+    const row = upcomingRowForCompareTicker({
+      ticker: "ZZZZY",
+      fund: null,
+      upcoming: { dollars: null, announced: false, asOf: null },
+      index: 0,
+    });
+    assert.equal(row.available, false);
+    assert.equal(row.inUniverse, false);
+    assert.equal(row.distributionDollars, null);
+    assert.equal(row.estimatedTax, null);
   });
 
   it("moves catalog Upcoming to Paid History when ex-date has passed, including $0", () => {

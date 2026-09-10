@@ -6,6 +6,7 @@ import { COPY } from "@/lib/copy";
 import {
   looksLikeExactTicker,
   notifyPortfolioTickerMiss,
+  tickerMissEmptyLabel,
 } from "@/lib/data-api/request-ticker";
 import { usePortfolioMissRequest } from "@/lib/data-api/use-portfolio-miss";
 import { useSearchMissRequest } from "@/lib/data-api/use-search-miss";
@@ -231,7 +232,15 @@ export function FundPicker({
         <ul className="absolute z-20 mt-1 max-h-72 w-full overflow-auto rounded-md border border-line bg-surface shadow-lg">
           {matches.length === 0 ? (
             <li className="px-3 py-3 text-sm text-muted">
-              {remotePending ? "Searching…" : "No funds match."}
+              {reportPortfolioMiss
+                ? tickerMissEmptyLabel({
+                    query,
+                    tickerInUniverse,
+                    pending: remotePending,
+                  })
+                : remotePending
+                  ? "Searching…"
+                  : "No funds match."}
             </li>
           ) : (
             matches.map((fund) => (
