@@ -1,8 +1,6 @@
 import { isUpcomingFund } from "../../data/distribution-bucket.ts";
 import type { FundEstimateView } from "../../data/types.ts";
 import { MAX_GROWTH_FUNDS } from "../charts/series-colors.ts";
-import { trailingCalendarPeriods } from "./compare-request.ts";
-import type { CompareIllustration, CompareResponse } from "./compare-types.ts";
 import { UI_DEFAULT_TAX_RATES, type TaxRates } from "./types.ts";
 import {
   upcomingDistDollarsFromPerShare,
@@ -12,12 +10,6 @@ import {
   publicationBucket,
   type UpcomingRow,
 } from "./publication-stage.ts";
-import {
-  comparePeriodCalendarYear,
-  illustrationIsUnmatched,
-  illustrationVintageYear,
-  toTaxDragPeriods,
-} from "./tax-drag-map.ts";
 
 export type CompareGrowthFund = {
   ticker: string;
@@ -87,22 +79,6 @@ export function compareInputsMatch(
 function normalizeTicker(value: string | null | undefined): string {
   return value?.trim().toUpperCase() ?? "";
 }
-
-export type CompareAnnualRow = {
-  key: string;
-  ticker: string;
-  kind: "tax" | "distribution";
-  label: string;
-  cells: Array<number | null>;
-};
-
-export type CompareAnnualTableModel = {
-  years: number[];
-  groups: {
-    ticker: string;
-    rows: CompareAnnualRow[];
-  }[];
-};
 
 export function emptyCompareSlots(): string[] {
   return Array.from({ length: COMPARE_SLOT_COUNT }, () => "");
@@ -212,119 +188,6 @@ export function growthFundsFromSlots(
       navPerShare: match && match.nav > 0 ? match.nav : undefined,
     };
   });
-}
-
-export function compareHistoryYears(nowYear = new Date().getUTCFullYear()): number[] {
-  return trailingCalendarPeriods(nowYear)
-    .map((period) => period.year)
-    .sort((a, b) => b - a);
-}
-
-function numericOrNull(value: unknown): number | null {
-  if (value == null || value === "") return null;
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
-function illustrationCalendarYear(illustration: CompareIllustration | null | undefined): number {
-  return illustrationVintageYear(illustration);
-}
-
-function distributionFromIllustration(
-  illustration: CompareIllustration | null | undefined,
-): number | null {
-  if (!illustration || illustrationIsUnmatched(illustration)) return null;
-  return numericOrNull(illustration.totals?.distribution_dollars);
-}
-
-/** Calendar-year distribution $. Unmatched / missing → null (N/A), never $0. */
-export function toDistributionPeriods(response: CompareResponse | null): Array<{
-  year: number;
-  value: number | null;
-}> {
-  if (!response) return [];
-  const byYear = new Map<number, number | null>();
-  const write = (year: number, value: number | null) => {
-    if (!Number.isFinite(year) || year <= 0) return;
-    const prior = byYear.get(year);
-    if (prior != null && value == null) return;
-    byYear.set(year, value);
-  };
-
-  for (const period of response.periods) {
-    const periodYear = comparePeriodCalendarYear(period);
-    const leftValue = distributionFromIllustration(period.left);
-    const rightValue = distributionFromIllustration(period.right);
-    if (response.mode !== "yoy") {
-      write(periodYear, leftValue);
-      continue;
-    }
-    const olderFromLabel = illustrationCalendarYear(period.left);
-    const newerFromLabel = illustrationCalendarYear(period.right);
-    // Same zip / calendar-row rules as toTaxDragPeriods so Dist $ years
-    // match Tax $ (ticker-labeled live AGTHX pairs included).
-    const calendarRow =
-      periodYear > 0 &&
-      ((olderFromLabel === 0 && newerFromLabel === 0) ||
-        (olderFromLabel === periodYear && newerFromLabel === periodYear));
-    if (calendarRow && olderFromLabel === periodYear && newerFromLabel === periodYear) {
-      write(periodYear, rightValue ?? leftValue);
-      continue;
-    }
-    if (calendarRow && olderFromLabel === 0 && newerFromLabel === 0) {
-      const olderYear = periodYear > 1 ? periodYear - 1 : 0;
-      if (olderYear > 0) write(olderYear, leftValue);
-      if (periodYear > 0) write(periodYear, rightValue);
-      continue;
-    }
-    const olderYear = olderFromLabel || (periodYear > 1 ? periodYear - 1 : 0);
-    const newerYear = newerFromLabel || periodYear;
-    if (olderYear > 0) write(olderYear, leftValue);
-    if (newerYear > 0) write(newerYear, rightValue);
-  }
-
-  return [...byYear.entries()]
-    .map(([year, value]) => ({ year, value }))
-    .sort((a, b) => a.year - b.year);
-}
-
-export function buildCompareAnnualTable(
-  loaded: Array<{ ticker: string; tax: CompareResponse | null }>,
-  years: number[] = compareHistoryYears(),
-): CompareAnnualTableModel {
-  return {
-    years,
-    groups: loaded.map((item) => {
-      const taxByYear = new Map(
-        (item.tax ? toTaxDragPeriods(item.tax, "tax_dollars", "auto") : []).map((point) => [
-          point.year,
-          point.value,
-        ]),
-      );
-      const distByYear = new Map(
-        toDistributionPeriods(item.tax).map((point) => [point.year, point.value]),
-      );
-      return {
-        ticker: item.ticker,
-        rows: [
-          {
-            key: `${item.ticker}-tax`,
-            ticker: item.ticker,
-            kind: "tax" as const,
-            label: "Tax $",
-            cells: years.map((year) => (taxByYear.has(year) ? (taxByYear.get(year) ?? null) : null)),
-          },
-          {
-            key: `${item.ticker}-dist`,
-            ticker: item.ticker,
-            kind: "distribution" as const,
-            label: "Dist $",
-            cells: years.map((year) => (distByYear.has(year) ? (distByYear.get(year) ?? null) : null)),
-          },
-        ],
-      };
-    }),
-  };
 }
 
 /**

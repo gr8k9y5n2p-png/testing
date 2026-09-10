@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { FundEstimateView } from "@/data/types";
-import { CompareAnnualTable } from "@/components/illustrate/CompareAnnualTable";
 import { CompareDeltaStrip } from "@/components/illustrate/CompareDeltaStrip";
 import {
   GrowthAndTaxDragModule,
@@ -31,8 +30,6 @@ import {
   COMPARE_DEFAULT_HOLDING_DOLLARS,
   COMPARE_DEFAULT_TAX_RATES,
   COMPARE_SLOT_COUNT,
-  buildCompareAnnualTable,
-  compareHistoryYears,
   compareInputsMatch,
   compareSlotPlaceholder,
   filledCompareTickers,
@@ -98,7 +95,6 @@ export function CompareWorkspace({
     combine: COMPARE_DEFAULT_COMBINE_STATE,
     rows: [],
   });
-  const [historyError, setHistoryError] = useState<string | null>(null);
   const [navOverrides, setNavOverrides] = useState<Record<string, number>>({});
   const [navNeededTickers, setNavNeededTickers] = useState<string[]>([]);
   const [pairMetrics, setPairMetrics] = useState<{
@@ -157,12 +153,6 @@ export function CompareWorkspace({
           setNavNeededTickers(
             rows.filter((row) => row.needsNav).map((row) => row.ticker),
           );
-          setHistoryError(
-            rows.every((row) => row.tax == null) &&
-              !rows.some((row) => row.needsNav)
-              ? "Calendar-year history is unavailable for these tickers."
-              : null,
-          );
         })
         .catch((caught: unknown) => {
           if (caught instanceof DOMException && caught.name === "AbortError") return;
@@ -176,9 +166,6 @@ export function CompareWorkspace({
               tax: null,
             })),
           });
-          setHistoryError(
-            caught instanceof Error ? caught.message : "Calendar-year history failed",
-          );
         });
     }, 250);
 
@@ -259,10 +246,6 @@ export function CompareWorkspace({
     () => (filledKey && historyMatchesInputs ? loaded.rows : []),
     [filledKey, historyMatchesInputs, loaded.rows],
   );
-  const annualModel = useMemo(
-    () => buildCompareAnnualTable(activeLoaded, compareHistoryYears()),
-    [activeLoaded],
-  );
   const upcomingRows = useMemo(
     () =>
       upcomingRowsFromCompareTickers(
@@ -280,7 +263,6 @@ export function CompareWorkspace({
       ),
     [activeLoaded, holdingDollars, navOverrides],
   );
-  const activeHistoryError = filledKey ? historyError : null;
   const pairReady = filledKey.split(",").filter(Boolean).length >= 2;
   const stripItems = useMemo(() => {
     if (
@@ -322,7 +304,7 @@ export function CompareWorkspace({
             Compare funds
           </Heading>
           <p className="mt-2 max-w-2xl text-sm text-muted">
-            Start with one ticker — growth, calendar-year history, and upcoming all
+            Start with one ticker — growth, tax drag, and upcoming all
             populate for that fund. Each additional filled slot (up to{" "}
             {COMPARE_SLOT_COUNT}) joins every module. Empty slots are ignored.
             Dollars invested and tax rates are shared — Tax $ and tax-drag
@@ -415,16 +397,6 @@ export function CompareWorkspace({
           combineStateWithFederal={combineState}
         />
       </section>
-
-      <div className="mt-10 w-full">
-        {activeHistoryError ? (
-          <p className="mb-3 text-sm text-tax-more">{activeHistoryError}</p>
-        ) : null}
-        <CompareAnnualTable
-          model={annualModel}
-          loading={Boolean(filledKey) && (!historyMatchesInputs || loaded.rows.length === 0)}
-        />
-      </div>
 
       <div className="mt-10 w-full">
         {navNeededTickers.length > 0 ? (

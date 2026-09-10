@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Aftertax — compare funds",
-  description: `${COPY.sub} Growth, calendar-year tax history, and upcoming for up to six tickers.`,
+  description: `${COPY.sub} Growth, tax drag, and upcoming for up to six tickers.`,
 };
 
 export default async function ComparePage({

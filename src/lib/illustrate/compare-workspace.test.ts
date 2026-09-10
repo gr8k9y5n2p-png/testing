@@ -4,15 +4,12 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { FundEstimateView } from "../../data/types.ts";
-import type { CompareIllustration, ComparePeriodOut, CompareResponse } from "./compare-types.ts";
 import {
   COMPARE_DEFAULT_COMBINE_STATE,
   COMPARE_DEFAULT_HOLDING_DOLLARS,
   COMPARE_DEFAULT_TAX_RATES,
   COMPARE_SLOT_COUNT,
-  compareHistoryYears,
   compareTickersPath,
-  buildCompareAnnualTable,
   compareInputsMatch,
   compareSlotPlaceholder,
   emptyCompareSlots,
@@ -59,58 +56,6 @@ function view(
     categoryAveragePctNav: 6.4,
     vsCategoryPctNav: 0,
     ...patch,
-  };
-}
-
-function side(
-  label: string,
-  matched: boolean,
-  tax: number | null,
-  dist: number | null,
-): CompareIllustration {
-  return {
-    label,
-    matched,
-    holding_dollars: 10_000,
-    totals: {
-      distribution_dollars: dist,
-      estimated_tax: tax,
-      estimated_tax_dollars: tax,
-      effective_tax_on_holding: tax == null ? null : tax / 10_000,
-    },
-  };
-}
-
-function period(
-  year: number,
-  left: CompareIllustration,
-  right: CompareIllustration,
-): ComparePeriodOut {
-  return {
-    year,
-    left,
-    right,
-    deltas: {
-      distribution_dollars: null,
-      estimated_tax: null,
-      effective_tax_on_holding: null,
-    },
-  };
-}
-
-function yoy(periods: ComparePeriodOut[]): CompareResponse {
-  return {
-    mode: "yoy",
-    periods,
-    summary: {
-      normalized_holding_dollars: 10_000,
-      total_tax_difference: 0,
-      annualized_tax_drag_delta: 0,
-      distribution_dollars_difference: 0,
-      periods_compared: periods.length,
-      common_inception: { from_year: 2022, to_year: 2026 },
-    },
-    notes: [],
   };
 }
 
@@ -245,14 +190,6 @@ describe("compare workspace slots (filled)", () => {
     assert.equal(growth.length, 1);
     assert.equal(growth[0]?.ticker, "AMCPX");
 
-    const tax = yoy([
-      period(2025, side("AMCPX", true, 88, 210), side("AMCPX", true, 88, 210)),
-    ]);
-    const model = buildCompareAnnualTable([{ ticker: "AMCPX", tax }], [2025]);
-    assert.equal(model.groups.length, 1);
-    assert.equal(model.groups[0]?.ticker, "AMCPX");
-    assert.equal(model.groups[0]?.rows.length, 2);
-
     const upcoming = upcomingRowsFromCompareTickers([
       {
         ticker: "AMCPX",
@@ -263,91 +200,6 @@ describe("compare workspace slots (filled)", () => {
     assert.equal(upcoming.length, 1);
     assert.equal(upcoming[0]?.ticker, "AMCPX");
     assert.equal(upcoming[0]?.available, true);
-  });
-});
-
-describe("compare annual table", () => {
-  it("uses the locked 2021–2025 axis so matched AGTHX years are not blanked", () => {
-    assert.deepEqual(compareHistoryYears(2026), [2025, 2024, 2023, 2022, 2021]);
-    const tax = yoy([
-      period(2022, side("AGTHX", true, 82, 210), side("AGTHX", true, 71, 180)),
-      period(2023, side("AGTHX", true, 71, 180), side("AGTHX", true, 118, 240)),
-      period(2024, side("AGTHX", true, 118, 240), side("AGTHX", true, 96, 220)),
-      period(2025, side("AGTHX", true, 96, 220), side("AGTHX", true, 88, 210)),
-    ]);
-    const model = buildCompareAnnualTable([{ ticker: "AGTHX", tax }], compareHistoryYears(2026));
-    const taxRow = model.groups[0]?.rows.find((row) => row.kind === "tax");
-    assert.deepEqual(taxRow?.cells, [88, 96, 118, 71, 82]);
-    assert.ok(taxRow?.cells.every((cell) => cell != null));
-  });
-
-  it("keeps unmatched years as N/A and matched published $0 as zero", () => {
-    const tax = yoy([
-      period(
-        2024,
-        side("AMCPX", true, 0, 0),
-        side("AMCPX", true, 0, 0),
-      ),
-      period(
-        2025,
-        side("AMCPX", false, 0, 0),
-        side("AMCPX", false, 0, 0),
-      ),
-    ]);
-    const model = buildCompareAnnualTable([{ ticker: "AMCPX", tax }], [2025, 2024, 2023]);
-    const taxRow = model.groups[0]?.rows.find((row) => row.kind === "tax");
-    const distRow = model.groups[0]?.rows.find((row) => row.kind === "distribution");
-    // YoY zip writes left onto year-1; unmatched 2025 stays N/A.
-    assert.deepEqual(taxRow?.cells, [null, 0, 0]);
-    assert.deepEqual(distRow?.cells, [null, 0, 0]);
-  });
-
-  it("does not invent a year when compare omitted that vintage pair", () => {
-    const tax = yoy([
-      period(2025, side("AGTHX", true, 88, 210), side("AGTHX", true, 88, 210)),
-    ]);
-    const model = buildCompareAnnualTable([{ ticker: "AGTHX", tax }], [2025, 2024, 2022]);
-    assert.deepEqual(model.groups[0]?.rows[0]?.cells, [88, 88, null]);
-    assert.deepEqual(model.groups[0]?.rows[1]?.cells, [210, 210, null]);
-  });
-
-  it("maps live AGTHX YoY zip pairs to Tax $ / Dist $ years, not all N/A", () => {
-    const taxes: Record<number, { tax: number; dist: number }> = {
-      2021: { tax: 82, dist: 210 },
-      2022: { tax: 71, dist: 180 },
-      2023: { tax: 118, dist: 260 },
-      2024: { tax: 96, dist: 240 },
-      2025: { tax: 88, dist: 220 },
-    };
-    const years = [2021, 2022, 2023, 2024, 2025];
-    const pairs = [];
-    for (let index = 0; index < years.length - 1; index += 1) {
-      const older = years[index];
-      const newer = years[index + 1];
-      pairs.push(
-        period(
-          newer,
-          side("AGTHX", true, taxes[older].tax, taxes[older].dist),
-          side("AGTHX", true, taxes[newer].tax, taxes[newer].dist),
-        ),
-      );
-    }
-    const model = buildCompareAnnualTable(
-      [{ ticker: "AGTHX", tax: yoy(pairs) }],
-      [2025, 2024, 2023, 2022, 2021],
-    );
-    const taxRow = model.groups[0]?.rows.find((row) => row.kind === "tax");
-    const distRow = model.groups[0]?.rows.find((row) => row.kind === "distribution");
-    assert.deepEqual(
-      taxRow?.cells,
-      years.slice().reverse().map((year) => taxes[year].tax),
-    );
-    assert.deepEqual(
-      distRow?.cells,
-      years.slice().reverse().map((year) => taxes[year].dist),
-    );
-    assert.ok(taxRow?.cells.every((cell) => cell != null), "AGTHX Tax $ must not be all N/A");
-    assert.ok(distRow?.cells.every((cell) => cell != null), "AGTHX Dist $ must not be all N/A");
   });
 });
 
@@ -502,6 +354,9 @@ describe("Compare workspace Upcoming + NAV soft path", () => {
     assert.match(workspace, /NeedFundPricePrompt/);
     assert.match(workspace, /isMissingNavError/);
     assert.match(workspace, /holdingDollars/);
+    assert.doesNotMatch(workspace, /CompareAnnualTable/);
+    assert.doesNotMatch(workspace, /Calendar-year history is unavailable/);
+    assert.doesNotMatch(workspace, /Calendar-year tax & distributions/);
     assert.match(table, /DIST_AMOUNT_COLUMN/);
     assert.match(table, /PCT_OF_NAV_COLUMN/);
     assert.match(table, /DOLLAR_IMPACT_COLUMN/);
