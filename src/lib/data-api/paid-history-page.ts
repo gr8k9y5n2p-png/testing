@@ -7,7 +7,8 @@
  * A 400 on `category` retries once without it (#127 may not be on Render).
  * Never hydrates the book in the browser. Never pulls Upcoming prelims.
  * Column sorts (Dist $/Share desc/asc) reorder the current year-window
- * page only — Data `/distributions` has no order/sort param.
+ * page only. Data additive `sort=amount|ex_date` is reserved in
+ * `paidHistoryDataOrderParams` and not sent until that PR is on Render.
  */
 
 import { normalizePublicationStage } from "@/data/distribution-bucket";
@@ -33,6 +34,7 @@ export {
   filterPaidHistoryFunds,
   pagePaidHistoryFunds,
   paidHistoryDataOrderParams,
+  paidHistoryDataSortKey,
   paidHistorySort,
 } from "@/data/paid-history-book";
 export {

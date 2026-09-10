@@ -5,7 +5,7 @@
  * the unique-fund count on this window.
  *
  * Dist $/Share and other column sorts reorder this window's fund rows.
- * `GET /distributions` has no order/sort param — do not walk to globally rank.
+ * Data additive `sort=amount|ex_date` is reserved — do not walk to rank.
  */
 
 import { aggregateDistributions, type DataDistribution } from "./aggregate-distributions.ts";

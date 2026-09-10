@@ -29,7 +29,7 @@ export type DistributionRowQuery = {
   exDateFrom?: string;
   exDateTo?: string;
   asOfFrom?: string;
-  /** Additive Data `sort=` when documented. Omit until then. */
+  /** Additive Data `sort=` (`amount` | `ex_date`). Omit = current default. */
   sort?: string;
   direction?: string;
   signal?: AbortSignal;

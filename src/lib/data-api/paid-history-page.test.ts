@@ -9,6 +9,7 @@ import {
   filterPaidHistoryFunds,
   pagePaidHistoryFunds,
   paidHistoryDataOrderParams,
+  paidHistoryDataSortKey,
 } from "../../data/paid-history-book.ts";
 import {
   isTrustworthyFilteredRowTotal,
@@ -111,8 +112,14 @@ describe("Search Paid History year-book page", () => {
         direction: "desc",
       }),
       {},
-      "do not send sort= to Data until the contract exists",
+      "do not send sort= to Data until that PR is on Render",
     );
+    assert.equal(
+      paidHistoryDataSortKey("estimatedDistributionAmount"),
+      "amount",
+    );
+    assert.equal(paidHistoryDataSortKey("exDate"), "ex_date");
+    assert.equal(paidHistoryDataSortKey("fundName"), undefined);
     assert.match(source, /loadPaidHistoryPage/);
     assert.match(source, /fundFamily: query\.family/);
     assert.match(source, /paidHistoryCategoryParam/);
@@ -149,7 +156,7 @@ describe("Search Paid History year-book page", () => {
     assert.match(dashboard, /setPaidOffset\(0\)/);
     assert.match(dashboard, /sort: sortKey/);
     assert.match(dashboard, /direction: sortDirection/);
-    assert.match(source, /no order\/sort param/);
+    assert.match(source, /sort=amount\|ex_date/);
     assert.match(table, /paidFunds \?\? funds/);
     assert.match(table, /page=\{paidPage\}/);
     assert.match(table, /All families/);

@@ -2,8 +2,9 @@
  * Filtered Paid History fund book. `total` is unique funds after year /
  * Family / Category — never a Data `/distributions` row count.
  *
- * Column sorts reorder this in-memory window. Data `GET /distributions`
- * has no order/sort param — do not walk the year book to globally rank.
+ * Column sorts reorder this in-memory window. Data is adding additive
+ * `sort=amount|ex_date` + `direction=` (omit = current default). Do not
+ * send those params until that PR is on Render, and do not walk the book.
  */
 
 import { isUpcomingFund } from "./distribution-bucket.ts";
@@ -28,13 +29,26 @@ export function paidHistorySort(
   return { sort, direction };
 }
 
+/** Data GET `/distributions` additive `sort=` values. Omit = current default. */
+export type PaidHistoryDataSort = "amount" | "ex_date";
+
+/** Map Search column keys onto Data's additive `sort=` contract. */
+export function paidHistoryDataSortKey(
+  sort?: SortKey,
+): PaidHistoryDataSort | undefined {
+  if (sort === "estimatedDistributionAmount") return "amount";
+  if (sort === "exDate") return "ex_date";
+  return undefined;
+}
+
 /**
- * Reserved for Data additive `sort=` / `direction=` on GET `/distributions`.
- * Empty until Data documents the contract — unknown params have 400'd
- * (category). Current-page order stays in `paidHistorySort` / `sortFunds`.
+ * Additive Data `sort=` / `direction=` on GET `/distributions`.
+ * Empty until Data's PR is on Render — unknown params have 400'd (category).
+ * UI current-page order stays in `paidHistorySort` / `sortFunds`.
+ * Later: return `{ sort: paidHistoryDataSortKey(query.sort), direction }`.
  */
 export function paidHistoryDataOrderParams(_query: FundPageQuery): {
-  sort?: SortKey;
+  sort?: PaidHistoryDataSort;
   direction?: SortDirection;
 } {
   return {};
