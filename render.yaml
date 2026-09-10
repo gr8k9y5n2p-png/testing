@@ -25,6 +25,10 @@ services:
         # Set true only to rebuild every family from fixtures on next boot.
       - key: DATABASE_URL
         value: sqlite:////var/data/distributions.db
+      - key: WEB_CONCURRENCY
+        value: "1"
+        # Single uvicorn worker. Multiple workers on one /var/data SQLite file
+        # lock the book and return 502s under concurrent /funds.
       - key: CORS_ORIGINS
         value: https://testing-seven-umber-19.vercel.app,http://localhost:3000,http://127.0.0.1:3000
       - key: CORS_ORIGIN_REGEX

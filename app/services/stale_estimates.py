@@ -6,7 +6,7 @@ from datetime import date, datetime, timezone
 from types import SimpleNamespace
 from typing import Any, Iterable
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, or_, select
 from sqlalchemy.orm import Session
 
 from app.aliases import enrich_class_a_fields
@@ -153,15 +153,45 @@ def is_live_unpaid_estimate(
     return not _intersects_paid(row, paid_index)
 
 
-def live_estimate_fund_identifiers(session: Session, today: date | None = None) -> set[str]:
+def _live_estimate_stage_stmt():
+    """Column-only scan: never hydrate raw_payload / amounts into the ORM."""
+    return select(
+        DistributionEstimate.fund_identifier,
+        DistributionEstimate.ticker,
+        DistributionEstimate.publication_stage,
+        DistributionEstimate.ex_date,
+        DistributionEstimate.payable_date,
+        DistributionEstimate.as_of,
+    ).where(DistributionEstimate.publication_stage.in_([*ESTIMATE_STAGES, *PAID_STAGES]))
+
+
+def live_estimate_fund_identifiers(
+    session: Session,
+    today: date | None = None,
+    fund_identifiers: Iterable[str] | None = None,
+    tickers: Iterable[str | None] | None = None,
+) -> set[str]:
+    """Return fund_identifiers that currently have a live unpaid estimate.
+
+    ``GET /funds`` must pass the page's identifiers so a ticker search does not
+    load the whole book (that OOM'd Render starter under concurrent Search).
+    Does not invent amounts.
+    """
     today = today or utc_today()
-    rows = list(
-        session.scalars(
-            select(DistributionEstimate).where(
-                DistributionEstimate.publication_stage.in_([*ESTIMATE_STAGES, *PAID_STAGES])
-            )
-        )
-    )
+    stmt = _live_estimate_stage_stmt()
+    scoped = fund_identifiers is not None or tickers is not None
+    wanted_ids = {ident for ident in (fund_identifiers or []) if ident}
+    wanted_tickers = {ticker.strip().upper() for ticker in (tickers or []) if ticker and ticker.strip()}
+    if scoped:
+        if not wanted_ids and not wanted_tickers:
+            return set()
+        clauses = []
+        if wanted_ids:
+            clauses.append(DistributionEstimate.fund_identifier.in_(wanted_ids))
+        if wanted_tickers:
+            clauses.append(DistributionEstimate.ticker.in_(wanted_tickers))
+        stmt = stmt.where(or_(*clauses))
+    rows = session.execute(stmt).all()
     paid_index = build_paid_season_index(rows)
     return {
         row.fund_identifier

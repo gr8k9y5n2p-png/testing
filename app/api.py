@@ -76,7 +76,7 @@ from app.services.illustrate import (
     illustrate_portfolio_compare,
 )
 from app.services.ingest import fetch_and_ingest, ingest_records
-from app.sources.registry import list_sources
+from app.sources.registry import list_sources, registered_family_slugs
 
 router = APIRouter()
 
@@ -116,7 +116,7 @@ def health() -> HealthOut:
     return HealthOut(
         status="ok",
         db=ping_db(),
-        registered_families=[s.slug for s in list_sources()],
+        registered_families=list(registered_family_slugs()),
         seed=seed_status(),
     )
 

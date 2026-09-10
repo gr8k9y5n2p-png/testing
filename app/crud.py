@@ -373,14 +373,32 @@ def search_funds(
         return [], 0
 
     stmt, sql_total = _unique_fund_query(session, q=q, fund_family=fund_family)
-    live_ids = live_estimate_fund_identifiers(session)
     if wanted is None:
         rows = session.execute(stmt.offset(offset).limit(limit)).all()
+        live_ids = live_estimate_fund_identifiers(
+            session,
+            fund_identifiers=[row.fund_identifier for row in rows],
+            tickers=[row.ticker for row in rows],
+        )
         return [_summary_from_row(row, live_ids) for row in rows], sql_total
 
-    items = [_summary_from_row(row, live_ids) for row in session.execute(stmt).all()]
+    items = [_summary_from_row(row) for row in session.execute(stmt).all()]
     items = [item for item in items if item.category == wanted]
-    return items[offset : offset + limit], len(items)
+    page = items[offset : offset + limit]
+    live_ids = live_estimate_fund_identifiers(
+        session,
+        fund_identifiers=[item.fund_identifier for item in page],
+        tickers=[item.ticker for item in page],
+    )
+    return [
+        item._replace(
+            has_estimate=item.fund_identifier in live_ids,
+            coverage_status=coverage_status_for_in_book_fund(
+                has_estimate=item.fund_identifier in live_ids
+            ),
+        )
+        for item in page
+    ], len(items)
 
 
 def list_fund_category_counts(

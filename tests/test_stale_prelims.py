@@ -310,3 +310,24 @@ def test_funds_has_estimate_ignores_past_prelim_once_final_exists(client: TestCl
     stages = {item["publication_stage"] for item in remaining.json()["items"]}
     assert stages == {"final"}
     assert Decimal(remaining.json()["items"][0]["amount"]) == AGTHX_YE2025_LTCG
+
+
+def test_live_estimate_empty_scope_skips_full_scan(session: Session) -> None:
+    upsert_records(session, [_row()], skip_stale_prelims=False, scrub_stale_prelims=False)
+    session.commit()
+    assert live_estimate_fund_identifiers(session, fund_identifiers=[], tickers=[]) == set()
+
+
+def test_live_estimate_does_not_hydrate_orm_payloads(session: Session) -> None:
+    upsert_records(
+        session,
+        [_row(raw_payload={"html": "<huge/>" * 100})],
+        skip_stale_prelims=False,
+        scrub_stale_prelims=False,
+    )
+    session.commit()
+    session.expunge_all()
+    live_estimate_fund_identifiers(session, today=TODAY)
+    assert not any(
+        isinstance(obj, DistributionEstimate) for obj in session.identity_map.values()
+    )
