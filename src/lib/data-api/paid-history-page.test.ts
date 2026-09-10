@@ -8,6 +8,7 @@ import { isUpcomingFund } from "../../data/distribution-bucket.ts";
 import {
   filterPaidHistoryFunds,
   pagePaidHistoryFunds,
+  paidHistoryDataOrderParams,
 } from "../../data/paid-history-book.ts";
 import {
   isTrustworthyFilteredRowTotal,
@@ -98,10 +99,20 @@ describe("Search Paid History year-book page", () => {
     assert.match(book, /isUpcomingFund/);
     assert.match(source, /pagePaidHistoryFunds/);
     assert.match(source, /paidHistorySort/);
+    assert.match(source, /paidHistoryDataOrderParams/);
     assert.match(book, /sortFunds/);
-    assert.match(book, /estimatedDistributionAmount|paidHistorySort/);
-    assert.doesNotMatch(dists, /params\.set\("sort"/);
+    assert.match(book, /paidHistoryDataOrderParams/);
+    assert.match(dists, /if \(query\.sort/);
     assert.doesNotMatch(dists, /params\.set\("order"/);
+    assert.deepEqual(paidHistoryDataOrderParams({}), {});
+    assert.deepEqual(
+      paidHistoryDataOrderParams({
+        sort: "estimatedDistributionAmount",
+        direction: "desc",
+      }),
+      {},
+      "do not send sort= to Data until the contract exists",
+    );
     assert.match(source, /loadPaidHistoryPage/);
     assert.match(source, /fundFamily: query\.family/);
     assert.match(source, /paidHistoryCategoryParam/);

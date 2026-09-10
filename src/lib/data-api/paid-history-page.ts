@@ -11,6 +11,7 @@
  */
 
 import { normalizePublicationStage } from "@/data/distribution-bucket";
+import { paidHistoryDataOrderParams } from "@/data/paid-history-book";
 import type { FundPageQuery, FundPageResult } from "@/data/pagination";
 import {
   emptyPaidHistoryPage,
@@ -31,6 +32,7 @@ import {
 export {
   filterPaidHistoryFunds,
   pagePaidHistoryFunds,
+  paidHistoryDataOrderParams,
   paidHistorySort,
 } from "@/data/paid-history-book";
 export {
@@ -73,11 +75,13 @@ export async function fetchPaidHistoryDataPage(
 ): Promise<PaidHistoryDataPage> {
   const { exDateFrom, exDateTo } = paidHistoryExDateWindow(query.year);
   const category = paidHistoryCategoryParam(query.category);
+  const dataOrder = paidHistoryDataOrderParams(query);
   const shared = {
     fundFamily: query.family,
     category,
     exDateFrom,
     exDateTo,
+    ...dataOrder,
     limit: window.limit,
     offset: window.offset,
     signal: window.signal,

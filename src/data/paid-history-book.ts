@@ -28,6 +28,18 @@ export function paidHistorySort(
   return { sort, direction };
 }
 
+/**
+ * Reserved for Data additive `sort=` / `direction=` on GET `/distributions`.
+ * Empty until Data documents the contract — unknown params have 400'd
+ * (category). Current-page order stays in `paidHistorySort` / `sortFunds`.
+ */
+export function paidHistoryDataOrderParams(_query: FundPageQuery): {
+  sort?: SortKey;
+  direction?: SortDirection;
+} {
+  return {};
+}
+
 function fundHasPaidYear(fund: FundEstimateView, year?: number): boolean {
   if (year == null) return !isUpcomingFund(fund);
   return paidHistoryViews([fund], year).length > 0;
