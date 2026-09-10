@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import date
+from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.encoders import jsonable_encoder
@@ -189,29 +190,65 @@ def list_distributions(
             "Filters via fund identity (not raw_payload)."
         ),
     ),
+    sort: Literal["amount", "ex_date", "ticker", "fund_name", "as_of"] | None = Query(
+        default=None,
+        description=(
+            "Optional server-side sort, applied after existing filters and before "
+            "limit/offset so filtered total is unchanged. "
+            "amount = numeric Dist $/share (amount with amount_unit=per_share; "
+            "nulls last; does not invent zeros). "
+            "Also: ex_date, ticker, fund_name, as_of. "
+            "Omit to keep the current default order "
+            "(as_of desc, fund_name, estimate_type)."
+        ),
+    ),
+    sort_by: Literal["amount", "ex_date", "ticker", "fund_name", "as_of"] | None = Query(
+        default=None,
+        description="Alias of sort. Ignored when sort is set.",
+    ),
+    order: Literal["asc", "desc"] | None = Query(
+        default=None,
+        description=(
+            "asc or desc. Ignored when sort/sort_by is omitted "
+            "(preserves the current unspecified-sort order). "
+            "When sort is set and order is omitted: amount, ex_date, and as_of "
+            "default to desc; ticker and fund_name default to asc."
+        ),
+    ),
+    sort_dir: Literal["asc", "desc"] | None = Query(
+        default=None,
+        description="Alias of order. Ignored when order is set or when sort is omitted.",
+    ),
     session: Session = Depends(get_session),
 ) -> DistributionListOut:
     page, page_size = resolve_page_from_limit_offset(
         page=page, page_size=page_size, limit=limit, offset=offset
     )
-    rows, total = search_distributions(
-        session,
-        q=q,
-        fund_family=fund_family,
-        fund_identifier=fund_identifier,
-        ticker=ticker,
-        fund_name=fund_name,
-        estimate_type=estimate_type,
-        as_of_from=as_of_from,
-        as_of_to=as_of_to,
-        ex_date_from=ex_date_from,
-        ex_date_to=ex_date_to,
-        publication_stage=publication_stage,
-        needs_review=needs_review,
-        category=category,
-        page=page,
-        page_size=page_size,
-    )
+    try:
+        rows, total = search_distributions(
+            session,
+            q=q,
+            fund_family=fund_family,
+            fund_identifier=fund_identifier,
+            ticker=ticker,
+            fund_name=fund_name,
+            estimate_type=estimate_type,
+            as_of_from=as_of_from,
+            as_of_to=as_of_to,
+            ex_date_from=ex_date_from,
+            ex_date_to=ex_date_to,
+            publication_stage=publication_stage,
+            needs_review=needs_review,
+            category=category,
+            sort=sort,
+            sort_by=sort_by,
+            order=order,
+            sort_dir=sort_dir,
+            page=page,
+            page_size=page_size,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     day_navs = nav_on_distribution_day_map(session, rows)
     items = []
     for row in rows:

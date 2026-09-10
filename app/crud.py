@@ -5,7 +5,7 @@ from datetime import date, datetime, timezone
 from decimal import Decimal
 from typing import NamedTuple
 
-from sqlalchemy import Select, delete, func, or_, select
+from sqlalchemy import Select, case, delete, func, or_, select
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.expression import ColumnElement
 
@@ -297,6 +297,90 @@ def _filter_stmt(
     return stmt
 
 
+DISTRIBUTION_SORT_FIELDS = frozenset({"amount", "ex_date", "ticker", "fund_name", "as_of"})
+DISTRIBUTION_SORT_ORDERS = frozenset({"asc", "desc"})
+_SORT_DEFAULT_ORDER = {
+    "amount": "desc",
+    "ex_date": "desc",
+    "as_of": "desc",
+    "ticker": "asc",
+    "fund_name": "asc",
+}
+
+
+def _blank_to_none(value: str | None) -> str | None:
+    if value is None:
+        return None
+    stripped = value.strip()
+    return stripped or None
+
+
+def resolve_distribution_sort(
+    *,
+    sort: str | None = None,
+    sort_by: str | None = None,
+    order: str | None = None,
+    sort_dir: str | None = None,
+) -> tuple[str | None, str | None]:
+    """Resolve additive ``sort`` / ``order`` aliases.
+
+    When ``sort`` / ``sort_by`` is omitted, returns ``(None, None)`` so callers
+    keep the current default order — ``order`` / ``sort_dir`` alone is ignored.
+    """
+    field_raw = _blank_to_none(sort) or _blank_to_none(sort_by)
+    if field_raw is None:
+        return None, None
+    field = field_raw.lower()
+    if field not in DISTRIBUTION_SORT_FIELDS:
+        allowed = ", ".join(sorted(DISTRIBUTION_SORT_FIELDS))
+        raise ValueError(f"sort must be one of: {allowed}")
+    dir_raw = _blank_to_none(order) or _blank_to_none(sort_dir)
+    if dir_raw is None:
+        return field, _SORT_DEFAULT_ORDER[field]
+    direction = dir_raw.lower()
+    if direction not in DISTRIBUTION_SORT_ORDERS:
+        raise ValueError("order must be asc or desc")
+    return field, direction
+
+
+def _per_share_amount_expr() -> ColumnElement:
+    """Numeric Dist $/share. Non-per_share and null amounts stay SQL NULL (not 0)."""
+    return case(
+        (DistributionEstimate.amount_unit == AmountUnit.per_share.value, DistributionEstimate.amount),
+        else_=None,
+    )
+
+
+def _default_distribution_order() -> tuple:
+    """Unspecified-sort order. Changing this is a breaking list-order change."""
+    return (
+        DistributionEstimate.as_of.desc().nulls_last(),
+        DistributionEstimate.fund_name.asc(),
+        DistributionEstimate.estimate_type.asc(),
+    )
+
+
+def _distribution_order_by(sort: str | None, direction: str | None) -> tuple:
+    """Column ORDER BY after filters, before limit/offset. Never uses raw_payload."""
+    default = _default_distribution_order()
+    if not sort:
+        return default
+    if sort == "amount":
+        expr = _per_share_amount_expr()
+    elif sort == "ex_date":
+        expr = DistributionEstimate.ex_date
+    elif sort == "ticker":
+        expr = DistributionEstimate.ticker
+    elif sort == "fund_name":
+        expr = DistributionEstimate.fund_name
+    elif sort == "as_of":
+        expr = DistributionEstimate.as_of
+    else:
+        return default
+    primary = expr.desc().nulls_last() if direction == "desc" else expr.asc().nulls_last()
+    return (primary, *default, DistributionEstimate.id.asc())
+
+
 def search_distributions(
     session: Session,
     *,
@@ -314,6 +398,10 @@ def search_distributions(
     publication_stage: str | None = None,
     needs_review: bool | None = None,
     category: str | None = None,
+    sort: str | None = None,
+    sort_by: str | None = None,
+    order: str | None = None,
+    sort_dir: str | None = None,
     page: int = 1,
     page_size: int = 50,
 ) -> tuple[list[DistributionEstimate], int]:
@@ -343,13 +431,12 @@ def search_distributions(
     total = session.scalar(select(func.count()).select_from(stmt.subquery())) or 0
     page = max(page, 1)
     page_size = min(max(page_size, 1), 200)
+    sort_field, sort_direction = resolve_distribution_sort(
+        sort=sort, sort_by=sort_by, order=order, sort_dir=sort_dir
+    )
     rows = list(
         session.scalars(
-            stmt.order_by(
-                DistributionEstimate.as_of.desc().nulls_last(),
-                DistributionEstimate.fund_name.asc(),
-                DistributionEstimate.estimate_type.asc(),
-            )
+            stmt.order_by(*_distribution_order_by(sort_field, sort_direction))
             .offset((page - 1) * page_size)
             .limit(page_size)
         ).all()
