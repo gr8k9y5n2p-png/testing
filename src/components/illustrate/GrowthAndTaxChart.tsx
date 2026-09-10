@@ -4,6 +4,9 @@ import { useId } from "react";
 import { END_LABEL_MIN_GAP, staggerEndLabels } from "@/lib/charts/end-labels";
 import {
   AXIS_LABEL_GAP_PX,
+  growthTaxBarCenter,
+  growthTaxBarWidth,
+  growthTaxBarX,
   growthTaxChartPad,
   startAmountLabel,
   startAmountLabelX,
@@ -383,8 +386,8 @@ export function GrowthAndTaxChart({
             taxModel.series.map((row, seriesIndex) => {
               const cell = row.years[yearIndex];
               if (!cell || cell.total == null || cell.total === 0) return null;
-              const x = axis.barX(yearIndex, seriesIndex);
-              const barW = axis.barW;
+              const x = growthTaxBarX(axis.barX(yearIndex, seriesIndex), axis.barW);
+              const barW = growthTaxBarWidth(axis.barW);
               let cursor = zeroY + ZERO_GAP;
               const segments = GROWTH_TAX_ESTIMATE_TYPES.flatMap((type) => {
                 const value = cell.amounts[type];
@@ -433,7 +436,7 @@ export function GrowthAndTaxChart({
 
           {years.map((year, yearIndex) =>
             taxModel.series.map((row, seriesIndex) => {
-              const x = axis.barX(yearIndex, seriesIndex) + axis.barW / 2;
+              const x = growthTaxBarCenter(axis.barX(yearIndex, seriesIndex), axis.barW);
               const fontSize = underBarTickerFontSize(axis.count);
               const label = underBarTickerLabel(row.ticker, axis.barW, fontSize);
               return (
@@ -441,8 +444,9 @@ export function GrowthAndTaxChart({
                   key={`bar-ticker-${year}-${row.ticker}`}
                   data-bar-ticker={row.ticker}
                   data-bar-year={year}
+                  data-bar-x={x.toFixed(1)}
                   x={x}
-                  y={height - 34}
+                  y={height - 36}
                   textAnchor="middle"
                   className="fill-ink"
                   fontSize={fontSize}
@@ -458,11 +462,12 @@ export function GrowthAndTaxChart({
           {years.map((year, index) => (
             <text
               key={year}
+              data-year-label={year}
               x={xCenter(index)}
               y={height - 12}
               textAnchor="middle"
-              className="fill-muted"
-              fontSize={10}
+              className="fill-ink"
+              fontSize={11}
               fontFamily="ui-monospace, monospace"
             >
               {year}

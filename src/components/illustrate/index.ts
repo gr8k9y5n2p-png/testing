@@ -90,7 +90,6 @@ export {
   compareTickersPath,
   parseCompareQueryTickers,
 } from "@/lib/illustrate/compare-workspace";
-export { CompareDeltaStrip } from "@/components/illustrate/CompareDeltaStrip";
 export { HomepageFundCompare } from "@/components/illustrate/HomepageFundCompare";
 export {
   defaultComparePeer,

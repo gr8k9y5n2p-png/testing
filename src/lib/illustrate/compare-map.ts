@@ -1,9 +1,10 @@
 import { formatUsd } from "@/lib/format";
-import { userFacingNotes } from "@/lib/illustrate/user-facing-notes";
 import {
+  DEFAULT_NORMALIZED_HOLDING_DOLLARS,
   scaleNormalizedHoldingDollars,
   scaleUpcomingToHolding,
-} from "@/lib/illustrate/compare-delta-strip";
+} from "@/lib/illustrate/holding-scale";
+import { userFacingNotes } from "@/lib/illustrate/user-facing-notes";
 import type {
   ComparePeriodOut,
   CompareResponse,
@@ -244,7 +245,7 @@ export function toTaxDeltaCardModel(
   const normalized =
     summary.normalized_holding_dollars > 0
       ? summary.normalized_holding_dollars
-      : 10_000;
+      : DEFAULT_NORMALIZED_HOLDING_DOLLARS;
   const scaleDollars = (value: number) =>
     displayHolding != null
       ? scaleNormalizedHoldingDollars(value, displayHolding, normalized)
