@@ -61,6 +61,7 @@ async function fetchFundPage(query: {
     limit?: number;
     offset?: number;
     years?: number[];
+    hasMore?: boolean;
   };
   const items = Array.isArray(body.items)
     ? body.items
@@ -73,6 +74,7 @@ async function fetchFundPage(query: {
     limit: typeof body.limit === "number" ? body.limit : query.limit,
     offset: typeof body.offset === "number" ? body.offset : query.offset,
     years: mergeTaxYears(body.years, collectTaxYearsFromFunds(items)),
+    hasMore: body.hasMore === true,
   };
 }
 
@@ -131,6 +133,7 @@ export function Dashboard({
     total: 0,
     limit: PAID_HISTORY_PAGE_SIZE,
     offset: 0,
+    hasMore: false,
   });
   const [focusedItems, setFocusedItems] = useState<FundEstimateView[]>([]);
   const [pageYears, setPageYears] = useState<number[]>(() =>
@@ -213,6 +216,8 @@ export function Dashboard({
           total: 0,
           limit: paidLimit,
           offset: paidOffset,
+          hasMore: false,
+          sourceLabel: "Data API /distributions unavailable",
         });
       });
     return () => {
@@ -373,6 +378,7 @@ export function Dashboard({
             total: paidPage.total,
             limit: paidPage.limit,
             offset: paidPage.offset,
+            hasMore: paidPage.hasMore,
             onOffset: setPaidOffset,
             onLimit: applyPaidLimit,
             limitOptions: PAID_HISTORY_PAGE_SIZES,

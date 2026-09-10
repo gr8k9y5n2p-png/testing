@@ -47,6 +47,8 @@ type SamplePage = {
   total: number;
   limit: number;
   offset: number;
+  /** More funds exist beyond this window — Next stays on without a fake last page. */
+  hasMore?: boolean;
   onOffset: (offset: number) => void;
   onLimit?: (limit: number) => void;
   limitOptions?: readonly number[];
@@ -665,6 +667,7 @@ function PaginationBar({
   total,
   limit,
   offset,
+  hasMore = false,
   onOffset,
   onLimit,
   limitOptions,
@@ -684,6 +687,7 @@ function PaginationBar({
     >
       <p className="font-mono text-[10px] tabular-nums text-faint">
         {from}–{to} of {total}
+        {hasMore ? "+" : ""}
       </p>
       <div className="flex items-center gap-1">
         {onLimit && sizes ? (
@@ -712,11 +716,11 @@ function PaginationBar({
           Previous
         </button>
         <p className="min-w-[4.75rem] text-center text-[10px] tabular-nums text-muted">
-          {page}/{pages}
+          {hasMore ? `${page}+` : `${page}/${pages}`}
         </p>
         <button
           type="button"
-          disabled={offset + limit >= total}
+          disabled={!hasMore && offset + limit >= total}
           onClick={() => onOffset(offset + limit)}
           className="h-6 rounded border border-line px-1.5 text-[11px] leading-none text-ink disabled:cursor-not-allowed disabled:text-faint"
         >

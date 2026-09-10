@@ -26,6 +26,7 @@ export type DistributionRowQuery = {
   pageSize?: number;
   exDateFrom?: string;
   asOfFrom?: string;
+  signal?: AbortSignal;
 };
 
 export type DistributionPageResult = {
@@ -33,6 +34,7 @@ export type DistributionPageResult = {
   total: number;
   page: number;
   pageSize: number;
+  ok: boolean;
 };
 
 function dedupeRows(rows: DataDistribution[]): DataDistribution[] {
@@ -103,9 +105,11 @@ export async function loadDistributionPage(
     Math.max(1, Math.trunc(query.pageSize ?? DISTRIBUTION_PAGE_SIZE)),
   );
   const params = distributionSearchParams({ ...query, page, pageSize });
-  const response = await fetchDataApi(`/distributions?${params.toString()}`);
+  const response = await fetchDataApi(`/distributions?${params.toString()}`, {
+    signal: query.signal,
+  });
   if (!response.ok) {
-    return { items: [], total: 0, page, pageSize };
+    return { items: [], total: 0, page, pageSize, ok: false };
   }
   const payload = (await response.json()) as {
     items?: DataDistribution[];
@@ -124,7 +128,7 @@ export async function loadDistributionPage(
       : typeof payload.count === "number"
         ? payload.count
         : items.length;
-  return { items, total, page, pageSize };
+  return { items, total, page, pageSize, ok: true };
 }
 
 export async function loadDistributionRows(
