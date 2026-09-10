@@ -6,14 +6,14 @@ import { usePathname } from "next/navigation";
 const TABS = [
   { href: "/", label: "Search", match: (path: string) => path === "/" },
   {
-    href: "/portfolio",
-    label: "Portfolio",
-    match: (path: string) => path === "/portfolio",
-  },
-  {
     href: "/compare",
     label: "Compare",
     match: (path: string) => path === "/compare",
+  },
+  {
+    href: "/portfolio",
+    label: "Portfolios",
+    match: (path: string) => path === "/portfolio",
   },
 ] as const;
 

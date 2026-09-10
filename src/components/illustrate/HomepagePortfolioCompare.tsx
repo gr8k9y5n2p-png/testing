@@ -30,7 +30,7 @@ export function HomepagePortfolioCompare({
   );
 
   return (
-    <section id="portfolio-compare" aria-label="Portfolio">
+    <section id="portfolio-compare" aria-label="Portfolios">
       <PortfolioCompare
         funds={catalog}
         bookDollars={PORTFOLIO_COMPARE_BOOK_DOLLARS}
