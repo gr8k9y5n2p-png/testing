@@ -44,6 +44,13 @@ export const PUBLICATION_STAGES = [
 
 export type PublicationStage = (typeof PUBLICATION_STAGES)[number];
 
+/** One GET /distributions estimate_type character. $0 still listed. */
+export type EstimateTypeLine = {
+  estimateType: string;
+  amount: number;
+  amountUnit: string;
+};
+
 export interface FundEstimate {
   id: string;
   fundName: string;
@@ -73,6 +80,11 @@ export interface FundEstimate {
    * Null when none were published — not the same as 0%.
    */
   publishedPctOfNav?: number | null;
+  /**
+   * Published estimate_type lines from the unpaid snapshot (LTCG / STCG / …).
+   * Announced $0 still appears. Empty when the API sent none.
+   */
+  estimateTypeLines?: EstimateTypeLine[];
   /** Combined estimated taxable distribution, $ per share. */
   estimatedDistributionAmount: number;
   /** Ordinary income / dividend portion, $ per share. */

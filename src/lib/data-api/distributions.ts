@@ -1,4 +1,7 @@
 import { aggregateDistributions, type DataDistribution } from "@/data/aggregate-distributions";
+import { chicagoTodayIso, isUpcomingFund } from "@/data/distribution-bucket";
+import { mapFundsApiItem, type FundsApiItem } from "@/data/funds-list";
+import { mergeFundWithDistributions } from "@/data/hydrate-funds";
 import { withPeerContext } from "@/data/queries";
 import type { FundEstimateView } from "@/data/types";
 import { looksLikeExactTicker, normalizeTickerSymbol } from "@/lib/data-api/request-ticker";
@@ -16,6 +19,9 @@ export type DistributionRowQuery = {
   ticker?: string;
   fundIdentifier?: string;
   fundFamily?: string;
+  publicationStage?: string;
+  exDateFrom?: string;
+  asOfFrom?: string;
 };
 
 function dedupeRows(rows: DataDistribution[]): DataDistribution[] {
@@ -54,6 +60,15 @@ export async function loadDistributionRows(
     }
     if (query.fundFamily?.trim()) {
       params.set("fund_family", query.fundFamily.trim());
+    }
+    if (query.publicationStage?.trim()) {
+      params.set("publication_stage", query.publicationStage.trim());
+    }
+    if (query.exDateFrom?.trim()) {
+      params.set("ex_date_from", query.exDateFrom.trim());
+    }
+    if (query.asOfFrom?.trim()) {
+      params.set("as_of_from", query.asOfFrom.trim());
     }
     const response = await fetchDataApi(`/distributions?${params.toString()}`);
     if (!response.ok) break;
@@ -150,6 +165,104 @@ export async function loadDistributionsForFundPage(input: {
   }
 
   return dedupeRows(rows);
+}
+
+/**
+ * Search Upcoming / Announced universe: every unpaid manager-published
+ * prelim/updated row the Data API exposes (`publication_stage` + still-future
+ * `ex_date_from`). Never invent, never page through GET /funds identity.
+ */
+async function loadFundIdentityByTicker(
+  ticker: string,
+): Promise<FundEstimateView | null> {
+  const key = ticker.trim().toUpperCase();
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      const params = new URLSearchParams();
+      params.set("q", key);
+      params.set("limit", "5");
+      params.set("offset", "0");
+      const response = await fetchDataApi(`/funds?${params.toString()}`);
+      if (!response.ok) {
+        if (attempt < 2) continue;
+        return null;
+      }
+      const payload = (await response.json()) as {
+        items?: FundsApiItem[];
+        data?: FundsApiItem[];
+      };
+      const items = Array.isArray(payload.items)
+        ? payload.items
+        : Array.isArray(payload.data)
+          ? payload.data
+          : [];
+      const match = items.find(
+        (row) => (row.ticker ?? "").trim().toUpperCase() === key,
+      );
+      return match ? mapFundsApiItem(match) : null;
+    } catch {
+      if (attempt < 2) continue;
+      return null;
+    }
+  }
+  return null;
+}
+
+async function attachWeeklyNavFromFunds(
+  funds: FundEstimateView[],
+): Promise<FundEstimateView[]> {
+  const tickers = [
+    ...new Set(
+      funds
+        .map((fund) => fund.ticker.trim().toUpperCase())
+        .filter((ticker) => ticker && ticker !== "—"),
+    ),
+  ];
+  if (!tickers.length) return funds;
+  const identities = await mapPool(
+    tickers,
+    TICKER_FETCH_CONCURRENCY,
+    loadFundIdentityByTicker,
+  );
+  const byTicker = new Map<string, FundEstimateView>();
+  for (const ident of identities) {
+    if (!ident) continue;
+    const ticker = ident.ticker.trim().toUpperCase();
+    if (ticker) byTicker.set(ticker, ident);
+  }
+  const missing = tickers.filter((ticker) => !byTicker.has(ticker));
+  for (const ticker of missing) {
+    const ident = await loadFundIdentityByTicker(ticker);
+    if (ident) byTicker.set(ticker, ident);
+  }
+  return funds.map((fund) => {
+    const ident = byTicker.get(fund.ticker.trim().toUpperCase());
+    return ident ? mergeFundWithDistributions(ident, fund) : fund;
+  });
+}
+
+export async function loadUpcomingAnnouncedFromDataApi(
+  today = chicagoTodayIso(),
+): Promise<FundEstimateView[]> {
+  try {
+    const rows = dedupeRows([
+      ...(await loadDistributionRows({
+        publicationStage: "preliminary_estimate",
+        exDateFrom: today,
+      })),
+      ...(await loadDistributionRows({
+        publicationStage: "updated_estimate",
+        exDateFrom: today,
+      })),
+    ]);
+    if (!rows.length) return [];
+    const upcoming = withPeerContext(aggregateDistributions(rows, today)).filter(
+      (fund) => isUpcomingFund(fund, today),
+    );
+    return attachWeeklyNavFromFunds(upcoming);
+  } catch {
+    return [];
+  }
 }
 
 export async function loadFundsFromDataApi(): Promise<FundEstimateView[] | null> {

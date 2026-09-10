@@ -1,5 +1,6 @@
 import {
   hasDisclosedUpcomingAmount,
+  isUpcomingFund,
   normalizePublicationStage,
   toPaidEvent,
   UPCOMING_STAGES,
@@ -98,6 +99,7 @@ export function paidEventsForFund(
     | "navOnDistributionDaySource"
     | "distributionYear"
     | "paidHistory"
+    | "estimateTypeLines"
   >,
 ): PaidDistributionEvent[] {
   const extras = fund.paidHistory ?? [];
@@ -116,6 +118,7 @@ export function paidEventsForFund(
     navOnDistributionDay: fund.navOnDistributionDay,
     navOnDistributionDayAsOf: fund.navOnDistributionDayAsOf,
     navOnDistributionDaySource: fund.navOnDistributionDaySource,
+    estimateTypeLines: fund.estimateTypeLines,
     distributionYear: fund.distributionYear,
   });
   if (!hasPaidEventSignal(own)) return preferFinalPaidEvents(extras);
@@ -193,8 +196,7 @@ export function mergeFundWithDistributions(
   // Upcoming comes from unpaid /distributions prelims only — not the
   // catalog `has_estimate` flag, paid/final YE, or $0 placeholders.
   // A stale `has_estimate: false` must not hide a still-future unpaid prelim.
-  const hasUpcoming =
-    fromDists.bucket === "upcoming" && hasDisclosedUpcomingAmount(fromDists);
+  const hasUpcoming = isUpcomingFund({ ...fromDists, hasEstimate: true });
   return {
     ...fund,
     cusip: fund.cusip || fromDists.cusip,
@@ -212,6 +214,7 @@ export function mergeFundWithDistributions(
       fund.navOnDistributionDaySource ??
       null,
     publishedPctOfNav: fromDists.publishedPctOfNav ?? fund.publishedPctOfNav ?? null,
+    estimateTypeLines: fromDists.estimateTypeLines ?? fund.estimateTypeLines,
     estimatedDistributionAmount: fromDists.estimatedDistributionAmount,
     estimatedOrdinaryIncome: fromDists.estimatedOrdinaryIncome,
     estimatedCapitalGains: fromDists.estimatedCapitalGains,
@@ -237,6 +240,29 @@ export function mergeFundWithDistributions(
   };
 }
 
+/**
+ * Weekly NAV is GET /funds `nav_per_share`. Upcoming /distributions rows
+ * often arrive with `nav: 0`. Overlay identity NAV only — never invent,
+ * never copy estimate `as_of` onto the weekly stamp.
+ */
+export function overlayWeeklyNav<T extends FundEstimate>(
+  selected: T,
+  identity?: Pick<FundEstimate, "nav" | "navAsOf" | "navSource" | "ticker"> | null,
+): T {
+  if (!identity || !(identity.nav > 0)) return selected;
+  const selectedTicker = selected.ticker.trim().toUpperCase();
+  const identityTicker = (identity.ticker ?? selectedTicker).trim().toUpperCase();
+  if (selectedTicker && identityTicker && selectedTicker !== identityTicker) {
+    return selected;
+  }
+  return {
+    ...selected,
+    nav: identity.nav,
+    navAsOf: identity.navAsOf ?? selected.navAsOf ?? null,
+    navSource: identity.navSource ?? selected.navSource ?? null,
+  };
+}
+
 function fundListKey(fund: Pick<FundEstimate, "ticker" | "id">): string {
   const ticker = fund.ticker.trim().toUpperCase();
   return ticker && ticker !== "—" ? `ticker:${ticker}` : fund.id;
@@ -248,11 +274,12 @@ function hydrationScore(fund: FundEstimateView): number {
   if (fund.estimatedDistributionAmount) score += 3;
   if (fund.publicationStage) score += 1;
   if (fund.recordDate || fund.exDate || fund.payableDate) score += 1;
+  if (fund.bucket === "upcoming") score += 10;
   if (fund.bucket === "paid" && fund.hasEstimate !== true) score += 1;
-  // Weekly / dist-day NAV from GET /funds + /distributions. A distributions-only
-  // duplicate must not win a tie and drop the live print.
-  if (fund.nav > 0) score += 2;
-  if (fund.navAsOf) score += 1;
+  // Weekly NAV from GET /funds. Score it above paid-history-only dumps so
+  // a distributions duplicate cannot hide the live print on a tie.
+  if (fund.nav > 0) score += 5;
+  if (fund.navAsOf) score += 2;
   if (fund.navOnDistributionDay != null && fund.navOnDistributionDay > 0) score += 1;
   return score;
 }
@@ -271,9 +298,13 @@ export function mergeFundLists(
       order.push(key);
       continue;
     }
-    if (hydrationScore(fund) > hydrationScore(prev)) {
-      map.set(key, fund);
-    }
+    // Paid-history-rich /distributions dumps can outscore an upcoming row
+    // that already has GET /funds weekly NAV. Keep the richer row, but
+    // never drop a live nav_per_share print.
+    const winner =
+      hydrationScore(fund) > hydrationScore(prev) ? fund : prev;
+    const other = winner === fund ? prev : fund;
+    map.set(key, overlayWeeklyNav(winner, other));
   }
   return order.map((key) => map.get(key)!);
 }

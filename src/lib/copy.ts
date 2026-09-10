@@ -47,12 +47,15 @@ export const PAID_HISTORY_EMPTY = "No paid history from the Data API.";
 /** Locked Search Upcoming / Announced module chrome (Modules). */
 export const SEARCH_UPCOMING_HEADING = "Upcoming / Announced";
 export const SEARCH_UPCOMING_DETAIL =
-  "Announced distributions that have not paid out yet. Past record/ex/payable dates stay in Paid history below.";
+  "Announced distributions that have not gone ex yet. After ex-date (America/Chicago) they move to Paid History below — do not wait for payable.";
 export const SEARCH_UPCOMING_KICKER = "unpaid announced · not paid history";
-export const SEARCH_PAID_HISTORY_HEADING = "Paid history";
+export const SEARCH_PAID_HISTORY_HEADING = "Paid History";
 export const SEARCH_PAID_HISTORY_DETAIL =
-  "Paid and final distributions from GET /distributions. Never invented from Upcoming.";
+  "Paid and final distributions from GET /distributions for the selected calendar year. Prior-year rows drop off when the year ends. Never invented from Upcoming.";
 export const SEARCH_PAID_HISTORY_KICKER = "past · not upcoming";
+export const ILLUSTRATION_PAID_HISTORY_DETAIL =
+  "Final and paid distributions from GET /distributions for the prior calendar year only. Current-year midyear paids stay out.";
+export const ILLUSTRATION_PAID_HISTORY_KICKER = "prior calendar year · not upcoming";
 
 /** Lists tab — ticker paste list + unpaid announced estimates. */
 export const LISTS_HEADING = "Lists";

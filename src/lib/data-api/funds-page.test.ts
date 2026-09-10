@@ -31,6 +31,23 @@ describe("Search / Sample Estimates fund page", () => {
     );
   });
 
+  it("loads Search Upcoming from unpaid announced distributions, not GET /funds page 1", () => {
+    const source = readFileSync(join(here, "distributions.ts"), "utf8");
+    const repo = readFileSync(join(here, "../../data/repository.ts"), "utf8");
+    assert.match(source, /loadUpcomingAnnouncedFromDataApi/);
+    assert.match(source, /publication_stage/);
+    assert.match(source, /ex_date_from/);
+    assert.match(source, /preliminary_estimate/);
+    assert.match(source, /updated_estimate/);
+    assert.match(source, /attachWeeklyNavFromFunds/);
+    assert.match(source, /nav_per_share|mapFundsApiItem/);
+    assert.match(source, /attempt < 2/);
+    const fundsPage = readFileSync(join(here, "funds-page.ts"), "utf8");
+    assert.match(fundsPage, /navOnly/);
+    assert.match(repo, /loadUpcomingAnnouncedFromDataApi/);
+    assert.match(repo, /mergeFundLists\(upcoming/);
+  });
+
   it("keeps paid/final history off the has_estimate Upcoming gate", () => {
     const table = readFileSync(
       join(here, "../../components/ResultsTable.tsx"),
@@ -58,13 +75,22 @@ describe("Search / Sample Estimates fund page", () => {
     );
     assert.match(results, /upcomingIllustrationTotals/);
     assert.match(results, /splitIllustrationComponents/);
-    assert.match(results, /paidEventsForFund/);
-    assert.match(results, /Paid history/);
     assert.match(results, /catalogUpcoming/);
     assert.match(results, /pctOfNavForFund|historicalPctOfNav/);
     assert.doesNotMatch(results, /result\.totals/);
+    assert.doesNotMatch(results, /paidEventsForFund/);
     assert.doesNotMatch(results, /paidComponents/);
     assert.doesNotMatch(results, /components=\{paid/);
+    const paid = readFileSync(
+      join(here, "../../components/illustrate/IllustrationPaidHistory.tsx"),
+      "utf8",
+    );
+    const panel = readFileSync(
+      join(here, "../../components/illustrate/IllustratePanel.tsx"),
+      "utf8",
+    );
+    assert.match(panel, /IllustrationPaidHistory/);
+    assert.match(paid, /illustrationPaidTypeRows/);
     assert.match(bucket, /every fund \(not ticker-specific\)/);
     assert.match(bucket, /`final` and `paid` are Paid history/);
     assert.doesNotMatch(bucket, /ABALX|AMCPX|ticker ===/);

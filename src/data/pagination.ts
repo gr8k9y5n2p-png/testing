@@ -24,6 +24,8 @@ export type FundPageQuery = SearchFilters & {
   offset?: number;
   sort?: SortKey;
   direction?: SortDirection;
+  /** Skip /distributions hydrate — weekly NAV identity only. */
+  navOnly?: boolean;
 };
 
 export type FundPageResult = {
@@ -85,6 +87,7 @@ export function parseFundPageQuery(
     direction: direction === "desc" || direction === "asc" ? direction : undefined,
     limit,
     offset,
+    navOnly: searchParams.get("nav_only") === "1",
   };
 }
 

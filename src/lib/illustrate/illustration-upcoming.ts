@@ -3,7 +3,7 @@ import {
   normalizePublicationStage,
   type DistributionBucket,
 } from "../../data/distribution-bucket.ts";
-import type { FundEstimate } from "../../data/types.ts";
+import type { EstimateTypeLine, FundEstimate } from "../../data/types.ts";
 import type { IllustrationComponent, IllustrationTotals } from "./types.ts";
 
 export type IllustrationFundGate = Pick<
@@ -110,5 +110,74 @@ export function upcomingIllustrationTotals(
     estimated_tax_dollars_max: sumNullable(
       rows.map((row) => num(row.estimated_tax_dollars_max)),
     ),
+  };
+}
+
+/**
+ * Upcoming table rows: illustrate components plus manager-published
+ * estimate_type lines that the illustrate payload omitted (STCG $0).
+ * Never invent a type the API did not publish.
+ */
+export function upcomingEstimateTypeRows(
+  upcoming: IllustrationComponent[],
+  fund?: Pick<
+    FundEstimate,
+    | "estimateTypeLines"
+    | "asOfDate"
+    | "recordDate"
+    | "exDate"
+    | "payableDate"
+    | "publicationStage"
+  > | null,
+): IllustrationComponent[] {
+  const typed = upcoming.filter((row) => !isRollupTotal(row.estimate_type));
+  const perShare = typed.filter((row) => row.amount_unit === "per_share");
+  const source = perShare.length ? perShare : typed;
+  const seen = new Set(source.map((row) => row.estimate_type));
+  const extras: IllustrationComponent[] = [];
+  const template = source[0];
+  for (const line of fund?.estimateTypeLines ?? []) {
+    const type = (line.estimateType ?? "").trim();
+    if (!type || isRollupTotal(type) || seen.has(type)) continue;
+    seen.add(type);
+    extras.push(publishedLineAsComponent(line, fund, template));
+  }
+  return [...source, ...extras];
+}
+
+function publishedLineAsComponent(
+  line: EstimateTypeLine,
+  fund?: Pick<
+    FundEstimate,
+    "asOfDate" | "recordDate" | "exDate" | "payableDate" | "publicationStage"
+  > | null,
+  template?: IllustrationComponent,
+): IllustrationComponent {
+  const zero = line.amount === 0;
+  return {
+    distribution_id: `published:${line.estimateType}`,
+    fund_name: template?.fund_name ?? "",
+    estimate_type: line.estimateType,
+    amount_unit: line.amountUnit,
+    publication_stage:
+      fund?.publicationStage ?? template?.publication_stage ?? null,
+    as_of: fund?.asOfDate ?? template?.as_of ?? null,
+    record_date: fund?.recordDate ?? template?.record_date ?? null,
+    ex_date: fund?.exDate ?? template?.ex_date ?? null,
+    payable_date: fund?.payableDate ?? template?.payable_date ?? null,
+    amount: line.amount,
+    percent_of_nav:
+      line.amountUnit === "percent_of_nav" ? line.amount : zero ? 0 : null,
+    distribution_dollars: zero ? 0 : null,
+    distribution_dollars_min: null,
+    distribution_dollars_max: null,
+    rate_key: line.estimateType,
+    federal_rate: Number.NaN,
+    state_rate: Number.NaN,
+    effective_rate: Number.NaN,
+    estimated_tax_dollars: zero ? 0 : null,
+    estimated_tax_dollars_min: null,
+    estimated_tax_dollars_max: null,
+    notes: null,
   };
 }

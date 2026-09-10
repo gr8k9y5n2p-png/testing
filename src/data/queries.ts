@@ -1,6 +1,16 @@
 import { pctOfNavForFund } from "../lib/illustrate/nav-math.ts";
-import { isoDate, splitFundsByBucket } from "./distribution-bucket.ts";
-import { preferFinalPaidEvents } from "./hydrate-funds.ts";
+import {
+  chicagoTodayIso,
+  isoDate,
+  normalizePublicationStage,
+  splitFundsByBucket,
+} from "./distribution-bucket.ts";
+import {
+  mergeFundLists,
+  mergeFundWithDistributions,
+  paidEventsForFund,
+  preferFinalPaidEvents,
+} from "./hydrate-funds.ts";
 import { collectTaxYearsFromFunds } from "./tax-years.ts";
 import type {
   DistributionBucket,
@@ -176,6 +186,71 @@ export function paidHistoryYearOf(
   const raw = event.exDate ?? event.payableDate ?? event.recordDate ?? event.asOfDate;
   const year = Number((raw ?? "").slice(0, 4));
   return year || event.distributionYear;
+}
+
+/** Chicago calendar year for Search Paid History default / year-end wipe. */
+export function currentPaidHistoryYear(now = new Date()): number {
+  return Number(chicagoTodayIso(now).slice(0, 4));
+}
+
+/** Dollar Illustration Paid History is the prior Chicago calendar year only. */
+export function priorPaidHistoryYear(now = new Date()): number {
+  return currentPaidHistoryYear(now) - 1;
+}
+
+/**
+ * Finals / paid from `/distributions` for the prior calendar year.
+ * Current-year midyear paids stay out of Dollar Illustration Paid History.
+ */
+export function illustrationPriorYearPaidEvents(
+  fund: Parameters<typeof paidEventsForFund>[0],
+  now = new Date(),
+): ReturnType<typeof paidEventsForFund> {
+  const year = priorPaidHistoryYear(now);
+  return paidEventsForFund(fund).filter((event) => {
+    const stage = normalizePublicationStage(event.publicationStage);
+    if (stage !== "final" && stage !== "paid") return false;
+    return paidHistoryYearOf(event) === year;
+  });
+}
+
+/**
+ * Search table book: Upcoming is the full unpaid announced universe.
+ * A selected ticker hydrates in place for detail / Paid History — it must
+ * never replace or filter away the rest of the unpaid set.
+ */
+export function buildSearchTableFunds(
+  catalog: FundEstimateView[],
+  pageItems: FundEstimateView[] = [],
+  filters: SearchFilters = {},
+  selectedTicker?: string,
+): FundEstimateView[] {
+  const family = filters.family;
+  const category = filters.category;
+  const upcoming = splitFundsByBucket(catalog).upcoming.filter((fund) => {
+    if (family && fund.family !== family) return false;
+    if (category && fund.category !== category) return false;
+    return true;
+  });
+
+  const hydratedPage = pageItems.map((item) => {
+    const fromCatalog = catalog.find(
+      (fund) =>
+        fund.ticker.trim().toUpperCase() === item.ticker.trim().toUpperCase() &&
+        item.ticker.trim() &&
+        item.ticker !== "—",
+    );
+    return fromCatalog ? mergeFundWithDistributions(item, fromCatalog) : item;
+  });
+
+  const selectedKey = selectedTicker?.trim().toUpperCase();
+  const focused = selectedKey
+    ? [...pageItems, ...catalog].filter(
+        (fund) => fund.ticker.trim().toUpperCase() === selectedKey,
+      )
+    : [];
+
+  return mergeFundLists(hydratedPage, [...upcoming, ...focused]);
 }
 
 export function paidHistoryViews(

@@ -82,6 +82,9 @@ export function ResultsTable({
   onSort,
   page,
   year,
+  years,
+  onYear,
+  highlightedTicker,
 }: {
   funds: FundEstimateView[];
   onIllustrate?: (fund: FundEstimateView) => void;
@@ -91,6 +94,10 @@ export function ResultsTable({
   page?: SamplePage;
   /** Paid history year toggle. Upcoming stays unpaid announced only. */
   year?: number;
+  years?: number[];
+  onYear?: (year: number) => void;
+  /** Selected Search ticker — highlight only; does not filter Upcoming. */
+  highlightedTicker?: string;
 }) {
   const [localSortKey, setLocalSortKey] = useState<SortKey>("fundName");
   const [localSortDirection, setLocalSortDirection] = useState<SortDirection>("asc");
@@ -149,6 +156,7 @@ export function ResultsTable({
         empty={UPCOMING_UNAVAILABLE_DETAIL}
         showPayable
         page={page}
+        highlightedTicker={highlightedTicker}
       />
       <FundSection
         title={SEARCH_PAID_HISTORY_HEADING}
@@ -163,6 +171,11 @@ export function ResultsTable({
         coverage={coverage}
         empty={PAID_HISTORY_EMPTY}
         showPayable
+        showHeading
+        highlightedTicker={highlightedTicker}
+        year={year}
+        years={years}
+        onYear={onYear}
       />
     </div>
   );
@@ -183,6 +196,11 @@ function FundSection({
   empty,
   showPayable,
   page,
+  showHeading = false,
+  highlightedTicker,
+  year,
+  years,
+  onYear,
 }: {
   title: string;
   description: string;
@@ -198,16 +216,55 @@ function FundSection({
   empty: string;
   showPayable: boolean;
   page?: SamplePage;
+  showHeading?: boolean;
+  highlightedTicker?: string;
+  year?: number;
+  years?: number[];
+  onYear?: (year: number) => void;
 }) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const highlightKey = highlightedTicker?.trim().toUpperCase();
 
   return (
     <section
       aria-label={title}
       className={`rounded-xl border border-line px-4 py-3 ${wellClassName}`}
     >
-      <header className="mb-3 flex flex-wrap items-end justify-end gap-2">
-        <p className="sr-only">{description}</p>
+      <header
+        className={`mb-3 flex flex-wrap gap-2 ${
+          showHeading ? "items-end justify-between" : "items-end justify-end"
+        }`}
+      >
+        {showHeading ? (
+          <div>
+            <h3 className="font-serif text-xl tracking-tight text-ink">{title}</h3>
+            <p className="mt-1 max-w-2xl text-sm text-muted">{description}</p>
+            {years && years.length > 0 && onYear ? (
+              <div
+                className="mt-2 flex flex-wrap items-center gap-1.5"
+                role="group"
+                aria-label="Paid History year"
+              >
+                {years.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => onYear(option)}
+                    className={`h-7 rounded-md border px-2 text-[11px] ${
+                      option === year
+                        ? "border-accent bg-accent-soft text-ink"
+                        : "border-line text-muted hover:text-ink"
+                    }`}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        ) : (
+          <p className="sr-only">{description}</p>
+        )}
         <p className="text-[10px] text-muted">{kicker}</p>
       </header>
 
@@ -279,6 +336,12 @@ function FundSection({
                   key={fund.id}
                   fund={fund}
                   open={expandedId === fund.id}
+                  highlighted={
+                    Boolean(
+                      highlightKey &&
+                        fund.ticker.trim().toUpperCase() === highlightKey,
+                    )
+                  }
                   coverageGap={!coverage.isLive(fund.family)}
                   showPayable={showPayable}
                   onToggle={() =>
@@ -299,7 +362,12 @@ function FundSection({
             {funds.map((fund) => (
               <article
                 key={fund.id}
-                className="rounded-lg border border-line bg-surface p-4"
+                className={`rounded-lg border bg-surface p-4 ${
+                  highlightKey &&
+                  fund.ticker.trim().toUpperCase() === highlightKey
+                    ? "border-accent"
+                    : "border-line"
+                }`}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -380,6 +448,7 @@ function FundSection({
 function EstimateRow({
   fund,
   open,
+  highlighted,
   coverageGap,
   showPayable,
   onToggle,
@@ -387,6 +456,7 @@ function EstimateRow({
 }: {
   fund: FundEstimateView;
   open: boolean;
+  highlighted?: boolean;
   coverageGap: boolean;
   showPayable: boolean;
   onToggle: () => void;
@@ -406,7 +476,9 @@ function EstimateRow({
 
   return (
     <tr
-      className="cursor-pointer align-top hover:bg-paper/80"
+      className={`cursor-pointer align-top hover:bg-paper/80 ${
+        highlighted ? "bg-paper ring-1 ring-inset ring-accent/40" : ""
+      }`}
       tabIndex={0}
       aria-expanded={open}
       onClick={onRowClick}

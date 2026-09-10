@@ -42,6 +42,7 @@ describe("Search-page ticker clicks select into Search a fund", () => {
     assert.match(app, /<HighlightsSection[^>]*onSelect=\{selectFund\}/);
     assert.match(app, /onIllustrate=\{selectFund\}/);
     assert.match(app, /function selectFund/);
+    assert.match(app, /overlayWeeklyNav/);
     assert.match(app, /function clearFund/);
     assert.doesNotMatch(
       app.slice(app.indexOf("<HighlightsSection"), app.indexOf("<Disclaimer")),

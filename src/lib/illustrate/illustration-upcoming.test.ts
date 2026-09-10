@@ -8,6 +8,7 @@ import { illustrationRequestNav, perShareNavError } from "./compare-request.ts";
 import {
   illustrationComponentBucket,
   splitIllustrationComponents,
+  upcomingEstimateTypeRows,
   upcomingIllustrationTotals,
 } from "./illustration-upcoming.ts";
 
@@ -159,25 +160,38 @@ describe("Dollar Illustration Upcoming gate", () => {
     const source = readFileSync(join(here, "../../components/illustrate/IllustrationResults.tsx"), "utf8");
     assert.match(source, /splitIllustrationComponents/);
     assert.match(source, /upcomingIllustrationTotals/);
+    assert.match(source, /upcomingEstimateTypeRows/);
     assert.match(source, /catalogUpcoming/);
     assert.match(source, /isUpcomingFund/);
     assert.doesNotMatch(source, /result\.totals/);
   });
 
-  it("IllustrationResults mounts Paid history from /distributions, not illustrate components", () => {
-    const source = readFileSync(
+  it("Dollar Illustration Paid History is full-bleed prior-year /distributions, not illustrate components", () => {
+    const results = readFileSync(
       join(here, "../../components/illustrate/IllustrationResults.tsx"),
       "utf8",
     );
-    assert.match(source, /paidEventsForFund/);
-    assert.match(source, /PAID_HISTORY_EMPTY/);
-    assert.match(source, /Paid history/);
-    assert.doesNotMatch(source, /paidComponents/);
-    assert.doesNotMatch(source, /components=\{paid/);
-    assert.doesNotMatch(
-      source,
-      /paidComponents\.length === 0/,
+    const panel = readFileSync(
+      join(here, "../../components/illustrate/IllustratePanel.tsx"),
+      "utf8",
     );
+    const paid = readFileSync(
+      join(here, "../../components/illustrate/IllustrationPaidHistory.tsx"),
+      "utf8",
+    );
+    assert.match(panel, /IllustrationPaidHistory/);
+    assert.match(panel, /space-y-6/);
+    assert.match(panel, /<\/div>\s*<IllustrationPaidHistory/);
+    assert.doesNotMatch(results, /paidEventsForFund/);
+    assert.doesNotMatch(results, /IllustrationPaidHistory/);
+    assert.doesNotMatch(results, /paidComponents/);
+    assert.doesNotMatch(results, /components=\{paid/);
+    assert.match(paid, /illustrationPaidTypeRows/);
+    assert.match(paid, /\$ \/ Share/);
+    assert.match(paid, /% of NAV/);
+    assert.match(paid, /Announced/);
+    assert.match(paid, /Ex-Date/);
+    assert.doesNotMatch(paid, /Payable/);
   });
 
   it("still-future unpaid prelims with omitted illustrate stage stay Upcoming", () => {
@@ -275,5 +289,54 @@ describe("Dollar Illustration Upcoming gate", () => {
     const totals = upcomingIllustrationTotals([ltcg, total, pct]);
     assert.equal(totals?.distribution_dollars, 67_318.9);
     assert.equal(totals?.estimated_tax_dollars, 16_829.73);
+  });
+
+  it("keeps published $0 estimate types and does not invent unpublished ones", () => {
+    const ltcg = component({
+      distribution_id: "fbgrx-ltcg",
+      estimate_type: "long_term_capital_gains",
+      publication_stage: "preliminary_estimate",
+      as_of: "2026-07-31",
+      ex_date: "2026-09-11",
+      payable_date: "2026-09-14",
+      amount: 21.021,
+      amount_unit: "per_share",
+      distribution_dollars: 67_319,
+      estimated_tax_dollars: 16_830,
+    });
+    const rows = upcomingEstimateTypeRows([ltcg], {
+      publicationStage: "preliminary_estimate",
+      asOfDate: "2026-07-31",
+      exDate: "2026-09-11",
+      payableDate: "2026-09-14",
+      estimateTypeLines: [
+        {
+          estimateType: "long_term_capital_gains",
+          amount: 21.021,
+          amountUnit: "per_share",
+        },
+        {
+          estimateType: "short_term_capital_gains",
+          amount: 0,
+          amountUnit: "per_share",
+        },
+      ],
+    });
+    assert.equal(rows.length, 2);
+    const stcg = rows.find((row) => row.estimate_type === "short_term_capital_gains");
+    assert.ok(stcg);
+    assert.equal(stcg.amount, 0);
+    assert.equal(stcg.distribution_dollars, 0);
+    assert.equal(
+      rows.some((row) => row.estimate_type === "ordinary_income"),
+      false,
+      "unpublished types stay off the table — never invent $0",
+    );
+    const panel = readFileSync(
+      join(here, "../../components/illustrate/IllustratePanel.tsx"),
+      "utf8",
+    );
+    assert.doesNotMatch(panel, /PortfolioCoverageCard/);
+    assert.doesNotMatch(panel, /postIllustratePortfolio/);
   });
 });

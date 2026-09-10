@@ -118,4 +118,10 @@ test("parseFundPageQuery and offsetToPage match the Data contract", () => {
   assert.equal(aliased.offset, 100);
   assert.equal(aliased.family, "Vanguard");
   assert.equal(aliased.query, "amc");
+
+  const navOnly = parseFundPageQuery(
+    new URLSearchParams("q=FBGRX&limit=5&nav_only=1"),
+  );
+  assert.equal(navOnly.query, "FBGRX");
+  assert.equal(navOnly.navOnly, true);
 });

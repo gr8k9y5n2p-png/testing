@@ -15,9 +15,13 @@ import type {
   HighlightSets,
   SearchFilters,
 } from "./types";
-import { loadFundsFromDataApi } from "@/lib/data-api/distributions";
+import {
+  loadFundsFromDataApi,
+  loadUpcomingAnnouncedFromDataApi,
+} from "@/lib/data-api/distributions";
 import { isRemoteDataApi } from "@/lib/data-api/config";
 import { loadFundPageFromDataApi } from "@/lib/data-api/funds-page";
+import { mergeFundLists } from "./hydrate-funds";
 
 /**
  * In-memory repository over a fund list. Live Search / Sample Estimates
@@ -79,6 +83,9 @@ export function repositoryFromApiFunds(
  * Down, empty, or uncovered → empty list. Never merge or fall back to seed.ts.
  */
 export async function getDistributionRepository(): Promise<DistributionRepository> {
-  const apiFunds = await loadFundsFromDataApi();
-  return repositoryFromApiFunds(apiFunds);
+  const [apiFunds, upcoming] = await Promise.all([
+    loadFundsFromDataApi(),
+    loadUpcomingAnnouncedFromDataApi(),
+  ]);
+  return repositoryFromApiFunds(mergeFundLists(upcoming, apiFunds ?? []));
 }

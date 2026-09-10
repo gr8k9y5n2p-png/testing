@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { FundEstimateView } from "@/data/types";
+import { hideUpcomingAmounts, overlayWeeklyNav } from "@/data/hydrate-funds";
 import { useCoverage } from "@/components/coverage/CoverageProvider";
 import { isMissingNavError, isMockIllustrate, postIllustrate } from "@/lib/illustrate/client";
 import {
@@ -9,13 +10,14 @@ import {
   navFromFundMetadata,
   perShareNavError,
 } from "@/lib/illustrate/compare-request";
-import { formatWeeklyNavLabel } from "@/lib/illustrate/nav-math";
+import { formatOptionalDate, formatUsd } from "@/lib/format";
+import {
+  formatSoftPct,
+  formatWeeklyNavLabel,
+  pctOfNavForFund,
+} from "@/lib/illustrate/nav-math";
 import { seedNavLookup } from "@/lib/illustrate/seed-nav";
 import { distributionIdsForFund } from "@/lib/illustrate/ids";
-import {
-  postIllustratePortfolio,
-  type PortfolioIllustrateResponse,
-} from "@/lib/illustrate/portfolio";
 import {
   AMOUNT_UNITS,
   DEFAULT_HOLDING_DOLLARS,
@@ -26,10 +28,32 @@ import {
   type IllustrateResponse,
   type TaxRates,
 } from "@/lib/illustrate/types";
-import { DistributionDateStrip } from "@/components/DistributionDateStrip";
+import { IllustrationPaidHistory } from "@/components/illustrate/IllustrationPaidHistory";
 import { IllustrationResults } from "@/components/illustrate/IllustrationResults";
-import { PortfolioCoverageCard } from "@/components/illustrate/PortfolioCoverageCard";
 import { TaxRateFields } from "@/components/illustrate/TaxRateFields";
+
+async function fetchWeeklyNavIdentity(
+  ticker: string,
+): Promise<FundEstimateView | null> {
+  const params = new URLSearchParams();
+  params.set("q", ticker);
+  params.set("limit", "5");
+  params.set("nav_only", "1");
+  const response = await fetch(`/api/funds?${params.toString()}`);
+  if (!response.ok) return null;
+  const body = (await response.json()) as {
+    items?: FundEstimateView[];
+    data?: FundEstimateView[];
+  };
+  const items = Array.isArray(body.items)
+    ? body.items
+    : Array.isArray(body.data)
+      ? body.data
+      : [];
+  return (
+    items.find((row) => row.ticker.trim().toUpperCase() === ticker) ?? null
+  );
+}
 
 export function IllustratePanel({
   selected,
@@ -37,8 +61,33 @@ export function IllustratePanel({
   selected: FundEstimateView | null;
 }) {
   const coverage = useCoverage();
-  const live = selected ? coverage.isLive(selected.family) : true;
-  const meta = selected ? coverage.familyMeta(selected.family) : undefined;
+  const [identityNav, setIdentityNav] = useState<FundEstimateView | null>(null);
+  const fund = selected ? overlayWeeklyNav(selected, identityNav) : null;
+  const live = fund ? coverage.isLive(fund.family) : true;
+  const meta = fund ? coverage.familyMeta(fund.family) : undefined;
+
+  useEffect(() => {
+    if (!selected) {
+      setIdentityNav(null);
+      return;
+    }
+    const ticker = selected.ticker.trim().toUpperCase();
+    if (!ticker || ticker === "—") {
+      setIdentityNav(null);
+      return;
+    }
+    let cancelled = false;
+    void fetchWeeklyNavIdentity(ticker)
+      .then((identity) => {
+        if (!cancelled) setIdentityNav(identity);
+      })
+      .catch(() => {
+        if (!cancelled) setIdentityNav(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selected]);
 
   return (
     <section
@@ -63,14 +112,14 @@ export function IllustratePanel({
             dollar result.
           </p>
         </div>
-        {selected && !live ? (
+        {fund && !live ? (
           <p className="max-w-xs rounded-md border border-line bg-notice px-3 py-2 text-xs text-ink">
-            Coverage gap: {selected.family}
+            Coverage gap: {fund.family}
             {meta?.aum_rank ? ` · AUM rank ${meta.aum_rank}` : ""} is not in live
             ingest yet. Result can understate tax impact.
           </p>
         ) : null}
-        {selected && live && meta ? (
+        {fund && live && meta ? (
           <p className="max-w-xs rounded-md border border-above/20 bg-above-soft px-3 py-2 text-xs text-above">
             Live coverage: {meta.display_name}
             {meta.aum_rank ? ` · AUM rank ${meta.aum_rank}` : ""}
@@ -79,31 +128,83 @@ export function IllustratePanel({
         ) : null}
       </div>
 
-      {selected ? (
-        <div className="mb-5 rounded-md border border-line bg-paper px-4 py-3">
-          <p className="text-sm font-medium text-ink">
-            {selected.ticker} · {selected.fundName}
-          </p>
-          <DistributionDateStrip
-            fund={selected}
-            showPayable
-            showStage
-            className="mt-1.5"
-          />
-          <p className="mt-1.5 font-mono text-[11px] text-faint">
-            Weekly NAV {formatWeeklyNavLabel(selected)}
-          </p>
-        </div>
-      ) : null}
+      {fund ? <EstimateLeadCard fund={fund} /> : null}
 
-      {selected ? (
-        <IllustrationWorkspace key={selected.id} fund={selected} />
+      {fund ? (
+        <IllustrationWorkspace key={fund.id} fund={fund} />
       ) : (
         <div className="flex min-h-[12rem] items-center justify-center rounded-md border border-dashed border-line-strong px-6 text-center text-sm text-muted">
           Search a fund above to see taxable impact in dollars.
         </div>
       )}
     </section>
+  );
+}
+
+const ESTIMATE_TYPE_LABELS: Record<string, string> = {
+  ordinary_income: "Ordinary income",
+  long_term_capital_gains: "Long-term capital gains",
+  short_term_capital_gains: "Short-term capital gains",
+  qualified_dividend: "Qualified dividends",
+  total_capital_gains: "Total capital gains",
+  special_dividend: "Special dividend",
+  return_of_capital: "Return of capital",
+};
+
+function EstimateLeadCard({ fund }: { fund: FundEstimateView }) {
+  const hideAmounts = hideUpcomingAmounts(fund);
+  const lines = fund.estimateTypeLines ?? [];
+  return (
+    <div className="mb-5 rounded-md border border-line bg-paper px-4 py-3">
+      <p className="text-sm font-medium text-ink">
+        {fund.ticker} · {fund.fundName}
+      </p>
+      <dl className="mt-3 grid gap-x-6 gap-y-2 sm:grid-cols-2">
+        <LeadField label="NAV" value={formatWeeklyNavLabel(fund)} />
+        <LeadField
+          label="Estimated $ / share"
+          value={
+            hideAmounts ? "—" : `${formatUsd(fund.estimatedDistributionAmount, 4)} / sh`
+          }
+        />
+        <LeadField
+          label="Distribution % of NAV"
+          value={hideAmounts ? "—" : formatSoftPct(pctOfNavForFund(fund))}
+        />
+        <LeadField
+          label="Estimate types"
+          value={
+            lines.length === 0
+              ? "—"
+              : lines
+                  .map((line) => {
+                    const name =
+                      ESTIMATE_TYPE_LABELS[line.estimateType] ?? line.estimateType;
+                    const amount =
+                      line.amountUnit === "percent_of_nav"
+                        ? formatSoftPct(line.amount)
+                        : `${formatUsd(line.amount, 4)} / sh`;
+                    return `${name} ${amount}`;
+                  })
+                  .join(" · ")
+          }
+        />
+        <LeadField label="Announced" value={formatOptionalDate(fund.asOfDate)} />
+        <LeadField label="Record" value={formatOptionalDate(fund.recordDate)} />
+        <LeadField label="Ex-date" value={formatOptionalDate(fund.exDate)} />
+      </dl>
+    </div>
+  );
+}
+
+function LeadField({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <dt className="text-[11px] font-semibold uppercase tracking-[0.12em] text-faint">
+        {label}
+      </dt>
+      <dd className="mt-0.5 font-mono text-sm text-ink">{value}</dd>
+    </div>
   );
 }
 
@@ -122,7 +223,6 @@ function IllustrationWorkspace({ fund }: { fund: FundEstimateView }) {
     metadataNav != null ? String(metadataNav) : fund.nav > 0 ? String(fund.nav) : "",
   );
   const [result, setResult] = useState<IllustrateResponse | null>(null);
-  const [portfolio, setPortfolio] = useState<PortfolioIllustrateResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -184,26 +284,6 @@ function IllustrationWorkspace({ fund }: { fund: FundEstimateView }) {
           setError(null);
           setLoading(false);
         });
-
-      void postIllustratePortfolio(
-        {
-          holdings: [
-            {
-              holding_dollars: holding,
-              ticker: fund.ticker,
-              fund_family: fund.family,
-              fund_identifier: fund.ticker,
-              ...(mock ? { fund_name: fund.fundName } : {}),
-              ...(requestNav != null ? { nav_per_share: requestNav } : {}),
-            },
-          ],
-          tax_rates: rates,
-          combine_state_with_federal: combine,
-        },
-        { signal: controller.signal },
-      )
-        .then(setPortfolio)
-        .catch(() => setPortfolio(null));
     }, 250);
 
     return () => {
@@ -221,90 +301,90 @@ function IllustrationWorkspace({ fund }: { fund: FundEstimateView }) {
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-12">
-      <div className="space-y-4 lg:col-span-5">
-        <label className="block">
-          <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.12em] text-faint">
-            Holding
-          </span>
-          <div className="relative">
-            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-faint">
-              $
-            </span>
-            <input
-              inputMode="decimal"
-              value={holdingInput}
-              onChange={(event) => setHoldingInput(event.target.value)}
-              onBlur={(event) => commitHolding(event.target.value)}
-              className="h-12 w-full rounded-md border border-line bg-paper pl-7 pr-3 font-mono text-base text-ink"
-            />
-          </div>
-        </label>
-        <div className="flex flex-wrap gap-2">
-          <UnitToggle
-            active={unit === AMOUNT_UNITS.percent_of_nav}
-            onClick={() => setUnit(AMOUNT_UNITS.percent_of_nav)}
-            label="% of NAV"
-          />
-          <UnitToggle
-            active={unit === AMOUNT_UNITS.per_share}
-            onClick={() => setUnit(AMOUNT_UNITS.per_share)}
-            label="$ / share"
-          />
-        </div>
-        {needsNav ? (
+    <div className="space-y-6">
+      <div className="grid gap-6 lg:grid-cols-12">
+        <div className="space-y-4 lg:col-span-5">
           <label className="block">
             <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.12em] text-faint">
-              NAV per share
+              Holding
             </span>
-            <input
-              type="number"
-              min={0.01}
-              step={0.01}
-              value={navInput}
-              onChange={(event) => setNavInput(event.target.value)}
-              className="h-10 w-full rounded-md border border-line bg-paper px-3 font-mono text-sm"
-            />
-            <span className="mt-1 block text-[11px] text-faint">
-              Required for per_share amounts. Share count = holding ÷ NAV.
-            </span>
+            <div className="relative">
+              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-faint">
+                $
+              </span>
+              <input
+                inputMode="decimal"
+                value={holdingInput}
+                onChange={(event) => setHoldingInput(event.target.value)}
+                onBlur={(event) => commitHolding(event.target.value)}
+                className="h-12 w-full rounded-md border border-line bg-paper pl-7 pr-3 font-mono text-base text-ink"
+              />
+            </div>
           </label>
-        ) : (
-          <p className="text-xs text-faint">
-            {metadataNav != null
-              ? `% of NAV uses weekly NAV (${formatWeeklyNavLabel(fund)}) so Dist $ = est $/share × (holding ÷ NAV).`
-              : "% of NAV sends holding dollars. Missing weekly NAV stays undisclosed — never invented. Switch to $ / share to enter a price."}
-          </p>
-        )}
-        <TaxRateFields
-          rates={rates}
-          combine={combine}
-          onRatesChange={setRates}
-          onCombineChange={setCombine}
-        />
-      </div>
-      <div className="lg:col-span-7">
-        {navError ? (
-          <p className="rounded-md border border-below/20 bg-below-soft px-4 py-3 text-sm text-below">
-            {navError}
-          </p>
-        ) : loading && !result ? (
-          <div className="h-64 animate-pulse rounded-md bg-paper" />
-        ) : error ? (
-          <p className="rounded-md border border-below/20 bg-below-soft px-4 py-3 text-sm text-below">
-            {error}
-          </p>
-        ) : result ? (
-          <div className="space-y-4">
-            {portfolio ? <PortfolioCoverageCard result={portfolio} /> : null}
+          <div className="flex flex-wrap gap-2">
+            <UnitToggle
+              active={unit === AMOUNT_UNITS.percent_of_nav}
+              onClick={() => setUnit(AMOUNT_UNITS.percent_of_nav)}
+              label="% of NAV"
+            />
+            <UnitToggle
+              active={unit === AMOUNT_UNITS.per_share}
+              onClick={() => setUnit(AMOUNT_UNITS.per_share)}
+              label="$ / share"
+            />
+          </div>
+          {needsNav ? (
+            <label className="block">
+              <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.12em] text-faint">
+                NAV per share
+              </span>
+              <input
+                type="number"
+                min={0.01}
+                step={0.01}
+                value={navInput}
+                onChange={(event) => setNavInput(event.target.value)}
+                className="h-10 w-full rounded-md border border-line bg-paper px-3 font-mono text-sm"
+              />
+              <span className="mt-1 block text-[11px] text-faint">
+                Required for per_share amounts. Share count = holding ÷ NAV.
+              </span>
+            </label>
+          ) : (
+            <p className="text-xs text-faint">
+              {metadataNav != null
+                ? `% of NAV uses weekly NAV (${formatWeeklyNavLabel(fund)}) so Dist $ = est $/share × (holding ÷ NAV).`
+                : "% of NAV sends holding dollars. Missing weekly NAV stays undisclosed — never invented. Switch to $ / share to enter a price."}
+            </p>
+          )}
+          <TaxRateFields
+            rates={rates}
+            combine={combine}
+            onRatesChange={setRates}
+            onCombineChange={setCombine}
+          />
+        </div>
+        <div className="lg:col-span-7">
+          {navError ? (
+            <p className="rounded-md border border-below/20 bg-below-soft px-4 py-3 text-sm text-below">
+              {navError}
+            </p>
+          ) : loading && !result ? (
+            <div className="h-64 animate-pulse rounded-md bg-paper" />
+          ) : error ? (
+            <p className="rounded-md border border-below/20 bg-below-soft px-4 py-3 text-sm text-below">
+              {error}
+            </p>
+          ) : result ? (
             <IllustrationResults
               result={result}
               fund={fund}
               holdingDollars={holding}
             />
-          </div>
-        ) : null}
+          ) : null}
+        </div>
       </div>
+      <IllustrationPaidHistory fund={fund} />
     </div>
   );
 }

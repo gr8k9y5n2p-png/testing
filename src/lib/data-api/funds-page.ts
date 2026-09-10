@@ -69,11 +69,10 @@ export async function loadFundPageFromDataApi(
       : Array.isArray(payload.data)
         ? payload.data
         : [];
-    if (!raw.every(isFundsApiItem)) return null;
-    const items = await hydrateFundPage(
-      raw.map((row) => mapFundsApiItem(row)),
-      query,
-    );
+    const catalog = raw.filter(isFundsApiItem).map((row) => mapFundsApiItem(row));
+    const items = query.navOnly
+      ? catalog
+      : await hydrateFundPage(catalog, query);
     const limit = clampPageSize(payload.limit ?? query.limit);
     const offset = clampOffset(payload.offset ?? query.offset);
     const total =

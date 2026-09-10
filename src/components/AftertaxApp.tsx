@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { overlayWeeklyNav } from "@/data/hydrate-funds";
 import type { Facets, FundEstimateView, HighlightSets } from "@/data/types";
 import { Dashboard } from "@/components/Dashboard";
 import { DemoBanner } from "@/components/DemoBanner";
@@ -160,7 +161,11 @@ function AftertaxAppInner({
       setPaywallOpen(true);
       return;
     }
-    setPicked(fund);
+    const catalog = funds.find(
+      (row) =>
+        row.ticker.trim().toUpperCase() === fund.ticker.trim().toUpperCase(),
+    );
+    setPicked(overlayWeeklyNav(fund, catalog));
     if (!coverage.isLive(fund.family)) {
       void reportCoverageGap({
         ticker: fund.ticker,
