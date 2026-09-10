@@ -5,6 +5,7 @@ import {
   FUND_PAGE_SIZE,
   PAID_HISTORY_PAGE_SIZE,
   PAID_HISTORY_PAGE_SIZE_MAX,
+  clampPageOffset,
   clampPageSize,
   clampPaidHistoryPageSize,
   fundPageSearchParams,
@@ -98,6 +99,39 @@ test("paginateViews applies filters before slicing", () => {
     page.items.map((fund) => fund.ticker),
     ["VFIAX", "VTIAX"],
   );
+});
+
+test("clampPageOffset keeps a thin book on page 1 instead of an empty page 2", () => {
+  assert.equal(clampPageOffset(0, 17, 50), 0);
+  assert.equal(clampPageOffset(50, 17, 50), 0);
+  assert.equal(clampPageOffset(50, 80, 50), 50);
+  assert.equal(clampPageOffset(100, 80, 50), 50);
+  assert.equal(clampPageOffset(0, 0, 50), 0);
+});
+
+test("paginateViews paid history total is the filtered fund count", () => {
+  const funds = withPeerContext(
+    Array.from({ length: 17 }, (_, index) =>
+      stubFund(index + 1, { family: index < 5 ? "Fidelity" : "American Funds" }),
+    ),
+  );
+  const thin = paginateViews(funds, {
+    paidHistory: true,
+    limit: 50,
+    offset: 50,
+  });
+  assert.equal(thin.total, 17);
+  assert.equal(thin.items.length, 17);
+  assert.equal(thin.offset, 0);
+
+  const fidelity = paginateViews(funds, {
+    paidHistory: true,
+    family: "Fidelity",
+    limit: 50,
+    offset: 0,
+  });
+  assert.equal(fidelity.total, 5);
+  assert.equal(fidelity.items.length, 5);
 });
 
 test("empty filter result stays honest (total 0, no invented rows)", () => {

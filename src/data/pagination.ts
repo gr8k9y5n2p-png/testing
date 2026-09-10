@@ -120,6 +120,23 @@ export function offsetToPage(offset: number, limit: number): number {
   return Math.floor(offset / limit) + 1;
 }
 
+/**
+ * Keep Previous/Next on a page that has rows when the book is shorter
+ * than the requested offset (thin year, Family/Category collapse).
+ */
+export function clampPageOffset(
+  offset: number | string | null | undefined,
+  total: number,
+  limit: number,
+): number {
+  const size = Math.max(1, Math.trunc(limit) || 1);
+  const safeTotal = Number.isFinite(total) && total > 0 ? Math.trunc(total) : 0;
+  const raw = clampOffset(offset);
+  if (safeTotal <= 0) return 0;
+  if (raw < safeTotal) return raw;
+  return Math.floor((safeTotal - 1) / size) * size;
+}
+
 export function paginateViews(
   funds: FundEstimateView[],
   query: FundPageQuery = {},
@@ -127,13 +144,15 @@ export function paginateViews(
   const limit = query.paidHistory
     ? clampPaidHistoryPageSize(query.limit)
     : clampPageSize(query.limit);
-  const offset = clampOffset(query.offset);
   const filtered = searchFunds(funds, query);
   const sorted = sortFunds(
     filtered,
     query.sort ?? "fundName",
     query.direction ?? (query.sort === "fundName" || !query.sort ? "asc" : "desc"),
   );
+  const offset = query.paidHistory
+    ? clampPageOffset(query.offset, filtered.length, limit)
+    : clampOffset(query.offset);
   return {
     items: sorted.slice(offset, offset + limit),
     total: filtered.length,

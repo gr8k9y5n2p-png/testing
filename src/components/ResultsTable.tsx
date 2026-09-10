@@ -7,7 +7,7 @@ import {
   type ReactNode,
   type UIEvent,
 } from "react";
-import type { FundEstimateView } from "@/data/types";
+import type { Facets, FundEstimateView } from "@/data/types";
 import { hideUpcomingAmounts } from "@/data/hydrate-funds";
 import { paidHistoryViews, splitFundsByBucket } from "@/data/queries";
 import { publicationStageLabel } from "@/data/distribution-bucket";
@@ -89,6 +89,11 @@ export function ResultsTable({
   years,
   onYear,
   highlightedTicker,
+  paidFacets,
+  paidFamily,
+  paidCategory,
+  onPaidFamily,
+  onPaidCategory,
 }: {
   funds: FundEstimateView[];
   onIllustrate?: (fund: FundEstimateView) => void;
@@ -105,6 +110,12 @@ export function ResultsTable({
   onYear?: (year: number) => void;
   /** Selected Search ticker — highlight only; does not filter Upcoming. */
   highlightedTicker?: string;
+  /** Search/home Family + Category lists — Paid History module only. */
+  paidFacets?: Pick<Facets, "families" | "categories">;
+  paidFamily?: string;
+  paidCategory?: string;
+  onPaidFamily?: (family: string | undefined) => void;
+  onPaidCategory?: (category: string | undefined) => void;
 }) {
   const [localSortKey, setLocalSortKey] = useState<SortKey>("fundName");
   const [localSortDirection, setLocalSortDirection] = useState<SortDirection>("asc");
@@ -184,6 +195,11 @@ export function ResultsTable({
         years={years}
         onYear={onYear}
         page={paidPage}
+        paidFacets={paidFacets}
+        paidFamily={paidFamily}
+        paidCategory={paidCategory}
+        onPaidFamily={onPaidFamily}
+        onPaidCategory={onPaidCategory}
       />
     </div>
   );
@@ -209,6 +225,11 @@ function FundSection({
   year,
   years,
   onYear,
+  paidFacets,
+  paidFamily,
+  paidCategory,
+  onPaidFamily,
+  onPaidCategory,
 }: {
   title: string;
   description: string;
@@ -229,6 +250,11 @@ function FundSection({
   year?: number;
   years?: number[];
   onYear?: (year: number) => void;
+  paidFacets?: Pick<Facets, "families" | "categories">;
+  paidFamily?: string;
+  paidCategory?: string;
+  onPaidFamily?: (family: string | undefined) => void;
+  onPaidCategory?: (category: string | undefined) => void;
 }) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const highlightKey = highlightedTicker?.trim().toUpperCase();
@@ -247,6 +273,58 @@ function FundSection({
           <div>
             <h3 className="font-serif text-xl tracking-tight text-ink">{title}</h3>
             <p className="mt-1 max-w-2xl text-sm text-muted">{description}</p>
+            {paidFacets && (onPaidFamily || onPaidCategory) ? (
+              <div
+                className="mt-2 flex flex-wrap items-end gap-2"
+                role="group"
+                aria-label="Paid History filters"
+              >
+                {onPaidFamily ? (
+                  <label className="block">
+                    <span className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.12em] text-faint">
+                      Family
+                    </span>
+                    <select
+                      aria-label="Paid History family"
+                      className="h-8 min-w-[10rem] rounded-md border border-line bg-surface px-2 text-[12px] text-ink"
+                      value={paidFamily ?? ""}
+                      onChange={(event) =>
+                        onPaidFamily(event.target.value || undefined)
+                      }
+                    >
+                      <option value="">All families</option>
+                      {paidFacets.families.map((family) => (
+                        <option key={family} value={family}>
+                          {family}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : null}
+                {onPaidCategory ? (
+                  <label className="block">
+                    <span className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.12em] text-faint">
+                      Category
+                    </span>
+                    <select
+                      aria-label="Paid History category"
+                      className="h-8 min-w-[10rem] rounded-md border border-line bg-surface px-2 text-[12px] text-ink"
+                      value={paidCategory ?? ""}
+                      onChange={(event) =>
+                        onPaidCategory(event.target.value || undefined)
+                      }
+                    >
+                      <option value="">All categories</option>
+                      {paidFacets.categories.map((category) => (
+                        <option key={category} value={category}>
+                          {category}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : null}
+              </div>
+            ) : null}
             {years && years.length > 0 && onYear ? (
               <div
                 className="mt-2 flex flex-wrap items-center gap-1.5"

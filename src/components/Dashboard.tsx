@@ -203,6 +203,7 @@ export function Dashboard({
       .then((next) => {
         if (cancelled) return;
         setPaidPage(next);
+        if (next.offset !== paidOffset) setPaidOffset(next.offset);
         setPageYears((current) => mergeTaxYears(current, next.years));
       })
       .catch(() => {
@@ -345,10 +346,18 @@ export function Dashboard({
           sortDirection={sortDirection}
           onSort={toggleSort}
           year={paidYear}
-            years={mergeTaxYears(toolbarFacets.years, [paidYear])}
+          years={mergeTaxYears(toolbarFacets.years, [paidYear])}
           onYear={(nextYear) =>
             applyFilters({ ...filters, year: nextYear })
           }
+          paidFacets={{
+            families: toolbarFacets.families,
+            categories: toolbarFacets.categories,
+          }}
+          paidFamily={filters.family}
+          paidCategory={filters.category}
+          onPaidFamily={(family) => applyFilters({ ...filters, family })}
+          onPaidCategory={(category) => applyFilters({ ...filters, category })}
           highlightedTicker={scopedTicker}
           page={
             upcomingCount > FUND_PAGE_SIZE

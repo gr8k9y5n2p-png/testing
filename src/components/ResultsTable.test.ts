@@ -61,6 +61,11 @@ describe("ResultsTable Search Paid history", () => {
     assert.match(fundSection, /\{description\}/);
     assert.match(fundSection, /showHeading \? \(/);
     assert.match(fundSection, /Paid History year/);
+    assert.match(fundSection, /Paid History filters/);
+    assert.match(fundSection, /All families/);
+    assert.match(fundSection, /All categories/);
+    assert.match(fundSection, /Paid History family/);
+    assert.match(fundSection, /Paid History category/);
   });
 });
 

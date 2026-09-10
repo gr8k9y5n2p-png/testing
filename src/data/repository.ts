@@ -1,6 +1,7 @@
-import { getFacets, getHighlights, paidHistoryViews, searchFunds } from "./queries";
+import { getFacets, getHighlights, searchFunds } from "./queries";
 import { mergeTaxYears } from "./tax-years";
 import { loadTaxYearsFromDataApi } from "@/lib/data-api/tax-years";
+import { pagePaidHistoryFunds } from "./paid-history-book";
 import {
   clampOffset,
   clampPageSize,
@@ -51,7 +52,7 @@ export class SeedDistributionRepository implements DistributionRepository {
       };
     }
     if (query.paidHistory) {
-      return paginateViews(paidHistoryViews(this.views, query.year), query);
+      return pagePaidHistoryFunds(this.views, query);
     }
     return paginateViews(this.views, query);
   }
