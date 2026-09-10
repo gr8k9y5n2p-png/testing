@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { CompactDisclaimer } from "@/components/CompactDisclaimer";
-import { GrowthOfXChart } from "@/components/illustrate/GrowthOfXChart";
-import { TaxDragByYearChart } from "@/components/illustrate/TaxDragByYearChart";
+import { GrowthAndTaxChart } from "@/components/illustrate/GrowthAndTaxChart";
+import { GrowthAndTaxTable } from "@/components/illustrate/GrowthAndTaxTable";
 import {
   MAX_GROWTH_FUNDS,
   fundSeriesColor,
@@ -15,17 +15,15 @@ import {
 } from "@/lib/charts/shared-axis";
 import { formatUsd } from "@/lib/format";
 import type { ComparePeriodIn } from "@/lib/illustrate/compare-types";
+import { buildGrowthTaxByTypeModel } from "@/lib/illustrate/growth-tax-by-type";
 import {
-  annualizedFromRows,
   calendarYearsFromRows,
   growthLinesFromRows,
   loadGrowthAndTaxDrag,
-  taxSeriesFromRows,
   type GrowthFundInput,
   type LoadedGrowthFund,
 } from "@/lib/illustrate/growth-tax-load";
-import { type TaxDragMetric } from "@/lib/illustrate/tax-drag-chart";
-import { UI_DEFAULT_TAX_RATES, type TaxRates } from "@/lib/illustrate/types";
+import { lockedTaxRates, UI_DEFAULT_TAX_RATES, type TaxRates } from "@/lib/illustrate/types";
 import {
   PERFORMANCE_UNAVAILABLE_HINT,
   PERFORMANCE_UNAVAILABLE_LABEL,
@@ -54,9 +52,6 @@ export type GrowthAndTaxDragModuleProps = {
   combineStateWithFederal?: boolean;
 };
 
-const SKETCH_DISCLAIMER =
-  "Hypothetical illustration based on estimated distributions and assumed tax rates. Estimates only — not tax advice. Past performance does not guarantee future results. Up to 6 funds + benchmark.";
-
 export function GrowthAndTaxDragModule({
   funds = [],
   seedFunds,
@@ -64,13 +59,14 @@ export function GrowthAndTaxDragModule({
   benchmark,
   periods,
   className = "",
-  showAnnualized = true,
   allowAddFund = true,
   editablePrincipal = true,
   lockToSeed = false,
   taxRates = UI_DEFAULT_TAX_RATES,
   combineStateWithFederal = true,
 }: GrowthAndTaxDragModuleProps) {
+  const rateKey = JSON.stringify(lockedTaxRates(taxRates));
+  const rates = useMemo(() => JSON.parse(rateKey) as TaxRates, [rateKey]);
   const [selected, setSelected] = useState<GrowthFundInput[]>(() =>
     funds.slice(0, MAX_GROWTH_FUNDS),
   );
@@ -78,7 +74,6 @@ export function GrowthAndTaxDragModule({
   const [principalDraft, setPrincipalDraft] = useState(formatPrincipal(startDollars));
   const [addTicker, setAddTicker] = useState("");
   const [adding, setAdding] = useState(false);
-  const [taxMetric, setTaxMetric] = useState<TaxDragMetric>("effective_tax");
   const [retry, setRetry] = useState(0);
   const [rows, setRows] = useState<LoadedGrowthFund[] | null>(null);
   const [missingTickers, setMissingTickers] = useState<string[]>([]);
@@ -90,7 +85,7 @@ export function GrowthAndTaxDragModule({
     principal,
     benchmark: benchmark ?? null,
     periods: periods ?? null,
-    taxRates,
+    taxRates: rates,
     combineStateWithFederal,
   });
   const fetchKey = `${requestKey}:${retry}`;
@@ -155,7 +150,7 @@ export function GrowthAndTaxDragModule({
         })
         .catch((caught: unknown) => {
           if (caught instanceof DOMException && caught.name === "AbortError") return;
-          // Keep last rows so tax-drag / historical bars are not blanked.
+          // Keep last rows so tax stacks / historical bars are not blanked.
           setMissingTickers(
             next.funds.map((fund) => fund.ticker.trim().toUpperCase()).filter(Boolean),
           );
@@ -171,8 +166,8 @@ export function GrowthAndTaxDragModule({
   }, [requestKey, fetchKey, periods]);
 
   const years = useMemo(
-    () => calendarYearsFromRows(rows, taxMetric),
-    [rows, taxMetric],
+    () => calendarYearsFromRows(rows, "tax_dollars"),
+    [rows],
   );
 
   const growthSeries = useMemo(
@@ -180,14 +175,19 @@ export function GrowthAndTaxDragModule({
     [principal, rows, years],
   );
 
-  const taxSeries = useMemo(
-    () => taxSeriesFromRows(rows, years, taxMetric),
-    [rows, taxMetric, years],
-  );
-
-  const annualized = useMemo(
-    () => annualizedFromRows(rows, years, principal),
-    [principal, rows, years],
+  const taxModel = useMemo(
+    () =>
+      buildGrowthTaxByTypeModel(
+        (rows ?? []).map((row) => ({
+          ticker: row.input.ticker,
+          tax: row.tax,
+          taxSide: row.taxSide,
+        })),
+        years,
+        rates,
+        combineStateWithFederal,
+      ),
+    [combineStateWithFederal, rates, rows, years],
   );
 
   function commitPrincipal() {
@@ -240,10 +240,10 @@ export function GrowthAndTaxDragModule({
         <div>
           <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-faint">
             <span aria-hidden className="inline-block size-1.5 rounded-full bg-tax-less" />
-            Aftertax
+            {lockToSeed ? "Aftertax · Compare" : "Aftertax"}
           </p>
           <h2 className="mt-1 font-serif text-xl tracking-tight text-ink">
-            Growth & tax drag
+            Growth & Tax
           </h2>
         </div>
 
@@ -360,72 +360,49 @@ export function GrowthAndTaxDragModule({
         </div>
       ) : null}
 
-      <div className="mt-5 flex flex-col gap-4">
-        <div className="rounded-xl border border-line bg-paper/40 px-3 py-3 sm:px-4">
-          {error ? (
-            <div className="flex min-h-[160px] flex-col justify-center py-4">
-              <p className="font-serif text-lg text-ink">{PERFORMANCE_UNAVAILABLE_LABEL}</p>
-              <p className="mt-2 text-sm text-muted">{PERFORMANCE_UNAVAILABLE_HINT}</p>
-              <button
-                type="button"
-                onClick={() => setRetry((value) => value + 1)}
-                className="mt-3 h-9 w-fit rounded-md bg-accent px-3 text-sm text-white hover:bg-accent-hover"
-              >
-                Retry
-              </button>
-            </div>
-          ) : (
-            <>
-              <GrowthOfXChart
-                years={years}
-                series={growthSeries}
-                startDollars={principal}
-                unit="dollars"
-                annualized={annualized}
-                showAnnualized={showAnnualized}
-                loading={loading}
-                axis={axis}
-                emptyLabel={
-                  selected.length === 0 ? "No fund series" : PERFORMANCE_UNAVAILABLE_LABEL
-                }
-                emptyHint={selected.length === 0 ? "" : PERFORMANCE_UNAVAILABLE_HINT}
-                onRemoveSeries={removeFund}
-              />
-              {missingTickers.length > 0 && growthSeries.some((row) => !row.dashed) ? (
-                <p className="mt-2 text-[11px] text-faint">
-                  {missingTickers.join(", ")}: {PERFORMANCE_UNAVAILABLE_LABEL}
-                </p>
-              ) : null}
-            </>
-          )}
-        </div>
-        <div className="rounded-xl border border-line bg-paper/40 px-3 py-3 sm:px-4">
-          <TaxDragByYearChart
-            series={taxSeries}
-            years={years}
-            metric={taxMetric}
-            onUnitChange={setTaxMetric}
-            orientation="down"
-            showBarLabels={selected.length <= 2}
-            layout="flush"
-            title="Estimated annual tax drag"
-            loading={loading}
-            onRemoveSeries={removeFund}
-            axis={axis}
-            emptyLabel={
-              selected.length === 0
-                ? "No fund series"
-                : "No overlapping tax-drag years"
-            }
-            emptyHint={selected.length === 0 ? "" : undefined}
-          />
-        </div>
+      <div className="mt-5">
+        {error ? (
+          <div className="flex min-h-[160px] flex-col justify-center py-4">
+            <p className="font-serif text-lg text-ink">{PERFORMANCE_UNAVAILABLE_LABEL}</p>
+            <p className="mt-2 text-sm text-muted">{PERFORMANCE_UNAVAILABLE_HINT}</p>
+            <button
+              type="button"
+              onClick={() => setRetry((value) => value + 1)}
+              className="mt-3 h-9 w-fit rounded-md bg-accent px-3 text-sm text-white hover:bg-accent-hover"
+            >
+              Retry
+            </button>
+          </div>
+        ) : (
+          <>
+            <GrowthAndTaxChart
+              years={years}
+              growthSeries={growthSeries}
+              taxModel={taxModel}
+              startDollars={principal}
+              loading={loading}
+              axis={axis}
+              emptyLabel={
+                selected.length === 0 ? "No fund series" : PERFORMANCE_UNAVAILABLE_LABEL
+              }
+              emptyHint={selected.length === 0 ? "" : PERFORMANCE_UNAVAILABLE_HINT}
+              onRemoveSeries={removeFund}
+            />
+            {missingTickers.length > 0 && growthSeries.some((row) => !row.dashed) ? (
+              <p className="mt-2 text-[11px] text-faint">
+                {missingTickers.join(", ")}: {PERFORMANCE_UNAVAILABLE_LABEL}
+              </p>
+            ) : null}
+            <GrowthAndTaxTable
+              model={taxModel}
+              loading={loading}
+              className="mt-5"
+            />
+          </>
+        )}
       </div>
 
-      <p className="mt-4 text-[10px] leading-relaxed text-faint">
-        {SKETCH_DISCLAIMER}
-      </p>
-      <CompactDisclaimer className="mt-1 text-[10px] leading-relaxed text-faint" />
+      <CompactDisclaimer className="mt-4 text-[10px] leading-relaxed text-faint" />
     </article>
   );
 }

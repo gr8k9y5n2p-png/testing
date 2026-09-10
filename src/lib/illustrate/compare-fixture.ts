@@ -91,6 +91,33 @@ const TAX_DRAG_BY_TICKER: Record<string, Record<number, number>> = {
   },
 };
 
+/** Unpaid manager-estimate fixture only. Never copy a paid final into these years. */
+const ANNOUNCED_UNPAID_RATES: Record<string, Record<number, number>> = {
+  AGTHX: { 2026: 0.024 },
+  FCNTX: { 2026: 0.0168 },
+};
+
+const DEFAULT_TYPE_WEIGHTS: Array<{ type: string; weight: number }> = [
+  { type: "ordinary_income", weight: 0.22 },
+  { type: "long_term_capital_gains", weight: 0.78 },
+];
+
+const TYPE_WEIGHTS_BY_TICKER: Record<string, Array<{ type: string; weight: number }>> = {
+  AGTHX: [
+    { type: "ordinary_income", weight: 0.19 },
+    { type: "short_term_capital_gains", weight: 0.1 },
+    { type: "long_term_capital_gains", weight: 0.71 },
+  ],
+  FCNTX: [
+    { type: "ordinary_income", weight: 0.21 },
+    { type: "long_term_capital_gains", weight: 0.79 },
+  ],
+  VFIAX: [
+    { type: "ordinary_income", weight: 0.22 },
+    { type: "long_term_capital_gains", weight: 0.78 },
+  ],
+};
+
 function tickerFromSide(side?: CompareSideIn | null, selectorsTicker?: string | null): string {
   const raw =
     side?.selectors?.ticker ||
@@ -106,6 +133,8 @@ const TAX_DRAG_TICKER_ALIASES: Record<string, string> = {
 
 function taxRateFor(ticker: string, year: number): number | null {
   const key = TAX_DRAG_TICKER_ALIASES[ticker] ?? ticker;
+  const announced = ANNOUNCED_UNPAID_RATES[key]?.[year];
+  if (announced != null) return announced;
   const table = TAX_DRAG_BY_TICKER[key];
   if (table && year in table) return table[year];
   const sketch = YOY_SKETCH_YEARS.find((row) => row.year === year);
@@ -113,19 +142,63 @@ function taxRateFor(ticker: string, year: number): number | null {
   return sketch.tax == null ? null : sketch.tax / COMPARE_SUMMARY_HOLDING_DOLLARS;
 }
 
+function isAnnouncedUnpaidYear(ticker: string, year: number): boolean {
+  const key = TAX_DRAG_TICKER_ALIASES[ticker] ?? ticker;
+  return ANNOUNCED_UNPAID_RATES[key]?.[year] != null;
+}
+
+function estimateTypeComponents(
+  ticker: string,
+  year: number,
+  taxDollars: number,
+  announced: boolean,
+): NonNullable<ComparePeriodOut["left"]["components"]> {
+  const weights = TYPE_WEIGHTS_BY_TICKER[ticker] ?? DEFAULT_TYPE_WEIGHTS;
+  const stage = announced ? "preliminary_estimate" : "paid";
+  const payable = announced ? `${year}-12-18` : `${year}-12-12`;
+  return weights.map((row, index) => {
+    const tax = Math.round(taxDollars * row.weight * 100) / 100;
+    return {
+      estimate_type: row.type,
+      publication_stage: stage,
+      as_of: announced ? `${year}-09-01` : `${year}-12-01`,
+      record_date: announced ? `${year}-12-16` : `${year}-12-10`,
+      ex_date: announced ? `${year}-12-17` : `${year}-12-11`,
+      payable_date: payable,
+      distribution_dollars: tax,
+      estimated_tax_dollars: tax,
+      estimated_tax: tax,
+      rate_key:
+        row.type === "long_term_capital_gains"
+          ? "long_term_capital_gains"
+          : row.type === "short_term_capital_gains"
+            ? "short_term_capital_gains"
+            : "ordinary_income",
+      distribution_id: `${ticker}-${year}-${row.type}-${index}`,
+    };
+  });
+}
+
 function taxIllustration(
   label: string,
   rate: number | null,
   holding: number,
+  ticker = "",
+  year = 0,
 ): ComparePeriodOut["left"] {
   const book = holding > 0 ? holding : COMPARE_SUMMARY_HOLDING_DOLLARS;
+  const key = TAX_DRAG_TICKER_ALIASES[ticker] ?? ticker;
+  const announced = Boolean(ticker && year && isAnnouncedUnpaidYear(key, year));
   const matched = rate != null;
   const dollars = rate == null ? null : rate * book;
   return {
     label,
     matched,
     holding_dollars: book,
-    components: [],
+    components:
+      matched && dollars != null && key
+        ? estimateTypeComponents(key, year, dollars, announced)
+        : [],
     totals: {
       // Future Data shape: unmatched years send null totals, not 0.00.
       distribution_dollars: dollars,
@@ -158,8 +231,20 @@ function mockYoyResponse(request: CompareRequest): CompareResponse {
   for (let index = 0; index < Math.max(0, years.length - 1); index += 1) {
     const older = years[index];
     const newer = years[index + 1];
-    const left = taxIllustration(String(older), taxRateFor(ticker, older), holding);
-    const right = taxIllustration(String(newer), taxRateFor(ticker, newer), holding);
+    const left = taxIllustration(
+      String(older),
+      taxRateFor(ticker, older),
+      holding,
+      ticker,
+      older,
+    );
+    const right = taxIllustration(
+      String(newer),
+      taxRateFor(ticker, newer),
+      holding,
+      ticker,
+      newer,
+    );
     pairs.push({
       year: newer,
       as_of: `${newer}-12-15`,
@@ -183,8 +268,12 @@ function mockYoyResponse(request: CompareRequest): CompareResponse {
   return {
     mode: "yoy",
     source: "mock",
-    left: pairs[0]?.left ?? taxIllustration(fundLabel, taxRateFor(ticker, fromYear), holding),
-    right: pairs[pairs.length - 1]?.right ?? taxIllustration(fundLabel, latestRate, holding),
+    left:
+      pairs[0]?.left ??
+      taxIllustration(fundLabel, taxRateFor(ticker, fromYear), holding, ticker, fromYear),
+    right:
+      pairs[pairs.length - 1]?.right ??
+      taxIllustration(fundLabel, latestRate, holding, ticker, toYear),
     deltas: pairs[pairs.length - 1]?.deltas ?? null,
     periods: pairs,
     summary: {
@@ -235,8 +324,20 @@ export function mockCompareResponse(request: CompareRequest): CompareResponse {
   });
 
   const periods: ComparePeriodOut[] = bars.map(({ year, apiDelta }) => {
-    const left = taxIllustration(leftLabel, taxRateFor(leftTicker, year), holding);
-    const right = taxIllustration(rightLabel, taxRateFor(rightTicker, year), holding);
+    const left = taxIllustration(
+      leftLabel,
+      taxRateFor(leftTicker, year),
+      holding,
+      leftTicker,
+      year,
+    );
+    const right = taxIllustration(
+      rightLabel,
+      taxRateFor(rightTicker, year),
+      holding,
+      rightTicker,
+      year,
+    );
     const bothMatched = left.matched && right.matched;
     return {
       year,
