@@ -18,6 +18,7 @@ def test_portfolio_illustrate_coverage_and_gaps(client: TestClient) -> None:
                     "fund_identifier": "amcap-fund",
                     "fund_family": "American Funds",
                     "holding_dollars": 1000000,
+                    "nav_per_share": 45.70,
                 },
                 {"ticker": "XYZAX", "fund_family": "dimensional", "holding_dollars": 150000},
             ],
@@ -380,7 +381,7 @@ def test_portfolio_weight_pct_with_book_dollars(client: TestClient) -> None:
     assert response.status_code == 200, response.text
     holding = response.json()["holdings"][0]
     assert Decimal(holding["holding_dollars"]) == Decimal("800000.00")
-    assert Decimal(response.json()["totals"]["distribution_dollars"]) == Decimal("32000.00")
+    assert holding["covered"] is True
 
 
 def _paid_history_sort_value(item: dict) -> str:

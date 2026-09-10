@@ -13,6 +13,7 @@ from app.schemas import DistributionIn
 from app.services.stale_estimates import (
     build_paid_season_index,
     is_live_unpaid_estimate,
+    is_prior_season,
     is_stale_superseded_preliminary,
     live_estimate_fund_identifiers,
     season_year,
@@ -74,6 +75,28 @@ def test_stale_prelim_with_same_year_final_is_superseded() -> None:
     assert is_live_unpaid_estimate(prelim, TODAY, paid) is False
 
 
+def test_dateless_prior_season_prelim_is_superseded_when_final_exists() -> None:
+    prelim = _row(
+        amount=Decimal("5.75"),
+        record_date=None,
+        ex_date=None,
+        payable_date=None,
+        as_of=date(2022, 10, 31),
+        publication_stage=PublicationStage.preliminary_estimate,
+    )
+    final = _row(
+        amount=Decimal("6.0394"),
+        record_date=None,
+        ex_date=date(2022, 12, 14),
+        payable_date=date(2022, 12, 16),
+        as_of=date(2022, 12, 31),
+        publication_stage=PublicationStage.final,
+    )
+    paid = build_paid_season_index([final])
+    assert is_stale_superseded_preliminary(prelim, TODAY, paid) is True
+    assert is_live_unpaid_estimate(prelim, TODAY, paid) is False
+
+
 def test_past_prelim_without_final_is_kept_and_not_live() -> None:
     prelim = _agthx_sep_2025_prelim()
     paid = build_paid_season_index([])
@@ -93,6 +116,29 @@ def test_future_unpaid_prelim_is_live_estimate() -> None:
     paid = build_paid_season_index([])
     assert is_stale_superseded_preliminary(prelim, TODAY, paid) is False
     assert is_live_unpaid_estimate(prelim, TODAY, paid) is True
+
+
+def test_current_year_dateless_prelim_is_not_prior_season() -> None:
+    prelim = _row(
+        amount=Decimal("5"),
+        record_date=None,
+        ex_date=None,
+        payable_date=None,
+        as_of=date(2026, 9, 1),
+        publication_stage=PublicationStage.preliminary_estimate,
+    )
+    final = _row(
+        amount=Decimal("7"),
+        record_date=None,
+        ex_date=None,
+        payable_date=None,
+        as_of=date(2026, 9, 15),
+        publication_stage=PublicationStage.final,
+    )
+    paid = build_paid_season_index([final])
+    assert is_prior_season(prelim, TODAY) is False
+    assert is_stale_superseded_preliminary(prelim, TODAY, paid) is False
+    assert is_live_unpaid_estimate(prelim, TODAY, paid) is False
 
 
 def test_future_prelim_with_same_year_final_is_not_live() -> None:

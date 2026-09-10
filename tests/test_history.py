@@ -972,11 +972,12 @@ def test_compare_hero_yoy_fixture_bars(client: TestClient) -> None:
         json={
             "mode": "yoy",
             "holding_dollars": 100000,
+            "nav_per_share": 45.70,
             "tax_rates": {},
             "selectors": {"fund_identifier": "amcap-fund"},
             "periods": [
-                {"year": 2024, "as_of": "2024-09-18"},
-                {"year": 2025, "as_of": "2025-09-19"},
+                {"year": 2024},
+                {"year": 2025},
             ],
         },
     )

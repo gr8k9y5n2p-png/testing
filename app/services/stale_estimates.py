@@ -116,13 +116,28 @@ def _intersects_paid(row: Any, paid_index: dict[int, set[tuple[str, str]]]) -> b
     return bool(fund_match_keys(row) & paid_index.get(year, set()))
 
 
+def is_prior_season(row: Any, today: date) -> bool:
+    """True for a past ex/payable window, or a dateless row from an earlier year."""
+    if is_past_window(row, today):
+        return True
+    if window_date(row) is not None:
+        return False
+    year = season_year(row)
+    return year is not None and year < today.year
+
+
 def is_stale_superseded_preliminary(
     row: Any, today: date, paid_index: dict[int, set[tuple[str, str]]]
 ) -> bool:
-    """Past prelim with a matching final/paid for the same fund + calendar year."""
+    """Prior-season prelim with a matching final/paid for the same fund + year.
+
+    Dated past windows and dateless 2022–prior-year snapshots are stale once a
+    same-fund, same-year final/paid exists. Current-year dateless prelims and
+    still-future windows are kept. Never invents a final.
+    """
     if _stage_value(row) != PublicationStage.preliminary_estimate.value:
         return False
-    if not is_past_window(row, today):
+    if not is_prior_season(row, today):
         return False
     return _intersects_paid(row, paid_index)
 
