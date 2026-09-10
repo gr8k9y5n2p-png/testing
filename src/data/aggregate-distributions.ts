@@ -109,13 +109,21 @@ function pickNavOnDistributionDay(rows: DataDistribution[]): {
   return { nav: null, asOf: null, source: null };
 }
 
+function isRollupTotal(type: string | null | undefined): boolean {
+  return (type ?? "").trim().toLowerCase() === "total";
+}
+
 function summarizeSnapshot(rows: DataDistribution[]): SnapshotTotals {
   let pctNav = 0;
   let publishedPctChars = 0;
   let perShare = 0;
   let ordinary = 0;
   let capGains = 0;
+  const hasTypedPerShare = rows.some(
+    (row) => row.amount_unit === "per_share" && !isRollupTotal(row.estimate_type),
+  );
   for (const row of rows) {
+    if (hasTypedPerShare && isRollupTotal(row.estimate_type)) continue;
     const value = midpoint(row);
     if (row.amount_unit === "percent_of_nav") {
       pctNav += value;

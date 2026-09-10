@@ -215,13 +215,12 @@ function AftertaxAppInner({
           Estimates behind the search
         </h2>
         <p className="mt-2 max-w-2xl text-sm text-muted">
-          Search a fund to open Upcoming / announced estimates and a dollar
-          illustration. Search and Sample Estimates read GET /funds for identity
-          and GET /distributions for unpaid Upcoming. Upcoming stays unpaid
-          announced only — undisclosed is never invented from paid history.
-          Historical paid distributions live on Compare / Portfolio Growth
-          &amp; Tax. Missing or uncovered values stay empty, N/A, or
-          Undisclosed.
+          Search a fund to open Upcoming / announced estimates, Paid history,
+          and a dollar illustration. Search and Sample Estimates read GET
+          /funds for identity and GET /distributions for unpaid Upcoming and
+          paid / final history. Upcoming stays unpaid announced only —
+          undisclosed is never invented from paid history. Missing or
+          uncovered values stay empty, N/A, or Undisclosed.
         </p>
         <div className="mt-5">
           <DemoBanner />
@@ -233,6 +232,7 @@ function AftertaxAppInner({
             facets={facets}
             onIllustrate={selectFund}
             onNotice={onNotice}
+            ticker={selected?.ticker}
           />
         </div>
       </section>

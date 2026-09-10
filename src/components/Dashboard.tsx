@@ -6,6 +6,11 @@ import {
   paginateViews,
   type FundPageResult,
 } from "@/data/pagination";
+import {
+  mergeFundLists,
+  mergeFundWithDistributions,
+  searchFunds,
+} from "@/data";
 import { collectTaxYearsFromFunds, mergeTaxYears } from "@/data/tax-years";
 import type { Facets, FundEstimateView, SearchFilters } from "@/data/types";
 import { EmptyState } from "@/components/EmptyState";
@@ -29,8 +34,13 @@ async function fetchFundPage(query: {
   params.set("offset", String(query.offset));
   params.set("sort", query.sort);
   params.set("direction", query.direction);
-  if (query.filters.family) params.set("family", query.filters.family);
-  if (query.filters.category) params.set("category", query.filters.category);
+  if (query.filters.query) params.set("q", query.filters.query);
+  if (!query.filters.query && query.filters.family) {
+    params.set("family", query.filters.family);
+  }
+  if (!query.filters.query && query.filters.category) {
+    params.set("category", query.filters.category);
+  }
   if (query.filters.year) params.set("year", String(query.filters.year));
 
   const response = await fetch(`/api/funds?${params.toString()}`);
@@ -67,6 +77,7 @@ function pageRequestKey(
   offset: number,
 ) {
   return JSON.stringify({
+    query: filters.query ?? "",
     family: filters.family ?? "",
     category: filters.category ?? "",
     year: filters.year ?? "",
@@ -76,18 +87,47 @@ function pageRequestKey(
   });
 }
 
+function hydratePageItems(
+  items: FundEstimateView[],
+  catalog: FundEstimateView[],
+  filters: SearchFilters,
+  scopedTicker?: string,
+): FundEstimateView[] {
+  const hydrated = items.map((item) => {
+    const fromCatalog = catalog.find(
+      (fund) => fund.ticker.toUpperCase() === item.ticker.toUpperCase(),
+    );
+    return fromCatalog ? mergeFundWithDistributions(item, fromCatalog) : item;
+  });
+  if (scopedTicker) return hydrated;
+  return mergeFundLists(hydrated, searchFunds(catalog, filters));
+}
+
 export function Dashboard({
   funds,
   facets,
   onIllustrate,
+  ticker,
 }: {
   funds: FundEstimateView[];
   facets: Facets;
   onIllustrate?: (fund: FundEstimateView) => void;
   onNotice?: (message: string) => void;
+  /** Selected Search ticker — hydrates Upcoming / Paid history for that fund. */
+  ticker?: string | null;
 }) {
   const [filters, setFilters] = useState<SearchFilters>({});
   const deferredFilters = useDeferredValue(filters);
+  const scopedTicker = ticker?.trim().toUpperCase() || undefined;
+  const requestFilters = useMemo<SearchFilters>(
+    () => ({
+      ...deferredFilters,
+      query: scopedTicker,
+      family: scopedTicker ? undefined : deferredFilters.family,
+      category: scopedTicker ? undefined : deferredFilters.category,
+    }),
+    [deferredFilters, scopedTicker],
+  );
   const [sortKey, setSortKey] = useState<SortKey>("fundName");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [offset, setOffset] = useState(0);
@@ -102,20 +142,21 @@ export function Dashboard({
   );
 
   const requestKey = pageRequestKey(
-    deferredFilters,
+    requestFilters,
     sortKey,
     sortDirection,
-    offset,
+    scopedTicker ? 0 : offset,
   );
 
   useEffect(() => {
     let cancelled = false;
+    const pageOffset = scopedTicker ? 0 : offset;
     void fetchFundPage({
-      filters: deferredFilters,
+      filters: requestFilters,
       sort: sortKey,
       direction: sortDirection,
       limit: FUND_PAGE_SIZE,
-      offset,
+      offset: pageOffset,
     })
       .then((next) => {
         if (cancelled) return;
@@ -126,11 +167,11 @@ export function Dashboard({
       .catch(() => {
         if (cancelled) return;
         const fallback = paginateViews(funds, {
-          ...deferredFilters,
+          ...requestFilters,
           sort: sortKey,
           direction: sortDirection,
           limit: FUND_PAGE_SIZE,
-          offset,
+          offset: pageOffset,
         });
         setPage(fallback);
         setPageYears((current) =>
@@ -141,7 +182,7 @@ export function Dashboard({
     return () => {
       cancelled = true;
     };
-  }, [deferredFilters, funds, offset, requestKey, sortDirection, sortKey]);
+  }, [funds, offset, requestFilters, requestKey, scopedTicker, sortDirection, sortKey]);
 
   const isPending = filters !== deferredFilters || appliedKey !== requestKey;
   const toolbarFacets = useMemo<Facets>(
@@ -152,8 +193,14 @@ export function Dashboard({
     [facets, page.items, pageYears],
   );
 
+  const tableFunds = useMemo(
+    () =>
+      hydratePageItems(page.items, funds, requestFilters, scopedTicker),
+    [funds, page.items, requestFilters, scopedTicker],
+  );
+
   const hasActiveFilters = Boolean(
-    filters.family || filters.category || filters.year,
+    filters.family || filters.category || filters.year || scopedTicker,
   );
 
   const rangeLabel = useMemo(() => {
@@ -203,7 +250,7 @@ export function Dashboard({
         onChange={applyFilters}
       />
       <div className={isPending ? "opacity-70 transition-opacity" : ""}>
-        {page.total === 0 ? (
+        {page.total === 0 && tableFunds.length === 0 ? (
           <EmptyState
             hasActiveFilters={hasActiveFilters}
             universeEmpty={funds.length === 0}
@@ -211,17 +258,22 @@ export function Dashboard({
           />
         ) : (
           <ResultsTable
-            funds={page.items}
+            funds={tableFunds}
             onIllustrate={onIllustrate}
             sortKey={sortKey}
             sortDirection={sortDirection}
             onSort={toggleSort}
-            page={{
-              total: page.total,
-              limit: page.limit,
-              offset: page.offset,
-              onOffset: setOffset,
-            }}
+            year={filters.year}
+            page={
+              scopedTicker
+                ? undefined
+                : {
+                    total: page.total,
+                    limit: page.limit,
+                    offset: page.offset,
+                    onOffset: setOffset,
+                  }
+            }
           />
         )}
       </div>

@@ -47,8 +47,12 @@ export const PAID_HISTORY_EMPTY = "No paid history from the Data API.";
 /** Locked Search Upcoming / Announced module chrome (Modules). */
 export const SEARCH_UPCOMING_HEADING = "Upcoming / Announced";
 export const SEARCH_UPCOMING_DETAIL =
-  "Announced distributions that have not paid out yet. Historical paid distributions live on Compare / Portfolio Growth & Tax.";
+  "Announced distributions that have not paid out yet. Past record/ex/payable dates stay in Paid history below.";
 export const SEARCH_UPCOMING_KICKER = "unpaid announced · not paid history";
+export const SEARCH_PAID_HISTORY_HEADING = "Paid history";
+export const SEARCH_PAID_HISTORY_DETAIL =
+  "Paid and final distributions from GET /distributions. Never invented from Upcoming.";
+export const SEARCH_PAID_HISTORY_KICKER = "past · not upcoming";
 
 export { TICKER_REQUEST } from "@/lib/data-api/request-ticker";
 

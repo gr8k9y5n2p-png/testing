@@ -166,7 +166,22 @@ function hasPaidHistorySignal(fund: FundEstimateView): boolean {
   return stage === "paid" || stage === "final";
 }
 
-export function paidHistoryViews(funds: FundEstimateView[]): FundEstimateView[] {
+/** Calendar year for a paid / final row. Ex, else payable, else record, else as_of. */
+export function paidHistoryYearOf(
+  event: Pick<
+    PaidDistributionEvent,
+    "exDate" | "payableDate" | "recordDate" | "asOfDate" | "distributionYear"
+  >,
+): number {
+  const raw = event.exDate ?? event.payableDate ?? event.recordDate ?? event.asOfDate;
+  const year = Number((raw ?? "").slice(0, 4));
+  return year || event.distributionYear;
+}
+
+export function paidHistoryViews(
+  funds: FundEstimateView[],
+  year?: number,
+): FundEstimateView[] {
   const rows: FundEstimateView[] = [];
   for (const fund of funds) {
     const extras = preferFinalPaidEvents(fund.paidHistory ?? []);
@@ -181,7 +196,11 @@ export function paidHistoryViews(funds: FundEstimateView[]): FundEstimateView[] 
       rows.push(fundFromPaidEvent(fund, event));
     }
   }
-  return rows.sort((a, b) => {
+  const scoped =
+    year == null
+      ? rows
+      : rows.filter((row) => paidHistoryYearOf(row) === year);
+  return scoped.sort((a, b) => {
     const byDate = (b.payableDate ?? b.exDate ?? b.asOfDate).localeCompare(
       a.payableDate ?? a.exDate ?? a.asOfDate,
     );
