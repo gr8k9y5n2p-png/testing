@@ -246,6 +246,11 @@ def test_coverage_exposes_estimate_feed_readiness(session) -> None:
     assert catalyst.estimate_feed_ready is True
     assert catalyst.estimate_feed_status == "paid_history_only"
     assert catalyst.history_years == [2025]
+    ark = by_slug["ark"]
+    assert ark.estimate_feed_ready is True
+    assert ark.estimate_feed_status == "paid_history_only"
+    assert ark.history_years == [2021]
+    assert any("ark-funds.com" in url for url in ark.estimate_feed_urls)
     assert "CPEAX" in catalyst.performance_tickers
     assert any("catalystmf.com/literature-and-forms" in url for url in catalyst.estimate_feed_urls)
     assert any("2025%20Capital%20Gains%20Distributions.pdf" in url for url in catalyst.estimate_feed_urls)

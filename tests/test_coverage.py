@@ -7,8 +7,8 @@ def test_coverage_endpoint_lists_top_110(client: TestClient) -> None:
     response = client.get("/coverage")
     assert response.status_code == 200
     body = response.json()
-    assert body["top_n"] == 113
-    assert body["implemented_count"] == 113
+    assert body["top_n"] == 114
+    assert body["implemented_count"] == 114
     assert body["stub_count"] == 0
     assert body["implemented_pct"] == 100.0
     slugs = [row["slug"] for row in body["families"]]
@@ -126,6 +126,7 @@ def test_coverage_endpoint_lists_top_110(client: TestClient) -> None:
         "first_trust",
         "dws",
         "catalyst",
+        "ark",
     ]
     assert all(row["coverage_tier"] == "implemented" for row in body["families"])
     assert body["families"][0]["priority"] == 1
@@ -152,6 +153,7 @@ def test_coverage_endpoint_lists_top_110(client: TestClient) -> None:
     assert body["families"][110]["slug"] == "first_trust"
     assert body["families"][111]["slug"] == "dws"
     assert body["families"][112]["slug"] == "catalyst"
+    assert body["families"][113]["slug"] == "ark"
     lookback = body["lookback_5y"]
     assert lookback["years"] == [2021, 2022, 2023, 2024, 2025]
     assert lookback["book_funds"] == 0
@@ -327,6 +329,12 @@ def test_coverage_gap_alias_xtrackers_and_dws_funds(client: TestClient) -> None:
     )
     assert funds.status_code == 200
     assert funds.json()["adapter_slug"] == "dws"
+
+
+def test_coverage_gap_alias_ark_invest(client: TestClient) -> None:
+    ark = client.post("/coverage/gaps", json={"ticker": "ARKK", "fund_family": "ark_funds"})
+    assert ark.status_code == 200
+    assert ark.json()["adapter_slug"] == "ark"
 
 
 def test_coverage_gap_alias_catalyst_funds(client: TestClient) -> None:

@@ -348,6 +348,11 @@ class SchwabSource(HtmlTableSource):
         "$0.4957; daily NII omitted). 2021–2024 ≥$1B product-page history adds SWSSX / "
         "SWISX / SWLGX alongside SWTSX / SWPPX "
         "(SWSSX 2021 ST $0.3715 / LT $2.3981; SWLGX 2021 LT $0.9628). "
+        "Schwab ETF product pages add December YE income for SCHD / SCHX / SCHB / "
+        "SCHF / SCHG plus additional ≥$1B ETFs SCHA / SCHM / SCHE / SCHV / SCHP / "
+        "SCHZ / SCHH / SCHC / FNDF (SCHD 2025 $0.2782; SCHA 2025 $0.1301; SCHM 2025 "
+        "$0.1334; official $0.0000 ST/LT stored; 3-for-1 SCHD split 10/10/2024 "
+        "printed as published). Family MF PDF does not include these ETFs. "
         "No public filled ICI file. Skip SPA family grids."
     )
     live_limitations = (
@@ -400,6 +405,13 @@ class SchwabSource(HtmlTableSource):
                 fixture="2021_annual_distributions.html",
                 live=False,
                 large_aum_only=True,
+            ),
+            PageSpec(
+                name="etf_product_page_distributions",
+                url="https://www.schwabassetmanagement.com/products/schd",
+                fixture="etf_product_page_distributions.html",
+                live=False,
+                large_aum_only=False,
             ),
         ]
 

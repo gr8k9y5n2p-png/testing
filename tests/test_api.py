@@ -312,6 +312,9 @@ def test_fund_families_coverage_ranks(client: TestClient) -> None:
     assert slugs["first_trust"]["aum_rank"] == 111
     assert slugs["dws"]["aum_rank"] == 112
     assert slugs["catalyst"]["aum_rank"] == 113
+    assert slugs["ark"]["aum_rank"] == 114
+    assert slugs["ark"]["implemented"] is True
+    assert slugs["ark"]["display_name"] == "ARK Invest"
     assert slugs["impax"]["implemented"] is True
     assert slugs["gqg"]["implemented"] is True
     assert slugs["third_avenue"]["implemented"] is True
@@ -338,7 +341,7 @@ def test_fund_families_coverage_ranks(client: TestClient) -> None:
     assert slugs["dws"]["display_name"] == "DWS / Xtrackers"
     assert slugs["catalyst"]["implemented"] is True
     assert slugs["catalyst"]["display_name"] == "Catalyst Funds"
-    assert len(slugs) == 113
+    assert len(slugs) == 114
 
 
 def test_manual_ingest_partner_feed(client: TestClient) -> None:
