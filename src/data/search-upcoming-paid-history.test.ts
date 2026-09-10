@@ -179,11 +179,15 @@ describe("Search Upcoming still-future unpaid prelims", () => {
       "FBGRX",
       "Blue Chip Growth",
       "Fidelity",
-      true,
+      false,
       FBGRX_ROWS,
     );
     assert.equal(fund.bucket, "upcoming");
-    assert.equal(fund.hasEstimate, true);
+    assert.equal(
+      fund.hasEstimate,
+      true,
+      "catalog has_estimate:false must not hide a still-future unpaid prelim",
+    );
     assert.equal(fund.publicationStage, "preliminary_estimate");
     assert.equal(fund.asOfDate, "2026-07-31");
     assert.equal(fund.exDate, "2026-09-11");

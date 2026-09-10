@@ -190,12 +190,11 @@ export function mergeFundWithDistributions(
     };
   }
 
-  // Every fund: catalog `has_estimate: false` means unpaid Upcoming = none.
-  // Do not let paid/final YE rows or $0 placeholders flip any ticker.
+  // Upcoming comes from unpaid /distributions prelims only — not the
+  // catalog `has_estimate` flag, paid/final YE, or $0 placeholders.
+  // A stale `has_estimate: false` must not hide a still-future unpaid prelim.
   const hasUpcoming =
-    fromDists.bucket === "upcoming" &&
-    fund.hasEstimate !== false &&
-    hasDisclosedUpcomingAmount(fromDists);
+    fromDists.bucket === "upcoming" && hasDisclosedUpcomingAmount(fromDists);
   return {
     ...fund,
     cusip: fund.cusip || fromDists.cusip,

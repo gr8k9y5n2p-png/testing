@@ -159,8 +159,9 @@ describe("Dollar Illustration Upcoming gate", () => {
     const source = readFileSync(join(here, "../../components/illustrate/IllustrationResults.tsx"), "utf8");
     assert.match(source, /splitIllustrationComponents/);
     assert.match(source, /upcomingIllustrationTotals/);
-    assert.doesNotMatch(source, /totals\.distribution_dollars/);
-    assert.doesNotMatch(source, /totals\.estimated_tax_dollars/);
+    assert.match(source, /catalogUpcoming/);
+    assert.match(source, /isUpcomingFund/);
+    assert.doesNotMatch(source, /result\.totals/);
   });
 
   it("IllustrationResults mounts Paid history from /distributions, not illustrate components", () => {
@@ -208,5 +209,71 @@ describe("Dollar Illustration Upcoming gate", () => {
       }),
       "upcoming",
     );
+  });
+
+  it("does not force paid when catalog hasEstimate is stale but bucket is Upcoming", () => {
+    const fbgrx = component({
+      distribution_id: "fbgrx-ltcg",
+      estimate_type: "long_term_capital_gains",
+      publication_stage: null,
+      as_of: "2026-07-31",
+      record_date: null,
+      ex_date: "2026-09-11",
+      payable_date: "2026-09-14",
+      amount: 21.021,
+      amount_unit: "per_share",
+      distribution_dollars: 67_318.9,
+      estimated_tax_dollars: 16_829.73,
+    });
+    assert.equal(
+      illustrationComponentBucket(fbgrx, {
+        hasEstimate: false,
+        bucket: "upcoming",
+        publicationStage: "preliminary_estimate",
+      }),
+      "upcoming",
+    );
+  });
+
+  it("coerces string illustrate dollars and does not double-count % NAV twins", () => {
+    const ltcg = component({
+      distribution_id: "fbgrx-ltcg",
+      estimate_type: "long_term_capital_gains",
+      publication_stage: "preliminary_estimate",
+      as_of: "2026-07-31",
+      ex_date: "2026-09-11",
+      payable_date: "2026-09-14",
+      amount: 21.021,
+      amount_unit: "per_share",
+      distribution_dollars: "67318.90" as unknown as number,
+      estimated_tax_dollars: "16829.73" as unknown as number,
+    });
+    const total = component({
+      distribution_id: "fbgrx-total",
+      estimate_type: "total",
+      publication_stage: "preliminary_estimate",
+      as_of: "2026-07-31",
+      ex_date: "2026-09-11",
+      payable_date: "2026-09-14",
+      amount: 21.021,
+      amount_unit: "per_share",
+      distribution_dollars: "67318.90" as unknown as number,
+      estimated_tax_dollars: "16829.73" as unknown as number,
+    });
+    const pct = component({
+      distribution_id: "fbgrx-tcg",
+      estimate_type: "total_capital_gains",
+      publication_stage: "preliminary_estimate",
+      as_of: "2026-07-31",
+      ex_date: "2026-09-11",
+      payable_date: "2026-09-14",
+      amount: 7.08,
+      amount_unit: "percent_of_nav",
+      distribution_dollars: "70800.00" as unknown as number,
+      estimated_tax_dollars: "17700.00" as unknown as number,
+    });
+    const totals = upcomingIllustrationTotals([ltcg, total, pct]);
+    assert.equal(totals?.distribution_dollars, 67_318.9);
+    assert.equal(totals?.estimated_tax_dollars, 16_829.73);
   });
 });
