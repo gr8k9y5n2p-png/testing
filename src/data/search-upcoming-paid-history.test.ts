@@ -409,6 +409,15 @@ describe("Search Paid history 2026 midyear paids", () => {
     const current = hydrate("AMCPX", "AMCAP Fund", "American Funds", true, AMCPX_ROWS);
     const year = currentPaidHistoryYear(new Date("2026-09-10T12:00:00Z"));
     assert.equal(year, 2026);
+    assert.equal(
+      currentPaidHistoryYear(new Date("2027-01-01T05:00:00Z")),
+      2026,
+      "year-end wipe follows America/Chicago, not UTC",
+    );
+    assert.equal(
+      currentPaidHistoryYear(new Date("2027-01-01T07:00:00Z")),
+      2027,
+    );
     const history = paidHistoryViews([prior, current], year);
     assert.equal(
       history.some((row) => Math.abs(row.estimatedDistributionAmount - 5.073) < 1e-6),

@@ -1,5 +1,5 @@
 import { pctOfNavForFund } from "../lib/illustrate/nav-math.ts";
-import { isoDate, splitFundsByBucket } from "./distribution-bucket.ts";
+import { chicagoTodayIso, isoDate, splitFundsByBucket } from "./distribution-bucket.ts";
 import {
   mergeFundLists,
   mergeFundWithDistributions,
@@ -182,9 +182,9 @@ export function paidHistoryYearOf(
   return year || event.distributionYear;
 }
 
-/** UTC calendar year for Search Paid History default / year-end wipe. */
+/** Chicago calendar year for Search Paid History default / year-end wipe. */
 export function currentPaidHistoryYear(now = new Date()): number {
-  return now.getUTCFullYear();
+  return Number(chicagoTodayIso(now).slice(0, 4));
 }
 
 /**

@@ -15,7 +15,7 @@ describe("Sample Estimates empty copy", () => {
     assert.match(source, /SEARCH_UPCOMING_HEADING = "Upcoming \/ Announced"/);
     assert.match(
       source,
-      /Announced distributions that have not paid out yet\. Past record\/ex\/payable dates stay in Paid history below\./,
+      /After ex-date \(America\/Chicago\) they move to Paid History below/,
     );
     assert.match(source, /SEARCH_PAID_HISTORY_HEADING = "Paid History"/);
     assert.match(source, /selected calendar year/);
