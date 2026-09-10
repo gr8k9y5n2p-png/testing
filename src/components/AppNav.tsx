@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const TABS = [
-  { href: "/", label: "Search", match: (path: string) => path === "/" },
   {
     href: "/compare",
     label: "Compare",
@@ -22,6 +21,14 @@ const TABS = [
   },
 ] as const;
 
+export function tabLinkClass(active: boolean): string {
+  return `inline-flex h-9 items-center rounded-md px-3 text-sm ${
+    active
+      ? "bg-accent-soft font-medium text-ink"
+      : "text-muted hover:bg-notice hover:text-ink"
+  }`;
+}
+
 export function AppNav() {
   const pathname = usePathname();
 
@@ -34,11 +41,7 @@ export function AppNav() {
             key={tab.href}
             href={tab.href}
             aria-current={active ? "page" : undefined}
-            className={`inline-flex h-9 items-center rounded-md px-3 text-sm ${
-              active
-                ? "bg-accent-soft font-medium text-ink"
-                : "text-muted hover:bg-notice hover:text-ink"
-            }`}
+            className={tabLinkClass(active)}
           >
             {tab.label}
           </Link>

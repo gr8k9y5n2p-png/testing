@@ -42,6 +42,15 @@ export default async function Home({
   }>;
 }) {
   const params = await searchParams;
+  if (firstParam(params.tab) === "search") {
+    const ticker = firstSearchParam(params.ticker);
+    const checkout = checkoutFromSearchParams(params.checkout);
+    const next = new URLSearchParams();
+    if (ticker) next.set("ticker", ticker);
+    if (checkout) next.set("checkout", checkout);
+    const qs = next.toString();
+    redirect(qs ? `/?${qs}` : "/");
+  }
   if (firstParam(params.tab) === "portfolio") {
     redirect("/portfolio");
   }
