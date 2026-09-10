@@ -171,3 +171,64 @@ def test_parse_ici_primary_2021_and_2025_ongoing() -> None:
     )
     assert vfiax_22.amount == Decimal("1.676500")
     assert len({r.ticker for r in y2022}) >= 200
+
+
+def test_invesco_ici_primary_december_2023_2025() -> None:
+    inv = Path(__file__).resolve().parents[1] / "fixtures" / "invesco"
+    y2025 = parse_ici_primary(
+        (inv / "ici_primary_2025.csv").read_text(encoding="utf-8"),
+        source_url=(
+            "https://www.invesco.com/content/dam/invesco/us/en/documents/"
+            "tax-documents/2025-Primary-Broker-File-without-Real-Estate-or-SteelPath-MLP-Funds.xlsx"
+        ),
+        fund_family="Invesco",
+    )
+    y2024 = parse_ici_primary(
+        (inv / "ici_primary_2024.csv").read_text(encoding="utf-8"),
+        source_url=(
+            "https://www.invesco.com/content/dam/invesco/us/en/documents/"
+            "tax-document/oe-2024-primary-broker-file.xlsx"
+        ),
+        fund_family="Invesco",
+    )
+    y2023 = parse_ici_primary(
+        (inv / "ici_primary_2023.csv").read_text(encoding="utf-8"),
+        source_url=(
+            "https://www.invesco.com/content/dam/invesco/us/en/documents/"
+            "tax-document/oe-2023-primary-broker-file.xlsx"
+        ),
+        fund_family="Invesco",
+    )
+    vafax_25 = next(
+        r
+        for r in y2025
+        if r.ticker == "VAFAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert vafax_25.amount == Decimal("4.0375")
+    assert str(vafax_25.as_of) == "2025-12-31"
+    assert vafax_25.publication_stage == PublicationStage.final
+    vafax_24 = next(
+        r
+        for r in y2024
+        if r.ticker == "VAFAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert vafax_24.amount == Decimal("1.0971")
+    acstx_24 = next(
+        r
+        for r in y2024
+        if r.ticker == "ACSTX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert acstx_24.amount == Decimal("2.2071")
+    chtrx_23 = next(
+        r
+        for r in y2023
+        if r.ticker == "CHTRX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert chtrx_23.amount == Decimal("0.9295")
+    assert {"VAFAX", "ACSTX", "CHTRX", "OPOCX"} <= {r.ticker for r in y2025}
+    assert len({r.ticker for r in y2025}) >= 500
+    assert len({r.ticker for r in y2024}) >= 500
+    assert len({r.ticker for r in y2023}) >= 450
+    assert all(r.amount_unit == AmountUnit.per_share for r in y2025 + y2024 + y2023)
+    assert all(r.amount is not None and r.amount != Decimal("0") for r in y2025 + y2024 + y2023)
+    assert not any(r.ticker and r.ticker.startswith("ZZ") for r in y2025)

@@ -38,7 +38,19 @@ class AmericanFundsSource(FundSource):
         "Live year-end *preliminary* estimate pages are seasonal and often advisor-gated; "
         "fixture mode includes estimate + final snapshots for 2024 and 2025 so time-series "
         "(as_of + publication_stage) coexist, plus product-page paid history for AMCAP / "
-        "Growth Fund of America (2021–2025 tax-year as_of). 2024 advisor HTML now 302s to "
+        "Growth Fund of America / American Balanced (ABALX 2021–2025 December OI; "
+        "2022–2023 LTCG published $0 omitted) and ICA / WMIF / New Perspective / "
+        "EUPAC / New World / American Mutual / Capital Income Builder / "
+        "Fundamental Investors / SMALLCAP World / Income Fund of America / "
+        "Bond Fund of America / New Economy / High-Income Trust / Capital "
+        "World Bond / U.S. Government Securities / International Growth and "
+        "Income Class A pages (2021–2025 tax-year as_of; unpublished December "
+        "years stay unmatched). Full public YE CG books for "
+        "2021–2024 are Wayback id_ snapshots of the individual tax-center pages (live "
+        "URLs now 404; advisor copies 302 to login) stored as year_end_*_tax_year.html "
+        "with as_of = published December ex-date so lookback counts the tax year. 2025 "
+        "tax-year as_of is the same official YE table as the January 2026 reprint. "
+        "Bare QDI % columns omitted. 2024 advisor HTML now 302s to "
         "login; per-fund history also lives at the Historical Distributions tool and on "
         "each fund’s product page (historicalDistributions JSON). "
         "CGHM (inception 6/25/24) has no 2021–2023 history. Official 2024 and 2025 "
@@ -60,6 +72,7 @@ class AmericanFundsSource(FundSource):
             HISTORICAL_TOOL_URL,
             "https://www.capitalgroup.com/individual/investments/mutual-funds/details/amcap-a",
             "https://www.capitalgroup.com/individual/investments/mutual-funds/details/gfa-a",
+            "https://www.capitalgroup.com/individual/investments/mutual-funds/details/ambal-a",
         ]
 
     def estimate_feed_urls(self) -> list[str]:
@@ -143,6 +156,36 @@ class AmericanFundsSource(FundSource):
                 "name": "paid_history_2021_2025",
                 "url": "https://www.capitalgroup.com/individual/investments/mutual-funds/details/amcap-a",
                 "fixture": "paid_history_2021_2025.html",
+                "live": False,
+            },
+            {
+                "name": "year_end_2021_tax_year",
+                "url": "https://www.capitalgroup.com/individual/service-and-support/tax-center/2021-year-end-distributions.html",
+                "fixture": "year_end_2021_tax_year.html",
+                "live": False,
+            },
+            {
+                "name": "year_end_2022_tax_year",
+                "url": "https://www.capitalgroup.com/individual/service-and-support/tax-center/2022-year-end-distributions.html",
+                "fixture": "year_end_2022_tax_year.html",
+                "live": False,
+            },
+            {
+                "name": "year_end_2023_tax_year",
+                "url": "https://www.capitalgroup.com/individual/service-and-support/tax-center/2023-year-end-distributions.html",
+                "fixture": "year_end_2023_tax_year.html",
+                "live": False,
+            },
+            {
+                "name": "year_end_2024_tax_year",
+                "url": "https://www.capitalgroup.com/individual/service-and-support/tax-center/2024-year-end-distributions.html",
+                "fixture": "year_end_2024_tax_year.html",
+                "live": False,
+            },
+            {
+                "name": "year_end_2025_tax_year",
+                "url": YEAR_END_2025_URL,
+                "fixture": "year_end_2025_tax_year.html",
                 "live": False,
             },
         ]

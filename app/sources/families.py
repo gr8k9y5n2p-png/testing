@@ -15,7 +15,7 @@ class BlackRockSource(HtmlTableSource):
         "BlackRock open-end mutual-fund distribution books "
         "https://www.blackrock.com/us/individual/resources/tax-information/2025-distributions "
         "(and the 2024 / 2023 / 2022 / 2021 HTML siblings). Investor A when listed. Mutual funds + ETFs "
-        "only; SMAs and Variable Series skipped. Live 2021–2024 pages are per-fund share-class tables "
+        "only; SMAs and Variable Series skipped. Live 2021–2025 pages are per-fund share-class tables "
         "(no ticker column) — fixtures flatten November–December YE Investor A rows. "
         "Investor A tickers are backfilled from ``app/aliases_blackrock.py`` without "
         "changing name-slug upsert keys (Equity Dividend Investor A MDDVX). "
@@ -432,15 +432,19 @@ class InvescoSource(HtmlTableSource):
         "ETF estimates via the 20 Nov 2025 press-release table (full listed ETFs). "
         "2025 MF fixture is the full paying-fund PDF table (names; no MF tickers; "
         "SMA High Yield Bond skipped). "
-        "Invesco lists ICI Primary distribution files on "
+        "Official ICI Primary broker XLSX files are public on "
         "https://www.invesco.com/us/en/accounts/tax-center/open-end-tax-guide.html "
-        "(2023–2025 most funds / REIT / SteelPath). No stable public file URL "
-        "was fetchable from this environment (JS / 406) — PDF/HTML archives remain "
-        "the supported path until an ICI download URL is confirmed. 2021–2023 "
-        "ICI/HTML books were re-probed for the 5-year lookback and are still "
-        "not fetchable — not invented."
+        "(2025 most-funds + Real Estate; 2024 / 2023 oe-*-primary-broker-file.xlsx "
+        "+ Real Estate companions). December YE income / ST / LT $/share only "
+        "(Daily and $0 omitted; bare QDI / 199A / AMT % columns omitted). "
+        "VAFAX Dec 2025 LT $4.0375 / 2024 LT $1.0971. SteelPath companions had "
+        "no December YE $/share rows — not invented. 2021–2022 sibling XLSX "
+        "URLs 404 — unmatched / Undisclosed."
     )
-    live_limitations = "Estimates are PDF/PR/contentdetail, not an HTML grid. Fixture mode transcribes the public tables."
+    live_limitations = (
+        "Estimates are PDF/PR/contentdetail, not an HTML grid. ICI Primary XLSX "
+        "is public but not HTML — fixture mode transcribes December YE rows."
+    )
 
     def pages(self) -> list[PageSpec]:
         return [
@@ -465,6 +469,36 @@ class InvescoSource(HtmlTableSource):
                 url="https://www.invesco.com/us-rest/contentdetail?contentId=29096ee0-8ec4-4199-930f-645be9d07e64",
                 fixture="2024_estimated_capital_gains.html",
                 live=False,
+            ),
+            PageSpec(
+                name="ici_primary_2025",
+                url=(
+                    "https://www.invesco.com/content/dam/invesco/us/en/documents/"
+                    "tax-documents/2025-Primary-Broker-File-without-Real-Estate-or-SteelPath-MLP-Funds.xlsx"
+                ),
+                fixture="ici_primary_2025.csv",
+                live=False,
+                parser="ici",
+            ),
+            PageSpec(
+                name="ici_primary_2024",
+                url=(
+                    "https://www.invesco.com/content/dam/invesco/us/en/documents/"
+                    "tax-document/oe-2024-primary-broker-file.xlsx"
+                ),
+                fixture="ici_primary_2024.csv",
+                live=False,
+                parser="ici",
+            ),
+            PageSpec(
+                name="ici_primary_2023",
+                url=(
+                    "https://www.invesco.com/content/dam/invesco/us/en/documents/"
+                    "tax-document/oe-2023-primary-broker-file.xlsx"
+                ),
+                fixture="ici_primary_2023.csv",
+                live=False,
+                parser="ici",
             ),
         ]
 

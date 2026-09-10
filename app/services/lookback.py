@@ -41,6 +41,21 @@ def _fund_key(ticker: str | None, fund_identifier: str | None, fund_name: str | 
     return (fund_name or "").strip().lower()
 
 
+def _product_sleeve(ticker: str | None, fund_name: str | None) -> str:
+    """Mutual-fund vs ETF sleeve for the lookback digest.
+
+    Eric: prioritize MFs (higher tax drag). Name containing ETF wins;
+    otherwise 1–4 letter alpha tickers are treated as ETFs and the rest as MFs.
+    """
+    name = (fund_name or "").lower()
+    symbol = (ticker or "").strip().upper()
+    if "etf" in name:
+        return "etf"
+    if symbol and symbol.isalpha() and len(symbol) <= 4:
+        return "etf"
+    return "mf"
+
+
 def _is_ye_final_amount(stage: str | None, unit: str | None, amount: Decimal | None) -> bool:
     if stage not in FINAL_STAGES:
         return False
@@ -53,8 +68,14 @@ def _is_ye_final_amount(stage: str | None, unit: str | None, amount: Decimal | N
 class LookbackDigest:
     years: tuple[int, ...]
     funds_with_finals_by_year: dict[int, int]
+    funds_with_finals_by_year_mf: dict[int, int]
+    funds_with_finals_by_year_etf: dict[int, int]
     book_funds: int
+    book_funds_mf: int
+    book_funds_etf: int
     funds_with_5y: int
+    funds_with_5y_mf: int
+    funds_with_5y_etf: int
     pct_book_with_5y: float
     fcntx_years: list[int]
     notes: list[str]
@@ -65,8 +86,18 @@ class LookbackDigest:
             "funds_with_finals_by_year": {
                 str(year): self.funds_with_finals_by_year.get(year, 0) for year in self.years
             },
+            "funds_with_finals_by_year_mf": {
+                str(year): self.funds_with_finals_by_year_mf.get(year, 0) for year in self.years
+            },
+            "funds_with_finals_by_year_etf": {
+                str(year): self.funds_with_finals_by_year_etf.get(year, 0) for year in self.years
+            },
             "book_funds": self.book_funds,
+            "book_funds_mf": self.book_funds_mf,
+            "book_funds_etf": self.book_funds_etf,
             "funds_with_5y": self.funds_with_5y,
+            "funds_with_5y_mf": self.funds_with_5y_mf,
+            "funds_with_5y_etf": self.funds_with_5y_etf,
             "pct_book_with_5y": self.pct_book_with_5y,
             "fcntx_years": self.fcntx_years,
             "notes": self.notes,
@@ -78,6 +109,7 @@ def lookback_digest_from_rows(
 ) -> LookbackDigest:
     """Build the digest from (ticker, fund_identifier, fund_name, as_of, ex_date, stage, unit, amount)."""
     years_by_fund: dict[str, set[int]] = defaultdict(set)
+    sleeve_by_fund: dict[str, str] = {}
     fcntx_years: set[int] = set()
     for ticker, ident, name, as_of, ex_date, stage, unit, amount in rows:
         if not _is_ye_final_amount(stage, unit, amount):
@@ -89,16 +121,39 @@ def lookback_digest_from_rows(
         if not key:
             continue
         years_by_fund[key].add(year)
+        sleeve = _product_sleeve(ticker, name)
+        prior = sleeve_by_fund.get(key)
+        if prior is None or (prior == "mf" and sleeve == "etf"):
+            sleeve_by_fund[key] = sleeve
         if (ticker or "").upper() == "FCNTX":
             fcntx_years.add(year)
 
     by_year = {year: 0 for year in LOOKBACK_YEARS}
+    by_year_mf = {year: 0 for year in LOOKBACK_YEARS}
+    by_year_etf = {year: 0 for year in LOOKBACK_YEARS}
     five = 0
-    for years in years_by_fund.values():
+    five_mf = 0
+    five_etf = 0
+    book_mf = 0
+    book_etf = 0
+    for key, years in years_by_fund.items():
+        sleeve = sleeve_by_fund.get(key, "mf")
+        if sleeve == "etf":
+            book_etf += 1
+        else:
+            book_mf += 1
         for year in years:
             by_year[year] += 1
+            if sleeve == "etf":
+                by_year_etf[year] += 1
+            else:
+                by_year_mf[year] += 1
         if len(years) >= 5:
             five += 1
+            if sleeve == "etf":
+                five_etf += 1
+            else:
+                five_mf += 1
     book = len(years_by_fund)
     pct = round(100.0 * five / book, 1) if book else 0.0
     notes = [
@@ -106,6 +161,7 @@ def lookback_digest_from_rows(
         "Only publication_stage final/paid with amount_unit=per_share are counted.",
         "Bare percent QDI columns are excluded.",
         "Missing years stay unmatched / Undisclosed — never invented as $0.",
+        "Mutual funds are prioritized over ETFs; digest splits MF vs ETF counts.",
     ]
     if set(LOOKBACK_YEARS) <= fcntx_years:
         notes.append("FCNTX has matched YE finals for 2021–2025.")
@@ -121,8 +177,14 @@ def lookback_digest_from_rows(
     return LookbackDigest(
         years=LOOKBACK_YEARS,
         funds_with_finals_by_year=by_year,
+        funds_with_finals_by_year_mf=by_year_mf,
+        funds_with_finals_by_year_etf=by_year_etf,
         book_funds=book,
+        book_funds_mf=book_mf,
+        book_funds_etf=book_etf,
         funds_with_5y=five,
+        funds_with_5y_mf=five_mf,
+        funds_with_5y_etf=five_etf,
         pct_book_with_5y=pct,
         fcntx_years=sorted(fcntx_years),
         notes=notes,
