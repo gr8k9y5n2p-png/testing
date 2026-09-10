@@ -18,7 +18,7 @@ export function TickerHistoryLink({
     <Link
       href={fundHistoryPath(label)}
       className={`rounded-sm text-ink underline-offset-2 hover:underline ${className}`}
-      aria-label={`Open ${label} historical distributions and upcoming estimates`}
+      aria-label={`Open ${label} upcoming estimates and dollar illustration`}
     >
       {children ?? label}
     </Link>

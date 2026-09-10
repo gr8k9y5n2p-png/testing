@@ -1,7 +1,7 @@
 import type { GrowthFundInput } from "@/components/illustrate/GrowthAndTaxDragModule";
 import type { FundEstimateView } from "@/data/types";
 
-/** Search-tab historical + upcoming tables (`IllustratePanel`). */
+/** Search-tab Upcoming + dollar illustration (`IllustratePanel`). */
 export const FUND_HISTORY_HASH = "illustrate";
 
 /**
@@ -11,9 +11,9 @@ export const FUND_HISTORY_HASH = "illustrate";
 export const HOMEPAGE_GROWTH_FUNDS: GrowthFundInput[] = [];
 
 /**
- * Deep-link into Search for a ticker's historical distribution table and
- * Upcoming / announced estimates. Growth & tax drag lives on Compare /
- * `/growth-tax`, not the Search homepage.
+ * Deep-link into Search for a ticker's Upcoming / announced estimates and
+ * dollar illustration. Historical paid distributions and Growth & tax drag
+ * live on Compare / Portfolio / `/growth-tax`, not the Search homepage.
  */
 export function fundHistoryPath(ticker: string): string {
   const key = normalizeTicker(ticker);

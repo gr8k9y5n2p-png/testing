@@ -163,14 +163,14 @@ describe("Dollar Illustration Upcoming gate", () => {
     assert.doesNotMatch(source, /totals\.estimated_tax_dollars/);
   });
 
-  it("IllustrationResults Paid history is /distributions rows, never illustration $", () => {
+  it("IllustrationResults does not mount Paid history on Search", () => {
     const source = readFileSync(
       join(here, "../../components/illustrate/IllustrationResults.tsx"),
       "utf8",
     );
-    assert.match(source, /paidEventsForFund/);
-    assert.match(source, /PAID_HISTORY_EMPTY/);
-    assert.match(source, /\/ sh/);
+    assert.doesNotMatch(source, /paidEventsForFund/);
+    assert.doesNotMatch(source, /PAID_HISTORY_EMPTY/);
+    assert.doesNotMatch(source, /Paid history/);
     assert.doesNotMatch(source, /paidComponents/);
     assert.doesNotMatch(source, /components=\{paid/);
     assert.doesNotMatch(

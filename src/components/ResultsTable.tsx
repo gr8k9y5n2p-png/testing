@@ -8,10 +8,9 @@ import {
   type UIEvent,
 } from "react";
 import type { FundEstimateView } from "@/data/types";
-import { hideUpcomingAmounts, paidEventsForFund } from "@/data/hydrate-funds";
-import { paidHistoryViews, splitFundsByBucket } from "@/data/queries";
+import { hideUpcomingAmounts } from "@/data/hydrate-funds";
+import { splitFundsByBucket } from "@/data/queries";
 import { publicationStageLabel } from "@/data/distribution-bucket";
-import { DistributionDateStrip } from "@/components/DistributionDateStrip";
 import { DeltaBadge } from "@/components/DeltaBadge";
 import { useCoverage } from "@/components/coverage/CoverageProvider";
 import {
@@ -28,7 +27,6 @@ import {
   pctOfNavForFund,
 } from "@/lib/illustrate/nav-math";
 import {
-  PAID_HISTORY_EMPTY,
   UPCOMING_UNAVAILABLE_DETAIL,
   UPCOMING_UNAVAILABLE_HEADLINE,
 } from "@/lib/copy";
@@ -90,7 +88,6 @@ export function ResultsTable({
   const sortDirection = sortDirectionProp ?? localSortDirection;
   const coverage = useCoverage();
   const { upcoming } = splitFundsByBucket(funds);
-  const paid = paidHistoryViews(funds);
   const serverSorted = Boolean(onSort);
 
   function toggleSort(key: SortKey) {
@@ -108,52 +105,21 @@ export function ResultsTable({
     );
   }
 
-  const sourceByHistoryId = new Map<string, FundEstimateView>();
-  for (const fund of funds) {
-    sourceByHistoryId.set(fund.id, fund);
-    if (fund.bucket === "paid") continue;
-    for (const event of fund.paidHistory) {
-      sourceByHistoryId.set(
-        `${fund.id}:paid:${event.asOfDate}:${event.exDate ?? ""}`,
-        fund,
-      );
-    }
-  }
-
-  function illustrate(row: FundEstimateView) {
-    onIllustrate?.(sourceByHistoryId.get(row.id) ?? row);
-  }
-
   return (
     <div className="space-y-6">
       <FundSection
         title="Upcoming / Announced"
-        description="Announced distributions that have not paid out yet. Past record/ex/payable dates stay in history below."
+        description="Announced distributions that have not paid out yet. Historical paid distributions live on Compare / Portfolio Growth & Tax."
         kicker="unpaid announced · not paid history"
         wellClassName="bg-surface"
         funds={serverSorted ? upcoming : sortFunds(upcoming, sortKey, sortDirection)}
         sortKey={sortKey}
         sortDirection={sortDirection}
         onSort={toggleSort}
-        onIllustrate={onIllustrate ? illustrate : undefined}
+        onIllustrate={onIllustrate}
         coverage={coverage}
         emptyHeadline={UPCOMING_UNAVAILABLE_HEADLINE}
         empty={UPCOMING_UNAVAILABLE_DETAIL}
-        showPayable
-        page={page}
-      />
-      <FundSection
-        title="Paid history"
-        description="Paid, final-past, and estimates whose record/ex/payable date is already past. These never appear in Upcoming."
-        kicker="past · not upcoming"
-        wellClassName="bg-paper"
-        funds={serverSorted ? paid : sortFunds(paid, sortKey, sortDirection)}
-        sortKey={sortKey}
-        sortDirection={sortDirection}
-        onSort={toggleSort}
-        onIllustrate={onIllustrate ? illustrate : undefined}
-        coverage={coverage}
-        empty={PAID_HISTORY_EMPTY}
         showPayable
         page={page}
       />
@@ -515,28 +481,6 @@ function ExpandedDetails({ fund }: { fund: FundEstimateView }) {
       />
       <Field label="Year" value={String(fund.distributionYear)} />
       <Field label="Share class" value={fund.shareClass} />
-      {paidEventsForFund(fund).length > 0 ? (
-        <div className="col-span-2">
-          <dt className="text-[11px] uppercase tracking-[0.1em] text-faint">
-            Paid history
-          </dt>
-          <dd className="mt-1 space-y-1.5">
-            {paidEventsForFund(fund).map((event) => (
-              <DistributionDateStrip
-                key={`${event.asOfDate}-${event.exDate ?? ""}`}
-                fund={{
-                  ...event,
-                  publicationStage: event.publicationStage,
-                  bucket: "paid",
-                }}
-                compact
-                showPayable
-                showStage
-              />
-            ))}
-          </dd>
-        </div>
-      ) : null}
     </dl>
   );
 }
