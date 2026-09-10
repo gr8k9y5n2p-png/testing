@@ -150,7 +150,7 @@ def test_full_book_vanguard_ici_and_next_wave() -> None:
 def test_full_book_jpm_aci_sei_aqr_alger() -> None:
     jpm_funds, jpm_tickers = _funds_and_tickers(JPMorganSource())
     assert "SEEGX" in jpm_tickers
-    assert {"OIEIX", "UBVAX", "BBEM", "JFLI", "VCAXX", "MJMXX", "VNYXX"} <= jpm_tickers
+    assert {"OIEIX", "UBVAX", "BBEM", "JFLI", "VCAXX", "MJMXX", "VNYXX", "JEPI", "JEPQ"} <= jpm_tickers
     assert len(jpm_funds) >= 35
 
     aci_funds, aci_tickers = _funds_and_tickers(AmericanCenturySource())

@@ -391,7 +391,15 @@ class JPMorganSource(HtmlTableSource):
         "section-19a-notice-mutual-funds-dec-13-2024.pdf and "
         "section-19a-etf-notice-12-2024.pdf publish unsplit estimated CG $/share "
         "(SEEGX / JLGMX 2024 LT mapping $0.79868). 2023/2022/2021 sibling 19a "
-        "URLs re-probed 2026-09-10 still 404 — not invented."
+        "URLs re-probed 2026-09-10 still 404 — not invented. "
+        "JEPI / JEPQ are absent from those 19a Appendix A CG tables (income-only). "
+        "Official US fiscal-year ordinary-income per share is in the J.P. Morgan "
+        "Exchange-Traded Fund Trust N-CSR Financial Highlights (years ended June 30): "
+        "https://www.sec.gov/Archives/edgar/data/1485894/000119312525193891/d66956dncsr.htm "
+        "(JEPI 2025 $4.67 / 2024 $4.16 / 2023 $6.04 / 2022 $4.96 / 2021 $4.85; "
+        "JEPQ 2025 $6.11 / 2024 $4.86 / 2023 $5.64 / 2022 commencement stub $0.38). "
+        "Those are full-year paid totals, not a single December payable. "
+        "AU/CA JEPI unit amounts are a different share class — not used."
     )
     live_limitations = "No scrapeable HTML grid; 19a books are PDF. Fixture / partner ingest only."
 
@@ -413,6 +421,12 @@ class JPMorganSource(HtmlTableSource):
                 name="2024_section_19a",
                 url=f"{notices}/section-19a-notice-mutual-funds-dec-13-2024.pdf",
                 fixture="2024_section_19a.html",
+                live=False,
+            ),
+            PageSpec(
+                name="jepi_ncsr_financial_highlights",
+                url="https://www.sec.gov/Archives/edgar/data/1485894/000119312525193891/d66956dncsr.htm",
+                fixture="jepi_ncsr_financial_highlights.html",
                 live=False,
             ),
         ]

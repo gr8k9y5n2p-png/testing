@@ -424,6 +424,35 @@ def test_state_street_invesco_jpm_gs_pimco_fixtures() -> None:
         source_url="fixture://jpm-2024",
         fund_family="J.P. Morgan Asset Management",
     )
+    jepi_ncsr = parse_distribution_html(
+        (ROOT / "jpmorgan" / "jepi_ncsr_financial_highlights.html").read_text(encoding="utf-8"),
+        source_url="https://www.sec.gov/Archives/edgar/data/1485894/000119312525193891/d66956dncsr.htm",
+        fund_family="J.P. Morgan Asset Management",
+    )
+    jepi_2025 = next(
+        r
+        for r in jepi_ncsr
+        if r.ticker == "JEPI"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.amount == Decimal("4.67")
+    )
+    assert str(jepi_2025.as_of) == "2025-06-30"
+    assert {r.as_of.year for r in jepi_ncsr if r.ticker == "JEPI" and r.as_of} == {
+        2021,
+        2022,
+        2023,
+        2024,
+        2025,
+    }
+    jepq_2025 = next(
+        r
+        for r in jepi_ncsr
+        if r.ticker == "JEPQ"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.amount == Decimal("6.11")
+    )
+    assert str(jepq_2025.as_of) == "2025-06-30"
+
     seegx_2024 = next(
         r
         for r in jpm_2024

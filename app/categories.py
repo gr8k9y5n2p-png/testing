@@ -368,6 +368,7 @@ _CURATED_TICKERS: dict[str, str] = {
     "VNQ": "Real Estate",
     "QQQ": "Large Growth",
     "JEPI": "Derivative Income",
+    "JEPQ": "Derivative Income",
     "SCHD": "Large Value",
     "SCHX": "Large Blend",
     "SCHB": "Large Blend",

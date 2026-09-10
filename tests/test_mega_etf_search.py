@@ -11,11 +11,31 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1] / "fixtures"
 
-MEGA = ("QQQ", "IVV", "IWM", "EFA", "AGG", "GLD", "SCHD", "ACWX", "IEMG", "IEFA", "ITOT", "TLT", "LQD", "HYG", "VNQ", "ARKK", "BNDX")
+MEGA = (
+    "QQQ",
+    "IVV",
+    "IWM",
+    "EFA",
+    "AGG",
+    "GLD",
+    "JEPI",
+    "JEPQ",
+    "SCHD",
+    "ACWX",
+    "IEMG",
+    "IEFA",
+    "ITOT",
+    "TLT",
+    "LQD",
+    "HYG",
+    "VNQ",
+    "ARKK",
+    "BNDX",
+)
 
 
 def test_mega_etf_tickers_are_exact_fund_hits(client: TestClient) -> None:
-    for family in ("blackrock", "vanguard", "invesco", "state_street", "schwab", "ark"):
+    for family in ("blackrock", "vanguard", "invesco", "state_street", "schwab", "ark", "jpmorgan"):
         fetched = client.post("/ingest/fetch", json={"fund_family": family, "mode": "fixture"})
         assert fetched.status_code == 200, fetched.text
         assert fetched.json()["created"] > 0
@@ -32,6 +52,9 @@ def test_mega_etf_tickers_are_exact_fund_hits(client: TestClient) -> None:
     ivv = client.get("/distributions", params={"q": "IVV", "page_size": 50}).json()
     amounts = [Decimal(row["amount"]) for row in ivv["items"] if row.get("ticker") == "IVV"]
     assert Decimal("2.413592") in amounts
+    jepi = client.get("/distributions", params={"q": "JEPI", "page_size": 50}).json()
+    jepi_amounts = [Decimal(row["amount"]) for row in jepi["items"] if row.get("ticker") == "JEPI"]
+    assert Decimal("4.67") in jepi_amounts
 
 
 def test_ark_2021_final_pins() -> None:

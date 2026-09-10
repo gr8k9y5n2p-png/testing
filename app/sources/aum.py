@@ -61,6 +61,7 @@ LARGE_AUM_TICKERS: frozenset[str] = frozenset(
         "AGG",
         "GLD",
         "JEPI",
+        "JEPQ",
         "SCHD",
         "SCHX",
         "SCHB",

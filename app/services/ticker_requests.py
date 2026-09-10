@@ -39,6 +39,7 @@ KNOWN_TICKER_SLUGS: dict[str, str] = {
     "HYG": "blackrock",
     "GLD": "state_street",
     "JEPI": "jpmorgan",
+    "JEPQ": "jpmorgan",
     "SCHD": "schwab",
     "SCHX": "schwab",
     "SCHB": "schwab",
