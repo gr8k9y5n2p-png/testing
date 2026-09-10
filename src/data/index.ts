@@ -5,6 +5,7 @@ export {
   hideUpcomingAmounts,
   mergeFundLists,
   mergeFundWithDistributions,
+  overlayWeeklyNav,
   paidEventsForFund,
   preferFinalPaidEvents,
 } from "./hydrate-funds";

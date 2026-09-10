@@ -4,6 +4,7 @@ import { aggregateDistributions, type DataDistribution } from "./aggregate-distr
 import { mapFundsApiItem } from "./funds-list.ts";
 import {
   mergeFundWithDistributions,
+  overlayWeeklyNav,
   paidEventsForFund,
 } from "./hydrate-funds.ts";
 import {
@@ -223,6 +224,21 @@ describe("Search Upcoming still-future unpaid prelims", () => {
     );
     assert.match(formatWeeklyNavLabel(withWeeklyNav), /\$312\.26/);
     assert.match(formatWeeklyNavLabel(withWeeklyNav), /Sep 8, 2026/);
+    const selectedMissingNav = { ...fund, nav: 0, navAsOf: null };
+    const fromIdentity = overlayWeeklyNav(
+      selectedMissingNav,
+      mapFundsApiItem({
+        ticker: "FBGRX",
+        fund_name: "Blue Chip Growth",
+        fund_family: "Fidelity",
+        has_estimate: true,
+        nav_per_share: "312.260010",
+        nav_as_of: "2026-09-08",
+      }),
+    );
+    assert.match(formatWeeklyNavLabel(fromIdentity), /\$312\.26/);
+    assert.match(formatWeeklyNavLabel(fromIdentity), /Sep 8, 2026/);
+    assert.equal(fromIdentity.asOfDate, "2026-07-31");
     assert.equal(isUpcomingFund(fund, TODAY), true);
     const { upcoming, paid } = splitFundsByBucket([fund]);
     assert.equal(upcoming.length, 1, "Upcoming must show FBGRX");

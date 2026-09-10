@@ -6,6 +6,7 @@ import {
   hideUpcomingAmounts,
   mergeFundLists,
   mergeFundWithDistributions,
+  overlayWeeklyNav,
   paidEventsForFund,
   preferFinalPaidEvents,
 } from "./hydrate-funds.ts";
@@ -385,6 +386,63 @@ describe("Search hydrate from /distributions", () => {
     assert.equal(merged.length, 1);
     assert.equal(merged[0].nav, 40.849998);
     assert.equal(merged[0].navAsOf, "2026-09-08");
+  });
+
+  it("overlays live weekly NAV onto a distributions-only selected fund", () => {
+    const selected = mergeFundWithDistributions(
+      mapFundsApiItem({
+        ticker: "FBGRX",
+        fund_name: "Blue Chip Growth",
+        fund_family: "Fidelity",
+        has_estimate: true,
+      }),
+      withPeerContext(
+        aggregateDistributions(
+          [
+            row({
+              id: "fbgrx-ltcg",
+              ticker: "FBGRX",
+              fund_family: "Fidelity",
+              fund_name: "Blue Chip Growth",
+              estimate_type: "long_term_capital_gains",
+              amount: "21.021000",
+              amount_unit: "per_share",
+              publication_stage: "preliminary_estimate",
+              as_of: "2026-07-31",
+              ex_date: "2026-09-11",
+              payable_date: "2026-09-14",
+            }),
+          ],
+          "2026-09-10",
+        ),
+      )[0],
+    );
+    assert.equal(selected.nav, 0);
+    const overlaid = overlayWeeklyNav(
+      selected,
+      mapFundsApiItem({
+        ticker: "FBGRX",
+        fund_name: "Blue Chip Growth",
+        fund_family: "Fidelity",
+        has_estimate: true,
+        nav_per_share: "312.260010",
+        nav_as_of: "2026-09-08",
+      }),
+    );
+    assert.equal(overlaid.nav, 312.26001);
+    assert.equal(overlaid.navAsOf, "2026-09-08");
+    assert.equal(overlaid.asOfDate, "2026-07-31");
+    assert.ok(Math.abs(overlaid.estimatedDistributionAmount - 21.021) < 1e-6);
+    assert.equal(overlayWeeklyNav(selected, undefined).nav, 0);
+    assert.equal(
+      overlayWeeklyNav(selected, {
+        ticker: "AGTHX",
+        nav: 88.42,
+        navAsOf: "2026-09-08",
+      }).nav,
+      0,
+      "must not stamp another ticker's NAV",
+    );
   });
 
   it("does not invent a $0 Paid history row from an unhydrated catalog", () => {

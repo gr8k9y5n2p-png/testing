@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { FundEstimateView } from "@/data/types";
+import { hideUpcomingAmounts, overlayWeeklyNav } from "@/data/hydrate-funds";
 import { useCoverage } from "@/components/coverage/CoverageProvider";
 import { isMissingNavError, isMockIllustrate, postIllustrate } from "@/lib/illustrate/client";
 import {
@@ -15,7 +16,6 @@ import {
   formatWeeklyNavLabel,
   pctOfNavForFund,
 } from "@/lib/illustrate/nav-math";
-import { hideUpcomingAmounts } from "@/data/hydrate-funds";
 import { seedNavLookup } from "@/lib/illustrate/seed-nav";
 import { distributionIdsForFund } from "@/lib/illustrate/ids";
 import {
@@ -36,14 +36,61 @@ import { IllustrationResults } from "@/components/illustrate/IllustrationResults
 import { PortfolioCoverageCard } from "@/components/illustrate/PortfolioCoverageCard";
 import { TaxRateFields } from "@/components/illustrate/TaxRateFields";
 
+async function fetchWeeklyNavIdentity(
+  ticker: string,
+): Promise<FundEstimateView | null> {
+  const params = new URLSearchParams();
+  params.set("q", ticker);
+  params.set("limit", "5");
+  const response = await fetch(`/api/funds?${params.toString()}`);
+  if (!response.ok) return null;
+  const body = (await response.json()) as {
+    items?: FundEstimateView[];
+    data?: FundEstimateView[];
+  };
+  const items = Array.isArray(body.items)
+    ? body.items
+    : Array.isArray(body.data)
+      ? body.data
+      : [];
+  return (
+    items.find((row) => row.ticker.trim().toUpperCase() === ticker) ?? null
+  );
+}
+
 export function IllustratePanel({
   selected,
 }: {
   selected: FundEstimateView | null;
 }) {
   const coverage = useCoverage();
-  const live = selected ? coverage.isLive(selected.family) : true;
-  const meta = selected ? coverage.familyMeta(selected.family) : undefined;
+  const [identityNav, setIdentityNav] = useState<FundEstimateView | null>(null);
+  const fund = selected ? overlayWeeklyNav(selected, identityNav) : null;
+  const live = fund ? coverage.isLive(fund.family) : true;
+  const meta = fund ? coverage.familyMeta(fund.family) : undefined;
+
+  useEffect(() => {
+    if (!selected) {
+      setIdentityNav(null);
+      return;
+    }
+    const ticker = selected.ticker.trim().toUpperCase();
+    if (!ticker || ticker === "—") {
+      setIdentityNav(null);
+      return;
+    }
+    let cancelled = false;
+    void fetchWeeklyNavIdentity(ticker)
+      .then((identity) => {
+        if (!cancelled) setIdentityNav(identity);
+      })
+      .catch(() => {
+        if (!cancelled) setIdentityNav(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selected]);
 
   return (
     <section
@@ -68,14 +115,14 @@ export function IllustratePanel({
             dollar result.
           </p>
         </div>
-        {selected && !live ? (
+        {fund && !live ? (
           <p className="max-w-xs rounded-md border border-line bg-notice px-3 py-2 text-xs text-ink">
-            Coverage gap: {selected.family}
+            Coverage gap: {fund.family}
             {meta?.aum_rank ? ` · AUM rank ${meta.aum_rank}` : ""} is not in live
             ingest yet. Result can understate tax impact.
           </p>
         ) : null}
-        {selected && live && meta ? (
+        {fund && live && meta ? (
           <p className="max-w-xs rounded-md border border-above/20 bg-above-soft px-3 py-2 text-xs text-above">
             Live coverage: {meta.display_name}
             {meta.aum_rank ? ` · AUM rank ${meta.aum_rank}` : ""}
@@ -84,10 +131,10 @@ export function IllustratePanel({
         ) : null}
       </div>
 
-      {selected ? <EstimateLeadCard fund={selected} /> : null}
+      {fund ? <EstimateLeadCard fund={fund} /> : null}
 
-      {selected ? (
-        <IllustrationWorkspace key={selected.id} fund={selected} />
+      {fund ? (
+        <IllustrationWorkspace key={fund.id} fund={fund} />
       ) : (
         <div className="flex min-h-[12rem] items-center justify-center rounded-md border border-dashed border-line-strong px-6 text-center text-sm text-muted">
           Search a fund above to see taxable impact in dollars.

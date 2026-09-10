@@ -238,6 +238,29 @@ export function mergeFundWithDistributions(
   };
 }
 
+/**
+ * Weekly NAV is GET /funds `nav_per_share`. Upcoming /distributions rows
+ * often arrive with `nav: 0`. Overlay identity NAV only — never invent,
+ * never copy estimate `as_of` onto the weekly stamp.
+ */
+export function overlayWeeklyNav<T extends FundEstimate>(
+  selected: T,
+  identity?: Pick<FundEstimate, "nav" | "navAsOf" | "navSource" | "ticker"> | null,
+): T {
+  if (!identity || !(identity.nav > 0)) return selected;
+  const selectedTicker = selected.ticker.trim().toUpperCase();
+  const identityTicker = (identity.ticker ?? selectedTicker).trim().toUpperCase();
+  if (selectedTicker && identityTicker && selectedTicker !== identityTicker) {
+    return selected;
+  }
+  return {
+    ...selected,
+    nav: identity.nav,
+    navAsOf: identity.navAsOf ?? selected.navAsOf ?? null,
+    navSource: identity.navSource ?? selected.navSource ?? null,
+  };
+}
+
 function fundListKey(fund: Pick<FundEstimate, "ticker" | "id">): string {
   const ticker = fund.ticker.trim().toUpperCase();
   return ticker && ticker !== "—" ? `ticker:${ticker}` : fund.id;
