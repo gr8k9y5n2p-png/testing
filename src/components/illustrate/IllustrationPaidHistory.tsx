@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { FundEstimate, FundEstimateView } from "@/data/types";
 import {
+  AWAITING_ESTIMATE,
   DATA_API_UNAVAILABLE,
   ILLUSTRATION_PAID_HISTORY_DETAIL,
   ILLUSTRATION_PAID_HISTORY_KICKER,
@@ -12,23 +13,12 @@ import {
 import { fetchFundsSearch } from "@/lib/data-api/funds-client";
 import { formatUsd } from "@/lib/format";
 import { formatSoftPct } from "@/lib/illustrate/nav-math";
-import { GROWTH_TAX_TYPE_LABELS } from "@/lib/illustrate/growth-tax-by-type";
 import {
   illustrationPaidHistoryMatrix,
   illustrationPaidHistoryYears,
+  paidHistoryTypeLabel,
   type IllustrationPaidMatrixCell,
 } from "@/lib/illustrate/illustration-paid-history";
-
-const ESTIMATE_LABELS: Record<string, string> = {
-  ...GROWTH_TAX_TYPE_LABELS,
-  ordinary_income: "Ordinary",
-  long_term_capital_gains: "LTCG",
-  short_term_capital_gains: "STCG",
-  qualified_dividend: "QDI",
-  total_capital_gains: "Total capital gains",
-  special_dividend: "Special",
-  return_of_capital: "ROC",
-};
 
 function formatMatrixCell(cell: IllustrationPaidMatrixCell): string {
   if (cell.perShare != null) {
@@ -71,7 +61,8 @@ export function IllustrationPaidHistory({ fund }: { fund: FundEstimate }) {
   const source = hydrated ?? fund;
   const years = illustrationPaidHistoryYears();
   const matrix = illustrationPaidHistoryMatrix(source);
-  const empty = matrix.rows.length === 0;
+  const awaitingYears = new Set(matrix.awaitingYears);
+  const empty = unavailable || matrix.rows.length === 0;
 
   return (
     <section
@@ -106,7 +97,12 @@ export function IllustrationPaidHistory({ fund }: { fund: FundEstimate }) {
                 <th className="px-4 py-2 text-left">Component</th>
                 {matrix.years.map((year) => (
                   <th key={year} className="px-4 py-2 text-right">
-                    {year}
+                    <span className="block">{year}</span>
+                    {awaitingYears.has(year) ? (
+                      <span className="mt-0.5 block font-medium normal-case tracking-normal text-muted">
+                        {AWAITING_ESTIMATE}
+                      </span>
+                    ) : null}
                   </th>
                 ))}
               </tr>
@@ -116,7 +112,7 @@ export function IllustrationPaidHistory({ fund }: { fund: FundEstimate }) {
                 <tr key={row.estimateType || "distribution"}>
                   <td className="px-4 py-2.5 text-ink">
                     {row.estimateType
-                      ? (ESTIMATE_LABELS[row.estimateType] ?? row.estimateType)
+                      ? paidHistoryTypeLabel(row.estimateType)
                       : "—"}
                   </td>
                   {matrix.years.map((year) => (
@@ -129,6 +125,7 @@ export function IllustrationPaidHistory({ fund }: { fund: FundEstimate }) {
                           perShare: null,
                           pctOfNav: null,
                           amountUnit: null,
+                          awaiting: awaitingYears.has(year),
                         },
                       )}
                     </td>

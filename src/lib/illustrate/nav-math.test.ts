@@ -274,7 +274,7 @@ describe("Search hydrate live NAV fields", () => {
     assert.match(panel, /EstimateLeadCard/);
     assert.match(panel, /Estimated \$ \/ share/);
     assert.match(panel, /Distribution % of NAV/);
-    assert.match(panel, /Estimate types/);
+    assert.match(panel, /illustrationFundCardTypeRows/);
     assert.match(panel, /overlayWeeklyNav/);
     assert.match(panel, /fillNavPerShareInput/);
     assert.match(panel, /\/api\/funds/);

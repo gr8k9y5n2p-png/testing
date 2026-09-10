@@ -200,7 +200,8 @@ export function priorPaidHistoryYear(now = new Date()): number {
 
 /**
  * Finals / paid from `/distributions` for the prior calendar year.
- * Current-year midyear paids stay out of Dollar Illustration Paid History.
+ * The calendar-year matrix includes the current year separately
+ * (Awaiting / — until an unpaid announced estimate arrives).
  */
 export function illustrationPriorYearPaidEvents(
   fund: Parameters<typeof paidEventsForFund>[0],
