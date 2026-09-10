@@ -9,6 +9,31 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 
+# Render internal URLs are postgres://… ; SQLAlchemy 2 needs an explicit driver.
+_POSTGRES_PREFIXES = (
+    ("postgres://", "postgresql+psycopg://"),
+    ("postgresql+psycopg2://", "postgresql+psycopg://"),
+    ("postgresql://", "postgresql+psycopg://"),
+)
+
+
+def rewrite_database_url(url: str) -> str:
+    """Normalize DATABASE_URL to sqlite… or postgresql+psycopg:// (psycopg3)."""
+    value = (url or "").strip()
+    for prefix, replacement in _POSTGRES_PREFIXES:
+        if value.startswith(prefix):
+            return replacement + value[len(prefix) :]
+    return value
+
+
+def is_postgres_url(url: str) -> bool:
+    return rewrite_database_url(url).startswith("postgresql+psycopg://")
+
+
+def is_sqlite_url(url: str) -> bool:
+    return rewrite_database_url(url).startswith("sqlite")
+
+
 # Website beta + local Next/FastAPI. Extra Vercel previews match CORS_ORIGIN_REGEX.
 DEFAULT_CORS_ORIGINS = ",".join(
     [
@@ -50,7 +75,8 @@ class Settings(BaseSettings):
 
     @field_validator("database_url")
     @classmethod
-    def _vercel_ephemeral_sqlite(cls, value: str) -> str:
+    def _normalize_database_url(cls, value: str) -> str:
+        value = rewrite_database_url(value)
         if os.getenv("VERCEL") and value.startswith("sqlite:///./"):
             return "sqlite:////tmp/distributions.db"
         return value

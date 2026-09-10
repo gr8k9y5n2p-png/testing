@@ -1,17 +1,22 @@
 from __future__ import annotations
 
+import os
 from collections.abc import Generator
 
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
+from app.config import rewrite_database_url
 from app.db import Base, configure_engine, init_db
 from app import db as app_db
 
 
 @pytest.fixture()
 def db_url(tmp_path) -> str:
+    override = os.getenv("TEST_DATABASE_URL", "").strip()
+    if override:
+        return rewrite_database_url(override)
     return f"sqlite:///{tmp_path / 'test.db'}"
 
 

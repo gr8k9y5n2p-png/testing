@@ -8,6 +8,7 @@ from datetime import date
 from decimal import Decimal
 
 from fastapi.testclient import TestClient
+import pytest
 from sqlalchemy import text
 
 from app.crud import (
@@ -40,6 +41,8 @@ def test_ticker_token_helpers() -> None:
 
 
 def _explain_fund_q(session, q: str, *, q_match: str) -> str:
+    if session.get_bind().dialect.name != "sqlite":
+        pytest.skip("EXPLAIN QUERY PLAN is SQLite-only")
     stmt = _filter_stmt(q=q, columns=_FUND_SEARCH_COLUMNS, q_match=q_match)
     compiled = stmt.compile(compile_kwargs={"literal_binds": True})
     rows = session.execute(text(f"EXPLAIN QUERY PLAN {compiled}")).all()
@@ -47,6 +50,8 @@ def _explain_fund_q(session, q: str, *, q_match: str) -> str:
 
 
 def test_indexed_ticker_filter_uses_search_index(session) -> None:
+    if session.get_bind().dialect.name != "sqlite":
+        pytest.skip("EXPLAIN QUERY PLAN is SQLite-only")
     plan = _explain_fund_q(session, "AGTHX", q_match="indexed")
     assert "index" in plan
     assert "ix_dist_ticker" in plan or "ix_dist_fund_identifier" in plan or "ix_dist_fund_search" in plan
@@ -116,8 +121,11 @@ def _seed_fat_book(session, *, n: int = 4000) -> None:
 
 def test_funds_exact_ticker_fast_on_fat_book(session) -> None:
     _seed_fat_book(session)
-    plan = _explain_fund_q(session, "AGTHX", q_match="indexed")
-    assert "index" in plan
+    if session.get_bind().dialect.name == "sqlite":
+        plan = _explain_fund_q(session, "AGTHX", q_match="indexed")
+        assert "index" in plan
+    else:
+        plan = "postgresql"
 
     started = time.perf_counter()
     agthx, agthx_total = search_funds(session, q="AGTHX")

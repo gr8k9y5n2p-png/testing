@@ -65,12 +65,20 @@ def test_funds_agthx_ok_while_seed_running(client: TestClient, monkeypatch) -> N
 
 
 def test_sqlite_file_uses_wal(engine) -> None:
+    if engine.dialect.name != "sqlite":
+        import pytest
+
+        pytest.skip("PRAGMA journal_mode is SQLite-only")
     with engine.connect() as conn:
         mode = conn.execute(text("PRAGMA journal_mode")).scalar()
     assert str(mode).lower() == "wal"
 
 
 def test_sqlite_file_uses_null_pool(engine) -> None:
+    if engine.dialect.name != "sqlite":
+        import pytest
+
+        pytest.skip("NullPool + WAL is the file-SQLite path")
     from sqlalchemy.pool import NullPool
 
     assert isinstance(engine.pool, NullPool)

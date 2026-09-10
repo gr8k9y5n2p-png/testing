@@ -1,0 +1,51 @@
+# EXAMPLE ONLY — preview / launch sketch.
+# Do NOT apply this Blueprint to the live aftertax-data-api service.
+# Do NOT replace production render.yaml with this file until Eric runs docs/CUTOVER.md
+# (Merge + Manual Deploy). Merging this repo must not flip production off SQLite.
+#
+# Approved lean path (spike #122, Eric greenlit):
+#   - Web Starter, WEB_CONCURRENCY=2 after cutover
+#   - Postgres Basic-1gb (same region as the web service)
+#   - No persistent disk (required for zero-downtime + later horizontal scale)
+#   - No Redis / CDN
+#   - Internal DATABASE_URL; app rewrites postgres:// → postgresql+psycopg://
+#
+# Soft beta stays on ../render.yaml (SQLite + /var/data + WEB_CONCURRENCY=1).
+
+databases:
+  - name: aftertax-data-pg
+    plan: basic-1gb
+    databaseName: distributions
+    # postgresMajorVersion: pick at create time (immutable). Use Render's current default.
+    # region: MUST match aftertax-data-api. Confirm in Dashboard before create.
+
+services:
+  - type: web
+    name: aftertax-data-api-pg-preview
+    runtime: docker
+    plan: starter
+    healthCheckPath: /health
+    preDeployCommand: alembic upgrade head
+    # No disk: Postgres is the durable store. A disk would pin this to 1 instance
+    # and disable zero-downtime deploys.
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: aftertax-data-pg
+          property: connectionString
+      - key: WEB_CONCURRENCY
+        value: "2"
+      - key: FETCH_MODE
+        value: fixture
+      - key: SEED_ON_START
+        value: "true"
+      - key: SEED_FORCE_FULL
+        value: "false"
+      - key: CORS_ORIGINS
+        value: https://testing-seven-umber-19.vercel.app,http://localhost:3000,http://127.0.0.1:3000
+      - key: CORS_ORIGIN_REGEX
+        value: https://([a-z0-9-]+\.)*vercel.app
+      - key: CATEGORY_OUTLIER_THRESHOLD_PCT
+        value: "50"
+      - key: CATEGORY_OUTLIER_MIN_PEERS
+        value: "3"

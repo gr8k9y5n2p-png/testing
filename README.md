@@ -59,7 +59,19 @@ Open interactive docs at [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs
 docker compose up --build
 ```
 
-The API listens on port 8000. SQLite is stored in the `dist-data` volume.
+The API listens on port 8000. SQLite is stored in the `dist-data` volume (soft-beta path).
+
+Local Postgres (optional; does not change production Render):
+
+```bash
+docker compose --profile postgres up --build
+# API on :8001 uses postgresql+psycopg://distributions:distributions@postgres:5432/distributions
+# From the host:
+export DATABASE_URL=postgresql+psycopg://distributions:distributions@localhost:5432/distributions
+alembic upgrade head
+```
+
+See `docs/CUTOVER.md` before any production flip.
 
 ## Public HTTPS URL (Website `NEXT_PUBLIC_DATA_API_URL`)
 
@@ -295,7 +307,7 @@ Live pages often 403, challenge, or render as a JS/SPA shell and parse 0 rows. T
 
 - Schedule: **Sundays and Mondays** at **14:00 UTC** (about 9am America/Chicago). Sunday scrape includes NAV.
 - Manual: **Actions → Weekly ingest refresh → Run workflow** (`workflow_dispatch`), optional `refresh_mode`
-- Installs `requirements-dev.txt`, uses SQLite unless a `DATABASE_URL` repo secret is set (then Postgres + `psycopg2-binary`)
+- Installs `requirements-dev.txt` (includes `psycopg[binary]`). Uses SQLite unless a `DATABASE_URL` repo secret is set (then Postgres; app rewrites `postgres://` / `postgresql://` to `postgresql+psycopg://`). Cron is still Sun+Mon 14:00 UTC; Sunday 06:00 CT is a post-cutover follow-up.
 - Runs `python -m app.cli refresh` (families + NAV) then `python -m app.cli refresh-nav` then ticker-request pickup
 - Writes `refresh-summary.json` / `refresh-summary.md` and `nav-summary.json` / `nav-summary.md`, appends both Markdown files to the job summary, and uploads them as the `weekly-ingest-summary` artifact
 
@@ -1411,21 +1423,35 @@ Keep normalization in the adapter: the ingest API only accepts the shared `Distr
 
 ## Postgres
 
-SQLAlchemy models are dialect-neutral (JSON, Numeric, timezone-aware DateTime).
+SQLAlchemy models are dialect-neutral (`JSON` on SQLite, `JSONB` on Postgres; Numeric; timezone-aware DateTime). `psycopg[binary]` is a default image dependency. File SQLite still uses NullPool + WAL (`WEB_CONCURRENCY=1`). Postgres uses QueuePool (`pool_size=5`, `max_overflow=5`, `pool_pre_ping`, `pool_recycle=1800`).
 
 ```bash
-pip install 'psycopg[binary]'
 export DATABASE_URL=postgresql+psycopg://user:pass@localhost:5432/distributions
+alembic upgrade head   # required before serving Postgres; also the Render pre-deploy command
 uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
-Tables are created on startup (`Base.metadata.create_all`). For production, swap that for Alembic migrations.
+`postgres://` and `postgresql://` URLs (Render internal) are rewritten to `postgresql+psycopg://` at config time.
+
+SQLite local / pytest still use `create_all` + `_ensure_*` until cutover. Production Postgres schema is Alembic revision `0001_initial` (seven tables, frozen upsert keys, `VARCHAR(36)` PKs — not native UUID).
+
+Copy a frozen SQLite snapshot (never invent amounts):
+
+```bash
+python scripts/copy_sqlite_to_postgres.py \
+  --source sqlite:////path/to/distributions.db \
+  --dest postgresql+psycopg://user:pass@host/distributions
+```
+
+Live Render stays on SQLite until Eric runs `docs/CUTOVER.md`. Do not apply `docs/render.postgres-launch.example.yaml` to `aftertax-data-api`.
 
 ## Tests
 
 ```bash
 pip install -r requirements-dev.txt
 pytest -q
+# Optional Postgres path (skip SQLite-only EXPLAIN tests automatically):
+# TEST_DATABASE_URL=postgresql+psycopg://distributions:distributions@localhost:5432/distributions pytest -q
 ```
 
 Coverage includes HTML normalization (American Funds plus top-110 family fixtures), multi-year history filters, upsert idempotency, search filters, tax illustration math, portfolio coverage, Current vs Proposed allocation compare, compare-chart deltas, Growth of $X performance series, and coverage-gap logging.
@@ -1437,12 +1463,17 @@ app/
   main.py              FastAPI app
   api.py               HTTP routes
   models.py / schemas.py / crud.py
+  db.py / config.py    Dialect-aware engine + DATABASE_URL rewrite
   sources/             FundSource adapters + HTML parser
   services/ingest.py   Fetch + upsert orchestration
   services/illustrate.py  Tax-impact illustration
   services/performance.py Growth of $X (Yahoo adj-close; not weekly refresh)
   services/coverage.py Coverage snapshot + gap logging
+  services/copy_db.py  SQLite → Postgres copy + checksum
   cli.py               seed / fetch / families
+alembic/               Postgres schema (0001_initial)
+scripts/copy_sqlite_to_postgres.py
+docs/CUTOVER.md        Eric Manual Deploy checklist
 fixtures/<family>/     HTML fixtures (American Funds + top 110)
 fixtures/performance/  Monthly adj-close fixtures (AGTHX, SPY, AGG, VXUS, …)
 tests/
