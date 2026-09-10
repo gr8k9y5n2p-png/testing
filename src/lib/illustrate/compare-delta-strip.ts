@@ -59,6 +59,14 @@ export const COMPARE_DELTA_STRIP_LABELS: Record<CompareDeltaStripKey, string> = 
 };
 
 /**
+ * Pair-Δ strip is only meaningful for ≤2 filled tickers.
+ * Empty slots do not count. Hide entirely when more than two funds are compared.
+ */
+export function showCompareDeltaStrip(filledTickerCount: number): boolean {
+  return filledTickerCount <= 2;
+}
+
+/**
  * Reserved Modules strip. Always four cells so Compare can mount it
  * without blocking Growth / history / Upcoming.
  */

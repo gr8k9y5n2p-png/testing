@@ -24,6 +24,7 @@ import {
   deltaStripFromPairMetrics,
   deltaStripFromSingleUpcoming,
   reservedDeltaStrip,
+  showCompareDeltaStrip,
 } from "@/lib/illustrate/compare-delta-strip";
 import {
   COMPARE_DEFAULT_COMBINE_STATE,
@@ -83,7 +84,9 @@ export function CompareWorkspace({
     () => growthFundsFromSlots(slots, funds),
     [slots, funds],
   );
-  const filledKey = filledCompareTickers(slots).join(",");
+  const filledTickers = filledCompareTickers(slots);
+  const filledKey = filledTickers.join(",");
+  const showDeltaStrip = showCompareDeltaStrip(filledTickers.length);
   const [loaded, setLoaded] = useState<{
     holdingDollars: number;
     taxRates: TaxRates;
@@ -387,9 +390,11 @@ export function CompareWorkspace({
         />
       </div>
 
-      <div className="mt-8 w-full">
-        <CompareDeltaStrip items={stripItems} />
-      </div>
+      {showDeltaStrip ? (
+        <div className="mt-8 w-full">
+          <CompareDeltaStrip items={stripItems} />
+        </div>
+      ) : null}
 
       <section
         id="growth-and-tax"
