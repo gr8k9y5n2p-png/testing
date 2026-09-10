@@ -1,108 +1,122 @@
 /**
- * Homepage Paid History: one GET /distributions page of finals/paid.
- * Never walks the year book. Never pulls Upcoming prelims.
+ * Homepage Paid History: finals/paid from GET /distributions, paged by funds.
+ * Walks the year-filtered book server-side so `total` is the filtered fund
+ * count — never Data's global row total. Never hydrates the book in the
+ * browser. Never pulls Upcoming prelims.
  */
 
 import { aggregateDistributions, type DataDistribution } from "@/data/aggregate-distributions";
+import { normalizePublicationStage } from "@/data/distribution-bucket";
 import {
-  isUpcomingFund,
-  normalizePublicationStage,
-} from "@/data/distribution-bucket";
-import {
-  clampOffset,
   clampPaidHistoryPageSize,
-  offsetToPage,
   type FundPageQuery,
   type FundPageResult,
 } from "@/data/pagination";
-import {
-  paidHistoryViews,
-  paidHistoryYearOf,
-  withPeerContext,
-} from "@/data/queries";
-import { collectTaxYearsFromFunds } from "@/data/tax-years";
-import type { FundEstimateView } from "@/data/types";
+import { pagePaidHistoryFunds } from "@/data/paid-history-book";
+import { withPeerContext } from "@/data/queries";
 import { isRemoteDataApi } from "@/lib/data-api/config";
 import {
   loadDistributionPage,
   type DistributionPageResult,
 } from "@/lib/data-api/distributions";
 
+export {
+  filterPaidHistoryFunds,
+  pagePaidHistoryFunds,
+} from "@/data/paid-history-book";
+
+/** Data `/distributions` max `page_size`. User windows stay 1–50 funds. */
+export const PAID_HISTORY_DATA_PAGE_SIZE = 200;
+/** Safety cap on year-filtered Data pages (200 rows each, final+paid). */
+export const PAID_HISTORY_WALK_MAX_PAGES = 64;
+const PAID_HISTORY_WALK_BATCH = 8;
+
 function isFinalOrPaidRow(row: DataDistribution): boolean {
   const stage = normalizePublicationStage(row.publication_stage);
   return stage === "final" || stage === "paid";
 }
 
-function fundHasPaidYear(fund: FundEstimateView, year?: number): boolean {
-  if (year == null) return !isUpcomingFund(fund);
-  return paidHistoryViews([fund], year).length > 0;
-}
-
-function applyLocalFilters(
-  funds: FundEstimateView[],
-  query: FundPageQuery,
-): FundEstimateView[] {
-  const family = query.family?.trim();
-  const category = query.category?.trim();
-  const hasCategory = funds.some(
-    (fund) => fund.category && fund.category !== "—",
-  );
-  return funds.filter((fund) => {
-    if (isUpcomingFund(fund)) return false;
-    if (!fundHasPaidYear(fund, query.year)) return false;
-    if (family && fund.family !== family) return false;
-    if (category && hasCategory && fund.category !== category) return false;
-    return true;
-  });
-}
-
-export async function loadPaidHistoryPageFromDataApi(
-  query: FundPageQuery = {},
-): Promise<FundPageResult> {
+function emptyPaidPage(query: FundPageQuery): FundPageResult {
   const limit = clampPaidHistoryPageSize(query.limit);
-  const offset = clampOffset(query.offset);
-  const empty: FundPageResult = {
+  return {
     items: [],
     total: 0,
     limit,
-    offset,
+    offset: 0,
     years: [],
   };
-  if (!isRemoteDataApi()) return empty;
+}
 
-  const page = offsetToPage(offset, limit);
+async function fetchFinalsAndPaids(
+  query: FundPageQuery,
+  page: number,
+): Promise<{ rows: DataDistribution[]; short: boolean }> {
   const shared = {
     q: query.query,
     fundFamily: query.family,
     category: query.category,
     year: query.year,
     page,
-    pageSize: limit,
+    pageSize: PAID_HISTORY_DATA_PAGE_SIZE,
   };
+  const [finals, paids]: DistributionPageResult[] = await Promise.all([
+    loadDistributionPage({ ...shared, publicationStage: "final" }),
+    loadDistributionPage({ ...shared, publicationStage: "paid" }),
+  ]);
+  const rows = [...finals.items, ...paids.items].filter(isFinalOrPaidRow);
+  const short =
+    finals.items.length < PAID_HISTORY_DATA_PAGE_SIZE &&
+    paids.items.length < PAID_HISTORY_DATA_PAGE_SIZE;
+  return { rows, short };
+}
+
+/**
+ * Year / Family / Category filtered finals+paid. Stops on a short Data page
+ * so a thin year is one request — never uses the unfiltered row `total`.
+ */
+export async function loadPaidHistoryDistributionRows(
+  query: FundPageQuery,
+): Promise<DataDistribution[]> {
+  const first = await fetchFinalsAndPaids(query, 1);
+  const rows = [...first.rows];
+  if (first.short) return rows;
+
+  for (
+    let start = 2;
+    start <= PAID_HISTORY_WALK_MAX_PAGES;
+    start += PAID_HISTORY_WALK_BATCH
+  ) {
+    const pages = Array.from(
+      {
+        length: Math.min(
+          PAID_HISTORY_WALK_BATCH,
+          PAID_HISTORY_WALK_MAX_PAGES - start + 1,
+        ),
+      },
+      (_, index) => start + index,
+    );
+    const batch = await Promise.all(
+      pages.map((page) => fetchFinalsAndPaids(query, page)),
+    );
+    for (const part of batch) rows.push(...part.rows);
+    if (batch.some((part) => part.short)) break;
+  }
+  return rows;
+}
+
+export async function loadPaidHistoryPageFromDataApi(
+  query: FundPageQuery = {},
+): Promise<FundPageResult> {
+  const empty = emptyPaidPage(query);
+  if (!isRemoteDataApi()) return empty;
 
   try {
-    const [finals, paids]: DistributionPageResult[] = await Promise.all([
-      loadDistributionPage({ ...shared, publicationStage: "final" }),
-      loadDistributionPage({ ...shared, publicationStage: "paid" }),
-    ]);
-    const rows = [...finals.items, ...paids.items].filter(isFinalOrPaidRow);
-    if (!rows.length) {
-      return {
-        ...empty,
-        total: Math.max(finals.total, paids.total, 0),
-      };
-    }
-    const funds = applyLocalFilters(
+    const rows = await loadPaidHistoryDistributionRows(query);
+    if (!rows.length) return empty;
+    return pagePaidHistoryFunds(
       withPeerContext(aggregateDistributions(rows)),
       query,
     );
-    return {
-      items: funds,
-      total: Math.max(finals.total, paids.total, funds.length),
-      limit,
-      offset,
-      years: collectTaxYearsFromFunds(funds),
-    };
   } catch {
     return empty;
   }
