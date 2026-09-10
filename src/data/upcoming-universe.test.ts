@@ -286,7 +286,7 @@ describe("universe Upcoming / Fund Manager Estimated Distributions", () => {
     assert.doesNotMatch(results, /paidEventsForFund/);
     assert.doesNotMatch(results, /paidComponents/);
     assert.match(panel, /IllustrationPaidHistory/);
-    assert.match(paid, /illustrationPaidTypeRows/);
+    assert.match(paid, /illustrationPaidHistoryMatrix/);
     assert.match(paid, /SEARCH_PAID_HISTORY_HEADING/);
     assert.match(bucket, /hasDisclosedUpcomingAmount/);
     assert.match(bucket, /isStaleAnnouncedOnly/);

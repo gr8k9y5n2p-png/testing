@@ -31,6 +31,19 @@ export function parsePositiveNav(value: unknown): number | null {
   return parsed != null && parsed > 0 ? parsed : null;
 }
 
+/** Keep a typed NAV; otherwise autofill the live weekly print. Never invent. */
+export function fillNavPerShareInput(
+  typedInput: unknown,
+  liveNav: unknown,
+): string {
+  if (parsePositiveNav(typedInput) != null) {
+    return String(typedInput).trim();
+  }
+  const nav = parsePositiveNav(liveNav);
+  if (nav != null) return String(nav);
+  return typeof typedInput === "string" ? typedInput : "";
+}
+
 /**
  * Distribution day is ex_date, else payable_date — matches Data.
  * Historical % of NAV uses that day's print when the day is on or before

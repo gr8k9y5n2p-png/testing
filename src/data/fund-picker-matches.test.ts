@@ -49,15 +49,38 @@ describe("Search a fund FBGRX match", () => {
     assert.equal(matches.some((fund) => fund.ticker === "FBGRX"), true);
   });
 
+  it("finds AGTHX identity when Upcoming catalog is empty / awaiting_estimate", () => {
+    const remote = mapFundsApiItem({
+      ticker: "AGTHX",
+      fund_name: "The Growth Fund of America",
+      fund_family: "American Funds",
+      has_estimate: false,
+      coverage_status: "awaiting_estimate",
+      nav_per_share: "88.419998",
+      nav_as_of: "2026-09-08",
+    });
+    assert.equal(remote.hasEstimate, false);
+    assert.equal(remote.coverageStatus, "awaiting_estimate");
+    const matches = fundPickerMatches([], [remote], "AGTHX");
+    assert.equal(matches.length, 1);
+    assert.equal(matches[0]?.ticker, "AGTHX");
+    assert.ok(Math.abs(matches[0]!.nav - 88.419998) < 1e-6);
+  });
+
   it("FundPicker always hits /api/funds for a typed query, not only search_miss", () => {
     const picker = readFileSync(
       join(here, "../components/illustrate/FundPicker.tsx"),
       "utf8",
     );
+    const client = readFileSync(
+      join(here, "../lib/data-api/funds-client.ts"),
+      "utf8",
+    );
     assert.match(picker, /fundPickerMatches/);
-    assert.match(picker, /fetchRemoteFunds/);
-    assert.match(picker, /\/api\/funds/);
+    assert.match(picker, /fetchFundsSearch/);
     assert.match(picker, /if \(!q\)/);
+    assert.match(client, /\/api\/funds/);
+    assert.match(client, /nav_only/);
     assert.doesNotMatch(picker, /reportSearchMiss \|\| !q/);
     assert.doesNotMatch(
       picker,

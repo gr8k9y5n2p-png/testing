@@ -186,11 +186,9 @@ describe("Dollar Illustration Upcoming gate", () => {
     assert.doesNotMatch(results, /IllustrationPaidHistory/);
     assert.doesNotMatch(results, /paidComponents/);
     assert.doesNotMatch(results, /components=\{paid/);
-    assert.match(paid, /illustrationPaidTypeRows/);
-    assert.match(paid, /\$ \/ Share/);
-    assert.match(paid, /% of NAV/);
-    assert.match(paid, /Announced/);
-    assert.match(paid, /Ex-Date/);
+    assert.match(paid, /illustrationPaidHistoryMatrix/);
+    assert.match(paid, /Component/);
+    assert.match(paid, /navOnly: false/);
     assert.doesNotMatch(paid, /Payable/);
   });
 

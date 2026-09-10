@@ -102,7 +102,7 @@ describe("Search / Sample Estimates fund page", () => {
       "utf8",
     );
     assert.match(panel, /IllustrationPaidHistory/);
-    assert.match(paid, /illustrationPaidTypeRows/);
+    assert.match(paid, /illustrationPaidHistoryMatrix/);
     assert.match(bucket, /every fund \(not ticker-specific\)/);
     assert.match(bucket, /`final` and `paid` are Paid history/);
     assert.doesNotMatch(bucket, /ABALX|AMCPX|ticker ===/);

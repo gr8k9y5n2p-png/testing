@@ -196,7 +196,10 @@ function AftertaxAppInner({
       (row) =>
         row.ticker.trim().toUpperCase() === fund.ticker.trim().toUpperCase(),
     );
-    setPicked(overlayWeeklyNav(fund, catalog));
+    setPicked(
+      mergeFundLists([fund], catalog ? [catalog] : [])[0] ??
+        overlayWeeklyNav(fund, catalog),
+    );
     if (!coverage.isLive(fund.family)) {
       void reportCoverageGap({
         ticker: fund.ticker,

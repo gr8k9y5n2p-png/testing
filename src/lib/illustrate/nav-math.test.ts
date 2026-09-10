@@ -8,6 +8,7 @@ import { aggregateDistributions, type DataDistribution } from "../../data/aggreg
 import { mergeFundWithDistributions } from "../../data/hydrate-funds.ts";
 import { paidHistoryViews, withPeerContext } from "../../data/queries.ts";
 import {
+  fillNavPerShareInput,
   formatSoftPct,
   formatWeeklyNavLabel,
   historicalPctOfNav,
@@ -81,6 +82,14 @@ describe("Eric-locked NAV math", () => {
       }),
       historical,
     );
+  });
+
+  it("autofills $ / share from live weekly NAV and keeps a typed print", () => {
+    assert.equal(fillNavPerShareInput("", 312.26001), "312.26001");
+    assert.equal(fillNavPerShareInput("   ", 312.26001), "312.26001");
+    assert.equal(fillNavPerShareInput("310", 312.26001), "310");
+    assert.equal(fillNavPerShareInput("", 0), "");
+    assert.equal(fillNavPerShareInput("", null), "");
   });
 
   it("soft-dashes when NAV or the estimate is missing — never invents", () => {
@@ -223,6 +232,7 @@ describe("Search hydrate live NAV fields", () => {
     assert.match(panel, /Distribution % of NAV/);
     assert.match(panel, /Estimate types/);
     assert.match(panel, /overlayWeeklyNav/);
+    assert.match(panel, /fillNavPerShareInput/);
     assert.match(panel, /\/api\/funds/);
     assert.match(panel, /nav_only/);
     assert.doesNotMatch(panel, /Weekly NAV/);
