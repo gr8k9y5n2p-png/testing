@@ -32,7 +32,7 @@ import {
   UPCOMING_UNAVAILABLE_DETAIL,
   UPCOMING_UNAVAILABLE_HEADLINE,
 } from "@/lib/copy";
-import { CompareTickerLink } from "@/components/illustrate/CompareTickerLink";
+import { SearchTickerButton } from "@/components/SearchTickerButton";
 
 const TABLE_VIEWPORT = 448;
 const TABLE_ROW_HEIGHT = 76;
@@ -306,9 +306,15 @@ function FundSection({
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <h3 className="font-medium text-ink">{fund.fundName}</h3>
+                    <h3 className="font-medium text-ink">
+                      <SearchTickerButton fund={fund} onSelect={onIllustrate}>
+                        {fund.fundName}
+                      </SearchTickerButton>
+                    </h3>
                     <p className="mt-0.5 font-mono text-[11px] text-faint">
-                      <CompareTickerLink ticker={fund.ticker} /> · {fund.family}
+                      <SearchTickerButton fund={fund} onSelect={onIllustrate} />
+                      <span className="mx-1.5">·</span>
+                      {fund.family}
                     </p>
                     <StageBadge fund={fund} />
                     {!coverage.isLive(fund.family) ? (
@@ -409,10 +415,12 @@ function EstimateRow({
     >
       <td className="px-3 py-3">
         <span className="block font-medium text-ink">
-          <CompareTickerLink ticker={fund.ticker}>{fund.fundName}</CompareTickerLink>
+          <SearchTickerButton fund={fund} onSelect={onIllustrate}>
+            {fund.fundName}
+          </SearchTickerButton>
         </span>
         <span className="mt-0.5 block font-mono text-[11px] text-faint">
-          <CompareTickerLink ticker={fund.ticker} />
+          <SearchTickerButton fund={fund} onSelect={onIllustrate} />
           <span className="mx-1.5">·</span>
           {fund.shareClass}
         </span>
