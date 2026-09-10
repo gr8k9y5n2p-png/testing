@@ -23,6 +23,25 @@ describe("GET /funds/lookup", () => {
     assert.ok(parsed.fund.nav > 0 && Math.abs(parsed.fund.nav - 88.419998) < 1e-6);
   });
 
+  it("maps a live FBGRX estimate_announced hit", () => {
+    const parsed = parseFundLookupResponse(
+      200,
+      {
+        ticker: "FBGRX",
+        fund_name: "Blue Chip Growth",
+        fund_family: "Fidelity",
+        has_estimate: true,
+        coverage_status: "estimate_announced",
+        nav_per_share: "312.26",
+      },
+      "FBGRX",
+    );
+    assert.equal(parsed.kind, "found");
+    if (parsed.kind !== "found") return;
+    assert.equal(parsed.coverageStatus, "estimate_announced");
+    assert.equal(parsed.fund.coverageStatus, "estimate_announced");
+  });
+
   it("maps 404 not_in_universe to Add to universe, not an empty catalog", () => {
     const parsed = parseFundLookupResponse(
       404,

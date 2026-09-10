@@ -6,7 +6,7 @@ import { shouldOpenFundSuggestions } from "@/components/illustrate/fund-picker-s
 import { tickerSlotBorderClass } from "@/components/illustrate/ticker-slot-border";
 import { ADD_TO_UNIVERSE, DATA_API_UNAVAILABLE, LISTS_AWAITING_ESTIMATE } from "@/lib/copy";
 import { fundPickerCoverageLabel } from "@/lib/data-api/coverage-status";
-import { fetchFundsSearch } from "@/lib/data-api/funds-client";
+import { fetchFundsSearch, searchPickerEmptyState } from "@/lib/data-api/funds-client";
 import {
   looksLikeExactTicker,
   noticeForTickerRequest,
@@ -79,6 +79,7 @@ export function TickerField({
   const [remoteFunds, setRemoteFunds] = useState<PortfolioFundOption[]>([]);
   const [remotePending, setRemotePending] = useState(false);
   const [remoteUnavailable, setRemoteUnavailable] = useState(false);
+  const [notInUniverse, setNotInUniverse] = useState(false);
   const [requesting, setRequesting] = useState(false);
   const pickedRef = useRef(false);
   const hasSelection = Boolean((ticker || fundName) && !cleared);
@@ -113,6 +114,7 @@ export function TickerField({
           setRemoteFunds([]);
           setRemotePending(false);
           setRemoteUnavailable(false);
+          setNotInUniverse(false);
         }
         return;
       }
@@ -121,12 +123,14 @@ export function TickerField({
         .then((result) => {
           if (cancelled) return;
           setRemoteUnavailable(result.unavailable);
+          setNotInUniverse(result.notInUniverse === true);
           setRemoteFunds(result.unavailable ? [] : result.items.map(toOption));
         })
         .catch(() => {
           if (!cancelled) {
             setRemoteFunds([]);
             setRemoteUnavailable(true);
+            setNotInUniverse(false);
           }
         })
         .finally(() => {
@@ -304,32 +308,39 @@ export function TickerField({
         >
           {matches.length === 0 ? (
             <li className="px-3 py-2.5 text-sm text-muted">
-              {remotePending ? (
-                "Searching…"
-              ) : remoteUnavailable ? (
-                DATA_API_UNAVAILABLE
-              ) : looksLikeExactTicker(typedQuery) ? (
-                <button
-                  type="button"
-                  className="text-left text-sm font-medium text-accent hover:underline"
-                  onMouseDown={(event) => event.preventDefault()}
-                  disabled={requesting}
-                  onClick={() => {
-                    const typed = typedQuery.trim().toUpperCase();
-                    setRequesting(true);
-                    void requestTicker({ ticker: typed, source: "web" })
-                      .then((result) => {
-                        const message = noticeForTickerRequest(result, "web");
-                        if (message) onNotice?.(message);
-                      })
-                      .finally(() => setRequesting(false));
-                  }}
-                >
-                  {ADD_TO_UNIVERSE}
-                </button>
-              ) : (
-                "No funds match."
-              )}
+              {(() => {
+                const empty = searchPickerEmptyState({
+                  pending: remotePending,
+                  unavailable: remoteUnavailable,
+                  notInUniverse,
+                  exactTicker: looksLikeExactTicker(typedQuery),
+                });
+                if (empty === "searching") return "Searching…";
+                if (empty === "unavailable") return DATA_API_UNAVAILABLE;
+                if (empty === "add_to_universe") {
+                  return (
+                    <button
+                      type="button"
+                      className="text-left text-sm font-medium text-accent hover:underline"
+                      onMouseDown={(event) => event.preventDefault()}
+                      disabled={requesting}
+                      onClick={() => {
+                        const typed = typedQuery.trim().toUpperCase();
+                        setRequesting(true);
+                        void requestTicker({ ticker: typed, source: "web" })
+                          .then((result) => {
+                            const message = noticeForTickerRequest(result, "web");
+                            if (message) onNotice?.(message);
+                          })
+                          .finally(() => setRequesting(false));
+                      }}
+                    >
+                      {ADD_TO_UNIVERSE}
+                    </button>
+                  );
+                }
+                return "No funds match.";
+              })()}
             </li>
           ) : (
             matches.map((fund) => {

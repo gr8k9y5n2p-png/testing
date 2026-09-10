@@ -117,7 +117,8 @@ describe("Eric product lock — paid-only funds stay searchable", () => {
       join(here, "../components/illustrate/FundPicker.tsx"),
       "utf8",
     );
-    assert.match(picker, /exactTicker \? \(/);
+    assert.match(picker, /searchPickerEmptyState/);
+    assert.match(picker, /notInUniverse/);
     assert.match(picker, /ADD_TO_UNIVERSE/);
     assert.doesNotMatch(
       picker,

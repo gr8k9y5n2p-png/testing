@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { FundEstimateView } from "@/data/types";
 import { COPY, ADD_TO_UNIVERSE, DATA_API_UNAVAILABLE, LISTS_AWAITING_ESTIMATE } from "@/lib/copy";
 import { fundPickerCoverageLabel } from "@/lib/data-api/coverage-status";
-import { fetchFundsSearch } from "@/lib/data-api/funds-client";
+import { fetchFundsSearch, searchPickerEmptyState } from "@/lib/data-api/funds-client";
 import {
   looksLikeExactTicker,
   noticeForTickerRequest,
@@ -56,6 +56,7 @@ export function FundPicker({
   const [remoteFunds, setRemoteFunds] = useState<FundEstimateView[]>([]);
   const [remotePending, setRemotePending] = useState(false);
   const [remoteUnavailable, setRemoteUnavailable] = useState(false);
+  const [notInUniverse, setNotInUniverse] = useState(false);
   const [requesting, setRequesting] = useState(false);
 
   useEffect(() => {
@@ -67,6 +68,7 @@ export function FundPicker({
           setRemoteFunds([]);
           setRemotePending(false);
           setRemoteUnavailable(false);
+          setNotInUniverse(false);
         }
         return;
       }
@@ -75,12 +77,14 @@ export function FundPicker({
         .then((result) => {
           if (cancelled) return;
           setRemoteUnavailable(result.unavailable);
+          setNotInUniverse(result.notInUniverse === true);
           setRemoteFunds(result.unavailable ? [] : result.items);
         })
         .catch(() => {
           if (!cancelled) {
             setRemoteFunds([]);
             setRemoteUnavailable(true);
+            setNotInUniverse(false);
           }
         })
         .finally(() => {
@@ -240,23 +244,30 @@ export function FundPicker({
         <ul className="absolute z-20 mt-1 max-h-72 w-full overflow-auto rounded-md border border-line bg-surface shadow-lg">
           {matches.length === 0 ? (
             <li className="px-3 py-3 text-sm text-muted">
-              {remotePending ? (
-                "Searching…"
-              ) : remoteUnavailable ? (
-                DATA_API_UNAVAILABLE
-              ) : exactTicker ? (
-                <button
-                  type="button"
-                  className="text-left text-sm font-medium text-accent hover:underline"
-                  onMouseDown={(event) => event.preventDefault()}
-                  onClick={() => void addToUniverse()}
-                  disabled={requesting}
-                >
-                  {ADD_TO_UNIVERSE}
-                </button>
-              ) : (
-                "No funds match."
-              )}
+              {(() => {
+                const empty = searchPickerEmptyState({
+                  pending: remotePending,
+                  unavailable: remoteUnavailable,
+                  notInUniverse,
+                  exactTicker,
+                });
+                if (empty === "searching") return "Searching…";
+                if (empty === "unavailable") return DATA_API_UNAVAILABLE;
+                if (empty === "add_to_universe") {
+                  return (
+                    <button
+                      type="button"
+                      className="text-left text-sm font-medium text-accent hover:underline"
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() => void addToUniverse()}
+                      disabled={requesting}
+                    >
+                      {ADD_TO_UNIVERSE}
+                    </button>
+                  );
+                }
+                return "No funds match.";
+              })()}
             </li>
           ) : (
             matches.map((fund) => {

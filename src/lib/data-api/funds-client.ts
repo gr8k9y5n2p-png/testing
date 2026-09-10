@@ -12,6 +12,41 @@ export type FundsApiClientResult<T = unknown> = {
   notInUniverse?: boolean;
 };
 
+export type SearchPickerEmptyState =
+  | "searching"
+  | "unavailable"
+  | "add_to_universe"
+  | "no_match";
+
+/** Data #114 lookup 404 is the miss. Exact ticker is the fallback. */
+export function searchPickerEmptyState(input: {
+  pending: boolean;
+  unavailable: boolean;
+  notInUniverse?: boolean;
+  exactTicker: boolean;
+}): SearchPickerEmptyState {
+  if (input.pending) return "searching";
+  if (input.unavailable) return "unavailable";
+  if (input.notInUniverse || input.exactTicker) return "add_to_universe";
+  return "no_match";
+}
+
+export function tickerFromFundsItem(item: unknown): string {
+  if (!item || typeof item !== "object") return "";
+  return String((item as { ticker?: unknown }).ticker ?? "")
+    .trim()
+    .toUpperCase();
+}
+
+export function fundsPageHasExactTicker(
+  items: readonly unknown[],
+  query: string,
+): boolean {
+  const key = query.trim().toUpperCase();
+  if (!looksLikeExactTicker(key)) return false;
+  return items.some((item) => tickerFromFundsItem(item) === key);
+}
+
 function sourceLabel(body: unknown): string {
   if (!body || typeof body !== "object") return "";
   const source = (body as { source?: { label?: unknown } }).source;
@@ -88,10 +123,17 @@ export async function fetchFundsSearch<T = unknown>(
     });
     const body = await response.json().catch(() => null);
     const page = parseFundsApiResponse<T>(response.ok, body);
-    if (page.unavailable || page.items.length || !looksLikeExactTicker(q)) {
+    if (page.unavailable) return page;
+    // Prefer /funds coverage_status when the ticker is in the page.
+    if (fundsPageHasExactTicker(page.items, q) || !looksLikeExactTicker(q)) {
       return page;
     }
-    return fetchFundsLookup<T>(q);
+    const lookup = await fetchFundsLookup<T>(q);
+    if (lookup.unavailable) {
+      return page.items.length ? page : lookup;
+    }
+    if (lookup.items.length) return lookup;
+    return { items: page.items, unavailable: false, notInUniverse: true };
   } catch {
     return { items: [], unavailable: true };
   }
