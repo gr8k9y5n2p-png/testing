@@ -531,7 +531,7 @@ def test_search_multi_year_top_families(client: TestClient) -> None:
 
     dgagx = client.get("/distributions", params={"fund_identifier": "DGAGX", "page_size": 50})
     dgagx_years = {item["as_of"][:4] for item in dgagx.json()["items"] if item.get("as_of")}
-    assert {"2022", "2023", "2024", "2025"} <= dgagx_years
+    assert {"2021", "2022", "2023", "2024", "2025"} <= dgagx_years
     dgagx_stages = {item["publication_stage"] for item in dgagx.json()["items"]}
     assert "final" in dgagx_stages
 
@@ -577,14 +577,32 @@ def test_search_multi_year_top_families(client: TestClient) -> None:
 
     disvx = client.get("/distributions", params={"fund_identifier": "DISVX", "page_size": 50})
     disvx_years = {item["as_of"][:4] for item in disvx.json()["items"] if item.get("as_of")}
-    assert {"2024", "2025"} <= disvx_years
+    assert {"2023", "2024", "2025"} <= disvx_years
+    assert any(
+        item["estimate_type"] == "long_term_capital_gains"
+        and Decimal(item["amount"]) == Decimal("0.025620")
+        and item.get("as_of", "").startswith("2023")
+        for item in disvx.json()["items"]
+    )
 
     lbsax = client.get("/distributions", params={"fund_identifier": "LBSAX", "page_size": 20})
+    lbsax_years = {item["as_of"][:4] for item in lbsax.json()["items"] if item.get("as_of")}
+    assert {"2022", "2024"} <= lbsax_years
     assert any(
         item["estimate_type"] == "long_term_capital_gains"
         and Decimal(item["amount"]) == Decimal("1.385810")
         for item in lbsax.json()["items"]
     )
+    assert any(
+        item["estimate_type"] == "long_term_capital_gains"
+        and Decimal(item["amount"]) == Decimal("0.561140")
+        for item in lbsax.json()["items"]
+    )
+
+    dagvx = client.get("/distributions", params={"fund_identifier": "DAGVX", "page_size": 50})
+    assert {"2021", "2022", "2023", "2024", "2025"} <= {
+        item["as_of"][:4] for item in dagvx.json()["items"] if item.get("as_of")
+    }
 
     cvlc = client.get("/distributions", params={"fund_identifier": "CVLC", "page_size": 20})
     assert {"2024", "2025"} <= {item["as_of"][:4] for item in cvlc.json()["items"] if item.get("as_of")}

@@ -15,6 +15,7 @@ from app.sources.families import (
 from app.sources.next_tier import (
     AmundiSource,
     BnyMellonSource,
+    ColumbiaThreadneedleSource,
     DimensionalSource,
     FranklinTempletonSource,
     MorganStanleySource,
@@ -120,6 +121,10 @@ def test_full_book_american_funds_invesco_dimensional() -> None:
     assert {"DISVX", "DFELX", "DFQTX"} <= dfa_tickers
     assert len(dfa_tickers) >= 130
 
+    columbia_funds, columbia_tickers = _funds_and_tickers(ColumbiaThreadneedleSource())
+    assert {"LBSAX", "CBLAX", "LEGAX", "ELGAX"} <= columbia_tickers
+    assert len(columbia_tickers) >= 40
+
 
 def test_full_book_vanguard_ici_and_next_wave() -> None:
     vg_funds, vg_tickers = _funds_and_tickers(VanguardSource())
@@ -127,7 +132,7 @@ def test_full_book_vanguard_ici_and_next_wave() -> None:
     assert len(vg_tickers) >= 250
 
     bny_funds, bny_tickers = _funds_and_tickers(BnyMellonSource())
-    assert {"DGAGX", "DAGVX", "BKCG", "BKLC"} <= bny_tickers
+    assert {"DGAGX", "DAGVX", "DREVX", "DREQX", "DNLDX", "PGROX", "DGLAX", "BKCG", "BKLC"} <= bny_tickers
     assert len(bny_funds) >= 40
 
     nt_funds, nt_tickers = _funds_and_tickers(NorthernTrustSource())
