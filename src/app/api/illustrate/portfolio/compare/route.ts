@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 import { toDataApiTaxRates } from "@/lib/illustrate/compare-request";
-import {
-  getPortfolioCompareUpstream,
-  toPortfolioCompareRequestBody,
-} from "@/lib/illustrate/portfolio-compare-client";
+import { proxyLiveOrDemo } from "@/lib/illustrate/illustrate-route";
+import { toPortfolioCompareRequestBody } from "@/lib/illustrate/portfolio-compare-client";
 import {
   isPortfolioCompareRequestValid,
   mockPortfolioCompareResponse,
@@ -20,8 +18,7 @@ function asRecord(value: unknown): Record<string, unknown> {
 
 /**
  * Same-origin Portfolio Compare. Maps UI tax_rates aliases, then proxies to
- * the Data API when configured. Localhost without an upstream stays on the
- * sketch fixture — never seed-math + MOCK banners on Production.
+ * the Data API when configured. Production never returns seed-math + MOCK banners.
  */
 export async function POST(request: Request) {
   let raw: unknown;
@@ -44,30 +41,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ detail: invalid }, { status: 422 });
   }
 
-  const upstream = getPortfolioCompareUpstream();
-  if (upstream) {
-    try {
-      const response = await fetch(upstream, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify(body),
-        cache: "no-store",
-      });
-      const text = await response.text();
-      const contentType = response.headers.get("content-type") ?? "application/json";
-      return new NextResponse(text, {
-        status: response.status,
-        headers: { "Content-Type": contentType },
-      });
-    } catch {
-      return NextResponse.json(
-        { detail: "Portfolio compare is unavailable from the Data API." },
-        { status: 503 },
-      );
-    }
-  }
-
-  return NextResponse.json(
-    mockPortfolioCompareResponse(body as PortfolioCompareRequest),
-  );
+  return proxyLiveOrDemo({
+    path: "/illustrate/portfolio/compare",
+    body,
+    unavailableDetail: "Portfolio compare is unavailable from the Data API.",
+    mock: () => mockPortfolioCompareResponse(body as PortfolioCompareRequest),
+  });
 }

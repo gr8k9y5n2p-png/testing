@@ -1,10 +1,26 @@
 import { PRODUCTION_ORIGIN, publicOrigin } from "@/lib/hosts";
+import { allowDemoEngine, readRuntimeEnv } from "./runtime-env.ts";
+
+export {
+  allowDemoEngine,
+  isProductionRuntime,
+  readRuntimeEnv,
+} from "./runtime-env.ts";
 
 /** Production apex. Brand chrome and ads-ready canonical. */
 export const AFTERTAX_ORIGIN = PRODUCTION_ORIGIN;
 
+function isBrowser(): boolean {
+  return typeof window !== "undefined";
+}
+
+export function sameOriginApiUrl(path: string): string {
+  const clean = path.startsWith("/") ? path : `/${path}`;
+  return `/api${clean}`;
+}
+
 export function getDataApiBaseUrl(): string | null {
-  const value = process.env.NEXT_PUBLIC_DATA_API_URL?.trim();
+  const value = readRuntimeEnv("NEXT_PUBLIC_DATA_API_URL");
   return value ? value.replace(/\/$/, "") : null;
 }
 
@@ -15,15 +31,20 @@ export function dataApiUrl(path: string): string {
   return base ? `${base}${clean}` : `/api${clean}`;
 }
 
+/**
+ * Browser always posts same-origin `/api/illustrate` so a missing client
+ * bundle env cannot skip the server proxy. Server may still use the live host.
+ */
 export function getIllustrateEndpoint(): string {
-  if (process.env.NEXT_PUBLIC_ILLUSTRATE_URL?.trim()) {
-    return process.env.NEXT_PUBLIC_ILLUSTRATE_URL.replace(/\/$/, "");
-  }
+  if (isBrowser()) return sameOriginApiUrl("/illustrate");
+  const override = readRuntimeEnv("NEXT_PUBLIC_ILLUSTRATE_URL");
+  if (override) return override.replace(/\/$/, "");
   return dataApiUrl("/illustrate");
 }
 
-export function isMockIllustrateEndpoint(endpoint = getIllustrateEndpoint()): boolean {
-  return endpoint.startsWith("/");
+/** Demo/seed illustrate — not "the URL starts with /". Same-origin can proxy live. */
+export function isMockIllustrateEndpoint(_endpoint = getIllustrateEndpoint()): boolean {
+  return allowDemoEngine();
 }
 
 export function isRemoteDataApi(): boolean {
@@ -33,20 +54,17 @@ export function isRemoteDataApi(): boolean {
 /** Live illustrate host from Vercel env (server runtime, not only the client bundle). */
 export function getLiveIllustrateUrl(path = "/illustrate"): string | null {
   const clean = path.startsWith("/") ? path : `/${path}`;
-  if (clean === "/illustrate" && process.env.NEXT_PUBLIC_ILLUSTRATE_URL?.trim()) {
-    return process.env.NEXT_PUBLIC_ILLUSTRATE_URL.replace(/\/$/, "");
+  if (clean === "/illustrate") {
+    const override = readRuntimeEnv("NEXT_PUBLIC_ILLUSTRATE_URL");
+    if (override) return override.replace(/\/$/, "");
   }
-  if (
-    clean === "/illustrate/compare" &&
-    process.env.NEXT_PUBLIC_COMPARE_URL?.trim()
-  ) {
-    return process.env.NEXT_PUBLIC_COMPARE_URL.replace(/\/$/, "");
+  if (clean === "/illustrate/compare") {
+    const override = readRuntimeEnv("NEXT_PUBLIC_COMPARE_URL");
+    if (override) return override.replace(/\/$/, "");
   }
-  if (
-    clean === "/illustrate/portfolio/compare" &&
-    process.env.NEXT_PUBLIC_PORTFOLIO_COMPARE_URL?.trim()
-  ) {
-    return process.env.NEXT_PUBLIC_PORTFOLIO_COMPARE_URL.replace(/\/$/, "");
+  if (clean === "/illustrate/portfolio/compare") {
+    const override = readRuntimeEnv("NEXT_PUBLIC_PORTFOLIO_COMPARE_URL");
+    if (override) return override.replace(/\/$/, "");
   }
   const base = getDataApiBaseUrl();
   return base ? `${base}${clean}` : null;

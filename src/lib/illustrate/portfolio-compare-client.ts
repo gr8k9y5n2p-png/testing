@@ -1,4 +1,8 @@
-import { dataApiUrl, isRemoteDataApi } from "@/lib/data-api/config";
+import {
+  allowDemoEngine,
+  readRuntimeEnv,
+  sameOriginApiUrl,
+} from "@/lib/data-api/config";
 import { IllustrateRequestError } from "@/lib/illustrate/client";
 import { userFacingIllustrateError } from "@/lib/illustrate/illustrate-error";
 import {
@@ -8,6 +12,7 @@ import {
   type NavLookup,
 } from "@/lib/illustrate/compare-request";
 import {
+  emptyPortfolioAllocation,
   mockIllustratePortfolioSide,
   mockPortfolioCompareResponse,
   synthesizePortfolioCompare,
@@ -38,18 +43,18 @@ export function getPortfolioCompareEndpoint(): string {
 
 /** Server-side Data API host. Never used from the browser. */
 export function getPortfolioCompareUpstream(): string | null {
-  const override = process.env.NEXT_PUBLIC_PORTFOLIO_COMPARE_URL?.trim();
+  const override = readRuntimeEnv("NEXT_PUBLIC_PORTFOLIO_COMPARE_URL");
   if (override && /^https?:\/\//i.test(override) && !override.startsWith("/")) {
     return override.replace(/\/$/, "");
   }
-  const base = process.env.NEXT_PUBLIC_DATA_API_URL?.trim();
+  const base = readRuntimeEnv("NEXT_PUBLIC_DATA_API_URL");
   return base ? `${base.replace(/\/$/, "")}/illustrate/portfolio/compare` : null;
 }
 
 export function isMockPortfolioCompareEndpoint(
-  endpoint = getPortfolioCompareEndpoint(),
+  _endpoint = getPortfolioCompareEndpoint(),
 ): boolean {
-  return endpoint.startsWith("/");
+  return allowDemoEngine();
 }
 
 function num(value: unknown, fallback = 0): number {
@@ -131,12 +136,13 @@ function withSideNav(
   // Live Data ANDs fund_name. Catalog labels miss product names (AGTHX
   // "American Funds Growth Fund of America" ≠ "The Growth Fund of America")
   // and return unmatched / N/A for every year. Ticker is unique — omit.
-  const nameLookup = isRemoteDataApi() ? undefined : seedFundNameLookup;
+  const live = !allowDemoEngine();
+  const nameLookup = live ? undefined : seedFundNameLookup;
   return {
     ...side,
     holdings: side.holdings.map((holding) => {
       const next = withPortfolioHoldingNav(holding, lookup, nameLookup);
-      if (!isRemoteDataApi()) return next;
+      if (!live) return next;
       const { fund_name: _omit, ...rest } = next;
       return rest;
     }),
@@ -152,7 +158,7 @@ export function toPortfolioCompareRequestBody(
   request: PortfolioCompareRequest,
   lookup: NavLookup = seedNavLookup,
 ): Record<string, unknown> {
-  const navLookup: NavLookup = isRemoteDataApi() ? () => undefined : lookup;
+  const navLookup: NavLookup = allowDemoEngine() ? lookup : () => undefined;
   const body: Record<string, unknown> = {
     current: withSideNav(request.current, navLookup),
     proposed: withSideNav(request.proposed, navLookup),
@@ -203,7 +209,7 @@ function normalizeHolding(raw: unknown, index: number): PortfolioHoldingOut {
     covered: row.covered !== false && !row.gap_reason,
     publication_stage_used:
       row.publication_stage_used == null ? null : String(row.publication_stage_used),
-    warnings: Array.isArray(row.warnings) ? row.warnings.map(String) : [],
+    warnings: userFacingNotes(row.warnings),
     upcoming: normalizeUpcoming(
       Object.prototype.hasOwnProperty.call(row, "upcoming") ? row.upcoming : undefined,
     ),
@@ -426,7 +432,7 @@ async function postPortfolioSide(
   combine: boolean | undefined,
   signal?: AbortSignal,
 ): Promise<PortfolioAllocationOut | null> {
-  const endpoint = dataApiUrl("/illustrate/portfolio");
+  const endpoint = sameOriginApiUrl("/illustrate/portfolio");
   const body = {
     ...toPortfolioIllustrateBody(side),
     tax_rates: toDataApiTaxRates(taxRates),
@@ -440,11 +446,11 @@ async function postPortfolioSide(
   let response: Response;
   try {
     response = await post(endpoint);
-    if (isRemoteDataApi() && (response.status >= 500 || response.status === 404)) {
+    if (!allowDemoEngine() && (response.status >= 500 || response.status === 404)) {
       return null;
     }
   } catch (error) {
-    if (isRemoteDataApi()) return null;
+    if (!allowDemoEngine()) return null;
     throw error;
   }
 
@@ -462,7 +468,7 @@ export async function postIllustratePortfolioCompare(
   init?: { signal?: AbortSignal },
 ): Promise<PortfolioCompareResponse> {
   const endpoint = getPortfolioCompareEndpoint();
-  const remote = isRemoteDataApi() || !isMockPortfolioCompareEndpoint(endpoint);
+  const remote = !allowDemoEngine();
 
   let response: Response | undefined;
   try {
@@ -472,7 +478,10 @@ export async function postIllustratePortfolioCompare(
     }
   } catch (error) {
     if (!remote) {
-      return mockPortfolioCompareResponse(request);
+      return normalizePortfolioCompareResponse(
+        mockPortfolioCompareResponse(request) as unknown as Record<string, unknown>,
+        "mock",
+      );
     }
     if (init?.signal?.aborted) throw error;
     response = undefined;
@@ -513,10 +522,12 @@ export async function postIllustratePortfolioCompare(
             init?.signal,
           )
         : Promise.resolve(
-            mockIllustratePortfolioSide(
-              request.current,
-              request.current.label || "Current Allocation",
-            ),
+            allowDemoEngine()
+              ? mockIllustratePortfolioSide(
+                  request.current,
+                  request.current.label || "Current Allocation",
+                )
+              : emptyPortfolioAllocation(request.current.label || "Current Allocation"),
           ),
       request.proposed.holdings.length > 0
         ? postPortfolioSide(
@@ -526,10 +537,12 @@ export async function postIllustratePortfolioCompare(
             init?.signal,
           )
         : Promise.resolve(
-            mockIllustratePortfolioSide(
-              request.proposed,
-              request.proposed.label || "Proposed Allocation",
-            ),
+            allowDemoEngine()
+              ? mockIllustratePortfolioSide(
+                  request.proposed,
+                  request.proposed.label || "Proposed Allocation",
+                )
+              : emptyPortfolioAllocation(request.proposed.label || "Proposed Allocation"),
           ),
     ]);
     if (current && proposed && (current.holdings.length > 0 || proposed.holdings.length > 0)) {
@@ -540,7 +553,10 @@ export async function postIllustratePortfolioCompare(
   }
 
   if (!remote) {
-    return mockPortfolioCompareResponse(request);
+    return normalizePortfolioCompareResponse(
+      mockPortfolioCompareResponse(request) as unknown as Record<string, unknown>,
+      "mock",
+    );
   }
 
   throw new IllustrateRequestError(

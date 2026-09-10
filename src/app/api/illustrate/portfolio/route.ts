@@ -1,10 +1,7 @@
 import { NextResponse } from "next/server";
 import { SAMPLE_FUNDS } from "@/data/seed";
-import {
-  getLiveIllustrateUrl,
-  proxyLiveDataApiPost,
-} from "@/lib/data-api/config";
 import { isLiveCoveredFamily } from "@/lib/coverage";
+import { proxyLiveOrDemo } from "@/lib/illustrate/illustrate-route";
 import type { PortfolioIllustrateRequest } from "@/lib/illustrate/portfolio";
 import { demoEngineNotes } from "@/lib/illustrate/user-facing-notes";
 
@@ -19,23 +16,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ detail: "Invalid JSON body" }, { status: 400 });
   }
 
-  const live = getLiveIllustrateUrl("/illustrate/portfolio");
-  if (live) {
-    try {
-      const upstream = await proxyLiveDataApiPost(live, body);
-      const text = await upstream.text();
-      return new NextResponse(text, {
-        status: upstream.status,
-        headers: { "Content-Type": "application/json" },
-      });
-    } catch {
-      return NextResponse.json(
-        { detail: "Portfolio illustrate is unavailable from the Data API." },
-        { status: 503 },
-      );
-    }
-  }
+  return proxyLiveOrDemo({
+    path: "/illustrate/portfolio",
+    body,
+    unavailableDetail: "Portfolio illustrate is unavailable from the Data API.",
+    mock: () => mockPortfolioCoverage(body),
+  });
+}
 
+function mockPortfolioCoverage(body: PortfolioIllustrateRequest) {
   const holdings = body.holdings ?? [];
   let covered = 0;
   let uncovered = 0;
@@ -67,7 +56,7 @@ export async function POST(request: Request) {
   }
 
   const total = covered + uncovered;
-  return NextResponse.json({
+  return {
     coverage: {
       dollars_total: total,
       dollars_covered: covered,
@@ -78,5 +67,5 @@ export async function POST(request: Request) {
     warnings: demoEngineNotes(
       "MOCK /illustrate/portfolio. Set NEXT_PUBLIC_DATA_API_URL to use the Data team endpoint.",
     ),
-  });
+  };
 }

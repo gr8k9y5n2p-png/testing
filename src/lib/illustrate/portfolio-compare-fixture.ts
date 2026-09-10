@@ -230,6 +230,31 @@ function mockDistributionEvents(
   ];
 }
 
+/** Soft-empty book. Production uses this instead of seed math. */
+export function emptyPortfolioAllocation(label: string): PortfolioAllocationOut {
+  return {
+    label: label.trim() || "Allocation",
+    holdings: [],
+    totals: {
+      distribution_dollars: 0,
+      estimated_tax: 0,
+      estimated_tax_dollars: 0,
+      effective_tax_on_holding: 0,
+    },
+    coverage: {
+      dollars_total: 0,
+      dollars_covered: 0,
+      dollars_uncovered: 0,
+      coverage_pct: 0,
+      holdings_covered: 0,
+      holdings_uncovered: 0,
+    },
+    gaps: [],
+    warnings: [],
+    notes: [],
+  };
+}
+
 export function mockIllustratePortfolioSide(
   side: PortfolioCompareSideIn,
   fallbackLabel: string,

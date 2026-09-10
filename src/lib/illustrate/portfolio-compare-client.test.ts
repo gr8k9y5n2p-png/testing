@@ -167,9 +167,9 @@ describe("portfolio compare tax_rates + same-origin proxy", () => {
     assert.match(client, /toDataApiTaxRates/);
     assert.match(client, /return "\/api\/illustrate\/portfolio\/compare"/);
     assert.match(client, /getPortfolioCompareUpstream/);
-    assert.match(client, /isRemoteDataApi\(\) \|\| !isMockPortfolioCompareEndpoint/);
+    assert.match(client, /const remote = !allowDemoEngine\(\)/);
     assert.doesNotMatch(client, /dataApiUrl\("\/illustrate\/portfolio\/compare"\)/);
-    assert.match(route, /getPortfolioCompareUpstream/);
+    assert.match(route, /proxyLiveOrDemo/);
     assert.match(route, /toDataApiTaxRates/);
     assert.match(route, /toPortfolioCompareRequestBody/);
     assert.match(compare, /tax_rates: payload\.taxRates/);

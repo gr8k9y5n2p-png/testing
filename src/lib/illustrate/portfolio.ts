@@ -1,4 +1,8 @@
-import { getDataApiBaseUrl, dataApiUrl, isRemoteDataApi } from "@/lib/data-api/config";
+import {
+  allowDemoEngine,
+  getDataApiBaseUrl,
+  sameOriginApiUrl,
+} from "@/lib/data-api/config";
 import { userFacingNotes } from "@/lib/illustrate/user-facing-notes";
 import type { TaxRates } from "@/lib/illustrate/types";
 
@@ -77,8 +81,8 @@ export async function postIllustratePortfolio(
   request: PortfolioIllustrateRequest,
   init?: { signal?: AbortSignal },
 ): Promise<PortfolioIllustrateResponse> {
-  const endpoint = dataApiUrl("/illustrate/portfolio");
-  const remote = isRemoteDataApi();
+  const endpoint = sameOriginApiUrl("/illustrate/portfolio");
+  const remote = !allowDemoEngine();
 
   async function post(url: string) {
     return fetch(url, {
