@@ -20,6 +20,9 @@ export type FundsApiItem = {
   nav?: number | string | null;
   nav_as_of?: string | null;
   nav_source?: string | null;
+  /** Data #114 when live. Soft-null until deployed. */
+  coverage_status?: string | null;
+  coverageStatus?: string | null;
 };
 
 export function mapFundsApiItem(row: FundsApiItem): FundEstimateView {
@@ -58,5 +61,6 @@ export function mapFundsApiItem(row: FundsApiItem): FundEstimateView {
     categoryAveragePctNav: 0,
     vsCategoryPctNav: 0,
     hasEstimate,
+    coverageStatus: row.coverage_status ?? row.coverageStatus ?? null,
   };
 }

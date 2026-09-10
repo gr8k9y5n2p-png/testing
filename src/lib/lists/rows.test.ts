@@ -164,7 +164,8 @@ describe("Lists upcoming rows", () => {
       found: true,
       today: TODAY,
     });
-    assert.equal(list.status, "undisclosed");
+    assert.equal(list.status, "awaiting_estimate");
+    assert.equal(list.found, true);
     assert.ok(list.nav != null && Math.abs(list.nav - 88.42) < 1e-6);
     assert.equal(list.distPerShare, null);
     assert.equal(list.pctOfNav, null);
@@ -173,6 +174,40 @@ describe("Lists upcoming rows", () => {
     assert.equal(list.recordDate, null);
     assert.equal(list.exDate, null);
     assert.deepEqual(upcomingEstimateTypeAmounts(AGTHX_PAID_ROWS, TODAY), emptyEstimateTypes());
+  });
+
+  it("does not double Dist $/sh when ticker= and Upcoming snapshot rows are the same", () => {
+    const list = listRowFromFund({
+      ticker: "FBGRX",
+      fund: null,
+      distributionRows: [...FBGRX_ROWS, ...FBGRX_ROWS],
+      found: true,
+      today: TODAY,
+    });
+    // latest snapshot still groups one as_of|stage|ex key; amounts add.
+    // BFF must dedupe before this helper — lock the helper to one snapshot sum.
+    assert.ok(
+      list.distPerShare != null && Math.abs(list.distPerShare - 21.021) < 1e-6,
+    );
+  });
+
+  it("fills LTCG from upcoming estimateTypeLines when raw snapshot rows are missing", () => {
+    const fund = hydrate("FBGRX", "Blue Chip Growth", "Fidelity", 312.26, FBGRX_ROWS);
+    const list = listRowFromFund({
+      ticker: "FBGRX",
+      fund,
+      distributionRows: [],
+      found: true,
+      today: TODAY,
+    });
+    assert.equal(list.status, "upcoming");
+    assert.ok(
+      list.estimateTypes.long_term_capital_gains != null &&
+        Math.abs(list.estimateTypes.long_term_capital_gains - 21.021) < 1e-6,
+    );
+    assert.ok(
+      list.distPerShare != null && Math.abs(list.distPerShare - 21.021) < 1e-6,
+    );
   });
 
   it("keeps unknown tickers as not-found instead of dropping them", () => {
@@ -217,6 +252,64 @@ describe("Lists upcoming rows", () => {
     assert.equal(list.estimateTypes.qualified_dividend, null);
   });
 
+  it("prefers published coverage_status on /funds over has_estimate", () => {
+    const awaiting = mapFundsApiItem({
+      ticker: "AGTHX",
+      fund_name: "The Growth Fund of America",
+      fund_family: "American Funds",
+      has_estimate: true,
+      coverage_status: "awaiting_estimate",
+      nav_per_share: 88.42,
+    });
+    const awaitingRow = listRowFromFund({
+      ticker: "AGTHX",
+      fund: awaiting,
+      found: true,
+      today: TODAY,
+    });
+    assert.equal(awaitingRow.status, "awaiting_estimate");
+    assert.equal(awaitingRow.distPerShare, null);
+
+    const announced = mapFundsApiItem({
+      ticker: "FBGRX",
+      fund_name: "Blue Chip Growth",
+      fund_family: "Fidelity",
+      has_estimate: false,
+      coverage_status: "estimate_announced",
+      nav_per_share: 312.26,
+    });
+    const announcedRow = listRowFromFund({
+      ticker: "FBGRX",
+      fund: announced,
+      found: true,
+      today: TODAY,
+    });
+    assert.equal(announcedRow.status, "upcoming");
+    assert.equal(announcedRow.distPerShare, null, "do not invent estimate $");
+  });
+
+  it("unpaid snapshot still fills columns when coverage_status is stale awaiting", () => {
+    const identity = mapFundsApiItem({
+      ticker: "FBGRX",
+      fund_name: "Blue Chip Growth",
+      fund_family: "Fidelity",
+      has_estimate: false,
+      coverage_status: "awaiting_estimate",
+      nav_per_share: 312.26,
+    });
+    const list = listRowFromFund({
+      ticker: "FBGRX",
+      fund: identity,
+      distributionRows: FBGRX_ROWS,
+      found: true,
+      today: TODAY,
+    });
+    assert.equal(list.status, "upcoming");
+    assert.ok(
+      list.distPerShare != null && Math.abs(list.distPerShare - 21.021) < 1e-6,
+    );
+  });
+
   it("hydrates FBGRX columns from unpaid rows when catalog identity is missing", () => {
     const list = listRowFromFund({
       ticker: "FBGRX",
@@ -246,6 +339,8 @@ describe("Lists chrome lock", () => {
       "utf8",
     );
     const page = readFileSync(join(here, "../../app/lists/page.tsx"), "utf8");
+    assert.match(page, /loadListRowsFromDataApi/);
+    assert.match(page, /initialRows/);
     const nav = readFileSync(join(here, "../../components/AppNav.tsx"), "utf8");
     assert.doesNotMatch(workspace, /MOCK/);
     assert.doesNotMatch(page, /MOCK/);
@@ -259,6 +354,13 @@ describe("Lists chrome lock", () => {
     assert.match(workspace, /tickerSlotBorderClass/);
     assert.match(workspace, /history\.replaceState/);
     assert.doesNotMatch(workspace, /useRouter|router\.replace/);
+    assert.match(workspace, /cache:\s*"no-store"/);
+    assert.match(workspace, /needsListHydrate/);
+    assert.match(workspace, /listRowsFromApiResponse/);
+    assert.doesNotMatch(
+      workspace,
+      /return tickers\.map\(\(ticker\) => emptyListRow\(ticker, "not_found"\)\)/,
+    );
     assert.match(nav, /label:\s*"Lists"/);
     assert.match(nav, /href:\s*"\/lists"/);
   });

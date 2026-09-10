@@ -9,8 +9,9 @@ import type { PaidDistributionEvent } from "./distribution-bucket.ts";
 import type { FundEstimate, FundEstimateView } from "./types.ts";
 
 /**
- * `GET /funds.has_estimate` is unpaid Upcoming / manager prelim only.
- * Paid / final YE history must never be hidden just because that flag is false.
+ * Upcoming chrome only. No unpaid announced publish → hide (`—` /
+ * Undisclosed). Paid / final YE still render on Paid History via
+ * `paidEventsForFund` — never as Upcoming $ / share.
  */
 export function hideUpcomingAmounts(
   fund: Pick<FundEstimate, "bucket" | "hasEstimate"> &
@@ -24,7 +25,7 @@ export function hideUpcomingAmounts(
       >
     >,
 ): boolean {
-  if (fund.bucket === "paid") return false;
+  if (fund.bucket === "paid") return true;
   if (fund.hasEstimate === false) return true;
   return !hasDisclosedUpcomingAmount(fund);
 }

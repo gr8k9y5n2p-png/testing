@@ -54,8 +54,8 @@ export const SEARCH_PAID_HISTORY_DETAIL =
   "Paid and final distributions from GET /distributions for the selected calendar year. Prior-year rows drop off when the year ends. Never invented from Upcoming.";
 export const SEARCH_PAID_HISTORY_KICKER = "past · not upcoming";
 export const ILLUSTRATION_PAID_HISTORY_DETAIL =
-  "Final and paid distributions from GET /distributions for the prior calendar year only. Current-year midyear paids stay out.";
-export const ILLUSTRATION_PAID_HISTORY_KICKER = "prior calendar year · not upcoming";
+  "Final and paid distributions from GET /distributions for the last 5 completed calendar years. Current-year midyear paids stay out.";
+export const ILLUSTRATION_PAID_HISTORY_KICKER = "5-year lookback · not upcoming";
 
 /** Lists tab — ticker paste list + unpaid announced estimates. */
 export const LISTS_HEADING = "Lists";
@@ -66,6 +66,10 @@ export const LISTS_EMPTY =
 export const LISTS_INPUT_PLACEHOLDER = "FBGRX, AGTHX, ABALX";
 export const LISTS_ADD = "Add";
 export const LISTS_NOT_FOUND = "Not found";
+export const LISTS_AWAITING_ESTIMATE = "Awaiting Estimate";
+export const ADD_TO_UNIVERSE = "Add to universe";
+export const DATA_API_UNAVAILABLE =
+  "Data API is unavailable. Try again — this is not an empty catalog.";
 export const LISTS_NAV_COLUMN = "NAV";
 export const LISTS_DIST_COLUMN = "Estimated $ Distribution/share";
 export const LISTS_PCT_COLUMN = "Distribution % of NAV";

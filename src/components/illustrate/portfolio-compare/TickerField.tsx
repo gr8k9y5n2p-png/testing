@@ -1,19 +1,43 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { shouldClearFundPickerSelection } from "@/components/illustrate/fund-picker-clear";
 import { shouldOpenFundSuggestions } from "@/components/illustrate/fund-picker-suggestions";
 import { tickerSlotBorderClass } from "@/components/illustrate/ticker-slot-border";
+import { ADD_TO_UNIVERSE, DATA_API_UNAVAILABLE, LISTS_AWAITING_ESTIMATE } from "@/lib/copy";
+import { fundPickerCoverageLabel } from "@/lib/data-api/coverage-status";
+import { fetchFundsSearch, searchPickerEmptyState } from "@/lib/data-api/funds-client";
 import {
   looksLikeExactTicker,
+  noticeForTickerRequest,
   notifyPortfolioTickerMiss,
+  requestTicker,
 } from "@/lib/data-api/request-ticker";
+import type { FundEstimateView } from "@/data/types";
 import type { PortfolioFundOption } from "@/lib/illustrate/portfolio-compare-types";
 import {
   emptyTickerSelection,
   tickerFieldDisplay,
   tickerFieldSubtitle,
 } from "@/components/illustrate/portfolio-compare/ticker-field-clear";
+
+const REMOTE_SEARCH_DEBOUNCE_MS = 220;
+
+function toOption(fund: FundEstimateView): PortfolioFundOption & {
+  coverageStatus?: string | null;
+  hasEstimate?: boolean;
+  bucket?: string | null;
+} {
+  return {
+    ticker: fund.ticker,
+    fundName: fund.fundName,
+    family: fund.family,
+    nav: fund.nav > 0 ? fund.nav : null,
+    coverageStatus: fund.coverageStatus,
+    hasEstimate: fund.hasEstimate,
+    bucket: fund.bucket,
+  };
+}
 
 function findExactFund(funds: PortfolioFundOption[], ticker: string) {
   const key = ticker.trim().toUpperCase();
@@ -52,6 +76,11 @@ export function TickerField({
   const [query, setQuery] = useState(ticker);
   const [open, setOpen] = useState(false);
   const [cleared, setCleared] = useState(false);
+  const [remoteFunds, setRemoteFunds] = useState<PortfolioFundOption[]>([]);
+  const [remotePending, setRemotePending] = useState(false);
+  const [remoteUnavailable, setRemoteUnavailable] = useState(false);
+  const [notInUniverse, setNotInUniverse] = useState(false);
+  const [requesting, setRequesting] = useState(false);
   const pickedRef = useRef(false);
   const hasSelection = Boolean((ticker || fundName) && !cleared);
   const display = tickerFieldDisplay({ open, query, ticker, cleared });
@@ -74,16 +103,62 @@ export function TickerField({
     onSelect(emptyTickerSelection());
   }
 
+  const typedQuery = (open ? query : cleared ? "" : ticker).trim();
+
+  useEffect(() => {
+    const q = typedQuery;
+    let cancelled = false;
+    const handle = window.setTimeout(() => {
+      if (!q || !open) {
+        if (!cancelled) {
+          setRemoteFunds([]);
+          setRemotePending(false);
+          setRemoteUnavailable(false);
+          setNotInUniverse(false);
+        }
+        return;
+      }
+      if (!cancelled) setRemotePending(true);
+      void fetchFundsSearch<FundEstimateView>(q)
+        .then((result) => {
+          if (cancelled) return;
+          setRemoteUnavailable(result.unavailable);
+          setNotInUniverse(result.notInUniverse === true);
+          setRemoteFunds(result.unavailable ? [] : result.items.map(toOption));
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setRemoteFunds([]);
+            setRemoteUnavailable(true);
+            setNotInUniverse(false);
+          }
+        })
+        .finally(() => {
+          if (!cancelled) setRemotePending(false);
+        });
+    }, q ? REMOTE_SEARCH_DEBOUNCE_MS : 0);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(handle);
+    };
+  }, [open, typedQuery]);
+
   const matches = useMemo(() => {
-    const needle = (open ? query : cleared ? "" : ticker).trim().toLowerCase();
+    const needle = typedQuery.toLowerCase();
     if (!needle) return [];
-    return funds
-      .filter((fund) => {
-        const haystack = `${fund.ticker} ${fund.fundName} ${fund.family ?? ""}`.toLowerCase();
-        return haystack.includes(needle);
-      })
-      .slice(0, 8);
-  }, [cleared, funds, open, query, ticker]);
+    const local = funds.filter((fund) => {
+      const haystack = `${fund.ticker} ${fund.fundName} ${fund.family ?? ""}`.toLowerCase();
+      return haystack.includes(needle);
+    });
+    const seen = new Set(local.map((fund) => fund.ticker.toUpperCase()));
+    const remote = remoteFunds.filter((fund) => {
+      const key = fund.ticker.toUpperCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    return [...local, ...remote].slice(0, 8);
+  }, [funds, remoteFunds, typedQuery]);
 
   function showSuggestions(value: string) {
     setOpen(shouldOpenFundSuggestions(value));
@@ -151,7 +226,7 @@ export function TickerField({
                 return;
               }
               if (typed !== ticker) {
-                const match = findExactFund(funds, typed);
+                const match = findExactFund(funds, typed) ?? findExactFund(remoteFunds, typed);
                 if (match) {
                   onSelect(match);
                   return;
@@ -191,7 +266,7 @@ export function TickerField({
               event.preventDefault();
               const typed = query.trim().toUpperCase();
               if (!typed) return;
-              const exact = findExactFund(funds, typed);
+              const exact = findExactFund(funds, typed) ?? findExactFund(remoteFunds, typed);
               const match = exact ?? matches[0];
               if (match) {
                 pickedRef.current = true;
@@ -232,34 +307,82 @@ export function TickerField({
           className="absolute z-30 mt-1 max-h-60 w-[min(100%,20rem)] overflow-auto rounded-md border border-line bg-surface shadow-lg"
         >
           {matches.length === 0 ? (
-            <li className="px-3 py-2.5 text-sm text-muted">No funds match.</li>
+            <li className="px-3 py-2.5 text-sm text-muted">
+              {(() => {
+                const empty = searchPickerEmptyState({
+                  pending: remotePending,
+                  unavailable: remoteUnavailable,
+                  notInUniverse,
+                  exactTicker: looksLikeExactTicker(typedQuery),
+                });
+                if (empty === "searching") return "Searching…";
+                if (empty === "unavailable") return DATA_API_UNAVAILABLE;
+                if (empty === "add_to_universe") {
+                  return (
+                    <button
+                      type="button"
+                      className="text-left text-sm font-medium text-accent hover:underline"
+                      onMouseDown={(event) => event.preventDefault()}
+                      disabled={requesting}
+                      onClick={() => {
+                        const typed = typedQuery.trim().toUpperCase();
+                        setRequesting(true);
+                        void requestTicker({ ticker: typed, source: "web" })
+                          .then((result) => {
+                            const message = noticeForTickerRequest(result, "web");
+                            if (message) onNotice?.(message);
+                          })
+                          .finally(() => setRequesting(false));
+                      }}
+                    >
+                      {ADD_TO_UNIVERSE}
+                    </button>
+                  );
+                }
+                return "No funds match.";
+              })()}
+            </li>
           ) : (
-            matches.map((fund) => (
-              <li key={fund.ticker} role="option" aria-selected={fund.ticker === ticker}>
-                <button
-                  type="button"
-                  className="flex w-full items-start justify-between gap-3 px-3 py-2 text-left hover:bg-paper"
-                  onMouseDown={(event) => event.preventDefault()}
-                  onClick={() => {
-                    pickedRef.current = true;
-                    setCleared(false);
-                    onSelect(fund);
-                    setQuery(fund.ticker);
-                    setOpen(false);
-                  }}
-                >
-                  <span>
-                    <span className="block font-mono text-sm font-medium text-ink">
-                      {fund.ticker}
+            matches.map((fund) => {
+              const coverage = fundPickerCoverageLabel(
+                fund as {
+                  coverageStatus?: unknown;
+                  hasEstimate?: boolean | null;
+                  bucket?: string | null;
+                },
+              );
+              return (
+                <li key={fund.ticker} role="option" aria-selected={fund.ticker === ticker}>
+                  <button
+                    type="button"
+                    className="flex w-full items-start justify-between gap-3 px-3 py-2 text-left hover:bg-paper"
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => {
+                      pickedRef.current = true;
+                      setCleared(false);
+                      onSelect(fund);
+                      setQuery(fund.ticker);
+                      setOpen(false);
+                    }}
+                  >
+                    <span>
+                      <span className="block font-mono text-sm font-medium text-ink">
+                        {fund.ticker}
+                        {coverage ? (
+                          <span className="ml-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">
+                            {LISTS_AWAITING_ESTIMATE}
+                          </span>
+                        ) : null}
+                      </span>
+                      <span className="block text-[11px] text-muted">{fund.fundName}</span>
+                      {fund.family ? (
+                        <span className="block text-[11px] text-faint">{fund.family}</span>
+                      ) : null}
                     </span>
-                    <span className="block text-[11px] text-muted">{fund.fundName}</span>
-                    {fund.family ? (
-                      <span className="block text-[11px] text-faint">{fund.family}</span>
-                    ) : null}
-                  </span>
-                </button>
-              </li>
-            ))
+                  </button>
+                </li>
+              );
+            })
           )}
         </ul>
       ) : null}

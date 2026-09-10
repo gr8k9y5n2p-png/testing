@@ -11,6 +11,7 @@ import {
 } from "../../data/distribution-bucket.ts";
 import { hideUpcomingAmounts } from "../../data/hydrate-funds.ts";
 import type { FundEstimateView } from "../../data/types.ts";
+import { resolveCoverageStatus } from "../data-api/coverage-status.ts";
 import { GROWTH_TAX_TYPE_LABELS } from "../illustrate/growth-tax-by-type.ts";
 import {
   parsePositiveNav,
@@ -46,7 +47,13 @@ const TYPE_ALIASES: Record<string, ListEstimateType> = {
   qdi: "qualified_dividend",
 };
 
-export type ListRowStatus = "loading" | "upcoming" | "undisclosed" | "not_found";
+export type ListRowStatus =
+  | "loading"
+  | "upcoming"
+  | "awaiting_estimate"
+  | "undisclosed"
+  | "not_found"
+  | "unavailable";
 
 export type ListRow = {
   ticker: string;
@@ -200,8 +207,14 @@ export function upcomingEstimateTypeAmounts(
       row.amount_unit === "per_share" && !isRollupTotal(row.estimate_type),
   );
   let totalCapitalGains: number | null = null;
+  const seenIds = new Set<string>();
 
   for (const row of snapshot) {
+    const id = (row.id ?? "").trim();
+    if (id) {
+      if (seenIds.has(id)) continue;
+      seenIds.add(id);
+    }
     if (hasTypedPerShare && isRollupTotal(row.estimate_type)) continue;
     if ((row.amount_unit ?? "").trim().toLowerCase() !== "per_share") continue;
     const value = midpoint(row);
@@ -268,6 +281,44 @@ function snapshotFamily(rows: DataDistribution[]): string | null {
   return null;
 }
 
+function estimateTypesFromFundLines(
+  fund: FundEstimateView | null,
+): Record<ListEstimateType, number | null> {
+  const amounts = emptyEstimateTypes();
+  if (!fund) return amounts;
+  let totalCapitalGains: number | null = null;
+  for (const line of fund.estimateTypeLines ?? []) {
+    if ((line.amountUnit ?? "").trim().toLowerCase() !== "per_share") continue;
+    if (!Number.isFinite(line.amount)) continue;
+    const kind = canonicalizeListEstimateType(line.estimateType);
+    if (kind === "skip") continue;
+    if (kind === "total_capital_gains") {
+      totalCapitalGains = (totalCapitalGains ?? 0) + line.amount;
+      continue;
+    }
+    amounts[kind] = (amounts[kind] ?? 0) + line.amount;
+  }
+  if (
+    totalCapitalGains != null &&
+    amounts.long_term_capital_gains == null &&
+    amounts.short_term_capital_gains == null
+  ) {
+    amounts.long_term_capital_gains = totalCapitalGains;
+  }
+  return amounts;
+}
+
+function mergeEstimateTypes(
+  primary: Record<ListEstimateType, number | null>,
+  fallback: Record<ListEstimateType, number | null>,
+): Record<ListEstimateType, number | null> {
+  const merged = emptyEstimateTypes();
+  for (const type of LIST_ESTIMATE_TYPES) {
+    merged[type] = primary[type] ?? fallback[type];
+  }
+  return merged;
+}
+
 function distTotalFromTypes(
   amounts: Record<ListEstimateType, number | null>,
 ): number | null {
@@ -320,12 +371,33 @@ export function listRowFromFund(input: {
     return emptyListRow(ticker, "not_found");
   }
   if (!fund && !snapshot.length) {
-    return emptyListRow(ticker, found ? "undisclosed" : "not_found");
+    const row = emptyListRow(ticker, found ? "awaiting_estimate" : "not_found");
+    return found ? { ...row, found: true } : row;
   }
 
   const upcoming = hasUpcomingEstimate(fund, distributionRows, input.today);
+  // Data #114 `coverage_status` when present. Until that deploy, best-effort
+  // from /funds hit + unpaid snapshot / has_estimate. Do not invent $.
+  const coverage = resolveCoverageStatus({
+    coverageStatus: fund?.coverageStatus,
+    foundInFunds: found,
+    // Catalog has_estimate is not an unpaid snapshot. Until Data #114,
+    // in-book + no unpaid → awaiting_estimate. Prefer the field when present.
+    hasEstimate: false,
+    hasUpcoming: upcoming,
+  });
+  const status: ListRowStatus = upcoming
+    ? "upcoming"
+    : coverage === "not_in_universe"
+      ? "not_found"
+      : coverage === "estimate_announced"
+        ? "upcoming"
+        : "awaiting_estimate";
   const estimateTypes = upcoming
-    ? upcomingEstimateTypeAmounts(distributionRows, input.today)
+    ? mergeEstimateTypes(
+        upcomingEstimateTypeAmounts(distributionRows, input.today),
+        estimateTypesFromFundLines(fund),
+      )
     : emptyEstimateTypes();
   const distFromTypes = distTotalFromTypes(estimateTypes);
   const distFromFund =
@@ -363,7 +435,7 @@ export function listRowFromFund(input: {
     fundName,
     family,
     found: true,
-    status: upcoming ? "upcoming" : "undisclosed",
+    status,
     nav,
     navAsOf: fund?.navAsOf ?? null,
     distPerShare,

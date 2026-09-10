@@ -15,7 +15,9 @@ import {
   withPeerContext,
 } from "../../data/queries.ts";
 import {
+  illustrationPaidHistoryMatrix,
   illustrationPaidHistoryYear,
+  illustrationPaidHistoryYears,
   illustrationPaidTypeRows,
 } from "./illustration-paid-history.ts";
 
@@ -150,6 +152,7 @@ describe("Dollar Illustration prior-year Paid History", () => {
   it("uses the prior Chicago calendar year (2026 → 2025)", () => {
     assert.equal(priorPaidHistoryYear(NOW), 2025);
     assert.equal(illustrationPaidHistoryYear(NOW), 2025);
+    assert.deepEqual(illustrationPaidHistoryYears(NOW), [2021, 2022, 2023, 2024, 2025]);
     assert.equal(
       priorPaidHistoryYear(new Date("2027-01-01T05:00:00Z")),
       2025,
@@ -260,11 +263,92 @@ describe("Dollar Illustration prior-year Paid History", () => {
     assert.doesNotMatch(results, /IllustrationPaidHistory/);
     assert.doesNotMatch(results, /paidEventsForFund/);
     assert.match(paid, /w-full/);
-    assert.match(paid, /illustrationPaidTypeRows/);
+    assert.match(paid, /illustrationPaidHistoryMatrix/);
     assert.match(paid, /ILLUSTRATION_PAID_HISTORY_KICKER/);
     assert.match(paid, /ILLUSTRATION_PAID_HISTORY_DETAIL/);
-    assert.match(paid, /fetchTickerDistributions/);
-    assert.match(paid, /\/api\/funds/);
+    assert.match(paid, /fetchFundsSearch/);
+    assert.match(paid, /navOnly:\s*false/);
     assert.doesNotMatch(paid, /params\.set\("nav_only"/);
+  });
+
+  it("builds a 5-year matrix from published types only — $0 stays, missing is null, unpaid stays out", () => {
+    const fund = hydrate("FBGRX", "Blue Chip Growth", "Fidelity", [
+      ...FBGRX_ROWS,
+      row({
+        id: "fbgrx-ye-2023",
+        ticker: "FBGRX",
+        fund_name: "Blue Chip Growth",
+        estimate_type: "ordinary_income",
+        amount: "0.410000",
+        amount_unit: "per_share",
+        record_date: "2023-12-08",
+        ex_date: "2023-12-11",
+        payable_date: "2023-12-13",
+        as_of: "2023-12-31",
+        publication_stage: "final",
+      }),
+    ]);
+    const matrix = illustrationPaidHistoryMatrix(fund, NOW);
+    assert.deepEqual(matrix.years, [2021, 2022, 2023, 2024, 2025]);
+    const types = matrix.rows.map((row) => row.estimateType);
+    assert.deepEqual(types, [
+      "long_term_capital_gains",
+      "short_term_capital_gains",
+      "ordinary_income",
+    ]);
+    assert.equal(
+      types.includes("qualified_dividend"),
+      false,
+      "never invent unpublished QDI",
+    );
+    const ltcg = matrix.rows.find((row) => row.estimateType === "long_term_capital_gains");
+    const stcg = matrix.rows.find((row) => row.estimateType === "short_term_capital_gains");
+    const ordinary = matrix.rows.find((row) => row.estimateType === "ordinary_income");
+    assert.ok(ltcg && stcg && ordinary);
+    assert.equal(ltcg.cells[2021]?.perShare, null);
+    assert.equal(ltcg.cells[2024]?.perShare, null);
+    assert.ok(Math.abs((ltcg.cells[2025]?.perShare ?? NaN) - 5.073) < 1e-6);
+    assert.equal(stcg.cells[2025]?.perShare, 0);
+    assert.ok(Math.abs((ordinary.cells[2023]?.perShare ?? NaN) - 0.41) < 1e-6);
+    assert.equal(
+      matrix.rows.some((row) =>
+        matrix.years.some((year) => Math.abs((row.cells[year]?.perShare ?? 0) - 21.021) < 1e-6),
+      ),
+      false,
+      "2026 unpaid prelim must not mix into the 5-year matrix",
+    );
+  });
+
+  it("does not double a republished same-year LTCG (newer as_of, same ex)", () => {
+    const fund = hydrate("AGTHX", "The Growth Fund of America", "American Funds", [
+      row({
+        id: "agthx-2025-a",
+        ticker: "AGTHX",
+        fund_name: "The Growth Fund of America",
+        fund_family: "American Funds",
+        estimate_type: "long_term_capital_gains",
+        amount: "8.364000",
+        amount_unit: "per_share",
+        ex_date: "2025-12-17",
+        as_of: "2025-12-17",
+        publication_stage: "final",
+      }),
+      row({
+        id: "agthx-2025-b",
+        ticker: "AGTHX",
+        fund_name: "The Growth Fund of America",
+        fund_family: "American Funds",
+        estimate_type: "long_term_capital_gains",
+        amount: "8.364000",
+        amount_unit: "per_share",
+        ex_date: "2025-12-17",
+        as_of: "2026-01-22",
+        publication_stage: "final",
+      }),
+    ]);
+    const matrix = illustrationPaidHistoryMatrix(fund, NOW);
+    const ltcg = matrix.rows.find((row) => row.estimateType === "long_term_capital_gains");
+    assert.ok(ltcg);
+    assert.ok(Math.abs((ltcg.cells[2025]?.perShare ?? NaN) - 8.364) < 1e-6);
   });
 });

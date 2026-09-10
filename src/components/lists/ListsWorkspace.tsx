@@ -4,8 +4,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { FundEstimateView } from "@/data/types";
 import { tickerSlotBorderClass } from "@/components/illustrate/ticker-slot-border";
 import {
+  ADD_TO_UNIVERSE,
+  DATA_API_UNAVAILABLE,
   LISTS_ADD,
   LISTS_ANNOUNCED_COLUMN,
+  LISTS_AWAITING_ESTIMATE,
   LISTS_DETAIL,
   LISTS_DIST_COLUMN,
   LISTS_EMPTY,
@@ -18,6 +21,10 @@ import {
   LISTS_RECORD_COLUMN,
   SEARCH_UPCOMING_KICKER,
 } from "@/lib/copy";
+import {
+  noticeForTickerRequest,
+  requestTicker,
+} from "@/lib/data-api/request-ticker";
 import { formatOptionalDate, formatUsd } from "@/lib/format";
 import { formatSoftNav, formatSoftPct, SOFT_DASH } from "@/lib/illustrate/nav-math";
 import { UPCOMING_AMOUNT_UNAVAILABLE } from "@/lib/illustrate/portfolio-compare-copy";
@@ -27,10 +34,16 @@ import {
   removeTicker,
 } from "@/lib/lists/parse-tickers";
 import {
+  LIST_HYDRATE_MAX_ATTEMPTS,
+  listHydrateBackoffMs,
+  listRowsAfterFailedHydrate,
+  listRowsFromApiResponse,
+  needsListHydrate,
+} from "@/lib/lists/hydrate";
+import {
   emptyListRow,
   LIST_ESTIMATE_TYPE_LABELS,
   LIST_ESTIMATE_TYPES,
-  orderListRows,
   type ListRow,
 } from "@/lib/lists/rows";
 
@@ -41,12 +54,11 @@ async function fetchListRows(tickers: string[]): Promise<ListRow[]> {
   if (!tickers.length) return [];
   const params = new URLSearchParams();
   params.set("tickers", tickers.join(","));
-  const response = await fetch(`/api/lists?${params.toString()}`);
-  if (!response.ok) {
-    return tickers.map((ticker) => emptyListRow(ticker, "not_found"));
-  }
-  const body = (await response.json()) as { items?: ListRow[] };
-  return orderListRows(tickers, Array.isArray(body.items) ? body.items : []);
+  const response = await fetch(`/api/lists?${params.toString()}`, {
+    cache: "no-store",
+  });
+  const body = await response.json().catch(() => null);
+  return listRowsFromApiResponse(tickers, body, response.ok);
 }
 
 function SoftCell({
@@ -75,12 +87,16 @@ function DistCell({ row }: { row: ListRow }) {
   if (row.status === "loading") {
     return <span className="font-mono text-[11px] text-faint">…</span>;
   }
-  if (row.status === "not_found") {
+  if (row.status === "not_found" || row.status === "unavailable") {
     return (
       <span className="font-mono text-[11px] leading-snug text-muted">{SOFT_DASH}</span>
     );
   }
-  if (row.status === "undisclosed" || row.distPerShare == null) {
+  if (
+    row.status === "undisclosed" ||
+    row.status === "awaiting_estimate" ||
+    row.distPerShare == null
+  ) {
     return (
       <span className="font-mono text-[11px] leading-snug text-muted">
         {UPCOMING_AMOUNT_UNAVAILABLE}
@@ -117,6 +133,7 @@ export function ListsWorkspace({
   initialRows?: ListRow[];
 }) {
   const [draft, setDraft] = useState("");
+  const [notice, setNotice] = useState<string | null>(null);
   const [tickers, setTickers] = useState<string[]>(initialTickers);
   const [rowsByTicker, setRowsByTicker] = useState<Record<string, ListRow>>(() => {
     const map: Record<string, ListRow> = {};
@@ -125,7 +142,6 @@ export function ListsWorkspace({
   });
   const rowsByTickerRef = useRef(rowsByTicker);
   rowsByTickerRef.current = rowsByTicker;
-  const inflight = useRef<Set<string>>(new Set());
 
   const rows = useMemo(
     () =>
@@ -141,20 +157,57 @@ export function ListsWorkspace({
   }, [tickers]);
 
   useEffect(() => {
-    const missing = tickers.filter(
-      (ticker) =>
-        !rowsByTickerRef.current[ticker] && !inflight.current.has(ticker),
-    );
-    if (!missing.length) return;
-    for (const ticker of missing) inflight.current.add(ticker);
-    void fetchListRows(missing).then((fetched) => {
-      setRowsByTicker((current) => {
-        const merged = { ...current };
-        for (const row of fetched) merged[row.ticker] = row;
-        return merged;
-      });
-      for (const ticker of missing) inflight.current.delete(ticker);
-    });
+    let cancelled = false;
+
+    function unresolved(): string[] {
+      return tickers.filter((ticker) =>
+        needsListHydrate(rowsByTickerRef.current[ticker], 0),
+      );
+    }
+
+    async function hydrate() {
+      for (let attempt = 0; attempt < LIST_HYDRATE_MAX_ATTEMPTS; attempt += 1) {
+        const missing = unresolved();
+        if (!missing.length || cancelled) return;
+        const wait = listHydrateBackoffMs(attempt);
+        if (wait) {
+          await new Promise((resolve) => window.setTimeout(resolve, wait));
+          if (cancelled) return;
+        }
+        try {
+          const fetched = await fetchListRows(missing);
+          if (cancelled) return;
+          setRowsByTicker((current) => {
+            const merged = { ...current };
+            for (const row of fetched) merged[row.ticker] = row;
+            return merged;
+          });
+          const stillMissing = missing.filter((ticker) => {
+            const row = fetched.find((item) => item.ticker === ticker);
+            return !row || row.status === "not_found" || row.status === "loading";
+          });
+          if (!stillMissing.length) return;
+        } catch {
+          if (cancelled) return;
+          if (attempt === LIST_HYDRATE_MAX_ATTEMPTS - 1) {
+            setRowsByTicker((current) => {
+              const merged = { ...current };
+              for (const row of listRowsAfterFailedHydrate(missing)) {
+                if (!merged[row.ticker] || merged[row.ticker]?.status === "loading") {
+                  merged[row.ticker] = row;
+                }
+              }
+              return merged;
+            });
+          }
+        }
+      }
+    }
+
+    void hydrate();
+    return () => {
+      cancelled = true;
+    };
   }, [tickers]);
 
   function commitDraft(raw = draft) {
@@ -184,6 +237,11 @@ export function ListsWorkspace({
         {LISTS_HEADING}
       </h1>
       <p className="mt-2 max-w-2xl text-sm text-muted">{LISTS_DETAIL}</p>
+      {notice ? (
+        <p className="mt-3 text-sm text-muted" role="status">
+          {notice}
+        </p>
+      ) : null}
 
       <form
         className="mt-6 flex flex-col gap-2 sm:flex-row sm:items-center"
@@ -246,7 +304,8 @@ export function ListsWorkspace({
                 const pct =
                   row.status === "upcoming"
                     ? formatSoftPct(row.pctOfNav)
-                    : row.status === "undisclosed"
+                    : row.status === "undisclosed" ||
+                        row.status === "awaiting_estimate"
                       ? UPCOMING_AMOUNT_UNAVAILABLE
                       : SOFT_DASH;
                 return (
@@ -255,6 +314,7 @@ export function ListsWorkspace({
                       <TickerStackItem
                         row={row}
                         onRemove={() => onRemove(row.ticker)}
+                        onNotice={setNotice}
                       />
                     </td>
                     <td className="whitespace-nowrap px-3 py-3 text-right">
@@ -320,9 +380,11 @@ export function ListsWorkspace({
 function TickerStackItem({
   row,
   onRemove,
+  onNotice,
 }: {
   row: ListRow;
   onRemove: () => void;
+  onNotice?: (message: string) => void;
 }) {
   return (
     <div
@@ -337,14 +399,35 @@ function TickerStackItem({
             {row.fundName}
           </p>
         ) : null}
-        {row.status === "not_found" ? (
+        {row.status === "unavailable" ? (
           <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">
-            {LISTS_NOT_FOUND}
+            {DATA_API_UNAVAILABLE}
           </p>
         ) : null}
-        {row.status === "undisclosed" ? (
+        {row.status === "not_found" ? (
+          <div className="mt-0.5">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">
+              {LISTS_NOT_FOUND}
+            </p>
+            <button
+              type="button"
+              className="mt-1 text-left text-[11px] font-medium text-accent hover:underline"
+              onClick={() => {
+                void requestTicker({ ticker: row.ticker, source: "web" }).then(
+                  (result) => {
+                    const message = noticeForTickerRequest(result, "web");
+                    if (message) onNotice?.(message);
+                  },
+                );
+              }}
+            >
+              {ADD_TO_UNIVERSE}
+            </button>
+          </div>
+        ) : null}
+        {row.status === "undisclosed" || row.status === "awaiting_estimate" ? (
           <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">
-            {UPCOMING_AMOUNT_UNAVAILABLE}
+            {LISTS_AWAITING_ESTIMATE}
           </p>
         ) : null}
       </div>

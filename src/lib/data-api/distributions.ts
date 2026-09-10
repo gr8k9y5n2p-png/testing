@@ -4,6 +4,8 @@ import { mapFundsApiItem, type FundsApiItem } from "@/data/funds-list";
 import { mergeFundWithDistributions } from "@/data/hydrate-funds";
 import { withPeerContext } from "@/data/queries";
 import type { FundEstimateView } from "@/data/types";
+import { fundPageSearchParams } from "@/data/pagination";
+import { loadFundLookupFromDataApi } from "@/lib/data-api/fund-lookup";
 import { looksLikeExactTicker, normalizeTickerSymbol } from "@/lib/data-api/request-ticker";
 import { fetchDataApi } from "@/lib/data-api/fetch";
 
@@ -24,7 +26,7 @@ export type DistributionRowQuery = {
   asOfFrom?: string;
 };
 
-function dedupeRows(rows: DataDistribution[]): DataDistribution[] {
+export function dedupeRows(rows: DataDistribution[]): DataDistribution[] {
   const seen = new Set<string>();
   const out: DataDistribution[] = [];
   for (const row of rows) {
@@ -70,8 +72,13 @@ export async function loadDistributionRows(
     if (query.asOfFrom?.trim()) {
       params.set("as_of_from", query.asOfFrom.trim());
     }
-    const response = await fetchDataApi(`/distributions?${params.toString()}`);
-    if (!response.ok) break;
+    const response = await fetchDistributionPage(params);
+    if (!response.ok) {
+      if (response.status >= 500) {
+        throw new Error(`distributions ${response.status}`);
+      }
+      break;
+    }
     const payload = (await response.json()) as {
       items?: DataDistribution[];
       total?: number;
@@ -82,6 +89,19 @@ export async function loadDistributionRows(
     if (typeof payload.total === "number" && items.length >= payload.total) break;
   }
   return items;
+}
+
+async function fetchDistributionPage(params: URLSearchParams): Promise<Response> {
+  let last: Response | null = null;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      last = await fetchDataApi(`/distributions?${params.toString()}`);
+      if (last.ok || last.status < 500 || attempt === 2) return last;
+    } catch (error) {
+      if (attempt === 2) throw error;
+    }
+  }
+  return last ?? new Response(null, { status: 502 });
 }
 
 async function mapPool<T, R>(
@@ -144,7 +164,13 @@ export async function loadDistributionsForFundPage(input: {
     const extra = await mapPool(
       tickersToFetch,
       TICKER_FETCH_CONCURRENCY,
-      (ticker) => loadDistributionRows({ ticker }),
+      async (ticker) => {
+        const byTicker = await loadDistributionRows({ ticker });
+        if (byTicker.length) return byTicker;
+        // Search uses `q=` when an exact ticker is typed. Render `ticker=`
+        // can 502 / return empty while `q=` still finds unpaid FBGRX.
+        return loadDistributionRows({ q: ticker });
+      },
     );
     for (const batch of extra) rows.push(...batch);
   }
@@ -201,24 +227,29 @@ export async function loadFundIdentityByTicker(
   const key = ticker.trim().toUpperCase();
   for (let attempt = 0; attempt < 3; attempt += 1) {
     try {
-      const params = new URLSearchParams();
-      params.set("q", key);
-      params.set("limit", "5");
-      params.set("offset", "0");
+      const params = fundPageSearchParams({ query: key, limit: 10, offset: 0 });
       const response = await fetchDataApi(`/funds?${params.toString()}`);
       if (!response.ok) {
         if (attempt < 2) continue;
-        return null;
+        break;
       }
       const items = fundsApiItemsFromPayload(await response.json());
-      const match = items.find(
-        (row) => (row.ticker ?? "").trim().toUpperCase() === key,
-      );
-      return match ? mapFundsApiItem(match) : null;
+      const match = items.find((row) => {
+        const ticker = (row.ticker ?? "").trim().toUpperCase();
+        const ident = (row.fund_identifier ?? "").trim().toUpperCase();
+        return ticker === key || ident === key;
+      });
+      if (match) return mapFundsApiItem(match);
+      break;
     } catch {
       if (attempt < 2) continue;
-      return null;
+      break;
     }
+  }
+  const lookup = await loadFundLookupFromDataApi(key);
+  if (lookup.kind === "found") return lookup.fund;
+  if (lookup.kind === "unavailable") {
+    throw new Error(`funds lookup ${key}`);
   }
   return null;
 }
@@ -265,20 +296,45 @@ async function attachWeeklyNavBestEffort(
   ]).catch(() => funds);
 }
 
+/**
+ * Same unpaid announced snapshot Search Upcoming uses. Lists falls back
+ * here when `ticker=` / `q=` GETs come back empty or 502.
+ */
+export async function loadUpcomingDistributionRows(
+  today = chicagoTodayIso(),
+): Promise<DataDistribution[]> {
+  return dedupeRows([
+    ...(await loadDistributionRows({
+      publicationStage: "preliminary_estimate",
+      exDateFrom: today,
+    })),
+    ...(await loadDistributionRows({
+      publicationStage: "updated_estimate",
+      exDateFrom: today,
+    })),
+  ]);
+}
+
+export function distributionRowsForTickers(
+  rows: DataDistribution[],
+  tickers: readonly string[],
+): DataDistribution[] {
+  const want = new Set(
+    tickers.map((ticker) => ticker.trim().toUpperCase()).filter(Boolean),
+  );
+  if (!want.size) return [];
+  return rows.filter((row) => {
+    const symbol = (row.ticker ?? "").trim().toUpperCase();
+    const ident = (row.fund_identifier ?? "").trim().toUpperCase();
+    return want.has(symbol) || want.has(ident);
+  });
+}
+
 export async function loadUpcomingAnnouncedFromDataApi(
   today = chicagoTodayIso(),
 ): Promise<FundEstimateView[]> {
   try {
-    const rows = dedupeRows([
-      ...(await loadDistributionRows({
-        publicationStage: "preliminary_estimate",
-        exDateFrom: today,
-      })),
-      ...(await loadDistributionRows({
-        publicationStage: "updated_estimate",
-        exDateFrom: today,
-      })),
-    ]);
+    const rows = await loadUpcomingDistributionRows(today);
     if (!rows.length) return [];
     const upcoming = withPeerContext(aggregateDistributions(rows, today)).filter(
       (fund) => isUpcomingFund({ ...fund, hasEstimate: true }, today),

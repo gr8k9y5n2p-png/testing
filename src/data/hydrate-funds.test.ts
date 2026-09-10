@@ -98,7 +98,7 @@ describe("Search hydrate from /distributions", () => {
     assert.equal(merged.hasEstimate, false);
     assert.equal(merged.bucket, "paid");
     assert.equal(merged.estimatedDistributionAmount, 2.125);
-    assert.equal(hideUpcomingAmounts(merged), false);
+    assert.equal(hideUpcomingAmounts(merged), true);
 
     const { upcoming, paid } = splitFundsByBucket([merged]);
     assert.equal(upcoming.length, 0);
@@ -526,7 +526,7 @@ describe("Search hydrate from /distributions", () => {
     );
     assert.equal(
       hideUpcomingAmounts({ bucket: "paid", hasEstimate: false }),
-      false,
+      true,
     );
     assert.equal(
       hideUpcomingAmounts({
