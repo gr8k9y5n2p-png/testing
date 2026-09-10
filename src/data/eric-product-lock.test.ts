@@ -6,6 +6,11 @@ import { fileURLToPath } from "node:url";
 import { mapFundsApiItem } from "./funds-list.ts";
 import { fundPickerMatches } from "./fund-picker-matches.ts";
 import { hideUpcomingAmounts } from "./hydrate-funds.ts";
+import {
+  AWAITING_ESTIMATE_LABEL,
+  fundPickerCoverageLabel,
+  resolveCoverageStatus,
+} from "../lib/data-api/coverage-status.ts";
 import { listRowFromFund } from "../lib/lists/rows.ts";
 import { fillNavPerShareInput } from "../lib/illustrate/nav-math.ts";
 
@@ -77,7 +82,46 @@ describe("Eric product lock — paid-only funds stay searchable", () => {
     assert.match(client, /nav_only/);
     assert.match(field, /fetchFundsSearch/);
     assert.match(lists, /LISTS_AWAITING_ESTIMATE/);
+    assert.match(lists, /ADD_TO_UNIVERSE/);
+    assert.match(lists, /source: "web"/);
+    assert.match(picker, /ADD_TO_UNIVERSE/);
+    assert.match(picker, /source: "web"/);
     assert.match(panel, /fillNavPerShareInput/);
     assert.match(panel, /hideAmounts \? "—"/);
+  });
+
+  it("empty states: /funds hit + no unpaid → Awaiting Estimate; miss → Add to universe", () => {
+    assert.equal(
+      resolveCoverageStatus({
+        foundInFunds: true,
+        hasEstimate: false,
+        hasUpcoming: false,
+      }),
+      "awaiting_estimate",
+    );
+    assert.equal(fundPickerCoverageLabel(AGTHX), AWAITING_ESTIMATE_LABEL);
+    assert.equal(
+      resolveCoverageStatus({ foundInFunds: false }),
+      "not_in_universe",
+    );
+    assert.equal(
+      resolveCoverageStatus({
+        coverageStatus: "awaiting_estimate",
+        foundInFunds: true,
+        hasEstimate: true,
+      }),
+      "awaiting_estimate",
+      "published coverage_status wins when present",
+    );
+    const picker = readFileSync(
+      join(here, "../components/illustrate/FundPicker.tsx"),
+      "utf8",
+    );
+    assert.match(picker, /exactTicker \? \(/);
+    assert.match(picker, /ADD_TO_UNIVERSE/);
+    assert.doesNotMatch(
+      picker,
+      /remotePending \? "Searching…" : "No funds match\."/,
+    );
   });
 });
