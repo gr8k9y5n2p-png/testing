@@ -15,8 +15,9 @@ describe("Sample Estimates empty copy", () => {
     assert.match(source, /SEARCH_UPCOMING_HEADING = "Upcoming \/ Announced"/);
     assert.match(
       source,
-      /Announced distributions that have not paid out yet\. Historical paid distributions live on Compare \/ Portfolio Growth & Tax\./,
+      /Announced distributions that have not paid out yet\. Past record\/ex\/payable dates stay in Paid history below\./,
     );
+    assert.match(source, /SEARCH_PAID_HISTORY_HEADING = "Paid history"/);
     assert.doesNotMatch(source, /in this sample/);
   });
 });

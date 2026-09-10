@@ -27,7 +27,9 @@ describe("Search Upcoming / Announced module chrome", () => {
     assert.match(dashboard, /SEARCH_UPCOMING_DETAIL/);
     assert.doesNotMatch(dashboard, /Sample estimates/);
     assert.doesNotMatch(dashboard, /Filter by name, ticker, CUSIP/);
-    assert.doesNotMatch(dashboard, /filters\.query/);
+    assert.doesNotMatch(dashboard, /type="search"/);
+    assert.match(dashboard, /params.set\("q"/);
+    assert.match(dashboard, /scopedTicker/);
     assert.match(dashboard, /mergeTaxYears/);
     assert.match(dashboard, /FUND_PAGE_SIZE/);
   });

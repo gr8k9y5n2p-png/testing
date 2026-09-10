@@ -40,7 +40,7 @@ describe("Search / Sample Estimates fund page", () => {
       "utf8",
     );
     assert.match(table, /hideUpcomingAmounts/);
-    assert.doesNotMatch(table, /title="Paid history"/);
+    assert.match(table, /SEARCH_PAID_HISTORY_HEADING/);
     assert.doesNotMatch(table, /paidEventsForFund/);
     assert.doesNotMatch(table, /hasEstimate === false \? "—"/);
     assert.match(badge, /hideUpcomingAmounts/);
@@ -57,10 +57,11 @@ describe("Search / Sample Estimates fund page", () => {
     );
     assert.match(results, /upcomingIllustrationTotals/);
     assert.match(results, /splitIllustrationComponents/);
-    assert.doesNotMatch(results, /paidEventsForFund/);
-    assert.doesNotMatch(results, /Paid history/);
+    assert.match(results, /paidEventsForFund/);
+    assert.match(results, /Paid history/);
+    assert.match(results, /catalogUpcoming/);
     assert.match(results, /pctOfNavForFund|historicalPctOfNav/);
-    assert.doesNotMatch(results, /totals\.distribution_dollars/);
+    assert.doesNotMatch(results, /result\.totals/);
     assert.doesNotMatch(results, /paidComponents/);
     assert.doesNotMatch(results, /components=\{paid/);
     assert.match(bucket, /every fund \(not ticker-specific\)/);
