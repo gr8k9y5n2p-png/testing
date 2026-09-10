@@ -6,9 +6,13 @@
  * Category is Data `category` (same strings as `/funds/categories`).
  * A 400 on `category` retries once without it (#127 may not be on Render).
  * Never hydrates the book in the browser. Never pulls Upcoming prelims.
+ * Column sorts (Dist $/Share desc/asc) reorder the current year-window
+ * page only. Data additive `sort=amount|ex_date` is reserved in
+ * `paidHistoryDataOrderParams` and not sent until that PR is on Render.
  */
 
 import { normalizePublicationStage } from "@/data/distribution-bucket";
+import { paidHistoryDataOrderParams } from "@/data/paid-history-book";
 import type { FundPageQuery, FundPageResult } from "@/data/pagination";
 import {
   emptyPaidHistoryPage,
@@ -29,6 +33,9 @@ import {
 export {
   filterPaidHistoryFunds,
   pagePaidHistoryFunds,
+  paidHistoryDataOrderParams,
+  paidHistoryDataSortKey,
+  paidHistorySort,
 } from "@/data/paid-history-book";
 export {
   isTrustworthyFilteredRowTotal,
@@ -70,11 +77,13 @@ export async function fetchPaidHistoryDataPage(
 ): Promise<PaidHistoryDataPage> {
   const { exDateFrom, exDateTo } = paidHistoryExDateWindow(query.year);
   const category = paidHistoryCategoryParam(query.category);
+  const dataOrder = paidHistoryDataOrderParams(query);
   const shared = {
     fundFamily: query.family,
     category,
     exDateFrom,
     exDateTo,
+    ...dataOrder,
     limit: window.limit,
     offset: window.offset,
     signal: window.signal,

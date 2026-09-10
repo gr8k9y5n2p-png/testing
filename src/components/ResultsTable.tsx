@@ -125,7 +125,13 @@ export function ResultsTable({
   const sortDirection = sortDirectionProp ?? localSortDirection;
   const coverage = useCoverage();
   const { upcoming } = splitFundsByBucket(funds);
-  const paid = paidHistoryViews(paidFunds ?? funds, year);
+  // paidHistoryViews date-sorts; Data /distributions has no order param.
+  // Always apply the header sort to the currently displayed Paid History rows.
+  const paid = sortFunds(
+    paidHistoryViews(paidFunds ?? funds, year),
+    sortKey,
+    sortDirection,
+  );
   const serverSorted = Boolean(onSort);
 
   function toggleSort(key: SortKey) {
@@ -183,7 +189,7 @@ export function ResultsTable({
         description={SEARCH_PAID_HISTORY_DETAIL}
         kicker={SEARCH_PAID_HISTORY_KICKER}
         wellClassName="bg-paper"
-        funds={serverSorted ? paid : sortFunds(paid, sortKey, sortDirection)}
+        funds={paid}
         sortKey={sortKey}
         sortDirection={sortDirection}
         onSort={toggleSort}
@@ -399,7 +405,7 @@ function FundSection({
                   />
                   <SortHeader
                     label="Dist $/sh"
-                    column="estimatedDistributionPctNav"
+                    column="estimatedDistributionAmount"
                     active={sortKey}
                     direction={sortDirection}
                     onSort={onSort}

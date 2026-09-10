@@ -19,6 +19,7 @@ export const FUND_SORT_KEYS = [
   "fundName",
   "family",
   "category",
+  "estimatedDistributionAmount",
   "estimatedDistributionPctNav",
   "publishedAt",
   "vsCategoryPctNav",

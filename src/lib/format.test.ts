@@ -103,6 +103,31 @@ describe("sortFunds date columns", () => {
     );
   });
 
+  it("sorts Dist $/Share by per-share amount, highest first then lowest", () => {
+    const low = row("LOW", "2026-07-31", "2026-12-12", "2026-12-15");
+    low.estimatedDistributionAmount = 0.25;
+    low.estimatedDistributionPctNav = 20;
+    const mid = row("MID$", "2026-07-31", "2026-12-12", "2026-12-15");
+    mid.estimatedDistributionAmount = 2.5;
+    mid.estimatedDistributionPctNav = 1;
+    const high = row("HIGH", "2026-07-31", "2026-12-12", "2026-12-15");
+    high.estimatedDistributionAmount = 21.021;
+    high.estimatedDistributionPctNav = 2;
+
+    assert.deepEqual(
+      sortFunds([low, high, mid], "estimatedDistributionAmount", "desc").map(
+        (fund) => fund.ticker,
+      ),
+      ["HIGH", "MID$", "LOW"],
+    );
+    assert.deepEqual(
+      sortFunds([high, low, mid], "estimatedDistributionAmount", "asc").map(
+        (fund) => fund.ticker,
+      ),
+      ["LOW", "MID$", "HIGH"],
+    );
+  });
+
   it("sorts % of NAV by Dist $/share ÷ weekly NAV, not published %", () => {
     const publishedWins = row("PUB", "2026-07-31", "2026-12-12", "2026-12-15");
     publishedWins.estimatedDistributionAmount = 1;

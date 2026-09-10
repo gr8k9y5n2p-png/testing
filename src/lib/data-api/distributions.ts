@@ -29,6 +29,9 @@ export type DistributionRowQuery = {
   exDateFrom?: string;
   exDateTo?: string;
   asOfFrom?: string;
+  /** Additive Data `sort=` (`amount` | `ex_date`). Omit = current default. */
+  sort?: string;
+  direction?: string;
   signal?: AbortSignal;
 };
 
@@ -106,6 +109,10 @@ function distributionSearchParams(query: DistributionRowQuery): URLSearchParams 
   }
   if (query.asOfFrom?.trim()) {
     params.set("as_of_from", query.asOfFrom.trim());
+  }
+  if (query.sort?.trim()) params.set("sort", query.sort.trim());
+  if (query.direction === "asc" || query.direction === "desc") {
+    params.set("direction", query.direction);
   }
   return params;
 }

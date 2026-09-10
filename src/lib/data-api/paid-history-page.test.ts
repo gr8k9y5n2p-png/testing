@@ -8,6 +8,8 @@ import { isUpcomingFund } from "../../data/distribution-bucket.ts";
 import {
   filterPaidHistoryFunds,
   pagePaidHistoryFunds,
+  paidHistoryDataOrderParams,
+  paidHistoryDataSortKey,
 } from "../../data/paid-history-book.ts";
 import {
   isTrustworthyFilteredRowTotal,
@@ -97,6 +99,27 @@ describe("Search Paid History year-book page", () => {
     assert.match(source, /isFinalOrPaidRow/);
     assert.match(book, /isUpcomingFund/);
     assert.match(source, /pagePaidHistoryFunds/);
+    assert.match(source, /paidHistorySort/);
+    assert.match(source, /paidHistoryDataOrderParams/);
+    assert.match(book, /sortFunds/);
+    assert.match(book, /paidHistoryDataOrderParams/);
+    assert.match(dists, /if \(query\.sort/);
+    assert.doesNotMatch(dists, /params\.set\("order"/);
+    assert.deepEqual(paidHistoryDataOrderParams({}), {});
+    assert.deepEqual(
+      paidHistoryDataOrderParams({
+        sort: "estimatedDistributionAmount",
+        direction: "desc",
+      }),
+      {},
+      "do not send sort= to Data until that PR is on Render",
+    );
+    assert.equal(
+      paidHistoryDataSortKey("estimatedDistributionAmount"),
+      "amount",
+    );
+    assert.equal(paidHistoryDataSortKey("exDate"), "ex_date");
+    assert.equal(paidHistoryDataSortKey("fundName"), undefined);
     assert.match(source, /loadPaidHistoryPage/);
     assert.match(source, /fundFamily: query\.family/);
     assert.match(source, /paidHistoryCategoryParam/);
@@ -131,11 +154,16 @@ describe("Search Paid History year-book page", () => {
     assert.match(dashboard, /paidFunds/);
     assert.match(dashboard, /paidFacets/);
     assert.match(dashboard, /setPaidOffset\(0\)/);
+    assert.match(dashboard, /sort: sortKey/);
+    assert.match(dashboard, /direction: sortDirection/);
+    assert.match(source, /sort=amount\|ex_date/);
     assert.match(table, /paidFunds \?\? funds/);
     assert.match(table, /page=\{paidPage\}/);
     assert.match(table, /All families/);
     assert.match(table, /All categories/);
     assert.match(table, /Paid History filters/);
+    assert.match(table, /column="estimatedDistributionAmount"/);
+    assert.match(table, /currently displayed Paid History rows/);
   });
 
   it("keeps published $0 finals and drops Upcoming prelims from the year book", () => {
@@ -268,6 +296,97 @@ describe("Search Paid History year-book page", () => {
         (fund) => fund.ticker === "FBGRX-UP",
       ),
       false,
+    );
+  });
+
+  it("sorts the current Paid History window by Dist $/Share desc then asc", () => {
+    const funds = [
+      paidFund(1, { ticker: "LOW", estimatedDistributionAmount: 0.19 }),
+      paidFund(2, { ticker: "HIGH", estimatedDistributionAmount: 21.021 }),
+      paidFund(3, { ticker: "MID", estimatedDistributionAmount: 2.5 }),
+    ];
+    const highest = pagePaidHistoryFunds(funds, {
+      year: 2026,
+      limit: 50,
+      offset: 0,
+      sort: "estimatedDistributionAmount",
+      direction: "desc",
+    });
+    assert.equal(highest.total, 3, "sort does not change the filtered total");
+    assert.deepEqual(
+      highest.items.map((fund) => fund.ticker),
+      ["HIGH", "MID", "LOW"],
+    );
+    assert.ok(
+      highest.items[0]!.estimatedDistributionAmount >
+        highest.items[1]!.estimatedDistributionAmount,
+    );
+    assert.ok(
+      highest.items[1]!.estimatedDistributionAmount >
+        highest.items[2]!.estimatedDistributionAmount,
+    );
+
+    const lowest = pagePaidHistoryFunds(funds, {
+      year: 2026,
+      limit: 50,
+      offset: 0,
+      sort: "estimatedDistributionAmount",
+      direction: "asc",
+    });
+    assert.equal(lowest.total, 3);
+    assert.deepEqual(
+      lowest.items.map((fund) => fund.ticker),
+      ["LOW", "MID", "HIGH"],
+    );
+  });
+
+  it("keeps Family / Category / year filters while Dist $/Share sorting", () => {
+    const funds = [
+      paidFund(1, {
+        ticker: "FXAIX",
+        family: "Fidelity",
+        category: "Large Blend",
+        estimatedDistributionAmount: 0.5,
+      }),
+      paidFund(2, {
+        ticker: "FBGRX",
+        family: "Fidelity",
+        category: "Large Growth",
+        estimatedDistributionAmount: 21.021,
+      }),
+      paidFund(3, {
+        ticker: "AMCPX",
+        family: "American Funds",
+        category: "Large Growth",
+        estimatedDistributionAmount: 5.0,
+      }),
+    ];
+    const fidelityHighest = pagePaidHistoryFunds(funds, {
+      year: 2026,
+      family: "Fidelity",
+      sort: "estimatedDistributionAmount",
+      direction: "desc",
+      limit: 50,
+      offset: 0,
+    });
+    assert.equal(fidelityHighest.total, 2);
+    assert.deepEqual(
+      fidelityHighest.items.map((fund) => fund.ticker),
+      ["FBGRX", "FXAIX"],
+    );
+
+    const growthLowest = pagePaidHistoryFunds(funds, {
+      year: 2026,
+      category: "Large Growth",
+      sort: "estimatedDistributionAmount",
+      direction: "asc",
+      limit: 50,
+      offset: 0,
+    });
+    assert.equal(growthLowest.total, 2);
+    assert.deepEqual(
+      growthLowest.items.map((fund) => fund.ticker),
+      ["AMCPX", "FBGRX"],
     );
   });
 
@@ -428,6 +547,55 @@ describe("Paid History year-window paging", () => {
     assert.equal(page2.total, 800);
     assert.notEqual(page2.items[0]?.ticker, page1.items[0]?.ticker);
     assert.equal(page2.hasMore, true);
+  });
+
+  it("sorts the fetched year-window funds by Dist $/Share without a book walk", async () => {
+    const rows = [
+      finalRow("LOW", 2026, { amount: "0.190000" }),
+      finalRow("HIGH", 2026, { amount: "21.021000" }),
+      finalRow("MID", 2026, { amount: "2.500000" }),
+    ];
+    const calls: number[] = [];
+    const fetchPage = async (
+      _query: unknown,
+      window: PaidHistoryFetchWindow,
+    ) => {
+      calls.push(window.offset);
+      return dataPage(rows, { filteredTotal: 3 });
+    };
+
+    const highest = await loadPaidHistoryPage(
+      {
+        year: 2026,
+        limit: 50,
+        offset: 0,
+        sort: "estimatedDistributionAmount",
+        direction: "desc",
+      },
+      { fetchPage },
+    );
+    assert.equal(calls.length, 1, "sort must not walk extra Data pages");
+    assert.equal(highest.total, 3);
+    assert.deepEqual(
+      highest.items.map((fund) => fund.ticker),
+      ["HIGH", "MID", "LOW"],
+    );
+
+    const lowest = await loadPaidHistoryPage(
+      {
+        year: 2026,
+        limit: 50,
+        offset: 0,
+        sort: "estimatedDistributionAmount",
+        direction: "asc",
+      },
+      { fetchPage },
+    );
+    assert.equal(calls.length, 2);
+    assert.deepEqual(
+      lowest.items.map((fund) => fund.ticker),
+      ["LOW", "MID", "HIGH"],
+    );
   });
 
   it("ignores an unfiltered global row total on a thin year page", () => {

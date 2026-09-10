@@ -150,6 +150,15 @@ test("parseFundPageQuery and offsetToPage match the Data contract", () => {
   assert.equal(query.query, "amc");
   assert.equal(query.sort, "publishedAt");
   assert.equal(query.direction, "desc");
+
+  const distShare = parseFundPageQuery(
+    new URLSearchParams(
+      "paid_history=1&sort=estimatedDistributionAmount&direction=desc",
+    ),
+  );
+  assert.equal(distShare.sort, "estimatedDistributionAmount");
+  assert.equal(distShare.direction, "desc");
+  assert.equal(distShare.paidHistory, true);
   assert.equal(offsetToPage(100, 50), 3);
 
   const params = fundPageSearchParams({ limit: 50, offset: 0 });
