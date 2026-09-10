@@ -349,7 +349,9 @@ export function formatAsOfStage(asOf: string | null, stage: string | null): stri
   return "—";
 }
 
-function holdingTicker(holding: PortfolioHoldingOut): string {
+function holdingTicker(
+  holding: Pick<PortfolioHoldingOut, "ticker" | "fund_identifier">,
+): string {
   return (holding.ticker || holding.fund_identifier || "—").toUpperCase();
 }
 
