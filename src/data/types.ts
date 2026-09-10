@@ -141,6 +141,7 @@ export interface FundPage {
   total: number;
   limit: number;
   offset: number;
+  years?: number[];
 }
 
 export interface DistributionRepository {

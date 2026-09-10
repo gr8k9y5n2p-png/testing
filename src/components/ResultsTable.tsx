@@ -27,6 +27,9 @@ import {
   pctOfNavForFund,
 } from "@/lib/illustrate/nav-math";
 import {
+  SEARCH_UPCOMING_DETAIL,
+  SEARCH_UPCOMING_HEADING,
+  SEARCH_UPCOMING_KICKER,
   UPCOMING_UNAVAILABLE_DETAIL,
   UPCOMING_UNAVAILABLE_HEADLINE,
 } from "@/lib/copy";
@@ -108,9 +111,9 @@ export function ResultsTable({
   return (
     <div className="space-y-6">
       <FundSection
-        title="Upcoming / Announced"
-        description="Announced distributions that have not paid out yet. Historical paid distributions live on Compare / Portfolio Growth & Tax."
-        kicker="unpaid announced · not paid history"
+        title={SEARCH_UPCOMING_HEADING}
+        description={SEARCH_UPCOMING_DETAIL}
+        kicker={SEARCH_UPCOMING_KICKER}
         wellClassName="bg-surface"
         funds={serverSorted ? upcoming : sortFunds(upcoming, sortKey, sortDirection)}
         sortKey={sortKey}
@@ -161,12 +164,12 @@ function FundSection({
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   return (
-    <section className={`rounded-xl border border-line px-4 py-3 ${wellClassName}`}>
-      <header className="mb-3 flex flex-wrap items-end justify-between gap-2">
-        <div>
-          <h3 className="font-serif text-lg tracking-tight text-ink">{title}</h3>
-          <p className="mt-0.5 text-sm text-muted">{description}</p>
-        </div>
+    <section
+      aria-label={title}
+      className={`rounded-xl border border-line px-4 py-3 ${wellClassName}`}
+    >
+      <header className="mb-3 flex flex-wrap items-end justify-end gap-2">
+        <p className="sr-only">{description}</p>
         <p className="text-[10px] text-muted">{kicker}</p>
       </header>
 
@@ -490,7 +493,7 @@ function PaginationBar({
   limit,
   offset,
   onOffset,
-  label = "Sample estimates pages",
+  label = `${SEARCH_UPCOMING_HEADING} pages`,
 }: SamplePage & { label?: string }) {
   const page = Math.floor(offset / limit) + 1;
   const pages = Math.max(1, Math.ceil(total / limit));

@@ -44,6 +44,12 @@ export const UPCOMING_UNAVAILABLE_DETAIL =
   "No unpaid announced estimates from the Data API.";
 export const PAID_HISTORY_EMPTY = "No paid history from the Data API.";
 
+/** Locked Search Upcoming / Announced module chrome (Modules). */
+export const SEARCH_UPCOMING_HEADING = "Upcoming / Announced";
+export const SEARCH_UPCOMING_DETAIL =
+  "Announced distributions that have not paid out yet. Historical paid distributions live on Compare / Portfolio Growth & Tax.";
+export const SEARCH_UPCOMING_KICKER = "unpaid announced · not paid history";
+
 export { TICKER_REQUEST } from "@/lib/data-api/request-ticker";
 
 export const FREE_SEARCH_LIMIT = 3;

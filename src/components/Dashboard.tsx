@@ -6,16 +6,16 @@ import {
   paginateViews,
   type FundPageResult,
 } from "@/data/pagination";
+import { collectTaxYearsFromFunds, mergeTaxYears } from "@/data/tax-years";
 import type { Facets, FundEstimateView, SearchFilters } from "@/data/types";
 import { EmptyState } from "@/components/EmptyState";
 import { ResultsTable } from "@/components/ResultsTable";
 import { SearchToolbar } from "@/components/SearchToolbar";
 import type { SortDirection, SortKey } from "@/lib/format";
 import {
-  looksLikeExactTicker,
-  normalizeTickerSymbol,
-} from "@/lib/data-api/request-ticker";
-import { useSearchMissRequest } from "@/lib/data-api/use-search-miss";
+  SEARCH_UPCOMING_DETAIL,
+  SEARCH_UPCOMING_HEADING,
+} from "@/lib/copy";
 
 async function fetchFundPage(query: {
   filters: SearchFilters;
@@ -29,7 +29,6 @@ async function fetchFundPage(query: {
   params.set("offset", String(query.offset));
   params.set("sort", query.sort);
   params.set("direction", query.direction);
-  if (query.filters.query?.trim()) params.set("q", query.filters.query.trim());
   if (query.filters.family) params.set("family", query.filters.family);
   if (query.filters.category) params.set("category", query.filters.category);
   if (query.filters.year) params.set("year", String(query.filters.year));
@@ -45,6 +44,7 @@ async function fetchFundPage(query: {
     count?: number;
     limit?: number;
     offset?: number;
+    years?: number[];
   };
   const items = Array.isArray(body.items)
     ? body.items
@@ -56,6 +56,7 @@ async function fetchFundPage(query: {
     total: typeof body.total === "number" ? body.total : (body.count ?? items.length),
     limit: typeof body.limit === "number" ? body.limit : query.limit,
     offset: typeof body.offset === "number" ? body.offset : query.offset,
+    years: mergeTaxYears(body.years, collectTaxYearsFromFunds(items)),
   };
 }
 
@@ -66,7 +67,6 @@ function pageRequestKey(
   offset: number,
 ) {
   return JSON.stringify({
-    q: filters.query ?? "",
     family: filters.family ?? "",
     category: filters.category ?? "",
     year: filters.year ?? "",
@@ -80,7 +80,6 @@ export function Dashboard({
   funds,
   facets,
   onIllustrate,
-  onNotice,
 }: {
   funds: FundEstimateView[];
   facets: Facets;
@@ -94,6 +93,9 @@ export function Dashboard({
   const [offset, setOffset] = useState(0);
   const [page, setPage] = useState<FundPageResult>(() =>
     paginateViews(funds, { limit: FUND_PAGE_SIZE, offset: 0 }),
+  );
+  const [pageYears, setPageYears] = useState<number[]>(() =>
+    mergeTaxYears(facets.years, collectTaxYearsFromFunds(funds)),
   );
   const [appliedKey, setAppliedKey] = useState(() =>
     pageRequestKey({}, "fundName", "asc", 0),
@@ -118,18 +120,21 @@ export function Dashboard({
       .then((next) => {
         if (cancelled) return;
         setPage(next);
+        setPageYears((current) => mergeTaxYears(current, next.years));
         setAppliedKey(requestKey);
       })
       .catch(() => {
         if (cancelled) return;
-        setPage(
-          paginateViews(funds, {
-            ...deferredFilters,
-            sort: sortKey,
-            direction: sortDirection,
-            limit: FUND_PAGE_SIZE,
-            offset,
-          }),
+        const fallback = paginateViews(funds, {
+          ...deferredFilters,
+          sort: sortKey,
+          direction: sortDirection,
+          limit: FUND_PAGE_SIZE,
+          offset,
+        });
+        setPage(fallback);
+        setPageYears((current) =>
+          mergeTaxYears(current, collectTaxYearsFromFunds(fallback.items)),
         );
         setAppliedKey(requestKey);
       });
@@ -139,22 +144,16 @@ export function Dashboard({
   }, [deferredFilters, funds, offset, requestKey, sortDirection, sortKey]);
 
   const isPending = filters !== deferredFilters || appliedKey !== requestKey;
-  const settledQuery = deferredFilters.query ?? "";
-  const inUniverse = useMemo(() => {
-    if (!looksLikeExactTicker(settledQuery)) return false;
-    const key = normalizeTickerSymbol(settledQuery);
-    return funds.some((fund) => fund.ticker.toUpperCase() === key);
-  }, [funds, settledQuery]);
-
-  useSearchMissRequest(
-    settledQuery,
-    page.total,
-    inUniverse || isPending,
-    onNotice,
+  const toolbarFacets = useMemo<Facets>(
+    () => ({
+      ...facets,
+      years: mergeTaxYears(facets.years, pageYears, collectTaxYearsFromFunds(page.items)),
+    }),
+    [facets, page.items, pageYears],
   );
 
   const hasActiveFilters = Boolean(
-    filters.query?.trim() || filters.family || filters.category || filters.year,
+    filters.family || filters.category || filters.year,
   );
 
   const rangeLabel = useMemo(() => {
@@ -190,13 +189,9 @@ export function Dashboard({
             id="results-heading"
             className="font-serif text-xl tracking-tight text-ink"
           >
-            Sample estimates
+            {SEARCH_UPCOMING_HEADING}
           </h2>
-          <p className="mt-1 text-sm text-muted">
-            Filter by name, ticker, CUSIP, family, category, or distribution year.
-            Upcoming / announced only — historical paid distributions live on
-            Compare / Portfolio Growth & Tax.
-          </p>
+          <p className="mt-1 text-sm text-muted">{SEARCH_UPCOMING_DETAIL}</p>
         </div>
         <p className="font-mono text-xs text-faint" aria-live="polite">
           {isPending ? "Updating…" : rangeLabel}
@@ -204,7 +199,7 @@ export function Dashboard({
       </div>
       <SearchToolbar
         filters={filters}
-        facets={facets}
+        facets={toolbarFacets}
         onChange={applyFilters}
       />
       <div className={isPending ? "opacity-70 transition-opacity" : ""}>

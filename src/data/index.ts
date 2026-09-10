@@ -35,6 +35,11 @@ export {
 } from "./distribution-bucket";
 export { SAMPLE_FUNDS } from "./seed";
 export {
+  collectTaxYearsFromFunds,
+  mergeTaxYears,
+  taxYearsFromPayload,
+} from "./tax-years";
+export {
   FUND_PAGE_SIZE,
   FUND_PAGE_SIZE_MAX,
   clampOffset,

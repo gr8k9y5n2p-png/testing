@@ -1,4 +1,6 @@
 import { getFacets, getHighlights, searchFunds } from "./queries";
+import { mergeTaxYears } from "./tax-years";
+import { loadTaxYearsFromDataApi } from "@/lib/data-api/tax-years";
 import {
   clampOffset,
   clampPageSize,
@@ -53,7 +55,9 @@ export class SeedDistributionRepository implements DistributionRepository {
   }
 
   async facets(): Promise<Facets> {
-    return getFacets(this.views);
+    const base = getFacets(this.views);
+    const years = mergeTaxYears(base.years, await loadTaxYearsFromDataApi());
+    return { ...base, years };
   }
 
   async getById(id: string): Promise<FundEstimateView | null> {

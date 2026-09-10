@@ -1,5 +1,6 @@
 import { getDistributionRepository } from "@/data";
 import { FUND_PAGE_SIZE, parseFundPageQuery } from "@/data/pagination";
+import { collectTaxYearsFromFunds, mergeTaxYears } from "@/data/tax-years";
 import { DATA_SOURCE } from "@/data/types";
 import { isRemoteDataApi } from "@/lib/data-api/config";
 import { loadFundPageFromDataApi } from "@/lib/data-api/funds-page";
@@ -20,6 +21,7 @@ export async function GET(request: Request) {
       offset: live.offset,
       count: live.items.length,
       data: live.items,
+      years: live.years ?? collectTaxYearsFromFunds(live.items),
     });
   }
 
@@ -33,6 +35,7 @@ export async function GET(request: Request) {
       offset,
       count: 0,
       data: [],
+      years: [],
     });
   }
 
@@ -49,5 +52,6 @@ export async function GET(request: Request) {
     offset: page.offset,
     count: page.items.length,
     data: page.items,
+    years: mergeTaxYears(page.years, collectTaxYearsFromFunds(page.items)),
   });
 }

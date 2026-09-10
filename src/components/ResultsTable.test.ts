@@ -31,7 +31,7 @@ describe("ResultsTable EstimateRow props", () => {
 
 describe("ResultsTable Search Paid history unmount", () => {
   it("keeps Upcoming / Announced and does not mount Paid history tables", () => {
-    assert.match(source, /title="Upcoming \/ Announced"/);
+    assert.match(source, /title=\{SEARCH_UPCOMING_HEADING\}/);
     assert.match(source, /UPCOMING_UNAVAILABLE_HEADLINE/);
     assert.match(source, /UPCOMING_UNAVAILABLE_DETAIL/);
     assert.doesNotMatch(source, /title="Paid history"/);
@@ -45,7 +45,7 @@ describe("ResultsTable Search pager placement", () => {
   it("puts the hybrid pager inside each FundSection card, not as a strip between modules", () => {
     const start = source.indexOf("return (");
     const layout = source.slice(start, source.indexOf("function FundSection"));
-    const upcoming = layout.indexOf('title="Upcoming / Announced"');
+    const upcoming = layout.indexOf("title={SEARCH_UPCOMING_HEADING}");
     const paid = layout.indexOf('title="Paid history"');
     assert.ok(upcoming >= 0, "Upcoming / Announced section");
     assert.ok(paid < 0, "Paid history stays off Search Sample Estimates");

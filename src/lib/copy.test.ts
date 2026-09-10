@@ -12,6 +12,11 @@ describe("Sample Estimates empty copy", () => {
     assert.match(source, /UPCOMING_UNAVAILABLE_HEADLINE = "Not available \/ undisclosed"/);
     assert.match(source, /No unpaid announced estimates from the Data API/);
     assert.match(source, /No paid history from the Data API/);
+    assert.match(source, /SEARCH_UPCOMING_HEADING = "Upcoming \/ Announced"/);
+    assert.match(
+      source,
+      /Announced distributions that have not paid out yet\. Historical paid distributions live on Compare \/ Portfolio Growth & Tax\./,
+    );
     assert.doesNotMatch(source, /in this sample/);
   });
 });
