@@ -52,7 +52,7 @@ export function IllustrationPaidHistory({ fund }: { fund: FundEstimate }) {
       return;
     }
     let cancelled = false;
-    void fetchFundsSearch<FundEstimateView>(ticker, 5).then((result) => {
+    void fetchFundsSearch<FundEstimateView>(ticker, 5, { navOnly: false }).then((result) => {
       if (cancelled) return;
       if (result.unavailable) {
         setUnavailable(true);

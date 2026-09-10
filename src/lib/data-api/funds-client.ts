@@ -69,6 +69,7 @@ export async function fetchFundsLookup<T = unknown>(
 export async function fetchFundsSearch<T = unknown>(
   query: string,
   limit = 20,
+  options?: { navOnly?: boolean },
 ): Promise<FundsApiClientResult<T>> {
   const q = query.trim();
   if (!q) return { items: [], unavailable: false };
@@ -76,9 +77,11 @@ export async function fetchFundsSearch<T = unknown>(
   params.set("q", q);
   params.set("limit", String(limit));
   params.set("offset", "0");
-  // Identity only — paid-history hydrate is why AGTHX Search timed out
-  // after a 502 while FBGRX still matched the Upcoming SSR catalog.
-  params.set("nav_only", "1");
+  // Autocomplete is identity-only. Paid History must omit nav_only so
+  // GET /distributions finals/paid hydrate the 5-year matrix.
+  if (options?.navOnly !== false) {
+    params.set("nav_only", "1");
+  }
   try {
     const response = await fetch(`/api/funds?${params.toString()}`, {
       cache: "no-store",
