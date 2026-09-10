@@ -106,8 +106,9 @@ function illustrationCalendarYear(illustration: CompareIllustration | null | und
 }
 
 /**
- * Place each compare side onto a calendar year using the same YoY zip as
- * tax-drag totals. Missing years stay absent — never invented.
+ * Place each compare side onto **that illustration’s calendar year**.
+ * YoY left/right vintages never share a column — never mix YE seasons
+ * or market years when comparing funds. Missing years stay absent.
  */
 export function illustrationsByCalendarYear(
   response: CompareResponse,

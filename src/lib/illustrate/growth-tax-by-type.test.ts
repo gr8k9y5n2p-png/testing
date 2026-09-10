@@ -10,6 +10,7 @@ import {
   foldEstimateTypeAmounts,
   formatGrowthTaxCell,
   growthTaxYearFromIllustration,
+  illustrationsByCalendarYear,
   selectComponentsForYear,
   taxDollarsFromComponent,
   GROWTH_TAX_EMPTY_LABEL,
@@ -304,6 +305,75 @@ describe("buildGrowthTaxByTypeModel", () => {
         years,
       );
     }
+  });
+
+  it("does not mix YoY left/right YE seasons into one column", () => {
+    const deltas = {
+      distribution_dollars: 0,
+      estimated_tax: 0,
+      effective_tax_on_holding: 0,
+    };
+    const agthx = yoy([
+      {
+        year: 2025,
+        left: illustration(true, [
+          component({
+            as_of: "2024-12-12",
+            ex_date: "2024-12-11",
+            payable_date: "2024-12-12",
+            estimated_tax_dollars: 100,
+          }),
+        ]),
+        right: illustration(true, [
+          component({
+            as_of: "2025-12-12",
+            ex_date: "2025-12-11",
+            payable_date: "2025-12-12",
+            estimated_tax_dollars: 200,
+          }),
+        ]),
+        deltas,
+      },
+    ]);
+    const fcntx = yoy([
+      {
+        year: 2025,
+        left: illustration(true, []),
+        right: illustration(true, [
+          component({
+            as_of: "2025-12-15",
+            ex_date: "2025-12-16",
+            payable_date: "2025-12-17",
+            estimated_tax_dollars: 350,
+          }),
+        ]),
+        deltas,
+      },
+    ]);
+
+    const byYear = illustrationsByCalendarYear(agthx);
+    assert.equal(byYear.get(2024)?.totals.estimated_tax, 100);
+    assert.equal(byYear.get(2025)?.totals.estimated_tax, 200);
+    assert.equal(byYear.has(2023), false);
+
+    const model = buildGrowthTaxByTypeModel(
+      [
+        { ticker: "AGTHX", tax: agthx },
+        { ticker: "FCNTX", tax: fcntx },
+      ],
+      [2024, 2025],
+    );
+    assert.deepEqual(
+      model.series.map((row) => row.years.map((cell) => cell.year)),
+      [
+        [2024, 2025],
+        [2024, 2025],
+      ],
+    );
+    assert.equal(model.series[0]?.years[0]?.total, 100);
+    assert.equal(model.series[0]?.years[1]?.total, 200);
+    assert.equal(model.series[1]?.years[0]?.status, "empty");
+    assert.equal(model.series[1]?.years[1]?.total, 350);
   });
 });
 
