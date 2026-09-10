@@ -125,9 +125,9 @@ export function ResultsTable({
   const sortDirection = sortDirectionProp ?? localSortDirection;
   const coverage = useCoverage();
   const { upcoming } = splitFundsByBucket(funds);
-  // Client current-page sort. Data /distributions has no order param yet
-  // (`paidHistoryDataOrderParams` stays empty). Always apply the header
-  // sort to the currently displayed Paid History rows and Upcoming page.
+  // Client current-page sort for columns Data cannot order. Dist $/Share
+  // / Ex-div refetch the year-window via `paidHistoryDataOrderParams`;
+  // still apply the header sort to the currently displayed Paid History rows.
   const paid = sortFunds(
     paidHistoryViews(paidFunds ?? funds, year),
     sortKey,

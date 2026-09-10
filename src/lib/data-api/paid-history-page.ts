@@ -6,9 +6,10 @@
  * Category is Data `category` (same strings as `/funds/categories`).
  * A 400 on `category` retries once without it (#127 may not be on Render).
  * Never hydrates the book in the browser. Never pulls Upcoming prelims.
- * Column sorts (Dist $/Share, % NAV, dates, …) reorder the current
- * year-window page only. Data additive `sort=amount|ex_date` is reserved
- * in `paidHistoryDataOrderParams` and not sent until that PR is on Render.
+ * Dist $/Share / Ex-div send Data `sort=amount|ex_date` + `order=` for
+ * full-book order of the filtered year window (page 1 on sort change).
+ * Other columns (`paidHistoryDataOrderParams` = {}) stay current-page
+ * `sortFunds`. Never walks the book to rank.
  */
 
 import { normalizePublicationStage } from "@/data/distribution-bucket";
