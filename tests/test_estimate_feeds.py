@@ -146,6 +146,8 @@ def test_coverage_exposes_estimate_feed_readiness(session) -> None:
 
     beacon = by_slug["american_beacon"]
     assert beacon.estimate_feed_ready is True
+    assert beacon.has_multi_year_history is True
+    assert beacon.history_years == [2021, 2022, 2023, 2024, 2025]
     assert "AADEX" in beacon.performance_tickers
 
     lazard = by_slug["lazard"]
