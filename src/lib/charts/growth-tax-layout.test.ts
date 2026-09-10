@@ -96,8 +96,10 @@ describe("Growth & Tax layout chrome", () => {
       join(here, "../../components/illustrate/GrowthAndTaxDragModule.tsx"),
       "utf8",
     );
+    const layoutSource = readFileSync(join(here, "growth-tax-layout.ts"), "utf8");
     assert.match(table, /growthTaxTableLayout/);
     assert.match(table, /data-growth-tax-table/);
+    assert.match(layoutSource, /minmax\(0,/);
     assert.doesNotMatch(table, /grid-cols-2|grid-cols-3|minmax\(8rem/);
     assert.doesNotMatch(table, /tickers\.length === 2|tickers\.length === 3/);
     assert.match(chart, /data-start-label/);

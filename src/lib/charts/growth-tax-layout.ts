@@ -131,7 +131,9 @@ export function growthTaxTableLayout(
 
   return {
     columns,
-    template: fr.map((value) => `${Math.max(value, 0.0001)}fr`).join(" "),
+    template: fr
+      .map((value) => `minmax(0, ${Math.max(value, 0.0001)}fr)`)
+      .join(" "),
     fr,
     tickerLeft,
     tickerCenters,

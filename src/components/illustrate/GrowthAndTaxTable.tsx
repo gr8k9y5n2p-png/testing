@@ -1,5 +1,6 @@
 import { GrowthTaxTypeLegend } from "@/components/illustrate/GrowthAndTaxChart";
 import { growthTaxChartPad, growthTaxTableLayout } from "@/lib/charts/growth-tax-layout";
+import { fundSeriesColor } from "@/lib/charts/series-colors";
 import {
   SHARED_CHART_WIDTH,
   type ChartPad,
@@ -59,14 +60,18 @@ export function GrowthAndTaxTable({
         aria-label="Distribution tax by calendar year"
         className="w-full text-sm"
       >
-        <div role="row" className="grid" style={{ gridTemplateColumns: layout.template }}>
+        <div
+          role="row"
+          className="grid min-w-0"
+          style={{ gridTemplateColumns: layout.template }}
+        >
           {layout.columns.map((column, index) => {
             if (column.kind === "stub") {
               return (
                 <div
                   key={`h-stub`}
                   role="columnheader"
-                  className="py-1.5 pr-2 text-left text-[10px] font-semibold uppercase tracking-[0.12em] text-faint"
+                  className="min-w-0 py-1.5 pr-2 text-left text-[10px] font-semibold uppercase tracking-[0.12em] text-faint"
                 >
                   {"\u00a0"}
                 </div>
@@ -75,18 +80,32 @@ export function GrowthAndTaxTable({
             if (column.kind === "ticker") {
               const year = model.years[column.yearIndex];
               const ticker = model.tickers[column.seriesIndex];
+              const compact = model.tickers.length >= 4;
               return (
                 <div
                   key={`h-${year}-${ticker}`}
                   role="columnheader"
-                  className={`px-0.5 py-1.5 text-center font-mono text-[11px] font-medium text-ink ${
+                  title={`${year} ${ticker}`}
+                  className={`min-w-0 overflow-hidden px-0.5 py-1.5 text-center font-mono text-[11px] font-medium text-ink ${
                     column.yearIndex > 0 && column.seriesIndex === 0
                       ? "border-l border-line"
                       : ""
                   }`}
                 >
-                  <span className="sr-only">{year} </span>
-                  {ticker}
+                  <span className="sr-only">
+                    {year} {ticker}
+                  </span>
+                  {compact ? (
+                    <span
+                      aria-hidden
+                      className="mx-auto block size-1.5 rounded-full"
+                      style={{ background: fundSeriesColor(column.seriesIndex) }}
+                    />
+                  ) : (
+                    <span aria-hidden className="block truncate">
+                      {ticker}
+                    </span>
+                  )}
                 </div>
               );
             }
@@ -108,7 +127,7 @@ export function GrowthAndTaxTable({
           <div
             key={type}
             role="row"
-            className="grid border-t border-line"
+            className="grid min-w-0 border-t border-line"
             style={{ gridTemplateColumns: layout.template }}
           >
             {layout.columns.map((column, index) => {
@@ -117,7 +136,7 @@ export function GrowthAndTaxTable({
                   <div
                     key={`${type}-stub`}
                     role="rowheader"
-                    className="py-1.5 pr-2 text-left text-[12px] font-medium text-muted"
+                    className="min-w-0 py-1.5 pr-2 text-left text-[12px] font-medium text-muted"
                   >
                     <span className="inline-flex items-center gap-1.5">
                       <span
@@ -140,7 +159,7 @@ export function GrowthAndTaxTable({
                   <div
                     key={`${type}-${year}-${row?.ticker ?? column.seriesIndex}`}
                     role="cell"
-                    className={`px-0.5 py-1.5 text-center font-mono text-[12px] tabular-nums ${
+                    className={`min-w-0 overflow-hidden px-0.5 py-1.5 text-center font-mono text-[10px] tabular-nums sm:text-[12px] ${
                       value == null ? "text-faint" : "text-ink"
                     } ${
                       column.yearIndex > 0 && column.seriesIndex === 0
@@ -172,7 +191,7 @@ export function GrowthAndTaxTable({
 
         <div
           role="row"
-          className="grid border-t border-line-strong"
+          className="grid min-w-0 border-t border-line-strong"
           style={{ gridTemplateColumns: layout.template }}
         >
           {layout.columns.map((column, index) => {
@@ -181,7 +200,7 @@ export function GrowthAndTaxTable({
                 <div
                   key="total-stub"
                   role="rowheader"
-                  className="py-2 pr-2 text-left text-[12px] font-semibold text-ink"
+                  className="min-w-0 py-2 pr-2 text-left text-[12px] font-semibold text-ink"
                 >
                   Total
                 </div>
@@ -196,7 +215,7 @@ export function GrowthAndTaxTable({
                 <div
                   key={`total-${year}-${row?.ticker ?? column.seriesIndex}`}
                   role="cell"
-                  className={`px-0.5 py-2 text-center font-mono text-[12px] font-medium tabular-nums ${
+                  className={`min-w-0 overflow-hidden px-0.5 py-2 text-center font-mono text-[10px] font-medium tabular-nums sm:text-[12px] ${
                     cell?.total == null ? "text-faint" : "text-ink"
                   } ${
                     column.yearIndex > 0 && column.seriesIndex === 0
