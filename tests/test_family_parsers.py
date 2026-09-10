@@ -2863,6 +2863,18 @@ def test_sixth_tier_fixtures() -> None:
         if r.ticker == "MEGMX" and r.estimate_type == EstimateType.short_term_capital_gains
     )
     assert megmx.amount == Decimal("0.08706")
+    mapix_2025 = next(
+        r
+        for r in matthews
+        if r.ticker == "MAPIX" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert mapix_2025.amount == Decimal("0.26050")
+    msmlx_2025 = next(
+        r
+        for r in matthews
+        if r.ticker == "MSMLX" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert msmlx_2025.amount == Decimal("0.38648")
 
     aqr_2024 = parse_distribution_html(
         (ROOT / "aqr" / "2024_final_distributions.html").read_text(encoding="utf-8"),
@@ -2895,6 +2907,61 @@ def test_sixth_tier_fixtures() -> None:
         if r.ticker == "CIVIX" and r.estimate_type == EstimateType.long_term_capital_gains
     )
     assert civix_2024.amount == Decimal("1.1868")
+
+    causeway_2023 = parse_distribution_html(
+        (ROOT / "causeway" / "2023_final_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://causeway-2023",
+        fund_family="Causeway",
+    )
+    civix_2023 = next(
+        r
+        for r in causeway_2023
+        if r.ticker == "CIVIX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert civix_2023.amount == Decimal("0.1748")
+    assert civix_2023.publication_stage == PublicationStage.final
+
+    causeway_2022 = parse_distribution_html(
+        (ROOT / "causeway" / "2022_final_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://causeway-2022",
+        fund_family="Causeway",
+    )
+    civix_2022 = next(
+        r
+        for r in causeway_2022
+        if r.ticker == "CIVIX" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert civix_2022.amount == Decimal("0.2834")
+    ccenx_2022 = next(
+        r
+        for r in causeway_2022
+        if r.ticker == "CCENX" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert ccenx_2022.amount == Decimal("0.0716")
+
+    causeway_2021 = parse_distribution_html(
+        (ROOT / "causeway" / "2021_final_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://causeway-2021",
+        fund_family="Causeway",
+    )
+    civix_2021 = next(
+        r
+        for r in causeway_2021
+        if r.ticker == "CIVIX" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert civix_2021.amount == Decimal("0.3170")
+    cemix_2021 = next(
+        r
+        for r in causeway_2021
+        if r.ticker == "CEMIX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert cemix_2021.amount == Decimal("2.4046")
     cemix_st = next(
         r
         for r in causeway_2024
@@ -2935,6 +3002,30 @@ def test_sixth_tier_fixtures() -> None:
         if r.ticker == "MAPTX" and r.estimate_type == EstimateType.long_term_capital_gains
     )
     assert maptx_2021.amount == Decimal("5.35902")
+    mapix_2021 = next(
+        r
+        for r in matthews_2021
+        if r.ticker == "MAPIX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert mapix_2021.amount == Decimal("2.31785")
+    mchfx_2021 = next(
+        r
+        for r in matthews_2021
+        if r.ticker == "MCHFX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert mchfx_2021.amount == Decimal("1.62473")
+    masgx_2021 = next(
+        r
+        for r in matthews_2021
+        if r.ticker == "MASGX" and r.estimate_type == EstimateType.short_term_capital_gains
+    )
+    assert masgx_2021.amount == Decimal("0.70374")
+    mcsmx_2021 = next(
+        r
+        for r in matthews_2021
+        if r.ticker == "MCSMX" and r.estimate_type == EstimateType.short_term_capital_gains
+    )
+    assert mcsmx_2021.amount == Decimal("1.77913")
 
 
 def test_seventh_tier_fixtures() -> None:
