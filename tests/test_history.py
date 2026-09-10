@@ -70,6 +70,61 @@ def test_american_funds_paid_history_2021_2025() -> None:
     assert gfa_lt["2025-12-17"].amount == Decimal("8.3640")
 
 
+def test_american_funds_tax_year_lookback_2021_2025() -> None:
+    """Wayback / official YE books with tax-year as_of — no invented $0 or QDI %."""
+    by_year: dict[int, list] = {}
+    for year in (2021, 2022, 2023, 2024, 2025):
+        records = parse_capital_group_html(
+            (AF / f"year_end_{year}_tax_year.html").read_text(encoding="utf-8"),
+            source_url=f"fixture://af-{year}-tax-year",
+        )
+        by_year[year] = records
+        assert records
+        assert all(r.amount_unit == AmountUnit.per_share for r in records)
+        assert all(r.publication_stage == PublicationStage.final for r in records)
+        assert all(r.as_of and r.as_of.year == year for r in records)
+        assert all(r.amount is not None and r.amount != Decimal("0") for r in records)
+        assert not any(r.amount_unit == AmountUnit.percent for r in records)
+        assert len({r.ticker or r.fund_name for r in records}) >= 25
+
+    amcap_21 = next(
+        r
+        for r in by_year[2021]
+        if r.ticker == "AMCPX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert amcap_21.amount == Decimal("1.1710")
+    assert str(amcap_21.as_of) == "2021-12-15"
+    assert not any(
+        r.ticker == "AMCPX" and r.estimate_type == EstimateType.long_term_capital_gains
+        for r in by_year[2022]
+    )
+    amcap_24 = next(
+        r
+        for r in by_year[2024]
+        if r.ticker == "AMCPX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert amcap_24.amount == Decimal("2.5220")
+    assert str(amcap_24.as_of) == "2024-12-17"
+    amcap_25 = next(
+        r
+        for r in by_year[2025]
+        if r.ticker == "AMCPX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert amcap_25.amount == Decimal("2.1509")
+    abalx_21 = next(
+        r
+        for r in by_year[2021]
+        if r.ticker == "ABALX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert abalx_21.amount == Decimal("0.8600")
+    gfa_22 = next(
+        r
+        for r in by_year[2022]
+        if r.ticker == "AGTHX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert gfa_22.amount == Decimal("1.8410")
+
+
 def test_t_rowe_prior_years() -> None:
     y2024 = parse_distribution_html(
         (TRP / "2024_year_end_distributions.html").read_text(encoding="utf-8"),

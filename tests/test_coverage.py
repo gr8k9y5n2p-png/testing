@@ -177,6 +177,22 @@ def test_coverage_lookback_fcntx_five_years(client: TestClient) -> None:
     assert "FCNTX has matched YE finals for 2021–2025." in lookback["notes"]
 
 
+def test_coverage_lookback_wave2_american_funds_invesco(client: TestClient) -> None:
+    af = client.post("/ingest/fetch", json={"fund_family": "american_funds", "mode": "fixture"})
+    assert af.status_code == 200, af.text
+    inv = client.post("/ingest/fetch", json={"fund_family": "invesco", "mode": "fixture"})
+    assert inv.status_code == 200, inv.text
+    lookback = client.get("/coverage").json()["lookback_5y"]
+    by_year = lookback["funds_with_finals_by_year"]
+    assert by_year["2021"] >= 40
+    assert by_year["2022"] >= 25
+    assert by_year["2023"] >= 450
+    assert by_year["2024"] >= 500
+    assert by_year["2025"] >= 500
+    assert lookback["funds_with_5y"] >= 20
+    assert "never invented" in " ".join(lookback["notes"]).lower()
+
+
 def test_coverage_gap_implemented_family(client: TestClient) -> None:
     response = client.post(
         "/coverage/gaps",

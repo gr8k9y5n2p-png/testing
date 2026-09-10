@@ -112,6 +112,7 @@ def test_full_book_american_funds_invesco_dimensional() -> None:
     inv_funds, inv_tickers = _funds_and_tickers(InvescoSource())
     assert {"VAFAX", "ACSTX", "CHTRX", "OPOCX"} <= inv_tickers
     assert len(inv_funds) >= 50
+    assert len(inv_tickers) >= 500
     assert not any(re.search(r"\bSMA\b", name, re.I) for name in inv_funds)
 
     dfa_funds, dfa_tickers = _funds_and_tickers(DimensionalSource())
