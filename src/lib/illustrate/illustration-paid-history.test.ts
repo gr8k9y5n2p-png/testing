@@ -15,6 +15,7 @@ import {
   withPeerContext,
 } from "../../data/queries.ts";
 import {
+  FUND_CARD_TYPE_LABELS,
   PAID_HISTORY_ESTIMATE_TYPES,
   hasCurrentYearUnpaidEstimate,
   illustrationFundCardTypeRows,
@@ -22,6 +23,8 @@ import {
   illustrationPaidHistoryYear,
   illustrationPaidHistoryYears,
   illustrationPaidTypeRows,
+  paidHistoryEmptyCellLabel,
+  paidHistoryTypeColor,
 } from "./illustration-paid-history.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -344,10 +347,16 @@ describe("Dollar Illustration prior-year Paid History", () => {
     assert.match(paid, /ILLUSTRATION_PAID_HISTORY_KICKER/);
     assert.match(paid, /ILLUSTRATION_PAID_HISTORY_DETAIL/);
     assert.match(paid, /AWAITING_ESTIMATE/);
+    assert.match(paid, /paidHistoryEmptyCellLabel/);
+    assert.match(paid, /paidHistoryTypeColor/);
+    assert.match(paid, /rounded-\[2px\]/);
     assert.match(paid, /fetchFundsSearch/);
     assert.match(paid, /navOnly: false/);
     assert.doesNotMatch(paid, /params\.set\("nav_only"/);
     assert.match(panel, /illustrationFundCardTypeRows/);
+    assert.match(panel, /AWAITING_ESTIMATE/);
+    assert.match(panel, /paidHistoryTypeColor/);
+    assert.match(panel, /Qualified dividend \(QDI\)|fundCardTypeLabel|row\.label/);
     assert.match(
       panel,
       /h-12 w-full rounded-md border border-line bg-paper pl-7 pr-3 font-mono text-base text-ink/,
@@ -373,6 +382,13 @@ describe("Dollar Illustration prior-year Paid History", () => {
     assert.equal(stcg.perShare, 0);
     assert.equal(ordinary.perShare, null);
     assert.equal(ordinary.awaiting, false);
+    assert.equal(
+      FUND_CARD_TYPE_LABELS.qualified_dividend,
+      "Qualified dividend (QDI)",
+    );
+    assert.equal(paidHistoryTypeColor("long_term_capital_gains"), "#b42318");
+    assert.equal(paidHistoryEmptyCellLabel(false), "—");
+    assert.equal(paidHistoryEmptyCellLabel(true), "Awaiting");
     assert.equal(
       rows.some((row) => Math.abs((row.perShare ?? 0) - 5.073) < 1e-6),
       false,

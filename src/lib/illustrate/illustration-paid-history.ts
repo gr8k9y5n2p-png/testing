@@ -11,6 +11,10 @@ import {
   priorPaidHistoryYear,
 } from "../../data/queries.ts";
 import type { EstimateTypeLine, FundEstimate } from "../../data/types.ts";
+import {
+  GROWTH_TAX_TYPE_COLORS,
+  type GrowthTaxEstimateType,
+} from "./growth-tax-by-type.ts";
 import { pctOfNavForFund } from "./nav-math.ts";
 
 export const ILLUSTRATION_PAID_LOOKBACK_YEARS = 5;
@@ -41,7 +45,7 @@ export const FUND_CARD_TYPE_LABELS: Record<string, string> = {
   ordinary_income: "Ordinary income",
   long_term_capital_gains: "Long-term capital gains",
   short_term_capital_gains: "Short-term capital gains",
-  qualified_dividend: "Qualified dividends",
+  qualified_dividend: "Qualified dividend (QDI)",
   total_capital_gains: "Total capital gains",
   special_dividend: "Special dividend",
   return_of_capital: "Return of capital",
@@ -57,6 +61,13 @@ export function paidHistoryTypeLabel(estimateType: string): string {
 
 export function fundCardTypeLabel(estimateType: string): string {
   return FUND_CARD_TYPE_LABELS[estimateType] ?? estimateType;
+}
+
+export function paidHistoryTypeColor(estimateType: string): string {
+  if (estimateType in GROWTH_TAX_TYPE_COLORS) {
+    return GROWTH_TAX_TYPE_COLORS[estimateType as GrowthTaxEstimateType];
+  }
+  return "#a8b0aa";
 }
 
 /** Canonical rows first; extra Data-published types append. Never invent amounts. */
@@ -163,6 +174,11 @@ export type IllustrationPaidMatrixCell = {
   amountUnit: string | null;
   awaiting: boolean;
 };
+
+/** Mock lock: 2026 empty cells read "Awaiting"; other missing years stay "—". */
+export function paidHistoryEmptyCellLabel(awaiting: boolean): string {
+  return awaiting ? "Awaiting" : "—";
+}
 
 export type IllustrationPaidMatrixRow = {
   estimateType: string;

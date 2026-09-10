@@ -16,6 +16,8 @@ import { formatSoftPct } from "@/lib/illustrate/nav-math";
 import {
   illustrationPaidHistoryMatrix,
   illustrationPaidHistoryYears,
+  paidHistoryEmptyCellLabel,
+  paidHistoryTypeColor,
   paidHistoryTypeLabel,
   type IllustrationPaidMatrixCell,
 } from "@/lib/illustrate/illustration-paid-history";
@@ -27,7 +29,7 @@ function formatMatrixCell(cell: IllustrationPaidMatrixCell): string {
   if (cell.pctOfNav != null) {
     return formatSoftPct(cell.pctOfNav);
   }
-  return "—";
+  return paidHistoryEmptyCellLabel(cell.awaiting);
 }
 
 export function IllustrationPaidHistory({ fund }: { fund: FundEstimate }) {
@@ -97,12 +99,7 @@ export function IllustrationPaidHistory({ fund }: { fund: FundEstimate }) {
                 <th className="px-4 py-2 text-left">Component</th>
                 {matrix.years.map((year) => (
                   <th key={year} className="px-4 py-2 text-right">
-                    <span className="block">{year}</span>
-                    {awaitingYears.has(year) ? (
-                      <span className="mt-0.5 block font-medium normal-case tracking-normal text-muted">
-                        {AWAITING_ESTIMATE}
-                      </span>
-                    ) : null}
+                    {year}
                   </th>
                 ))}
               </tr>
@@ -111,25 +108,50 @@ export function IllustrationPaidHistory({ fund }: { fund: FundEstimate }) {
               {matrix.rows.map((row) => (
                 <tr key={row.estimateType || "distribution"}>
                   <td className="px-4 py-2.5 text-ink">
-                    {row.estimateType
-                      ? paidHistoryTypeLabel(row.estimateType)
-                      : "—"}
+                    {row.estimateType ? (
+                      <span className="inline-flex items-center gap-2">
+                        <span
+                          aria-hidden
+                          className="inline-block size-2 shrink-0 rounded-[2px]"
+                          style={{
+                            background: paidHistoryTypeColor(row.estimateType),
+                          }}
+                        />
+                        {paidHistoryTypeLabel(row.estimateType)}
+                      </span>
+                    ) : (
+                      "—"
+                    )}
                   </td>
-                  {matrix.years.map((year) => (
-                    <td
-                      key={year}
-                      className="px-4 py-2.5 text-right font-mono tabular-nums"
-                    >
-                      {formatMatrixCell(
-                        row.cells[year] ?? {
-                          perShare: null,
-                          pctOfNav: null,
-                          amountUnit: null,
-                          awaiting: awaitingYears.has(year),
-                        },
-                      )}
-                    </td>
-                  ))}
+                  {matrix.years.map((year) => {
+                    const cell = row.cells[year] ?? {
+                      perShare: null,
+                      pctOfNav: null,
+                      amountUnit: null,
+                      awaiting: awaitingYears.has(year),
+                    };
+                    return (
+                      <td
+                        key={year}
+                        aria-label={
+                          cell.awaiting &&
+                          cell.perShare == null &&
+                          cell.pctOfNav == null
+                            ? AWAITING_ESTIMATE
+                            : undefined
+                        }
+                        className={`px-4 py-2.5 text-right font-mono tabular-nums ${
+                          cell.awaiting &&
+                          cell.perShare == null &&
+                          cell.pctOfNav == null
+                            ? "italic text-muted"
+                            : ""
+                        }`}
+                      >
+                        {formatMatrixCell(cell)}
+                      </td>
+                    );
+                  })}
                 </tr>
               ))}
             </tbody>
