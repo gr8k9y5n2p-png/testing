@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import time
-from collections.abc import Callable, Generator, TypeVar
+from collections.abc import Callable, Generator
+from typing import TypeVar
 
 from sqlalchemy import create_engine, event, inspect, text
 from sqlalchemy.engine import Engine
