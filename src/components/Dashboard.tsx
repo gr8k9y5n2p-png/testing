@@ -1,6 +1,7 @@
 "use client";
 
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
+import { paidHistoryDataSortKey } from "@/data/paid-history-book";
 import {
   FUND_PAGE_SIZE,
   PAID_HISTORY_PAGE_SIZE,
@@ -311,10 +312,12 @@ export function Dashboard({
   }
 
   function toggleSort(key: SortKey) {
-    // Current-page client sort for every column (Data has no order param).
+    // Dist $/Share / Ex-div: Data full-book sort — refetch page 1.
+    // Other columns: client current-page sort (keep the year-window offset).
     if (key === sortKey) {
       setSortDirection((current) => (current === "asc" ? "desc" : "asc"));
       setOffset(0);
+      if (paidHistoryDataSortKey(key)) setPaidOffset(0);
       return;
     }
     setSortKey(key);
@@ -322,6 +325,7 @@ export function Dashboard({
       key === "fundName" || key === "family" || key === "category" ? "asc" : "desc",
     );
     setOffset(0);
+    if (paidHistoryDataSortKey(key)) setPaidOffset(0);
   }
 
   return (

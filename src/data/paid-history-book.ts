@@ -2,10 +2,9 @@
  * Filtered Paid History fund book. `total` is unique funds after year /
  * Family / Category — never a Data `/distributions` row count.
  *
- * Column sorts (every Search header) reorder this in-memory window.
- * Data is adding additive `sort=amount|ex_date` + `direction=` (omit =
- * current default). Do not send those params until that PR is on Render,
- * and do not walk the book.
+ * Dist $/Share and Ex-div send Data `sort=amount|ex_date` + `order=`
+ * so the year-window page is the top of the filtered book. Other
+ * columns stay current-page `sortFunds`. Do not walk the book.
  */
 
 import { isUpcomingFund } from "./distribution-bucket.ts";
@@ -43,16 +42,17 @@ export function paidHistoryDataSortKey(
 }
 
 /**
- * Additive Data `sort=` / `direction=` on GET `/distributions`.
- * Empty until Data's PR is on Render — unknown params have 400'd (category).
- * UI current-page order stays in `paidHistorySort` / `sortFunds`.
- * Later: return `{ sort: paidHistoryDataSortKey(query.sort), direction }`.
+ * Live Data `sort=` / `order=` on GET `/distributions` (`amount` | `ex_date`).
+ * Other Search columns omit these — client `sortFunds` reorders the page.
  */
-export function paidHistoryDataOrderParams(_query: FundPageQuery): {
+export function paidHistoryDataOrderParams(query: FundPageQuery): {
   sort?: PaidHistoryDataSort;
   direction?: SortDirection;
 } {
-  return {};
+  const sort = paidHistoryDataSortKey(query.sort);
+  if (!sort) return {};
+  const { direction } = paidHistorySort(query);
+  return { sort, direction };
 }
 
 function fundHasPaidYear(fund: FundEstimateView, year?: number): boolean {

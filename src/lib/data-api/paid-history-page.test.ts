@@ -104,15 +104,16 @@ describe("Search Paid History year-book page", () => {
     assert.match(book, /sortFunds/);
     assert.match(book, /paidHistoryDataOrderParams/);
     assert.match(dists, /if \(query\.sort/);
-    assert.doesNotMatch(dists, /params\.set\("order"/);
+    assert.match(dists, /params\.set\("order"/);
+    assert.match(dists, /params\.set\("sort_dir"/);
+    assert.match(dists, /params\.set\("sort_by"/);
     assert.deepEqual(paidHistoryDataOrderParams({}), {});
     assert.deepEqual(
       paidHistoryDataOrderParams({
         sort: "estimatedDistributionAmount",
         direction: "desc",
       }),
-      {},
-      "do not send sort= to Data until that PR is on Render",
+      { sort: "amount", direction: "desc" },
     );
     assert.equal(
       paidHistoryDataSortKey("estimatedDistributionAmount"),
@@ -156,7 +157,14 @@ describe("Search Paid History year-book page", () => {
     assert.match(dashboard, /setPaidOffset\(0\)/);
     assert.match(dashboard, /sort: sortKey/);
     assert.match(dashboard, /direction: sortDirection/);
+    assert.match(dashboard, /paidHistoryDataSortKey/);
     assert.match(source, /sort=amount\|ex_date/);
+    const toggleSort = dashboard.slice(
+      dashboard.indexOf("function toggleSort"),
+      dashboard.indexOf("return (", dashboard.indexOf("function toggleSort")),
+    );
+    assert.match(toggleSort, /setPaidOffset\(0\)/);
+    assert.match(toggleSort, /paidHistoryDataSortKey\(key\)/);
     assert.match(table, /paidFunds \?\? funds/);
     assert.match(table, /page=\{paidPage\}/);
     assert.match(table, /All families/);
@@ -164,6 +172,97 @@ describe("Search Paid History year-book page", () => {
     assert.match(table, /Paid History filters/);
     assert.match(table, /column="estimatedDistributionAmount"/);
     assert.match(table, /currently displayed Paid History rows/);
+  });
+
+  it("maps Dist $/Share and Ex-div onto Data sort= / order=", () => {
+    assert.deepEqual(paidHistoryDataOrderParams({}), {});
+    assert.deepEqual(
+      paidHistoryDataOrderParams({
+        sort: "estimatedDistributionAmount",
+        direction: "desc",
+      }),
+      { sort: "amount", direction: "desc" },
+    );
+    assert.deepEqual(
+      paidHistoryDataOrderParams({
+        sort: "estimatedDistributionAmount",
+        direction: "asc",
+      }),
+      { sort: "amount", direction: "asc" },
+    );
+    assert.deepEqual(
+      paidHistoryDataOrderParams({
+        sort: "exDate",
+        direction: "desc",
+      }),
+      { sort: "ex_date", direction: "desc" },
+    );
+    assert.deepEqual(
+      paidHistoryDataOrderParams({
+        sort: "exDate",
+        direction: "asc",
+      }),
+      { sort: "ex_date", direction: "asc" },
+    );
+    assert.deepEqual(
+      paidHistoryDataOrderParams({
+        sort: "estimatedDistributionPctNav",
+        direction: "desc",
+      }),
+      {},
+    );
+    assert.deepEqual(
+      paidHistoryDataOrderParams({
+        sort: "asOfDate",
+        direction: "desc",
+      }),
+      {},
+    );
+    assert.deepEqual(
+      paidHistoryDataOrderParams({
+        sort: "recordDate",
+        direction: "asc",
+      }),
+      {},
+    );
+    assert.deepEqual(
+      paidHistoryDataOrderParams({
+        sort: "payableDate",
+        direction: "desc",
+      }),
+      {},
+    );
+    assert.deepEqual(
+      paidHistoryDataOrderParams({
+        sort: "fundName",
+        direction: "asc",
+      }),
+      {},
+    );
+    assert.deepEqual(
+      paidHistoryDataOrderParams({
+        sort: "family",
+        direction: "asc",
+      }),
+      {},
+    );
+  });
+
+  it("sends Dist $/Share desc as Data sort=amount&order=desc on the year window", () => {
+    const dataOrder = paidHistoryDataOrderParams({
+      sort: "estimatedDistributionAmount",
+      direction: "desc",
+    });
+    assert.deepEqual(dataOrder, { sort: "amount", direction: "desc" });
+    const source = readFileSync(join(here, "paid-history-page.ts"), "utf8");
+    const dists = readFileSync(join(here, "distributions.ts"), "utf8");
+    assert.match(source, /\.\.\.dataOrder/);
+    assert.match(source, /paidHistoryDataOrderParams\(query\)/);
+    assert.match(dists, /params\.set\("sort", sort\)/);
+    assert.match(dists, /params\.set\("sort_by", sort\)/);
+    assert.match(dists, /params\.set\("order", order\)/);
+    assert.match(dists, /params\.set\("sort_dir", order\)/);
+    assert.doesNotMatch(dists, /params\.set\("direction"/);
   });
 
   it("keeps published $0 finals and drops Upcoming prelims from the year book", () => {
@@ -598,6 +697,62 @@ describe("Paid History year-window paging", () => {
     );
   });
 
+  it("passes Dist $/Share desc through to Data sort=amount without a book walk", async () => {
+    const seen: Array<{
+      sort?: string;
+      direction?: string;
+      offset: number;
+    }> = [];
+    const fetchPage = async (
+      query: { sort?: string; direction?: string },
+      window: PaidHistoryFetchWindow,
+    ) => {
+      seen.push({
+        sort: query.sort,
+        direction: query.direction,
+        offset: window.offset,
+      });
+      assert.deepEqual(
+        paidHistoryDataOrderParams(query),
+        { sort: "amount", direction: "desc" },
+      );
+      return dataPage(
+        [
+          finalRow("HIGH", 2026, { amount: "21.021000" }),
+          finalRow("MID", 2026, { amount: "2.500000" }),
+          finalRow("LOW", 2026, { amount: "0.190000" }),
+        ],
+        { filteredTotal: 3 },
+      );
+    };
+
+    const page = await loadPaidHistoryPage(
+      {
+        year: 2026,
+        limit: 50,
+        offset: 0,
+        sort: "estimatedDistributionAmount",
+        direction: "desc",
+      },
+      { fetchPage },
+    );
+    assert.deepEqual(seen, [
+      {
+        sort: "estimatedDistributionAmount",
+        direction: "desc",
+        offset: 0,
+      },
+    ]);
+    assert.equal(page.total, 3);
+    assert.deepEqual(
+      page.items.map((fund) => fund.ticker),
+      ["HIGH", "MID", "LOW"],
+    );
+    const dists = readFileSync(join(here, "distributions.ts"), "utf8");
+    assert.match(dists, /params\.set\("sort", sort\)/);
+    assert.match(dists, /params\.set\("order", order\)/);
+  });
+
   it("sorts the current year-window by % NAV and Ex-div without walking the book", async () => {
     const family = pagePaidHistoryFunds(
       [
@@ -684,8 +839,7 @@ describe("Paid History year-window paging", () => {
     );
     assert.deepEqual(
       paidHistoryDataOrderParams({ sort: "exDate", direction: "desc" }),
-      {},
-      "do not send sort= to Data until that PR is on Render",
+      { sort: "ex_date", direction: "desc" },
     );
   });
 

@@ -4,8 +4,8 @@
  * Pager `total` is Data's filtered `total` when trustworthy, otherwise
  * the unique-fund count on this window.
  *
- * Every Search column sort reorders this window's fund rows.
- * Data additive `sort=amount|ex_date` is reserved — do not walk to rank.
+ * Dist $/Share / Ex-div use Data `sort=amount|ex_date` on this window.
+ * Other column sorts reorder the fetched fund rows. Do not walk to rank.
  */
 
 import { aggregateDistributions, type DataDistribution } from "./aggregate-distributions.ts";
