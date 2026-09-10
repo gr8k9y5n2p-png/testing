@@ -237,9 +237,9 @@ describe("module empty-state wiring", () => {
     );
     assert.equal(PERFORMANCE_UNAVAILABLE_LABEL, "No Performance");
     assert.match(moduleSource, /PERFORMANCE_UNAVAILABLE_LABEL/);
-    assert.match(moduleSource, /TaxDragByYearChart/);
+    assert.match(moduleSource, /GrowthAndTaxChart/);
     assert.doesNotMatch(moduleSource, /Module unavailable/);
-    assert.match(moduleSource, /Keep last rows so tax-drag/);
+    assert.match(moduleSource, /Keep last rows so tax stacks/);
   });
 });
 
