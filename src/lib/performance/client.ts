@@ -1,6 +1,7 @@
 import { dataApiUrl, isRemoteDataApi } from "@/lib/data-api/config";
 import { IllustrateRequestError } from "@/lib/illustrate/client";
 import {
+  isAbortError,
   performanceCoveredFromRaw,
   performanceFromFetchError,
   performancePackIsUsable,
@@ -219,6 +220,8 @@ export async function fetchPerformanceIfAvailable(
     return performancePackIsUsable(response) ? response : null;
   } catch (error) {
     if (init?.signal?.aborted) throw error;
+    // Stray AbortError (connection reuse / sibling cancel) must not fail the book.
+    if (isAbortError(error)) return null;
     return performanceFromFetchError(error);
   }
 }

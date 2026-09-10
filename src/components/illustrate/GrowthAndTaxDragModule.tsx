@@ -21,6 +21,7 @@ import {
   growthLinesFromRows,
   loadGrowthAndTaxDrag,
   type GrowthFundInput,
+  type GrowthTaxPrefetch,
   type LoadedGrowthFund,
 } from "@/lib/illustrate/growth-tax-load";
 import { lockedTaxRates, UI_DEFAULT_TAX_RATES, type TaxRates } from "@/lib/illustrate/types";
@@ -50,6 +51,8 @@ export type GrowthAndTaxDragModuleProps = {
   /** Compare / illustration rates. Defaults to locked top-bracket UI set. */
   taxRates?: TaxRates;
   combineStateWithFederal?: boolean;
+  /** YoY already fetched by Compare — soft-empty per fund, never blank the module. */
+  prefetchTax?: GrowthTaxPrefetch[];
 };
 
 export function GrowthAndTaxDragModule({
@@ -64,6 +67,7 @@ export function GrowthAndTaxDragModule({
   lockToSeed = false,
   taxRates = UI_DEFAULT_TAX_RATES,
   combineStateWithFederal = true,
+  prefetchTax,
 }: GrowthAndTaxDragModuleProps) {
   const rateKey = JSON.stringify(lockedTaxRates(taxRates));
   const rates = useMemo(() => JSON.parse(rateKey) as TaxRates, [rateKey]);
@@ -80,6 +84,13 @@ export function GrowthAndTaxDragModule({
   const [error, setError] = useState<string | null>(null);
   const [settledKey, setSettledKey] = useState<string | null>(null);
 
+  const prefetchKey = JSON.stringify(
+    (prefetchTax ?? []).map((row) => [
+      row.ticker.trim().toUpperCase(),
+      row.tax == null ? null : row.tax.periods?.length ?? 0,
+      row.tax?.summary?.periods_compared ?? null,
+    ]),
+  );
   const requestKey = JSON.stringify({
     funds: selected.map((fund) => fundKey(fund)),
     principal,
@@ -87,9 +98,10 @@ export function GrowthAndTaxDragModule({
     periods: periods ?? null,
     taxRates: rates,
     combineStateWithFederal,
+    prefetchKey,
   });
   const fetchKey = `${requestKey}:${retry}`;
-  const loading = selected.length > 0 && settledKey !== fetchKey;
+  const loading = selected.length > 0 && settledKey !== fetchKey && rows == null;
   const seedKey = JSON.stringify((seedFunds ?? []).map(fundKey));
 
   useEffect(() => {
@@ -140,16 +152,18 @@ export function GrowthAndTaxDragModule({
         {
           taxRates: next.taxRates,
           combineStateWithFederal: next.combineStateWithFederal,
+          prefetchTax,
         },
       )
         .then((loaded) => {
+          if (controller.signal.aborted) return;
           setRows(loaded.rows);
           setMissingTickers(loaded.missingTickers);
           setError(null);
           setSettledKey(fetchKey);
         })
         .catch((caught: unknown) => {
-          if (caught instanceof DOMException && caught.name === "AbortError") return;
+          if (controller.signal.aborted) return;
           // Keep last rows so tax stacks / historical bars are not blanked.
           setMissingTickers(
             next.funds.map((fund) => fund.ticker.trim().toUpperCase()).filter(Boolean),
@@ -163,7 +177,7 @@ export function GrowthAndTaxDragModule({
       controller.abort();
       window.clearTimeout(timer);
     };
-  }, [requestKey, fetchKey, periods]);
+  }, [requestKey, fetchKey, periods, prefetchKey]);
 
   const years = useMemo(
     () => calendarYearsFromRows(rows, "tax_dollars"),
@@ -175,9 +189,9 @@ export function GrowthAndTaxDragModule({
     [principal, rows, years],
   );
 
-  const taxModel = useMemo(
-    () =>
-      buildGrowthTaxByTypeModel(
+  const taxModel = useMemo(() => {
+    try {
+      return buildGrowthTaxByTypeModel(
         (rows ?? []).map((row) => ({
           ticker: row.input.ticker,
           tax: row.tax,
@@ -186,9 +200,31 @@ export function GrowthAndTaxDragModule({
         years,
         rates,
         combineStateWithFederal,
-      ),
-    [combineStateWithFederal, rates, rows, years],
-  );
+      );
+    } catch {
+      return {
+        years,
+        tickers: (rows ?? []).map((row) => row.input.ticker.trim().toUpperCase()),
+        series: (rows ?? []).map((row) => ({
+          ticker: row.input.ticker.trim().toUpperCase(),
+          years: years.map((year) => ({
+            ticker: row.input.ticker.trim().toUpperCase(),
+            year,
+            status: "empty" as const,
+            amounts: {
+              ordinary_income: null,
+              short_term_capital_gains: null,
+              long_term_capital_gains: null,
+              qualified_dividend: null,
+              special_dividend: null,
+              return_of_capital: null,
+            },
+            total: null,
+          })),
+        })),
+      };
+    }
+  }, [combineStateWithFederal, rates, rows, years]);
 
   function commitPrincipal() {
     const parsed = Number(principalDraft.replace(/[$,\s]/g, ""));

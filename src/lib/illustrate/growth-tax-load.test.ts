@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { buildGrowthTaxByTypeModel } from "./growth-tax-by-type.ts";
+import { loadGrowthAndTaxDrag } from "./growth-tax-load.ts";
 import {
   calendarYearsFromRows,
   growthLinesFromRows,
@@ -265,6 +267,107 @@ describe("loadGrowthAndTaxDrag performance mode", () => {
     assert.match(source, /mode:\s*defaultPerformanceMode\(\)/);
     assert.doesNotMatch(source, /mode:\s*"fixture"/);
     assert.match(source, /defaultPerformanceMode/);
+  });
+});
+
+describe("3-fund Compare Growth & Tax", () => {
+  it("does not fail the book when one performance AbortErrors and one compare fails", async () => {
+    const abort = new DOMException("Aborted", "AbortError");
+    const result = await loadGrowthAndTaxDrag(
+      [
+        fundInput("ABALX"),
+        fundInput("AGTHX"),
+        fundInput("VFIAX"),
+      ],
+      10_000,
+      null,
+      undefined,
+      new AbortController().signal,
+      {
+        loaders: {
+          async loadPerformance(request) {
+            if (request.ticker === "VFIAX") throw abort;
+            if (request.ticker === "AGTHX") return null;
+            return pack("ABALX", [2022, 2023, 2024, 2025]);
+          },
+          async loadCompare(request) {
+            const ticker =
+              request.selectors?.ticker ??
+              request.left?.selectors?.ticker ??
+              "";
+            if (ticker === "AGTHX") throw new Error("compare 422");
+            return yoyTax(ticker || "ABALX", [2022, 2023, 2024, 2025], 80);
+          },
+        },
+      },
+    );
+
+    assert.equal(result.rows.length, 3);
+    assert.ok(result.rows.find((row) => row.input.ticker === "ABALX")?.tax);
+    assert.equal(result.rows.find((row) => row.input.ticker === "AGTHX")?.tax, null);
+    assert.ok(result.rows.find((row) => row.input.ticker === "VFIAX")?.tax);
+    assert.deepEqual(result.missingTickers.sort(), ["AGTHX", "VFIAX"]);
+
+    const years = calendarYearsFromRows(result.rows, "tax_dollars");
+    assert.ok(years.length >= 2);
+    assert.ok(years.every((year) => year >= 2022 && year <= 2025));
+
+    const model = buildGrowthTaxByTypeModel(
+      result.rows.map((row) => ({
+        ticker: row.input.ticker,
+        tax: row.tax,
+        taxSide: row.taxSide,
+      })),
+      years,
+    );
+    assert.deepEqual(model.tickers, ["ABALX", "AGTHX", "VFIAX"]);
+    assert.ok(model.series.every((row) => row.years.map((cell) => cell.year).join() === years.join()));
+    const empty = model.series.find((row) => row.ticker === "AGTHX");
+    assert.ok(empty?.years.every((cell) => cell.status === "empty"));
+  });
+
+  it("keeps shared calendar years when only some funds have tax or performance", () => {
+    const rows = [
+      row("ABALX", pack("ABALX", [2022, 2023, 2024, 2025]), yoyTax("ABALX", [2022, 2023, 2024, 2025])),
+      row("AGTHX", null, null, "#3a4348"),
+      row("VFIAX", pack("VFIAX", [2023, 2024, 2025]), null, "#0f7a4b"),
+    ];
+    const years = calendarYearsFromRows(rows, "tax_dollars");
+    assert.ok(years.includes(2023) && years.includes(2024) && years.includes(2025));
+    const model = buildGrowthTaxByTypeModel(
+      rows.map((item) => ({ ticker: item.input.ticker, tax: item.tax, taxSide: item.taxSide })),
+      years,
+    );
+    assert.equal(model.series.length, 3);
+    assert.ok(model.series.every((series) => series.years.length === years.length));
+    const vfiax = model.series.find((series) => series.ticker === "VFIAX");
+    assert.ok(vfiax?.years.every((cell) => cell.status === "empty"));
+  });
+
+  it("falls back to the locked calendar window when no fund has years yet", () => {
+    const years = calendarYearsFromRows(
+      [row("ABALX", null, null), row("AGTHX", null, null), row("VFIAX", null, null)],
+      "tax_dollars",
+    );
+    assert.ok(years.length >= 2);
+    assert.ok(years.every((year) => year >= 2021 && year <= 2025));
+  });
+
+  it("wires Compare prefetch tax so a 3-fund book does not require a second compare storm", () => {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const workspace = readFileSync(
+      join(here, "../../components/illustrate/CompareWorkspace.tsx"),
+      "utf8",
+    );
+    const load = readFileSync(join(here, "growth-tax-load.ts"), "utf8");
+    const moduleSource = readFileSync(
+      join(here, "../../components/illustrate/GrowthAndTaxDragModule.tsx"),
+      "utf8",
+    );
+    assert.match(workspace, /prefetchTax=\{prefetchTax\}/);
+    assert.match(load, /prefetchTax/);
+    assert.match(moduleSource, /settledKey !== fetchKey && rows == null/);
+    assert.match(moduleSource, /if \(controller\.signal\.aborted\) return/);
   });
 });
 
