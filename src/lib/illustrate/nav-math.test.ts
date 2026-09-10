@@ -147,17 +147,49 @@ describe("Eric-locked NAV math", () => {
     assert.equal(formatWeeklyNavLabel({ nav: 0, navAsOf: null }), SOFT_DASH);
   });
 
-  it("leaves issuer-published percent_of_nav as-is", () => {
+  it("live Aftertax % is Dist $/share ÷ weekly NAV — ignores published percent_of_nav", () => {
+    const fcpgxPerShare = 7.277;
+    const fcpgxWeeklyNav = 42.94;
+    const live = upcomingPctOfNav(fcpgxPerShare, fcpgxWeeklyNav);
+    assert.ok(live != null);
+    assert.equal(Number(live.toFixed(1)), 16.9);
+    assert.equal(
+      resolvePctOfNav({
+        publishedPctNav: 7.08,
+        perShare: fcpgxPerShare,
+        weeklyNav: fcpgxWeeklyNav,
+        publicationStage: "preliminary_estimate",
+        exDate: "2026-12-15",
+        today: "2026-09-10",
+      }),
+      live,
+    );
+    assert.equal(
+      pctOfNavForFund(
+        {
+          estimatedDistributionAmount: fcpgxPerShare,
+          publishedPctOfNav: 7.08,
+          estimatedDistributionPctNav: 7.08,
+          nav: fcpgxWeeklyNav,
+          publicationStage: "preliminary_estimate",
+          exDate: "2026-12-15",
+        },
+        "2026-09-10",
+      ),
+      live,
+    );
     assert.equal(
       resolvePctOfNav({
         publishedPctNav: 1.28,
-        perShare: 2.125,
+        perShare: ABALX_YE_PER_SHARE,
         weeklyNav: ABALX_WEEKLY_NAV,
         navOnDistributionDay: ABALX_YE_NAV,
         publicationStage: "final",
         exDate: "2025-12-15",
+        today: "2026-09-09",
       }),
-      1.28,
+      historicalPctOfNav(ABALX_YE_PER_SHARE, ABALX_YE_NAV),
+      "paid/final still uses dist-day NAV, not the published % character",
     );
   });
 });
@@ -270,6 +302,11 @@ describe("Search hydrate live NAV fields", () => {
     assert.match(results, /pctOfNavForFund/);
     assert.match(results, /historicalPctOfNav/);
     assert.match(results, /usesDistributionDayNav/);
+    assert.match(results, /upcomingPctOfNav\(perShare, weekly\)/);
+    assert.doesNotMatch(
+      results,
+      /if \(published != null\) return formatSoftPct\(published\)/,
+    );
     assert.match(panel, /formatWeeklyNavLabel/);
     assert.match(panel, /EstimateLeadCard/);
     assert.match(panel, /Estimated \$ \/ share/);

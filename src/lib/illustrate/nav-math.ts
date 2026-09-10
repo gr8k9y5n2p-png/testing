@@ -1,15 +1,15 @@
 /**
- * Eric-locked NAV math (2026-09-10) for Search / Compare / Portfolio / Lists.
+ * Eric-locked NAV math (2026-09-10) for Search / Dollar Illustration /
+ * Compare / Portfolio / Lists.
  *
  * Upcoming Dist $ = est $/share × (holding $ ÷ weekly nav_per_share)
- * Upcoming / live unpaid % of NAV = Dist $/share ÷ latest weekly nav_per_share
- *   (FCPGX $7.277 ÷ $42.94 = 16.9%). Never manager percent_of_nav unless
- *   the UI explicitly labels that print manager-published.
+ * Aftertax live % of NAV = Dist $/share ÷ latest weekly nav_per_share
+ *   (FCPGX $7.277 ÷ $42.94 = 16.9%). Never manager-published
+ *   percent_of_nav unless the UI explicitly labels that print
+ *   manager-published. publishedPctOfNav is that separately labeled field.
  * Paid / historical % of NAV = Dist $/share ÷ nav_on_distribution_day
  *   (ex-day NAV). Never today's weekly NAV.
  *
- * Published amount_unit=percent_of_nav is left as-is only when callers
- * pass it as an explicit manager-published print.
  * Missing estimate or NAV → null → UI "—". Never invent.
  */
 
@@ -150,20 +150,19 @@ export type PctOfNavInputs = {
 };
 
 /**
- * Resolve % of NAV for one snapshot / character total.
- * Published percent_of_nav wins. Otherwise divide per-share by the
- * correct NAV series. Missing inputs stay null.
+ * Aftertax % of NAV. Live/upcoming is always Dist $/share ÷ weekly NAV.
+ * Historical/paid is Dist $/share ÷ nav_on_distribution_day.
+ * Manager-published percent_of_nav is ignored here — keep it on
+ * publishedPctOfNav for a separately labeled field only.
  */
 export function resolvePctOfNav(input: PctOfNavInputs): number | null {
-  const published = parseFiniteNumber(input.publishedPctNav);
-  if (published != null) return published;
   if (usesDistributionDayNav(input, input.today)) {
     return historicalPctOfNav(input.perShare, input.navOnDistributionDay);
   }
   return upcomingPctOfNav(input.perShare, input.weeklyNav);
 }
 
-/** Search / Paid history row: published % or $/share ÷ the correct NAV series. */
+/** Search / Lists / Dollar Ill live %: Dist $/share ÷ the correct NAV series. */
 export function pctOfNavForFund(
   fund: {
     estimatedDistributionAmount?: number | null;
@@ -178,9 +177,6 @@ export function pctOfNavForFund(
   today?: string,
 ): number | null {
   return resolvePctOfNav({
-    publishedPctNav:
-      fund.publishedPctOfNav ??
-      (fund.estimatedDistributionPctNav ? fund.estimatedDistributionPctNav : null),
     perShare: fund.estimatedDistributionAmount,
     weeklyNav: fund.nav,
     navOnDistributionDay: fund.navOnDistributionDay,
