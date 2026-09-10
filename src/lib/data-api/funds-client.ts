@@ -109,8 +109,8 @@ export function fundsSearchParams(
 
 /**
  * Add to universe only when the shared /api/funds search returned no rows.
- * Prefix / name hits (BLAC → BlackRock) stay selectable even without an
- * exact ticker token.
+ * Family / name hits (Blackrock → BlackRock / iShares) stay selectable
+ * even without an exact ticker token.
  */
 export function fundsSearchNotInUniverse(
   items: readonly unknown[],
