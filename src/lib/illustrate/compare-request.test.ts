@@ -12,6 +12,7 @@ import {
   PER_SHARE_NAV_REQUIRED,
   perShareNavError,
   positiveNav,
+  preferLiveWeeklyNav,
   toDataApiCompareBody,
   toDataApiTaxRates,
   trailingCalendarPeriods,
@@ -47,6 +48,44 @@ describe("compare-request NAV / Data body", () => {
     assert.equal(navFromFundMetadata("AGTHX", 0, seedLookup), 72.14);
     assert.equal(navFromFundMetadata("vigax", undefined, seedLookup), 186.4);
     assert.equal(navFromFundMetadata("ZZNOPE", undefined, seedLookup), undefined);
+  });
+
+  it("prefers live weekly NAV over AGTHX seed 72.14", () => {
+    assert.equal(
+      preferLiveWeeklyNav({
+        ticker: "AGTHX",
+        catalogNav: 88.42,
+        weeklyNav: 90,
+        lookup: seedLookup,
+      }),
+      88.42,
+    );
+    assert.equal(
+      preferLiveWeeklyNav({
+        ticker: "AGTHX",
+        catalogNav: 72.14,
+        weeklyNav: 88.42,
+        lookup: seedLookup,
+      }),
+      88.42,
+    );
+    assert.equal(
+      preferLiveWeeklyNav({
+        ticker: "AGTHX",
+        catalogNav: 0,
+        weeklyNav: null,
+        lookup: seedLookup,
+      }),
+      72.14,
+    );
+    assert.equal(
+      preferLiveWeeklyNav({
+        ticker: "AGTHX",
+        catalogNav: 72.14,
+        weeklyNav: 88.42,
+      }),
+      88.42,
+    );
   });
 
   it("auto-attaches ABALX $/share NAV from metadata when catalog nav is 0", () => {
