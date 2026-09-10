@@ -149,8 +149,17 @@ export function calendarYearsFromRows(
   }
   const sketched = sketchYears([...set].sort((a, b) => a - b));
   const inception = commonInceptionYear(rows, taxMetric);
-  if (inception == null) return sketched;
-  return sketched.filter((year) => year >= inception);
+  const filled = rows.filter((row) => fundInceptionYear(row, taxMetric) != null);
+  const toYears = filled.map((row) => compareInceptionToYear(row.tax));
+  const toYear =
+    toYears.length > 0 && toYears.every((year): year is number => year != null)
+      ? Math.min(...toYears)
+      : null;
+  return sketched.filter((year) => {
+    if (inception != null && year < inception) return false;
+    if (toYear != null && year > toYear) return false;
+    return true;
+  });
 }
 
 export function windowedGrowth(

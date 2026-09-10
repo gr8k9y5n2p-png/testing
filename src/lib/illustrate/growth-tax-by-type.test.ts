@@ -484,6 +484,7 @@ describe("Growth & Tax chrome locks", () => {
     );
     assert.match(seriesSource, /commonInceptionYear/);
     assert.match(seriesSource, /compareInceptionFromYear/);
+    assert.match(seriesSource, /compareInceptionToYear/);
     assert.doesNotMatch(chart, /strokeDasharray=\{row\.dashed/);
     assert.equal(GROWTH_TAX_TYPE_COLORS.long_term_capital_gains, "#b42318");
     assert.equal(GROWTH_TAX_TYPE_COLORS.ordinary_income, "#1b7a72");

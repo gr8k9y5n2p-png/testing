@@ -302,6 +302,18 @@ describe("common inception window", () => {
     assert.ok(!years.includes(2023));
   });
 
+  it("clips the shared window to compare to_year when every filled fund has one", () => {
+    const rows = [
+      row("AGTHX", pack("AGTHX", [2022, 2023, 2024, 2025, 2026]), yoyTax("AGTHX", [2024, 2025])),
+      row("NEWFD", pack("NEWFD", [2024, 2025, 2026]), yoyTax("NEWFD", [2024, 2025])),
+    ];
+    const years = calendarYearsFromRows(rows, "tax_dollars");
+    assert.equal(years[0], 2024);
+    assert.equal(years[years.length - 1], 2025);
+    assert.ok(!years.includes(2023));
+    assert.ok(!years.includes(2026));
+  });
+
   it("falls back to from_as_of when from_year is missing", () => {
     const tax = yoyTax("AGTHX", [2023, 2024, 2025]);
     tax.summary.common_inception = {
