@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import type { FundEstimateView } from "@/data/types";
 import { tickerSlotBorderClass } from "@/components/illustrate/ticker-slot-border";
 import {
@@ -117,7 +116,6 @@ export function ListsWorkspace({
   initialTickers?: string[];
   initialRows?: ListRow[];
 }) {
-  const router = useRouter();
   const [draft, setDraft] = useState("");
   const [tickers, setTickers] = useState<string[]>(initialTickers);
   const [rowsByTicker, setRowsByTicker] = useState<Record<string, ListRow>>(() => {
@@ -125,6 +123,8 @@ export function ListsWorkspace({
     for (const row of initialRows) map[row.ticker] = row;
     return map;
   });
+  const rowsByTickerRef = useRef(rowsByTicker);
+  rowsByTickerRef.current = rowsByTicker;
   const inflight = useRef<Set<string>>(new Set());
 
   const rows = useMemo(
@@ -136,19 +136,18 @@ export function ListsWorkspace({
   useEffect(() => {
     const path = listsTickersPath(tickers);
     if (`${window.location.pathname}${window.location.search}` !== path) {
-      router.replace(path, { scroll: false });
+      window.history.replaceState(null, "", path);
     }
-  }, [router, tickers]);
+  }, [tickers]);
 
   useEffect(() => {
     const missing = tickers.filter(
-      (ticker) => !rowsByTicker[ticker] && !inflight.current.has(ticker),
+      (ticker) =>
+        !rowsByTickerRef.current[ticker] && !inflight.current.has(ticker),
     );
     if (!missing.length) return;
-    let cancelled = false;
     for (const ticker of missing) inflight.current.add(ticker);
     void fetchListRows(missing).then((fetched) => {
-      if (cancelled) return;
       setRowsByTicker((current) => {
         const merged = { ...current };
         for (const row of fetched) merged[row.ticker] = row;
@@ -156,10 +155,7 @@ export function ListsWorkspace({
       });
       for (const ticker of missing) inflight.current.delete(ticker);
     });
-    return () => {
-      cancelled = true;
-    };
-  }, [rowsByTicker, tickers]);
+  }, [tickers]);
 
   function commitDraft(raw = draft) {
     const next = mergeTickerLists(tickers, raw);

@@ -201,6 +201,8 @@ describe("Lists chrome lock", () => {
     assert.match(workspace, /LISTS_RECORD_COLUMN/);
     assert.match(workspace, /LISTS_EX_COLUMN/);
     assert.match(workspace, /tickerSlotBorderClass/);
+    assert.match(workspace, /history\.replaceState/);
+    assert.doesNotMatch(workspace, /useRouter|router\.replace/);
     assert.match(nav, /label:\s*"Lists"/);
     assert.match(nav, /href:\s*"\/lists"/);
   });
