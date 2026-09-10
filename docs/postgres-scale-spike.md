@@ -9,6 +9,8 @@
 
 Friends / soft beta can stay on SQLite. Cutover is for official public / paid scale — after this plan is approved and the implementation tickets below are done.
 
+**Data | Engineering — read first:** [Locked coordination rules](#2-locked-data--engineering-coordination-do-not-relax) · [Draft entity list](#3-draft-entity-list-confirm-against-live-ingest) · [Schema freeze](#5-schema-freeze)
+
 ---
 
 ## 1. Why this spike
@@ -28,9 +30,170 @@ Soft beta can keep SQLite. Official / paid traffic needs Postgres + a real pool 
 
 ---
 
-## 2. Inventory (verified in repo + live `/health` / `/funds`)
+## 2. Locked Data | Engineering coordination (do not relax)
 
-### 2.1 Live book snapshot (2026-09-10, public GET only)
+These rules are **locked** for the scale plan. This spike does not implement them; it records them so the later Postgres work cannot “optimize” them away. Accuracy still beats scale.
+
+### 2.1 Accuracy first — never invent estimates
+
+| Rule | How the live API already behaves | Scale / Postgres implication |
+|---|---|---|
+| Never invent amounts | Parsers + upsert skip characterization `%` (QDI-of-income). Missing values stay **null**. | Copy and Alembic must preserve **null vs 0**. Do not `COALESCE` amounts to 0. |
+| **Awaiting Estimate** when in-book but unpublished | `GET /funds` `coverage_status=awaiting_estimate` (`has_estimate=false`). Not a miss. | Do not invent a prelim row to “fill the hero bar.” |
+| **Undisclosed** when a history year is missing | `GET /coverage` lookback_5y: missing 2021–2025 finals stay unmatched / Undisclosed — **never invented as $0**. | Lookback queries stay `final`/`paid` + `per_share` only. |
+| Ticker not in universe | `GET /funds/lookup` 404 `not_in_universe`. Never conflate with Awaiting Estimate. | Unchanged contract. |
+| **Announced $0 kept** | Upsert will store `amount=0` if a parser emits it. **Gap:** `app/sources/ici.py` currently `continue`s on `Decimal("0")` — ICI $0 lines never reach the book. Other adapters do not have that skip. | Flag for Data (not this spike). Postgres must still allow 0. Do not add a CHECK that rejects 0. |
+| Historical **% of NAV** | `est $/share ÷ nav_on_distribution_day × 100` (`ex_date`, else `payable_date`; last print on or before, ≤7 days). Null if unknown — **never today's weekly NAV** for a past day. | `fund_nav_history` natural key `(ticker, nav_as_of)` stays frozen. |
+| Live **% of NAV** | `est $/share ÷ latest weekly NAV` (`fund_navs`). | `fund_navs` unique `ticker` stays frozen. |
+
+Hero-bar math lives in `app/services/nav.py` (Eric lock 2026-09-09) and `app/schemas.py` `percent_of_nav`.
+
+### 2.2 Storage portable
+
+- Prefer types/indexes that compile on **both** SQLite (soft beta) and Postgres (launch).
+- **Do not add new SQLite-only features** (new PRAGMAs, `EXPLAIN QUERY PLAN` in app code, SQLite-only `ALTER` helpers, FTS5, etc.).
+- Keep `raw_payload` **out of hot Search paths** (post-#118). Unique-fund Search selects identity columns only (`id`, `fund_identifier`, `fund_name`, `fund_family`, `ticker`, `as_of`, `ingested_at`).
+- New indexes must be expressible in Alembic for Postgres; SQLite `_ensure_*` is legacy until cutover.
+
+### 2.3 Efficient ingest
+
+- Delta / upsert by **natural keys** (see [§3](#3-draft-entity-list-confirm-against-live-ingest)). Same `as_of` + ex-date + type updates; a new `as_of` inserts.
+- **No full re-seed on boot.** Warm disk / warm Postgres: densify missing families or changed fixture fingerprints only. `SEED_FORCE_FULL=true` is intentional-only (OOM risk on Starter; worse at 32k rows).
+- **Weekly scrape:** locked target is **Sunday 6:00 America/Chicago** for estimates **and** NAV.  
+  **Current Action** (`.github/workflows/weekly-ingest.yml`) is `0 14 * * 0` and `0 14 * * 1` (Sun + Mon 14:00 UTC ≈ **9:00 CT** CDT). Align the cron at implementation — **do not change the live workflow in this spike.**  
+  After cutover the Action should write the **same** Postgres (external URL + psycopg3). Today it cannot see `/var/data`.
+
+### 2.4 Hero bar for every fund
+
+Website hero (API surfaces; UI owns layout) for each in-book fund:
+
+| Slot | Source of truth | Missing behavior |
+|---|---|---|
+| 5-year paid history | `distribution_estimates` where `publication_stage` in `final`/`paid`, `amount_unit=per_share` | Undisclosed for that year — never $0 |
+| Weekly NAV | `fund_navs.nav_per_share` on `GET /funds` | null — never invented |
+| Dist-day NAV | `fund_nav_history` joined on ex/payable date | null — never use weekly NAV for a past day |
+| Category | `app/categories.py` (in-process; **not a table**) | null — never invented |
+| Estimates when published | unpaid prelim/updated with future ex/payable → `estimate_announced` | else **Awaiting Estimate** |
+
+There is **no `funds` table**. A “fund” is `COUNT(DISTINCT fund_identifier)` over `distribution_estimates`. Do not add a funds table at cutover (product change; ping Scale).
+
+### 2.5 Schema freeze (summary)
+
+Densify stays on **SQLite** until cutover. Full protocol: [§5](#5-schema-freeze). Breaking Postgres-only type/PK changes are called out in [§6.1](#61-proposed-table--type-changes).
+
+---
+
+## 3. Draft entity list (confirm against live ingest)
+
+Data | Engineering: confirm these entities, natural keys, and indexes against live ingest before any Alembic revision. Surrogate `id` values are `VARCHAR(36)` UUID text — **not** the upsert identity.
+
+Logical names used in freeze pings (`funds`, `distributions`, `fund_navs`, seed paths) map to the physical tables below.
+
+### 3.1 `distribution_estimates` — logical **distributions** (+ derived **funds**)
+
+**What:** One published tax-character line (income, ST/LT, QDI $/share, ROC, …).  
+**Derived fund:** latest row per `fund_identifier` (`row_number` in `search_funds`). Never a separate funds row.
+
+| | |
+|---|---|
+| Surrogate PK | `id` |
+| **Natural / upsert key** | `upsert_key` = `make_upsert_key`: `family\|ident\|share_class\|estimate_type\|as_of\|ex_date` (lowercased family/ident/class; ISO dates or empty) |
+| Unique | `uq_distribution_upsert_key` (`upsert_key`) |
+| Identity fields | `fund_family`, `fund_identifier` (ticker or slugified name; Class A alias may replace name), `ticker`, `share_class`, `estimate_type`, `as_of`, `ex_date` |
+| Amounts | `amount` / `amount_min` / `amount_max` `Numeric(18,6)` — **0 allowed**; null = unknown |
+| Stage | `publication_stage`: `preliminary_estimate` / `updated_estimate` / `final` / `paid` |
+| Audit | `raw_payload` JSON — **not selected on Search** |
+| Quality | `needs_review`, `review_reason`, `data_quality_flags` |
+
+**Indexes (keep names on Postgres):**
+
+| Index | Columns | Role |
+|---|---|---|
+| `ix_dist_ticker` | `ticker` | #118 exact ticker Search |
+| `ix_dist_fund_identifier` | `fund_identifier` | #118 + lookup |
+| `ix_dist_fund_name` | `fund_name` | name Search (btree; leading-wildcard still scans) |
+| `ix_dist_family` | `fund_family` | family filter |
+| `ix_dist_publication_stage` | `publication_stage` | live-estimate / lookback |
+| `ix_dist_estimate_type` | `estimate_type` | type filter |
+| `ix_dist_as_of` | `as_of` | history / YoY |
+| `ix_dist_ex_date` | `ex_date` | dist-day join |
+| `ix_dist_fund_search` | `ticker, fund_identifier, fund_name, fund_family, as_of, ingested_at, id` | covering index — avoids `raw_payload` table scan |
+
+**Do not change `make_upsert_key` during migration.** A new publication `as_of` is a new row; the same document updates in place.
+
+### 3.2 `fund_navs` — logical **fund_navs** (weekly)
+
+| | |
+|---|---|
+| Surrogate PK | `id` |
+| **Natural key** | `ticker` (unique `uq_fund_nav_ticker`) |
+| Payload | `nav_per_share` `Numeric(18,6)` **> 0** in writer (`nav.py` rejects ≤0); `nav_as_of`; `source` |
+| Indexes | `ix_nav_ticker`, `ix_nav_fund_identifier`, `ix_nav_as_of` |
+
+Hero weekly NAV. Live % of NAV and live dist-$ use this print.
+
+### 3.3 `fund_nav_history` — dist-day NAV
+
+| | |
+|---|---|
+| Surrogate PK | `id` |
+| **Natural key** | `(ticker, nav_as_of)` unique `uq_fund_nav_history_ticker_as_of` |
+| Indexes | `ix_nav_hist_ticker_as_of` (`ticker`, `nav_as_of`) |
+
+Historical % of NAV. Join: last print with `nav_as_of ≤ distribution_day` and ≥ day−7. Missing → null.
+
+### 3.4 `seed_family_state` — seed path
+
+| | |
+|---|---|
+| **Natural / PK** | `family_slug` |
+| Payload | `fixture_fingerprint` (sha256 of fixture names/sizes/mtimes), `updated_at` |
+
+Boot densify: 0 rows for a family → ingest; fingerprint change → ingest; warm + same fingerprint → skip. **No full rebuild.**
+
+### 3.5 `ingest_runs`
+
+| | |
+|---|---|
+| Surrogate PK | `id` |
+| **Natural (soft)** | `(fund_family, started_at)` — not unique; one row per run |
+| Indexes | `ix_ingest_family_started` (`fund_family`, `started_at`) |
+| Payload | `mode`, `status`, counts, `source_urls` JSON |
+
+### 3.6 `ticker_requests`
+
+| | |
+|---|---|
+| Surrogate PK | `id` |
+| **Natural (soft)** | `ticker` — **not unique** (repeat submits allowed; statuses `queued` / `search_issuer` / `matched` / …) |
+| Indexes | `ix_ticker_request_status`, `ix_ticker_request_ticker`, `ix_ticker_request_created` |
+
+Website Add-to-universe. Never invents amounts.
+
+### 3.7 `coverage_gaps`
+
+| | |
+|---|---|
+| Surrogate PK | `id` |
+| **Natural (soft)** | append-only advisor miss (`ticker` / `fund_name` / `fund_family` + `created_at`) — no unique |
+| Indexes | `ix_gap_created` |
+
+### 3.8 Not a table (hero still needs them)
+
+| Logical entity | Where | Natural key |
+|---|---|---|
+| **Fund** (hero identity) | Derived from `distribution_estimates.fund_identifier` | `fund_identifier` (plus display `ticker`) |
+| **Category** | `app/categories.py` map | ticker / identifier / name / family → category string or null |
+
+Adding either as a real table is a **ping-required** product change, not a cutover requirement.
+
+Local dump of physical columns/indexes: `python3 scripts/schema_inventory.py`.
+
+---
+
+## 4. Inventory (verified in repo + live `/health` / `/funds`)
+
+### 4.1 Live book snapshot (2026-09-10, public GET only)
 
 | Metric | Value |
 |---|---|
@@ -46,7 +209,7 @@ README still says “a cold full book is ~11k rows.” That figure is **stale**.
 
 `SEED_FORCE_FULL=true` on Starter (512 MB) is still a documented OOM risk (#113). That risk is **higher** now, not lower.
 
-### 2.2 SQLAlchemy engine (`app/db.py`)
+### 4.2 SQLAlchemy engine (`app/db.py`)
 
 | Item | Current behavior |
 |---|---|
@@ -64,7 +227,7 @@ README still says “a cold full book is ~11k rows.” That figure is **stale**.
 
 Tests that lock this in: `tests/test_seed_on_start.py` (`test_sqlite_file_uses_wal`, `test_sqlite_file_uses_null_pool`, `test_sqlite_search_indexes_exist`). `EXPLAIN QUERY PLAN` in `tests/test_funds_search_speed.py` is **SQLite-only**.
 
-### 2.3 Models / tables (`app/models.py`)
+### 4.3 Models / tables (`app/models.py`)
 
 Dialect-neutral SQLAlchemy 2.0 mappings. Types that need a Postgres decision are called out.
 
@@ -82,7 +245,7 @@ Dialect-neutral SQLAlchemy 2.0 mappings. Types that need a Postgres decision are
 
 **SQLite-only SQL in app code:** PRAGMAs + the `_ensure_*` ALTERs (SQLite `BOOLEAN NOT NULL DEFAULT 0` / `JSON`). Queries themselves use SQLAlchemy (`ilike`, `row_number`, `nulls_last`, `count(distinct)`). Those compile on Postgres. Name Search still uses leading-wildcard `ILIKE '%…%'` — fine on both; **not indexable** without `pg_trgm` on Postgres.
 
-### 2.4 Boot / seed / paths
+### 4.4 Boot / seed / paths
 
 | Knob | Where | Live Blueprint value |
 |---|---|---|
@@ -94,7 +257,7 @@ Dialect-neutral SQLAlchemy 2.0 mappings. Types that need a Postgres decision are
 
 Warm-disk densify (`app/services/boot_seed.py`) is the **supported** way the live book grows. A Manual Deploy must not rebuild ~32k rows.
 
-### 2.5 Render / Docker / start command
+### 4.5 Render / Docker / start command
 
 **`render.yaml` (live Blueprint shape):**
 
@@ -117,7 +280,7 @@ Binds `0.0.0.0:$PORT` (Render-correct). Default workers = 1.
 
 **Image deps (`requirements.txt`):** FastAPI / uvicorn / SQLAlchemy / pydantic / httpx / bs4 / lxml. **No Postgres driver in the default image.** `pyproject.toml` optional extra: `postgres = ["psycopg[binary]>=3.2.0"]` (psycopg3).
 
-### 2.6 Weekly ingest + driver mismatch (hypothesis verified in files)
+### 4.6 Weekly ingest + driver mismatch (hypothesis verified in files)
 
 `.github/workflows/weekly-ingest.yml`:
 
@@ -133,34 +296,102 @@ README / `.env.example` / `pyproject.toml` document **`postgresql+psycopg://`** 
 
 **Hypothesis (not contradicted by the repo; Render MCP was unauthorized so Dashboard secrets were not inspected):** the weekly Action is **not** updating the live Render SQLite disk. Production durability is the Starter disk + fixture densify on boot. After Postgres, the Action *can* write the same database — but only if the driver and URL dialect are aligned and the secret is the **external** URL (`sslmode=require`).
 
-### 2.7 Migrations state
+Locked coordination wants **Sunday 6:00 CT** (estimates + NAV). The Action today is Sun+Mon 14:00 UTC ≈ 9:00 CT. Treat that as an implementation alignment item, not a live workflow edit in this spike.
+
+### 4.7 Migrations state
 
 - **No `alembic/`**, no `alembic.ini`.
 - Production schema = `create_all` + two `_ensure_*` helpers aimed at existing SQLite disks.
 - README already says: “For production, swap that for Alembic migrations.”
 
+The Action schedule is **not** the locked Sunday 6:00 CT target (see [§2.3](#23-efficient-ingest)). Align later; do not edit the live workflow in this spike.
+
 ---
 
-## 3. Draft Postgres schema + migration approach
+## 5. Schema freeze
 
-### 3.1 Proposed table / type changes
+Agreement with Data | Engineering. Densify **stays on SQLite** until cutover. This spike only inventories/drafts against tip of `cursor/fund-distribution-ingest-api-85ed` (post-#117 / #118).
 
-Keep the **same seven tables and unique keys** so a row-for-row copy is possible and densify upserts stay stable.
+### 5.1 Soft freeze (now → greenlight)
 
-| Current | Postgres recommendation | Why |
-|---|---|---|
-| `String(36)` UUID PKs | Keep as `VARCHAR(36)` for copy simplicity. Optional later: native `UUID`. | Avoids rewrite of every FK-less id during cutover. |
-| `sqlalchemy.JSON` | **`JSONB`** (`JSONB` TypeDecorator or `postgresql.JSONB`) | `raw_payload` is audit HTML/JSON; JSONB is smaller / indexable if we ever query it. Search must keep **not** selecting this column (#118). |
-| `Boolean` / `DEFAULT 0` | native `BOOLEAN` default `false` | `_ensure_quality_columns` SQLite SQL is not the PG path. |
-| `Numeric(18,6)` / `Date` / `Text` | unchanged | Portable. |
-| `DateTime(timezone=True)` | `TIMESTAMPTZ` | Copy must preserve UTC. SQLite stores text. |
-| Existing btree indexes | recreate with the same names | Ticker equality path (#118) must keep hitting `ix_dist_ticker` / `ix_dist_fund_identifier` / covering `ix_dist_fund_search`. |
-| Name / family `ILIKE '%q%'` | **optional** `pg_trgm` GIN on `fund_name`, `fund_family` | Only if name Search p95 is a problem after cutover. Not required for ticker path. |
-| Categories | stay in Python for v1 | Moving them into SQL is a product change, not a cutover requirement. |
+Densify is **additive-only**: new distribution/NAV/history rows, new families, category-map fills, lookback years. No column/type/index redesign on core entities.
+
+**Core entities for ping** (logical → physical):
+
+| Logical (Data \| Eng) | Physical table(s) |
+|---|---|
+| funds | derived from `distribution_estimates.fund_identifier` (no table) |
+| distributions | `distribution_estimates` |
+| fund_navs | `fund_navs` + `fund_nav_history` |
+| seed paths | `seed_family_state`, boot densify, `SEED_*` env |
+
+Engineering **pings Scale** before any migration that changes columns, types, or indexes on those.
+
+### 5.2 Hard freeze (when Eric greenlights cutover)
+
+Pause densify **schema** changes for **~24–48 hours** during migrate + dual-run. Ingest may still **upsert into the frozen shape** (new rows / updated `upsert_key` documents). Then re-copy SQLite → Postgres (or replay ingest) before traffic moves.
+
+### 5.3 No ping needed
+
+- New distribution / NAV / category **rows** via existing upserts
+- Weekly scrape (estimates + NAV) into the current keys
+- Fixture HTML / parser / adapter densify that does not change the schema
+- Soft-beta traffic on live SQLite
+
+### 5.4 Ping Scale required
+
+- New columns or renamed fields
+- Dropping or changing `raw_payload` reliance (Search must keep it off the hot path; dropping the column is a product/audit change)
+- Seed-on-start behavior (`SEED_ON_START` / `SEED_FORCE_FULL` / fingerprint rules)
+- Worker / `DATABASE_URL` / disk / pool config (production Render)
+- New first-class `funds` or `categories` table
+- Changing `make_upsert_key` or unique keys on `fund_navs` / `fund_nav_history`
+
+### 5.5 Frozen vs not frozen (copy validity)
+
+**Frozen until cutover:**
+
+- `upsert_key` algorithm and `uq_distribution_upsert_key`
+- `fund_navs.ticker` unique; `fund_nav_history (ticker, nav_as_of)` unique
+- `seed_family_state.family_slug` PK / fingerprint meaning
+- Table/column renames or PK type change (native UUID = **breaking — do not**)
+- Dropping `raw_payload` or `ix_dist_fund_search`
+- Production `DATABASE_URL`, `WEB_CONCURRENCY`, disk mount, Render secrets
+
+**Not frozen — keep going on SQLite:**
+
+- Fixture / parser / adapter densify (5y lookback is 19.8%)
+- `SEED_ON_START` warm-disk delta (not `SEED_FORCE_FULL`)
+- Website contracts (`/funds`, `/illustrate`, `/performance`)
+- Soft-beta traffic on the live SQLite API
+
+**Re-copy rule:** any densify that lands on SQLite after the last copy must be re-copied (or replayed via `POST /ingest/fetch` against Postgres) before traffic moves.
+
+---
+
+## 6. Draft Postgres schema + migration approach
+
+### 6.1 Proposed table / type changes
+
+Keep the **same seven tables and unique keys** so a row-for-row copy is possible and densify upserts stay stable. See [§3](#3-draft-entity-list-confirm-against-live-ingest).
+
+| Current | Postgres recommendation | Breaking? | Why |
+|---|---|---|---|
+| `String(36)` UUID PKs | Keep `VARCHAR(36)` at cutover. Native `UUID` later only. | **Yes if native UUID now** — do not | Copy + every `id` rewrite. Ping required. |
+| `sqlalchemy.JSON` | **`JSONB`** | **No** (dialect mapping) | Same SQLAlchemy attribute. Search still must not SELECT it (#118). |
+| `Boolean` / `DEFAULT 0` | native `BOOLEAN` default `false` | **No** | SQLite `_ensure_*` SQL is not the PG path. |
+| `Numeric(18,6)` / `Date` / `Text` | unchanged | **No** | Portable. **0 amounts allowed.** |
+| `DateTime(timezone=True)` | `TIMESTAMPTZ` | **No** (dialect mapping) | Copy must preserve UTC. |
+| Existing btree indexes | same names | **Yes if dropped/renamed** | Ticker path needs `ix_dist_ticker` / `ix_dist_fund_identifier` / `ix_dist_fund_search`. Extra `pg_trgm` = ping (index change). |
+| Name `ILIKE '%q%'` | optional `pg_trgm` GIN | Additive; **ping** | Not required for ticker path. |
+| Categories | stay in Python | **Yes if new table** | Product change; ping Scale. |
+| `make_upsert_key` | unchanged | **Yes if changed** | Idempotency contract. Freeze. |
+
+**Breaking — do not do at cutover:** native UUID PKs, drop `raw_payload`, change `upsert_key`, add `funds`/`categories` tables, `SEED_FORCE_FULL` on production boot.
 
 Do **not** change `upsert_key` / `make_upsert_key` during migration. That is the idempotency contract.
 
-### 3.2 Alembic plan
+### 6.2 Alembic plan
 
 1. Add Alembic; `env.py` reads `settings.database_url`.
 2. Autogenerate **revision 001** = current models (seven tables + indexes + uniques). Review by hand (JSONB, timestamptz, boolean defaults).
@@ -176,7 +407,7 @@ alembic/env.py
 alembic/versions/0001_initial_postgres.py
 ```
 
-### 3.3 Engine behavior after Postgres
+### 6.3 Engine behavior after Postgres
 
 | URL | Pool | Notes |
 |---|---|---|
@@ -188,7 +419,7 @@ Install `psycopg[binary]` in the Docker image (or `requirements.txt`), not only 
 
 Render internal URLs are typically `postgres://…`. SQLAlchemy 2 needs an explicit driver: rewrite `postgres://` / `postgresql://` → `postgresql+psycopg://` at config time. Do not store secrets in git.
 
-### 3.4 Data copy strategy
+### 6.4 Data copy strategy
 
 ~32k estimate rows + NAV / gaps / ticker_requests / seed fingerprints is a **small** database. Prefer a **controlled Python copy** over a blind SQL dump.
 
@@ -206,7 +437,7 @@ Verification after copy (do not invent amounts — compare stored values):
 - Checksum of `(upsert_key, amount, as_of, publication_stage)` for a fixture set (AGTHX, FBGRX, DODIX, VFIAX, SGENX, …)
 - Replay `GET /funds?q=AGTHX`, `q=Balanced`, `GET /funds/lookup?ticker=ZZZZZ` (404), `GET /coverage` lookback_5y totals
 
-### 3.5 Dual-run and what stays frozen on SQLite
+### 6.5 Dual-run sketch
 
 ```
 Soft beta (now)          Dual-run (after greenlight)         Official launch
@@ -217,29 +448,15 @@ Densify waves OK         Densify continues on SQLite         Re-copy, then cut o
 Weekly Action isolated   Preview validates Search            Action → same PG (external)
 ```
 
-**Frozen until cutover (so the copy stays valid):**
-
-- `upsert_key` algorithm and unique constraint
-- Table/column renames or PK type change
-- Dropping `raw_payload` / search covering index
-- Production `DATABASE_URL`, `WEB_CONCURRENCY`, disk mount, Render secrets
-
-**Not frozen — keep going on SQLite:**
-
-- Fixture / parser / adapter densify (5y lookback is 19.8%; waves can continue)
-- `SEED_ON_START` warm-disk behavior
-- Website contracts (`/funds`, `/illustrate`, `/performance`)
-- Soft-beta traffic on the live SQLite API
-
-**Re-copy rule:** any densify that lands on SQLite after the last copy must be **re-copied** (or replayed via `POST /ingest/fetch` against Postgres) before traffic moves. Do not cut over on a stale snapshot.
+Freeze / ping rules: [§5](#5-schema-freeze). Do not cut over on a stale snapshot.
 
 ---
 
-## 4. Draft Render plan (do not apply)
+## 7. Draft Render plan (do not apply)
 
 Render MCP `list_workspaces` returned **unauthorized** in this environment. Live settings below are from `render.yaml` + public HTTP + README. Confirm in Dashboard before any future implementation PR.
 
-### 4.1 Recommended first Postgres (lean)
+### 7.1 Recommended first Postgres (lean)
 
 | Choice | Recommendation | Why |
 |---|---|---|
@@ -252,7 +469,7 @@ Render MCP `list_workspaces` returned **unauthorized** in this environment. Live
 
 Do **not** point production at this database until the cutover checklist is executed.
 
-### 4.2 Web service + workers
+### 7.2 Web service + workers
 
 | Setting | Soft beta (keep) | Official launch (proposed) |
 |---|---|---|
@@ -266,7 +483,7 @@ Do **not** point production at this database until the cutover checklist is exec
 
 Starter + 2 workers is the lean launch. If RSS after two uvicorn processes + SQLAlchemy pools is close to 512 MB, bump the **web** plan, not Postgres RAM.
 
-### 4.3 Env vars (implementation PR — not this spike)
+### 7.3 Env vars (implementation PR — not this spike)
 
 ```
 DATABASE_URL=<internal fromDatabase connectionString, rewritten to postgresql+psycopg>
@@ -282,20 +499,20 @@ Drop SQLite-only assumptions when URL is Postgres: no WAL PRAGMAs, no NullPool, 
 
 GitHub Action secret (later): **external** URL with `sslmode=require`, same logical database. Never commit it.
 
-### 4.4 Optional Redis / CDN — not justified for launch
+### 7.4 Optional Redis / CDN — not justified for launch
 
 | Add-on | Launch? | Reason |
 |---|---|---|
 | Render Key Value (Redis/Valkey) | **No** | Search is already 0.13–0.34s after #118. Postgres indexes + optional `pg_trgm` fix the remaining name-scan. Redis ($10 Starter) is a third moving part before official traffic exists. Revisit if multi-instance + hot tickers show cacheable p95. |
 | Edge/CDN cache on the API | **No** | `/funds`, `/illustrate`, `/coverage` are request-specific and must not serve stale estimates. Website already sits on Vercel. |
 
-### 4.5 Example Blueprint
+### 7.5 Example Blueprint
 
 See [`render.postgres-launch.example.yaml`](./render.postgres-launch.example.yaml). **Do not apply it to the live service.** It is a preview/staging sketch for the implementation PR.
 
 ---
 
-## 5. Rough monthly cost (Render list prices — estimates)
+## 8. Rough monthly cost (Render list prices — estimates)
 
 Prices from [render.com/pricing](https://render.com/pricing) as of **2026-09-10**. Prorated per second; bandwidth / build minutes extra. **Not a quote.**
 
@@ -342,7 +559,7 @@ Web Starter $7 + Postgres **Basic-256mb** $6 ≈ **$13 / mo**. Reject if `EXPLAI
 
 ---
 
-## 6. Eng-day breakdown (after Eric greenlights)
+## 9. Eng-day breakdown (after Eric greenlights)
 
 Implementation is a **follow-up PR series**, not this spike. Calendar-time estimates aside: this is **about 6–8 focused eng-days**.
 
@@ -357,11 +574,11 @@ Implementation is a **follow-up PR series**, not this spike. Calendar-time estim
 | 7 | Weekly Action → psycopg3 + external URL; README / Blueprint example → real yaml | 0.5–1 | Still no prod cutover until checklist. |
 | 8 | Cutover rehearsal + rollback drill (disk still mounted, URL flip ready) | 0.5–1 | Execute only after greenlight. |
 
-**Out of scope for those days:** inventing estimates, category-table migration, Redis, multi-region, HA Postgres, changing Website contracts.
+**Out of scope for those days:** inventing estimates, relaxing [§2](#2-locked-data--engineering-coordination-do-not-relax) accuracy rules, category-table migration, Redis, multi-region, HA Postgres, changing Website contracts.
 
 ---
 
-## 7. Dual-run / cutover checklist (execute later — not now)
+## 10. Dual-run / cutover checklist (execute later — not now)
 
 Print and tick only after implementation PRs land and Eric says go.
 
@@ -372,6 +589,7 @@ Print and tick only after implementation PRs land and Eric says go.
 - [ ] `alembic upgrade head` on preview.
 - [ ] Copy a **frozen snapshot** of `/var/data/distributions.db` (service SSH / disk file). Production keeps serving SQLite.
 - [ ] Verify counts + fixture checksums + Search / lookup / coverage / illustrate.
+- [ ] Accuracy sample: AGTHX `awaiting_estimate` vs a live `estimate_announced` ticker; lookback missing years stay Undisclosed (not $0); historical `%` uses dist-day NAV; live `%` uses weekly NAV; announced `amount=0` still stores if present.
 - [ ] Watch preview RSS and PG `active_connections` under an 8-way `/funds` burst.
 - [ ] Leave production `WEB_CONCURRENCY=1` and sqlite URL untouched.
 
@@ -404,11 +622,11 @@ Print and tick only after implementation PRs land and Eric says go.
 
 ---
 
-## 8. Helper stubs in this PR
+## 11. Helper stubs in this PR
 
 | File | Role |
 |---|---|
-| `docs/postgres-scale-spike.md` | This plan. |
+| `docs/postgres-scale-spike.md` | This plan (coordination rules, **draft entity list**, freeze, Render/cost). |
 | `docs/render.postgres-launch.example.yaml` | Proposed Blueprint. **Not wired to the live service.** |
 | `scripts/schema_inventory.py` | Prints SQLAlchemy tables/indexes locally. Does not connect to Render. |
 
@@ -416,10 +634,13 @@ No cutover code, no production `DATABASE_URL` rewrite in `render.yaml`.
 
 ---
 
-## 9. Open items for Eric
+## 12. Open items for Eric
 
-1. Greenlight **Basic-1gb** (~+$19) vs try **Basic-256mb** first on a preview copy.
-2. Stay **Starter + 2 workers** vs budget **Standard** if boot RSS is scary.
-3. Who can copy `/var/data/distributions.db` (SSH) for the snapshot — this agent must not touch live disks.
-4. Whether weekly ingest should write the shared Postgres at cutover (recommended) or stay fixture-only until later.
-5. Confirm workspace is Hobby (assumed from lean ops). Pro workspace ($25) is not required for this plan.
+1. **Data | Engineering:** confirm [§3 draft entity list](#3-draft-entity-list-confirm-against-live-ingest) (natural keys + indexes) against live ingest.
+2. Greenlight **Basic-1gb** (~+$19) vs try **Basic-256mb** first on a preview copy.
+3. Stay **Starter + 2 workers** vs budget **Standard** if boot RSS is scary.
+4. Who can copy `/var/data/distributions.db` (SSH) for the snapshot — this agent must not touch live disks.
+5. Whether weekly ingest should write the shared Postgres at cutover (recommended) or stay fixture-only until later.
+6. Align weekly cron to locked **Sunday 6:00 CT** (today Sun+Mon 14:00 UTC ≈ 9:00 CT) — implementation PR, not this spike.
+7. ICI parser drops announced `$0` (`app/sources/ici.py`) while the locked rule says keep $0 — Data decision; not a scale cutover blocker.
+8. Confirm workspace is Hobby (assumed from lean ops). Pro workspace ($25) is not required for this plan.
