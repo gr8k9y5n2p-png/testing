@@ -48,6 +48,10 @@ describe("compare delta strip", () => {
     assert.equal(announced[0]?.headline, null);
     assert.equal(announced[3]?.headline, "$185");
     assert.equal(announced[3]?.reserved, false);
+
+    const publishedZero = deltaStripFromSingleUpcoming({ announced: true, dollars: 0 });
+    assert.equal(publishedZero[3]?.headline, "$0");
+    assert.equal(publishedZero[3]?.reserved, false);
   });
 
   it("fills reserved cells from a live pair model without dropping the four-slot layout", () => {

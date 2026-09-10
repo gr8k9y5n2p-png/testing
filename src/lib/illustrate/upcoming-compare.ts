@@ -40,7 +40,11 @@ export function sideIsAnnounced(
 
 function nearlyEqualDollars(left: number | null | undefined, right: number | null | undefined) {
   if (left == null || right == null) return false;
-  return Math.abs(Number(left) - Number(right)) < 0.51;
+  const leftN = Number(left);
+  const rightN = Number(right);
+  // Published $0 must not look like a copy of a $0 calendar-year tax cell.
+  if (Math.abs(leftN) < 0.51 && Math.abs(rightN) < 0.51) return false;
+  return Math.abs(leftN - rightN) < 0.51;
 }
 
 function periodTaxForSide(

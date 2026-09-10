@@ -1,4 +1,3 @@
-import { isUpcomingFund } from "../../data/distribution-bucket.ts";
 import type { FundEstimateView } from "../../data/types.ts";
 import { MAX_GROWTH_FUNDS } from "../charts/series-colors.ts";
 import { UI_DEFAULT_TAX_RATES, type TaxRates } from "./types.ts";
@@ -287,15 +286,18 @@ export function upcomingRowForCompareTicker(input: {
   };
 }
 
-/** Unpaid future announcement only — never catalog $0 / stale as_of placeholders. */
+/**
+ * Unpaid future announcement only. Do not use `isUpcomingFund` here — that
+ * gate drops manager-published $0 as a catalog leftover. Advisors want
+ * announced zeros. Identity / paid / final / past-event rows still fail
+ * `publicationBucket`. Undisclosed only when there is no unpaid publish.
+ */
 function catalogIsUnpaidAnnounced(fund?: FundEstimateView | null): boolean {
-  if (!fund || !isUpcomingFund(fund)) {
-    return false;
-  }
+  if (!fund) return false;
   return (
     publicationBucket(
       {
-        distribution_dollars: null,
+        distribution_dollars: fund.estimatedDistributionAmount,
         estimated_tax: null,
         as_of: fund.asOfDate,
         announced_date: fund.publishedAt,

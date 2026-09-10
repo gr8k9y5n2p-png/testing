@@ -276,6 +276,8 @@ describe("compare upcoming rows", () => {
     const source = readFileSync(join(here, "compare-workspace.ts"), "utf8");
     assert.match(source, /catalogUpcoming && fund && Number.isFinite\(fund\.estimatedDistributionAmount\)/);
     assert.match(source, /upcomingPctOfNavFromPerShare/);
+    assert.match(source, /Do not use `isUpcomingFund`/);
+    assert.doesNotMatch(source, /!isUpcomingFund\(fund\)/);
     assert.doesNotMatch(source, /estimatedDistributionPctNav/);
     assert.doesNotMatch(source, /ticker === ["'][A-Z0-9]+["']/);
     const stage = readFileSync(join(here, "publication-stage.ts"), "utf8");
@@ -308,6 +310,31 @@ describe("compare upcoming rows", () => {
       assert.equal(row.estimatedTax, null, ticker);
       assert.equal(row.recordDate, null, ticker);
     }
+  });
+
+  it("keeps unpaid manager-announced $0 after hydrate treats zeros as not Upcoming", () => {
+    const row = upcomingRowForCompareTicker({
+      ticker: "ZEROX",
+      fund: view("ZEROX", {
+        estimatedDistributionAmount: 0,
+        estimatedOrdinaryIncome: 0,
+        estimatedCapitalGains: 0,
+        estimatedDistributionPctNav: 0,
+        hasEstimate: false,
+        bucket: "paid",
+      }),
+      upcoming: { dollars: null, announced: false, asOf: null },
+      holdingDollars: 10_000,
+      index: 0,
+    });
+    assert.equal(row.available, true);
+    assert.equal(row.distributionPerShare, 0);
+    assert.equal(row.distributionDollars, 0);
+    assert.equal(row.pctOfNav, 0);
+    assert.equal(row.recordDate, "2026-12-16");
+    assert.equal(row.exDate, "2026-12-17");
+    assert.equal(row.ordinaryPerShare, 0);
+    assert.equal(row.capitalGainsPerShare, 0);
   });
 
   it("computes Dist $ and % of NAV from unpaid $/share ÷ weekly NAV", () => {

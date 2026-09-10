@@ -181,6 +181,8 @@ function hasDistributionSignal(row: PortfolioDistributionRow): boolean {
     num(row.distribution_dollars) != null ||
     num(row.estimated_tax) != null ||
     num(row.percent_of_nav) != null ||
+    num(row.per_share) != null ||
+    num(row.amount) != null ||
     Boolean(
       announcedDateOf(row) ||
         row.record_date ||

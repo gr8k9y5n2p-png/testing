@@ -6,7 +6,9 @@ import type {
   PortfolioHoldingOut,
 } from "./portfolio-compare-types.ts";
 import {
+  upcomingDistributionAmount,
   upcomingDistributionLine,
+  upcomingDistributionPerShareAmount,
   upcomingEstimatedTaxLine,
   upcomingPctOfNavAmount,
 } from "./portfolio-compare-copy.ts";
@@ -882,6 +884,47 @@ describe("PortfolioCompare distribution tables", () => {
     assert.equal(
       upcomingPctOfNavAmount({ available: false, pctOfNav: null }),
       "Undisclosed",
+    );
+  });
+
+  it("keeps unpaid manager-announced $0 amount and Dist $", () => {
+    const book = allocation([
+      holding({
+        ticker: "ZEROX",
+        upcoming: {
+          publication_stage: "preliminary_estimate",
+          amount: 0,
+          amount_unit: "per_share",
+          distribution_dollars: 0,
+          estimated_tax: 0,
+          announced_date: "2026-09-01",
+          record_date: "2026-12-16",
+          ex_date: "2026-12-17",
+        },
+      }),
+    ]);
+    const rows = upcomingHoldingsForSide(book, "current", TODAY);
+    assert.equal(rows[0]?.available, true);
+    assert.equal(rows[0]?.distributionDollars, 0);
+    assert.equal(rows[0]?.distributionPerShare, 0);
+    assert.equal(rows[0]?.estimatedTax, 0);
+    assert.equal(rows[0]?.announcedDate, "2026-09-01");
+    assert.equal(
+      upcomingDistributionAmount({
+        available: true,
+        distributionDollars: rows[0]?.distributionDollars ?? null,
+      }),
+      "$0",
+    );
+    assert.equal(
+      upcomingDistributionPerShareAmount({
+        available: true,
+        distributionPerShare: rows[0]?.distributionPerShare,
+        distributionDollars: rows[0]?.distributionDollars ?? null,
+        holdingDollars: rows[0]?.holdingDollars ?? null,
+        navPerShare: rows[0]?.navPerShare ?? null,
+      }),
+      "$0.0000 / sh",
     );
   });
 
