@@ -4,6 +4,7 @@ import { CoverageProvider } from "@/components/coverage/CoverageProvider";
 import { ListsWorkspace } from "@/components/lists/ListsWorkspace";
 import { COPY, LISTS_DETAIL, LISTS_HEADING } from "@/lib/copy";
 import { loadCoverageSnapshot } from "@/lib/data-api/coverage";
+import { loadListRowsFromDataApi } from "@/lib/data-api/lists-page";
 import { parseListsQueryTickers } from "@/lib/lists/parse-tickers";
 
 export const dynamic = "force-dynamic";
@@ -23,12 +24,21 @@ export default async function ListsPage({
 }) {
   const params = await searchParams;
   const initialTickers = parseListsQueryTickers(params);
-  const coverage = await loadCoverageSnapshot();
+  const [coverage, initialRows] = await Promise.all([
+    loadCoverageSnapshot(),
+    initialTickers.length
+      ? loadListRowsFromDataApi({ tickers: initialTickers }).catch(() => [])
+      : Promise.resolve([]),
+  ]);
 
   return (
     <main className="mx-auto w-full max-w-7xl px-4 pb-16 pt-6 sm:px-6 lg:px-8">
       <CoverageProvider families={coverage.families}>
-        <ListsWorkspace funds={[]} initialTickers={initialTickers} />
+        <ListsWorkspace
+          funds={[]}
+          initialTickers={initialTickers}
+          initialRows={initialRows}
+        />
       </CoverageProvider>
       <Disclaimer className="mt-8 text-xs leading-relaxed text-muted" />
     </main>

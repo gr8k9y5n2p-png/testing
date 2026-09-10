@@ -280,6 +280,8 @@ describe("Lists chrome lock", () => {
       "utf8",
     );
     const page = readFileSync(join(here, "../../app/lists/page.tsx"), "utf8");
+    assert.match(page, /loadListRowsFromDataApi/);
+    assert.match(page, /initialRows/);
     const nav = readFileSync(join(here, "../../components/AppNav.tsx"), "utf8");
     assert.doesNotMatch(workspace, /MOCK/);
     assert.doesNotMatch(page, /MOCK/);
