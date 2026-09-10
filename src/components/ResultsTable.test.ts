@@ -29,6 +29,18 @@ describe("ResultsTable EstimateRow props", () => {
   });
 });
 
+describe("ResultsTable Search Paid history unmount", () => {
+  it("keeps Upcoming / Announced and does not mount Paid history tables", () => {
+    assert.match(source, /title="Upcoming \/ Announced"/);
+    assert.match(source, /UPCOMING_UNAVAILABLE_HEADLINE/);
+    assert.match(source, /UPCOMING_UNAVAILABLE_DETAIL/);
+    assert.doesNotMatch(source, /title="Paid history"/);
+    assert.doesNotMatch(source, /paidHistoryViews/);
+    assert.doesNotMatch(source, /paidEventsForFund/);
+    assert.doesNotMatch(source, /PAID_HISTORY_EMPTY/);
+  });
+});
+
 describe("ResultsTable Search pager placement", () => {
   it("puts the hybrid pager inside each FundSection card, not as a strip between modules", () => {
     const start = source.indexOf("return (");
@@ -36,13 +48,13 @@ describe("ResultsTable Search pager placement", () => {
     const upcoming = layout.indexOf('title="Upcoming / Announced"');
     const paid = layout.indexOf('title="Paid history"');
     assert.ok(upcoming >= 0, "Upcoming / Announced section");
-    assert.ok(paid >= 0, "Paid history section");
+    assert.ok(paid < 0, "Paid history stays off Search Sample Estimates");
     assert.doesNotMatch(layout, /<PaginationBar/, "no inter-module pager strip");
     assert.match(layout, /page=\{page\}/);
     assert.equal(
       (layout.match(/page=\{page\}/g) ?? []).length,
-      2,
-      "Upcoming and Paid history both receive the same hybrid page controls",
+      1,
+      "Upcoming receives the hybrid page controls",
     );
 
     const fundSection = source.slice(

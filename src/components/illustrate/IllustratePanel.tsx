@@ -178,8 +178,8 @@ function IllustrationWorkspace({ fund }: { fund: FundEstimateView }) {
             setLoading(false);
             return;
           }
-          // Live miss: soft empty (Upcoming undisclosed, Paid from /distributions).
-          // Never invent seed math or show a MOCK banner.
+          // Live miss: soft empty Upcoming (undisclosed). Never invent seed
+          // math, paid history, or a MOCK banner.
           setResult(emptyIllustrateResponse(rates));
           setError(null);
           setLoading(false);

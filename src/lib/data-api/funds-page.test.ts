@@ -38,7 +38,8 @@ describe("Search / Sample Estimates fund page", () => {
       "utf8",
     );
     assert.match(table, /hideUpcomingAmounts/);
-    assert.match(table, /paidEventsForFund/);
+    assert.doesNotMatch(table, /title="Paid history"/);
+    assert.doesNotMatch(table, /paidEventsForFund/);
     assert.doesNotMatch(table, /hasEstimate === false \? "—"/);
     assert.match(badge, /hideUpcomingAmounts/);
   });
@@ -54,7 +55,8 @@ describe("Search / Sample Estimates fund page", () => {
     );
     assert.match(results, /upcomingIllustrationTotals/);
     assert.match(results, /splitIllustrationComponents/);
-    assert.match(results, /paidEventsForFund/);
+    assert.doesNotMatch(results, /paidEventsForFund/);
+    assert.doesNotMatch(results, /Paid history/);
     assert.match(results, /pctOfNavForFund|historicalPctOfNav/);
     assert.doesNotMatch(results, /totals\.distribution_dollars/);
     assert.doesNotMatch(results, /paidComponents/);

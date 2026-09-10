@@ -265,12 +265,14 @@ describe("universe Upcoming / Fund Manager Estimated Distributions", () => {
     const bucket = readFileSync(join(here, "distribution-bucket.ts"), "utf8");
     const catalog = readFileSync(join(here, "funds-list.ts"), "utf8");
     assert.match(table, /splitFundsByBucket/);
+    assert.doesNotMatch(table, /title="Paid history"/);
     assert.match(highlights, /splitFundsByBucket/);
     assert.match(highlights, /pickHighlightsCalendarYear/);
     assert.match(highlights, /highlightsCalendarYear/);
     assert.match(highlights, /withPeerContext\(scoped\)/);
     assert.match(badges, /hideUpcomingAmounts/);
-    assert.match(results, /paidEventsForFund/);
+    assert.doesNotMatch(results, /paidEventsForFund/);
+    assert.doesNotMatch(results, /Paid history/);
     assert.doesNotMatch(results, /paidComponents/);
     assert.match(bucket, /hasDisclosedUpcomingAmount/);
     assert.match(bucket, /isStaleAnnouncedOnly/);

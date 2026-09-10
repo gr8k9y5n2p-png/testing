@@ -51,7 +51,7 @@ export function AftertaxApp({
   facets: Facets;
   coverageFamilies: FundFamilyCoverage[];
   checkout?: CheckoutReturn;
-  /** Portfolio review drill-in. Preselects this ticker's historical + upcoming tables. */
+  /** Portfolio review drill-in. Preselects this ticker's Upcoming + dollar illustration. */
   ticker?: string | null;
 }) {
   return (
@@ -215,12 +215,13 @@ function AftertaxAppInner({
           Estimates behind the search
         </h2>
         <p className="mt-2 max-w-2xl text-sm text-muted">
-          Search a fund to open that ticker&apos;s historical distribution table
-          and Upcoming / announced estimates. Search and Sample Estimates read
-          GET /funds for identity and GET /distributions for paid / final
-          history. Upcoming stays unpaid announced only — undisclosed is never
-          invented from paid history. Missing or uncovered values stay empty,
-          N/A, or Undisclosed.
+          Search a fund to open Upcoming / announced estimates and a dollar
+          illustration. Search and Sample Estimates read GET /funds for identity
+          and GET /distributions for unpaid Upcoming. Upcoming stays unpaid
+          announced only — undisclosed is never invented from paid history.
+          Historical paid distributions live on Compare / Portfolio Growth
+          &amp; Tax. Missing or uncovered values stay empty, N/A, or
+          Undisclosed.
         </p>
         <div className="mt-5">
           <DemoBanner />
