@@ -7,9 +7,18 @@ import {
   reservedDeltaStrip,
   scaleNormalizedHoldingDollars,
   scaleUpcomingToHolding,
+  showCompareDeltaStrip,
 } from "./compare-delta-strip.ts";
 
 describe("compare delta strip", () => {
+  it("shows the strip for 0–2 filled tickers and hides it for 3+", () => {
+    assert.equal(showCompareDeltaStrip(0), true);
+    assert.equal(showCompareDeltaStrip(1), true);
+    assert.equal(showCompareDeltaStrip(2), true);
+    assert.equal(showCompareDeltaStrip(3), false);
+    assert.equal(showCompareDeltaStrip(6), false);
+  });
+
   it("reserves all four metric cells without inventing $0", () => {
     const items = reservedDeltaStrip();
     assert.deepEqual(

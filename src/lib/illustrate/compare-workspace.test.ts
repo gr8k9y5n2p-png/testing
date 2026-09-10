@@ -430,4 +430,14 @@ describe("Compare workspace Upcoming + NAV soft path", () => {
     assert.match(fields, /label="State"/);
     assert.match(fields, /Combine state with federal \(effective rate = federal \+ state\)/);
   });
+
+  it("unmounts the delta strip when more than two tickers are filled", () => {
+    const workspace = readFileSync(
+      join(here, "../../components/illustrate/CompareWorkspace.tsx"),
+      "utf8",
+    );
+    assert.match(workspace, /showCompareDeltaStrip/);
+    assert.match(workspace, /showDeltaStrip \? \(/);
+    assert.match(workspace, /<CompareDeltaStrip items=\{stripItems\} \/>/);
+  });
 });
