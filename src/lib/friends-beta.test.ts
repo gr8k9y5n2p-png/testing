@@ -83,6 +83,7 @@ describe("friends-beta public paths and next", () => {
     assert.equal(isFriendsBetaPublicPath("/"), false);
     assert.equal(isFriendsBetaPublicPath("/portfolio"), false);
     assert.equal(isFriendsBetaPublicPath("/compare"), false);
+    assert.equal(isFriendsBetaPublicPath("/lists"), false);
   });
 
   it("rejects open redirects", () => {
@@ -108,8 +109,8 @@ describe("friends-beta gate decision", () => {
     );
   });
 
-  it("challenges Search / Compare / Portfolios without a cookie", () => {
-    for (const pathname of ["/", "/portfolio", "/compare"]) {
+  it("challenges Search / Compare / Portfolios / Lists without a cookie", () => {
+    for (const pathname of ["/", "/portfolio", "/compare", "/lists"]) {
       assert.deepEqual(
         friendsBetaGateDecision({ password: "secret", pathname }),
         { action: "redirect", next: pathname },

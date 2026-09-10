@@ -13,6 +13,7 @@ import {
   compareTickersPath,
   parseCompareQueryTickers,
 } from "@/lib/illustrate/compare-workspace";
+import { listsTickersPath, parseListsQueryTickers } from "@/lib/lists/parse-tickers";
 
 export const dynamic = "force-dynamic";
 
@@ -46,6 +47,9 @@ export default async function Home({
   }
   if (firstParam(params.tab) === "compare") {
     redirect(compareTickersPath(parseCompareQueryTickers(params)));
+  }
+  if (firstParam(params.tab) === "lists") {
+    redirect(listsTickersPath(parseListsQueryTickers(params)));
   }
   const repository = await getDistributionRepository();
   const ticker = firstSearchParam(params.ticker);

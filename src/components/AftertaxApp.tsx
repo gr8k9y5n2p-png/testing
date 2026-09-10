@@ -24,6 +24,7 @@ import {
   compareTickersPath,
   parseCompareQueryTickers,
 } from "@/lib/illustrate/compare-workspace";
+import { listsTickersPath, parseListsQueryTickers } from "@/lib/lists/parse-tickers";
 
 function scrollToId(id: string) {
   requestAnimationFrame(() => {
@@ -119,6 +120,18 @@ function AftertaxAppInner({
             ticker: search.get("ticker") ?? undefined,
             left: search.get("left") ?? undefined,
             right: search.get("right") ?? undefined,
+          }),
+        ),
+      );
+      return;
+    }
+    if (id === "lists") {
+      const search = new URLSearchParams(window.location.search);
+      router.replace(
+        listsTickersPath(
+          parseListsQueryTickers({
+            tickers: search.getAll("tickers"),
+            ticker: search.get("ticker") ?? undefined,
           }),
         ),
       );

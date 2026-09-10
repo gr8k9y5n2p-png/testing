@@ -15,6 +15,11 @@ const TABS = [
     label: "Portfolios",
     match: (path: string) => path === "/portfolio",
   },
+  {
+    href: "/lists",
+    label: "Lists",
+    match: (path: string) => path === "/lists",
+  },
 ] as const;
 
 export function AppNav() {
