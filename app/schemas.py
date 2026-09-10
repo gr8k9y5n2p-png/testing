@@ -260,6 +260,16 @@ class FundFamilyOut(BaseModel):
     last_error: str | None = None
 
 
+class LookbackDigestOut(BaseModel):
+    years: list[int]
+    funds_with_finals_by_year: dict[str, int]
+    book_funds: int
+    funds_with_5y: int
+    pct_book_with_5y: float
+    fcntx_years: list[int] = Field(default_factory=list)
+    notes: list[str] = Field(default_factory=list)
+
+
 class CoverageOut(BaseModel):
     top_n: int
     implemented_count: int
@@ -267,6 +277,7 @@ class CoverageOut(BaseModel):
     implemented_pct: float
     logged_gap_count: int
     families: list[FundFamilyOut]
+    lookback_5y: LookbackDigestOut | None = None
 
 
 class CoverageGapIn(BaseModel):

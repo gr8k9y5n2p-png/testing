@@ -96,6 +96,7 @@ def test_full_book_ishares_fidelity_trp() -> None:
 
     fidelity_funds, fidelity_tickers = _funds_and_tickers(FidelitySource())
     assert "FBGRX" in fidelity_tickers
+    assert "FCNTX" in fidelity_tickers
     assert len(fidelity_tickers) >= 300
 
     trp_funds, trp_tickers = _funds_and_tickers(TRowePriceSource())

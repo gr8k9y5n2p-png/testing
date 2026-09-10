@@ -16,6 +16,7 @@ from app.sources.readiness import (
     history_years,
     performance_tickers,
 )
+from app.services.lookback import lookback_digest
 from app.sources.registry import get_source, list_sources, resolve_slug
 
 
@@ -147,4 +148,5 @@ def coverage_snapshot(session: Session) -> dict:
         "implemented_pct": round(100.0 * implemented / top_n, 1) if top_n else 0.0,
         "logged_gap_count": count_coverage_gaps(session),
         "families": families,
+        "lookback_5y": lookback_digest(session).as_dict(),
     }

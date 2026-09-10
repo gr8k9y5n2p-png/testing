@@ -243,6 +243,63 @@ def test_fidelity_2024_prior_year_fbgrx() -> None:
     assert len({r.ticker for r in paid if r.ticker}) >= 300
 
 
+def test_fidelity_2021_prior_year_fcntx() -> None:
+    paid = parse_distribution_html(
+        (FID / "prior_year_distributions_2021.html").read_text(encoding="utf-8"),
+        source_url="https://institutional.fidelity.com/app/tabbed/products/FIIS_SP10_DPL6.html?navId=324",
+        fund_family="Fidelity",
+    )
+    fcntx = [r for r in paid if r.ticker == "FCNTX"]
+    lt = sorted(
+        (r for r in fcntx if r.estimate_type == EstimateType.long_term_capital_gains),
+        key=lambda r: r.ex_date or r.as_of,
+    )
+    assert [r.amount for r in lt] == [Decimal("0.40000"), Decimal("1.62700")]
+    assert str(lt[0].ex_date) == "2021-02-12"
+    assert str(lt[1].ex_date) == "2021-12-10"
+    assert {str(r.as_of) for r in lt} == {"2021-12-31"}
+    assert all(r.publication_stage == PublicationStage.final for r in lt)
+    st_dec = next(
+        r
+        for r in fcntx
+        if r.estimate_type == EstimateType.short_term_capital_gains and str(r.ex_date) == "2021-12-10"
+    )
+    assert st_dec.amount == Decimal("0.00000")
+    fbgrx_lt = next(
+        r
+        for r in paid
+        if r.ticker == "FBGRX"
+        and r.estimate_type == EstimateType.long_term_capital_gains
+        and str(r.ex_date) == "2021-12-17"
+    )
+    assert fbgrx_lt.amount == Decimal("2.51300")
+    assert len({r.ticker for r in paid if r.ticker}) >= 200
+    # Must not be the 2024 DPL6 replay.
+    assert not any(r.ex_date and r.ex_date.year == 2024 for r in paid)
+
+
+def test_fidelity_2022_2023_fcntx_highlights_no_invented_stlt() -> None:
+    records = parse_distribution_html(
+        (FID / "financial_highlights_2022_2023.html").read_text(encoding="utf-8"),
+        source_url="https://institutional.fidelity.com/app/funds-and-products/22/fidelity-contrafund-fcntx.html",
+        fund_family="Fidelity",
+    )
+    fcntx = [r for r in records if r.ticker == "FCNTX"]
+    by_year = {(str(r.as_of), r.estimate_type): r for r in fcntx}
+    assert by_year[("2022-12-31", EstimateType.ordinary_income)].amount == Decimal("0.08")
+    assert by_year[("2022-12-31", EstimateType.total_capital_gains)].amount == Decimal("1.36")
+    assert by_year[("2023-12-31", EstimateType.ordinary_income)].amount == Decimal("0.08")
+    assert by_year[("2023-12-31", EstimateType.total_capital_gains)].amount == Decimal("0.61")
+    assert all(r.publication_stage == PublicationStage.final for r in fcntx)
+    # Highlights do not publish ST/LT — do not invent zeros.
+    assert not any(
+        r.estimate_type
+        in {EstimateType.short_term_capital_gains, EstimateType.long_term_capital_gains}
+        for r in fcntx
+    )
+    assert not any(r.amount_unit.value == "percent" for r in fcntx)
+
+
 def test_invesco_2024_estimate_fixture() -> None:
     records = parse_distribution_html(
         (INV / "2024_estimated_capital_gains.html").read_text(encoding="utf-8"),
@@ -268,7 +325,24 @@ def test_search_multi_year_top_families(client: TestClient) -> None:
     fbgrx = client.get("/distributions", params={"fund_identifier": "FBGRX", "page_size": 50})
     assert fbgrx.status_code == 200
     years = {item["as_of"][:4] for item in fbgrx.json()["items"] if item.get("as_of")}
-    assert {"2024", "2025", "2026"} <= years
+    assert {"2021", "2024", "2025", "2026"} <= years
+
+    fcntx = client.get("/distributions", params={"fund_identifier": "FCNTX", "page_size": 100})
+    assert fcntx.status_code == 200
+    fcntx_years = {item["as_of"][:4] for item in fcntx.json()["items"] if item.get("as_of")}
+    assert {"2021", "2022", "2023", "2024", "2025"} <= fcntx_years
+    finals = [
+        item
+        for item in fcntx.json()["items"]
+        if item.get("publication_stage") in {"final", "paid"} and item.get("amount_unit") == "per_share"
+    ]
+    assert {item["as_of"][:4] for item in finals if item.get("as_of")} >= {
+        "2021",
+        "2022",
+        "2023",
+        "2024",
+        "2025",
+    }
     stages = {item["publication_stage"] for item in fbgrx.json()["items"]}
     assert "final" in stages
     assert "preliminary_estimate" in stages

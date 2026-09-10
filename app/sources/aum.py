@@ -47,6 +47,7 @@ LARGE_AUM_TICKERS: frozenset[str] = frozenset(
         "CGHM",
         "TRBCX",
         "FBGRX",
+        "FCNTX",
         # Other rank 1–10 flagships already in fixtures
         "AGTHX",
         "SEEGX",

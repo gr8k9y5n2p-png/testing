@@ -152,6 +152,29 @@ def test_coverage_endpoint_lists_top_110(client: TestClient) -> None:
     assert body["families"][110]["slug"] == "first_trust"
     assert body["families"][111]["slug"] == "dws"
     assert body["families"][112]["slug"] == "catalyst"
+    lookback = body["lookback_5y"]
+    assert lookback["years"] == [2021, 2022, 2023, 2024, 2025]
+    assert lookback["book_funds"] == 0
+    assert lookback["funds_with_5y"] == 0
+    assert lookback["pct_book_with_5y"] == 0.0
+    assert lookback["fcntx_years"] == []
+    assert "never invented" in " ".join(lookback["notes"]).lower()
+
+
+def test_coverage_lookback_fcntx_five_years(client: TestClient) -> None:
+    fetched = client.post("/ingest/fetch", json={"fund_family": "fidelity", "mode": "fixture"})
+    assert fetched.status_code == 200, fetched.text
+    body = client.get("/coverage").json()
+    lookback = body["lookback_5y"]
+    assert lookback["fcntx_years"] == [2021, 2022, 2023, 2024, 2025]
+    by_year = lookback["funds_with_finals_by_year"]
+    assert by_year["2021"] >= 200
+    assert by_year["2022"] >= 1
+    assert by_year["2023"] >= 1
+    assert by_year["2024"] >= 300
+    assert by_year["2025"] >= 300
+    assert lookback["funds_with_5y"] >= 1
+    assert "FCNTX has matched YE finals for 2021–2025." in lookback["notes"]
 
 
 def test_coverage_gap_implemented_family(client: TestClient) -> None:

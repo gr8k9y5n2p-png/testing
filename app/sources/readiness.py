@@ -130,7 +130,7 @@ ESTIMATE_STATUS: dict[str, str] = {
 HISTORY_YEARS: dict[str, tuple[int, ...]] = {
     "blackrock": (2021, 2022, 2023, 2024, 2025, 2026),
     "vanguard": (2021, 2022, 2023, 2024, 2025),
-    "fidelity": (2024, 2025, 2026),
+    "fidelity": (2021, 2022, 2023, 2024, 2025, 2026),
     "state_street": (2021, 2022, 2023, 2024, 2025),
     "jpmorgan": (2024, 2025),
     "goldman_sachs": (2025,),
@@ -247,7 +247,7 @@ HISTORY_YEARS: dict[str, tuple[int, ...]] = {
 PERFORMANCE_TICKERS: dict[str, tuple[str, ...]] = {
     "blackrock": ("MDDVX", "AGG"),
     "vanguard": ("VFIAX", "VTIAX", "VIGAX", "VBIAX", "VXUS"),
-    "fidelity": ("FBGRX",),
+    "fidelity": ("FBGRX", "FCNTX"),
     "state_street": ("SPY", "ALLW"),
     "american_funds": ("AGTHX", "AMCPX", "ABALX"),
     "t_rowe_price": ("TRBCX",),
