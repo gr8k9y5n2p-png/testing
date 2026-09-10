@@ -25,6 +25,11 @@ def test_curated_flagships() -> None:
         "Technology"
     )
     assert resolve_category(ticker="SXPAX", fund_name="DWS S&P 500 Index Fund") == "Large Blend"
+    assert resolve_category(ticker="FAGAX", fund_name="FA Growth Opp - A") == "Large Growth"
+    assert resolve_category(ticker="FTRIX", fund_name="FA Mega Cap Stock - I") == "Large Blend"
+    assert resolve_category(ticker="FNDX") == "Large Value"
+    assert resolve_category(ticker="FNDE") == "Diversified Emerging Markets"
+    assert resolve_category(ticker="FNDA") == "Small Blend"
 
 
 def test_name_rules_high_confidence() -> None:

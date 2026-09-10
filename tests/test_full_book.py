@@ -101,7 +101,8 @@ def test_full_book_ishares_fidelity_trp() -> None:
     fidelity_funds, fidelity_tickers = _funds_and_tickers(FidelitySource())
     assert "FBGRX" in fidelity_tickers
     assert "FCNTX" in fidelity_tickers
-    assert len(fidelity_tickers) >= 300
+    assert {"FAGAX", "FAGCX", "FTRIX", "FCIGX"} <= fidelity_tickers
+    assert len(fidelity_tickers) >= 1100
 
     trp_funds, trp_tickers = _funds_and_tickers(TRowePriceSource())
     assert "TRBCX" in trp_tickers
@@ -256,8 +257,11 @@ def test_full_book_artisan_ici_and_first_eagle() -> None:
         "SCHV",
         "SCHZ",
         "FNDF",
+        "FNDX",
+        "FNDE",
+        "FNDA",
     } <= schwab_tickers
-    assert len(schwab_tickers) >= 70
+    assert len(schwab_tickers) >= 80
     assert len(schwab_funds) >= 70
 
     ft_funds, ft_tickers = _funds_and_tickers(FranklinTempletonSource())

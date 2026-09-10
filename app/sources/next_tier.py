@@ -363,8 +363,11 @@ class SchwabSource(HtmlTableSource):
         "(SWSSX 2021 ST $0.3715 / LT $2.3981; SWLGX 2021 LT $0.9628). "
         "Schwab ETF product pages add December YE income for SCHD / SCHX / SCHB / "
         "SCHF / SCHG plus additional ≥$1B ETFs SCHA / SCHM / SCHE / SCHV / SCHP / "
-        "SCHZ / SCHH / SCHC / FNDF (SCHD 2025 $0.2782; SCHA 2025 $0.1301; SCHM 2025 "
-        "$0.1334; official $0.0000 ST/LT stored; 3-for-1 SCHD split 10/10/2024 "
+        "SCHZ / SCHH / SCHC / FNDF / FNDX / FNDE / FNDA "
+        "(SCHD 2025 $0.2782; SCHA 2025 $0.1301; SCHM 2025 "
+        "$0.1334; FNDX 2025 $0.1222; FNDE 2025 $1.2986; FNDA 2024 $0.1643 — "
+        "2025 December is not on the FNDA product page, unmatched not invented; "
+        "official $0.0000 ST/LT stored; 3-for-1 SCHD / FNDX split 10/10/2024 "
         "printed as published). Family MF PDF does not include these ETFs. "
         "No public filled ICI file. Skip SPA family grids."
     )
