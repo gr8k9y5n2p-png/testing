@@ -30,7 +30,7 @@ describe("tickerSlotBorderClass", () => {
   it("uses LIVE / above green once a ticker is locked in", () => {
     assert.equal(
       tickerSlotBorderClass({ committed: true, midEdit: false }),
-      "border-above",
+      "ticker-slot-locked",
     );
   });
 });
@@ -43,9 +43,11 @@ describe("ticker slot locked-border wiring", () => {
     const workspace = read("CompareWorkspace.tsx");
     const column = read("portfolio-compare/AllocationColumn.tsx");
 
-    assert.match(helper, /border-above/);
+    const css = read("../../app/globals.css");
+    assert.match(helper, /ticker-slot-locked/);
     assert.match(helper, /border-line/);
     assert.doesNotMatch(helper, /#[0-9a-fA-F]{3,8}/);
+    assert.match(css, /\.ticker-slot-locked\s*\{\s*border-color:\s*var\(--above\);/);
 
     assert.match(picker, /tickerSlotBorderClass/);
     assert.match(picker, /committed: hasSelection/);

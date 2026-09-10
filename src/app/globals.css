@@ -66,6 +66,11 @@
   border-color: var(--line);
 }
 
+/* Unlayered so locked ticker chips beat the * border-color reset. LIVE / above green. */
+.ticker-slot-locked {
+  border-color: var(--above);
+}
+
 html {
   background: var(--paper);
 }
