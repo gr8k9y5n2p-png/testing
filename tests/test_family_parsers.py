@@ -665,6 +665,51 @@ def test_next_tier_fixtures() -> None:
         if r.ticker == "TIIRX" and r.estimate_type == EstimateType.long_term_capital_gains
     )
     assert tiirx.amount == Decimal("1.97")
+    nsbax_st = next(
+        r
+        for r in nuveen
+        if r.ticker == "NSBAX" and r.estimate_type == EstimateType.short_term_capital_gains
+    )
+    nsbax_lt = next(
+        r
+        for r in nuveen
+        if r.ticker == "NSBAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert nsbax_st.amount == Decimal("0.04")
+    assert nsbax_lt.amount == Decimal("4.89")
+    tinrx_st = next(
+        r
+        for r in nuveen
+        if r.ticker == "TINRX" and r.estimate_type == EstimateType.short_term_capital_gains
+    )
+    assert tinrx_st.amount == Decimal("0.21")
+    nuveen_tickers = {r.ticker for r in nuveen if r.ticker}
+    assert len(nuveen_tickers) >= 500
+    assert not any("Managed Account" in (r.fund_name or "") for r in nuveen)
+
+    ft_summ = parse_distribution_html(
+        (ROOT / "franklin_templeton" / "2025_cef_distribution_summary.html").read_text(encoding="utf-8"),
+        source_url="https://www.franklintempleton.com/forms-literature/download/DIST-SUMM",
+        fund_family="Franklin Templeton",
+    )
+    ft_ye = next(
+        r for r in ft_summ if r.ticker == "FT" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert ft_ye.amount == Decimal("0.341")
+    ft_lt = next(
+        r
+        for r in ft_summ
+        if r.ticker == "FT" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert ft_lt.amount == Decimal("0.145")
+    emo_roc = next(
+        r
+        for r in ft_summ
+        if r.ticker == "EMO" and r.estimate_type == EstimateType.return_of_capital
+    )
+    assert emo_roc.amount == Decimal("3.504")
+    assert {r.ticker for r in ft_summ if r.ticker} >= {"FT", "FTF", "TEI", "EMO", "WDI", "PIM"}
+    assert "RMT" not in {r.ticker for r in ft_summ}
 
     nt = parse_distribution_html(
         (ROOT / "northern_trust" / "2025_capital_gain_distributions.html").read_text(encoding="utf-8"),

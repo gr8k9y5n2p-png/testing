@@ -20,6 +20,7 @@ from app.sources.next_tier import (
     FranklinTempletonSource,
     MorganStanleySource,
     NorthernTrustSource,
+    NuveenSource,
     SchwabSource,
 )
 from app.sources.ark import ArkSource
@@ -260,8 +261,14 @@ def test_full_book_artisan_ici_and_first_eagle() -> None:
     assert len(schwab_funds) >= 70
 
     ft_funds, ft_tickers = _funds_and_tickers(FranklinTempletonSource())
-    assert {"FT", "FTF", "TEI", "SMDLX"} <= ft_tickers
-    assert len(ft_tickers) >= 4
+    assert {"FT", "FTF", "TEI", "SMDLX", "EMO", "WDI", "PIM"} <= ft_tickers
+    assert "RMT" not in ft_tickers
+    assert len(ft_tickers) >= 25
+
+    nuveen_funds, nuveen_tickers = _funds_and_tickers(NuveenSource())
+    assert {"TIIRX", "NSBAX", "TINRX", "FFEIX", "TIGRX"} <= nuveen_tickers
+    assert len(nuveen_tickers) >= 500
+    assert not any(re.search(r"managed account", name, re.I) for name in nuveen_funds)
 
     artisan_funds, artisan_tickers = _funds_and_tickers(ArtisanSource())
     assert {"ARTKX", "ARTIX"} <= artisan_tickers
