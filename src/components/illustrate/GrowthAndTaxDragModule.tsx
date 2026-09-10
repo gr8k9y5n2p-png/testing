@@ -15,7 +15,10 @@ import {
 } from "@/lib/charts/shared-axis";
 import { formatUsd } from "@/lib/format";
 import type { ComparePeriodIn } from "@/lib/illustrate/compare-types";
-import { buildGrowthTaxByTypeModel } from "@/lib/illustrate/growth-tax-by-type";
+import {
+  buildGrowthTaxByTypeModel,
+  type GrowthTaxValueMode,
+} from "@/lib/illustrate/growth-tax-by-type";
 import {
   annualizedFromRows,
   calendarYearsFromRows,
@@ -191,7 +194,7 @@ export function GrowthAndTaxDragModule({
     [principal, rows, years],
   );
 
-  const valueMode = perShare ? "per_share" : "tax";
+  const valueMode: GrowthTaxValueMode = perShare ? "per_share" : "tax";
   const taxModel = useMemo(() => {
     try {
       return buildGrowthTaxByTypeModel(
