@@ -91,6 +91,31 @@ describe("unpaid-only Upcoming gate", () => {
     assert.equal(toUpcomingSummary(null), null);
   });
 
+  it("keeps unpaid manager-announced $0 even when a period tax cell is also $0", () => {
+    const publishedZero: CompareUpcomingDistribution = {
+      left_dollars: 0,
+      right_dollars: 0,
+      delta_dollars: 0,
+      left_publication_stage: "preliminary_estimate",
+      right_publication_stage: "updated_estimate",
+    };
+    const periods = [period(2025, 0, 0)];
+    const gated = gateCompareUpcoming(publishedZero, periods);
+    assert.equal(gated?.left_dollars, 0);
+    assert.equal(gated?.right_dollars, 0);
+    const summary = toUpcomingSummary(publishedZero, "left", periods);
+    assert.equal(summary?.announced, true);
+    assert.equal(summary?.dollars, 0);
+    assert.match(summary?.label ?? "", /Upcoming/);
+    assert.match(summary?.label ?? "", /\$0/);
+  });
+
+  it("does not treat dollars without a stage as announced, including $0", () => {
+    assert.equal(sideIsAnnounced(0, "preliminary_estimate"), true);
+    assert.equal(sideIsAnnounced(0, null), false);
+    assert.equal(sideIsAnnounced(0, "paid"), false);
+  });
+
   it("keeps Growth & tax drag off compare-summary Upcoming badges", () => {
     const growthModule = readFileSync(
       join(here, "../../components/illustrate/GrowthAndTaxDragModule.tsx"),

@@ -96,6 +96,14 @@ function normalizeDistributionRow(raw: unknown): PortfolioDistributionRow | null
     percent_of_nav: numOrNull(
       row.percent_of_nav ?? row.pct_of_nav ?? row.distribution_pct_nav,
     ),
+    per_share: numOrNull(row.per_share),
+    amount: numOrNull(row.amount),
+    amount_unit:
+      row.amount_unit == null && row.amountUnit == null
+        ? null
+        : String(row.amount_unit ?? row.amountUnit),
+    nav_per_share: numOrNull(row.nav_per_share ?? row.navPerShare),
+    nav_as_of: isoOrNull(row.nav_as_of ?? row.navAsOf),
     as_of: isoOrNull(row.as_of),
     announced_date: isoOrNull(row.announced_date ?? row.announcedDate),
     record_date: isoOrNull(row.record_date ?? row.recordDate),

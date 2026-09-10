@@ -216,6 +216,20 @@ describe("PortfolioCompare upcoming module copy", () => {
       }),
       "$3,000–$3,600",
     );
+    assert.equal(
+      upcomingDistributionAmount({ available: true, distributionDollars: 0 }),
+      "$0",
+    );
+    assert.equal(
+      upcomingDistributionPerShareAmount({
+        available: true,
+        distributionPerShare: 0,
+        distributionDollars: 0,
+        holdingDollars: 10_000,
+        navPerShare: 41.22,
+      }),
+      "$0.0000 / sh",
+    );
   });
 });
 

@@ -6,6 +6,22 @@ import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
+describe("announced $0 upcoming normalize", () => {
+  it("keeps manager-published $0 amount/per_share through normalize", () => {
+    const client = readFileSync(join(here, "portfolio-compare-client.ts"), "utf8");
+    const fn = client.split("function normalizeDistributionRow")[1]?.split(
+      "function normalizeUpcoming",
+    )[0];
+    assert.ok(fn);
+    assert.match(fn, /per_share: numOrNull\(row\.per_share\)/);
+    assert.match(fn, /amount: numOrNull\(row\.amount\)/);
+    assert.match(fn, /amount_unit:/);
+    assert.match(fn, /numOrNull\(row\.amount\)/);
+    assert.doesNotMatch(fn, /amount\s*>\s*0/);
+    assert.doesNotMatch(fn, /if \(!.*amount/);
+  });
+});
+
 describe("paid_history contract wiring", () => {
   it("normalizes holdings[].paid_history on portfolio compare", () => {
     const client = readFileSync(join(here, "portfolio-compare-client.ts"), "utf8");

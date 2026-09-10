@@ -6,7 +6,9 @@ import type {
   PortfolioHoldingOut,
 } from "./portfolio-compare-types.ts";
 import {
+  upcomingDistributionAmount,
   upcomingDistributionLine,
+  upcomingDistributionPerShareAmount,
   upcomingEstimatedTaxLine,
   upcomingPctOfNavAmount,
 } from "./portfolio-compare-copy.ts";
@@ -17,6 +19,7 @@ import {
   paidHistoryRowsForSide,
   pctOfNavFromDist,
   publicationBucket,
+  upcomingCutoverDateOf,
   totalUpcomingTax,
   upcomingFromHolding,
   upcomingHoldingsForSide,
@@ -192,19 +195,37 @@ describe("publicationBucket", () => {
     );
   });
 
-  it("uses record, else ex, else payable to decide past prelims are paid history", () => {
+  it("moves unpaid announced to Paid History as soon as ex-date passes, not payable", () => {
+    const pastExFuturePayable = row({
+      publication_stage: "updated_estimate",
+      as_of: "2026-08-12",
+      record_date: "2026-09-01",
+      ex_date: "2026-09-02",
+      payable_date: "2026-12-18",
+    });
+    assert.equal(upcomingCutoverDateOf(pastExFuturePayable), "2026-09-02");
+    assert.equal(publicationBucket(pastExFuturePayable, TODAY), "paid_history");
     assert.equal(
       publicationBucket(
         row({
-          publication_stage: "updated_estimate",
+          publication_stage: "preliminary_estimate",
           as_of: "2026-08-12",
           record_date: "2026-09-01",
-          ex_date: "2026-09-02",
+          ex_date: "2026-09-15",
           payable_date: "2026-12-18",
         }),
         TODAY,
       ),
-      "paid_history",
+      "upcoming",
+      "past record + future ex stays Upcoming until ex-date",
+    );
+    assert.equal(
+      upcomingCutoverDateOf({
+        ex_date: null,
+        record_date: "2026-09-01",
+        payable_date: "2026-12-18",
+      }),
+      "2026-09-01",
     );
   });
 });
@@ -882,6 +903,81 @@ describe("PortfolioCompare distribution tables", () => {
     assert.equal(
       upcomingPctOfNavAmount({ available: false, pctOfNav: null }),
       "Undisclosed",
+    );
+  });
+
+  it("keeps unpaid announced $0 until ex-date, then moves it to Paid History", () => {
+    const announcedZero = {
+      publication_stage: "preliminary_estimate" as const,
+      amount: 0,
+      amount_unit: "per_share",
+      distribution_dollars: 0,
+      estimated_tax: 0,
+      announced_date: "2026-08-12",
+      record_date: "2026-09-01",
+      payable_date: "2026-12-18",
+    };
+    const stillUpcoming = allocation([
+      holding({
+        ticker: "ZEROX",
+        upcoming: { ...announcedZero, ex_date: "2026-09-15" },
+      }),
+    ]);
+    const upcoming = upcomingHoldingsForSide(stillUpcoming, "current", TODAY);
+    assert.equal(upcoming[0]?.available, true);
+    assert.equal(upcoming[0]?.distributionPerShare, 0);
+    assert.equal(upcoming[0]?.distributionDollars, 0);
+
+    const afterEx = allocation([
+      holding({
+        ticker: "ZEROX",
+        upcoming: { ...announcedZero, ex_date: "2026-09-02" },
+      }),
+    ]);
+    const past = upcomingHoldingsForSide(afterEx, "current", TODAY);
+    assert.equal(past[0]?.available, false);
+    assert.equal(upcomingRowsForSide(afterEx, "current", TODAY).length, 0);
+    assert.equal(paidHistoryRowsForSide(afterEx, "current", TODAY).length, 0);
+  });
+
+  it("keeps unpaid manager-announced $0 amount and Dist $", () => {
+    const book = allocation([
+      holding({
+        ticker: "ZEROX",
+        upcoming: {
+          publication_stage: "preliminary_estimate",
+          amount: 0,
+          amount_unit: "per_share",
+          distribution_dollars: 0,
+          estimated_tax: 0,
+          announced_date: "2026-09-01",
+          record_date: "2026-12-16",
+          ex_date: "2026-12-17",
+        },
+      }),
+    ]);
+    const rows = upcomingHoldingsForSide(book, "current", TODAY);
+    assert.equal(rows[0]?.available, true);
+    assert.equal(rows[0]?.distributionDollars, 0);
+    assert.equal(rows[0]?.distributionPerShare, 0);
+    assert.equal(rows[0]?.estimatedTax, 0);
+    assert.equal(rows[0]?.announcedDate, "2026-09-01");
+    assert.equal(
+      upcomingDistributionAmount({
+        available: true,
+        distributionDollars: rows[0]?.distributionDollars ?? null,
+      }),
+      "$0",
+    );
+    assert.equal(
+      upcomingDistributionPerShareAmount({
+        available: true,
+        distributionPerShare: rows[0]?.distributionPerShare,
+        distributionDollars: rows[0]?.distributionDollars ?? null,
+        holdingDollars: rows[0]?.holdingDollars ?? null,
+        navPerShare: rows[0]?.navPerShare ?? null,
+      }),
+      "$0.0000 / sh",
     );
   });
 
