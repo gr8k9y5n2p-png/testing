@@ -10,6 +10,11 @@ import { searchFunds } from "./queries.ts";
 export const FUND_PAGE_SIZE = 50;
 export const FUND_PAGE_SIZE_MAX = 200;
 
+/** Homepage Paid History window. Users toggle 1–50; Data API max is 200. */
+export const PAID_HISTORY_PAGE_SIZE = 50;
+export const PAID_HISTORY_PAGE_SIZE_MAX = 50;
+export const PAID_HISTORY_PAGE_SIZES = [1, 10, 25, 50] as const;
+
 export const FUND_SORT_KEYS = [
   "fundName",
   "family",
@@ -28,6 +33,8 @@ export type FundPageQuery = SearchFilters & {
   navOnly?: boolean;
   /** Search Upcoming universe — unpaid announced only. */
   upcoming?: boolean;
+  /** Search Paid History year book — finals/paid only from GET /distributions. */
+  paidHistory?: boolean;
 };
 
 export type FundPageResult = {
@@ -43,6 +50,14 @@ export function clampPageSize(value: number | string | null | undefined): number
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) return FUND_PAGE_SIZE;
   return Math.min(FUND_PAGE_SIZE_MAX, Math.max(1, Math.trunc(parsed)));
+}
+
+export function clampPaidHistoryPageSize(
+  value: number | string | null | undefined,
+): number {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return PAID_HISTORY_PAGE_SIZE;
+  return Math.min(PAID_HISTORY_PAGE_SIZE_MAX, Math.max(1, Math.trunc(parsed)));
 }
 
 export function clampOffset(value: number | string | null | undefined): number {
@@ -69,9 +84,14 @@ export function parseFundPageQuery(
   const direction = searchParams.get("direction");
   const family =
     searchParams.get("fund_family") ?? searchParams.get("family") ?? undefined;
-  const limit = clampPageSize(
-    searchParams.get("limit") ?? searchParams.get("page_size") ?? undefined,
-  );
+  const paidHistory = searchParams.get("paid_history") === "1";
+  const limit = paidHistory
+    ? clampPaidHistoryPageSize(
+        searchParams.get("limit") ?? searchParams.get("page_size") ?? undefined,
+      )
+    : clampPageSize(
+        searchParams.get("limit") ?? searchParams.get("page_size") ?? undefined,
+      );
   const rawOffset = searchParams.get("offset");
   const rawPage = searchParams.get("page");
   const offset =
@@ -91,6 +111,7 @@ export function parseFundPageQuery(
     offset,
     navOnly: searchParams.get("nav_only") === "1",
     upcoming: searchParams.get("upcoming") === "1",
+    paidHistory,
   };
 }
 
@@ -103,7 +124,9 @@ export function paginateViews(
   funds: FundEstimateView[],
   query: FundPageQuery = {},
 ): FundPageResult {
-  const limit = clampPageSize(query.limit);
+  const limit = query.paidHistory
+    ? clampPaidHistoryPageSize(query.limit)
+    : clampPageSize(query.limit);
   const offset = clampOffset(query.offset);
   const filtered = searchFunds(funds, query);
   const sorted = sortFunds(
@@ -120,7 +143,9 @@ export function paginateViews(
 }
 
 export function fundPageSearchParams(query: FundPageQuery): URLSearchParams {
-  const limit = clampPageSize(query.limit);
+  const limit = query.paidHistory
+    ? clampPaidHistoryPageSize(query.limit)
+    : clampPageSize(query.limit);
   const offset = clampOffset(query.offset);
   const params = new URLSearchParams();
   params.set("limit", String(limit));
@@ -138,5 +163,6 @@ export function fundPageSearchParams(query: FundPageQuery): URLSearchParams {
   if (query.direction) params.set("direction", query.direction);
   if (query.navOnly) params.set("nav_only", "1");
   if (query.upcoming) params.set("upcoming", "1");
+  if (query.paidHistory) params.set("paid_history", "1");
   return params;
 }

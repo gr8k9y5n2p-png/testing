@@ -28,6 +28,8 @@ export type DataDistribution = {
   nav_on_distribution_day?: string | number | null;
   nav_on_distribution_day_as_of?: string | null;
   nav_on_distribution_day_source?: string | null;
+  category?: string | null;
+  fund_category?: string | null;
 };
 
 function num(value: string | number | null | undefined): number | null {
@@ -219,7 +221,7 @@ function toFundEstimate(
     ticker: (latest.ticker || latest.fund_identifier || key).toUpperCase(),
     cusip: latest.cusip ?? "",
     family: latest.fund_family,
-    category: "—",
+    category: (latest.category ?? latest.fund_category ?? "—").trim() || "—",
     shareClass: latest.share_class ?? "",
     nav: 0,
     navOnDistributionDay: snapshot.navOnDistributionDay,
