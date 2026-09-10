@@ -149,6 +149,8 @@ export function Dashboard({
     year: paidYear,
     limit: paidLimit,
     offset: paidOffset,
+    sort: sortKey,
+    direction: sortDirection,
   });
 
   const requestKey = pageRequestKey(
@@ -309,6 +311,7 @@ export function Dashboard({
   }
 
   function toggleSort(key: SortKey) {
+    // Paid History reorders the current year-window rows (Data has no order param).
     if (key === sortKey) {
       setSortDirection((current) => (current === "asc" ? "desc" : "asc"));
       setOffset(0);

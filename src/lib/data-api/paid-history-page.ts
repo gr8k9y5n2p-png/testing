@@ -6,6 +6,8 @@
  * Category is Data `category` (same strings as `/funds/categories`).
  * A 400 on `category` retries once without it (#127 may not be on Render).
  * Never hydrates the book in the browser. Never pulls Upcoming prelims.
+ * Column sorts (Dist $/Share desc/asc) reorder the current year-window
+ * page only — Data `/distributions` has no order/sort param.
  */
 
 import { normalizePublicationStage } from "@/data/distribution-bucket";
@@ -29,6 +31,7 @@ import {
 export {
   filterPaidHistoryFunds,
   pagePaidHistoryFunds,
+  paidHistorySort,
 } from "@/data/paid-history-book";
 export {
   isTrustworthyFilteredRowTotal,

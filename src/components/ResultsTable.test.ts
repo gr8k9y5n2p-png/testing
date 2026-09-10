@@ -38,6 +38,11 @@ describe("ResultsTable Search Paid history", () => {
     assert.match(source, /paidHistoryViews/);
     assert.match(source, /PAID_HISTORY_EMPTY/);
     assert.match(source, /Dist \$\/sh/);
+    assert.match(source, /column="estimatedDistributionAmount"/);
+    assert.doesNotMatch(
+      source,
+      /label="Dist \$\/sh"[\s\S]*column="estimatedDistributionPctNav"/,
+    );
     assert.match(source, /% NAV/);
     assert.match(source, /Aftertax % of NAV/);
     assert.match(source, /estimatePct\(fund\)/);
@@ -66,6 +71,22 @@ describe("ResultsTable Search Paid history", () => {
     assert.match(fundSection, /All categories/);
     assert.match(fundSection, /Paid History family/);
     assert.match(fundSection, /Paid History category/);
+  });
+});
+
+describe("ResultsTable Paid History column sort", () => {
+  it("applies Dist $/Share sort to displayed Paid History rows after paidHistoryViews", () => {
+    const results = source.slice(
+      source.indexOf("export function ResultsTable"),
+      source.indexOf("function FundSection"),
+    );
+    assert.match(results, /paidHistoryViews\(paidFunds \?\? funds, year\)/);
+    assert.match(results, /sortFunds\(/);
+    assert.match(results, /sortKey/);
+    assert.match(results, /sortDirection/);
+    assert.match(results, /currently displayed Paid History rows/);
+    assert.doesNotMatch(results, /serverSorted \? paid : sortFunds\(paid/);
+    assert.match(source, /column="estimatedDistributionAmount"/);
   });
 });
 

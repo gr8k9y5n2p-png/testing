@@ -3,6 +3,9 @@
  * `ex_date_from`/`ex_date_to` — never a multi-page Data walk.
  * Pager `total` is Data's filtered `total` when trustworthy, otherwise
  * the unique-fund count on this window.
+ *
+ * Dist $/Share and other column sorts reorder this window's fund rows.
+ * `GET /distributions` has no order/sort param — do not walk to globally rank.
  */
 
 import { aggregateDistributions, type DataDistribution } from "./aggregate-distributions.ts";
@@ -12,7 +15,8 @@ import {
   type FundPageQuery,
   type FundPageResult,
 } from "./pagination.ts";
-import { filterPaidHistoryFunds } from "./paid-history-book.ts";
+import { filterPaidHistoryFunds, paidHistorySort } from "./paid-history-book.ts";
+import { sortFunds } from "../lib/format.ts";
 import { withPeerContext } from "./queries.ts";
 import { collectTaxYearsFromFunds } from "./tax-years.ts";
 
@@ -230,8 +234,9 @@ export async function loadPaidHistoryPage(
   }
 
   const hasMore = offset + limit < total;
+  const { sort, direction } = paidHistorySort(query);
   return {
-    items: funds.slice(0, limit),
+    items: sortFunds(funds, sort, direction).slice(0, limit),
     total,
     limit,
     offset,

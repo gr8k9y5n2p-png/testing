@@ -89,6 +89,7 @@ export type SortKey =
   | "fundName"
   | "family"
   | "category"
+  | "estimatedDistributionAmount"
   | "estimatedDistributionPctNav"
   | "publishedAt"
   | "asOfDate"
@@ -147,6 +148,12 @@ function compareOptionalPct(
   return left - right;
 }
 
+/** Dist $/share. Non-finite / missing amounts sort after real dollars. */
+function distPerShareForSort(fund: FundEstimateView): number | null {
+  const amount = Number(fund.estimatedDistributionAmount);
+  return Number.isFinite(amount) ? amount : null;
+}
+
 function compareFunds(
   a: FundEstimateView,
   b: FundEstimateView,
@@ -164,6 +171,8 @@ function compareFunds(
       return compareOptionalIsoDates(a.recordDate, b.recordDate);
     case "exDate":
       return compareOptionalIsoDates(a.exDate, b.exDate);
+    case "estimatedDistributionAmount":
+      return compareOptionalPct(distPerShareForSort(a), distPerShareForSort(b));
     case "estimatedDistributionPctNav":
       return compareOptionalPct(
         aftertaxPctOfNavForSort(a),
