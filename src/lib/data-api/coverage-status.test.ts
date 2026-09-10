@@ -7,7 +7,7 @@ import {
 } from "./coverage-status.ts";
 
 describe("coverage_status", () => {
-  it("prefers a published Data coverage_status", () => {
+  it("prefers a published Data coverage_status (Data #114; #112 Ready unblocked)", () => {
     assert.equal(
       resolveCoverageStatus({
         coverageStatus: "awaiting_estimate",

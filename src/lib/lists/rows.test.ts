@@ -252,6 +252,64 @@ describe("Lists upcoming rows", () => {
     assert.equal(list.estimateTypes.qualified_dividend, null);
   });
 
+  it("prefers published coverage_status on /funds over has_estimate", () => {
+    const awaiting = mapFundsApiItem({
+      ticker: "AGTHX",
+      fund_name: "The Growth Fund of America",
+      fund_family: "American Funds",
+      has_estimate: true,
+      coverage_status: "awaiting_estimate",
+      nav_per_share: 88.42,
+    });
+    const awaitingRow = listRowFromFund({
+      ticker: "AGTHX",
+      fund: awaiting,
+      found: true,
+      today: TODAY,
+    });
+    assert.equal(awaitingRow.status, "awaiting_estimate");
+    assert.equal(awaitingRow.distPerShare, null);
+
+    const announced = mapFundsApiItem({
+      ticker: "FBGRX",
+      fund_name: "Blue Chip Growth",
+      fund_family: "Fidelity",
+      has_estimate: false,
+      coverage_status: "estimate_announced",
+      nav_per_share: 312.26,
+    });
+    const announcedRow = listRowFromFund({
+      ticker: "FBGRX",
+      fund: announced,
+      found: true,
+      today: TODAY,
+    });
+    assert.equal(announcedRow.status, "upcoming");
+    assert.equal(announcedRow.distPerShare, null, "do not invent estimate $");
+  });
+
+  it("unpaid snapshot still fills columns when coverage_status is stale awaiting", () => {
+    const identity = mapFundsApiItem({
+      ticker: "FBGRX",
+      fund_name: "Blue Chip Growth",
+      fund_family: "Fidelity",
+      has_estimate: false,
+      coverage_status: "awaiting_estimate",
+      nav_per_share: 312.26,
+    });
+    const list = listRowFromFund({
+      ticker: "FBGRX",
+      fund: identity,
+      distributionRows: FBGRX_ROWS,
+      found: true,
+      today: TODAY,
+    });
+    assert.equal(list.status, "upcoming");
+    assert.ok(
+      list.distPerShare != null && Math.abs(list.distPerShare - 21.021) < 1e-6,
+    );
+  });
+
   it("hydrates FBGRX columns from unpaid rows when catalog identity is missing", () => {
     const list = listRowFromFund({
       ticker: "FBGRX",

@@ -1,7 +1,9 @@
 /**
- * Data `coverage_status` (`awaiting_estimate` | `estimate_announced`) when
- * present. Until that field is live, best-effort from /funds hit +
- * has_estimate / unpaid Upcoming. A miss is not_in_universe — never invent.
+ * Data PR #114 `coverage_status` (`awaiting_estimate` | `estimate_announced`)
+ * when present on /funds. A miss is 404 `not_in_universe` + POST
+ * /request/ticker. Until Eric deploys Data #113+#114, best-effort from
+ * /funds hit + has_estimate / unpaid Upcoming. Website #112 Ready is not
+ * blocked on that field going live — swap is prefer-when-present.
  */
 
 export const COVERAGE_STATUSES = [

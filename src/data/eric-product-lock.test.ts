@@ -111,7 +111,7 @@ describe("Eric product lock — paid-only funds stay searchable", () => {
         hasEstimate: true,
       }),
       "awaiting_estimate",
-      "published coverage_status wins when present",
+      "published coverage_status wins when present — #112 Ready is not blocked on Data #114",
     );
     const picker = readFileSync(
       join(here, "../components/illustrate/FundPicker.tsx"),

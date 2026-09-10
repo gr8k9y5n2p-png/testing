@@ -11,6 +11,7 @@ import {
 } from "../../data/distribution-bucket.ts";
 import { hideUpcomingAmounts } from "../../data/hydrate-funds.ts";
 import type { FundEstimateView } from "../../data/types.ts";
+import { resolveCoverageStatus } from "../data-api/coverage-status.ts";
 import { GROWTH_TAX_TYPE_LABELS } from "../illustrate/growth-tax-by-type.ts";
 import {
   parsePositiveNav,
@@ -375,6 +376,23 @@ export function listRowFromFund(input: {
   }
 
   const upcoming = hasUpcomingEstimate(fund, distributionRows, input.today);
+  // Data #114 `coverage_status` when present. Until that deploy, best-effort
+  // from /funds hit + unpaid snapshot / has_estimate. Do not invent $.
+  const coverage = resolveCoverageStatus({
+    coverageStatus: fund?.coverageStatus,
+    foundInFunds: found,
+    // Catalog has_estimate is not an unpaid snapshot. Until Data #114,
+    // in-book + no unpaid → awaiting_estimate. Prefer the field when present.
+    hasEstimate: false,
+    hasUpcoming: upcoming,
+  });
+  const status: ListRowStatus = upcoming
+    ? "upcoming"
+    : coverage === "not_in_universe"
+      ? "not_found"
+      : coverage === "estimate_announced"
+        ? "upcoming"
+        : "awaiting_estimate";
   const estimateTypes = upcoming
     ? mergeEstimateTypes(
         upcomingEstimateTypeAmounts(distributionRows, input.today),
@@ -417,7 +435,7 @@ export function listRowFromFund(input: {
     fundName,
     family,
     found: true,
-    status: upcoming ? "upcoming" : "awaiting_estimate",
+    status,
     nav,
     navAsOf: fund?.navAsOf ?? null,
     distPerShare,

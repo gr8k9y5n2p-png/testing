@@ -120,8 +120,9 @@ export interface FundEstimate {
    */
   hasEstimate?: boolean;
   /**
-   * Data `coverage_status` when present (`awaiting_estimate` |
-   * `estimate_announced`). Soft-null until Data #114 is live.
+   * Data #114 `coverage_status` when present (`awaiting_estimate` |
+   * `estimate_announced`). Soft-null until deployed — #112 Ready does not
+   * wait on that field.
    */
   coverageStatus?: string | null;
 }
