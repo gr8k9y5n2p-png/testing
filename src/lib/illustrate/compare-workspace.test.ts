@@ -565,13 +565,24 @@ describe("Compare workspace Upcoming + NAV soft path", () => {
     assert.match(fields, /Combine state with federal \(effective rate = federal \+ state\)/);
   });
 
-  it("unmounts the delta strip when more than two tickers are filled", () => {
+  it("does not mount Compare pair-Δ / Delta Strip chrome", () => {
     const workspace = readFileSync(
       join(here, "../../components/illustrate/CompareWorkspace.tsx"),
       "utf8",
     );
-    assert.match(workspace, /showCompareDeltaStrip/);
-    assert.match(workspace, /showDeltaStrip \? \(/);
-    assert.match(workspace, /<CompareDeltaStrip items=\{stripItems\} \/>/);
+    const barrel = readFileSync(
+      join(here, "../../components/illustrate/index.ts"),
+      "utf8",
+    );
+    assert.doesNotMatch(workspace, /CompareDeltaStrip/);
+    assert.doesNotMatch(workspace, /showCompareDeltaStrip/);
+    assert.doesNotMatch(workspace, /reservedDeltaStrip/);
+    assert.doesNotMatch(workspace, /deltaStripFrom/);
+    assert.doesNotMatch(workspace, /pair Δ/);
+    assert.doesNotMatch(workspace, /never invent \$0/);
+    assert.doesNotMatch(workspace, /DELTA STRIP/i);
+    assert.match(workspace, /GrowthAndTaxDragModule/);
+    assert.match(workspace, /UpcomingTable/);
+    assert.doesNotMatch(barrel, /CompareDeltaStrip/);
   });
 });
