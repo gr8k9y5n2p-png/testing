@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from app.categories import category_for_row
 from app.config import settings
 from app.models import AmountUnit, DistributionEstimate
-from app.services.nav import get_nav_map, lookup_nav
+from app.services.nav import get_nav_map, listed_ticker
 
 REVIEW_CATEGORY_OUTLIER = "category_outlier"
 
@@ -44,8 +44,13 @@ def _median(values: list[Decimal]) -> Decimal:
     return (ordered[mid - 1] + ordered[mid]) / Decimal("2")
 
 
-def _nav_for_row(session: Session, row: DistributionEstimate) -> Decimal | None:
-    weekly = lookup_nav(session, ticker=row.ticker, fund_identifier=row.fund_identifier)
+def _nav_from_map(
+    row: DistributionEstimate, nav_map: dict
+) -> Decimal | None:
+    key = listed_ticker(row.ticker, row.fund_identifier)
+    if not key:
+        return None
+    weekly = nav_map.get(key)
     if weekly is not None and weekly.nav_per_share is not None:
         return Decimal(str(weekly.nav_per_share))
     return None
@@ -96,11 +101,19 @@ def flag_category_outliers(session: Session) -> int:
     ``CATEGORY_OUTLIER_MIN_PEERS`` (default 3). Uncategorized funds are never
     used as peers and are never flagged.
     """
-    rows = list(session.scalars(select(DistributionEstimate)).all())
+    rows = list(
+        session.scalars(
+            select(DistributionEstimate).where(
+                DistributionEstimate.amount_unit.in_(
+                    (AmountUnit.per_share.value, AmountUnit.percent_of_nav.value)
+                )
+            )
+        ).all()
+    )
     if not rows:
         return 0
 
-    get_nav_map(session, [row.ticker for row in rows])
+    nav_map = get_nav_map(session, [row.ticker for row in rows])
 
     groups: dict[tuple[str, int, str, str], list[tuple[DistributionEstimate, Decimal]]] = defaultdict(
         list
@@ -110,7 +123,7 @@ def flag_category_outliers(session: Session) -> int:
         year = _calendar_year(row)
         if not category or year is None:
             continue
-        comparable = _comparable(row, _nav_for_row(session, row))
+        comparable = _comparable(row, _nav_from_map(row, nav_map))
         if comparable is None:
             continue
         metric, value = comparable
