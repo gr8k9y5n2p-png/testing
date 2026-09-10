@@ -25,6 +25,7 @@ describe("Search / Sample Estimates fund page", () => {
     assert.match(route, /status:\s*503/);
     assert.match(route, /error: "upstream"/);
     assert.match(route, /Cache-Control": "no-store"/);
+    assert.match(route, /dynamic = "force-dynamic"/);
     assert.doesNotMatch(
       route,
       /if \(isRemoteDataApi\(\)\) \{\s*return Response\.json\(\{\s*source: \{ kind: "live", label: "Data API \/funds unavailable" \}/,

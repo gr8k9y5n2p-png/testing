@@ -23,6 +23,17 @@ describe("GET /api/funds client parse", () => {
     );
   });
 
+  it("keeps a live AGTHX hit even if a stale unavailable label is present", () => {
+    const agthx = { ticker: "AGTHX", hasEstimate: false, fundName: "The Growth Fund of America" };
+    const parsed = parseFundsApiResponse(true, {
+      source: { kind: "live", label: "Data API /funds unavailable" },
+      items: [agthx],
+      total: 1,
+    });
+    assert.equal(parsed.unavailable, false);
+    assert.equal((parsed.items[0] as { ticker: string }).ticker, "AGTHX");
+  });
+
   it("keeps a live AGTHX hit even when has_estimate is false", () => {
     const agthx = { ticker: "AGTHX", hasEstimate: false, fundName: "The Growth Fund of America" };
     const parsed = parseFundsApiResponse(true, {

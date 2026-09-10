@@ -49,6 +49,36 @@ describe("Search a fund FBGRX match", () => {
     assert.equal(matches.some((fund) => fund.ticker === "FBGRX"), true);
   });
 
+  it("keeps Production-shaped paid-only AGTHX even when the Upcoming book has FBGRX only", () => {
+    const upcomingOnly = mapFundsApiItem({
+      ticker: "FBGRX",
+      fund_name: "Blue Chip Growth",
+      fund_family: "Fidelity",
+      has_estimate: true,
+    });
+    const remote = mapFundsApiItem({
+      ticker: "AGTHX",
+      fund_name: "The Growth Fund of America",
+      fund_family: "American Funds",
+      has_estimate: false,
+      nav_per_share: "88.419998",
+      coverage_status: "awaiting_estimate",
+    });
+    remote.bucket = "paid";
+    remote.publicationStage = "final";
+    remote.hasEstimate = false;
+    const matches = fundPickerMatches([upcomingOnly], [remote], "AGTHX");
+    assert.equal(matches.length, 1);
+    assert.equal(matches[0]?.ticker, "AGTHX");
+    assert.equal(matches[0]?.hasEstimate, false);
+    assert.equal(matches[0]?.bucket, "paid");
+    assert.equal(
+      fundPickerMatches([upcomingOnly], [], "AGTHX").length,
+      0,
+      "Upcoming-only SSR book must not be the only Search source",
+    );
+  });
+
   it("finds AGTHX from GET /api/funds when has_estimate is false", () => {
     const remote = mapFundsApiItem({
       ticker: "AGTHX",
@@ -75,6 +105,7 @@ describe("Search a fund FBGRX match", () => {
     assert.match(picker, /fundPickerMatches/);
     assert.match(picker, /fetchFundsSearch/);
     assert.match(client, /\/api\/funds/);
+    assert.match(client, /nav_only/);
     assert.match(picker, /if \(!q\)/);
     assert.doesNotMatch(picker, /reportSearchMiss \|\| !q/);
     assert.doesNotMatch(

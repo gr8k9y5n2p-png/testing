@@ -30,15 +30,17 @@ export function parseFundsApiResponse<T = unknown>(
   ok: boolean,
   body: unknown,
 ): FundsApiClientResult<T> {
-  const unavailable = isFundsApiUnavailable(ok, body);
-  if (unavailable) return { items: [], unavailable: true };
   const record = body && typeof body === "object" ? (body as { items?: unknown; data?: unknown }) : null;
   const items = Array.isArray(record?.items)
     ? record.items
     : Array.isArray(record?.data)
       ? record.data
       : [];
-  return { items: items as T[], unavailable: false };
+  // A live hit must never be dropped because a stale/soft-empty
+  // "unavailable" label arrived with the same payload.
+  if (items.length) return { items: items as T[], unavailable: false };
+  if (isFundsApiUnavailable(ok, body)) return { items: [], unavailable: true };
+  return { items: [], unavailable: false };
 }
 
 export async function fetchFundsLookup<T = unknown>(
@@ -74,6 +76,9 @@ export async function fetchFundsSearch<T = unknown>(
   params.set("q", q);
   params.set("limit", String(limit));
   params.set("offset", "0");
+  // Identity only — paid-history hydrate is why AGTHX Search timed out
+  // after a 502 while FBGRX still matched the Upcoming SSR catalog.
+  params.set("nav_only", "1");
   try {
     const response = await fetch(`/api/funds?${params.toString()}`, {
       cache: "no-store",

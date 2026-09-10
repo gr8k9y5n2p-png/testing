@@ -5,6 +5,10 @@ import { DATA_SOURCE } from "@/data/types";
 import { isRemoteDataApi } from "@/lib/data-api/config";
 import { loadFundPageFromDataApi } from "@/lib/data-api/funds-page";
 
+export const dynamic = "force-dynamic";
+
+const NO_STORE = { "Cache-Control": "no-store" };
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const query = parseFundPageQuery(searchParams);
@@ -13,16 +17,19 @@ export async function GET(request: Request) {
 
   const live = await loadFundPageFromDataApi(query);
   if (live) {
-    return Response.json({
-      source: { kind: "live", label: "Data API /funds" },
-      items: live.items,
-      total: live.total,
-      limit: live.limit,
-      offset: live.offset,
-      count: live.items.length,
-      data: live.items,
-      years: live.years ?? collectTaxYearsFromFunds(live.items),
-    });
+    return Response.json(
+      {
+        source: { kind: "live", label: "Data API /funds" },
+        items: live.items,
+        total: live.total,
+        limit: live.limit,
+        offset: live.offset,
+        count: live.items.length,
+        data: live.items,
+        years: live.years ?? collectTaxYearsFromFunds(live.items),
+      },
+      { headers: NO_STORE },
+    );
   }
 
   // Remote Data is set but /funds 5xx'd or failed — never a 200 empty catalog.
@@ -48,14 +55,17 @@ export async function GET(request: Request) {
     ? await repository.searchPage(query)
     : { items: [], total: 0, limit, offset };
 
-  return Response.json({
-    source: DATA_SOURCE,
-    items: page.items,
-    total: page.total,
-    limit: page.limit,
-    offset: page.offset,
-    count: page.items.length,
-    data: page.items,
-    years: mergeTaxYears(page.years, collectTaxYearsFromFunds(page.items)),
-  });
+  return Response.json(
+    {
+      source: DATA_SOURCE,
+      items: page.items,
+      total: page.total,
+      limit: page.limit,
+      offset: page.offset,
+      count: page.items.length,
+      data: page.items,
+      years: mergeTaxYears(page.years, collectTaxYearsFromFunds(page.items)),
+    },
+    { headers: NO_STORE },
+  );
 }
