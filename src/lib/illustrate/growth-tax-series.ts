@@ -13,6 +13,7 @@ import {
 } from "../performance/coverage.ts";
 import type { PerformanceResponse } from "../performance/types.ts";
 import type { CompareResponse } from "./compare-types.ts";
+import { PORTFOLIO_COMPARE_YEARS } from "./portfolio-compare-years.ts";
 import {
   alignTaxDragYears,
   toNegativeTaxDrag,
@@ -47,14 +48,18 @@ export function settlePerformancePack(
 export async function mapFundsWithOptionalPerformance<T>(
   funds: T[],
   loadOne: (fund: T) => Promise<PerformanceResponse | null>,
+  signal?: AbortSignal,
 ): Promise<Array<{ fund: T; performance: PerformanceResponse | null }>> {
   return Promise.all(
     funds.map(async (fund) => {
       try {
         return { fund, performance: settlePerformancePack(await loadOne(fund)) };
       } catch (error) {
-        if (isAbortError(error)) throw error;
-        return { fund, performance: performanceFromFetchError(error) };
+        if (isAbortError(error) && signal?.aborted) throw error;
+        return {
+          fund,
+          performance: isAbortError(error) ? null : performanceFromFetchError(error),
+        };
       }
     }),
   );
@@ -74,17 +79,28 @@ export function calendarYearsFromRows(
   const set = new Set<number>();
   for (const row of rows) {
     if (row.performance) {
-      for (const point of yearEndGrowth(row.performance.fund.points)) {
-        set.add(point.year);
+      try {
+        for (const point of yearEndGrowth(row.performance.fund.points)) {
+          set.add(point.year);
+        }
+      } catch {
+        /* skip a broken pack — do not drop the shared year axis */
       }
     }
     if (row.tax) {
-      for (const point of toTaxDragPeriods(row.tax, taxMetric, row.taxSide)) {
-        if (point.year > 0) set.add(point.year);
+      try {
+        for (const point of toTaxDragPeriods(row.tax, taxMetric, row.taxSide)) {
+          if (point.year > 0) set.add(point.year);
+        }
+      } catch {
+        /* skip a broken compare payload — keep years from the other funds */
       }
     }
   }
-  return sketchYears([...set].sort((a, b) => a - b));
+  const sketched = sketchYears([...set].sort((a, b) => a - b));
+  if (sketched.length > 0) return sketched;
+  if (rows.length === 0) return [];
+  return sketchYears([...PORTFOLIO_COMPARE_YEARS]);
 }
 
 export function windowedGrowth(

@@ -74,10 +74,18 @@ const defaultLoaders: GrowthTaxLoaders = {
   loadCompare: postIllustrateCompare,
 };
 
+export type GrowthTaxPrefetch = {
+  ticker: string;
+  tax: CompareResponse | null;
+  taxSide?: LoadedGrowthFund["taxSide"];
+};
+
 export type GrowthTaxLoadOptions = {
   loaders?: GrowthTaxLoaders;
   taxRates?: TaxRates;
   combineStateWithFederal?: boolean;
+  /** Compare workspace YoY rows — skip a second compare storm when present. */
+  prefetchTax?: GrowthTaxPrefetch[];
 };
 
 export async function loadGrowthAndTaxDrag(
@@ -93,21 +101,31 @@ export async function loadGrowthAndTaxDrag(
     taxRates: options.taxRates,
     combineStateWithFederal: options.combineStateWithFederal,
   });
-  const mapped = await mapFundsWithOptionalPerformance(funds, async (input) => {
-    const ticker = input.ticker.trim().toUpperCase();
-    const usePost = principal !== DEFAULT_START_DOLLARS;
-    const request: PerformanceQuery = {
-      ticker,
-      fund_identifier: input.fundIdentifier ?? ticker,
-      benchmark,
-      start_dollars: principal,
-      mode: defaultPerformanceMode(),
-    };
-    return loaders.loadPerformance(request, {
-      signal,
-      method: usePost ? "POST" : "GET",
-    });
-  });
+  const prefetchByTicker = new Map(
+    (options.prefetchTax ?? []).map((row) => [
+      row.ticker.trim().toUpperCase(),
+      row,
+    ]),
+  );
+  const mapped = await mapFundsWithOptionalPerformance(
+    funds,
+    async (input) => {
+      const ticker = input.ticker.trim().toUpperCase();
+      const usePost = principal !== DEFAULT_START_DOLLARS;
+      const request: PerformanceQuery = {
+        ticker,
+        fund_identifier: input.fundIdentifier ?? ticker,
+        benchmark,
+        start_dollars: principal,
+        mode: defaultPerformanceMode(),
+      };
+      return loaders.loadPerformance(request, {
+        signal,
+        method: usePost ? "POST" : "GET",
+      });
+    },
+    signal,
+  );
 
   const prepared = mapped.map(({ fund: input, performance }, index) => {
     const ticker = input.ticker.trim().toUpperCase();
@@ -180,6 +198,16 @@ export async function loadGrowthAndTaxDrag(
 
   const rows: LoadedGrowthFund[] = await Promise.all(
     prepared.map(async (row) => {
+      const prefetched = prefetchByTicker.get(row.ticker);
+      if (prefetched && Object.prototype.hasOwnProperty.call(prefetched, "tax")) {
+        return {
+          input: row.input,
+          color: fundSeriesColor(row.index),
+          performance: row.performance,
+          tax: prefetched.tax,
+          taxSide: prefetched.taxSide ?? "auto",
+        };
+      }
       let tax: CompareResponse | null = pair;
       let taxSide: LoadedGrowthFund["taxSide"] =
         pair == null ? "auto" : row.index === 0 ? "left" : "right";
@@ -200,7 +228,8 @@ export async function loadGrowthAndTaxDrag(
             }),
             { signal },
           );
-        } catch {
+        } catch (error) {
+          if (signal.aborted) throw error;
           tax = null;
         }
         taxSide = "auto";

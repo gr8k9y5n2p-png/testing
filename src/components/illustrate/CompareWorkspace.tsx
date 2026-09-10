@@ -263,6 +263,17 @@ export function CompareWorkspace({
       ),
     [activeLoaded, holdingDollars, navOverrides],
   );
+  const prefetchTax = useMemo(
+    () =>
+      historyMatchesInputs
+        ? loaded.rows.map((row) => ({
+            ticker: row.ticker,
+            tax: row.tax,
+            taxSide: "auto" as const,
+          }))
+        : undefined,
+    [historyMatchesInputs, loaded.rows],
+  );
   const pairReady = filledKey.split(",").filter(Boolean).length >= 2;
   const stripItems = useMemo(() => {
     if (
@@ -395,6 +406,7 @@ export function CompareWorkspace({
           startDollars={holdingDollars}
           taxRates={taxRates}
           combineStateWithFederal={combineState}
+          prefetchTax={prefetchTax}
         />
       </section>
 
