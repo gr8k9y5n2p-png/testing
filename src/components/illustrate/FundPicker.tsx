@@ -13,6 +13,7 @@ import { usePortfolioMissRequest } from "@/lib/data-api/use-portfolio-miss";
 import { useSearchMissRequest } from "@/lib/data-api/use-search-miss";
 import { shouldClearFundPickerSelection } from "@/components/illustrate/fund-picker-clear";
 import { shouldOpenFundSuggestions } from "@/components/illustrate/fund-picker-suggestions";
+import { tickerSlotBorderClass } from "@/components/illustrate/ticker-slot-border";
 
 const REMOTE_SEARCH_DEBOUNCE_MS = 220;
 
@@ -211,7 +212,7 @@ export function FundPicker({
             }
           }}
           placeholder="Ticker, name, CUSIP, or family"
-          className="h-12 w-full rounded-md border border-line bg-surface px-3 pr-11 text-base text-ink placeholder:text-faint [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden"
+          className={`h-12 w-full rounded-md border ${tickerSlotBorderClass({ committed: hasSelection, midEdit: open })} bg-surface px-3 pr-11 text-base text-ink placeholder:text-faint [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden`}
           autoComplete="off"
           autoFocus={autoFocus}
         />
