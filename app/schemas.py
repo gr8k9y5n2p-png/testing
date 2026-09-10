@@ -111,7 +111,15 @@ class DistributionOut(BaseModel):
     amount_min: Decimal | None
     amount_max: Decimal | None
     amount_unit: str
-    record_date: date | None
+    record_date: date | None = Field(
+        default=None,
+        description=(
+            "Shareholder-of-record date when the manager publishes it. "
+            "Null when the source omits Record / Record Date / Date of Record "
+            "(Fidelity DPL6 estimate + paid tables; Conestoga 2026 estimates). "
+            "Never invented from ex−1."
+        ),
+    )
     ex_date: date | None
     payable_date: date | None
     as_of: date | None

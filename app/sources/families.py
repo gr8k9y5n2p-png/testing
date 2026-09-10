@@ -185,13 +185,23 @@ class FidelitySource(HtmlTableSource):
         "$0.08 / $0.08 and net realized gain $1.36 / $0.61) stored as "
         "ordinary_income + total_capital_gains — ST/LT not published, not "
         "invented. No QDI % columns. "
-        "Hub: https://www.fidelity.com/mutual-funds/information/overview"
+        "Hub: https://www.fidelity.com/mutual-funds/information/overview. "
+        "Record date: the midyear estimate table (FIIS_SP52_DPL6) and prior-year "
+        "paid DPL6 print Fund / Ex Date / Pay Date / NAV / % of NAV / ST / LT / "
+        "Total / As of — no Record / Record Date / Date of Record column. "
+        "Fidelity's Cap-Gains Q&A (literature 779188) defines Record Date as "
+        "usually the business day prior to ex and states that only Ex-Date and "
+        "Pay Date are disclosed in the table. No filled ICI Primary Layout for "
+        "these FBGRX-class fiscal estimates. record_date stays null — never "
+        "invented from ex-1. Parser will store Record when a future book prints it."
     )
     live_limitations = (
         "Live HTML tables on institutional.fidelity.com are supported "
         "(current estimates + prior-year paid). The live DPL6 URL rotates to "
         "the latest prior year — 2021 and 2024 are fixture-only. 2022–2023 "
-        "DPL6 is unpublished in CDX; FCNTX highlights are prospectus-only."
+        "DPL6 is unpublished in CDX; FCNTX highlights are prospectus-only. "
+        "Estimate + paid DPL6 omit Record Date; ETF Annual-Distribution-Calendar "
+        "PDF prints Record but is not this mutual-fund estimate book."
     )
 
     def pages(self) -> list[PageSpec]:

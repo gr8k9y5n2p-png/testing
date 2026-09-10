@@ -159,12 +159,18 @@ class ConestogaSource(HtmlTableSource):
         "https://conestogacapital.com/capital-gains-information/ "
         "(Small Cap Institutional CCALX LT $19.71; "
         "Discovery Institutional CMIRX LT $0.31). "
-        "Estimates as of July 31, 2026; not final. "
+        "Estimates as of July 31, 2026; not final; October update promised. "
+        "Live 2026 estimate table is fund-level ST/LT/Total only — no Record, "
+        "Ex, or Payable columns and no dated prose. record_date / ex_date / "
+        "payable_date stay null; never invented. When the page later prints "
+        "finals with 'record date of …' / 'ex-date of …' prose (as the 2025 "
+        "finalized copy did), the HTML parser stores those published dates. "
         "Live table is fund-level (all share classes); tickers are public Institutional identifiers."
     )
     live_limitations = (
         "Public HTML has fund-name ST/LT columns and no ticker column. "
-        "Fixture attaches public Institutional tickers."
+        "Fixture attaches public Institutional tickers. "
+        "2026 estimate book omits Record / Ex / Payable."
     )
 
     def pages(self) -> list[PageSpec]:

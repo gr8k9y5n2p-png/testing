@@ -5,8 +5,9 @@ files, those are the first-choice historical + ongoing book. PDF/HTML
 archives are the fallback. Blank ICI templates on ici.org are not a feed.
 
 Official ICI columns used here (see https://www.ici.org/year-end-tax-reporting):
-1 fund name, 2 CUSIP, 3 ticker, 7 record, 8 ex, 9 payable,
+1 fund name, 2 CUSIP, 3 ticker, 7 record / record date / date of record, 8 ex, 9 payable,
 14 income dividends, 15 short-term capital gain, 22 total capital gain (1099 Box 2a / LT).
+Fidelity midyear FIIS_SP52_DPL6 and Conestoga 2026 estimate HTML are not filled ICI files.
 
 Vanguard publishes filled Primary Layout PDFs on the advisor tax center
 (`/content/dam/fas/pdfs/ICI*_Primary*` and `ICIprimary_*.pdf`). Live PDFs are
@@ -45,6 +46,8 @@ _HEADER_ALIASES: dict[str, str] = {
         "ticker symbol": "ticker",
         "record_date": "record_date",
         "record date": "record_date",
+        "date of record": "record_date",
+        "rec date": "record_date",
         "ex_dividend_date": "ex_date",
         "ex-dividend date": "ex_date",
         "ex date": "ex_date",
