@@ -41,8 +41,8 @@ def test_ticker_token_helpers() -> None:
 
 def _explain_fund_q(session, q: str, *, q_match: str) -> str:
     stmt = _filter_stmt(q=q, columns=_FUND_SEARCH_COLUMNS, q_match=q_match)
-    compiled = stmt.compile(dialect=session.get_bind().dialect)
-    rows = session.execute(text(f"EXPLAIN QUERY PLAN {compiled}"), compiled.params).all()
+    compiled = stmt.compile(compile_kwargs={"literal_binds": True})
+    rows = session.execute(text(f"EXPLAIN QUERY PLAN {compiled}")).all()
     return " ".join(str(part).lower() for row in rows for part in row)
 
 
