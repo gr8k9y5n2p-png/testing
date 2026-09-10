@@ -6,6 +6,7 @@ import type { IllustrationComponent, IllustrateResponse } from "@/lib/illustrate
 import {
   illustrationComponentBucket,
   splitIllustrationComponents,
+  upcomingEstimateTypeRows,
   upcomingIllustrationTotals,
 } from "@/lib/illustrate/illustration-upcoming";
 import { DistributionDateStrip } from "@/components/DistributionDateStrip";
@@ -54,8 +55,7 @@ export function IllustrationResults({
     components,
     fund,
   );
-  const upcomingTyped = upcomingAll.filter((row) => row.estimate_type !== "total");
-  const upcomingComponents = upcomingTyped.length ? upcomingTyped : upcomingAll;
+  const upcomingComponents = upcomingEstimateTypeRows(upcomingAll, fund);
   const upcomingTotals = upcomingIllustrationTotals(upcomingComponents);
   const catalogUpcoming =
     fund != null && isUpcomingFund(fund) && !hideUpcomingAmounts(fund);
@@ -288,10 +288,12 @@ function ComponentTable({
                 {componentPctOfNav(component, fund, holdingDollars)}
               </td>
               <td className="px-3 py-2 text-right font-mono text-muted">
-                {formatRatePct(component.effective_rate)}
+                {formatOptionalRate(component.effective_rate)}
                 <span className="block text-[11px] text-faint">
-                  fed {formatRatePct(component.federal_rate)}
-                  {component.state_rate
+                  {Number.isFinite(component.federal_rate)
+                    ? `fed ${formatRatePct(component.federal_rate)}`
+                    : "—"}
+                  {Number.isFinite(component.state_rate) && component.state_rate
                     ? ` + st ${formatRatePct(component.state_rate)}`
                     : ""}
                 </span>
@@ -310,6 +312,10 @@ function ComponentTable({
       )}
     </div>
   );
+}
+
+function formatOptionalRate(value: number): string {
+  return Number.isFinite(value) ? formatRatePct(value) : "—";
 }
 
 function StatCard({

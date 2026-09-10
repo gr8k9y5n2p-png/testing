@@ -19,10 +19,6 @@ import {
 import { seedNavLookup } from "@/lib/illustrate/seed-nav";
 import { distributionIdsForFund } from "@/lib/illustrate/ids";
 import {
-  postIllustratePortfolio,
-  type PortfolioIllustrateResponse,
-} from "@/lib/illustrate/portfolio";
-import {
   AMOUNT_UNITS,
   DEFAULT_HOLDING_DOLLARS,
   UI_DEFAULT_TAX_RATES,
@@ -33,7 +29,6 @@ import {
   type TaxRates,
 } from "@/lib/illustrate/types";
 import { IllustrationResults } from "@/components/illustrate/IllustrationResults";
-import { PortfolioCoverageCard } from "@/components/illustrate/PortfolioCoverageCard";
 import { TaxRateFields } from "@/components/illustrate/TaxRateFields";
 
 async function fetchWeeklyNavIdentity(
@@ -227,7 +222,6 @@ function IllustrationWorkspace({ fund }: { fund: FundEstimateView }) {
     metadataNav != null ? String(metadataNav) : fund.nav > 0 ? String(fund.nav) : "",
   );
   const [result, setResult] = useState<IllustrateResponse | null>(null);
-  const [portfolio, setPortfolio] = useState<PortfolioIllustrateResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -289,26 +283,6 @@ function IllustrationWorkspace({ fund }: { fund: FundEstimateView }) {
           setError(null);
           setLoading(false);
         });
-
-      void postIllustratePortfolio(
-        {
-          holdings: [
-            {
-              holding_dollars: holding,
-              ticker: fund.ticker,
-              fund_family: fund.family,
-              fund_identifier: fund.ticker,
-              ...(mock ? { fund_name: fund.fundName } : {}),
-              ...(requestNav != null ? { nav_per_share: requestNav } : {}),
-            },
-          ],
-          tax_rates: rates,
-          combine_state_with_federal: combine,
-        },
-        { signal: controller.signal },
-      )
-        .then(setPortfolio)
-        .catch(() => setPortfolio(null));
     }, 250);
 
     return () => {
@@ -400,14 +374,11 @@ function IllustrationWorkspace({ fund }: { fund: FundEstimateView }) {
             {error}
           </p>
         ) : result ? (
-          <div className="space-y-4">
-            {portfolio ? <PortfolioCoverageCard result={portfolio} /> : null}
-            <IllustrationResults
-              result={result}
-              fund={fund}
-              holdingDollars={holding}
-            />
-          </div>
+          <IllustrationResults
+            result={result}
+            fund={fund}
+            holdingDollars={holding}
+          />
         ) : null}
       </div>
     </div>
