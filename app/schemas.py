@@ -181,6 +181,17 @@ class FundOut(BaseModel):
     )
     latest_as_of: date | None = None
     has_estimate: bool = False
+    coverage_status: Literal["awaiting_estimate", "estimate_announced"] = Field(
+        default="awaiting_estimate",
+        description=(
+            "In-book coverage only. awaiting_estimate = fund is in the universe "
+            "but has no unpaid manager-announced estimate (UI: Awaiting Estimate). "
+            "estimate_announced = unpaid manager-published estimate with a future "
+            "ex/payable window (has_estimate=true). "
+            "not_in_universe is never returned on GET /funds items — that is a "
+            "ticker-lookup miss only (GET /funds/lookup 404 or empty GET /funds?q=)."
+        ),
+    )
     nav_per_share: Decimal | None = Field(
         default=None,
         description=(
@@ -200,12 +211,40 @@ class FundOut(BaseModel):
         ),
     )
 
+    @model_validator(mode="after")
+    def sync_in_book_coverage_status(self) -> "FundOut":
+        """Keep coverage_status aligned with has_estimate. Never invent estimates."""
+        expected = "estimate_announced" if self.has_estimate else "awaiting_estimate"
+        if self.coverage_status != expected:
+            self.coverage_status = expected
+        return self
+
 
 class FundListOut(BaseModel):
     items: list[FundOut]
     limit: int
     offset: int
     total: int
+
+
+class FundLookupMissOut(BaseModel):
+    """Ticker is not in the stored book. Never conflate with awaiting_estimate."""
+
+    coverage_status: Literal["not_in_universe"] = "not_in_universe"
+    ticker: str
+    message: str = Field(
+        default=(
+            "Ticker is not in the coverage universe. UI: Add to universe. "
+            "POST /request/ticker to request ingest. Never invent estimates."
+        )
+    )
+    add_to_universe: str = Field(
+        default="POST /request/ticker",
+        description=(
+            "Website Add to universe intake. Body { ticker, note?, source? }. "
+            "201 queued / 200 already_covered / 422 invalid. Never invents amounts."
+        ),
+    )
 
 
 class FundCategoryOut(BaseModel):

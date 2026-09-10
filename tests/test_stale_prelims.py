@@ -256,7 +256,9 @@ def test_american_funds_fixture_agthx_amcpx_after_scrub(client: TestClient) -> N
     agthx_fund = client.get("/funds", params={"q": "AGTHX"})
     amcpx_fund = client.get("/funds", params={"q": "AMCPX"})
     assert agthx_fund.json()["items"][0]["has_estimate"] is False
+    assert agthx_fund.json()["items"][0]["coverage_status"] == "awaiting_estimate"
     assert amcpx_fund.json()["items"][0]["has_estimate"] is False
+    assert amcpx_fund.json()["items"][0]["coverage_status"] == "awaiting_estimate"
 
 
 def test_funds_has_estimate_ignores_past_prelim_once_final_exists(client: TestClient) -> None:
@@ -302,6 +304,7 @@ def test_funds_has_estimate_ignores_past_prelim_once_final_exists(client: TestCl
     assert funds.json()["total"] == 1
     assert funds.json()["items"][0]["ticker"] == "AGTHX"
     assert funds.json()["items"][0]["has_estimate"] is False
+    assert funds.json()["items"][0]["coverage_status"] == "awaiting_estimate"
 
     remaining = client.get("/distributions", params={"ticker": "AGTHX", "page_size": 20})
     stages = {item["publication_stage"] for item in remaining.json()["items"]}

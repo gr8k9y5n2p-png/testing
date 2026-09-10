@@ -11,6 +11,8 @@ from sqlalchemy.orm import Session
 from app.aliases import display_cusip, display_ticker
 from app.categories import category_for_row
 from app.crud import (
+    FundSummary,
+    coverage_status_for_in_book_fund,
     get_by_id,
     list_coverage_gaps,
     list_fund_category_counts,
@@ -29,6 +31,7 @@ from app.schemas import (
     FundCategoryListOut,
     FundCategoryOut,
     FundListOut,
+    FundLookupMissOut,
     FundOut,
     FetchRequest,
     FundFamilyOut,
@@ -76,6 +79,33 @@ from app.services.ingest import fetch_and_ingest, ingest_records
 from app.sources.registry import list_sources
 
 router = APIRouter()
+
+
+def _fund_out(row: FundSummary, navs: dict) -> FundOut:
+    ticker = display_ticker(row.ticker, row.fund_identifier)
+    nav = navs.get(listed_ticker(row.ticker, row.fund_identifier) or "")
+    has_estimate = bool(row.has_estimate)
+    return FundOut(
+        ticker=ticker,
+        fund_name=row.fund_name,
+        fund_family=row.fund_family,
+        fund_identifier=row.fund_identifier,
+        category=row.category,
+        latest_as_of=row.latest_as_of,
+        has_estimate=has_estimate,
+        coverage_status=coverage_status_for_in_book_fund(has_estimate=has_estimate),
+        nav_per_share=nav.nav_per_share if nav else None,
+        nav_as_of=nav.nav_as_of if nav else None,
+        nav_source=nav.source if nav else None,
+    )
+
+
+def _fund_matches_lookup_ticker(row: FundSummary, ticker: str) -> bool:
+    wanted = ticker.strip().upper()
+    shown = (display_ticker(row.ticker, row.fund_identifier) or "").upper()
+    stored = (row.ticker or "").upper()
+    ident = (row.fund_identifier or "").upper()
+    return wanted in {shown, stored, ident}
 
 
 @router.get("/health", response_model=HealthOut, tags=["ops"])
@@ -206,6 +236,44 @@ def list_fund_categories(
     )
 
 
+@router.get(
+    "/funds/lookup",
+    response_model=FundOut,
+    responses={404: {"model": FundLookupMissOut, "description": "Ticker is not in the coverage universe."}},
+    tags=["search"],
+)
+def lookup_fund(
+    ticker: str = Query(
+        ...,
+        min_length=1,
+        max_length=32,
+        description="Exact ticker (e.g. AGTHX). Miss → 404 not_in_universe, not Awaiting Estimate.",
+    ),
+    session: Session = Depends(get_session),
+) -> FundOut | JSONResponse:
+    """Exact ticker lookup. In-book funds return coverage_status; misses are not_in_universe."""
+    wanted = ticker.strip().upper()
+
+    def _load() -> tuple[FundSummary | None, dict]:
+        rows, _total = search_funds(session, q=wanted, limit=50, offset=0)
+        found = next((row for row in rows if _fund_matches_lookup_ticker(row, wanted)), None)
+        if found is None:
+            return None, {}
+        navs_by_ticker = get_nav_map(
+            session,
+            [listed_ticker(found.ticker, found.fund_identifier)],
+        )
+        return found, navs_by_ticker
+
+    match, navs = read_with_lock_retry(_load)
+    if match is None:
+        return JSONResponse(
+            status_code=404,
+            content=FundLookupMissOut(ticker=wanted).model_dump(),
+        )
+    return _fund_out(match, navs)
+
+
 @router.get("/funds", response_model=FundListOut, tags=["search"])
 def list_funds(
     q: str | None = Query(default=None, description="Search ticker, fund name, family, or identifier"),
@@ -234,24 +302,7 @@ def list_funds(
         return found, count, navs_by_ticker
 
     rows, total, navs = read_with_lock_retry(_load)
-    items = []
-    for row in rows:
-        ticker = display_ticker(row.ticker, row.fund_identifier)
-        nav = navs.get(listed_ticker(row.ticker, row.fund_identifier) or "")
-        items.append(
-            FundOut(
-                ticker=ticker,
-                fund_name=row.fund_name,
-                fund_family=row.fund_family,
-                fund_identifier=row.fund_identifier,
-                category=row.category,
-                latest_as_of=row.latest_as_of,
-                has_estimate=row.has_estimate,
-                nav_per_share=nav.nav_per_share if nav else None,
-                nav_as_of=nav.nav_as_of if nav else None,
-                nav_source=nav.source if nav else None,
-            )
-        )
+    items = [_fund_out(row, navs) for row in rows]
     return FundListOut(items=items, limit=limit, offset=offset, total=total)
 
 
