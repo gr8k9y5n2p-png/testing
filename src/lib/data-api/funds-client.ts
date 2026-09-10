@@ -3,9 +3,13 @@
  * Keep this module free of `@/` so node:test can load it.
  */
 
+import { parseFundLookupResponse } from "./fund-lookup-parse.ts";
+import { looksLikeExactTicker } from "./request-ticker.ts";
+
 export type FundsApiClientResult<T = unknown> = {
   items: T[];
   unavailable: boolean;
+  notInUniverse?: boolean;
 };
 
 function sourceLabel(body: unknown): string {
@@ -37,6 +41,29 @@ export function parseFundsApiResponse<T = unknown>(
   return { items: items as T[], unavailable: false };
 }
 
+export async function fetchFundsLookup<T = unknown>(
+  ticker: string,
+): Promise<FundsApiClientResult<T> & { notInUniverse?: boolean }> {
+  const key = ticker.trim().toUpperCase();
+  try {
+    const response = await fetch(
+      `/api/funds/lookup?ticker=${encodeURIComponent(key)}`,
+      { cache: "no-store" },
+    );
+    const body = await response.json().catch(() => null);
+    const parsed = parseFundLookupResponse(response.status, body, key);
+    if (parsed.kind === "unavailable") {
+      return { items: [], unavailable: true };
+    }
+    if (parsed.kind === "found") {
+      return { items: [parsed.fund as T], unavailable: false };
+    }
+    return { items: [], unavailable: false, notInUniverse: true };
+  } catch {
+    return { items: [], unavailable: true };
+  }
+}
+
 export async function fetchFundsSearch<T = unknown>(
   query: string,
   limit = 20,
@@ -52,7 +79,11 @@ export async function fetchFundsSearch<T = unknown>(
       cache: "no-store",
     });
     const body = await response.json().catch(() => null);
-    return parseFundsApiResponse<T>(response.ok, body);
+    const page = parseFundsApiResponse<T>(response.ok, body);
+    if (page.unavailable || page.items.length || !looksLikeExactTicker(q)) {
+      return page;
+    }
+    return fetchFundsLookup<T>(q);
   } catch {
     return { items: [], unavailable: true };
   }

@@ -5,6 +5,7 @@ import { mergeFundWithDistributions } from "@/data/hydrate-funds";
 import { withPeerContext } from "@/data/queries";
 import type { FundEstimateView } from "@/data/types";
 import { fundPageSearchParams } from "@/data/pagination";
+import { loadFundLookupFromDataApi } from "@/lib/data-api/fund-lookup";
 import { looksLikeExactTicker, normalizeTickerSymbol } from "@/lib/data-api/request-ticker";
 import { fetchDataApi } from "@/lib/data-api/fetch";
 
@@ -230,7 +231,7 @@ export async function loadFundIdentityByTicker(
       const response = await fetchDataApi(`/funds?${params.toString()}`);
       if (!response.ok) {
         if (attempt < 2) continue;
-        return null;
+        break;
       }
       const items = fundsApiItemsFromPayload(await response.json());
       const match = items.find((row) => {
@@ -238,11 +239,17 @@ export async function loadFundIdentityByTicker(
         const ident = (row.fund_identifier ?? "").trim().toUpperCase();
         return ticker === key || ident === key;
       });
-      return match ? mapFundsApiItem(match) : null;
+      if (match) return mapFundsApiItem(match);
+      break;
     } catch {
       if (attempt < 2) continue;
-      return null;
+      break;
     }
+  }
+  const lookup = await loadFundLookupFromDataApi(key);
+  if (lookup.kind === "found") return lookup.fund;
+  if (lookup.kind === "unavailable") {
+    throw new Error(`funds lookup ${key}`);
   }
   return null;
 }

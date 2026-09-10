@@ -317,4 +317,37 @@ describe("Dollar Illustration prior-year Paid History", () => {
       "2026 unpaid prelim must not mix into the 5-year matrix",
     );
   });
+
+  it("does not double a republished same-year LTCG (newer as_of, same ex)", () => {
+    const fund = hydrate("AGTHX", "The Growth Fund of America", "American Funds", [
+      row({
+        id: "agthx-2025-a",
+        ticker: "AGTHX",
+        fund_name: "The Growth Fund of America",
+        fund_family: "American Funds",
+        estimate_type: "long_term_capital_gains",
+        amount: "8.364000",
+        amount_unit: "per_share",
+        ex_date: "2025-12-17",
+        as_of: "2025-12-17",
+        publication_stage: "final",
+      }),
+      row({
+        id: "agthx-2025-b",
+        ticker: "AGTHX",
+        fund_name: "The Growth Fund of America",
+        fund_family: "American Funds",
+        estimate_type: "long_term_capital_gains",
+        amount: "8.364000",
+        amount_unit: "per_share",
+        ex_date: "2025-12-17",
+        as_of: "2026-01-22",
+        publication_stage: "final",
+      }),
+    ]);
+    const matrix = illustrationPaidHistoryMatrix(fund, NOW);
+    const ltcg = matrix.rows.find((row) => row.estimateType === "long_term_capital_gains");
+    assert.ok(ltcg);
+    assert.ok(Math.abs((ltcg.cells[2025]?.perShare ?? NaN) - 8.364) < 1e-6);
+  });
 });

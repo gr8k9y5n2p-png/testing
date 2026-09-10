@@ -21,6 +21,7 @@ describe("Lists Data API hydrate", () => {
     assert.doesNotMatch(lists, /raw\.every\(/);
     assert.doesNotMatch(lists, /getDistributionRepository/);
     assert.match(dists, /export async function loadFundIdentityByTicker/);
+    assert.match(dists, /loadFundLookupFromDataApi/);
     assert.match(dists, /fundPageSearchParams/);
     assert.match(dists, /fundsApiItemsFromPayload/);
     assert.match(dists, /payload\.filter\(isFundsApiItem\)/);

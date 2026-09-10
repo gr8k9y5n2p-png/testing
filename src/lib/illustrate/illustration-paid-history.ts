@@ -148,6 +148,15 @@ function addLineToCell(
   return next;
 }
 
+/** Same year×type×ex republish (newer as_of) replaces; different ex-dates still add. */
+function snapshotSlotKey(
+  year: number,
+  estimateType: string,
+  exDate: string | null,
+): string {
+  return `${year}|${estimateType}|${exDate ?? ""}`;
+}
+
 /**
  * 5-year Paid History matrix. Rows are published estimate_types only —
  * never invent Ordinary / QDI. Cells stay null → UI "—"; published $0 stays.
@@ -157,29 +166,57 @@ export function illustrationPaidHistoryMatrix(
   now = new Date(),
 ): { years: number[]; rows: IllustrationPaidMatrixRow[] } {
   const years = illustrationPaidHistoryYears(now);
-  const byType = new Map<string, Record<number, IllustrationPaidMatrixCell>>();
+  const slots = new Map<
+    string,
+    { asOf: string; estimateType: string; year: number; cell: IllustrationPaidMatrixCell }
+  >();
 
   for (const event of lookbackPaidEvents(fund, now)) {
     const year = paidHistoryYearOf(event);
+    const asOf = event.asOfDate ?? "";
     const lines = (event.estimateTypeLines ?? []).filter(
       (line) => line.estimateType !== "total",
     );
-    if (lines.length) {
-      for (const line of lines) {
-        const cells = byType.get(line.estimateType) ?? {};
-        cells[year] = addLineToCell(cells[year] ?? emptyCell(), line, event);
-        byType.set(line.estimateType, cells);
-      }
-      continue;
+    const typed = lines.length
+      ? lines
+      : [
+          {
+            estimateType: "",
+            amount: event.estimatedDistributionAmount,
+            amountUnit: "per_share",
+          },
+        ];
+    for (const line of typed) {
+      const key = snapshotSlotKey(year, line.estimateType, event.exDate);
+      const existing = slots.get(key);
+      if (existing && existing.asOf > asOf) continue;
+      const base =
+        existing && existing.asOf === asOf ? existing.cell : emptyCell();
+      slots.set(key, {
+        asOf,
+        estimateType: line.estimateType,
+        year,
+        cell: addLineToCell(base, line, event),
+      });
     }
-    const cells = byType.get("") ?? {};
-    const existing = cells[year] ?? emptyCell();
-    cells[year] = {
-      perShare: (existing.perShare ?? 0) + event.estimatedDistributionAmount,
-      pctOfNav: existing.pctOfNav ?? pctOfNavForFund(event),
-      amountUnit: existing.amountUnit ?? "per_share",
+  }
+
+  const byType = new Map<string, Record<number, IllustrationPaidMatrixCell>>();
+  for (const slot of slots.values()) {
+    const cells = byType.get(slot.estimateType) ?? {};
+    const current = cells[slot.year] ?? emptyCell();
+    cells[slot.year] = {
+      perShare:
+        current.perShare == null && slot.cell.perShare == null
+          ? null
+          : (current.perShare ?? 0) + (slot.cell.perShare ?? 0),
+      pctOfNav:
+        current.pctOfNav == null && slot.cell.pctOfNav == null
+          ? null
+          : (current.pctOfNav ?? 0) + (slot.cell.pctOfNav ?? 0),
+      amountUnit: current.amountUnit ?? slot.cell.amountUnit,
     };
-    byType.set("", cells);
+    byType.set(slot.estimateType, cells);
   }
 
   const types = [...byType.keys()].sort((a, b) => {
