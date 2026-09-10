@@ -1,23 +1,26 @@
 /**
- * Bounded Paid History year-book walk. Testable without `@/` aliases.
- * Stops at a short Data page, the requested fund window, the page cap,
- * or the time budget — never an unbounded loop.
+ * Paid History year window. One Data `limit`/`offset` fetch against
+ * `ex_date_from`/`ex_date_to` — never a multi-page Data walk.
+ * Pager `total` is Data's filtered `total` when trustworthy, otherwise
+ * the unique-fund count on this window.
  */
 
 import { aggregateDistributions, type DataDistribution } from "./aggregate-distributions.ts";
 import {
+  clampPageOffset,
   clampPaidHistoryPageSize,
   type FundPageQuery,
   type FundPageResult,
 } from "./pagination.ts";
-import { filterPaidHistoryFunds, pagePaidHistoryFunds } from "./paid-history-book.ts";
+import { filterPaidHistoryFunds } from "./paid-history-book.ts";
 import { withPeerContext } from "./queries.ts";
+import { collectTaxYearsFromFunds } from "./tax-years.ts";
 
-/** Data `/distributions` max `page_size`. User windows stay 1–50 funds. */
-export const PAID_HISTORY_DATA_PAGE_SIZE = 200;
-/** Hard cap — never walk a dense year (~25k rows) in one request. */
-export const PAID_HISTORY_MAX_DATA_PAGES = 5;
-/** Wall-clock budget for the bounded walk (Vercel / browser must not hang). */
+/** User windows stay 1–50; passed through as Data `limit`. */
+export const PAID_HISTORY_DATA_PAGE_SIZE = 50;
+/** Requested window + optional thin-year clamp refetch. Never a book walk. */
+export const PAID_HISTORY_MAX_FETCH_ROUNDS = 2;
+/** Wall-clock budget so 502 / timeouts cannot hang Vercel or the browser. */
 export const PAID_HISTORY_BUDGET_MS = 8_000;
 
 export const PAID_HISTORY_SOURCE_LIVE = "Data API /distributions";
@@ -25,20 +28,21 @@ export const PAID_HISTORY_SOURCE_PARTIAL = "Data API /distributions (partial)";
 export const PAID_HISTORY_SOURCE_UNAVAILABLE =
   "Data API /distributions unavailable";
 
+export type PaidHistoryFetchWindow = {
+  limit: number;
+  offset: number;
+  signal?: AbortSignal;
+};
+
 export type PaidHistoryDataPage = {
   rows: DataDistribution[];
-  short: boolean;
   failed: boolean;
-  finalsCount: number;
-  paidsCount: number;
-  finalsTotal?: number;
-  paidsTotal?: number;
+  filteredTotal?: number;
 };
 
 export type PaidHistoryPageFetcher = (
   query: FundPageQuery,
-  page: number,
-  signal?: AbortSignal,
+  window: PaidHistoryFetchWindow,
 ) => Promise<PaidHistoryDataPage>;
 
 export type PaidHistoryWalkOptions = {
@@ -47,34 +51,33 @@ export type PaidHistoryWalkOptions = {
   fetchPage: PaidHistoryPageFetcher;
 };
 
+export function paidHistoryExDateWindow(year?: number): {
+  exDateFrom?: string;
+  exDateTo?: string;
+} {
+  if (year == null || !Number.isFinite(year)) return {};
+  const y = Math.trunc(year);
+  if (y < 1990 || y > 2100) return {};
+  return { exDateFrom: `${y}-01-01`, exDateTo: `${y}-12-31` };
+}
+
 /**
- * Data's filtered row `total` is trustworthy only when it agrees with a
- * year-scoped short page. A huge total on a short page is the unfiltered
- * global leak from #121 — never a fund-pager total.
+ * Year-window `total` is trustworthy unless a short page reports a much
+ * larger book — that is the unfiltered global leak from #121.
  */
 export function isTrustworthyFilteredRowTotal(
   itemCount: number,
-  pageSize: number,
+  limit: number,
   reported: number | undefined,
+  offset = 0,
 ): reported is number {
   if (reported == null || !Number.isFinite(reported) || reported < 0) {
     return false;
   }
-  if (itemCount < pageSize && reported > pageSize) return false;
+  if (itemCount < limit && reported > offset + itemCount && reported > limit) {
+    return false;
+  }
   return true;
-}
-
-function stageComplete(
-  itemCount: number,
-  pageSize: number,
-  reported: number | undefined,
-  collected: number,
-): boolean {
-  if (itemCount < pageSize) return true;
-  return (
-    isTrustworthyFilteredRowTotal(itemCount, pageSize, reported) &&
-    collected >= reported
-  );
 }
 
 export function emptyPaidHistoryPage(
@@ -104,6 +107,35 @@ function uniquePaidFundsFromRows(
   );
 }
 
+function pagerTotal(input: {
+  uniqueFunds: number;
+  rowCount: number;
+  limit: number;
+  offset: number;
+  reported: number | undefined;
+}): number {
+  if (
+    isTrustworthyFilteredRowTotal(
+      input.rowCount,
+      input.limit,
+      input.reported,
+      input.offset,
+    )
+  ) {
+    return input.reported;
+  }
+  return input.offset + input.uniqueFunds;
+}
+
+function isAbortError(error: unknown): boolean {
+  const name = error instanceof Error ? error.name : "";
+  return name === "TimeoutError" || name === "AbortError";
+}
+
+/**
+ * One year-window page. At most two Data rounds (requested offset + clamp).
+ * 502 / timeout → honest empty, never a hang.
+ */
 export async function loadPaidHistoryPage(
   query: FundPageQuery = {},
   options: PaidHistoryWalkOptions,
@@ -113,92 +145,84 @@ export async function loadPaidHistoryPage(
   const now = options.now ?? Date.now;
   const deadline = now() + budgetMs;
   const limit = clampPaidHistoryPageSize(query.limit);
-  const requestedOffset = Math.max(0, Math.trunc(query.offset ?? 0));
-  const needFunds = requestedOffset + limit;
+  let offset = Math.max(0, Math.trunc(query.offset ?? 0));
+  let rounds = 0;
 
-  const rows: DataDistribution[] = [];
-  let collectedFinals = 0;
-  let collectedPaids = 0;
-  let lastFull = false;
-  let sawFailure = false;
-  let timedOut = false;
-  let knownComplete = false;
-
-  for (let page = 1; page <= PAID_HISTORY_MAX_DATA_PAGES; page += 1) {
-    if (now() >= deadline) {
-      timedOut = true;
-      break;
+  const pull = async (off: number): Promise<PaidHistoryDataPage | "timeout"> => {
+    if (rounds >= PAID_HISTORY_MAX_FETCH_ROUNDS) {
+      return { rows: [], failed: true };
     }
+    if (now() >= deadline) return "timeout";
+    rounds += 1;
     const remaining = Math.max(1, deadline - now());
     const signal =
       typeof AbortSignal !== "undefined" && "timeout" in AbortSignal
         ? AbortSignal.timeout(remaining)
         : undefined;
-    let part: PaidHistoryDataPage;
     try {
-      part = await fetchPage(query, page, signal);
+      return await fetchPage(query, { limit, offset: off, signal });
     } catch (error) {
-      const name = error instanceof Error ? error.name : "";
-      if (name === "TimeoutError" || name === "AbortError") {
-        timedOut = true;
-        break;
-      }
+      if (isAbortError(error)) return "timeout";
       throw error;
     }
+  };
 
-    if (part.failed && !part.rows.length) {
-      sawFailure = true;
-      if (!rows.length) {
+  let part = await pull(offset);
+  if (part === "timeout") {
+    return emptyPaidHistoryPage(query, PAID_HISTORY_SOURCE_UNAVAILABLE);
+  }
+  if (part.failed && !part.rows.length) {
+    return emptyPaidHistoryPage(query, PAID_HISTORY_SOURCE_UNAVAILABLE);
+  }
+
+  let funds = uniquePaidFundsFromRows(part.rows, query);
+  let total = pagerTotal({
+    uniqueFunds: funds.length,
+    rowCount: part.rows.length,
+    limit,
+    offset,
+    reported: part.filteredTotal,
+  });
+
+  const clamped = clampPageOffset(offset, total, limit);
+  if (clamped !== offset) {
+    const again = await pull(clamped);
+    if (again === "timeout") {
+      if (!funds.length) {
         return emptyPaidHistoryPage(query, PAID_HISTORY_SOURCE_UNAVAILABLE);
       }
-      break;
+    } else if (again.failed && !again.rows.length) {
+      if (!funds.length) {
+        return emptyPaidHistoryPage(query, PAID_HISTORY_SOURCE_UNAVAILABLE);
+      }
+    } else {
+      part = again;
+      offset = clamped;
+      funds = uniquePaidFundsFromRows(part.rows, query);
+      total = pagerTotal({
+        uniqueFunds: funds.length,
+        rowCount: part.rows.length,
+        limit,
+        offset,
+        reported: part.filteredTotal,
+      });
     }
-
-    rows.push(...part.rows);
-    collectedFinals += part.finalsCount;
-    collectedPaids += part.paidsCount;
-    lastFull =
-      part.finalsCount >= PAID_HISTORY_DATA_PAGE_SIZE ||
-      part.paidsCount >= PAID_HISTORY_DATA_PAGE_SIZE;
-
-    const finalsDone = stageComplete(
-      part.finalsCount,
-      PAID_HISTORY_DATA_PAGE_SIZE,
-      part.finalsTotal,
-      collectedFinals,
-    );
-    const paidsDone = stageComplete(
-      part.paidsCount,
-      PAID_HISTORY_DATA_PAGE_SIZE,
-      part.paidsTotal,
-      collectedPaids,
-    );
-    if (part.short || (finalsDone && paidsDone)) {
-      knownComplete = true;
-      break;
-    }
-
-    const uniqueSoFar = uniquePaidFundsFromRows(rows, query).length;
-    if (uniqueSoFar >= needFunds) break;
   }
 
-  if (!rows.length) {
-    return emptyPaidHistoryPage(
-      query,
-      sawFailure || timedOut
-        ? PAID_HISTORY_SOURCE_UNAVAILABLE
-        : PAID_HISTORY_SOURCE_LIVE,
-    );
+  if (!funds.length) {
+    return emptyPaidHistoryPage(query, PAID_HISTORY_SOURCE_LIVE);
   }
 
-  const funds = withPeerContext(aggregateDistributions(rows));
-  const paged = pagePaidHistoryFunds(funds, query);
-  const hasMore = !knownComplete && lastFull;
+  const hasMore = offset + limit < total;
   return {
-    ...paged,
+    items: funds.slice(0, limit),
+    total,
+    limit,
+    offset,
+    years: collectTaxYearsFromFunds(funds),
     hasMore,
-    sourceLabel: knownComplete
-      ? PAID_HISTORY_SOURCE_LIVE
-      : PAID_HISTORY_SOURCE_PARTIAL,
+    sourceLabel: hasMore
+      ? PAID_HISTORY_SOURCE_PARTIAL
+      : PAID_HISTORY_SOURCE_LIVE,
   };
 }

@@ -52,9 +52,10 @@ describe("Search / Sample Estimates fund page", () => {
     assert.match(fundsPage, /loadPaidHistoryPageFromDataApi/);
     const paid = readFileSync(join(here, "paid-history-page.ts"), "utf8");
     const walk = readFileSync(join(here, "../../data/paid-history-walk.ts"), "utf8");
-    assert.match(paid, /PAID_HISTORY_MAX_DATA_PAGES/);
-    assert.match(walk, /PAID_HISTORY_MAX_DATA_PAGES = 5/);
+    assert.match(paid, /PAID_HISTORY_MAX_FETCH_ROUNDS/);
+    assert.match(walk, /PAID_HISTORY_MAX_FETCH_ROUNDS = 2/);
     assert.doesNotMatch(walk, /PAID_HISTORY_WALK_MAX_PAGES/);
+    assert.doesNotMatch(walk, /PAID_HISTORY_MAX_DATA_PAGES/);
     assert.match(repo, /loadUpcomingAnnouncedFromDataApi/);
     assert.match(repo, /if \(upcoming\.length\)/);
     assert.match(source, /upcoming/);
