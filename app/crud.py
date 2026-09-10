@@ -4,19 +4,19 @@ from datetime import date, datetime, timezone
 from decimal import Decimal
 from typing import NamedTuple
 
-from sqlalchemy import Select, case, delete, func, or_, select
+from sqlalchemy import Select, delete, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.aliases import alias_fund_identifier, enrich_class_a_fields
 from app.categories import canonical_category, resolve_category
-from app.models import AmountUnit, CoverageGap, DistributionEstimate, IngestRun, PublicationStage
+from app.models import AmountUnit, CoverageGap, DistributionEstimate, IngestRun
 from app.schemas import DistributionIn, fund_identifier, make_upsert_key
-from app.sources.parser import is_ingestible_distribution_amount
-
-_ESTIMATE_STAGES = (
-    PublicationStage.preliminary_estimate.value,
-    PublicationStage.updated_estimate.value,
+from app.services.stale_estimates import (
+    filter_stale_incoming_prelims,
+    live_estimate_fund_identifiers,
+    scrub_stale_preliminary_estimates,
 )
+from app.sources.parser import is_ingestible_distribution_amount
 
 
 class FundSummary(NamedTuple):
@@ -40,7 +40,11 @@ def _midpoint(record: DistributionIn) -> Decimal | None:
 
 
 def upsert_records(
-    session: Session, records: list[DistributionIn]
+    session: Session,
+    records: list[DistributionIn],
+    *,
+    skip_stale_prelims: bool = True,
+    scrub_stale_prelims: bool = True,
 ) -> tuple[int, int, list[tuple[str, DistributionEstimate]]]:
     created = 0
     updated = 0
@@ -54,6 +58,8 @@ def upsert_records(
             continue
         ingestible.append(record)
     records = ingestible
+    if skip_stale_prelims:
+        records, _skipped = filter_stale_incoming_prelims(session, records)
     for record in records:
         ident = fund_identifier(record.ticker, record.fund_name, record.fund_family)
         key = make_upsert_key(
@@ -110,6 +116,8 @@ def upsert_records(
             created += 1
             stored.append(("created", row))
     session.flush()
+    if scrub_stale_prelims:
+        scrub_stale_preliminary_estimates(session)
     return created, updated, stored
 
 
@@ -302,15 +310,12 @@ def _unique_fund_query(
         select(
             filtered.c.fund_identifier,
             func.max(filtered.c.as_of).label("latest_as_of"),
-            func.max(
-                case((filtered.c.publication_stage.in_(_ESTIMATE_STAGES), 1), else_=0)
-            ).label("has_estimate"),
         )
         .group_by(filtered.c.fund_identifier)
         .subquery()
     )
     stmt = (
-        select(ranked, aggregates.c.latest_as_of, aggregates.c.has_estimate)
+        select(ranked, aggregates.c.latest_as_of)
         .join(aggregates, aggregates.c.fund_identifier == ranked.c.fund_identifier)
         .where(ranked.c.rn == 1)
         .order_by(
@@ -322,14 +327,14 @@ def _unique_fund_query(
     return stmt, int(total)
 
 
-def _summary_from_row(row) -> FundSummary:
+def _summary_from_row(row, live_estimate_ids: set[str] | None = None) -> FundSummary:
     return FundSummary(
         fund_identifier=row.fund_identifier,
         fund_name=row.fund_name,
         fund_family=row.fund_family,
         ticker=row.ticker,
         latest_as_of=row.latest_as_of,
-        has_estimate=bool(row.has_estimate),
+        has_estimate=bool(live_estimate_ids and row.fund_identifier in live_estimate_ids),
         category=resolve_category(
             ticker=row.ticker,
             fund_identifier=row.fund_identifier,
@@ -356,11 +361,12 @@ def search_funds(
         return [], 0
 
     stmt, sql_total = _unique_fund_query(session, q=q, fund_family=fund_family)
+    live_ids = live_estimate_fund_identifiers(session)
     if wanted is None:
         rows = session.execute(stmt.offset(offset).limit(limit)).all()
-        return [_summary_from_row(row) for row in rows], sql_total
+        return [_summary_from_row(row, live_ids) for row in rows], sql_total
 
-    items = [_summary_from_row(row) for row in session.execute(stmt).all()]
+    items = [_summary_from_row(row, live_ids) for row in session.execute(stmt).all()]
     items = [item for item in items if item.category == wanted]
     return items[offset : offset + limit], len(items)
 
