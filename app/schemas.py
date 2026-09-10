@@ -263,8 +263,14 @@ class FundFamilyOut(BaseModel):
 class LookbackDigestOut(BaseModel):
     years: list[int]
     funds_with_finals_by_year: dict[str, int]
+    funds_with_finals_by_year_mf: dict[str, int] = Field(default_factory=dict)
+    funds_with_finals_by_year_etf: dict[str, int] = Field(default_factory=dict)
     book_funds: int
+    book_funds_mf: int = 0
+    book_funds_etf: int = 0
     funds_with_5y: int
+    funds_with_5y_mf: int = 0
+    funds_with_5y_etf: int = 0
     pct_book_with_5y: float
     fcntx_years: list[int] = Field(default_factory=list)
     notes: list[str] = Field(default_factory=list)

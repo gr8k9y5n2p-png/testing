@@ -68,6 +68,50 @@ def test_american_funds_paid_history_2021_2025() -> None:
     assert gfa_lt["2023-12-15"].amount == Decimal("4.3010")
     assert gfa_lt["2024-12-18"].amount == Decimal("6.3810")
     assert gfa_lt["2025-12-17"].amount == Decimal("8.3640")
+    abalx_oi = {
+        str(r.as_of): r
+        for r in records
+        if r.ticker == "ABALX" and r.estimate_type == EstimateType.ordinary_income
+    }
+    assert abalx_oi["2021-12-14"].amount == Decimal("0.1000")
+    assert abalx_oi["2022-12-13"].amount == Decimal("0.1000")
+    assert abalx_oi["2023-12-12"].amount == Decimal("0.1000")
+    assert abalx_oi["2024-12-16"].amount == Decimal("0.1100")
+    assert abalx_oi["2025-12-15"].amount == Decimal("0.1100")
+    abalx_lt = {
+        str(r.as_of): r
+        for r in records
+        if r.ticker == "ABALX" and r.estimate_type == EstimateType.long_term_capital_gains
+    }
+    assert abalx_lt["2021-12-14"].amount == Decimal("0.8600")
+    assert "2022-12-13" not in abalx_lt
+    assert "2023-12-12" not in abalx_lt
+    assert abalx_lt["2022-06-13"].amount == Decimal("0.1775")
+    assert abalx_lt["2024-12-16"].amount == Decimal("1.7485")
+    assert abalx_lt["2025-12-15"].amount == Decimal("2.1250")
+    abalx_sp = {
+        str(r.as_of): r
+        for r in records
+        if r.ticker == "ABALX" and r.estimate_type == EstimateType.special_dividend
+    }
+    assert abalx_sp["2022-12-13"].amount == Decimal("0.0850")
+    assert abalx_sp["2023-12-12"].amount == Decimal("0.3550")
+    ica_lt = next(
+        r
+        for r in records
+        if r.ticker == "AIVSX"
+        and r.estimate_type == EstimateType.long_term_capital_gains
+        and str(r.as_of) == "2022-12-14"
+    )
+    assert ica_lt.amount == Decimal("1.3330")
+    eupac_22 = [
+        r
+        for r in records
+        if r.ticker == "AEPGX"
+        and str(r.as_of) == "2022-12-15"
+        and r.estimate_type == EstimateType.long_term_capital_gains
+    ]
+    assert eupac_22 == []
 
 
 def test_american_funds_tax_year_lookback_2021_2025() -> None:

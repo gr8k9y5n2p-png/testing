@@ -36,7 +36,10 @@ class AmericanFundsSource(FundSource):
         "Live year-end *preliminary* estimate pages are seasonal and often advisor-gated; "
         "fixture mode includes estimate + final snapshots for 2024 and 2025 so time-series "
         "(as_of + publication_stage) coexist, plus product-page paid history for AMCAP / "
-        "Growth Fund of America (2021–2025 tax-year as_of). Full public YE CG books for "
+        "Growth Fund of America / American Balanced (ABALX 2021–2025 December OI; "
+        "2022–2023 LTCG published $0 omitted) and ICA / WMIF / New Perspective / "
+        "EUPAC / New World / American Mutual / Capital Income Builder Class A pages "
+        "(2021–2025 tax-year as_of). Full public YE CG books for "
         "2021–2024 are Wayback id_ snapshots of the individual tax-center pages (live "
         "URLs now 404; advisor copies 302 to login) stored as year_end_*_tax_year.html "
         "with as_of = published December ex-date so lookback counts the tax year. 2025 "
@@ -63,6 +66,7 @@ class AmericanFundsSource(FundSource):
             HISTORICAL_TOOL_URL,
             "https://www.capitalgroup.com/individual/investments/mutual-funds/details/amcap-a",
             "https://www.capitalgroup.com/individual/investments/mutual-funds/details/gfa-a",
+            "https://www.capitalgroup.com/individual/investments/mutual-funds/details/ambal-a",
         ]
 
     def estimate_feed_urls(self) -> list[str]:

@@ -190,7 +190,11 @@ def test_coverage_lookback_wave2_american_funds_invesco(client: TestClient) -> N
     assert by_year["2024"] >= 500
     assert by_year["2025"] >= 500
     assert lookback["funds_with_5y"] >= 20
+    assert lookback["funds_with_5y_mf"] >= 20
+    assert lookback["book_funds_mf"] >= lookback["book_funds_etf"]
+    assert lookback["funds_with_finals_by_year_mf"]["2023"] >= 400
     assert "never invented" in " ".join(lookback["notes"]).lower()
+    assert "mutual funds" in " ".join(lookback["notes"]).lower()
 
 
 def test_coverage_gap_implemented_family(client: TestClient) -> None:
