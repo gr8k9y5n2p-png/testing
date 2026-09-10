@@ -86,11 +86,25 @@ This FastAPI service is **not** the Aftertax Next.js app on `main`. The existing
 
 1. [Render → New → Blueprint](https://dashboard.render.com/select-repo?type=blueprint) → this GitHub repo, this branch (`render.yaml`).
 2. Service name `aftertax-data-api`, health path `/health`.
-3. Blueprint attaches a 1 GB disk at `/var/data` (`plan: starter`) and sets
-   `DATABASE_URL=sqlite:////var/data/distributions.db` so the SQLite book
-   survives deploys. Free web services cannot attach a disk.
-4. Copy `https://aftertax-data-api.onrender.com` (or the URL Render prints).
-5. Verify `GET /health` 200 as above.
+3. Blueprint attaches a 1 GB disk at `/var/data` (`plan: starter`, 512 MB RAM)
+   and sets `DATABASE_URL=sqlite:////var/data/distributions.db` so the SQLite
+   book survives deploys. Free web services cannot attach a disk. Persistent
+   disk also **disables zero-downtime deploys** — the old process is gone
+   before the new one listens, so a blocking boot looks like 502s.
+4. Recommended env (Blueprint already sets these):
+   - `SEED_ON_START=true` — background seed; `/health` stays 200 (`health.seed`
+     is `running` then `complete`). Warm disk densifies deltas only (missing
+     families or changed fixture files). Does **not** wipe/rebuild the book
+     on every Manual Deploy.
+   - `SEED_FORCE_FULL=false` — set `true` only when you intentionally want
+     every family re-parsed from fixtures (CPU/RAM spike; can OOM starter).
+   - Memory: **starter (512 MB) is enough for delta boot**. A cold empty-disk
+     seed or `SEED_FORCE_FULL=true` parses ~12 MB / 400 fixture files in-process
+     and can exit 137 / 502. If that crash persists after the disk is warm,
+     upgrade to **Standard (2 GB)** — that is infra, not a missing code path.
+5. Copy `https://aftertax-data-api.onrender.com` (or the URL Render prints).
+6. Verify `GET /health` 200 and `GET /funds?q=AGTHX` 200 (even while
+   `health.seed` is `running` if the ticker is already on disk).
 
 **Website env** (project that serves `testing-seven-umber-19.vercel.app`):
 
@@ -104,9 +118,9 @@ CORS already allows `https://testing-seven-umber-19.vercel.app`, `http://localho
 
 ### Weekly refresh on the public API
 
-Fixture seed on boot (`SEED_ON_START=true`, also implied on Vercel) runs the **same full fixture ingest** as `POST /ingest/fetch {"fund_family":"all","mode":"fixture"}` — every registered family, including Dodge & Cox (`DODIX` / `DODGX`), Vanguard, Fidelity, MFS, First Eagle. Render Blueprint SQLite lives on `/var/data` (persistent disk); a thin American-Funds-only seed used to leave advisors without the book after each ephemeral-filesystem deploy.
+Fixture seed on boot (`SEED_ON_START=true`, also implied on Vercel) is **not** a wipe. Empty disk (or `SEED_FORCE_FULL=true`) runs the same fixture ingest as `POST /ingest/fetch {"fund_family":"all","mode":"fixture"}` — every registered family, including Dodge & Cox (`DODIX` / `DODGX`), Vanguard, Fidelity, MFS, First Eagle. When `/var/data/distributions.db` already has rows, boot records fixture fingerprints and **only ingests families with 0 rows or changed fixture files** (densify deltas). It does not invent amounts.
 
-The seed starts in a **background thread** after `init_db()` so `GET /health` stays 200 during ingest (`health.seed` is `running` then `complete`). Families commit one at a time; a mid-book failure does not roll back earlier families. Typical full fixture book is ~11k rows and finishes in tens of seconds. Manual ingest is no longer required after a cold start.
+The seed starts in a **background thread** after `init_db()` so `GET /health` is liveness: HTTP 200 as soon as uvicorn is listening (`health.seed` is `running` then `complete`; `health.status` stays `ok` even if SQLite is briefly busy). SQLite uses WAL so `/funds` can read the existing book mid-seed. Families commit one at a time; a mid-book failure does not roll back earlier families. A cold full book is ~11k rows. Manual ingest is not required after a cold start.
 
 ```bash
 python -m app.cli refresh --mode fixture   # same offline all-family ingest (foreground)
@@ -114,7 +128,7 @@ python -m app.cli refresh --mode fixture   # same offline all-family ingest (for
 python -m app.cli refresh                  # REFRESH_MODE=auto: live then fixture
 ```
 
-GitHub Action `.github/workflows/weekly-ingest.yml` (Monday 14:00 UTC + `workflow_dispatch`). For a durable book across restarts, set repo secret `DATABASE_URL` to the **same Postgres** the API uses (`postgresql+psycopg://…`) and install `psycopg[binary]`. Vercel `/tmp` SQLite is ephemeral. Render Blueprint uses `sqlite:////var/data/distributions.db` on a persistent disk (`plan: starter`) so the book survives deploys; `SEED_ON_START` still rebuilds from fixtures on boot.
+GitHub Action `.github/workflows/weekly-ingest.yml` (Monday 14:00 UTC + `workflow_dispatch`). For a durable book across restarts, set repo secret `DATABASE_URL` to the **same Postgres** the API uses (`postgresql+psycopg://…`) and install `psycopg[binary]`. Vercel `/tmp` SQLite is ephemeral. Render Blueprint uses `sqlite:////var/data/distributions.db` on a persistent disk (`plan: starter`) so the book survives deploys; `SEED_ON_START=true` densifies fixture deltas on boot and does not rebuild a warm disk.
 
 ## Example curl
 

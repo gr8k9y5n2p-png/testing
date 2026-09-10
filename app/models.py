@@ -182,6 +182,16 @@ class FundNavHistory(Base):
     )
 
 
+class SeedFamilyState(Base):
+    """Last fixture fingerprint applied per family. Used to skip full rebuilds."""
+
+    __tablename__ = "seed_family_state"
+
+    family_slug: Mapped[str] = mapped_column(String(128), primary_key=True)
+    fixture_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
 class IngestRun(Base):
     __tablename__ = "ingest_runs"
     __table_args__ = (Index("ix_ingest_family_started", "fund_family", "started_at"),)

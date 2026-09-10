@@ -1,6 +1,29 @@
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 from fastapi.testclient import TestClient
+from sqlalchemy import text
+from sqlalchemy.exc import OperationalError
+
+
+def _agthx_record() -> dict:
+    return {
+        "fund_family": "American Funds",
+        "fund_name": "The Growth Fund of America",
+        "ticker": "AGTHX",
+        "estimate_type": "long_term_capital_gains",
+        "amount": "2.12",
+        "amount_unit": "per_share",
+        "as_of": "2025-12-18",
+        "publication_stage": "final",
+    }
+
+
+def _reset_seed_state() -> None:
+    import app.main as main
+
+    main._seed_state.update({"status": "idle", "created": 0, "error": None})
 
 
 def test_health_stays_up_while_seed_running(client: TestClient, monkeypatch) -> None:
@@ -14,6 +37,133 @@ def test_health_stays_up_while_seed_running(client: TestClient, monkeypatch) -> 
     assert body["seed"] == "running"
 
 
+def test_health_ok_when_db_ping_busy(client: TestClient, monkeypatch) -> None:
+    import app.api as api
+    import app.main as main
+
+    monkeypatch.setattr(api, "ping_db", lambda: "busy: OperationalError")
+    monkeypatch.setitem(main._seed_state, "status", "running")
+    response = client.get("/health")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "ok"
+    assert body["db"].startswith("busy")
+    assert body["seed"] == "running"
+
+
+def test_funds_agthx_ok_while_seed_running(client: TestClient, monkeypatch) -> None:
+    import app.main as main
+
+    seeded = client.post("/ingest/distributions", json={"records": [_agthx_record()]})
+    assert seeded.status_code == 200, seeded.text
+    monkeypatch.setitem(main._seed_state, "status", "running")
+    response = client.get("/funds", params={"q": "AGTHX"})
+    assert response.status_code == 200
+    items = response.json()["items"]
+    assert len(items) == 1
+    assert items[0]["ticker"] == "AGTHX"
+
+
+def test_sqlite_file_uses_wal(engine) -> None:
+    with engine.connect() as conn:
+        mode = conn.execute(text("PRAGMA journal_mode")).scalar()
+    assert str(mode).lower() == "wal"
+
+
+def test_read_with_lock_retry_recovers_from_locked() -> None:
+    from app.db import read_with_lock_retry
+
+    calls = {"n": 0}
+
+    def op() -> str:
+        calls["n"] += 1
+        if calls["n"] < 3:
+            raise OperationalError("SELECT 1", {}, Exception("database is locked"))
+        return "ok"
+
+    assert read_with_lock_retry(op) == "ok"
+    assert calls["n"] == 3
+
+
+def test_fixture_fingerprint_is_stable() -> None:
+    from app.services.boot_seed import fixture_fingerprint
+
+    first = fixture_fingerprint("american_funds")
+    second = fixture_fingerprint("american_funds")
+    assert first
+    assert first == second
+    assert fixture_fingerprint("not_a_real_family_dir") == ""
+
+
+def test_warm_family_is_not_rebuilt(session) -> None:
+    from app.crud import upsert_records
+    from app.schemas import DistributionIn
+    from app.services.boot_seed import families_needing_seed
+    from app.sources.american_funds import AmericanFundsSource
+    from app.sources.third_tier import DodgeCoxSource
+
+    upsert_records(session, [DistributionIn(**_agthx_record())], scrub_stale_prelims=False)
+    session.commit()
+    needed, recorded_warm = families_needing_seed(
+        session,
+        sources=[AmericanFundsSource(), DodgeCoxSource()],
+    )
+    slugs = [source.slug for source in needed]
+    assert "american_funds" not in slugs
+    assert recorded_warm == 1
+    assert "dodge_cox" in slugs
+
+
+def test_changed_fingerprint_densifies_that_family(session) -> None:
+    from app.crud import upsert_records
+    from app.models import SeedFamilyState
+    from app.schemas import DistributionIn
+    from app.services.boot_seed import families_needing_seed, fixture_fingerprint
+    from app.sources.american_funds import AmericanFundsSource
+
+    upsert_records(session, [DistributionIn(**_agthx_record())], scrub_stale_prelims=False)
+    session.commit()
+    families_needing_seed(session, sources=[AmericanFundsSource()])
+    session.commit()
+    row = session.get(SeedFamilyState, "american_funds")
+    assert row is not None
+    assert row.fixture_fingerprint == fixture_fingerprint("american_funds")
+    row.fixture_fingerprint = "stale-fingerprint"
+    session.commit()
+    needed, _warm = families_needing_seed(session, sources=[AmericanFundsSource()])
+    assert [source.slug for source in needed] == ["american_funds"]
+
+
+def test_boot_seed_ingests_only_missing_family(client: TestClient, monkeypatch) -> None:
+    from app.services import boot_seed
+    from app.sources.american_funds import AmericanFundsSource
+    from app.sources.third_tier import DodgeCoxSource
+
+    _reset_seed_state()
+    seeded = client.post("/ingest/distributions", json={"records": [_agthx_record()]})
+    assert seeded.status_code == 200, seeded.text
+
+    called: list[str] = []
+
+    def fake_fetch(_session, slug: str, _mode, review_outliers=False):
+        called.append(slug)
+        return SimpleNamespace(created=0, updated=0)
+
+    monkeypatch.setattr("app.services.ingest.fetch_and_ingest", fake_fetch)
+    monkeypatch.setattr(boot_seed, "list_sources", lambda: [AmericanFundsSource(), DodgeCoxSource()])
+    monkeypatch.setattr(
+        "app.services.nav.refresh_navs",
+        lambda *_a, **_k: SimpleNamespace(created=0, updated=0, unknown=0),
+    )
+    monkeypatch.setattr("app.services.quality.flag_category_outliers", lambda *_a, **_k: 0)
+
+    from app.main import _seed_fixture_if_empty
+
+    _seed_fixture_if_empty()
+    assert called == ["dodge_cox"]
+    _reset_seed_state()
+
+
 def test_seed_on_start_loads_full_fixture_book(client: TestClient) -> None:
     from sqlalchemy import func, select
 
@@ -21,6 +171,7 @@ def test_seed_on_start_loads_full_fixture_book(client: TestClient) -> None:
     from app.main import _seed_fixture_if_empty
     from app.models import DistributionEstimate
 
+    _reset_seed_state()
     _seed_fixture_if_empty()
     assert app_db.SessionLocal is not None
     with app_db.SessionLocal() as session:
@@ -46,3 +197,4 @@ def test_seed_on_start_loads_full_fixture_book(client: TestClient) -> None:
     sgenx = client.get("/distributions", params={"fund_identifier": "SGENX", "page_size": 5})
     assert sgenx.status_code == 200
     assert sgenx.json()["total"] >= 1
+    _reset_seed_state()
