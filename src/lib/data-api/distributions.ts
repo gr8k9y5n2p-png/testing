@@ -1,5 +1,7 @@
 import { aggregateDistributions, type DataDistribution } from "@/data/aggregate-distributions";
-import { isUpcomingFund, utcTodayIso } from "@/data/distribution-bucket";
+import { chicagoTodayIso, isUpcomingFund } from "@/data/distribution-bucket";
+import { mapFundsApiItem, type FundsApiItem } from "@/data/funds-list";
+import { mergeFundWithDistributions } from "@/data/hydrate-funds";
 import { withPeerContext } from "@/data/queries";
 import type { FundEstimateView } from "@/data/types";
 import { looksLikeExactTicker, normalizeTickerSymbol } from "@/lib/data-api/request-ticker";
@@ -170,8 +172,53 @@ export async function loadDistributionsForFundPage(input: {
  * prelim/updated row the Data API exposes (`publication_stage` + still-future
  * `ex_date_from`). Never invent, never page through GET /funds identity.
  */
+async function loadFundIdentityByTicker(
+  ticker: string,
+): Promise<FundEstimateView | null> {
+  const params = new URLSearchParams();
+  params.set("q", ticker);
+  params.set("limit", "5");
+  params.set("offset", "0");
+  const response = await fetchDataApi(`/funds?${params.toString()}`);
+  if (!response.ok) return null;
+  const payload = (await response.json()) as { items?: FundsApiItem[] };
+  const items = Array.isArray(payload.items) ? payload.items : [];
+  const match = items.find(
+    (row) => (row.ticker ?? "").trim().toUpperCase() === ticker,
+  );
+  return match ? mapFundsApiItem(match) : null;
+}
+
+async function attachWeeklyNavFromFunds(
+  funds: FundEstimateView[],
+): Promise<FundEstimateView[]> {
+  const tickers = [
+    ...new Set(
+      funds
+        .map((fund) => fund.ticker.trim().toUpperCase())
+        .filter((ticker) => ticker && ticker !== "—"),
+    ),
+  ];
+  if (!tickers.length) return funds;
+  const identities = await mapPool(
+    tickers,
+    TICKER_FETCH_CONCURRENCY,
+    loadFundIdentityByTicker,
+  );
+  const byTicker = new Map<string, FundEstimateView>();
+  for (const ident of identities) {
+    if (!ident) continue;
+    const key = ident.ticker.trim().toUpperCase();
+    if (key) byTicker.set(key, ident);
+  }
+  return funds.map((fund) => {
+    const ident = byTicker.get(fund.ticker.trim().toUpperCase());
+    return ident ? mergeFundWithDistributions(ident, fund) : fund;
+  });
+}
+
 export async function loadUpcomingAnnouncedFromDataApi(
-  today = utcTodayIso(),
+  today = chicagoTodayIso(),
 ): Promise<FundEstimateView[]> {
   try {
     const rows = dedupeRows([
@@ -185,9 +232,10 @@ export async function loadUpcomingAnnouncedFromDataApi(
       })),
     ]);
     if (!rows.length) return [];
-    return withPeerContext(aggregateDistributions(rows, today)).filter((fund) =>
-      isUpcomingFund(fund, today),
+    const upcoming = withPeerContext(aggregateDistributions(rows, today)).filter(
+      (fund) => isUpcomingFund(fund, today),
     );
+    return attachWeeklyNavFromFunds(upcoming);
   } catch {
     return [];
   }

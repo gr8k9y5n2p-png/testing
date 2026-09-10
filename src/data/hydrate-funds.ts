@@ -1,5 +1,6 @@
 import {
   hasDisclosedUpcomingAmount,
+  isUpcomingFund,
   normalizePublicationStage,
   toPaidEvent,
   UPCOMING_STAGES,
@@ -193,8 +194,7 @@ export function mergeFundWithDistributions(
   // Upcoming comes from unpaid /distributions prelims only — not the
   // catalog `has_estimate` flag, paid/final YE, or $0 placeholders.
   // A stale `has_estimate: false` must not hide a still-future unpaid prelim.
-  const hasUpcoming =
-    fromDists.bucket === "upcoming" && hasDisclosedUpcomingAmount(fromDists);
+  const hasUpcoming = isUpcomingFund({ ...fromDists, hasEstimate: true });
   return {
     ...fund,
     cusip: fund.cusip || fromDists.cusip,
@@ -212,6 +212,7 @@ export function mergeFundWithDistributions(
       fund.navOnDistributionDaySource ??
       null,
     publishedPctOfNav: fromDists.publishedPctOfNav ?? fund.publishedPctOfNav ?? null,
+    estimateTypeLines: fromDists.estimateTypeLines ?? fund.estimateTypeLines,
     estimatedDistributionAmount: fromDists.estimatedDistributionAmount,
     estimatedOrdinaryIncome: fromDists.estimatedOrdinaryIncome,
     estimatedCapitalGains: fromDists.estimatedCapitalGains,

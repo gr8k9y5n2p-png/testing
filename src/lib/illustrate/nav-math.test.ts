@@ -218,6 +218,10 @@ describe("Search hydrate live NAV fields", () => {
     assert.match(results, /historicalPctOfNav/);
     assert.match(results, /usesDistributionDayNav/);
     assert.match(panel, /formatWeeklyNavLabel/);
+    assert.match(panel, /EstimateLeadCard/);
+    assert.match(panel, /Estimated \$ \/ share/);
+    assert.match(panel, /Distribution % of NAV/);
+    assert.match(panel, /Estimate types/);
     assert.match(panel, /mock \? seedNavLookup/);
     assert.match(fundsList, /nav_per_share/);
     assert.match(fundsList, /parsePositiveNav/);

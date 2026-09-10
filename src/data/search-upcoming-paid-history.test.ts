@@ -15,6 +15,7 @@ import {
   withPeerContext,
 } from "./queries.ts";
 import { isUpcomingFund } from "./distribution-bucket.ts";
+import { formatWeeklyNavLabel } from "../lib/illustrate/nav-math.ts";
 
 const TODAY = "2026-09-10";
 
@@ -202,6 +203,26 @@ describe("Search Upcoming still-future unpaid prelims", () => {
       fund.publishedPctOfNav != null && Math.abs(fund.publishedPctOfNav - 7.08) < 1e-6,
       "% NAV should keep the published 7.08 character",
     );
+    assert.ok(
+      (fund.estimateTypeLines ?? []).some(
+        (line) =>
+          line.estimateType === "short_term_capital_gains" && line.amount === 0,
+      ),
+      "STCG $0 still lists as an announced type",
+    );
+    const withWeeklyNav = mergeFundWithDistributions(
+      mapFundsApiItem({
+        ticker: "FBGRX",
+        fund_name: "Blue Chip Growth",
+        fund_family: "Fidelity",
+        has_estimate: true,
+        nav_per_share: "312.260010",
+        nav_as_of: "2026-09-08",
+      }),
+      fund,
+    );
+    assert.match(formatWeeklyNavLabel(withWeeklyNav), /\$312\.26/);
+    assert.match(formatWeeklyNavLabel(withWeeklyNav), /Sep 8, 2026/);
     assert.equal(isUpcomingFund(fund, TODAY), true);
     const { upcoming, paid } = splitFundsByBucket([fund]);
     assert.equal(upcoming.length, 1, "Upcoming must show FBGRX");
@@ -230,6 +251,7 @@ describe("Search Upcoming still-future unpaid prelims", () => {
       "FRIFX",
       "FVDFX",
     ];
+    const zeroCg = new Set(["FGMNX", "FIREX", "FRIFX"]);
     const upcomingFunds = unpaidTickers.map((ticker) =>
       hydrate(
         ticker,
@@ -243,7 +265,8 @@ describe("Search Upcoming still-future unpaid prelims", () => {
             fund_name: ticker,
             fund_family: "Fidelity",
             estimate_type: "long_term_capital_gains",
-            amount: ticker === "FBGRX" ? "21.021000" : "1.250000",
+            amount:
+              ticker === "FBGRX" ? "21.021000" : zeroCg.has(ticker) ? "0.000000" : "1.250000",
             amount_unit: "per_share",
             ex_date: "2026-09-11",
             payable_date: "2026-09-14",
@@ -286,6 +309,11 @@ describe("Search Upcoming still-future unpaid prelims", () => {
     const fbgrx = upcoming.find((fund) => fund.ticker === "FBGRX");
     assert.ok(fbgrx);
     assert.ok(Math.abs(fbgrx.estimatedDistributionAmount - 21.021) < 1e-6);
+    for (const ticker of zeroCg) {
+      const zero = upcoming.find((fund) => fund.ticker === ticker);
+      assert.ok(zero, `${ticker} $0 CG prelim must stay in Upcoming`);
+      assert.equal(zero.estimatedDistributionAmount, 0);
+    }
 
     const selected = buildSearchTableFunds(book, [fbgrx], {}, "FBGRX");
     const selectedSplit = splitFundsByBucket(selected);

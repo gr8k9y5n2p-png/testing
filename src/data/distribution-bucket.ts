@@ -34,6 +34,11 @@ export function utcTodayIso(now = new Date()): string {
   return now.toISOString().slice(0, 10);
 }
 
+/** Search Upcoming / Paid History cutover calendar (Eric: America/Chicago). */
+export function chicagoTodayIso(now = new Date()): string {
+  return now.toLocaleDateString("en-CA", { timeZone: "America/Chicago" });
+}
+
 export function isoDate(value: unknown): string | null {
   if (value == null || value === "") return null;
   const raw = String(value).trim();
@@ -55,12 +60,20 @@ export function eventDateOf(
  * Event date in the past. `as_of` is announcement for estimates and does not
  * make a preliminary/updated row paid. Past `final` rows fall back to `as_of`
  * when payable/ex/record are missing (year-end 2025 finals with only as_of).
+ * Unpaid prelims cut over on **ex_date** (not payable): once ex < today the
+ * row is Paid History even if payable is still ahead.
  */
 export function isPastDistribution(
   dates: DistributionDateFields,
-  today = utcTodayIso(),
+  today = chicagoTodayIso(),
 ): boolean {
   const stage = normalizePublicationStage(dates.publicationStage);
+  if (isUnpaidPrelimStage(stage)) {
+    const ex = isoDate(dates.exDate);
+    if (ex != null) return ex < today;
+    const cutoff = eventDateOf(dates);
+    return cutoff != null && cutoff < today;
+  }
   const cutoff =
     eventDateOf(dates) ?? (stage === "final" ? isoDate(dates.asOfDate) : null);
   return cutoff != null && cutoff < today;
@@ -74,7 +87,7 @@ export function isPastDistribution(
  */
 export function isStaleAnnouncedOnly(
   dates: DistributionDateFields,
-  today = utcTodayIso(),
+  today = chicagoTodayIso(),
 ): boolean {
   if (eventDateOf(dates)) return false;
   const announced = isoDate(dates.asOfDate);
@@ -107,7 +120,7 @@ function isUnpaidPrelimStage(stage: string | null): boolean {
  */
 export function distributionBucket(
   dates: DistributionDateFields,
-  today = utcTodayIso(),
+  today = chicagoTodayIso(),
 ): DistributionBucket {
   const stage = normalizePublicationStage(dates.publicationStage);
   if (
@@ -128,29 +141,37 @@ type UpcomingAmountFields = {
   estimatedCapitalGains?: number;
 };
 
-/**
- * True unpaid estimate dollars / % of NAV. `$0.00` catalog placeholders and
- * empty identity rows are undisclosed — never Upcoming.
- * Partial classifier rows with no amount fields still follow bucket + flag.
- */
-export function hasDisclosedUpcomingAmount(fund: UpcomingAmountFields): boolean {
-  const fields = [
+function upcomingAmountFields(fund: UpcomingAmountFields): Array<number | null | undefined> {
+  return [
     fund.estimatedDistributionAmount,
     fund.estimatedDistributionPctNav,
     fund.estimatedOrdinaryIncome,
     fund.estimatedCapitalGains,
   ];
+}
+
+export function hasPositiveUpcomingAmount(fund: UpcomingAmountFields): boolean {
+  return upcomingAmountFields(fund).some((value) => value != null && value > 0);
+}
+
+/**
+ * Manager-published Upcoming characters, including announced **$0**.
+ * Soft — / undisclosed only when every amount field is missing.
+ * Partial classifier rows with no amount fields still follow bucket + flag.
+ */
+export function hasDisclosedUpcomingAmount(fund: UpcomingAmountFields): boolean {
+  const fields = upcomingAmountFields(fund);
   if (fields.every((value) => value == null)) return true;
-  return fields.some((value) => value != null && value > 0);
+  return fields.some((value) => value != null);
 }
 
 /**
  * Universe Upcoming gate for Search Sample Estimates, Highlights, and badges.
- * A fund appears only with a true unpaid future announced distribution:
- * unpaid prelim/updated, not past record/ex/payable, and not a `$0` / empty
- * fake row. A past announcement of an unpaid estimate still qualifies when
- * dollars exist (sell-before-record). `has_estimate: false` is never Upcoming.
- * Never invent from paid/final history, catalog identity, or illustration math.
+ * A fund appears with a true unpaid future announced distribution:
+ * unpaid prelim/updated, ex_date still today-or-later (Chicago). Announced
+ * **$0** still qualifies when dated. `$0` + stale as_of-only leftovers stay
+ * out. `has_estimate: false` is never Upcoming. Never invent from paid/final
+ * history, catalog identity, or illustration math.
  */
 export function isUpcomingFund<
   T extends {
@@ -162,10 +183,23 @@ export function isUpcomingFund<
     payableDate?: string | null;
     publicationStage?: string | null;
   } & UpcomingAmountFields,
->(fund: T, today = utcTodayIso()): boolean {
+>(fund: T, today = chicagoTodayIso()): boolean {
   if (fund.hasEstimate === false) return false;
   if (fund.bucket !== "upcoming") return false;
   if (!hasDisclosedUpcomingAmount(fund)) return false;
+  const dates = {
+    asOfDate: fund.asOfDate,
+    recordDate: fund.recordDate,
+    exDate: fund.exDate,
+    payableDate: fund.payableDate,
+    publicationStage: fund.publicationStage,
+  };
+  if (
+    isStaleAnnouncedOnly(dates, today) &&
+    !hasPositiveUpcomingAmount(fund)
+  ) {
+    return false;
+  }
   if (
     fund.asOfDate != null ||
     fund.recordDate != null ||
@@ -173,18 +207,7 @@ export function isUpcomingFund<
     fund.payableDate != null ||
     fund.publicationStage != null
   ) {
-    return (
-      distributionBucket(
-        {
-          asOfDate: fund.asOfDate,
-          recordDate: fund.recordDate,
-          exDate: fund.exDate,
-          payableDate: fund.payableDate,
-          publicationStage: fund.publicationStage,
-        },
-        today,
-      ) === "upcoming"
-    );
+    return distributionBucket(dates, today) === "upcoming";
   }
   return true;
 }

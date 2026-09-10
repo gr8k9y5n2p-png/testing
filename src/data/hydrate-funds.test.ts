@@ -423,7 +423,8 @@ describe("Search hydrate from /distributions", () => {
         estimatedOrdinaryIncome: 0,
         estimatedCapitalGains: 0,
       }),
-      true,
+      false,
+      "published $0 stays visible — never soft-dash a manager zero",
     );
   });
 });

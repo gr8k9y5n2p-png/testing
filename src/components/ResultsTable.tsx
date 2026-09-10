@@ -82,6 +82,8 @@ export function ResultsTable({
   onSort,
   page,
   year,
+  years,
+  onYear,
   highlightedTicker,
 }: {
   funds: FundEstimateView[];
@@ -92,6 +94,8 @@ export function ResultsTable({
   page?: SamplePage;
   /** Paid history year toggle. Upcoming stays unpaid announced only. */
   year?: number;
+  years?: number[];
+  onYear?: (year: number) => void;
   /** Selected Search ticker — highlight only; does not filter Upcoming. */
   highlightedTicker?: string;
 }) {
@@ -169,6 +173,9 @@ export function ResultsTable({
         showPayable
         showHeading
         highlightedTicker={highlightedTicker}
+        year={year}
+        years={years}
+        onYear={onYear}
       />
     </div>
   );
@@ -191,6 +198,9 @@ function FundSection({
   page,
   showHeading = false,
   highlightedTicker,
+  year,
+  years,
+  onYear,
 }: {
   title: string;
   description: string;
@@ -208,6 +218,9 @@ function FundSection({
   page?: SamplePage;
   showHeading?: boolean;
   highlightedTicker?: string;
+  year?: number;
+  years?: number[];
+  onYear?: (year: number) => void;
 }) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const highlightKey = highlightedTicker?.trim().toUpperCase();
@@ -226,6 +239,28 @@ function FundSection({
           <div>
             <h3 className="font-serif text-xl tracking-tight text-ink">{title}</h3>
             <p className="mt-1 max-w-2xl text-sm text-muted">{description}</p>
+            {years && years.length > 0 && onYear ? (
+              <div
+                className="mt-2 flex flex-wrap items-center gap-1.5"
+                role="group"
+                aria-label="Paid History year"
+              >
+                {years.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => onYear(option)}
+                    className={`h-7 rounded-md border px-2 text-[11px] ${
+                      option === year
+                        ? "border-accent bg-accent-soft text-ink"
+                        : "border-line text-muted hover:text-ink"
+                    }`}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+            ) : null}
           </div>
         ) : (
           <p className="sr-only">{description}</p>

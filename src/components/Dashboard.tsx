@@ -285,6 +285,10 @@ export function Dashboard({
             sortDirection={sortDirection}
             onSort={toggleSort}
             year={filters.year ?? currentPaidHistoryYear()}
+            years={toolbarFacets.years}
+            onYear={(nextYear) =>
+              applyFilters({ ...filters, year: nextYear })
+            }
             highlightedTicker={scopedTicker}
             page={
               upcomingCount > FUND_PAGE_SIZE

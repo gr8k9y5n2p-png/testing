@@ -27,9 +27,11 @@ export {
   withPeerContext,
 } from "./queries";
 export {
+  chicagoTodayIso,
   distributionBucket,
   eventDateOf,
   hasDisclosedUpcomingAmount,
+  hasPositiveUpcomingAmount,
   isoDate,
   isPastDistribution,
   isStaleAnnouncedOnly,

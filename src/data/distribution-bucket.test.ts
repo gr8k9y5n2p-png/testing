@@ -121,7 +121,8 @@ test("$0 / empty fake upcoming rows are not Upcoming", () => {
       estimatedOrdinaryIncome: 0,
       estimatedCapitalGains: 0,
     }),
-    false,
+    true,
+    "published $0 is a real announced character",
   );
   assert.equal(
     isUpcomingFund({
@@ -132,6 +133,51 @@ test("$0 / empty fake upcoming rows are not Upcoming", () => {
       asOfDate: "2025-10-31",
       publicationStage: "updated_estimate",
     }),
+    false,
+    "stale as_of-only $0 leftovers stay out of Upcoming",
+  );
+  assert.equal(
+    isUpcomingFund(
+      {
+        bucket: "upcoming",
+        hasEstimate: true,
+        estimatedDistributionAmount: 0,
+        estimatedDistributionPctNav: 0,
+        estimatedOrdinaryIncome: 0,
+        estimatedCapitalGains: 0,
+        asOfDate: "2026-07-31",
+        exDate: "2026-09-11",
+        payableDate: "2026-09-14",
+        publicationStage: "preliminary_estimate",
+      },
+      TODAY,
+    ),
+    true,
+    "dated unpaid $0 CG prelims stay in Upcoming",
+  );
+});
+
+test("unpaid prelims cut over on ex_date, not payable", () => {
+  const dates = {
+    asOfDate: "2026-07-31",
+    exDate: "2026-09-11",
+    payableDate: "2026-09-14",
+    publicationStage: "preliminary_estimate",
+  };
+  assert.equal(isPastDistribution(dates, "2026-09-11"), false);
+  assert.equal(distributionBucket(dates, "2026-09-11"), "upcoming");
+  assert.equal(isPastDistribution(dates, "2026-09-12"), true);
+  assert.equal(distributionBucket(dates, "2026-09-12"), "paid");
+  assert.equal(
+    isUpcomingFund(
+      {
+        bucket: "upcoming",
+        hasEstimate: true,
+        estimatedDistributionAmount: 21.021,
+        ...dates,
+      },
+      "2026-09-12",
+    ),
     false,
   );
 });

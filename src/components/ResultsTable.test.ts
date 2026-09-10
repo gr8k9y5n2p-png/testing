@@ -54,6 +54,7 @@ describe("ResultsTable Search Paid history", () => {
     assert.match(fundSection, /<h3 className="font-serif text-xl tracking-tight text-ink">\{title\}<\/h3>/);
     assert.match(fundSection, /\{description\}/);
     assert.match(fundSection, /showHeading \? \(/);
+    assert.match(fundSection, /Paid History year/);
   });
 });
 

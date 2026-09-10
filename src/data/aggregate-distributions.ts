@@ -5,7 +5,7 @@ import {
   toPaidEvent,
 } from "./distribution-bucket.ts";
 import type { PaidDistributionEvent } from "./distribution-bucket.ts";
-import type { FundEstimate } from "./types.ts";
+import type { EstimateTypeLine, FundEstimate } from "./types.ts";
 
 export type DataDistribution = {
   id: string;
@@ -113,6 +113,24 @@ function isRollupTotal(type: string | null | undefined): boolean {
   return (type ?? "").trim().toLowerCase() === "total";
 }
 
+function estimateTypeLinesFromRows(rows: DataDistribution[]): EstimateTypeLine[] {
+  const lines: EstimateTypeLine[] = [];
+  const seen = new Set<string>();
+  for (const row of rows) {
+    const estimateType = (row.estimate_type ?? "").trim();
+    if (!estimateType || isRollupTotal(estimateType)) continue;
+    const key = `${estimateType}|${row.amount_unit}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    lines.push({
+      estimateType,
+      amount: midpoint(row),
+      amountUnit: row.amount_unit,
+    });
+  }
+  return lines;
+}
+
 function summarizeSnapshot(rows: DataDistribution[]): SnapshotTotals {
   let pctNav = 0;
   let publishedPctChars = 0;
@@ -201,6 +219,7 @@ function toFundEstimate(
     navOnDistributionDayAsOf: snapshot.navOnDistributionDayAsOf,
     navOnDistributionDaySource: snapshot.navOnDistributionDaySource,
     publishedPctOfNav: snapshot.publishedPct,
+    estimateTypeLines: estimateTypeLinesFromRows(snapshot.rows),
     estimatedDistributionAmount: snapshot.perShare,
     estimatedOrdinaryIncome: snapshot.ordinary,
     estimatedCapitalGains: snapshot.capGains,

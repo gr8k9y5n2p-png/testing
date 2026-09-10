@@ -39,6 +39,8 @@ describe("Search / Sample Estimates fund page", () => {
     assert.match(source, /ex_date_from/);
     assert.match(source, /preliminary_estimate/);
     assert.match(source, /updated_estimate/);
+    assert.match(source, /attachWeeklyNavFromFunds/);
+    assert.match(source, /nav_per_share|mapFundsApiItem/);
     assert.match(repo, /loadUpcomingAnnouncedFromDataApi/);
     assert.match(repo, /mergeFundLists\(upcoming/);
   });

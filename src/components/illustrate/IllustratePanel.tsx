@@ -9,7 +9,13 @@ import {
   navFromFundMetadata,
   perShareNavError,
 } from "@/lib/illustrate/compare-request";
-import { formatWeeklyNavLabel } from "@/lib/illustrate/nav-math";
+import { formatOptionalDate, formatUsd } from "@/lib/format";
+import {
+  formatSoftPct,
+  formatWeeklyNavLabel,
+  pctOfNavForFund,
+} from "@/lib/illustrate/nav-math";
+import { hideUpcomingAmounts } from "@/data/hydrate-funds";
 import { seedNavLookup } from "@/lib/illustrate/seed-nav";
 import { distributionIdsForFund } from "@/lib/illustrate/ids";
 import {
@@ -26,7 +32,6 @@ import {
   type IllustrateResponse,
   type TaxRates,
 } from "@/lib/illustrate/types";
-import { DistributionDateStrip } from "@/components/DistributionDateStrip";
 import { IllustrationResults } from "@/components/illustrate/IllustrationResults";
 import { PortfolioCoverageCard } from "@/components/illustrate/PortfolioCoverageCard";
 import { TaxRateFields } from "@/components/illustrate/TaxRateFields";
@@ -79,22 +84,7 @@ export function IllustratePanel({
         ) : null}
       </div>
 
-      {selected ? (
-        <div className="mb-5 rounded-md border border-line bg-paper px-4 py-3">
-          <p className="text-sm font-medium text-ink">
-            {selected.ticker} · {selected.fundName}
-          </p>
-          <DistributionDateStrip
-            fund={selected}
-            showPayable
-            showStage
-            className="mt-1.5"
-          />
-          <p className="mt-1.5 font-mono text-[11px] text-faint">
-            Weekly NAV {formatWeeklyNavLabel(selected)}
-          </p>
-        </div>
-      ) : null}
+      {selected ? <EstimateLeadCard fund={selected} /> : null}
 
       {selected ? (
         <IllustrationWorkspace key={selected.id} fund={selected} />
@@ -104,6 +94,73 @@ export function IllustratePanel({
         </div>
       )}
     </section>
+  );
+}
+
+const ESTIMATE_TYPE_LABELS: Record<string, string> = {
+  ordinary_income: "Ordinary income",
+  long_term_capital_gains: "Long-term capital gains",
+  short_term_capital_gains: "Short-term capital gains",
+  qualified_dividend: "Qualified dividends",
+  total_capital_gains: "Total capital gains",
+  special_dividend: "Special dividend",
+  return_of_capital: "Return of capital",
+};
+
+function EstimateLeadCard({ fund }: { fund: FundEstimateView }) {
+  const hideAmounts = hideUpcomingAmounts(fund);
+  const lines = fund.estimateTypeLines ?? [];
+  return (
+    <div className="mb-5 rounded-md border border-line bg-paper px-4 py-3">
+      <p className="text-sm font-medium text-ink">
+        {fund.ticker} · {fund.fundName}
+      </p>
+      <dl className="mt-3 grid gap-x-6 gap-y-2 sm:grid-cols-2">
+        <LeadField label="NAV" value={formatWeeklyNavLabel(fund)} />
+        <LeadField
+          label="Estimated $ / share"
+          value={
+            hideAmounts ? "—" : `${formatUsd(fund.estimatedDistributionAmount, 4)} / sh`
+          }
+        />
+        <LeadField
+          label="Distribution % of NAV"
+          value={hideAmounts ? "—" : formatSoftPct(pctOfNavForFund(fund))}
+        />
+        <LeadField
+          label="Estimate types"
+          value={
+            lines.length === 0
+              ? "—"
+              : lines
+                  .map((line) => {
+                    const name =
+                      ESTIMATE_TYPE_LABELS[line.estimateType] ?? line.estimateType;
+                    const amount =
+                      line.amountUnit === "percent_of_nav"
+                        ? formatSoftPct(line.amount)
+                        : `${formatUsd(line.amount, 4)} / sh`;
+                    return `${name} ${amount}`;
+                  })
+                  .join(" · ")
+          }
+        />
+        <LeadField label="Announced" value={formatOptionalDate(fund.asOfDate)} />
+        <LeadField label="Record" value={formatOptionalDate(fund.recordDate)} />
+        <LeadField label="Ex-date" value={formatOptionalDate(fund.exDate)} />
+      </dl>
+    </div>
+  );
+}
+
+function LeadField({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <dt className="text-[11px] font-semibold uppercase tracking-[0.12em] text-faint">
+        {label}
+      </dt>
+      <dd className="mt-0.5 font-mono text-sm text-ink">{value}</dd>
+    </div>
   );
 }
 
