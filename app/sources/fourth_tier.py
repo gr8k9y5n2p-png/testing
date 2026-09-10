@@ -83,7 +83,10 @@ class PrincipalSource(HtmlTableSource):
         "(2025-12-18 ST $0.0190 / LT $0.6384; 2024-12-19 ST $0.0584 / LT $0.3748; "
         "2023-12-20 LT $0.6387), and Blue Chip A PBLCX "
         "(2025-12-11 LT $8.3248; 2024-12-12 ST $0.0055 / LT $2.0527; no 2023 row). "
-        "Fixture transcribes those public December YE rows."
+        "Fixture transcribes those public December YE rows. Wave 4: PQIAX / "
+        "PEMGX / PLFPX / PBLCX / PLFIX product pages still truncate before "
+        "2021–2022 (PQIAX last printed CG is 2023 LT $0.2649; PEMGX last is "
+        "2023 LT $0.9475) — gaps, not invented."
     )
     live_limitations = (
         "Family estimate PDF is a GetFile/viewer shell. Product-page tables may put the date "
@@ -233,15 +236,20 @@ class MacquarieSource(HtmlTableSource):
         "non-US Macquarie trusts). Renamed Macquarie Funds on 12/31/2024. "
         "No public filled ICI. Public US retail 2025 estimate PDF "
         "https://mim.fgsfulfillment.com/download.aspx?sku=CGE-RET "
-        "is the full paying-fund book (WSTAX LT $10.051 / 15.05% of Class A NAV; "
-        "Class A tickers; no-pay list omitted). 2024 paid book "
+        "is the September estimate book (WSTAX LT $10.051 / 15.05% of Class A NAV; "
+        "Class A tickers; no-pay list omitted). 2025 paid book is the unversioned "
+        "SKU CGE-RET-ACT (CGE-RET-ACT-2025 404; Nomura-branded 2025 paid YE; "
+        "WSTAX LT $10.603; distinct from CGE-RET estimate). 2024 paid book "
         "https://mim.fgsfulfillment.com/download.aspx?sku=CGE-RET-ACT-2024 "
         "is the full paying-fund table (WSTAX ST $1.108 / LT $8.135; 16 Class A "
         "tickers; no-pay list omitted). 2023 paid book "
         "https://mim.fgsfulfillment.com/download.aspx?sku=CGE-RET-ACT-2023 "
         "is the full paying-fund table (WSTAX LT $5.331; 20 Class A tickers; "
-        "no-pay list omitted). Literature hub: "
-        "https://www.macquarie.com/mam/literature."
+        "no-pay list omitted). 2022 paid book "
+        "https://mim.fgsfulfillment.com/download.aspx?sku=CGE-RET-ACT-2022 "
+        "(WSTAX LT $12.373; December YE Class A; November munis omitted). "
+        "CGE-RET-ACT-2021 404 — overlapping Class A can reach 4y (2022–2025), "
+        "not 5y. Literature hub: https://www.macquarie.com/mam/literature."
     )
     live_limitations = "US estimate/paid books are fulfillment PDFs, not an HTML grid."
 
@@ -256,6 +264,12 @@ class MacquarieSource(HtmlTableSource):
                 empty_ok=True,
             ),
             PageSpec(
+                name="2025_paid_capital_gains",
+                url="https://mim.fgsfulfillment.com/download.aspx?sku=CGE-RET-ACT",
+                fixture="2025_paid_capital_gains.html",
+                live=False,
+            ),
+            PageSpec(
                 name="2024_paid_capital_gains",
                 url="https://mim.fgsfulfillment.com/download.aspx?sku=CGE-RET-ACT-2024",
                 fixture="2024_paid_capital_gains.html",
@@ -265,6 +279,12 @@ class MacquarieSource(HtmlTableSource):
                 name="2023_paid_capital_gains",
                 url="https://mim.fgsfulfillment.com/download.aspx?sku=CGE-RET-ACT-2023",
                 fixture="2023_paid_capital_gains.html",
+                live=False,
+            ),
+            PageSpec(
+                name="2022_paid_capital_gains",
+                url="https://mim.fgsfulfillment.com/download.aspx?sku=CGE-RET-ACT-2022",
+                fixture="2022_paid_capital_gains.html",
                 live=False,
             ),
         ]
