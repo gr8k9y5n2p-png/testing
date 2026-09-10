@@ -342,6 +342,16 @@ describe("Search Upcoming still-future unpaid prelims", () => {
       selectedSplit.upcoming.some((fund) => fund.ticker === "AGTHX"),
       false,
     );
+
+    const fromApiOnly = buildSearchTableFunds([], upcomingFunds, {});
+    assert.equal(
+      splitFundsByBucket(fromApiOnly).upcoming.length,
+      13,
+      "Upcoming stays nonempty when the SSR catalog is empty but /api/funds unpaid is present",
+    );
+    const fbgrxOnly = fromApiOnly.find((fund) => fund.ticker === "FBGRX");
+    assert.ok(fbgrxOnly);
+    assert.ok(Math.abs(fbgrxOnly.estimatedDistributionAmount - 21.021) < 1e-6);
   });
 
   it("does not invent Upcoming from AMCPX/CGHM midyear paids", () => {

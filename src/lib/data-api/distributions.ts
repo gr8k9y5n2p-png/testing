@@ -230,15 +230,24 @@ async function attachWeeklyNavFromFunds(
     const ticker = ident.ticker.trim().toUpperCase();
     if (ticker) byTicker.set(ticker, ident);
   }
-  const missing = tickers.filter((ticker) => !byTicker.has(ticker));
-  for (const ticker of missing) {
-    const ident = await loadFundIdentityByTicker(ticker);
-    if (ident) byTicker.set(ticker, ident);
-  }
   return funds.map((fund) => {
     const ident = byTicker.get(fund.ticker.trim().toUpperCase());
     return ident ? mergeFundWithDistributions(ident, fund) : fund;
   });
+}
+
+const NAV_ATTACH_BUDGET_MS = 2500;
+
+async function attachWeeklyNavBestEffort(
+  funds: FundEstimateView[],
+): Promise<FundEstimateView[]> {
+  if (!funds.length) return funds;
+  return Promise.race([
+    attachWeeklyNavFromFunds(funds),
+    new Promise<FundEstimateView[]>((resolve) => {
+      setTimeout(() => resolve(funds), NAV_ATTACH_BUDGET_MS);
+    }),
+  ]).catch(() => funds);
 }
 
 export async function loadUpcomingAnnouncedFromDataApi(
@@ -257,9 +266,11 @@ export async function loadUpcomingAnnouncedFromDataApi(
     ]);
     if (!rows.length) return [];
     const upcoming = withPeerContext(aggregateDistributions(rows, today)).filter(
-      (fund) => isUpcomingFund(fund, today),
+      (fund) => isUpcomingFund({ ...fund, hasEstimate: true }, today),
     );
-    return attachWeeklyNavFromFunds(upcoming);
+    // Weekly NAV is best-effort. Never drop unpaid announced because identity
+    // fan-out is slow or Render dropped GET /funds.
+    return attachWeeklyNavBestEffort(upcoming);
   } catch {
     return [];
   }

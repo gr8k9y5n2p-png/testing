@@ -28,12 +28,14 @@ async function fetchFundPage(query: {
   direction: SortDirection;
   limit: number;
   offset: number;
+  upcoming?: boolean;
 }): Promise<FundPageResult> {
   const params = new URLSearchParams();
   params.set("limit", String(query.limit));
   params.set("offset", String(query.offset));
   params.set("sort", query.sort);
   params.set("direction", query.direction);
+  if (query.upcoming) params.set("upcoming", "1");
   if (query.filters.query) params.set("q", query.filters.query);
   if (!query.filters.query && query.filters.family) {
     params.set("family", query.filters.family);

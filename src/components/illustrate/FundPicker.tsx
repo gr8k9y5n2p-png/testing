@@ -2,8 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { FundEstimateView } from "@/data/types";
-import { mergeFundLists } from "@/data/hydrate-funds";
-import { searchFunds, splitFundsByBucket } from "@/data/queries";
 import { COPY } from "@/lib/copy";
 import {
   looksLikeExactTicker,
@@ -12,6 +10,7 @@ import {
 import { usePortfolioMissRequest } from "@/lib/data-api/use-portfolio-miss";
 import { useSearchMissRequest } from "@/lib/data-api/use-search-miss";
 import { shouldClearFundPickerSelection } from "@/components/illustrate/fund-picker-clear";
+import { fundPickerMatches } from "@/data/fund-picker-matches";
 import { shouldOpenFundSuggestions } from "@/components/illustrate/fund-picker-suggestions";
 import { tickerSlotBorderClass } from "@/components/illustrate/ticker-slot-border";
 
@@ -73,14 +72,16 @@ export function FundPicker({
 
   useEffect(() => {
     const q = query.trim();
-    if (!reportSearchMiss || !q) {
-      setRemoteFunds([]);
-      setRemotePending(false);
-      return;
-    }
     let cancelled = false;
-    setRemotePending(true);
     const handle = window.setTimeout(() => {
+      if (!q) {
+        if (!cancelled) {
+          setRemoteFunds([]);
+          setRemotePending(false);
+        }
+        return;
+      }
+      if (!cancelled) setRemotePending(true);
       void fetchRemoteFunds(q)
         .then((items) => {
           if (!cancelled) setRemoteFunds(items);
@@ -91,19 +92,17 @@ export function FundPicker({
         .finally(() => {
           if (!cancelled) setRemotePending(false);
         });
-    }, REMOTE_SEARCH_DEBOUNCE_MS);
+    }, q ? REMOTE_SEARCH_DEBOUNCE_MS : 0);
     return () => {
       cancelled = true;
       window.clearTimeout(handle);
     };
-  }, [query, reportSearchMiss]);
+  }, [query]);
 
-  const matches = useMemo(() => {
-    if (!query.trim()) return [];
-    const found = mergeFundLists(searchFunds(funds, { query }), remoteFunds);
-    const { upcoming, paid } = splitFundsByBucket(found);
-    return [...upcoming, ...paid].slice(0, 8);
-  }, [funds, query, remoteFunds]);
+  const matches = useMemo(
+    () => fundPickerMatches(funds, remoteFunds, query),
+    [funds, query, remoteFunds],
+  );
 
   const tickerInUniverse = useMemo(() => {
     const key = query.trim().toUpperCase();
@@ -231,7 +230,9 @@ export function FundPicker({
       {open ? (
         <ul className="absolute z-20 mt-1 max-h-72 w-full overflow-auto rounded-md border border-line bg-surface shadow-lg">
           {matches.length === 0 ? (
-            <li className="px-3 py-3 text-sm text-muted">No funds match.</li>
+            <li className="px-3 py-3 text-sm text-muted">
+              {remotePending ? "Searching…" : "No funds match."}
+            </li>
           ) : (
             matches.map((fund) => (
               <li key={fund.id}>

@@ -16,7 +16,10 @@ import { withPeerContext } from "@/data/queries";
 import { collectTaxYearsFromFunds, mergeTaxYears, taxYearsFromPayload } from "@/data/tax-years";
 import type { FundEstimateView } from "@/data/types";
 import { isRemoteDataApi } from "@/lib/data-api/config";
-import { loadDistributionsForFundPage } from "@/lib/data-api/distributions";
+import {
+  loadDistributionsForFundPage,
+  loadUpcomingAnnouncedFromDataApi,
+} from "@/lib/data-api/distributions";
 import { fetchDataApi } from "@/lib/data-api/fetch";
 
 export { mapFundsApiItem, type FundsApiItem } from "@/data/funds-list";
@@ -57,6 +60,27 @@ export async function loadFundPageFromDataApi(
   query: FundPageQuery = {},
 ): Promise<FundPageResult | null> {
   if (!isRemoteDataApi()) return null;
+  if (query.upcoming) {
+    try {
+      const items = await loadUpcomingAnnouncedFromDataApi();
+      const limit = clampPageSize(query.limit);
+      return {
+        items,
+        total: items.length,
+        limit,
+        offset: 0,
+        years: collectTaxYearsFromFunds(items),
+      };
+    } catch {
+      return {
+        items: [],
+        total: 0,
+        limit: clampPageSize(query.limit),
+        offset: 0,
+        years: [],
+      };
+    }
+  }
   const params = fundPageSearchParams(query);
   try {
     const response = await fetchDataApi(`/funds?${params.toString()}`, {

@@ -21,7 +21,6 @@ import {
 } from "@/lib/data-api/distributions";
 import { isRemoteDataApi } from "@/lib/data-api/config";
 import { loadFundPageFromDataApi } from "@/lib/data-api/funds-page";
-import { mergeFundLists } from "./hydrate-funds";
 
 /**
  * In-memory repository over a fund list. Live Search / Sample Estimates
@@ -83,9 +82,11 @@ export function repositoryFromApiFunds(
  * Down, empty, or uncovered → empty list. Never merge or fall back to seed.ts.
  */
 export async function getDistributionRepository(): Promise<DistributionRepository> {
-  const [apiFunds, upcoming] = await Promise.all([
-    loadFundsFromDataApi(),
-    loadUpcomingAnnouncedFromDataApi(),
-  ]);
-  return repositoryFromApiFunds(mergeFundLists(upcoming, apiFunds ?? []));
+  // Search Upcoming is the unpaid announced set. Do not require the full
+  // /distributions dump — that fan-out empties homepage Search when it
+  // times out. Fall back to the dump only when unpaid is empty.
+  const upcoming = await loadUpcomingAnnouncedFromDataApi();
+  if (upcoming.length) return repositoryFromApiFunds(upcoming);
+  const apiFunds = await loadFundsFromDataApi();
+  return repositoryFromApiFunds(apiFunds ?? []);
 }
