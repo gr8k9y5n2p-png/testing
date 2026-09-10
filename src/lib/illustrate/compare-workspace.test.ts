@@ -312,6 +312,54 @@ describe("compare upcoming rows", () => {
     }
   });
 
+  it("moves catalog Upcoming to Paid History when ex-date has passed, including $0", () => {
+    const afterEx = upcomingRowForCompareTicker({
+      ticker: "ZEROX",
+      fund: view("ZEROX", {
+        estimatedDistributionAmount: 0,
+        estimatedOrdinaryIncome: 0,
+        estimatedCapitalGains: 0,
+        estimatedDistributionPctNav: 0,
+        hasEstimate: false,
+        bucket: "paid",
+        recordDate: "2026-09-01",
+        exDate: "2026-09-02",
+        payableDate: "2026-12-18",
+      }),
+      upcoming: {
+        dollars: 0,
+        announced: true,
+        asOf: "2026-08-12",
+        publicationStage: "preliminary_estimate",
+      },
+      index: 0,
+    });
+    assert.equal(afterEx.available, false);
+    assert.equal(afterEx.distributionPerShare, null);
+    assert.equal(afterEx.recordDate, null);
+
+    const beforeEx = upcomingRowForCompareTicker({
+      ticker: "ZEROX",
+      fund: view("ZEROX", {
+        estimatedDistributionAmount: 0,
+        estimatedOrdinaryIncome: 0,
+        estimatedCapitalGains: 0,
+        estimatedDistributionPctNav: 0,
+        hasEstimate: false,
+        bucket: "paid",
+        recordDate: "2026-09-01",
+        exDate: "2026-09-15",
+        payableDate: "2026-12-18",
+      }),
+      upcoming: { dollars: null, announced: false, asOf: null },
+      holdingDollars: 10_000,
+      index: 0,
+    });
+    assert.equal(beforeEx.available, true);
+    assert.equal(beforeEx.distributionPerShare, 0);
+    assert.equal(beforeEx.exDate, "2026-09-15");
+  });
+
   it("keeps unpaid manager-announced $0 after hydrate treats zeros as not Upcoming", () => {
     const row = upcomingRowForCompareTicker({
       ticker: "ZEROX",

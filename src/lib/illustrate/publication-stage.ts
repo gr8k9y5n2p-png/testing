@@ -83,13 +83,24 @@ export function eventDateOf(
 }
 
 /**
- * Data paid_history cutoff: record, else ex, else payable.
+ * Data paid_history sort key: record, else ex, else payable.
  * Null dates stay null — never invent a day.
  */
 export function paidHistoryDateOf(
   row: Pick<PortfolioDistributionRow, "record_date" | "ex_date" | "payable_date">,
 ): string | null {
   return isoDate(row.record_date) ?? isoDate(row.ex_date) ?? isoDate(row.payable_date);
+}
+
+/**
+ * Compare / Portfolio Upcoming → Paid History cutover: ex-date, else record,
+ * else payable. Unpaid announced moves as soon as ex-date passes — do not
+ * wait for payable. Null dates stay null — never invent a day.
+ */
+export function upcomingCutoverDateOf(
+  row: Pick<PortfolioDistributionRow, "ex_date" | "record_date" | "payable_date">,
+): string | null {
+  return isoDate(row.ex_date) ?? isoDate(row.record_date) ?? isoDate(row.payable_date);
 }
 
 export function normalizePublicationStage(
@@ -120,12 +131,13 @@ export function isPaidHistoryPublicationStage(
 }
 
 /**
- * Record (else ex, else payable) already past. as_of is announcement and
+ * Ex-date (else record, else payable) already past. as_of is announcement and
  * does not make a preliminary/updated row paid. Past `final` falls back to as_of.
+ * Do not wait for payable when ex-date has passed.
  */
 function isPastPaidEvent(row: PortfolioDistributionRow, today = utcToday()): boolean {
   const stage = normalizePublicationStage(row.publication_stage);
-  const event = paidHistoryDateOf(row);
+  const event = upcomingCutoverDateOf(row);
   const cutoff = event ?? (stage === "final" ? isoDate(row.as_of) : null);
   return cutoff != null && cutoff < today;
 }
@@ -133,10 +145,11 @@ function isPastPaidEvent(row: PortfolioDistributionRow, today = utcToday()): boo
 /**
  * Locked split vs Data `paid_history[]` / unpaid `upcoming`:
  * Upcoming = unpaid prelim/estimate only (not `final`).
- * If record (else ex, else payable) is already past, the row is Paid history
- * even when publication_stage is still preliminary_estimate / updated_estimate.
- * as_of is announcement only — never invent a day. Never invent Upcoming from
- * paid/final YE history or illustration / tax-on-holding math.
+ * If ex-date (else record, else payable) is already past, the row is Paid
+ * history even when publication_stage is still preliminary_estimate /
+ * updated_estimate. Do not wait for payable. as_of is announcement only —
+ * never invent a day. Never invent Upcoming from paid/final YE history or
+ * illustration / tax-on-holding math.
  */
 export function publicationBucket(
   row: PortfolioDistributionRow,

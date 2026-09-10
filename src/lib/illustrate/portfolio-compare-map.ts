@@ -28,6 +28,7 @@ export {
   normalizePublicationStage,
   PAID_HISTORY_CAP,
   paidHistoryDateOf,
+  upcomingCutoverDateOf,
   paidHistoryRowsForSide,
   pctOfNavFromDist,
   publicationBucket,

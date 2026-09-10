@@ -225,7 +225,9 @@ export function upcomingRowForCompareTicker(input: {
   const ticker = normalizeTicker(input.ticker) || input.ticker;
   const fund = input.fund ?? null;
   const catalogUpcoming = catalogIsUnpaidAnnounced(fund);
-  const announced = Boolean(input.upcoming?.announced);
+  // Live compare summary has no ex-date. Do not keep a row in Upcoming after
+  // catalog ex-date has passed (payable may still be ahead).
+  const announced = Boolean(input.upcoming?.announced) && !catalogExHasPassed(fund);
   const available = announced || catalogUpcoming;
   const holdingDollars =
     input.holdingDollars != null && input.holdingDollars > 0
@@ -292,20 +294,26 @@ export function upcomingRowForCompareTicker(input: {
  * announced zeros. Identity / paid / final / past-event rows still fail
  * `publicationBucket`. Undisclosed only when there is no unpaid publish.
  */
+function catalogDistributionRow(fund: FundEstimateView) {
+  return {
+    distribution_dollars: fund.estimatedDistributionAmount,
+    estimated_tax: null,
+    as_of: fund.asOfDate,
+    announced_date: fund.publishedAt,
+    record_date: fund.recordDate,
+    ex_date: fund.exDate,
+    payable_date: fund.payableDate,
+    publication_stage: fund.publicationStage,
+  };
+}
+
 function catalogIsUnpaidAnnounced(fund?: FundEstimateView | null): boolean {
   if (!fund) return false;
-  return (
-    publicationBucket(
-      {
-        distribution_dollars: fund.estimatedDistributionAmount,
-        estimated_tax: null,
-        as_of: fund.asOfDate,
-        announced_date: fund.publishedAt,
-        record_date: fund.recordDate,
-        ex_date: fund.exDate,
-        payable_date: fund.payableDate,
-        publication_stage: fund.publicationStage,
-      },
-    ) === "upcoming"
-  );
+  return publicationBucket(catalogDistributionRow(fund)) === "upcoming";
+}
+
+/** True when catalog dates say the unpaid announce already went ex. */
+function catalogExHasPassed(fund?: FundEstimateView | null): boolean {
+  if (!fund) return false;
+  return publicationBucket(catalogDistributionRow(fund)) === "paid_history";
 }
