@@ -233,3 +233,6 @@ as_of,fund_name,cusip,ticker,record_date,ex_dividend_date,payable_date,income_di
 2025-12-31,Vanguard Wellington U.S. Growth Active ETF,921938502,VUSG,12/23/2025,12/23/2025,12/26/2025,0.010700,,
 2025-12-31,Vanguard Wellington U.S. Value Active ETF,921938601,VUSV,12/23/2025,12/23/2025,12/26/2025,0.123600,,
 2025-12-31,Vanguard Core-Plus Bond Index ETF,921913869,BNDP,12/23/2025,12/23/2025,12/26/2025,0.183600,,
+2025-12-31,Vanguard Real Estate ETF,922908553,VNQ,12/22/2025,12/22/2025,12/24/2025,0.800500,,
+2025-12-31,Vanguard Total International Bond ETF,92203J407,BNDX,12/01/2025,12/01/2025,12/03/2025,0.104400,,
+2025-12-31,Vanguard Total International Bond ETF,92203J407,BNDX,12/18/2025,12/18/2025,12/22/2025,0.968600,,

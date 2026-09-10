@@ -21,8 +21,12 @@ class BlackRockSource(HtmlTableSource):
         "changing name-slug upsert keys (Equity Dividend Investor A MDDVX). "
         "Equity Dividend Investor A LT $1.089256 (2021) / $0.740291 (2022) / "
         "$0.481929 (2023) / $0.728360 (2024) / $0.999925 (2025). "
-        "iShares 2023–2024 tax kits remain 1099-style PDFs, not an ETF HTML CG grid. "
-        "No public ICI Primary Layout download was found on the iShares tax library."
+        "iShares official December YE income books are the stamped distribution-summary "
+        "PDFs on the tax library (2025–2021), transcribed as ICI Primary CSVs "
+        "(December / early-January YE payable only; first printed $/share = ordinary "
+        "income; ST/LT left blank unless a later wave parses those columns). "
+        "IVV Dec 2025 $2.413592; IWM $0.842454; AGG $0.326375 + $0.334012; "
+        "ITOT $0.486672. Never invent missing years or $0."
     )
     live_limitations = (
         "Live HTML on ishares.com/us/capital-gains-distributions is supported. "
@@ -32,6 +36,7 @@ class BlackRockSource(HtmlTableSource):
 
     def pages(self) -> list[PageSpec]:
         tax = "https://www.blackrock.com/us/individual/resources/tax-information"
+        ishares_tax = "https://www.ishares.com/us/literature/tax-information"
         return [
             PageSpec(
                 name="ishares_us_capital_gains",
@@ -40,6 +45,46 @@ class BlackRockSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
+            ),
+            PageSpec(
+                name="ici_primary_2025",
+                url=f"{ishares_tax}/2025-ishares-distribution-summary-stamped.pdf",
+                fixture="ici_primary_2025.csv",
+                live=False,
+                parser="ici",
+                large_aum_only=False,
+            ),
+            PageSpec(
+                name="ici_primary_2024",
+                url=f"{ishares_tax}/2024-ishares-etf-distribution-summary-stamped-extended.pdf",
+                fixture="ici_primary_2024.csv",
+                live=False,
+                parser="ici",
+                large_aum_only=False,
+            ),
+            PageSpec(
+                name="ici_primary_2023",
+                url=f"{ishares_tax}/2023-ishares-distribution-summary-stamped.pdf",
+                fixture="ici_primary_2023.csv",
+                live=False,
+                parser="ici",
+                large_aum_only=False,
+            ),
+            PageSpec(
+                name="ici_primary_2022",
+                url=f"{ishares_tax}/2022-ishares-distribution-summary-stamped.pdf",
+                fixture="ici_primary_2022.csv",
+                live=False,
+                parser="ici",
+                large_aum_only=False,
+            ),
+            PageSpec(
+                name="ici_primary_2021",
+                url=f"{ishares_tax}/2021-ishares-distribution-summary.pdf",
+                fixture="ici_primary_2021.csv",
+                live=False,
+                parser="ici",
+                large_aum_only=False,
             ),
             PageSpec(
                 name="2025_open_end_distributions",
@@ -91,6 +136,9 @@ class VanguardSource(HtmlTableSource):
         "layout: income / ST / LT at tokens 4 / 5 / 12). 2025 omits "
         "VFIAX / VBIAX / VIGAX so the YE HTML fixture is not double-counted. "
         "2024 includes those three. Quarterly ICI lines are not stored. "
+        "Wave mega-ETF densify appends official December YE ETF rows that were "
+        "thin in the earlier Admiral-heavy extract: VNQ Dec 2025 income $0.800500; "
+        "BNDX Dec 2025 monthly $0.104400 + YE $0.968600 (CUSIPs 922908553 / 92203J407). "
         "Tax center hub: https://advisors.vanguard.com/tax-center."
     )
     live_limitations = (
@@ -256,7 +304,11 @@ class StateStreetSource(HtmlTableSource):
         "Official paid history is the public XLSX "
         "https://www.ssga.com/library-content/products/fund-data/etfs/us/spdr-etf-historical-distributions.xlsx "
         "(verified 2026-09-08; 2021–2025 December / annual rows that publish a ST or LT "
-        "cell, including official $0.000000). SPLG was renamed SPYM on 10/31/2025."
+        "cell, including official $0.000000). SPLG was renamed SPYM on 10/31/2025. "
+        "GLD is absent from the XLSX (grantor trust). Official FAQ "
+        "https://www.ssga.com/library-content/products/fund-docs/etfs/us/tax-documents/gld-faq.pdf "
+        "states the trust makes no distributions — 2025 published $0.000000 stored, "
+        "not invented."
     )
     live_limitations = (
         "SSGA estimate tables are client-rendered Angular. Historical XLSX is public but "
@@ -449,7 +501,13 @@ class InvescoSource(HtmlTableSource):
         "(Daily and $0 omitted; bare QDI / 199A / AMT % columns omitted). "
         "VAFAX Dec 2025 LT $4.0375 / 2024 LT $1.0971. SteelPath companions had "
         "no December YE $/share rows — not invented. 2021–2022 sibling XLSX "
-        "URLs 404 — unmatched / Undisclosed."
+        "URLs 404 — unmatched / Undisclosed. "
+        "QQQ (UIT through 12/19/2025) is absent from the open-end ICI broker files. "
+        "Official Invesco QQQ Trust financial highlights (N-30B-2 / HK annual report) "
+        "publish fiscal-year ordinary-income per share for years ended September 30: "
+        "2025 $2.84 / 2024 $3.04 / 2023 $2.17 / 2022 $1.97 / 2021 $1.77. "
+        "Those are full-year paid totals, not a single December payable. "
+        "Individual quarterly YE $/share US notices were not column-safe this wave."
     )
     live_limitations = (
         "Estimates are PDF/PR/contentdetail, not an HTML grid. ICI Primary XLSX "
@@ -509,6 +567,12 @@ class InvescoSource(HtmlTableSource):
                 fixture="ici_primary_2023.csv",
                 live=False,
                 parser="ici",
+            ),
+            PageSpec(
+                name="qqq_annual_report_distributions",
+                url="https://www.invesco.com/content/dam/invesco/hk/en/pdf/annual-report/Invesco_QQQ_AnnualReport.pdf",
+                fixture="qqq_annual_report_distributions.html",
+                live=False,
             ),
         ]
 

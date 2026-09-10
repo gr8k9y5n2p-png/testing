@@ -126,6 +126,7 @@ from app.sources.tenth_tier import (
 )
 from app.sources.dws import DwsSource
 from app.sources.catalyst import CatalystSource
+from app.sources.ark import ArkSource
 from app.sources.eleventh_tier import (
     AmgSource,
     ConestogaSource,
@@ -297,6 +298,10 @@ _ALIASES = {
     "catalyst_mutual_funds": "catalyst",
     "catalyst_mf": "catalyst",
     "catalyst_millburn": "catalyst",
+    "ark": "ark",
+    "ark_invest": "ark",
+    "ark_funds": "ark",
+    "arkinvest": "ark",
     "aqr": "aqr",
     "causeway": "causeway",
     "alger": "alger",
@@ -467,6 +472,7 @@ def _sources() -> dict[str, FundSource]:
         FirstTrustSource(),
         DwsSource(),
         CatalystSource(),
+        ArkSource(),
         AqrSource(),
         CausewaySource(),
         AlgerSource(),
@@ -535,7 +541,7 @@ def list_sources() -> list[FundSource]:
 
 @lru_cache(maxsize=1)
 def registered_family_slugs() -> tuple[str, ...]:
-    """Stable slug list for /health. Avoids reconstructing 113 sources per probe."""
+    """Stable slug list for /health. Avoids reconstructing 114 sources per probe."""
     return tuple(source.slug for source in list_sources())
 
 

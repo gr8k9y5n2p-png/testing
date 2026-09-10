@@ -22,6 +22,7 @@ from app.sources.next_tier import (
     NorthernTrustSource,
     SchwabSource,
 )
+from app.sources.ark import ArkSource
 from app.sources.eleventh_tier import AmgSource, GuidestoneSource
 from app.sources.eighth_tier import BairdSource, BuffaloSource, GqgSource, HeartlandSource, LongleafSource
 from app.sources.fifth_tier import (
@@ -91,8 +92,9 @@ def test_full_book_ishares_fidelity_trp() -> None:
     ishares_funds, ishares_tickers = _funds_and_tickers(BlackRockSource())
     assert "BDVL" in ishares_tickers
     assert {"MDDVX", "LIRAX", "BSPAX", "BAGPX", "BMSAX", "BACAX", "MDGCX"} <= ishares_tickers
-    assert len(ishares_tickers) >= 40
-    assert len(ishares_funds) >= 50
+    assert {"IVV", "IWM", "EFA", "AGG", "ACWX", "IEMG", "IEFA", "ITOT", "TLT", "LQD", "HYG"} <= ishares_tickers
+    assert len(ishares_tickers) >= 350
+    assert len(ishares_funds) >= 350
     assert not any(re.search(r"\bSMA\b", name, re.I) for name in ishares_funds)
 
     fidelity_funds, fidelity_tickers = _funds_and_tickers(FidelitySource())
@@ -112,7 +114,7 @@ def test_full_book_american_funds_invesco_dimensional() -> None:
     assert len(af_funds) >= 45
 
     inv_funds, inv_tickers = _funds_and_tickers(InvescoSource())
-    assert {"VAFAX", "ACSTX", "CHTRX", "OPOCX"} <= inv_tickers
+    assert {"VAFAX", "ACSTX", "CHTRX", "OPOCX", "QQQ"} <= inv_tickers
     assert len(inv_funds) >= 50
     assert len(inv_tickers) >= 500
     assert not any(re.search(r"\bSMA\b", name, re.I) for name in inv_funds)
@@ -128,7 +130,7 @@ def test_full_book_american_funds_invesco_dimensional() -> None:
 
 def test_full_book_vanguard_ici_and_next_wave() -> None:
     vg_funds, vg_tickers = _funds_and_tickers(VanguardSource())
-    assert {"VFIAX", "VTSAX", "VOO", "VFINX"} <= vg_tickers
+    assert {"VFIAX", "VTSAX", "VOO", "VFINX", "VNQ", "BNDX"} <= vg_tickers
     assert len(vg_tickers) >= 250
 
     bny_funds, bny_tickers = _funds_and_tickers(BnyMellonSource())
@@ -230,12 +232,12 @@ def test_full_book_jh_hartford_macquarie_msim() -> None:
 
 def test_full_book_artisan_ici_and_first_eagle() -> None:
     ssga_funds, ssga_tickers = _funds_and_tickers(StateStreetSource())
-    assert {"SPY", "SPYM", "ALLW", "DIA"} <= ssga_tickers
+    assert {"SPY", "SPYM", "ALLW", "DIA", "GLD"} <= ssga_tickers
     assert len(ssga_tickers) >= 160
     assert len(ssga_funds) >= 160
 
     schwab_funds, schwab_tickers = _funds_and_tickers(SchwabSource())
-    assert {"SWTSX", "SWPPX", "SWANX", "SWSSX", "SWISX", "SWLGX"} <= schwab_tickers
+    assert {"SWTSX", "SWPPX", "SWANX", "SWSSX", "SWISX", "SWLGX", "SCHD", "SCHX", "SCHB", "SCHF", "SCHG"} <= schwab_tickers
     assert len(schwab_tickers) >= 70
     assert len(schwab_funds) >= 70
 
@@ -460,3 +462,10 @@ def test_full_book_amundi_pioneer_included() -> None:
     assert len(tickers) >= 60
     assert len(funds) >= 60
     assert not any(re.search(r"\bInterval\b", name, re.I) for name in funds)
+
+
+def test_full_book_ark_2021_final() -> None:
+    funds, tickers = _funds_and_tickers(ArkSource())
+    assert {"ARKK", "ARKQ", "ARKW", "ARKG"} <= tickers
+    assert "ARKF" not in tickers
+    assert len(tickers) >= 6

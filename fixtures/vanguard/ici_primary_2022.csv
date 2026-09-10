@@ -225,3 +225,6 @@ as_of,fund_name,cusip,ticker,record_date,ex_dividend_date,payable_date,income_di
 2022-12-31,Vanguard ESG US Corporate Bond ETF,921910691,VCEB,12/27/2022,12/23/2022,12/29/2022,0.179100,,
 2022-12-31,Vanguard Advice Select Dividend Growth Fund Admiral Shares,921946752,VADGX,12/16/2022,12/19/2022,12/20/2022,0.133100,0.009454,
 2022-12-31,Vanguard Advice Select Global Value Fund Admiral Shares,921946778,VAGVX,12/16/2022,12/19/2022,12/20/2022,0.138600,0.011689,
+2022-12-31,Vanguard Real Estate ETF,922908553,VNQ,12/23/2022,12/22/2022,12/28/2022,1.163500,,
+2022-12-31,Vanguard Total International Bond ETF,92203J407,BNDX,12/02/2022,12/01/2022,12/06/2022,0.059800,,
+2022-12-31,Vanguard Total International Bond ETF,92203J407,BNDX,12/27/2022,12/23/2022,12/29/2022,0.215300,,

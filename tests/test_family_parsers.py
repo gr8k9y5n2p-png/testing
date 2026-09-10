@@ -5,6 +5,7 @@ from decimal import Decimal
 from pathlib import Path
 
 from app.models import AmountUnit, EstimateType, PublicationStage
+from app.sources.ark import ArkSource
 from app.sources.families import (
     BlackRockSource,
     FidelitySource,
@@ -286,6 +287,24 @@ def test_blackrock_ishares_fixture() -> None:
     assert str(equity_div_2021.as_of) == "2021-12-31"
     assert not any("SMA" in (r.fund_name or "") for r in oef_2022 + oef_2021)
 
+    ishares_ici = parse_ici_primary(
+        (ROOT / "blackrock" / "ici_primary_2025.csv").read_text(encoding="utf-8"),
+        source_url="fixture://ishares-ici-2025",
+        fund_family="BlackRock / iShares",
+    )
+    ivv_ici = next(
+        r
+        for r in ishares_ici
+        if r.ticker == "IVV" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert ivv_ici.amount == Decimal("2.413592")
+    itot_ici = next(
+        r
+        for r in ishares_ici
+        if r.ticker == "ITOT" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert itot_ici.amount == Decimal("0.486672")
+
 
 def test_vanguard_fixture() -> None:
     html = (ROOT / "vanguard" / "year_end_distributions.html").read_text(encoding="utf-8")
@@ -356,6 +375,12 @@ def test_state_street_invesco_jpm_gs_pimco_fixtures() -> None:
     )
     assert allw_lt.amount == Decimal("0.172577")
     assert "SPYM" in {r.ticker for r in ssga_paid}
+    gld = next(
+        r
+        for r in ssga_paid
+        if r.ticker == "GLD" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert gld.amount == Decimal("0.000000")
 
     invesco = parse_distribution_html(
         (ROOT / "invesco" / "2025_estimated_capital_gains.html").read_text(encoding="utf-8"),
@@ -370,6 +395,21 @@ def test_state_street_invesco_jpm_gs_pimco_fixtures() -> None:
     assert franchise.amount == Decimal("2.89")
     pin = next(r for r in invesco if r.ticker == "PIN" and r.estimate_type == EstimateType.long_term_capital_gains)
     assert pin.amount == Decimal("1.68")
+
+    qqq = parse_distribution_html(
+        (ROOT / "invesco" / "qqq_annual_report_distributions.html").read_text(encoding="utf-8"),
+        source_url="https://www.invesco.com/content/dam/invesco/hk/en/pdf/annual-report/Invesco_QQQ_AnnualReport.pdf",
+        fund_family="Invesco",
+    )
+    qqq_2025 = next(
+        r
+        for r in qqq
+        if r.ticker == "QQQ"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.amount == Decimal("2.84")
+    )
+    assert str(qqq_2025.as_of) == "2025-09-30"
+    assert {r.as_of.year for r in qqq if r.as_of} == {2021, 2022, 2023, 2024, 2025}
 
     jpm = parse_distribution_html(
         (ROOT / "jpmorgan" / "section_19a_sample.html").read_text(encoding="utf-8"),
@@ -521,6 +561,7 @@ def test_adapters_fetch_fixture_mode() -> None:
         TimothyPlanSource(),
         HodgesSource(),
         TocquevilleSource(),
+        ArkSource(),
     ]
     for source in sources:
         result = source.fetch(mode="fixture")
@@ -931,6 +972,21 @@ def test_next_tier_fixtures() -> None:
     )
     assert swssx_2025.amount == Decimal("0.5123")
     assert len({r.ticker for r in schwab_2025 if r.ticker}) >= 70
+
+    schwab_etf = parse_distribution_html(
+        (ROOT / "schwab" / "etf_product_page_distributions.html").read_text(encoding="utf-8"),
+        source_url="https://www.schwabassetmanagement.com/products/schd",
+        fund_family="Charles Schwab Investment Management",
+    )
+    schd_2025 = next(
+        r
+        for r in schwab_etf
+        if r.ticker == "SCHD"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.amount == Decimal("0.2782")
+    )
+    assert str(schd_2025.ex_date) == "2025-12-10"
+    assert {"SCHD", "SCHX", "SCHB", "SCHF", "SCHG"} <= {r.ticker for r in schwab_etf}
 
     dfa_2024 = parse_distribution_html(
         (ROOT / "dimensional" / "2024_capital_gain_distributions.html").read_text(encoding="utf-8"),

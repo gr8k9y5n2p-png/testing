@@ -231,3 +231,6 @@ as_of,fund_name,cusip,ticker,record_date,ex_dividend_date,payable_date,income_di
 2024-12-31,Vanguard California Tax-Exempt Bond ETF,922021605,VTEC,12/2/2024,12/2/2024,12/4/2024,,,
 2024-12-31,Vanguard Short Duration Tax-Exempt Bond ETF,922907696,VSDM,12/24/2024,12/24/2024,12/27/2024,,,
 2024-12-31,Vanguard Core Tax-Exempt Bond ETF,922907712,VCRM,12/24/2024,12/24/2024,12/27/2024,,,
+2024-12-31,Vanguard Real Estate ETF,922908553,VNQ,12/23/2024,12/23/2024,12/26/2024,0.855500,,
+2024-12-31,Vanguard Total International Bond ETF,92203J407,BNDX,12/02/2024,12/02/2024,12/04/2024,0.098200,,
+2024-12-31,Vanguard Total International Bond ETF,92203J407,BNDX,12/24/2024,12/24/2024,12/27/2024,1.013900,,

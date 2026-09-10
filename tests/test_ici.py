@@ -18,6 +18,15 @@ def test_large_aum_allowlist_covers_heroes() -> None:
         "VFIAX",
         "VBIAX",
         "VIGAX",
+        "QQQ",
+        "IVV",
+        "IWM",
+        "AGG",
+        "SCHD",
+        "ARKK",
+        "GLD",
+        "VNQ",
+        "BNDX",
         "VTSAX",
         "VTIAX",
         "VOO",
@@ -148,7 +157,17 @@ def test_parse_ici_primary_2021_and_2025_ongoing() -> None:
     )
     assert voo.amount == Decimal("1.771000")
     assert len({r.ticker for r in y2025}) >= 200
-    assert {"VTSAX", "VOO", "VWENX", "VPMAX", "VFINX"} <= {r.ticker for r in y2025}
+    assert {"VTSAX", "VOO", "VWENX", "VPMAX", "VFINX", "VNQ", "BNDX"} <= {r.ticker for r in y2025}
+    vnq = next(r for r in y2025 if r.ticker == "VNQ" and r.estimate_type == EstimateType.ordinary_income)
+    assert vnq.amount == Decimal("0.800500")
+    bndx_ye = next(
+        r
+        for r in y2025
+        if r.ticker == "BNDX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.amount == Decimal("0.968600")
+    )
+    assert str(bndx_ye.ex_date) == "2025-12-18"
 
     y2023 = parse_ici_primary(
         (VG / "ici_primary_2023.csv").read_text(encoding="utf-8"),
@@ -232,3 +251,35 @@ def test_invesco_ici_primary_december_2023_2025() -> None:
     assert all(r.amount_unit == AmountUnit.per_share for r in y2025 + y2024 + y2023)
     assert all(r.amount is not None and r.amount != Decimal("0") for r in y2025 + y2024 + y2023)
     assert not any(r.ticker and r.ticker.startswith("ZZ") for r in y2025)
+
+
+def test_ishares_ici_primary_december_mega_etfs() -> None:
+    br = Path(__file__).resolve().parents[1] / "fixtures" / "blackrock"
+    y2025 = parse_ici_primary(
+        (br / "ici_primary_2025.csv").read_text(encoding="utf-8"),
+        source_url="https://www.ishares.com/us/literature/tax-information/2025-ishares-distribution-summary-stamped.pdf",
+        fund_family="BlackRock / iShares",
+    )
+    y2024 = parse_ici_primary(
+        (br / "ici_primary_2024.csv").read_text(encoding="utf-8"),
+        source_url="https://www.ishares.com/us/literature/tax-information/2024-ishares-etf-distribution-summary-stamped-extended.pdf",
+        fund_family="BlackRock / iShares",
+    )
+    mega = {"IVV", "IWM", "EFA", "AGG", "ACWX", "IEMG", "IEFA", "ITOT", "TLT", "LQD", "HYG"}
+    assert mega <= {r.ticker for r in y2025}
+    assert mega <= {r.ticker for r in y2024}
+    ivv = next(
+        r for r in y2025 if r.ticker == "IVV" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert ivv.amount == Decimal("2.413592")
+    assert str(ivv.ex_date) == "2025-12-16"
+    agg_ye = next(
+        r
+        for r in y2025
+        if r.ticker == "AGG"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.amount == Decimal("0.334012")
+    )
+    assert str(agg_ye.payable_date) == "2025-12-24"
+    assert len({r.ticker for r in y2025}) >= 350
+    assert all(r.amount != Decimal("0") for r in y2025)
