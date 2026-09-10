@@ -3422,6 +3422,76 @@ def test_ninth_tier_fixtures() -> None:
     assert aadex.amount == Decimal("2.3846")
     assert {r.ticker for r in beacon if r.ticker} >= {"AADEX", "SFMIX", "ABCIX", "AVFIX"}
 
+    beacon_2021 = parse_distribution_html(
+        (ROOT / "american_beacon" / "2021_annual_ordinary_income_and_capital_gains.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://american_beacon/2021",
+        fund_family="American Beacon",
+    )
+    aadex_2021 = next(
+        r
+        for r in beacon_2021
+        if r.ticker == "AADEX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert aadex_2021.amount == Decimal("2.2327")
+    assert aadex_2021.publication_stage == PublicationStage.final
+    assert aadex_2021.as_of == date(2021, 12, 23)
+    assert not any(
+        r.ticker == "AADEX" and r.estimate_type == EstimateType.long_term_capital_gains
+        and r.amount == Decimal("0")
+        for r in beacon_2021
+    )
+
+    beacon_2022 = parse_distribution_html(
+        (ROOT / "american_beacon" / "2022_annual_ordinary_income_and_capital_gains.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://american_beacon/2022",
+        fund_family="American Beacon",
+    )
+    aadex_2022_st = next(
+        r
+        for r in beacon_2022
+        if r.ticker == "AADEX" and r.estimate_type == EstimateType.short_term_capital_gains
+    )
+    assert aadex_2022_st.amount == Decimal("0.0001")
+    aadex_2022_lt = next(
+        r
+        for r in beacon_2022
+        if r.ticker == "AADEX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert aadex_2022_lt.amount == Decimal("2.3936")
+
+    beacon_2023 = parse_distribution_html(
+        (ROOT / "american_beacon" / "2023_annual_ordinary_income_and_capital_gains.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://american_beacon/2023",
+        fund_family="American Beacon",
+    )
+    aadex_2023 = next(
+        r
+        for r in beacon_2023
+        if r.ticker == "AADEX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert aadex_2023.amount == Decimal("0.8312")
+    assert not any(r.ticker == "SFMIX" for r in beacon_2023)
+
+    beacon_2024 = parse_distribution_html(
+        (ROOT / "american_beacon" / "2024_annual_ordinary_income_and_capital_gains.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://american_beacon/2024",
+        fund_family="American Beacon",
+    )
+    aadex_2024 = next(
+        r
+        for r in beacon_2024
+        if r.ticker == "AADEX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert aadex_2024.amount == Decimal("2.5614")
+
     bg = parse_distribution_html(
         (ROOT / "baillie_gifford" / "2025_estimated_capital_gains.html").read_text(
             encoding="utf-8"

@@ -20,15 +20,22 @@ class AmericanBeaconSource(HtmlTableSource):
         "Stephens Mid-Cap Growth R5 SFMIX ST $0.7583 / LT $8.0356; "
         "London Company Income Equity R5 ABCIX ST $0.0696 / LT $3.0255). "
         "Record 12/19/2025; ex/reinvest 12/22/2025; pay 12/23/2025. "
-        "All-dash rows omitted. Live WP GET 403 this session — weekly walk still "
-        "hits the tax-center hub + PDF URL (empty/403 = no-op success)."
+        "Wave 6 lookback: official 2021–2024 YE PDFs on the same tax-center archive "
+        "(2021YearEndDistributions.pdf AADEX income $0.3864 / ST $0.5435 / LT $2.2327; "
+        "2022YearEndDistributions.pdf AADEX income $0.4256 / published ST $0.0001 / LT $2.3936; "
+        "2023AmericanBeaconFundsYearEndDistributions.pdf AADEX income $0.4571 / ST $0.0709 / LT $0.8312; "
+        "AmericanBeaconFundYearEndDistributions12.20.2024.pdf AADEX income $0.4994 / ST $0.2576 / LT $2.5614). "
+        "All-dash rows omitted (SFMIX 2023 is unmatched, not invented). "
+        "Live WP GET 403 this session — weekly walk still hits the tax-center hub + "
+        "2025 PDF URL (empty/403 = no-op success)."
     )
     live_limitations = (
         "Year-end book is PDF. Live WP path is sometimes 403; fixture transcribes "
-        "the official Wayback full share-class book."
+        "the official Wayback / issuer full share-class books."
     )
 
     def pages(self) -> list[PageSpec]:
+        archive = "https://americanbeaconfunds.com/wp-content/uploads/2025/08"
         return [
             PageSpec(
                 name="tax_and_distribution_center_hub",
@@ -48,7 +55,35 @@ class AmericanBeaconSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
-            )
+            ),
+            PageSpec(
+                name="2024_annual_ordinary_income_and_capital_gains",
+                url=f"{archive}/AmericanBeaconFundYearEndDistributions12.20.2024.pdf",
+                fixture="2024_annual_ordinary_income_and_capital_gains.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="2023_annual_ordinary_income_and_capital_gains",
+                url=f"{archive}/2023AmericanBeaconFundsYearEndDistributions.pdf",
+                fixture="2023_annual_ordinary_income_and_capital_gains.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="2022_annual_ordinary_income_and_capital_gains",
+                url=f"{archive}/2022YearEndDistributions.pdf",
+                fixture="2022_annual_ordinary_income_and_capital_gains.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="2021_annual_ordinary_income_and_capital_gains",
+                url=f"{archive}/2021YearEndDistributions.pdf",
+                fixture="2021_annual_ordinary_income_and_capital_gains.html",
+                live=False,
+                role="history",
+            ),
         ]
 
 
