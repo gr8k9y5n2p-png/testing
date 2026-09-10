@@ -126,8 +126,8 @@ def test_full_book_american_funds_invesco_dimensional() -> None:
     assert len(dfa_tickers) >= 130
 
     columbia_funds, columbia_tickers = _funds_and_tickers(ColumbiaThreadneedleSource())
-    assert {"LBSAX", "CBLAX", "LEGAX", "ELGAX"} <= columbia_tickers
-    assert len(columbia_tickers) >= 40
+    assert {"LBSAX", "CBLAX", "LEGAX", "ELGAX", "GSFTX", "CDDRX", "LCCAX"} <= columbia_tickers
+    assert len(columbia_tickers) >= 200
 
 
 def test_full_book_vanguard_ici_and_next_wave() -> None:
@@ -313,8 +313,8 @@ def test_full_book_artisan_ici_and_first_eagle() -> None:
     assert len(wt_tickers) >= 80
 
     first_trust_funds, first_trust_tickers = _funds_and_tickers(FirstTrustSource())
-    assert {"BFAP", "BGLD", "IGLD", "BFJL", "FVD", "FTHI", "FPE"} <= first_trust_tickers
-    assert len(first_trust_tickers) >= 140
+    assert {"BFAP", "BGLD", "IGLD", "BFJL", "FVD", "FTHI", "FPE", "WCME", "FTCB"} <= first_trust_tickers
+    assert len(first_trust_tickers) >= 150
 
     dws_funds, dws_tickers = _funds_and_tickers(DwsSource())
     assert {"DBEF", "HYLB", "HDEF", "ASHR", "PSWD", "DBAW", "HAUZ"} <= dws_tickers

@@ -30,6 +30,11 @@ def test_curated_flagships() -> None:
     assert resolve_category(ticker="FNDX") == "Large Value"
     assert resolve_category(ticker="FNDE") == "Diversified Emerging Markets"
     assert resolve_category(ticker="FNDA") == "Small Blend"
+    assert resolve_category(ticker="GSFTX") == "Large Value"
+    assert resolve_category(ticker="CDDRX") == "Large Value"
+    assert resolve_category(ticker="CBLAX") == "Moderate Allocation"
+    assert resolve_category(ticker="LEGAX") == "Large Growth"
+    assert resolve_category(ticker="LCCAX") == "Large Blend"
 
 
 def test_name_rules_high_confidence() -> None:

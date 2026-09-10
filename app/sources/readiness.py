@@ -184,7 +184,7 @@ HISTORY_YEARS: dict[str, tuple[int, ...]] = {
     "william_blair": (2024, 2025),
     "vaneck": (2023, 2024, 2025),
     "wisdomtree": (2024, 2025),
-    "first_trust": (2025,),
+    "first_trust": (2024, 2025),
     "dws": (2025, 2026),
     "catalyst": (2025,),
     "ark": (2021,),
