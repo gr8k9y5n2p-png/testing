@@ -16,28 +16,29 @@ describe("ResultsTable Search ticker clicks", () => {
 });
 
 describe("ResultsTable EstimateRow props", () => {
-  it("does not pass showPayable into EstimateRow (Vercel typecheck)", () => {
+  it("passes showPayable into EstimateRow for the payable date column", () => {
     const start = source.indexOf("<EstimateRow");
     const estimateCall = source.slice(start, source.indexOf("/>", start) + 2);
     assert.match(estimateCall, /<EstimateRow/);
-    assert.doesNotMatch(estimateCall, /showPayable=/);
+    assert.match(estimateCall, /showPayable=\{showPayable\}/);
     const props = source.slice(
       source.indexOf("function EstimateRow"),
       source.indexOf("function onRowClick"),
     );
-    assert.doesNotMatch(props, /showPayable/);
+    assert.match(props, /showPayable: boolean/);
   });
 });
 
-describe("ResultsTable Search Paid history unmount", () => {
-  it("keeps Upcoming / Announced and does not mount Paid history tables", () => {
+describe("ResultsTable Search Paid history", () => {
+  it("keeps Upcoming / Announced and mounts Paid history from /distributions", () => {
     assert.match(source, /title=\{SEARCH_UPCOMING_HEADING\}/);
+    assert.match(source, /title=\{SEARCH_PAID_HISTORY_HEADING\}/);
     assert.match(source, /UPCOMING_UNAVAILABLE_HEADLINE/);
     assert.match(source, /UPCOMING_UNAVAILABLE_DETAIL/);
-    assert.doesNotMatch(source, /title="Paid history"/);
-    assert.doesNotMatch(source, /paidHistoryViews/);
-    assert.doesNotMatch(source, /paidEventsForFund/);
-    assert.doesNotMatch(source, /PAID_HISTORY_EMPTY/);
+    assert.match(source, /paidHistoryViews/);
+    assert.match(source, /PAID_HISTORY_EMPTY/);
+    assert.match(source, /Dist \$\/sh/);
+    assert.match(source, /% NAV/);
   });
 });
 
@@ -46,9 +47,9 @@ describe("ResultsTable Search pager placement", () => {
     const start = source.indexOf("return (");
     const layout = source.slice(start, source.indexOf("function FundSection"));
     const upcoming = layout.indexOf("title={SEARCH_UPCOMING_HEADING}");
-    const paid = layout.indexOf('title="Paid history"');
+    const paid = layout.indexOf("title={SEARCH_PAID_HISTORY_HEADING}");
     assert.ok(upcoming >= 0, "Upcoming / Announced section");
-    assert.ok(paid < 0, "Paid history stays off Search Sample Estimates");
+    assert.ok(paid > upcoming, "Paid history mounts below Upcoming");
     assert.doesNotMatch(layout, /<PaginationBar/, "no inter-module pager strip");
     assert.match(layout, /page=\{page\}/);
     assert.equal(

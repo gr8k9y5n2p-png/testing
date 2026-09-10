@@ -163,19 +163,50 @@ describe("Dollar Illustration Upcoming gate", () => {
     assert.doesNotMatch(source, /totals\.estimated_tax_dollars/);
   });
 
-  it("IllustrationResults does not mount Paid history on Search", () => {
+  it("IllustrationResults mounts Paid history from /distributions, not illustrate components", () => {
     const source = readFileSync(
       join(here, "../../components/illustrate/IllustrationResults.tsx"),
       "utf8",
     );
-    assert.doesNotMatch(source, /paidEventsForFund/);
-    assert.doesNotMatch(source, /PAID_HISTORY_EMPTY/);
-    assert.doesNotMatch(source, /Paid history/);
+    assert.match(source, /paidEventsForFund/);
+    assert.match(source, /PAID_HISTORY_EMPTY/);
+    assert.match(source, /Paid history/);
     assert.doesNotMatch(source, /paidComponents/);
     assert.doesNotMatch(source, /components=\{paid/);
     assert.doesNotMatch(
       source,
       /paidComponents\.length === 0/,
+    );
+  });
+
+  it("still-future unpaid prelims with omitted illustrate stage stay Upcoming", () => {
+    const fbgrx = component({
+      distribution_id: "fbgrx-ltcg",
+      estimate_type: "long_term_capital_gains",
+      publication_stage: null,
+      as_of: "2026-07-31",
+      record_date: null,
+      ex_date: "2026-09-11",
+      payable_date: "2026-09-14",
+      amount: 21.021,
+      amount_unit: "per_share",
+      distribution_dollars: 67_318.9,
+      estimated_tax_dollars: 16_829.73,
+    });
+    const { upcoming, paid } = splitIllustrationComponents([fbgrx], {
+      hasEstimate: true,
+      bucket: "upcoming",
+      publicationStage: "preliminary_estimate",
+    });
+    assert.equal(upcoming.length, 1);
+    assert.equal(paid.length, 0);
+    assert.equal(
+      illustrationComponentBucket(fbgrx, {
+        hasEstimate: true,
+        bucket: "upcoming",
+        publicationStage: "preliminary_estimate",
+      }),
+      "upcoming",
     );
   });
 });

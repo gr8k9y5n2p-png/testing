@@ -9,7 +9,7 @@ import {
 } from "react";
 import type { FundEstimateView } from "@/data/types";
 import { hideUpcomingAmounts } from "@/data/hydrate-funds";
-import { splitFundsByBucket } from "@/data/queries";
+import { paidHistoryViews, splitFundsByBucket } from "@/data/queries";
 import { publicationStageLabel } from "@/data/distribution-bucket";
 import { DeltaBadge } from "@/components/DeltaBadge";
 import { useCoverage } from "@/components/coverage/CoverageProvider";
@@ -27,6 +27,10 @@ import {
   pctOfNavForFund,
 } from "@/lib/illustrate/nav-math";
 import {
+  PAID_HISTORY_EMPTY,
+  SEARCH_PAID_HISTORY_DETAIL,
+  SEARCH_PAID_HISTORY_HEADING,
+  SEARCH_PAID_HISTORY_KICKER,
   SEARCH_UPCOMING_DETAIL,
   SEARCH_UPCOMING_HEADING,
   SEARCH_UPCOMING_KICKER,
@@ -77,6 +81,7 @@ export function ResultsTable({
   sortDirection: sortDirectionProp,
   onSort,
   page,
+  year,
 }: {
   funds: FundEstimateView[];
   onIllustrate?: (fund: FundEstimateView) => void;
@@ -84,6 +89,8 @@ export function ResultsTable({
   sortDirection?: SortDirection;
   onSort?: (key: SortKey) => void;
   page?: SamplePage;
+  /** Paid history year toggle. Upcoming stays unpaid announced only. */
+  year?: number;
 }) {
   const [localSortKey, setLocalSortKey] = useState<SortKey>("fundName");
   const [localSortDirection, setLocalSortDirection] = useState<SortDirection>("asc");
@@ -91,6 +98,7 @@ export function ResultsTable({
   const sortDirection = sortDirectionProp ?? localSortDirection;
   const coverage = useCoverage();
   const { upcoming } = splitFundsByBucket(funds);
+  const paid = paidHistoryViews(funds, year);
   const serverSorted = Boolean(onSort);
 
   function toggleSort(key: SortKey) {
@@ -108,6 +116,22 @@ export function ResultsTable({
     );
   }
 
+  const sourceByHistoryId = new Map<string, FundEstimateView>();
+  for (const fund of funds) {
+    sourceByHistoryId.set(fund.id, fund);
+    if (fund.bucket === "paid") continue;
+    for (const event of fund.paidHistory) {
+      sourceByHistoryId.set(
+        `${fund.id}:paid:${event.asOfDate}:${event.exDate ?? ""}`,
+        fund,
+      );
+    }
+  }
+
+  function illustrate(row: FundEstimateView) {
+    onIllustrate?.(sourceByHistoryId.get(row.id) ?? row);
+  }
+
   return (
     <div className="space-y-6">
       <FundSection
@@ -119,12 +143,26 @@ export function ResultsTable({
         sortKey={sortKey}
         sortDirection={sortDirection}
         onSort={toggleSort}
-        onIllustrate={onIllustrate}
+        onIllustrate={onIllustrate ? illustrate : undefined}
         coverage={coverage}
         emptyHeadline={UPCOMING_UNAVAILABLE_HEADLINE}
         empty={UPCOMING_UNAVAILABLE_DETAIL}
         showPayable
         page={page}
+      />
+      <FundSection
+        title={SEARCH_PAID_HISTORY_HEADING}
+        description={SEARCH_PAID_HISTORY_DETAIL}
+        kicker={SEARCH_PAID_HISTORY_KICKER}
+        wellClassName="bg-paper"
+        funds={serverSorted ? paid : sortFunds(paid, sortKey, sortDirection)}
+        sortKey={sortKey}
+        sortDirection={sortDirection}
+        onSort={toggleSort}
+        onIllustrate={onIllustrate ? illustrate : undefined}
+        coverage={coverage}
+        empty={PAID_HISTORY_EMPTY}
+        showPayable
       />
     </div>
   );
@@ -197,11 +235,11 @@ function FundSection({
             <VirtualizedTable
               funds={funds}
               expandedId={expandedId}
-              columnCount={onIllustrate ? 7 : 6}
+              columnCount={(onIllustrate ? 8 : 7) + (showPayable ? 1 : 0)}
               header={
                 <tr>
                   <SortHeader
-                    label="Fund"
+                    label="Ticker"
                     column="fundName"
                     active={sortKey}
                     direction={sortDirection}
@@ -215,20 +253,14 @@ function FundSection({
                     onSort={onSort}
                   />
                   <SortHeader
-                    label="Category"
-                    column="category"
-                    active={sortKey}
-                    direction={sortDirection}
-                    onSort={onSort}
-                  />
-                  <SortHeader
-                    label="Est. distribution"
+                    label="Dist $/sh"
                     column="estimatedDistributionPctNav"
                     active={sortKey}
                     direction={sortDirection}
                     onSort={onSort}
                     align="right"
                   />
+                  <th className="px-3 py-2.5 text-right">% NAV</th>
                   <SortHeader
                     label="Announced"
                     column="publishedAt"
@@ -236,14 +268,9 @@ function FundSection({
                     direction={sortDirection}
                     onSort={onSort}
                   />
-                  <SortHeader
-                    label="vs category avg"
-                    column="vsCategoryPctNav"
-                    active={sortKey}
-                    direction={sortDirection}
-                    onSort={onSort}
-                    align="right"
-                  />
+                  <th className="px-3 py-2.5">Record</th>
+                  <th className="px-3 py-2.5">Ex-div</th>
+                  {showPayable ? <th className="px-3 py-2.5">Payable</th> : null}
                   {onIllustrate ? <th className="px-3 py-2.5"> </th> : null}
                 </tr>
               }
@@ -253,6 +280,7 @@ function FundSection({
                   fund={fund}
                   open={expandedId === fund.id}
                   coverageGap={!coverage.isLive(fund.family)}
+                  showPayable={showPayable}
                   onToggle={() =>
                     setExpandedId((current) =>
                       toggleExpandedId(current, fund.id),
@@ -353,12 +381,14 @@ function EstimateRow({
   fund,
   open,
   coverageGap,
+  showPayable,
   onToggle,
   onIllustrate,
 }: {
   fund: FundEstimateView;
   open: boolean;
   coverageGap: boolean;
+  showPayable: boolean;
   onToggle: () => void;
   onIllustrate?: (fund: FundEstimateView) => void;
 }) {
@@ -383,15 +413,13 @@ function EstimateRow({
       onKeyDown={onRowKeyDown}
     >
       <td className="px-3 py-3">
-        <span className="block font-medium text-ink">
+        <span className="block font-mono text-sm font-medium text-ink">
+          <SearchTickerButton fund={fund} onSelect={onIllustrate} />
+        </span>
+        <span className="mt-0.5 block text-[11px] text-faint">
           <SearchTickerButton fund={fund} onSelect={onIllustrate}>
             {fund.fundName}
           </SearchTickerButton>
-        </span>
-        <span className="mt-0.5 block font-mono text-[11px] text-faint">
-          <SearchTickerButton fund={fund} onSelect={onIllustrate} />
-          <span className="mx-1.5">·</span>
-          {fund.shareClass}
         </span>
         <StageBadge fund={fund} />
         {open ? <ExpandedDetails fund={fund} /> : null}
@@ -404,14 +432,11 @@ function EstimateRow({
           </span>
         ) : null}
       </td>
-      <td className="px-3 py-3 text-muted">{fund.category}</td>
-      <td className="px-3 py-3 text-right">
-        <span className="block font-mono text-ink">
-          {estimatePct(fund)}
-        </span>
-        <span className="mt-0.5 block font-mono text-[11px] text-faint">
-          {estimateUsd(fund)}
-        </span>
+      <td className="px-3 py-3 text-right font-mono text-ink">
+        {estimateUsd(fund)}
+      </td>
+      <td className="px-3 py-3 text-right font-mono text-ink">
+        {estimatePct(fund)}
       </td>
       <td className="whitespace-nowrap px-3 py-3 font-mono text-sm text-ink">
         {formatOptionalDate(fund.asOfDate)}
@@ -422,14 +447,11 @@ function EstimateRow({
       <td className="whitespace-nowrap px-3 py-3 font-mono text-sm text-ink">
         {formatOptionalDate(fund.exDate)}
       </td>
-      <td className="px-3 py-3 text-right">
-        <div className="flex flex-col items-end gap-1">
-          <DeltaBadge fund={fund} compact />
-          <span className="font-mono text-[11px] text-faint">
-            Cat. {hideUpcomingAmounts(fund) ? "—" : formatPct(fund.categoryAveragePctNav)}
-          </span>
-        </div>
-      </td>
+      {showPayable ? (
+        <td className="whitespace-nowrap px-3 py-3 font-mono text-sm text-ink">
+          {formatOptionalDate(fund.payableDate)}
+        </td>
+      ) : null}
       {onIllustrate ? (
         <td className="px-3 py-3 text-right">
           <button

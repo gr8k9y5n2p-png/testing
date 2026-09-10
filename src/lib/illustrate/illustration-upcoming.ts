@@ -5,13 +5,19 @@ import {
 import type { FundEstimate } from "../../data/types.ts";
 import type { IllustrationComponent, IllustrationTotals } from "./types.ts";
 
-export type IllustrationFundGate = Pick<FundEstimate, "hasEstimate"> | null | undefined;
+export type IllustrationFundGate = Pick<
+  FundEstimate,
+  "hasEstimate" | "publicationStage" | "bucket"
+> | null | undefined;
 
 /**
  * Dollar Illustration Upcoming for every fund: unpaid prelim/estimate
  * components only. `has_estimate: false` and `final` / paid YE rows stay
- * out of Upcoming. Never treat holding-scaled illustration totals as
- * Upcoming — and never as Paid history (Paid history is `/distributions`).
+ * out of Upcoming. Live illustrate may omit `publication_stage` on an
+ * unpaid prelim (FBGRX) — inherit the /distributions stage so a
+ * still-future unpaid estimate is not treated as paid/stale.
+ * Never treat holding-scaled illustration totals as Upcoming — and never
+ * as Paid history (Paid history is `/distributions`).
  */
 export function illustrationComponentBucket(
   component: Pick<
@@ -21,12 +27,17 @@ export function illustrationComponentBucket(
   fund?: IllustrationFundGate,
 ): DistributionBucket {
   if (fund?.hasEstimate === false) return "paid";
+  const inheritedStage =
+    component.publication_stage ||
+    (fund?.bucket === "upcoming" || fund?.hasEstimate === true
+      ? fund?.publicationStage
+      : null);
   return distributionBucket({
     asOfDate: component.as_of,
     recordDate: component.record_date,
     exDate: component.ex_date,
     payableDate: component.payable_date,
-    publicationStage: component.publication_stage,
+    publicationStage: inheritedStage,
   });
 }
 

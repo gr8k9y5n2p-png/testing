@@ -164,5 +164,5 @@ export const DATA_SOURCE = {
   kind: "live" as const,
   label: "Live Data API",
   notice:
-    "Search and Sample Estimates use GET /funds for identity and GET /distributions for unpaid Upcoming. Missing or uncovered values stay empty, N/A, or Undisclosed — they are not filled from seed or demo math. Historical paid distributions live on Compare / Portfolio Growth & Tax.",
+    "Search and Sample Estimates use GET /funds for identity and GET /distributions for unpaid Upcoming and paid / final history. Missing or uncovered values stay empty, N/A, or Undisclosed — they are not filled from seed or demo math.",
 };
