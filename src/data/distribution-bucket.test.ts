@@ -3,7 +3,10 @@ import { test } from "node:test";
 import {
   distributionBucket,
   eventDateOf,
+  hasDisclosedUpcomingAmount,
   isPastDistribution,
+  isStaleAnnouncedOnly,
+  isUpcomingFund,
   splitFundsByBucket,
 } from "./distribution-bucket.ts";
 
@@ -92,7 +95,12 @@ test("has_estimate false never qualifies as Upcoming", () => {
   const { upcoming, paid } = splitFundsByBucket([
     { ticker: "FXAIX", bucket: "upcoming" as const, hasEstimate: false },
     { ticker: "VFIAX", bucket: "paid" as const, hasEstimate: false },
-    { ticker: "AMCPX", bucket: "upcoming" as const, hasEstimate: true },
+    {
+      ticker: "AMCPX",
+      bucket: "upcoming" as const,
+      hasEstimate: true,
+      estimatedDistributionAmount: 2.6,
+    },
   ]);
   assert.deepEqual(
     upcoming.map((row) => row.ticker),
@@ -101,6 +109,30 @@ test("has_estimate false never qualifies as Upcoming", () => {
   assert.deepEqual(
     paid.map((row) => row.ticker),
     ["FXAIX", "VFIAX"],
+  );
+});
+
+test("$0 / empty fake upcoming rows are not Upcoming", () => {
+  assert.equal(hasDisclosedUpcomingAmount({}), true);
+  assert.equal(
+    hasDisclosedUpcomingAmount({
+      estimatedDistributionAmount: 0,
+      estimatedDistributionPctNav: 0,
+      estimatedOrdinaryIncome: 0,
+      estimatedCapitalGains: 0,
+    }),
+    false,
+  );
+  assert.equal(
+    isUpcomingFund({
+      bucket: "upcoming",
+      hasEstimate: true,
+      estimatedDistributionAmount: 0,
+      estimatedDistributionPctNav: 0,
+      asOfDate: "2025-10-31",
+      publicationStage: "updated_estimate",
+    }),
+    false,
   );
 });
 
@@ -195,6 +227,52 @@ test("finals-only rows never become Upcoming for any fund (future YE dates or mi
       TODAY,
     ),
     "paid",
+  );
+});
+
+test("stale announced-only $0 placeholders are not Upcoming", () => {
+  const oct2023 = {
+    asOfDate: "2023-10-31",
+    recordDate: null,
+    exDate: null,
+    payableDate: null,
+    publicationStage: "updated_estimate",
+  };
+  const oct2025 = {
+    asOfDate: "2025-10-31",
+    recordDate: null,
+    exDate: null,
+    payableDate: null,
+    publicationStage: "updated_estimate",
+  };
+  assert.equal(isStaleAnnouncedOnly(oct2023, TODAY), true);
+  assert.equal(isStaleAnnouncedOnly(oct2025, TODAY), true);
+  assert.equal(
+    isUpcomingFund(
+      {
+        bucket: "upcoming",
+        hasEstimate: true,
+        estimatedDistributionAmount: 0,
+        estimatedDistributionPctNav: 0,
+        ...oct2023,
+      },
+      TODAY,
+    ),
+    false,
+  );
+  assert.equal(
+    isUpcomingFund(
+      {
+        bucket: "upcoming",
+        hasEstimate: true,
+        estimatedDistributionAmount: 19.71,
+        asOfDate: "2026-07-31",
+        publicationStage: "preliminary_estimate",
+      },
+      TODAY,
+    ),
+    true,
+    "unpaid announced dollars with dates still TBD stay Upcoming",
   );
 });
 

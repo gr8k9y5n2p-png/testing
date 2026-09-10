@@ -28,8 +28,9 @@ export { mapFundsApiItem, type FundsApiItem } from "@/data/funds-list";
  *
  * Paid history / historical Est. dist hydrate from `GET /distributions`
  * (final / paid YE rows). `has_estimate` is unpaid Upcoming only — never
- * gate paid/final history on that flag. Do **not** invent Upcoming from
- * history. 404 / down → empty page (honest), not a dump.
+ * gate paid/final history on that flag, and never invent Upcoming from the
+ * catalog flag / `latest_as_of` / `$0` placeholders. 404 / down → empty
+ * page (honest), not a dump.
  */
 type PagePayload = {
   items?: unknown[];

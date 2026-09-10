@@ -66,6 +66,23 @@ export function isPastDistribution(
   return cutoff != null && cutoff < today;
 }
 
+/**
+ * Announced (`as_of`) already passed and no remaining unpaid event date.
+ * Sell-before-record still uses record/ex/payable when those exist — a past
+ * announcement of a future YE event stays unpaid. Catalog `latest_as_of`
+ * alone (Oct 2023 / Oct 2025 placeholders) is not Upcoming.
+ */
+export function isStaleAnnouncedOnly(
+  dates: DistributionDateFields,
+  today = utcTodayIso(),
+): boolean {
+  if (eventDateOf(dates)) return false;
+  const announced = isoDate(dates.asOfDate);
+  const stage = normalizePublicationStage(dates.publicationStage);
+  if (stage === "final" || (stage && PAID_STAGES.has(stage))) return false;
+  return announced != null && announced < today && isUnpaidPrelimStage(stage);
+}
+
 export function normalizePublicationStage(stage: string | null | undefined): string | null {
   if (stage == null || stage === "") return null;
   const key = stage.trim().toLowerCase().replace(/[\s-]+/g, "_");
@@ -85,7 +102,8 @@ function isUnpaidPrelimStage(stage: string | null): boolean {
  * past. `final` and `paid` are Paid history — never Upcoming, even with
  * future event dates or holding-scaled illustration dollars.
  * A future event date without a prelim/estimate stage does not invent Upcoming.
- * Identity / `latest_as_of`-only rows stay paid history.
+ * Identity / `latest_as_of`-only rows stay paid history. `$0` catalog
+ * leftovers are dropped by `isUpcomingFund`, not by treating as_of as paid.
  */
 export function distributionBucket(
   dates: DistributionDateFields,
@@ -103,16 +121,72 @@ export function distributionBucket(
   return "paid";
 }
 
+type UpcomingAmountFields = {
+  estimatedDistributionAmount?: number;
+  estimatedDistributionPctNav?: number;
+  estimatedOrdinaryIncome?: number;
+  estimatedCapitalGains?: number;
+};
+
 /**
- * Universe Upcoming gate for Search Sample Estimates, fund detail, and badges.
- * Every fund: `has_estimate: false` OR no unpaid prelim/estimate → not Upcoming.
- * Never invent from paid/final history, illustration, or tax-on-holding math.
+ * True unpaid estimate dollars / % of NAV. `$0.00` catalog placeholders and
+ * empty identity rows are undisclosed — never Upcoming.
+ * Partial classifier rows with no amount fields still follow bucket + flag.
+ */
+export function hasDisclosedUpcomingAmount(fund: UpcomingAmountFields): boolean {
+  const fields = [
+    fund.estimatedDistributionAmount,
+    fund.estimatedDistributionPctNav,
+    fund.estimatedOrdinaryIncome,
+    fund.estimatedCapitalGains,
+  ];
+  if (fields.every((value) => value == null)) return true;
+  return fields.some((value) => value != null && value > 0);
+}
+
+/**
+ * Universe Upcoming gate for Search Sample Estimates, Highlights, and badges.
+ * A fund appears only with a true unpaid future announced distribution:
+ * unpaid prelim/updated, not past record/ex/payable, and not a `$0` / empty
+ * fake row. A past announcement of an unpaid estimate still qualifies when
+ * dollars exist (sell-before-record). `has_estimate: false` is never Upcoming.
+ * Never invent from paid/final history, catalog identity, or illustration math.
  */
 export function isUpcomingFund<
-  T extends { bucket: DistributionBucket; hasEstimate?: boolean },
->(fund: T): boolean {
+  T extends {
+    bucket: DistributionBucket;
+    hasEstimate?: boolean;
+    asOfDate?: string | null;
+    recordDate?: string | null;
+    exDate?: string | null;
+    payableDate?: string | null;
+    publicationStage?: string | null;
+  } & UpcomingAmountFields,
+>(fund: T, today = utcTodayIso()): boolean {
   if (fund.hasEstimate === false) return false;
-  return fund.bucket === "upcoming";
+  if (fund.bucket !== "upcoming") return false;
+  if (!hasDisclosedUpcomingAmount(fund)) return false;
+  if (
+    fund.asOfDate != null ||
+    fund.recordDate != null ||
+    fund.exDate != null ||
+    fund.payableDate != null ||
+    fund.publicationStage != null
+  ) {
+    return (
+      distributionBucket(
+        {
+          asOfDate: fund.asOfDate,
+          recordDate: fund.recordDate,
+          exDate: fund.exDate,
+          payableDate: fund.payableDate,
+          publicationStage: fund.publicationStage,
+        },
+        today,
+      ) === "upcoming"
+    );
+  }
+  return true;
 }
 
 export function publicationStageLabel(stage: string | null | undefined): string {

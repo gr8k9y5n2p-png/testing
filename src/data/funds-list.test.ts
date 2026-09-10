@@ -57,5 +57,8 @@ test("mapFundsApiItem accepts a null ticker without inventing one", () => {
   });
   assert.equal(view.ticker, "—");
   assert.equal(view.hasEstimate, true);
+  assert.equal(view.bucket, "paid");
+  assert.equal(view.publicationStage, null);
+  assert.equal(view.estimatedDistributionAmount, 0);
   assert.match(view.id, /ab-all-market-total-return-portfolio/);
 });

@@ -97,6 +97,61 @@ function hydrateFinalsOnly(
 }
 
 describe("universe Upcoming / Fund Manager Estimated Distributions", () => {
+  it("keeps AllianceBernstein catalog $0 / past announced rows out of Search Upcoming", () => {
+    const today = "2026-09-09";
+    const catalogs = [
+      mapFundsApiItem({
+        ticker: null,
+        fund_name: "AB All Market Total Return Portfolio",
+        fund_family: "AllianceBernstein",
+        latest_as_of: "2025-10-31",
+        has_estimate: true,
+      }),
+      mapFundsApiItem({
+        ticker: null,
+        fund_name: "AB Global Real Estate Investment Fund",
+        fund_family: "AllianceBernstein",
+        latest_as_of: "2023-10-31",
+        has_estimate: true,
+      }),
+    ];
+    const staleZero: DataDistribution[] = [
+      {
+        id: "ab-re-2023",
+        fund_family: "AllianceBernstein",
+        fund_name: "AB Global Real Estate Investment Fund",
+        fund_identifier: "ab-global-real-estate-investment-fund",
+        ticker: null,
+        cusip: null,
+        share_class: null,
+        estimate_type: "total_capital_gains",
+        amount: "0",
+        amount_min: null,
+        amount_max: null,
+        amount_unit: "per_share",
+        record_date: null,
+        ex_date: null,
+        payable_date: null,
+        as_of: "2023-10-31",
+        publication_stage: "updated_estimate",
+      },
+    ];
+    const realEstate = mergeFundWithDistributions(
+      catalogs[1],
+      withPeerContext(aggregateDistributions(staleZero, today))[0],
+    );
+    const book = [...catalogs.map((fund) => mergeFundWithDistributions(fund, null)), realEstate];
+    const { upcoming, paid } = splitFundsByBucket(book);
+    assert.equal(upcoming.length, 0, "Search Upcoming must not list stale $0 AB rows");
+    assert.ok(paid.length >= 1);
+    const highlights = getHighlights(book);
+    assert.equal(highlights.mostRecent.length, 0);
+    assert.equal(highlights.largest.length, 0);
+    for (const fund of book) {
+      assert.equal(isUpcomingFund(fund, today), false, fund.fundName);
+    }
+  });
+
   it("treats every has_estimate:false + finals-only fund as Undisclosed Upcoming", () => {
     const abalx = hydrateFinalsOnly("ABALX", "American Balanced Fund", ABALX_FINALS);
     const amecx = hydrateFinalsOnly(
@@ -207,10 +262,15 @@ describe("universe Upcoming / Fund Manager Estimated Distributions", () => {
       join(here, "../components/illustrate/IllustrationResults.tsx"),
       "utf8",
     );
+    const bucket = readFileSync(join(here, "distribution-bucket.ts"), "utf8");
+    const catalog = readFileSync(join(here, "funds-list.ts"), "utf8");
     assert.match(table, /splitFundsByBucket/);
     assert.match(highlights, /splitFundsByBucket/);
     assert.match(badges, /hideUpcomingAmounts/);
     assert.match(results, /paidEventsForFund/);
     assert.doesNotMatch(results, /paidComponents/);
+    assert.match(bucket, /hasDisclosedUpcomingAmount/);
+    assert.match(bucket, /isStaleAnnouncedOnly/);
+    assert.match(catalog, /never invent an/);
   });
 });
