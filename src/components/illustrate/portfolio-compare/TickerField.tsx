@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import { shouldClearFundPickerSelection } from "@/components/illustrate/fund-picker-clear";
 import { shouldOpenFundSuggestions } from "@/components/illustrate/fund-picker-suggestions";
+import { tickerSlotBorderClass } from "@/components/illustrate/ticker-slot-border";
 import {
   looksLikeExactTicker,
   notifyPortfolioTickerMiss,
@@ -104,7 +105,7 @@ export function TickerField({
           aria-autocomplete="list"
           aria-expanded={open}
           aria-controls={`${inputId}-list`}
-          className="h-10 w-full rounded-md border border-line bg-paper px-2.5 pr-9 font-mono text-sm font-medium uppercase tracking-wide text-ink placeholder:normal-case placeholder:tracking-normal placeholder:text-faint"
+          className={`h-10 w-full rounded-md border ${tickerSlotBorderClass({ committed: hasSelection, midEdit: open })} bg-paper px-2.5 pr-9 font-mono text-sm font-medium uppercase tracking-wide text-ink placeholder:normal-case placeholder:tracking-normal placeholder:text-faint`}
           onChange={(event) => {
             const next = event.target.value.toUpperCase();
             if (
