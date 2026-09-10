@@ -66,10 +66,13 @@ export type GrowthTaxFundSeries = {
   years: GrowthTaxFundYear[];
 };
 
+export type GrowthTaxValueMode = "tax" | "per_share";
+
 export type GrowthTaxByTypeModel = {
   years: number[];
   tickers: string[];
   series: GrowthTaxFundSeries[];
+  unit: GrowthTaxValueMode;
 };
 
 /** Holding + live weekly NAV for Dist $ = amount × (holding / nav). */
@@ -353,6 +356,33 @@ export function taxDollarsFromComponent(
   return dist * rateForComponent(component, rates, combineState);
 }
 
+function normalizeAmountUnit(raw: string): string {
+  return raw.trim().toLowerCase().replace(/[\s-]+/g, "_");
+}
+
+/** True for Data `amount_unit=per_share`. Percent rows are skipped. */
+export function isPerShareAmountUnit(raw: string | null | undefined): boolean {
+  const unit = normalizeAmountUnit(raw ?? "");
+  return unit === "per_share" || unit === "usd_per_share" || unit === "dollars_per_share";
+}
+
+export function isPercentAmountUnit(raw: string | null | undefined): boolean {
+  const unit = normalizeAmountUnit(raw ?? "");
+  return unit.includes("percent") || unit === "pct_of_nav" || unit === "pct";
+}
+
+/**
+ * Published $/share when `amount_unit=per_share`. Soft — missing amount
+ * or a percent row stays null (never invent from Dist $ / NAV).
+ */
+export function perShareAmountFromComponent(
+  component: Pick<IllustrationComponent, "amount" | "amount_unit">,
+): number | null {
+  if (isPercentAmountUnit(component.amount_unit)) return null;
+  if (!isPerShareAmountUnit(component.amount_unit)) return null;
+  return numericOrNull(component.amount);
+}
+
 function addAmount(amounts: GrowthTaxTypeAmounts, type: GrowthTaxEstimateType, value: number) {
   amounts[type] = (amounts[type] ?? 0) + value;
 }
@@ -450,6 +480,7 @@ export function growthTaxYearFromIllustration(
   rates?: TaxRates,
   combineState = true,
   ctx?: DistTaxContext,
+  valueMode: GrowthTaxValueMode = "tax",
 ): GrowthTaxFundYear {
   const empty: GrowthTaxFundYear = {
     ticker,
@@ -474,7 +505,10 @@ export function growthTaxYearFromIllustration(
   const amounts = foldEstimateTypeAmounts(
     used.map((component) => ({
       estimate_type: component.estimate_type,
-      tax: taxDollarsFromComponent(component, rates, combineState, resolved),
+      tax:
+        valueMode === "per_share"
+          ? perShareAmountFromComponent(component)
+          : taxDollarsFromComponent(component, rates, combineState, resolved),
     })),
   );
   return {
@@ -494,6 +528,7 @@ export function growthTaxSeriesFromCompare(
   rates?: TaxRates,
   combineState = true,
   ctx?: DistTaxContext,
+  valueMode: GrowthTaxValueMode = "tax",
 ): GrowthTaxFundSeries {
   const byYear = response ? illustrationsByCalendarYear(response, side) : new Map();
   return {
@@ -506,6 +541,7 @@ export function growthTaxSeriesFromCompare(
         rates,
         combineState,
         ctx,
+        valueMode,
       ),
     ),
   };
@@ -523,11 +559,13 @@ export function buildGrowthTaxByTypeModel(
   years: number[],
   rates?: TaxRates,
   combineState = true,
+  valueMode: GrowthTaxValueMode = "tax",
 ): GrowthTaxByTypeModel {
   const tickers = rows.map((row) => row.ticker.trim().toUpperCase()).filter(Boolean);
   return {
     years,
     tickers,
+    unit: valueMode,
     series: rows.map((row) =>
       growthTaxSeriesFromCompare(
         row.ticker.trim().toUpperCase(),
@@ -540,6 +578,7 @@ export function buildGrowthTaxByTypeModel(
           holdingDollars: row.holdingDollars,
           navPerShare: row.navPerShare,
         },
+        valueMode,
       ),
     ),
   };
@@ -560,11 +599,20 @@ export function formatGrowthTaxCell(
   value: number | null,
   status: GrowthTaxYearStatus,
   kind: "type" | "total" = "type",
+  unit: GrowthTaxValueMode = "tax",
 ): string {
   if (value == null) {
     return status === "empty" && kind === "total"
       ? GROWTH_TAX_UNDISCLOSED_LABEL
       : GROWTH_TAX_EMPTY_LABEL;
+  }
+  if (unit === "per_share") {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 3,
+    }).format(value);
   }
   return new Intl.NumberFormat("en-US", {
     style: "currency",

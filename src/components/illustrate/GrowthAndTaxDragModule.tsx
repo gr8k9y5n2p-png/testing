@@ -8,8 +8,8 @@ import {
   MAX_GROWTH_FUNDS,
   fundSeriesColor,
 } from "@/lib/charts/series-colors";
+import { growthTaxChartPad } from "@/lib/charts/growth-tax-layout";
 import {
-  SHARED_CHART_PAD,
   SHARED_CHART_WIDTH,
   yearLayout,
 } from "@/lib/charts/shared-axis";
@@ -17,6 +17,7 @@ import { formatUsd } from "@/lib/format";
 import type { ComparePeriodIn } from "@/lib/illustrate/compare-types";
 import { buildGrowthTaxByTypeModel } from "@/lib/illustrate/growth-tax-by-type";
 import {
+  annualizedFromRows,
   calendarYearsFromRows,
   growthLinesFromRows,
   loadGrowthAndTaxDrag,
@@ -83,6 +84,7 @@ export function GrowthAndTaxDragModule({
   const [missingTickers, setMissingTickers] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [settledKey, setSettledKey] = useState<string | null>(null);
+  const [perShare, setPerShare] = useState(false);
 
   const prefetchKey = JSON.stringify(
     (prefetchTax ?? []).map((row) => [
@@ -189,6 +191,7 @@ export function GrowthAndTaxDragModule({
     [principal, rows, years],
   );
 
+  const valueMode = perShare ? "per_share" : "tax";
   const taxModel = useMemo(() => {
     try {
       return buildGrowthTaxByTypeModel(
@@ -202,6 +205,7 @@ export function GrowthAndTaxDragModule({
         years,
         rates,
         combineStateWithFederal,
+        valueMode,
       );
     } catch {
       return {
@@ -224,9 +228,15 @@ export function GrowthAndTaxDragModule({
             total: null,
           })),
         })),
+        unit: valueMode,
       };
     }
-  }, [combineStateWithFederal, principal, rates, rows, years]);
+  }, [combineStateWithFederal, principal, rates, rows, valueMode, years]);
+
+  const annualized = useMemo(
+    () => annualizedFromRows(rows, years, principal).filter((row) => !row.id.startsWith("bench-")),
+    [principal, rows, years],
+  );
 
   function commitPrincipal() {
     const parsed = Number(principalDraft.replace(/[$,\s]/g, ""));
@@ -261,9 +271,11 @@ export function GrowthAndTaxDragModule({
     );
   }
 
+  const pad = useMemo(() => growthTaxChartPad(principal), [principal]);
+  const fundCount = Math.max(taxModel.tickers.length, selected.length, 1);
   const axis = useMemo(
-    () => yearLayout(years, selected.length, SHARED_CHART_WIDTH, SHARED_CHART_PAD),
-    [selected.length, years],
+    () => yearLayout(years, fundCount, SHARED_CHART_WIDTH, pad),
+    [fundCount, pad, years],
   );
 
   const remaining = PERFORMANCE_FIXTURE_TICKERS.filter(
@@ -318,6 +330,15 @@ export function GrowthAndTaxDragModule({
           ) : (
             <p className="text-sm text-muted">{formatUsd(principal, 0)}</p>
           )}
+          <label className="flex h-9 items-center gap-2 text-[12px] text-ink">
+            <input
+              type="checkbox"
+              checked={perShare}
+              onChange={(event) => setPerShare(event.target.checked)}
+              className="size-3.5 rounded border-line accent-accent"
+            />
+            Per Share
+          </label>
           {allowAddFund && selected.length < MAX_GROWTH_FUNDS ? (
             adding ? (
               <form
@@ -413,29 +434,37 @@ export function GrowthAndTaxDragModule({
           </div>
         ) : (
           <>
-            <GrowthAndTaxChart
-              years={years}
-              growthSeries={growthSeries}
-              taxModel={taxModel}
-              startDollars={principal}
-              loading={loading}
-              axis={axis}
-              emptyLabel={
-                selected.length === 0 ? "No fund series" : PERFORMANCE_UNAVAILABLE_LABEL
-              }
-              emptyHint={selected.length === 0 ? "" : PERFORMANCE_UNAVAILABLE_HINT}
-              onRemoveSeries={removeFund}
-            />
-            {missingTickers.length > 0 && growthSeries.some((row) => !row.dashed) ? (
-              <p className="mt-2 text-[11px] text-faint">
-                {missingTickers.join(", ")}: {PERFORMANCE_UNAVAILABLE_LABEL}
-              </p>
-            ) : null}
-            <GrowthAndTaxTable
-              model={taxModel}
-              loading={loading}
-              className="mt-5"
-            />
+            <div className="overflow-x-auto">
+              <div className="min-w-[40rem]">
+                <GrowthAndTaxChart
+                  years={years}
+                  growthSeries={growthSeries}
+                  taxModel={taxModel}
+                  startDollars={principal}
+                  loading={loading}
+                  pad={pad}
+                  axis={axis}
+                  emptyLabel={
+                    selected.length === 0 ? "No fund series" : PERFORMANCE_UNAVAILABLE_LABEL
+                  }
+                  emptyHint={selected.length === 0 ? "" : PERFORMANCE_UNAVAILABLE_HINT}
+                  onRemoveSeries={removeFund}
+                  annualized={annualized}
+                />
+                {missingTickers.length > 0 && growthSeries.some((row) => !row.dashed) ? (
+                  <p className="mt-2 text-[11px] text-faint">
+                    {missingTickers.join(", ")}: {PERFORMANCE_UNAVAILABLE_LABEL}
+                  </p>
+                ) : null}
+                <GrowthAndTaxTable
+                  model={taxModel}
+                  loading={loading}
+                  className="mt-1"
+                  axis={axis}
+                  pad={pad}
+                />
+              </div>
+            </div>
           </>
         )}
       </div>

@@ -2,11 +2,19 @@
 
 import { useId } from "react";
 import { END_LABEL_MIN_GAP, staggerEndLabels } from "@/lib/charts/end-labels";
+import {
+  AXIS_LABEL_GAP_PX,
+  growthTaxChartPad,
+  startAmountLabel,
+  startAmountLabelX,
+  underBarTickerFontSize,
+  underBarTickerLabel,
+} from "@/lib/charts/growth-tax-layout";
 import { formatCompactUsd, niceMoneyScale } from "@/lib/charts/money-axis";
 import {
-  SHARED_CHART_PAD,
   SHARED_CHART_WIDTH,
   yearLayout,
+  type ChartPad,
   type YearLayout,
 } from "@/lib/charts/shared-axis";
 import { formatUsd } from "@/lib/format";
@@ -16,6 +24,7 @@ import {
   GROWTH_TAX_ESTIMATE_TYPES,
   GROWTH_TAX_TYPE_COLORS,
   GROWTH_TAX_TYPE_LABELS,
+  formatGrowthTaxCell,
   lightenHex,
   type GrowthTaxByTypeModel,
 } from "@/lib/illustrate/growth-tax-by-type";
@@ -27,10 +36,12 @@ export type GrowthAndTaxChartProps = {
   startDollars: number;
   loading?: boolean;
   className?: string;
+  pad?: ChartPad;
   axis?: YearLayout;
   emptyLabel?: string;
   emptyHint?: string;
   onRemoveSeries?: (id: string) => void;
+  annualized?: { id: string; value: number | null }[];
 };
 
 const GROWTH_H = 220;
@@ -44,10 +55,12 @@ export function GrowthAndTaxChart({
   startDollars,
   loading = false,
   className = "",
+  pad: padProp,
   axis: axisProp,
   emptyLabel = "No fund series",
   emptyHint = "",
   onRemoveSeries,
+  annualized = [],
 }: GrowthAndTaxChartProps) {
   const hatchId = useId().replace(/:/g, "");
 
@@ -72,8 +85,10 @@ export function GrowthAndTaxChart({
   }
 
   const width = SHARED_CHART_WIDTH;
-  const pad = SHARED_CHART_PAD;
+  const pad = padProp ?? growthTaxChartPad(startDollars);
   const axis = axisProp ?? yearLayout(years, Math.max(taxModel.tickers.length, 1), width, pad);
+  const startLabel = startAmountLabel(startDollars);
+  const startLabelX = startAmountLabelX(pad.left);
   const growthInner = GROWTH_H - pad.top - ZERO_GAP;
   const taxInner = TAX_H - pad.bottom - ZERO_GAP;
   const zeroY = pad.top + growthInner;
@@ -92,7 +107,11 @@ export function GrowthAndTaxChart({
       row.years.map((year) => (year.total == null ? 0 : Math.abs(year.total))),
     ),
   );
-  const taxScale = niceMoneyScale(0, Math.max(taxPeak, 50), 0);
+  const taxScale = niceMoneyScale(
+    0,
+    Math.max(taxPeak, taxModel.unit === "per_share" ? 1 : 50),
+    0,
+  );
 
   const xCenter = (index: number) => axis.center(index);
   const growthY = (value: number) => {
@@ -137,7 +156,9 @@ export function GrowthAndTaxChart({
           Growth ({formatUsd(startDollars, 0)})
         </h3>
         <ul className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-ink">
-          {fundSeries.map((row) => (
+          {fundSeries.map((row) => {
+            const ann = annualized.find((item) => item.id === row.id);
+            return (
             <li key={row.id} className="flex items-center gap-1.5">
               <span
                 className="inline-block h-px w-4"
@@ -154,8 +175,17 @@ export function GrowthAndTaxChart({
                   ×
                 </button>
               ) : null}
+              {ann?.value != null ? (
+                <span
+                  className="inline-flex items-center rounded-full bg-paper px-2 py-0.5 text-[10px] font-medium"
+                  style={{ color: row.color }}
+                >
+                  {(ann.value * 100).toFixed(1)}% ann.
+                </span>
+              ) : null}
             </li>
-          ))}
+            );
+          })}
         </ul>
       </header>
 
@@ -167,6 +197,14 @@ export function GrowthAndTaxChart({
           aria-hidden
         >
           <defs>
+            <clipPath id={`gt-plot-${hatchId}`}>
+              <rect
+                x={pad.left}
+                y={pad.top}
+                width={Math.max(1, width - pad.left - pad.right)}
+                height={Math.max(1, height - pad.top - pad.bottom)}
+              />
+            </clipPath>
             <pattern
               id={`gt-hatch-${hatchId}`}
               width="5"
@@ -196,6 +234,7 @@ export function GrowthAndTaxChart({
 
           {growthScale.ticks.map((tick) => {
             const y = growthY(tick);
+            const isStart = Math.abs(tick - startDollars) < 1e-6;
             return (
               <g key={`g-${tick}`}>
                 <line
@@ -206,19 +245,34 @@ export function GrowthAndTaxChart({
                   className="stroke-line"
                   strokeWidth={1}
                 />
-                <text
-                  x={pad.left - 6}
-                  y={y + 3}
-                  textAnchor="end"
-                  className="fill-faint"
-                  fontSize={9}
-                  fontFamily="ui-monospace, monospace"
-                >
-                  {formatCompactUsd(tick)}
-                </text>
+                {isStart ? null : (
+                  <text
+                    x={pad.left - AXIS_LABEL_GAP_PX}
+                    y={y + 3}
+                    textAnchor="end"
+                    className="fill-faint"
+                    fontSize={9}
+                    fontFamily="ui-monospace, monospace"
+                  >
+                    {formatCompactUsd(tick)}
+                  </text>
+                )}
               </g>
             );
           })}
+
+          <text
+            data-start-label
+            data-start-x={startLabelX.toFixed(1)}
+            x={startLabelX}
+            y={growthY(startDollars) + 3}
+            textAnchor="end"
+            className="fill-faint"
+            fontSize={9}
+            fontFamily="ui-monospace, monospace"
+          >
+            {startLabel}
+          </text>
 
           {taxScale.ticks
             .filter((tick) => tick > 0)
@@ -235,14 +289,16 @@ export function GrowthAndTaxChart({
                     strokeWidth={1}
                   />
                   <text
-                    x={pad.left - 6}
+                    x={pad.left - AXIS_LABEL_GAP_PX}
                     y={y + 3}
                     textAnchor="end"
                     className="fill-faint"
                     fontSize={9}
                     fontFamily="ui-monospace, monospace"
                   >
-                    {formatCompactUsd(-tick)}
+                    {taxModel.unit === "per_share"
+                      ? formatGrowthTaxCell(-tick, "paid", "type", "per_share")
+                      : formatCompactUsd(-tick)}
                   </text>
                 </g>
               );
@@ -257,7 +313,7 @@ export function GrowthAndTaxChart({
             strokeWidth={1.15}
           />
           <text
-            x={pad.left - 6}
+            x={pad.left - AXIS_LABEL_GAP_PX}
             y={zeroY + 3}
             textAnchor="end"
             className="fill-faint"
@@ -267,6 +323,7 @@ export function GrowthAndTaxChart({
             $0
           </text>
 
+          <g clipPath={`url(#gt-plot-${hatchId})`}>
           {fundSeries.map((row) => {
             const d = polyline(row.points, years, xCenter, growthY);
             if (!d) return null;
@@ -293,6 +350,7 @@ export function GrowthAndTaxChart({
               </g>
             );
           })}
+          </g>
 
           {endLabels.map((label) => {
             const leader = Math.abs(label.labelY - label.y) > 6;
@@ -373,11 +431,35 @@ export function GrowthAndTaxChart({
             }),
           )}
 
+          {years.map((year, yearIndex) =>
+            taxModel.series.map((row, seriesIndex) => {
+              const x = axis.barX(yearIndex, seriesIndex) + axis.barW / 2;
+              const fontSize = underBarTickerFontSize(axis.count);
+              const label = underBarTickerLabel(row.ticker, axis.barW, fontSize);
+              return (
+                <text
+                  key={`bar-ticker-${year}-${row.ticker}`}
+                  data-bar-ticker={row.ticker}
+                  data-bar-year={year}
+                  x={x}
+                  y={height - 34}
+                  textAnchor="middle"
+                  className="fill-ink"
+                  fontSize={fontSize}
+                  fontFamily="ui-monospace, monospace"
+                >
+                  <title>{row.ticker}</title>
+                  {label}
+                </text>
+              );
+            }),
+          )}
+
           {years.map((year, index) => (
             <text
               key={year}
               x={xCenter(index)}
-              y={height - 8}
+              y={height - 12}
               textAnchor="middle"
               className="fill-muted"
               fontSize={10}

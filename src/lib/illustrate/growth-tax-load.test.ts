@@ -3,7 +3,9 @@ import { describe, it } from "node:test";
 import { buildGrowthTaxByTypeModel } from "./growth-tax-by-type.ts";
 import { loadGrowthAndTaxDrag } from "./growth-tax-load.ts";
 import {
+  annualizedFromRows,
   calendarYearsFromRows,
+  commonInceptionYear,
   growthLinesFromRows,
   mapFundsWithOptionalPerformance,
   missingPerformanceTickers,
@@ -257,6 +259,76 @@ describe("growthLinesFromRows", () => {
       ["AMCPX"],
     );
     assert.ok(lines[0]?.points.every((point) => point.value > 0));
+  });
+
+  it("does not invent annualized return when the performance pack is missing", () => {
+    const rows = [row("VIGAX", null, yoyTax("VIGAX"), "#3a4348")];
+    assert.deepEqual(annualizedFromRows(rows, [2024, 2025], 10_000), []);
+  });
+});
+
+describe("common inception window", () => {
+  it("clips shared years to the latest fund inception and omits earlier empties", () => {
+    const rows = [
+      row("AGTHX", pack("AGTHX", [2022, 2023, 2024, 2025])),
+      row("NEWFD", pack("NEWFD", [2024, 2025])),
+    ];
+    assert.equal(commonInceptionYear(rows, "tax_dollars"), 2024);
+    const years = calendarYearsFromRows(rows, "tax_dollars");
+    assert.equal(years[0], 2024);
+    assert.ok(!years.includes(2022));
+    assert.ok(!years.includes(2023));
+    const lines = growthLinesFromRows(rows, years, 10_000);
+    assert.ok(lines.every((line) => line.points.every((point) => point.year >= 2024)));
+  });
+
+  it("does not let a ticker with no pack clip the others", () => {
+    const rows = [
+      row("AGTHX", pack("AGTHX", [2022, 2023, 2024, 2025])),
+      row("ZZNONE", null, null),
+    ];
+    assert.equal(commonInceptionYear(rows, "tax_dollars"), 2022);
+    const years = calendarYearsFromRows(rows, "tax_dollars");
+    assert.ok(years.includes(2022) || years.includes(2023));
+  });
+
+  it("prefers compare common_inception.from_year over pack first year", () => {
+    const rows = [
+      row("AGTHX", pack("AGTHX", [2022, 2023, 2024, 2025]), yoyTax("AGTHX", [2024, 2025])),
+      row("NEWFD", pack("NEWFD", [2022, 2023, 2024, 2025]), yoyTax("NEWFD", [2024, 2025])),
+    ];
+    assert.equal(commonInceptionYear(rows, "tax_dollars"), 2024);
+    const years = calendarYearsFromRows(rows, "tax_dollars");
+    assert.equal(years[0], 2024);
+    assert.ok(!years.includes(2022));
+    assert.ok(!years.includes(2023));
+  });
+
+  it("clips the shared window to compare to_year when every filled fund has one", () => {
+    const rows = [
+      row("AGTHX", pack("AGTHX", [2022, 2023, 2024, 2025, 2026]), yoyTax("AGTHX", [2024, 2025])),
+      row("NEWFD", pack("NEWFD", [2024, 2025, 2026]), yoyTax("NEWFD", [2024, 2025])),
+    ];
+    const years = calendarYearsFromRows(rows, "tax_dollars");
+    assert.equal(years[0], 2024);
+    assert.equal(years[years.length - 1], 2025);
+    assert.ok(!years.includes(2023));
+    assert.ok(!years.includes(2026));
+  });
+
+  it("falls back to from_as_of when from_year is missing", () => {
+    const tax = yoyTax("AGTHX", [2023, 2024, 2025]);
+    tax.summary.common_inception = {
+      from_year: null,
+      to_year: 2025,
+      from_as_of: "2023-12-15",
+      to_as_of: "2025-12-15",
+    };
+    const rows = [row("AGTHX", pack("AGTHX", [2021, 2022, 2023, 2024, 2025]), tax)];
+    assert.equal(commonInceptionYear(rows, "tax_dollars"), 2023);
+    const years = calendarYearsFromRows(rows, "tax_dollars");
+    assert.equal(years[0], 2023);
+    assert.ok(!years.includes(2021));
   });
 });
 
