@@ -1,4 +1,5 @@
 import { illustrationComponentBucket } from "./illustration-upcoming.ts";
+import { upcomingDistDollars, parsePositiveNav } from "./nav-math.ts";
 import {
   calendarYearFromUnknown,
   comparePeriodCalendarYear,
@@ -71,6 +72,12 @@ export type GrowthTaxByTypeModel = {
   series: GrowthTaxFundSeries[];
 };
 
+/** Holding + live weekly NAV for Dist $ = amount × (holding / nav). */
+export type DistTaxContext = {
+  holdingDollars?: number | null;
+  navPerShare?: number | null;
+};
+
 const TYPE_SET = new Set<string>(GROWTH_TAX_ESTIMATE_TYPES);
 
 function emptyAmounts(): GrowthTaxTypeAmounts {
@@ -90,25 +97,64 @@ function numericOrNull(value: unknown): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-function illustrationCalendarYear(illustration: CompareIllustration | null | undefined): number {
-  if (!illustration) return 0;
-  const extra = illustration as CompareIllustration & { year?: unknown; as_of?: unknown };
-  const first = Array.isArray(illustration.components)
-    ? (illustration.components[0] as { as_of?: unknown; ex_date?: unknown } | undefined)
-    : undefined;
+/** Calendar year from `ex_date`, else `payable_date`. Never `as_of`. */
+export function componentCalendarYear(component: {
+  ex_date?: unknown;
+  payable_date?: unknown;
+}): number {
   return (
-    calendarYearFromUnknown(extra.year) ||
-    calendarYearFromUnknown(extra.as_of) ||
-    calendarYearFromUnknown(illustration.label) ||
-    calendarYearFromUnknown(first?.as_of) ||
-    calendarYearFromUnknown(first?.ex_date)
+    calendarYearFromUnknown(component.ex_date) ||
+    calendarYearFromUnknown(component.payable_date)
   );
 }
 
 /**
- * Place each compare side onto **that illustration’s calendar year**.
+ * Calendar year for an illustration: first component `ex_date` /
+ * `payable_date`. Do not use `as_of` — a Dec 17, 2025 YE with a 2026
+ * as_of stays in 2025 only.
+ */
+export function illustrationCalendarYear(
+  illustration: CompareIllustration | null | undefined,
+): number {
+  if (!illustration) return 0;
+  const years = illustrationCalendarYears(illustration);
+  return years[0] ?? 0;
+}
+
+export function illustrationCalendarYears(
+  illustration: CompareIllustration | null | undefined,
+): number[] {
+  if (!illustration) return [];
+  const years = new Set<number>();
+  for (const raw of illustration.components ?? []) {
+    const row = raw as { ex_date?: unknown; payable_date?: unknown };
+    const year = componentCalendarYear(row);
+    if (year > 0) years.add(year);
+  }
+  if (years.size > 0) return [...years].sort((a, b) => a - b);
+  const extra = illustration as CompareIllustration & { year?: unknown };
+  const fallback =
+    calendarYearFromUnknown(extra.year) ||
+    calendarYearFromUnknown(illustration.label);
+  return fallback > 0 ? [fallback] : [];
+}
+
+function illustrationsForPeriodSide(
+  period: CompareResponse["periods"][number],
+  responseMode: CompareResponse["mode"],
+  side: "left" | "right" | "auto",
+): Array<CompareIllustration | null | undefined> {
+  if (side === "right") return [period.right];
+  if (side === "left") return [period.left];
+  if (responseMode === "yoy") return [period.left, period.right];
+  return [period.left];
+}
+
+/**
+ * Place each compare side onto **that illustration’s ex_date year**.
  * YoY left/right vintages never share a column — never mix YE seasons
  * or market years when comparing funds. Missing years stay absent.
+ * A paid Dec 17, 2025 YE must not repeat as a 2026 bar.
  */
 export function illustrationsByCalendarYear(
   response: CompareResponse,
@@ -117,6 +163,8 @@ export function illustrationsByCalendarYear(
   const byYear = new Map<number, CompareIllustration>();
   const write = (year: number, illustration: CompareIllustration | null | undefined) => {
     if (!Number.isFinite(year) || year <= 0 || !illustration) return;
+    const dated = illustrationCalendarYears(illustration);
+    if (dated.length > 0 && !dated.includes(year)) return;
     const prior = byYear.get(year);
     if (prior && !illustrationIsUnmatched(prior) && illustrationIsUnmatched(illustration)) {
       return;
@@ -125,31 +173,16 @@ export function illustrationsByCalendarYear(
   };
 
   for (const period of response.periods) {
-    const yoy = response.mode === "yoy";
     const periodYear = comparePeriodCalendarYear(period);
-    if (yoy) {
-      const olderFromLabel = illustrationCalendarYear(period.left);
-      const newerFromLabel = illustrationCalendarYear(period.right);
-      const calendarRow =
-        periodYear > 0 &&
-        ((olderFromLabel === 0 && newerFromLabel === 0) ||
-          (olderFromLabel === periodYear && newerFromLabel === periodYear));
-      if (calendarRow && side !== "auto") {
-        write(periodYear, side === "right" ? period.right : period.left);
+    for (const illustration of illustrationsForPeriodSide(period, response.mode, side)) {
+      if (!illustration) continue;
+      const years = illustrationCalendarYears(illustration);
+      if (years.length === 0) {
+        if (periodYear > 0) write(periodYear, illustration);
         continue;
       }
-      if (calendarRow && olderFromLabel === periodYear && newerFromLabel === periodYear) {
-        write(periodYear, period.right ?? period.left);
-        continue;
-      }
-      const olderYear = olderFromLabel || (periodYear > 1 ? periodYear - 1 : 0);
-      const newerYear = newerFromLabel || periodYear;
-      if (olderYear > 0) write(olderYear, period.left);
-      if (newerYear > 0) write(newerYear, period.right);
-      continue;
+      for (const year of years) write(year, illustration);
     }
-    if (side === "right") write(periodYear, period.right);
-    else write(periodYear, period.left);
   }
 
   return byYear;
@@ -187,7 +220,63 @@ function asComponent(raw: unknown): IllustrationComponent | null {
       row.estimated_tax_dollars_max ?? row.estimated_tax_max,
     ),
     notes: typeof row.notes === "string" ? row.notes : null,
+    amount: numericOrNull(row.amount),
+    percent_of_nav: numericOrNull(row.percent_of_nav ?? row.pct_of_nav),
+    nav_on_distribution_day: numericOrNull(row.nav_on_distribution_day),
   };
+}
+
+function amountUnitOf(component: { amount_unit?: string | null }): string {
+  return String(component.amount_unit ?? "").trim().toLowerCase();
+}
+
+function publishedAmount(
+  component: Pick<IllustrationComponent, "amount" | "percent_of_nav">,
+): number | null {
+  return numericOrNull(component.amount) ?? numericOrNull(component.percent_of_nav);
+}
+
+/**
+ * Dist $ = amount × (holding_dollars / live nav_per_share) for per_share.
+ * percent_of_nav stays holding × amount/100. Never invent when amount or
+ * live NAV is missing — fall back to published distribution_dollars only.
+ */
+export function distDollarsFromComponent(
+  component: Pick<
+    IllustrationComponent,
+    "amount" | "amount_unit" | "percent_of_nav" | "distribution_dollars"
+  >,
+  ctx?: DistTaxContext,
+): number | null {
+  const unit = amountUnitOf(component);
+  const amount = publishedAmount(component);
+  const holding = parsePositiveNav(ctx?.holdingDollars);
+  const nav = parsePositiveNav(ctx?.navPerShare);
+  if (unit === "per_share" || unit === "usd_per_share") {
+    const recomputed = upcomingDistDollars(amount, holding, nav);
+    if (recomputed != null) return recomputed;
+    return numericOrNull(component.distribution_dollars);
+  }
+  if (unit === "percent_of_nav") {
+    if (amount != null && holding != null) return holding * (amount / 100);
+    return numericOrNull(component.distribution_dollars);
+  }
+  const recomputed = upcomingDistDollars(amount, holding, nav);
+  if (recomputed != null) return recomputed;
+  return numericOrNull(component.distribution_dollars);
+}
+
+export function canRecomputeDistDollars(
+  component: Pick<IllustrationComponent, "amount" | "amount_unit" | "percent_of_nav">,
+  ctx?: DistTaxContext,
+): boolean {
+  const unit = amountUnitOf(component);
+  const amount = publishedAmount(component);
+  const holding = parsePositiveNav(ctx?.holdingDollars);
+  const nav = parsePositiveNav(ctx?.navPerShare);
+  if (amount == null || holding == null) return false;
+  if (unit === "percent_of_nav") return true;
+  return nav != null && (unit === "per_share" || unit === "usd_per_share");
 }
 
 export function canonicalizeEstimateType(raw: string): GrowthTaxEstimateType | "skip" | "total_capital_gains" {
@@ -197,15 +286,34 @@ export function canonicalizeEstimateType(raw: string): GrowthTaxEstimateType | "
   return "skip";
 }
 
+function rateForComponent(
+  component: Pick<IllustrationComponent, "estimate_type" | "rate_key">,
+  rates: TaxRates,
+  combineState: boolean,
+): number {
+  const rateKey =
+    (component.rate_key as keyof TaxRates | undefined) &&
+    component.rate_key in rates
+      ? (component.rate_key as keyof TaxRates)
+      : (RATE_MAPPING[component.estimate_type] ?? "ordinary_income");
+  const federal = rates[rateKey] ?? rates.ordinary_income;
+  const state = combineState ? rates.state : 0;
+  return federal + state;
+}
+
 /**
- * Tax $ for one component: API tax first, else Dist $ × the rate already
- * applied (component effective_rate, else locked user rates). ROC is not
- * taxed unless Data sent a tax figure. Never invent Dist $.
+ * Tax $ = Dist $ × locked user rates when amount + live NAV + holding can
+ * recompute Dist $. Otherwise API tax first, else Dist $ × effective_rate
+ * / user rates. ROC is not taxed unless Data sent a tax figure and Dist $
+ * cannot be recomputed. Never invent Dist $.
  */
 export function taxDollarsFromComponent(
   component: Pick<
     IllustrationComponent,
     | "estimate_type"
+    | "amount"
+    | "amount_unit"
+    | "percent_of_nav"
     | "distribution_dollars"
     | "estimated_tax_dollars"
     | "effective_rate"
@@ -215,28 +323,34 @@ export function taxDollarsFromComponent(
   >,
   rates?: TaxRates,
   combineState = true,
+  ctx?: DistTaxContext,
 ): number | null {
-  const published = numericOrNull(component.estimated_tax_dollars);
-  if (published != null) return published;
-
-  const dist = numericOrNull(component.distribution_dollars);
-  if (dist == null) return null;
-
+  const recomputed = canRecomputeDistDollars(component, ctx);
+  const dist = distDollarsFromComponent(component, ctx);
   const kind = canonicalizeEstimateType(component.estimate_type);
-  if (kind === "return_of_capital") return 0;
+
+  if (kind === "return_of_capital") {
+    if (!recomputed) {
+      const published = numericOrNull(component.estimated_tax_dollars);
+      if (published != null) return published;
+    }
+    return dist == null && !recomputed ? null : 0;
+  }
+
+  if (!recomputed) {
+    const published = numericOrNull(component.estimated_tax_dollars);
+    if (published != null) return published;
+  }
+
+  if (dist == null) return numericOrNull(component.estimated_tax_dollars);
+
+  if (recomputed && rates) return dist * rateForComponent(component, rates, combineState);
 
   const effective = numericOrNull(component.effective_rate);
   if (effective != null && effective > 0) return dist * effective;
 
   if (!rates) return null;
-  const rateKey =
-    (component.rate_key as keyof TaxRates | undefined) &&
-    component.rate_key in rates
-      ? (component.rate_key as keyof TaxRates)
-      : (RATE_MAPPING[component.estimate_type] ?? "ordinary_income");
-  const federal = rates[rateKey] ?? rates.ordinary_income;
-  const state = combineState ? rates.state : 0;
-  return dist * (federal + state);
+  return dist * rateForComponent(component, rates, combineState);
 }
 
 function addAmount(amounts: GrowthTaxTypeAmounts, type: GrowthTaxEstimateType, value: number) {
@@ -312,12 +426,30 @@ export function selectComponentsForYear(
   return { status: "empty", used: [] };
 }
 
+function contextForIllustration(
+  illustration: CompareIllustration | null | undefined,
+  ctx?: DistTaxContext,
+): DistTaxContext {
+  const extra = illustration as (CompareIllustration & { nav_per_share?: unknown }) | undefined;
+  return {
+    holdingDollars:
+      parsePositiveNav(illustration?.holding_dollars) ??
+      parsePositiveNav(ctx?.holdingDollars) ??
+      null,
+    navPerShare:
+      parsePositiveNav(ctx?.navPerShare) ??
+      parsePositiveNav(extra?.nav_per_share) ??
+      null,
+  };
+}
+
 export function growthTaxYearFromIllustration(
   ticker: string,
   year: number,
   illustration: CompareIllustration | null | undefined,
   rates?: TaxRates,
   combineState = true,
+  ctx?: DistTaxContext,
 ): GrowthTaxFundYear {
   const empty: GrowthTaxFundYear = {
     ticker,
@@ -328,16 +460,21 @@ export function growthTaxYearFromIllustration(
   };
   if (!illustration || illustrationIsUnmatched(illustration)) return empty;
 
+  const resolved = contextForIllustration(illustration, ctx);
   const parsed = (illustration.components ?? [])
     .map(asComponent)
-    .filter((row): row is IllustrationComponent => row != null);
+    .filter((row): row is IllustrationComponent => row != null)
+    .filter((row) => {
+      const componentYear = componentCalendarYear(row);
+      return componentYear === 0 || componentYear === year;
+    });
   const { status, used } = selectComponentsForYear(parsed);
   if (status === "empty") return empty;
 
   const amounts = foldEstimateTypeAmounts(
     used.map((component) => ({
       estimate_type: component.estimate_type,
-      tax: taxDollarsFromComponent(component, rates, combineState),
+      tax: taxDollarsFromComponent(component, rates, combineState, resolved),
     })),
   );
   return {
@@ -356,12 +493,20 @@ export function growthTaxSeriesFromCompare(
   side: "left" | "right" | "auto" = "auto",
   rates?: TaxRates,
   combineState = true,
+  ctx?: DistTaxContext,
 ): GrowthTaxFundSeries {
   const byYear = response ? illustrationsByCalendarYear(response, side) : new Map();
   return {
     ticker,
     years: years.map((year) =>
-      growthTaxYearFromIllustration(ticker, year, byYear.get(year), rates, combineState),
+      growthTaxYearFromIllustration(
+        ticker,
+        year,
+        byYear.get(year),
+        rates,
+        combineState,
+        ctx,
+      ),
     ),
   };
 }
@@ -372,6 +517,8 @@ export function buildGrowthTaxByTypeModel(
     ticker: string;
     tax: CompareResponse | null;
     taxSide?: "left" | "right" | "auto";
+    holdingDollars?: number | null;
+    navPerShare?: number | null;
   }>,
   years: number[],
   rates?: TaxRates,
@@ -389,6 +536,10 @@ export function buildGrowthTaxByTypeModel(
         row.taxSide ?? "auto",
         rates,
         combineState,
+        {
+          holdingDollars: row.holdingDollars,
+          navPerShare: row.navPerShare,
+        },
       ),
     ),
   };

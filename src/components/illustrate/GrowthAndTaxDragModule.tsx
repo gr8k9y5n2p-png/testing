@@ -196,6 +196,8 @@ export function GrowthAndTaxDragModule({
           ticker: row.input.ticker,
           tax: row.tax,
           taxSide: row.taxSide,
+          holdingDollars: principal,
+          navPerShare: row.navPerShare ?? row.input.navPerShare ?? null,
         })),
         years,
         rates,
@@ -224,7 +226,7 @@ export function GrowthAndTaxDragModule({
         })),
       };
     }
-  }, [combineStateWithFederal, rates, rows, years]);
+  }, [combineStateWithFederal, principal, rates, rows, years]);
 
   function commitPrincipal() {
     const parsed = Number(principalDraft.replace(/[$,\s]/g, ""));
