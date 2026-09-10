@@ -14,7 +14,10 @@ export async function GET(request: Request) {
   const live = await loadFundPageFromDataApi(query);
   if (live) {
     return Response.json({
-      source: { kind: "live", label: "Data API /funds" },
+      source: {
+        kind: "live",
+        label: query.paidHistory ? "Data API /distributions" : "Data API /funds",
+      },
       items: live.items,
       total: live.total,
       limit: live.limit,

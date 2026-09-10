@@ -16,7 +16,6 @@ import {
 } from "@/data";
 import { collectTaxYearsFromFunds, mergeTaxYears } from "@/data/tax-years";
 import type { Facets, FundEstimateView, SearchFilters } from "@/data/types";
-import { EmptyState } from "@/components/EmptyState";
 import { ResultsTable } from "@/components/ResultsTable";
 import { SearchToolbar } from "@/components/SearchToolbar";
 import type { SortDirection, SortKey } from "@/lib/format";
@@ -289,8 +288,6 @@ export function Dashboard({
     [focusedItems, paidPage.items],
   );
 
-  const hasActiveFilters = Boolean(filters.family || filters.category);
-  const hasPaidBook = paidPage.total > 0 || paidPage.items.length > 0;
 
   const rangeLabel = `${upcomingCount} unpaid announced`;
 
@@ -340,46 +337,38 @@ export function Dashboard({
         onChange={applyFilters}
       />
       <div className={isPending ? "opacity-70 transition-opacity" : ""}>
-        {tableFunds.length === 0 && !hasPaidBook ? (
-          <EmptyState
-            hasActiveFilters={hasActiveFilters}
-            universeEmpty={funds.length === 0}
-            onClear={() => applyFilters({ year: currentPaidHistoryYear() })}
-          />
-        ) : (
-          <ResultsTable
-            funds={tableFunds}
-            paidFunds={paidFunds}
-            onIllustrate={onIllustrate}
-            sortKey={sortKey}
-            sortDirection={sortDirection}
-            onSort={toggleSort}
-            year={paidYear}
-            years={toolbarFacets.years}
-            onYear={(nextYear) =>
-              applyFilters({ ...filters, year: nextYear })
-            }
-            highlightedTicker={scopedTicker}
-            page={
-              upcomingCount > FUND_PAGE_SIZE
-                ? {
-                    total: upcomingCount,
-                    limit: FUND_PAGE_SIZE,
-                    offset,
-                    onOffset: setOffset,
-                  }
-                : undefined
-            }
-            paidPage={{
-              total: paidPage.total,
-              limit: paidPage.limit,
-              offset: paidPage.offset,
-              onOffset: setPaidOffset,
-              onLimit: applyPaidLimit,
-              limitOptions: PAID_HISTORY_PAGE_SIZES,
-            }}
-          />
-        )}
+        <ResultsTable
+          funds={tableFunds}
+          paidFunds={paidFunds}
+          onIllustrate={onIllustrate}
+          sortKey={sortKey}
+          sortDirection={sortDirection}
+          onSort={toggleSort}
+          year={paidYear}
+          years={toolbarFacets.years}
+          onYear={(nextYear) =>
+            applyFilters({ ...filters, year: nextYear })
+          }
+          highlightedTicker={scopedTicker}
+          page={
+            upcomingCount > FUND_PAGE_SIZE
+              ? {
+                  total: upcomingCount,
+                  limit: FUND_PAGE_SIZE,
+                  offset,
+                  onOffset: setOffset,
+                }
+              : undefined
+          }
+          paidPage={{
+            total: paidPage.total,
+            limit: paidPage.limit,
+            offset: paidPage.offset,
+            onOffset: setPaidOffset,
+            onLimit: applyPaidLimit,
+            limitOptions: PAID_HISTORY_PAGE_SIZES,
+          }}
+        />
       </div>
     </section>
   );
