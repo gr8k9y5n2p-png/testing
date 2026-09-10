@@ -365,6 +365,7 @@ export function growthTaxSeriesFromCompare(
   };
 }
 
+/** Same calendar-year columns for every fund — never mix YE seasons. */
 export function buildGrowthTaxByTypeModel(
   rows: Array<{
     ticker: string;
@@ -392,7 +393,7 @@ export function buildGrowthTaxByTypeModel(
   };
 }
 
-export function lightenHex(hex: string, amount = 0.42): string {
+export function lightenHex(hex: string, amount = 0.32): string {
   const raw = hex.replace("#", "");
   if (raw.length !== 6) return hex;
   const mix = (channel: number) =>

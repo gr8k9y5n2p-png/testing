@@ -286,6 +286,25 @@ describe("buildGrowthTaxByTypeModel", () => {
     assert.equal(six.series.length, 6);
     assert.ok(six.series.every((row) => row.years.every((year) => year.status === "empty")));
   });
+
+  it("aligns every fund to the same calendar-year columns", () => {
+    const years = [2023, 2024, 2025, 2026];
+    const model = buildGrowthTaxByTypeModel(
+      [
+        { ticker: "AGTHX", tax: null },
+        { ticker: "FCNTX", tax: null },
+        { ticker: "VFIAX", tax: null },
+      ],
+      years,
+    );
+    assert.deepEqual(model.years, years);
+    for (const row of model.series) {
+      assert.deepEqual(
+        row.years.map((cell) => cell.year),
+        years,
+      );
+    }
+  });
 });
 
 describe("Growth & Tax chrome locks", () => {
@@ -310,11 +329,14 @@ describe("Growth & Tax chrome locks", () => {
     assert.doesNotMatch(moduleSource, /Estimated annual tax drag/);
     assert.match(workspace, /GrowthAndTaxDragModule/);
     assert.doesNotMatch(workspace, /CompareAnnualTable/);
+    assert.doesNotMatch(workspace, /CalendarYearTaxTable/);
     assert.match(workspace, /TaxRateFields/);
     assert.match(workspace, /compareTaxRequestFields|lockedTaxRates|toDataApiTaxRates/);
     assert.match(workspace, /UpcomingTable/);
     assert.match(chart, /Announced \(unpaid\)/);
     assert.doesNotMatch(chart, /rotate\(-/);
+    assert.match(chart, /fundSeries\.map/);
+    assert.doesNotMatch(chart, /strokeDasharray=\{row\.dashed/);
     assert.equal(GROWTH_TAX_TYPE_COLORS.long_term_capital_gains, "#b42318");
     assert.equal(GROWTH_TAX_TYPE_COLORS.ordinary_income, "#1b7a72");
   });

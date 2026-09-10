@@ -137,14 +137,11 @@ export function GrowthAndTaxChart({
           Growth ({formatUsd(startDollars, 0)})
         </h3>
         <ul className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-ink">
-          {growthSeries.map((row) => (
+          {fundSeries.map((row) => (
             <li key={row.id} className="flex items-center gap-1.5">
               <span
                 className="inline-block h-px w-4"
-                style={{
-                  background: row.dashed ? "transparent" : row.color,
-                  borderTop: row.dashed ? `1.5px dashed ${row.color}` : undefined,
-                }}
+                style={{ background: row.color }}
               />
               <span className="font-medium">{row.label}</span>
               {onRemoveSeries && isRemovableGrowthSeries(row.id, row.dashed) ? (
@@ -162,18 +159,23 @@ export function GrowthAndTaxChart({
         </ul>
       </header>
 
-      <div role="img" aria-label={`Growth and tax. ${aria}`}>
-        <svg viewBox={`0 0 ${width} ${height}`} className="h-auto w-full" aria-hidden>
+      <div role="img" aria-label={`Growth and tax. ${aria}`} className="min-h-[280px]">
+        <svg
+          viewBox={`0 0 ${width} ${height}`}
+          className="h-auto w-full"
+          preserveAspectRatio="xMidYMid meet"
+          aria-hidden
+        >
           <defs>
             <pattern
               id={`gt-hatch-${hatchId}`}
-              width="6"
-              height="6"
+              width="5"
+              height="5"
               patternUnits="userSpaceOnUse"
               patternTransform="rotate(45)"
             >
-              <rect width="6" height="6" fill="white" fillOpacity="0.35" />
-              <line x1="0" y1="0" x2="0" y2="6" stroke="white" strokeWidth="1.6" />
+              <rect width="5" height="5" fill="white" fillOpacity="0.2" />
+              <line x1="0" y1="0" x2="0" y2="5" stroke="white" strokeWidth="1.35" />
             </pattern>
           </defs>
 
@@ -265,7 +267,7 @@ export function GrowthAndTaxChart({
             $0
           </text>
 
-          {growthSeries.map((row) => {
+          {fundSeries.map((row) => {
             const d = polyline(row.points, years, xCenter, growthY);
             if (!d) return null;
             const last = row.points[row.points.length - 1];
@@ -277,11 +279,10 @@ export function GrowthAndTaxChart({
                   fill="none"
                   stroke={row.color}
                   strokeWidth={1.75}
-                  strokeDasharray={row.dashed ? "5 4" : undefined}
                   strokeLinejoin="round"
                   strokeLinecap="round"
                 />
-                {last && !row.dashed && lastIndex >= 0 ? (
+                {last && lastIndex >= 0 ? (
                   <circle
                     cx={xCenter(lastIndex)}
                     cy={growthY(last.value)}
