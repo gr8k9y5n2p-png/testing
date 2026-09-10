@@ -98,6 +98,8 @@ export async function loadDistributionsForFundPage(input: {
   family?: string;
   tickers?: string[];
   fundIdentifiers?: string[];
+  /** Lists / exact ticker batches — hydrate every ticker, not the browse prefix. */
+  hydrateAll?: boolean;
 }): Promise<DataDistribution[]> {
   const rows: DataDistribution[] = [];
   const q = input.q?.trim();
@@ -119,7 +121,8 @@ export async function loadDistributionsForFundPage(input: {
   // Search / small picker pages only — do not fan out 50 ticker GETs on browse.
   // Search hydrates every missing ticker. Browse hydrates the first 8 so
   // FXAIX/VFIAX YE finals land in Paid history without 50 hobby-plan GETs.
-  const tickersToFetch = Boolean(q)
+  // Lists passes hydrateAll so a pasted batch is not capped at 8.
+  const tickersToFetch = Boolean(q) || input.hydrateAll
     ? missingTickers
     : missingTickers.slice(0, 8);
   if (tickersToFetch.length) {

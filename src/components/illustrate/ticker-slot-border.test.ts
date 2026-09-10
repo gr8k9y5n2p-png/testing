@@ -42,6 +42,7 @@ describe("ticker slot locked-border wiring", () => {
     const field = read("portfolio-compare/TickerField.tsx");
     const workspace = read("CompareWorkspace.tsx");
     const column = read("portfolio-compare/AllocationColumn.tsx");
+    const lists = read("../lists/ListsWorkspace.tsx");
 
     assert.match(helper, /border-above/);
     assert.match(helper, /border-line/);
@@ -57,7 +58,9 @@ describe("ticker slot locked-border wiring", () => {
 
     assert.match(workspace, /TickerField/);
     assert.match(column, /TickerField/);
+    assert.match(lists, /tickerSlotBorderClass/);
     assert.doesNotMatch(workspace, /border-above/);
     assert.doesNotMatch(column, /border-above/);
+    assert.doesNotMatch(lists, /border-above/);
   });
 });

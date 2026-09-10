@@ -24,6 +24,7 @@ describe("Search / Sample Estimates fund page", () => {
   it("hydrates a browse page prefix instead of skipping all ticker GETs", () => {
     const source = readFileSync(join(here, "distributions.ts"), "utf8");
     assert.match(source, /missingTickers\.slice\(0, 8\)/);
+    assert.match(source, /hydrateAll/);
     assert.doesNotMatch(
       source,
       /Boolean\(q\) \|\| missingTickers\.length <= 8/,

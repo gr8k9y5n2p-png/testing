@@ -54,6 +54,22 @@ export const SEARCH_PAID_HISTORY_DETAIL =
   "Paid and final distributions from GET /distributions. Never invented from Upcoming.";
 export const SEARCH_PAID_HISTORY_KICKER = "past · not upcoming";
 
+/** Lists tab — ticker paste list + unpaid announced estimates. */
+export const LISTS_HEADING = "Lists";
+export const LISTS_DETAIL =
+  "Paste or type tickers. Upcoming / announced estimates only — unpaid, never invented from paid history.";
+export const LISTS_EMPTY =
+  "Paste or type tickers to build a list. Separate with commas, spaces, or new lines.";
+export const LISTS_INPUT_PLACEHOLDER = "FBGRX, AGTHX, ABALX";
+export const LISTS_ADD = "Add";
+export const LISTS_NOT_FOUND = "Not found";
+export const LISTS_NAV_COLUMN = "NAV";
+export const LISTS_DIST_COLUMN = "Estimated $ Distribution/share";
+export const LISTS_PCT_COLUMN = "Distribution % of NAV";
+export const LISTS_ANNOUNCED_COLUMN = "Announced Date";
+export const LISTS_RECORD_COLUMN = "Record Date";
+export const LISTS_EX_COLUMN = "Ex-Date";
+
 export { TICKER_REQUEST } from "@/lib/data-api/request-ticker";
 
 export const FREE_SEARCH_LIMIT = 3;
