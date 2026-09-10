@@ -24,3 +24,7 @@ services:
         value: https://testing-seven-umber-19.vercel.app,http://localhost:3000,http://127.0.0.1:3000
       - key: CORS_ORIGIN_REGEX
         value: https://([a-z0-9-]+\.)*vercel\.app
+      - key: CATEGORY_OUTLIER_THRESHOLD_PCT
+        value: "50"
+      - key: CATEGORY_OUTLIER_MIN_PEERS
+        value: "3"

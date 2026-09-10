@@ -107,7 +107,8 @@ def test_full_book_ishares_fidelity_trp() -> None:
 def test_full_book_american_funds_invesco_dimensional() -> None:
     af_funds, af_tickers = _funds_and_tickers(AmericanFundsSource())
     assert {"AMCPX", "ABALX", "AGTHX"} <= af_tickers
-    assert len(af_funds) >= 70
+    # Dollar tables only. QDI "% qualified" characterization rows are not funds.
+    assert len(af_funds) >= 45
 
     inv_funds, inv_tickers = _funds_and_tickers(InvescoSource())
     assert {"VAFAX", "ACSTX", "CHTRX", "OPOCX"} <= inv_tickers

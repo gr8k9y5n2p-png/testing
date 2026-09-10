@@ -135,6 +135,18 @@ class DistributionOut(BaseModel):
         default=None,
         description="yahoo_last_close, issuer, fixture, or fixture_fallback. Null when unknown.",
     )
+    needs_review: bool = Field(
+        default=False,
+        description="True when a data-quality check flagged this row. Never auto-deleted.",
+    )
+    review_reason: str | None = Field(
+        default=None,
+        description="Stable reason code, e.g. category_outlier.",
+    )
+    data_quality_flags: list[str] | None = Field(
+        default=None,
+        description="All active quality flags. category_outlier means vs category median.",
+    )
 
 
 class DistributionListOut(BaseModel):
@@ -218,6 +230,21 @@ class IngestItemOut(BaseModel):
 class IngestResponse(BaseModel):
     created: int
     updated: int
+    skipped_characterization: int = Field(
+        default=0,
+        description=(
+            "Bare % / '% of dividends that are qualified' cells dropped. "
+            "Tax-character $/share rows (ordinary_income, ST/LT gains, "
+            "qualified_dividend, special_dividend, ROC, …) are still ingested."
+        ),
+    )
+    category_outliers_flagged: int = Field(
+        default=0,
+        description=(
+            "per_share rows flagged needs_review=category_outlier after this ingest "
+            "(default ±50% vs category median, same year + estimate_type)."
+        ),
+    )
     fund_family: str | None = None
     mode: str | None = None
     source_urls: list[str] = Field(default_factory=list)

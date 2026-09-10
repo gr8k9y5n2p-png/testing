@@ -40,6 +40,11 @@ class Settings(BaseSettings):
     cors_origins: str = DEFAULT_CORS_ORIGINS
     cors_origin_regex: str = DEFAULT_CORS_ORIGIN_REGEX
     seed_on_start: bool = False
+    # Flag a per_share row when it is more than ±pct from the category
+    # median (same calendar year + estimate_type). 50 → median × 1.5 / 0.5.
+    # Never auto-deletes or invents amounts.
+    category_outlier_threshold_pct: float = 50.0
+    category_outlier_min_peers: int = 3
 
     @field_validator("database_url")
     @classmethod

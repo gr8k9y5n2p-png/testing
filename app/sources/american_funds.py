@@ -32,7 +32,9 @@ class AmericanFundsSource(FundSource):
     priority = 7
     notes = (
         "Parses Capital Group public HTML tables (midyear/year-end per-share amounts, "
-        "special dividends, qualified-dividend percentages, and estimate % of NAV). "
+        "special dividends, and estimate % of NAV). Qualified-dividend income "
+        "percentages (% of dividends that are qualified) are 1099 characterizations, "
+        "not $/share distributions — skipped, never invented as QDI dollars. "
         "Live year-end *preliminary* estimate pages are seasonal and often advisor-gated; "
         "fixture mode includes estimate + final snapshots for 2024 and 2025 so time-series "
         "(as_of + publication_stage) coexist, plus product-page paid history for AMCAP / "

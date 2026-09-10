@@ -66,12 +66,22 @@ def _seed_fixture_if_empty() -> None:
     created_total = 0
     mode = settings.fetch_mode or "fixture"
     try:
+        try:
+            from app.crud import scrub_qdi_percent_characterizations
+
+            with app_db.SessionLocal() as session:
+                removed = scrub_qdi_percent_characterizations(session)
+                session.commit()
+            if removed:
+                logger.info("Scrubbed %s QDI percent characterization rows", removed)
+        except Exception:
+            logger.exception("QDI percent scrub failed; continuing")
         for source in list_sources():
             if not source.implemented:
                 continue
             try:
                 with app_db.SessionLocal() as session:
-                    result = fetch_and_ingest(session, source.slug, mode)
+                    result = fetch_and_ingest(session, source.slug, mode, review_outliers=False)
                     session.commit()
                     created_total += int(result.created or 0)
             except Exception:
@@ -90,6 +100,15 @@ def _seed_fixture_if_empty() -> None:
             )
         except Exception:
             logger.exception("Fixture NAV seed failed; continuing with null NAV")
+        try:
+            from app.services.quality import flag_category_outliers
+
+            with app_db.SessionLocal() as session:
+                flagged = flag_category_outliers(session)
+                session.commit()
+            logger.info("Category-outlier review flagged=%s", flagged)
+        except Exception:
+            logger.exception("Category-outlier review failed; continuing")
         _seed_state["created"] = created_total
         _seed_state["status"] = "complete"
         logger.info("Fixture seed complete created=%s", created_total)
@@ -112,6 +131,18 @@ def _start_background_seed() -> None:
 async def lifespan(_app: FastAPI):
     _ensure_sqlite_dir()
     init_db()
+    # Persistent Render disk keeps mis-parsed QDI % rows across deploys.
+    if app_db.SessionLocal is not None:
+        try:
+            from app.crud import scrub_qdi_percent_characterizations
+
+            with app_db.SessionLocal() as session:
+                removed = scrub_qdi_percent_characterizations(session)
+                session.commit()
+            if removed:
+                logger.info("Boot-scrubbed %s QDI percent characterization rows", removed)
+        except Exception:
+            logger.exception("Boot QDI percent scrub failed; continuing")
     if _should_seed_on_start():
         # /health must come up before the full book finishes (~11k fixture rows).
         _start_background_seed()

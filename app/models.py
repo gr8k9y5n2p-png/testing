@@ -75,6 +75,9 @@ class DistributionEstimate(Base):
         nullable=False,
         server_default=func.now(),
     )
+    needs_review: Mapped[bool] = mapped_column(default=False, nullable=False)
+    review_reason: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    data_quality_flags: Mapped[list | None] = mapped_column(JSON, nullable=True)
 
 
 class CoverageGap(Base):

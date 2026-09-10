@@ -4,13 +4,14 @@ from datetime import date, datetime, timezone
 from decimal import Decimal
 from typing import NamedTuple
 
-from sqlalchemy import Select, case, func, or_, select
+from sqlalchemy import Select, case, delete, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.aliases import alias_fund_identifier, enrich_class_a_fields
 from app.categories import canonical_category, resolve_category
-from app.models import CoverageGap, DistributionEstimate, IngestRun, PublicationStage
+from app.models import AmountUnit, CoverageGap, DistributionEstimate, IngestRun, PublicationStage
 from app.schemas import DistributionIn, fund_identifier, make_upsert_key
+from app.sources.parser import is_ingestible_distribution_amount
 
 _ESTIMATE_STAGES = (
     PublicationStage.preliminary_estimate.value,
@@ -47,6 +48,12 @@ def upsert_records(
     now = datetime.now(timezone.utc)
     collapsed: dict[str, DistributionIn] = {}
     order: list[str] = []
+    ingestible: list[DistributionIn] = []
+    for record in records:
+        if not is_ingestible_distribution_amount(record.estimate_type, record.amount_unit):
+            continue
+        ingestible.append(record)
+    records = ingestible
     for record in records:
         ident = fund_identifier(record.ticker, record.fund_name, record.fund_family)
         key = make_upsert_key(
@@ -136,6 +143,7 @@ def _filter_stmt(
     ex_date_from: date | None = None,
     ex_date_to: date | None = None,
     publication_stage: str | None = None,
+    needs_review: bool | None = None,
 ) -> Select[tuple[DistributionEstimate]]:
     stmt: Select[tuple[DistributionEstimate]] = select(DistributionEstimate)
     if q:
@@ -194,6 +202,8 @@ def _filter_stmt(
         stmt = stmt.where(DistributionEstimate.ex_date >= ex_date_from)
     if ex_date_to:
         stmt = stmt.where(DistributionEstimate.ex_date <= ex_date_to)
+    if needs_review is not None:
+        stmt = stmt.where(DistributionEstimate.needs_review.is_(needs_review))
     return stmt
 
 
@@ -212,6 +222,7 @@ def search_distributions(
     ex_date_from: date | None = None,
     ex_date_to: date | None = None,
     publication_stage: str | None = None,
+    needs_review: bool | None = None,
     page: int = 1,
     page_size: int = 50,
 ) -> tuple[list[DistributionEstimate], int]:
@@ -228,6 +239,7 @@ def search_distributions(
         ex_date_from=ex_date_from,
         ex_date_to=ex_date_to,
         publication_stage=publication_stage,
+        needs_review=needs_review,
     )
     total = session.scalar(select(func.count()).select_from(stmt.subquery())) or 0
     page = max(page, 1)
@@ -403,6 +415,25 @@ def list_matching(
             ).limit(limit)
         ).all()
     )
+
+
+def scrub_qdi_percent_characterizations(session: Session) -> int:
+    """Delete stored characterization-percent rows (not $/share tax characters).
+
+    Removes leftover ``amount_unit=percent`` rows — including every
+    ``qualified_dividend`` / QSTCG "% of dividends that are qualified" cell —
+    from Cap Group and any other family. Does not delete ``per_share`` or
+    ``percent_of_nav`` ordinary_income / ST-LT gains / QDI / special / ROC.
+    Render's SQLite disk survives redeploy, so seed must delete these or they
+    stay in Search / paid-history after the parser skip lands.
+    """
+    result = session.execute(
+        delete(DistributionEstimate).where(
+            DistributionEstimate.amount_unit == AmountUnit.percent.value,
+        )
+    )
+    session.flush()
+    return int(result.rowcount or 0)
 
 
 def record_ingest_run(session: Session, run: IngestRun) -> IngestRun:

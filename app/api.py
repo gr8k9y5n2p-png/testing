@@ -150,6 +150,10 @@ def list_distributions(
         description="Website alias of (page-1)*page_size. When set, overrides page.",
     ),
     include_raw: bool = False,
+    needs_review: bool | None = Query(
+        default=None,
+        description="If true, only rows flagged for data-quality review (e.g. category_outlier).",
+    ),
     session: Session = Depends(get_session),
 ) -> DistributionListOut:
     page, page_size = resolve_page_from_limit_offset(
@@ -168,6 +172,7 @@ def list_distributions(
         ex_date_from=ex_date_from,
         ex_date_to=ex_date_to,
         publication_stage=publication_stage,
+        needs_review=needs_review,
         page=page,
         page_size=page_size,
     )

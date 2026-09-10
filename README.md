@@ -903,7 +903,7 @@ Website can average illustrated tax / distribution fields by `category` and show
 | Yahoo `fundProfile.categoryName` | Remaining tickers, only when the published name canonicalizes to the Morningstar-style taxonomy |
 | **Null** | Anything left — opaque active names, name-only remainder rows, parser samples, Yahoo miss / unpublished category |
 
-Rebuild the catalog with `python3 scripts/build_fund_categories.py` (add `--yahoo` to refresh ticker lookups). Catalog file: `app/fund_categories.json`. This pass: **4,145 / 4,716 unique fixture funds (87.9%)** have a category; **571 stay null** (name-only remainder rows, unpublished Yahoo `fundProfile`, alt/buffer names that still do not canonicalize, parser samples). Do **not** invent a category to raise the percentage. Versus Category UI should skip nulls when averaging.
+Rebuild the catalog with `python3 scripts/build_fund_categories.py` (add `--yahoo` to refresh ticker lookups). Catalog file: `app/fund_categories.json`. This pass: **4,483 / 4,859 unique fixture funds (92.3%)** have a category; **376 stay null** (name-only remainder rows, unpublished Yahoo `fundProfile`, alt/buffer names that still do not canonicalize, parser samples). Do **not** invent a category to raise the percentage. Versus Category UI should skip nulls when averaging.
 
 `GET /distributions` still uses `page` / `page_size` / `total`. Website may send `limit` / `offset` as aliases (`limit` → `page_size`, `offset` → `page = floor(offset / page_size) + 1`). The response keeps `page` / `page_size`.
 
@@ -1023,7 +1023,8 @@ Each stored row is one estimate **component** (a fund can have long-term and sho
 | `fund_identifier` | Ticker if known, otherwise a slug of the fund name (upsert identity) |
 | `estimate_type` | `ordinary_income`, `short_term_capital_gains`, `long_term_capital_gains`, `total_capital_gains`, `total`, `qualified_dividend`, `qualified_short_term_gains`, `special_dividend`, `return_of_capital`, `other` |
 | `amount` / `amount_min` / `amount_max` | Midpoint plus range when the source publishes a band |
-| `amount_unit` | `per_share`, `percent_of_nav`, or `percent` (qualified-dividend %) |
+| `amount_unit` | `per_share` or `percent_of_nav`. Bare `"100%"` / `"41.94%"` and QDI "% of dividends that are qualified" are **not** ingested. Real $/share tax-character rows **are** ingested (`ordinary_income`, ST/LT gains, `qualified_dividend` when published as $/share, `special_dividend`, `return_of_capital`, `total_capital_gains`, …). |
+| `needs_review` / `review_reason` / `data_quality_flags` | Set after ingest when a `per_share` row is a **category outlier**. Default: more than **±50%** vs the category median for the same calendar year + `estimate_type` (`CATEGORY_OUTLIER_THRESHOLD_PCT=50`, `CATEGORY_OUTLIER_MIN_PEERS=3`). Uses % of NAV when NAV is present, else $/share. Never auto-deleted. Filter: `GET /distributions?needs_review=true`. |
 | `record_date`, `ex_date`, `payable_date` | When published |
 | `as_of` | Page publication date (Capital Group `meta name=date`) |
 | `publication_stage` | `preliminary_estimate`, `updated_estimate`, `final`, `paid`. Midyear **estimate** books (Columbia `mid-year-cap-gain-estimates`) stay `preliminary_estimate` / `updated_estimate`. Midyear **paid** / special / interim / semi-annual amounts (Capital Group `midyear-cap-gains`, iShares mid-year table, Davis June rows) map to `paid`. Year-end HTML/PDF maps to `final` (or the matching estimate stage). |
@@ -1316,7 +1317,7 @@ Verified public URLs (checked 2026-09-07):
 | Page | URL |
 | --- | --- |
 | 2026 midyear capital gains (paid per-share amounts) | https://www.capitalgroup.com/individual/service-and-support/tax-center/midyear-cap-gains.html |
-| 2025 year-end distributions (final LTCG/STCG, special dividends, QDI %) | https://www.capitalgroup.com/individual/service-and-support/tax-center/2025-year-end-distributions.html |
+| 2025 year-end distributions (final LTCG/STCG, special dividends; QDI % of income is not ingested) | https://www.capitalgroup.com/individual/service-and-support/tax-center/2025-year-end-distributions.html |
 | Tax Center hub | https://www.capitalgroup.com/individual/service-and-support/tax-center.html |
 | Year-end calendar (when estimates are posted) | https://www.capitalgroup.com/individual/news/distribution-dates.html |
 

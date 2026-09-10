@@ -218,6 +218,41 @@ def test_funds_category_filter_and_catalog(client: TestClient) -> None:
     assert names["Intermediate Core Bond"] == 1
 
 
+def test_funds_one_choice_target_date_category(client: TestClient) -> None:
+    """Issuer One Choice vintage names resolve; /funds and /funds/categories stay consistent."""
+    response = client.post(
+        "/ingest/distributions",
+        json={
+            "records": [
+                _record(
+                    fund_family="American Century",
+                    fund_name="American Century One Choice 2065 Portfolio Investor",
+                    ticker="ARHVX",
+                    estimate_type="long_term_capital_gains",
+                    amount="1.00",
+                    as_of="2025-12-15",
+                    publication_stage="final",
+                )
+            ]
+        },
+    )
+    assert response.status_code == 200
+    funds = client.get("/funds", params={"q": "ARHVX"})
+    assert funds.json()["total"] == 1
+    assert funds.json()["items"][0]["category"] == "Target-Date 2065"
+
+    filtered = client.get("/funds", params={"category": "Target-Date 2065"})
+    assert filtered.json()["total"] == 1
+    assert filtered.json()["items"][0]["ticker"] == "ARHVX"
+
+    cats = client.get("/funds/categories")
+    body = cats.json()
+    assert body["categorized"] == 1
+    assert body["uncategorized"] == 0
+    names = {item["category"]: item["fund_count"] for item in body["items"]}
+    assert names["Target-Date 2065"] == 1
+
+
 def test_funds_unknown_category_stays_null(client: TestClient) -> None:
     response = client.post(
         "/ingest/distributions",
