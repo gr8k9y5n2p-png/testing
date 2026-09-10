@@ -16,6 +16,8 @@ function stub(patch: Partial<FundEstimate> & Pick<FundEstimate, "ticker">): Fund
     Number((patch.exDate ?? patch.recordDate ?? asOfDate).slice(0, 4)) ??
     2026;
   const pct = patch.estimatedDistributionPctNav ?? 8;
+  const nav = patch.nav ?? 10;
+  const perShare = (pct / 100) * nav;
   return {
     id: `hl-${patch.ticker}`,
     fundName: patch.fundName ?? patch.ticker,
@@ -24,10 +26,11 @@ function stub(patch: Partial<FundEstimate> & Pick<FundEstimate, "ticker">): Fund
     family: patch.family ?? "Fidelity",
     category: patch.category ?? "Large Growth",
     shareClass: "A",
-    nav: 10,
-    estimatedDistributionAmount: pct,
-    estimatedOrdinaryIncome: pct / 2,
-    estimatedCapitalGains: pct / 2,
+    nav,
+    navOnDistributionDay: patch.navOnDistributionDay ?? nav,
+    estimatedDistributionAmount: patch.estimatedDistributionAmount ?? perShare,
+    estimatedOrdinaryIncome: perShare / 2,
+    estimatedCapitalGains: perShare / 2,
     estimatedDistributionPctNav: pct,
     publishedAt: asOfDate,
     asOfDate,

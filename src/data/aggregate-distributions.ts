@@ -113,6 +113,14 @@ function isRollupTotal(type: string | null | undefined): boolean {
   return (type ?? "").trim().toLowerCase() === "total";
 }
 
+function isPercentOfNavUnit(unit: string | null | undefined): boolean {
+  return (unit ?? "").trim().toLowerCase() === "percent_of_nav";
+}
+
+function isPerShareUnit(unit: string | null | undefined): boolean {
+  return (unit ?? "").trim().toLowerCase() === "per_share";
+}
+
 function estimateTypeLinesFromRows(rows: DataDistribution[]): EstimateTypeLine[] {
   const lines: EstimateTypeLine[] = [];
   const seen = new Set<string>();
@@ -143,16 +151,15 @@ function summarizeSnapshot(rows: DataDistribution[]): SnapshotTotals {
   for (const row of rows) {
     if (hasTypedPerShare && isRollupTotal(row.estimate_type)) continue;
     const value = midpoint(row);
-    if (row.amount_unit === "percent_of_nav") {
+    if (isPercentOfNavUnit(row.amount_unit)) {
       pctNav += value;
       publishedPctChars += 1;
-      if (CG_TYPES.has(row.estimate_type)) capGains += value;
-      else ordinary += value;
-    } else if (row.amount_unit === "per_share") {
-      perShare += value;
-      if (CG_TYPES.has(row.estimate_type)) capGains += value;
-      else ordinary += value;
+      continue;
     }
+    if (!isPerShareUnit(row.amount_unit)) continue;
+    perShare += value;
+    if (CG_TYPES.has(row.estimate_type)) capGains += value;
+    else ordinary += value;
   }
   const dayNav = pickNavOnDistributionDay(rows);
   return {

@@ -264,7 +264,7 @@ export function upcomingDistributionAmount(row: {
   return formatUsd(row.distributionDollars, 0);
 }
 
-/** % of NAV cell. Prefer $/share ÷ weekly NAV; never invent a manager rate. */
+/** % of NAV cell. Dist $/share ÷ weekly NAV only — never manager-published %. */
 export function upcomingPctOfNavAmount(row: {
   available: boolean;
   inUniverse?: boolean | null;
@@ -275,9 +275,10 @@ export function upcomingPctOfNavAmount(row: {
   navPerShare?: number | null;
 }): string {
   if (!row.available) return upcomingEmptyLabel(row.inUniverse);
-  const computed =
-    upcomingPctOfNavFromPerShare(resolveUpcomingPerShare(row), row.navPerShare ?? null) ??
-    row.pctOfNav;
+  const computed = upcomingPctOfNavFromPerShare(
+    resolveUpcomingPerShare(row),
+    row.navPerShare ?? null,
+  );
   if (computed == null) return UPCOMING_SOFT_DASH;
   return formatPct(computed);
 }

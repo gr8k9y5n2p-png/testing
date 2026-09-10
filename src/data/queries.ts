@@ -122,10 +122,11 @@ export function withPeerContext(funds: FundEstimate[]): FundEstimateView[] {
     const categoryAveragePctNav = averages.get(categoryPeerKey(fund)) ?? 0;
     return {
       ...fund,
-      estimatedDistributionPctNav: pct ?? fund.estimatedDistributionPctNav,
+      // Aftertax live/historical % only. Never manager-published percent_of_nav.
+      estimatedDistributionPctNav: pct ?? 0,
       categoryAveragePctNav: roundTo(categoryAveragePctNav, 4),
       vsCategoryPctNav: roundTo(
-        (pct ?? fund.estimatedDistributionPctNav) - categoryAveragePctNav,
+        pct == null ? 0 : pct - categoryAveragePctNav,
         4,
       ),
     };
@@ -200,7 +201,8 @@ export function priorPaidHistoryYear(now = new Date()): number {
 
 /**
  * Finals / paid from `/distributions` for the prior calendar year.
- * Current-year midyear paids stay out of Dollar Illustration Paid History.
+ * The calendar-year matrix includes the current year separately
+ * (Awaiting / — until an unpaid announced estimate arrives).
  */
 export function illustrationPriorYearPaidEvents(
   fund: Parameters<typeof paidEventsForFund>[0],

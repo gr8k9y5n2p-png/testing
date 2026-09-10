@@ -102,4 +102,25 @@ describe("sortFunds date columns", () => {
       ["EARLY", "LATE", "MID"],
     );
   });
+
+  it("sorts % of NAV by Dist $/share ÷ weekly NAV, not published %", () => {
+    const publishedWins = row("PUB", "2026-07-31", "2026-12-12", "2026-12-15");
+    publishedWins.estimatedDistributionAmount = 1;
+    publishedWins.nav = 100;
+    publishedWins.estimatedDistributionPctNav = 20;
+    publishedWins.publishedPctOfNav = 20;
+
+    const distWins = row("DIST", "2026-07-31", "2026-12-12", "2026-12-15");
+    distWins.estimatedDistributionAmount = 5;
+    distWins.nav = 100;
+    distWins.estimatedDistributionPctNav = 2;
+    distWins.publishedPctOfNav = 2;
+
+    assert.deepEqual(
+      sortFunds([publishedWins, distWins], "estimatedDistributionPctNav", "desc").map(
+        (fund) => fund.ticker,
+      ),
+      ["DIST", "PUB"],
+    );
+  });
 });

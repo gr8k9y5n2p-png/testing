@@ -7,6 +7,7 @@ import { mapFundsApiItem } from "../../data/funds-list.ts";
 import { aggregateDistributions, type DataDistribution } from "../../data/aggregate-distributions.ts";
 import { mergeFundWithDistributions } from "../../data/hydrate-funds.ts";
 import { paidHistoryViews, withPeerContext } from "../../data/queries.ts";
+import { sortFunds } from "../format.ts";
 import {
   fillNavPerShareInput,
   formatSoftPct,
@@ -147,17 +148,49 @@ describe("Eric-locked NAV math", () => {
     assert.equal(formatWeeklyNavLabel({ nav: 0, navAsOf: null }), SOFT_DASH);
   });
 
-  it("leaves issuer-published percent_of_nav as-is", () => {
+  it("live Aftertax % is Dist $/share ÷ weekly NAV — ignores published percent_of_nav", () => {
+    const fcpgxPerShare = 7.277;
+    const fcpgxWeeklyNav = 42.94;
+    const live = upcomingPctOfNav(fcpgxPerShare, fcpgxWeeklyNav);
+    assert.ok(live != null);
+    assert.equal(Number(live.toFixed(1)), 16.9);
+    assert.equal(
+      resolvePctOfNav({
+        publishedPctNav: 7.08,
+        perShare: fcpgxPerShare,
+        weeklyNav: fcpgxWeeklyNav,
+        publicationStage: "preliminary_estimate",
+        exDate: "2026-12-15",
+        today: "2026-09-10",
+      }),
+      live,
+    );
+    assert.equal(
+      pctOfNavForFund(
+        {
+          estimatedDistributionAmount: fcpgxPerShare,
+          publishedPctOfNav: 7.08,
+          estimatedDistributionPctNav: 7.08,
+          nav: fcpgxWeeklyNav,
+          publicationStage: "preliminary_estimate",
+          exDate: "2026-12-15",
+        },
+        "2026-09-10",
+      ),
+      live,
+    );
     assert.equal(
       resolvePctOfNav({
         publishedPctNav: 1.28,
-        perShare: 2.125,
+        perShare: ABALX_YE_PER_SHARE,
         weeklyNav: ABALX_WEEKLY_NAV,
         navOnDistributionDay: ABALX_YE_NAV,
         publicationStage: "final",
         exDate: "2025-12-15",
+        today: "2026-09-09",
       }),
-      1.28,
+      historicalPctOfNav(ABALX_YE_PER_SHARE, ABALX_YE_NAV),
+      "paid/final still uses dist-day NAV, not the published % character",
     );
   });
 });
@@ -270,11 +303,16 @@ describe("Search hydrate live NAV fields", () => {
     assert.match(results, /pctOfNavForFund/);
     assert.match(results, /historicalPctOfNav/);
     assert.match(results, /usesDistributionDayNav/);
+    assert.match(results, /upcomingPctOfNav\(perShare, weekly\)/);
+    assert.doesNotMatch(
+      results,
+      /if \(published != null\) return formatSoftPct\(published\)/,
+    );
     assert.match(panel, /formatWeeklyNavLabel/);
     assert.match(panel, /EstimateLeadCard/);
     assert.match(panel, /Estimated \$ \/ share/);
     assert.match(panel, /Distribution % of NAV/);
-    assert.match(panel, /Estimate types/);
+    assert.match(panel, /illustrationFundCardTypeRows/);
     assert.match(panel, /overlayWeeklyNav/);
     assert.match(panel, /fillNavPerShareInput/);
     assert.match(panel, /\/api\/funds/);
@@ -283,5 +321,55 @@ describe("Search hydrate live NAV fields", () => {
     assert.match(panel, /mock \? seedNavLookup/);
     assert.match(fundsList, /nav_per_share/);
     assert.match(fundsList, /parsePositiveNav/);
+
+    const queries = readFileSync(join(here, "../../data/queries.ts"), "utf8");
+    const format = readFileSync(join(here, "../format.ts"), "utf8");
+    const compareCopy = readFileSync(
+      join(here, "portfolio-compare-copy.ts"),
+      "utf8",
+    );
+    const lists = readFileSync(join(here, "../lists/rows.ts"), "utf8");
+    assert.doesNotMatch(queries, /pct \?\? fund\.estimatedDistributionPctNav/);
+    assert.match(queries, /estimatedDistributionPctNav: pct \?\? 0/);
+    assert.match(format, /aftertaxPctOfNavForSort/);
+    assert.match(format, /case "estimatedDistributionPctNav"/);
+    assert.doesNotMatch(compareCopy, /\?\?[\s\n]+row\.pctOfNav/);
+    assert.match(lists, /upcomingPctOfNav\(distPerShare, nav\)/);
+  });
+
+  it("withPeerContext overwrites stored published % with Dist ÷ weekly NAV", () => {
+    const [view] = withPeerContext([
+      {
+        id: "fcpgx",
+        fundName: "Small Cap Growth",
+        ticker: "FCPGX",
+        cusip: "000000000",
+        family: "Fidelity",
+        category: "Small Growth",
+        shareClass: "A",
+        nav: 42.94,
+        estimatedDistributionAmount: 7.277,
+        estimatedOrdinaryIncome: 0,
+        estimatedCapitalGains: 7.277,
+        estimatedDistributionPctNav: 7.08,
+        publishedPctOfNav: 7.08,
+        publishedAt: "2026-07-31",
+        asOfDate: "2026-07-31",
+        recordDate: "2026-12-12",
+        exDate: "2026-12-15",
+        payableDate: "2026-12-17",
+        publicationStage: "preliminary_estimate",
+        bucket: "upcoming",
+        paidHistory: [],
+        distributionYear: 2026,
+      },
+    ]);
+    assert.ok(view);
+    assert.equal(Number(view.estimatedDistributionPctNav.toFixed(1)), 16.9);
+    assert.ok(Math.abs(view.estimatedDistributionPctNav - (7.277 / 42.94) * 100) < 1e-9);
+    assert.equal(
+      sortFunds([view], "estimatedDistributionPctNav", "desc")[0]?.ticker,
+      "FCPGX",
+    );
   });
 });

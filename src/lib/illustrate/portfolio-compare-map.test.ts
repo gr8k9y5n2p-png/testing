@@ -904,8 +904,18 @@ describe("PortfolioCompare distribution tables", () => {
       "Estimated Tax: —",
     );
     assert.equal(
-      upcomingPctOfNavAmount({ available: true, pctOfNav: 1.28 }),
+      upcomingPctOfNavAmount({
+        available: true,
+        pctOfNav: 7.08,
+        distributionPerShare: 1.28,
+        navPerShare: 100,
+      }),
       "1.28%",
+    );
+    assert.equal(
+      upcomingPctOfNavAmount({ available: true, pctOfNav: 7.08 }),
+      "—",
+      "published pctOfNav alone is not Aftertax live %",
     );
     assert.equal(
       upcomingPctOfNavAmount({ available: false, pctOfNav: null }),

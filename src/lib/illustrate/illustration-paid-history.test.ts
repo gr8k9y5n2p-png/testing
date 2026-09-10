@@ -15,10 +15,16 @@ import {
   withPeerContext,
 } from "../../data/queries.ts";
 import {
+  FUND_CARD_TYPE_LABELS,
+  PAID_HISTORY_ESTIMATE_TYPES,
+  hasCurrentYearUnpaidEstimate,
+  illustrationFundCardTypeRows,
   illustrationPaidHistoryMatrix,
   illustrationPaidHistoryYear,
   illustrationPaidHistoryYears,
   illustrationPaidTypeRows,
+  paidHistoryEmptyCellLabel,
+  paidHistoryTypeColor,
 } from "./illustration-paid-history.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -246,15 +252,27 @@ describe("Dollar Illustration prior-year Paid History", () => {
         publication_stage: "final",
       }),
     ]);
-    assert.deepEqual(illustrationPaidHistoryYears(NOW), [2021, 2022, 2023, 2024, 2025]);
+    assert.deepEqual(illustrationPaidHistoryYears(NOW), [
+      2021, 2022, 2023, 2024, 2025, 2026,
+    ]);
     const matrix = illustrationPaidHistoryMatrix(fund, NOW);
-    assert.deepEqual(matrix.years, [2021, 2022, 2023, 2024, 2025]);
+    assert.deepEqual(matrix.years, [2021, 2022, 2023, 2024, 2025, 2026]);
+    assert.deepEqual(
+      matrix.rows.map((row) => row.estimateType),
+      [...PAID_HISTORY_ESTIMATE_TYPES],
+    );
     const ltcg = matrix.rows.find((row) => row.estimateType === "long_term_capital_gains");
     const stcg = matrix.rows.find((row) => row.estimateType === "short_term_capital_gains");
     const ordinary = matrix.rows.find((row) => row.estimateType === "ordinary_income");
+    const qdi = matrix.rows.find((row) => row.estimateType === "qualified_dividend");
+    const special = matrix.rows.find((row) => row.estimateType === "special_dividend");
+    const roc = matrix.rows.find((row) => row.estimateType === "return_of_capital");
     assert.ok(ltcg);
     assert.ok(stcg);
     assert.ok(ordinary);
+    assert.ok(qdi);
+    assert.ok(special);
+    assert.ok(roc);
     assert.ok(Math.abs((ltcg.cells[2025]?.perShare ?? NaN) - 5.073) < 1e-6);
     assert.equal(stcg.cells[2025]?.perShare, 0);
     assert.ok(Math.abs((ltcg.cells[2024]?.perShare ?? NaN) - 1.669) < 1e-6);
@@ -262,6 +280,12 @@ describe("Dollar Illustration prior-year Paid History", () => {
     assert.equal(ltcg.cells[2023]?.perShare, null);
     assert.equal(ltcg.cells[2022]?.perShare, null);
     assert.equal(ltcg.cells[2021]?.perShare, null);
+    assert.equal(qdi.cells[2025]?.perShare, null);
+    assert.equal(special.cells[2025]?.perShare, null);
+    assert.equal(roc.cells[2025]?.perShare, null);
+    assert.equal(ltcg.cells[2026]?.perShare, null);
+    assert.equal(ltcg.cells[2026]?.awaiting, false);
+    assert.deepEqual(matrix.awaitingYears, []);
     assert.equal(
       matrix.rows.some((row) =>
         Object.values(row.cells).some(
@@ -269,12 +293,7 @@ describe("Dollar Illustration prior-year Paid History", () => {
         ),
       ),
       false,
-      "2026 unpaid prelim must not mix into the 5-year Paid History matrix",
-    );
-    assert.equal(
-      matrix.rows.some((row) => row.estimateType === "qualified_dividend"),
-      false,
-      "never invent unpublished estimate types",
+      "2026 unpaid prelim must not mix into the Paid History matrix",
     );
   });
 
@@ -327,8 +346,120 @@ describe("Dollar Illustration prior-year Paid History", () => {
     assert.match(paid, /illustrationPaidHistoryMatrix/);
     assert.match(paid, /ILLUSTRATION_PAID_HISTORY_KICKER/);
     assert.match(paid, /ILLUSTRATION_PAID_HISTORY_DETAIL/);
+    assert.match(paid, /AWAITING_ESTIMATE/);
+    assert.match(paid, /paidHistoryEmptyCellLabel/);
+    assert.match(paid, /paidHistoryTypeColor/);
+    assert.match(paid, /rounded-\[2px\]/);
     assert.match(paid, /fetchFundsSearch/);
     assert.match(paid, /navOnly: false/);
     assert.doesNotMatch(paid, /params\.set\("nav_only"/);
+    assert.match(panel, /illustrationFundCardTypeRows/);
+    assert.match(panel, /AWAITING_ESTIMATE/);
+    assert.match(panel, /paidHistoryTypeColor/);
+    assert.match(panel, /Qualified dividend \(QDI\)|fundCardTypeLabel|row\.label/);
+    assert.match(
+      panel,
+      /h-12 w-full rounded-md border border-line bg-paper pl-7 pr-3 font-mono text-base text-ink/,
+    );
+    assert.match(panel, /TaxRateFields/);
+  });
+
+  it("stacks every estimate_type on the FBGRX fund card and keeps published $0", () => {
+    const fund = hydrate("FBGRX", "Blue Chip Growth", "Fidelity", FBGRX_ROWS);
+    assert.equal(hasCurrentYearUnpaidEstimate(fund, NOW), true);
+    const rows = illustrationFundCardTypeRows(fund, NOW);
+    assert.deepEqual(
+      rows.map((row) => row.estimateType),
+      [...PAID_HISTORY_ESTIMATE_TYPES],
+    );
+    const ltcg = rows.find((row) => row.estimateType === "long_term_capital_gains");
+    const stcg = rows.find((row) => row.estimateType === "short_term_capital_gains");
+    const ordinary = rows.find((row) => row.estimateType === "ordinary_income");
+    assert.ok(ltcg);
+    assert.ok(stcg);
+    assert.ok(ordinary);
+    assert.ok(Math.abs((ltcg.perShare ?? NaN) - 21.021) < 1e-6);
+    assert.equal(stcg.perShare, 0);
+    assert.equal(ordinary.perShare, null);
+    assert.equal(ordinary.awaiting, false);
+    assert.equal(
+      FUND_CARD_TYPE_LABELS.qualified_dividend,
+      "Qualified dividend (QDI)",
+    );
+    assert.equal(paidHistoryTypeColor("long_term_capital_gains"), "#b42318");
+    assert.equal(paidHistoryEmptyCellLabel(false), "—");
+    assert.equal(paidHistoryEmptyCellLabel(true), "Awaiting");
+    assert.equal(
+      rows.some((row) => Math.abs((row.perShare ?? 0) - 5.073) < 1e-6),
+      false,
+      "paid 2025 finals must not appear on the fund-card stack",
+    );
+  });
+
+  it("shows AGTHX paid finals only and 2026 Awaiting — never invent Upcoming", () => {
+    const fund = hydrate("AGTHX", "The Growth Fund of America", "American Funds", [
+      row({
+        id: "agthx-ye-ltcg",
+        ticker: "AGTHX",
+        fund_name: "The Growth Fund of America",
+        fund_family: "American Funds",
+        estimate_type: "long_term_capital_gains",
+        amount: "2.000000",
+        amount_unit: "per_share",
+        record_date: "2025-12-12",
+        ex_date: "2025-12-15",
+        payable_date: "2025-12-16",
+        as_of: "2025-12-31",
+        publication_stage: "final",
+      }),
+      row({
+        id: "agthx-ye-ordinary",
+        ticker: "AGTHX",
+        fund_name: "The Growth Fund of America",
+        fund_family: "American Funds",
+        estimate_type: "ordinary_income",
+        amount: "0.000000",
+        amount_unit: "per_share",
+        record_date: "2025-12-12",
+        ex_date: "2025-12-15",
+        payable_date: "2025-12-16",
+        as_of: "2025-12-31",
+        publication_stage: "final",
+      }),
+    ]);
+    assert.equal(hasCurrentYearUnpaidEstimate(fund, NOW), false);
+
+    const card = illustrationFundCardTypeRows(fund, NOW);
+    assert.deepEqual(
+      card.map((row) => row.estimateType),
+      [...PAID_HISTORY_ESTIMATE_TYPES],
+    );
+    assert.ok(card.every((row) => row.awaiting && row.perShare == null));
+    assert.equal(
+      card.some((row) => Math.abs((row.perShare ?? 0) - 2) < 1e-6),
+      false,
+      "paid AGTHX finals must not appear on the fund-card stack",
+    );
+
+    const matrix = illustrationPaidHistoryMatrix(fund, NOW);
+    assert.deepEqual(matrix.years, [2021, 2022, 2023, 2024, 2025, 2026]);
+    assert.deepEqual(matrix.awaitingYears, [2026]);
+    assert.deepEqual(
+      matrix.rows.map((row) => row.estimateType),
+      [...PAID_HISTORY_ESTIMATE_TYPES],
+    );
+    const ltcg = matrix.rows.find((row) => row.estimateType === "long_term_capital_gains");
+    const ordinary = matrix.rows.find((row) => row.estimateType === "ordinary_income");
+    const stcg = matrix.rows.find((row) => row.estimateType === "short_term_capital_gains");
+    assert.ok(ltcg);
+    assert.ok(ordinary);
+    assert.ok(stcg);
+    assert.ok(Math.abs((ltcg.cells[2025]?.perShare ?? NaN) - 2) < 1e-6);
+    assert.equal(ordinary.cells[2025]?.perShare, 0);
+    assert.equal(stcg.cells[2025]?.perShare, null);
+    assert.equal(ltcg.cells[2026]?.perShare, null);
+    assert.equal(ltcg.cells[2026]?.awaiting, true);
+    assert.equal(ordinary.cells[2026]?.awaiting, true);
+    assert.equal(stcg.cells[2026]?.awaiting, true);
   });
 });

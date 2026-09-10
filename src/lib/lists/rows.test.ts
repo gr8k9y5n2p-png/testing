@@ -283,10 +283,54 @@ describe("Lists upcoming rows", () => {
       Number((((7.277 / 37.09) * 100).toFixed(1))),
     );
   });
+
+  it("uses Dist $/share ÷ weekly NAV for live % — FCPGX $7.277 ÷ $42.94 = 16.9%", () => {
+    const rows: DataDistribution[] = [
+      row({
+        id: "fcpgx-ltcg",
+        ticker: "FCPGX",
+        fund_name: "Small Cap Growth",
+        estimate_type: "long_term_capital_gains",
+        amount: "7.277000",
+        amount_unit: "per_share",
+        ex_date: "2026-09-11",
+        payable_date: "2026-09-14",
+        as_of: "2026-07-31",
+        publication_stage: "preliminary_estimate",
+      }),
+      row({
+        id: "fcpgx-tcg",
+        ticker: "FCPGX",
+        fund_name: "Small Cap Growth",
+        estimate_type: "total_capital_gains",
+        amount: "7.080000",
+        amount_unit: "percent_of_nav",
+        ex_date: "2026-09-11",
+        payable_date: "2026-09-14",
+        as_of: "2026-07-31",
+        publication_stage: "preliminary_estimate",
+      }),
+    ];
+    const fund = hydrate("FCPGX", "Small Cap Growth", "Fidelity", 42.94, rows);
+    fund.publishedPctOfNav = 7.08;
+    const list = listRowFromFund({
+      ticker: "FCPGX",
+      fund,
+      distributionRows: rows,
+      found: true,
+      today: TODAY,
+    });
+    assert.equal(list.status, "upcoming");
+    assert.ok(list.distPerShare != null && Math.abs(list.distPerShare - 7.277) < 1e-6);
+    assert.ok(list.pctOfNav != null);
+    assert.equal(Number(list.pctOfNav.toFixed(1)), 16.9);
+    assert.ok(Math.abs(list.pctOfNav - (7.277 / 42.94) * 100) < 1e-9);
+  });
 });
 
 describe("Lists chrome lock", () => {
   it("does not show MOCK banners and keeps Eric's column order", () => {
+    const rows = readFileSync(join(here, "rows.ts"), "utf8");
     const workspace = readFileSync(
       join(here, "../../components/lists/ListsWorkspace.tsx"),
       "utf8",
@@ -307,5 +351,7 @@ describe("Lists chrome lock", () => {
     assert.doesNotMatch(workspace, /useRouter|router\.replace/);
     assert.match(nav, /label:\s*"Lists"/);
     assert.match(nav, /href:\s*"\/lists"/);
+    assert.match(rows, /upcomingPctOfNav\(distPerShare, nav\)/);
+    assert.doesNotMatch(rows, /publishedPctNav/);
   });
 });

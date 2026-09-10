@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { FundEstimate, FundEstimateView } from "@/data/types";
 import {
+  AWAITING_ESTIMATE,
   DATA_API_UNAVAILABLE,
   ILLUSTRATION_PAID_HISTORY_DETAIL,
   ILLUSTRATION_PAID_HISTORY_KICKER,
@@ -12,23 +13,14 @@ import {
 import { fetchFundsSearch } from "@/lib/data-api/funds-client";
 import { formatUsd } from "@/lib/format";
 import { formatSoftPct } from "@/lib/illustrate/nav-math";
-import { GROWTH_TAX_TYPE_LABELS } from "@/lib/illustrate/growth-tax-by-type";
 import {
   illustrationPaidHistoryMatrix,
   illustrationPaidHistoryYears,
+  paidHistoryEmptyCellLabel,
+  paidHistoryTypeColor,
+  paidHistoryTypeLabel,
   type IllustrationPaidMatrixCell,
 } from "@/lib/illustrate/illustration-paid-history";
-
-const ESTIMATE_LABELS: Record<string, string> = {
-  ...GROWTH_TAX_TYPE_LABELS,
-  ordinary_income: "Ordinary",
-  long_term_capital_gains: "LTCG",
-  short_term_capital_gains: "STCG",
-  qualified_dividend: "QDI",
-  total_capital_gains: "Total capital gains",
-  special_dividend: "Special",
-  return_of_capital: "ROC",
-};
 
 function formatMatrixCell(cell: IllustrationPaidMatrixCell): string {
   if (cell.perShare != null) {
@@ -37,7 +29,7 @@ function formatMatrixCell(cell: IllustrationPaidMatrixCell): string {
   if (cell.pctOfNav != null) {
     return formatSoftPct(cell.pctOfNav);
   }
-  return "—";
+  return paidHistoryEmptyCellLabel(cell.awaiting);
 }
 
 export function IllustrationPaidHistory({ fund }: { fund: FundEstimate }) {
@@ -71,7 +63,8 @@ export function IllustrationPaidHistory({ fund }: { fund: FundEstimate }) {
   const source = hydrated ?? fund;
   const years = illustrationPaidHistoryYears();
   const matrix = illustrationPaidHistoryMatrix(source);
-  const empty = matrix.rows.length === 0;
+  const awaitingYears = new Set(matrix.awaitingYears);
+  const empty = unavailable || matrix.rows.length === 0;
 
   return (
     <section
@@ -115,24 +108,50 @@ export function IllustrationPaidHistory({ fund }: { fund: FundEstimate }) {
               {matrix.rows.map((row) => (
                 <tr key={row.estimateType || "distribution"}>
                   <td className="px-4 py-2.5 text-ink">
-                    {row.estimateType
-                      ? (ESTIMATE_LABELS[row.estimateType] ?? row.estimateType)
-                      : "—"}
+                    {row.estimateType ? (
+                      <span className="inline-flex items-center gap-2">
+                        <span
+                          aria-hidden
+                          className="inline-block size-2 shrink-0 rounded-[2px]"
+                          style={{
+                            background: paidHistoryTypeColor(row.estimateType),
+                          }}
+                        />
+                        {paidHistoryTypeLabel(row.estimateType)}
+                      </span>
+                    ) : (
+                      "—"
+                    )}
                   </td>
-                  {matrix.years.map((year) => (
-                    <td
-                      key={year}
-                      className="px-4 py-2.5 text-right font-mono tabular-nums"
-                    >
-                      {formatMatrixCell(
-                        row.cells[year] ?? {
-                          perShare: null,
-                          pctOfNav: null,
-                          amountUnit: null,
-                        },
-                      )}
-                    </td>
-                  ))}
+                  {matrix.years.map((year) => {
+                    const cell = row.cells[year] ?? {
+                      perShare: null,
+                      pctOfNav: null,
+                      amountUnit: null,
+                      awaiting: awaitingYears.has(year),
+                    };
+                    return (
+                      <td
+                        key={year}
+                        aria-label={
+                          cell.awaiting &&
+                          cell.perShare == null &&
+                          cell.pctOfNav == null
+                            ? AWAITING_ESTIMATE
+                            : undefined
+                        }
+                        className={`px-4 py-2.5 text-right font-mono tabular-nums ${
+                          cell.awaiting &&
+                          cell.perShare == null &&
+                          cell.pctOfNav == null
+                            ? "italic text-muted"
+                            : ""
+                        }`}
+                      >
+                        {formatMatrixCell(cell)}
+                      </td>
+                    );
+                  })}
                 </tr>
               ))}
             </tbody>

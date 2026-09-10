@@ -10,6 +10,7 @@ import {
   navFromFundMetadata,
   perShareNavError,
 } from "@/lib/illustrate/compare-request";
+import { AWAITING_ESTIMATE } from "@/lib/copy";
 import { formatOptionalDate, formatUsd } from "@/lib/format";
 import {
   fillNavPerShareInput,
@@ -33,6 +34,11 @@ import {
 import { IllustrationPaidHistory } from "@/components/illustrate/IllustrationPaidHistory";
 import { IllustrationResults } from "@/components/illustrate/IllustrationResults";
 import { TaxRateFields } from "@/components/illustrate/TaxRateFields";
+import {
+  hasCurrentYearUnpaidEstimate,
+  illustrationFundCardTypeRows,
+  paidHistoryTypeColor,
+} from "@/lib/illustrate/illustration-paid-history";
 
 async function fetchWeeklyNavIdentity(
   ticker: string,
@@ -144,19 +150,27 @@ export function IllustratePanel({
   );
 }
 
-const ESTIMATE_TYPE_LABELS: Record<string, string> = {
-  ordinary_income: "Ordinary income",
-  long_term_capital_gains: "Long-term capital gains",
-  short_term_capital_gains: "Short-term capital gains",
-  qualified_dividend: "Qualified dividends",
-  total_capital_gains: "Total capital gains",
-  special_dividend: "Special dividend",
-  return_of_capital: "Return of capital",
-};
+function formatFundCardTypeAmount(
+  row: ReturnType<typeof illustrationFundCardTypeRows>[number],
+): string {
+  if (row.perShare != null) return `${formatUsd(row.perShare, 4)} / sh`;
+  return "—";
+}
+
+function EstimateTypeSwatch({ estimateType }: { estimateType: string }) {
+  return (
+    <span
+      aria-hidden
+      className="inline-block size-2 shrink-0 rounded-[2px]"
+      style={{ background: paidHistoryTypeColor(estimateType) }}
+    />
+  );
+}
 
 function EstimateLeadCard({ fund }: { fund: FundEstimateView }) {
-  const hideAmounts = hideUpcomingAmounts(fund);
-  const lines = fund.estimateTypeLines ?? [];
+  const awaiting = !hasCurrentYearUnpaidEstimate(fund);
+  const hideAmounts = awaiting || hideUpcomingAmounts(fund);
+  const typeRows = illustrationFundCardTypeRows(fund);
   return (
     <div className="mb-5 rounded-md border border-line bg-paper px-4 py-3">
       <p className="text-sm font-medium text-ink">
@@ -164,37 +178,55 @@ function EstimateLeadCard({ fund }: { fund: FundEstimateView }) {
       </p>
       <dl className="mt-3 grid gap-x-6 gap-y-2 sm:grid-cols-2">
         <LeadField label="NAV" value={formatWeeklyNavLabel(fund)} />
-        <LeadField
-          label="Estimated $ / share"
-          value={
-            hideAmounts ? "—" : `${formatUsd(fund.estimatedDistributionAmount, 4)} / sh`
-          }
-        />
+        <div>
+          <dt className="text-[11px] font-semibold uppercase tracking-[0.12em] text-faint">
+            Estimated $ / share
+          </dt>
+          <dd className="mt-0.5 flex flex-wrap items-center gap-2 font-mono text-sm text-ink">
+            <span>
+              {hideAmounts
+                ? "—"
+                : `${formatUsd(fund.estimatedDistributionAmount, 4)} / sh`}
+            </span>
+            {awaiting ? (
+              <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">
+                {AWAITING_ESTIMATE}
+              </span>
+            ) : null}
+          </dd>
+        </div>
         <LeadField
           label="Distribution % of NAV"
           value={hideAmounts ? "—" : formatSoftPct(pctOfNavForFund(fund))}
         />
         <LeadField
-          label="Estimate types"
-          value={
-            lines.length === 0
-              ? "—"
-              : lines
-                  .map((line) => {
-                    const name =
-                      ESTIMATE_TYPE_LABELS[line.estimateType] ?? line.estimateType;
-                    const amount =
-                      line.amountUnit === "percent_of_nav"
-                        ? formatSoftPct(line.amount)
-                        : `${formatUsd(line.amount, 4)} / sh`;
-                    return `${name} ${amount}`;
-                  })
-                  .join(" · ")
-          }
+          label="Announced"
+          value={awaiting ? "—" : formatOptionalDate(fund.asOfDate)}
         />
-        <LeadField label="Announced" value={formatOptionalDate(fund.asOfDate)} />
-        <LeadField label="Record" value={formatOptionalDate(fund.recordDate)} />
-        <LeadField label="Ex-date" value={formatOptionalDate(fund.exDate)} />
+        <LeadField
+          label="Record"
+          value={awaiting ? "—" : formatOptionalDate(fund.recordDate)}
+        />
+        <LeadField
+          label="Ex-date"
+          value={awaiting ? "—" : formatOptionalDate(fund.exDate)}
+        />
+      </dl>
+      <dl className="mt-3 space-y-1.5 border-t border-line pt-3">
+        {typeRows.map((row) => (
+          <div
+            key={row.estimateType}
+            className="flex items-center justify-between gap-4"
+          >
+            <dt className="inline-flex items-center gap-2 text-sm text-ink">
+              <EstimateTypeSwatch estimateType={row.estimateType} />
+              {row.label}
+            </dt>
+            <dd className="font-mono text-sm text-ink">
+              {formatFundCardTypeAmount(row)}
+            </dd>
+          </div>
+        ))}
       </dl>
     </div>
   );

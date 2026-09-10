@@ -142,6 +142,7 @@ function componentPctOfNav(
   const unit = (component.amount_unit ?? "").trim().toLowerCase();
   const perShare =
     unit === "percent_of_nav" ? null : parseFiniteNumber(component.amount);
+  const weekly = parsePositiveNav(fund?.nav);
 
   if (usesDistributionDayNav(component)) {
     return formatSoftPct(
@@ -149,7 +150,7 @@ function componentPctOfNav(
     );
   }
 
-  return formatSoftPct(upcomingPctOfNav(perShare, parsePositiveNav(fund?.nav)));
+  return formatSoftPct(upcomingPctOfNav(perShare, weekly));
 }
 
 function ComponentTable({

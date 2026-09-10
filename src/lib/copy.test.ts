@@ -20,7 +20,8 @@ describe("Sample Estimates empty copy", () => {
     assert.match(source, /SEARCH_PAID_HISTORY_HEADING = "Paid History"/);
     assert.match(source, /selected calendar year/);
     assert.match(source, /ILLUSTRATION_PAID_HISTORY_DETAIL/);
-    assert.match(source, /last 5 completed calendar years/);
+    assert.match(source, /5-year lookback · not upcoming/);
+    assert.match(source, /2026 cells show Awaiting when no unpaid announced estimate has arrived/);
     assert.match(source, /ADD_TO_UNIVERSE = "Add to universe"/);
     assert.match(source, /AWAITING_ESTIMATE = "Awaiting Estimate"/);
     assert.match(source, /LISTS_HEADING = "Lists"/);

@@ -54,7 +54,7 @@ export const SEARCH_PAID_HISTORY_DETAIL =
   "Paid and final distributions from GET /distributions for the selected calendar year. Prior-year rows drop off when the year ends. Never invented from Upcoming.";
 export const SEARCH_PAID_HISTORY_KICKER = "past · not upcoming";
 export const ILLUSTRATION_PAID_HISTORY_DETAIL =
-  "Final and paid distributions from GET /distributions for the last 5 completed calendar years. Current-year midyear paids stay out.";
+  "Final and paid distributions from GET /distributions for the last 5 completed calendar years plus the current year. 2026 cells show Awaiting when no unpaid announced estimate has arrived — never invented from history or Upcoming.";
 export const ILLUSTRATION_PAID_HISTORY_KICKER = "5-year lookback · not upcoming";
 export const AWAITING_ESTIMATE = "Awaiting Estimate";
 export const ADD_TO_UNIVERSE = "Add to universe";
