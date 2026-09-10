@@ -59,8 +59,9 @@ describe("Search / Sample Estimates fund page", () => {
     assert.match(results, /splitIllustrationComponents/);
     assert.match(results, /paidEventsForFund/);
     assert.match(results, /Paid history/);
+    assert.match(results, /catalogUpcoming/);
     assert.match(results, /pctOfNavForFund|historicalPctOfNav/);
-    assert.doesNotMatch(results, /totals\.distribution_dollars/);
+    assert.doesNotMatch(results, /result\.totals/);
     assert.doesNotMatch(results, /paidComponents/);
     assert.doesNotMatch(results, /components=\{paid/);
     assert.match(bucket, /every fund \(not ticker-specific\)/);

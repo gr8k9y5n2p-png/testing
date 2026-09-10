@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import type { FundEstimate } from "@/data/types";
-import { publicationStageLabel } from "@/data/distribution-bucket";
-import { paidEventsForFund } from "@/data/hydrate-funds";
+import { isUpcomingFund, publicationStageLabel } from "@/data/distribution-bucket";
+import { hideUpcomingAmounts, paidEventsForFund } from "@/data/hydrate-funds";
 import type { IllustrationComponent, IllustrateResponse } from "@/lib/illustrate/types";
 import {
   illustrationComponentBucket,
@@ -57,7 +57,8 @@ export function IllustrationResults({
   const upcomingTyped = upcomingAll.filter((row) => row.estimate_type !== "total");
   const upcomingComponents = upcomingTyped.length ? upcomingTyped : upcomingAll;
   const upcomingTotals = upcomingIllustrationTotals(upcomingComponents);
-  const hasUpcoming = upcomingTotals != null;
+  const catalogUpcoming =
+    fund != null && isUpcomingFund(fund) && !hideUpcomingAmounts(fund);
   // Paid history is GET /distributions only — never illustration component $.
   const paidEvents = fund ? paidEventsForFund(fund) : [];
 
@@ -67,19 +68,21 @@ export function IllustrationResults({
         <StatCard
           label="Estimated distribution"
           value={
-            hasUpcoming
+            upcomingTotals != null
               ? formatUsdRange(
                   upcomingTotals.distribution_dollars,
                   upcomingTotals.distribution_dollars_min,
                   upcomingTotals.distribution_dollars_max,
                 )
-              : UPCOMING_UNAVAILABLE_HEADLINE
+              : catalogUpcoming && fund
+                ? `${formatUsd(fund.estimatedDistributionAmount, 4)} / sh`
+                : UPCOMING_UNAVAILABLE_HEADLINE
           }
         />
         <StatCard
           label="Estimated tax"
           value={
-            hasUpcoming
+            upcomingTotals != null
               ? formatUsdRange(
                   upcomingTotals.estimated_tax_dollars,
                   upcomingTotals.estimated_tax_dollars_min,
@@ -99,12 +102,28 @@ export function IllustrationResults({
         fund={fund}
         holdingDollars={holdingDollars}
         empty={
-          <div className="px-3 py-5">
-            <p className="font-serif text-base tracking-tight text-ink">
-              {UPCOMING_UNAVAILABLE_HEADLINE}
-            </p>
-            <p className="mt-1 text-sm text-muted">{UPCOMING_UNAVAILABLE_DETAIL}</p>
-          </div>
+          catalogUpcoming && fund ? (
+            <div className="flex flex-wrap items-start justify-between gap-3 px-3 py-3">
+              <div>
+                <p className="font-mono text-sm font-medium text-ink">{fund.ticker}</p>
+                <p className="mt-0.5 text-[11px] text-faint">{fund.fundName}</p>
+                <DistributionDateStrip fund={fund} showPayable showStage className="mt-1.5" />
+              </div>
+              <p className="text-right font-mono text-sm text-ink">
+                {formatUsd(fund.estimatedDistributionAmount, 4)} / sh
+                <span className="mt-0.5 block text-[11px] text-faint">
+                  {formatSoftPct(pctOfNavForFund(fund))} of NAV
+                </span>
+              </p>
+            </div>
+          ) : (
+            <div className="px-3 py-5">
+              <p className="font-serif text-base tracking-tight text-ink">
+                {UPCOMING_UNAVAILABLE_HEADLINE}
+              </p>
+              <p className="mt-1 text-sm text-muted">{UPCOMING_UNAVAILABLE_DETAIL}</p>
+            </div>
+          )
         }
       />
       <section className="rounded-xl border border-line bg-paper px-3 py-2">
