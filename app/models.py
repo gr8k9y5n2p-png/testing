@@ -50,6 +50,17 @@ class DistributionEstimate(Base):
         Index("ix_dist_estimate_type", "estimate_type"),
         Index("ix_dist_as_of", "as_of"),
         Index("ix_dist_ex_date", "ex_date"),
+        # Identity-only covering index so unique-fund Search never table-scans raw_payload.
+        Index(
+            "ix_dist_fund_search",
+            "ticker",
+            "fund_identifier",
+            "fund_name",
+            "fund_family",
+            "as_of",
+            "ingested_at",
+            "id",
+        ),
     )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))

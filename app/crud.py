@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import re
 from datetime import date, datetime, timezone
 from decimal import Decimal
 from typing import NamedTuple
 
 from sqlalchemy import Select, delete, func, or_, select
 from sqlalchemy.orm import Session
+from sqlalchemy.sql.expression import ColumnElement
 
 from app.aliases import alias_fund_identifier, enrich_class_a_fields
 from app.categories import canonical_category, resolve_category
@@ -17,6 +19,19 @@ from app.services.stale_estimates import (
     scrub_stale_preliminary_estimates,
 )
 from app.sources.parser import is_ingestible_distribution_amount
+
+# Compact Search tokens (AGTHX, FBGRX, AMCAP). Leading-wildcard ILIKE cannot use
+# ix_dist_ticker / ix_dist_fund_identifier and forces a raw_payload table scan.
+_TICKER_TOKEN_RE = re.compile(r"^[A-Za-z][A-Za-z0-9./-]{0,7}$")
+_FUND_SEARCH_COLUMNS = (
+    DistributionEstimate.id,
+    DistributionEstimate.fund_identifier,
+    DistributionEstimate.fund_name,
+    DistributionEstimate.fund_family,
+    DistributionEstimate.ticker,
+    DistributionEstimate.as_of,
+    DistributionEstimate.ingested_at,
+)
 
 
 class FundSummary(NamedTuple):
@@ -39,6 +54,64 @@ def coverage_status_for_in_book_fund(*, has_estimate: bool) -> str:
     Never invents an estimate — ``has_estimate`` is the live unpaid-prelim flag.
     """
     return "estimate_announced" if has_estimate else "awaiting_estimate"
+
+
+def looks_like_ticker_token(q: str | None) -> bool:
+    """True for compact ticker / nickname tokens used by Website Search."""
+    if not q or not q.strip():
+        return False
+    return bool(_TICKER_TOKEN_RE.fullmatch(q.strip()))
+
+
+def prefer_indexed_fund_match(q: str | None) -> bool:
+    """Exact ticker / nickname Search should never fall back to a table scan.
+
+    5-character tokens, tokens with a digit, and Class A aliases (AGTHX, AMCAP)
+    are index equality. Longer all-letter tokens (Balanced, Growth) still use
+    contains so name Search keeps working.
+    """
+    if not looks_like_ticker_token(q):
+        return False
+    token = (q or "").strip()
+    if alias_fund_identifier(token):
+        return True
+    if any(ch.isdigit() for ch in token):
+        return True
+    return len(token) <= 5
+
+
+def _identity_variants(raw: str) -> list[str]:
+    token = raw.strip()
+    variants = {token, token.upper(), token.lower()}
+    return sorted(variants)
+
+
+def _indexed_fund_q_clauses(raw_q: str) -> list[ColumnElement[bool]]:
+    """Indexable equality on ticker / fund_identifier / Class A alias. No leading %."""
+    variants = _identity_variants(raw_q)
+    clauses: list[ColumnElement[bool]] = [
+        DistributionEstimate.ticker.in_(variants),
+        DistributionEstimate.fund_identifier.in_(variants),
+    ]
+    alias_ident = alias_fund_identifier(raw_q)
+    if alias_ident:
+        alias_variants = _identity_variants(alias_ident)
+        clauses.append(DistributionEstimate.fund_identifier.in_(alias_variants))
+    return clauses
+
+
+def _contains_fund_q_clauses(raw_q: str) -> list[ColumnElement[bool]]:
+    like = f"%{raw_q}%"
+    clauses: list[ColumnElement[bool]] = [
+        DistributionEstimate.fund_name.ilike(like),
+        DistributionEstimate.ticker.ilike(like),
+        DistributionEstimate.fund_family.ilike(like),
+        DistributionEstimate.fund_identifier.ilike(like),
+    ]
+    alias_ident = alias_fund_identifier(raw_q)
+    if alias_ident:
+        clauses.append(DistributionEstimate.fund_identifier.ilike(alias_ident))
+    return clauses
 
 
 def _midpoint(record: DistributionIn) -> Decimal | None:
@@ -162,20 +235,16 @@ def _filter_stmt(
     ex_date_to: date | None = None,
     publication_stage: str | None = None,
     needs_review: bool | None = None,
-) -> Select[tuple[DistributionEstimate]]:
-    stmt: Select[tuple[DistributionEstimate]] = select(DistributionEstimate)
+    columns: tuple | None = None,
+    q_match: str = "contains",
+) -> Select:
+    stmt: Select = select(*columns) if columns else select(DistributionEstimate)
     if q:
         raw_q = q.strip()
-        like = f"%{raw_q}%"
-        q_clauses = [
-            DistributionEstimate.fund_name.ilike(like),
-            DistributionEstimate.ticker.ilike(like),
-            DistributionEstimate.fund_family.ilike(like),
-            DistributionEstimate.fund_identifier.ilike(like),
-        ]
-        alias_ident = alias_fund_identifier(raw_q)
-        if alias_ident:
-            q_clauses.append(DistributionEstimate.fund_identifier.ilike(alias_ident))
+        if q_match == "indexed":
+            q_clauses = _indexed_fund_q_clauses(raw_q)
+        else:
+            q_clauses = _contains_fund_q_clauses(raw_q)
         stmt = stmt.where(or_(*q_clauses))
     if fund_family:
         stmt = stmt.where(DistributionEstimate.fund_family.ilike(f"%{fund_family.strip()}%"))
@@ -303,9 +372,20 @@ def _unique_fund_query(
     *,
     q: str | None = None,
     fund_family: str | None = None,
+    q_match: str = "contains",
 ):
-    """Latest stored row per fund_identifier. Never invents funds."""
-    filtered = _filter_stmt(q=q, fund_family=fund_family).subquery()
+    """Latest stored row per fund_identifier. Never invents funds.
+
+    Selects identity columns only — never hydrates ``raw_payload``. Ticker Search
+    uses ``q_match='indexed'`` so SQLite hits ``ix_dist_ticker`` /
+    ``ix_dist_fund_identifier`` instead of scanning the JSON book.
+    """
+    filtered = _filter_stmt(
+        q=q,
+        fund_family=fund_family,
+        columns=_FUND_SEARCH_COLUMNS,
+        q_match=q_match,
+    ).subquery()
     total = session.scalar(select(func.count(func.distinct(filtered.c.fund_identifier)))) or 0
     row_number = func.row_number().over(
         partition_by=filtered.c.fund_identifier,
@@ -315,18 +395,15 @@ def _unique_fund_query(
             filtered.c.id.desc(),
         ),
     )
-    ranked = select(filtered, row_number.label("rn")).subquery()
-    aggregates = (
-        select(
-            filtered.c.fund_identifier,
-            func.max(filtered.c.as_of).label("latest_as_of"),
-        )
-        .group_by(filtered.c.fund_identifier)
-        .subquery()
-    )
+    ranked = select(*filtered.c, row_number.label("rn")).subquery()
     stmt = (
-        select(ranked, aggregates.c.latest_as_of)
-        .join(aggregates, aggregates.c.fund_identifier == ranked.c.fund_identifier)
+        select(
+            ranked.c.fund_identifier,
+            ranked.c.fund_name,
+            ranked.c.fund_family,
+            ranked.c.ticker,
+            ranked.c.as_of.label("latest_as_of"),
+        )
         .where(ranked.c.rn == 1)
         .order_by(
             ranked.c.fund_name.asc(),
@@ -372,7 +449,10 @@ def search_funds(
     if category and category.strip() and wanted is None:
         return [], 0
 
-    stmt, sql_total = _unique_fund_query(session, q=q, fund_family=fund_family)
+    q_match = "indexed" if prefer_indexed_fund_match(q) else "contains"
+    stmt, sql_total = _unique_fund_query(
+        session, q=q, fund_family=fund_family, q_match=q_match
+    )
     if wanted is None:
         rows = session.execute(stmt.offset(offset).limit(limit)).all()
         live_ids = live_estimate_fund_identifiers(
@@ -408,7 +488,10 @@ def list_fund_category_counts(
     fund_family: str | None = None,
 ) -> tuple[list[tuple[str, int]], int, int]:
     """Return (category, count) pairs plus uncategorized and total unique funds."""
-    stmt, total = _unique_fund_query(session, q=q, fund_family=fund_family)
+    q_match = "indexed" if prefer_indexed_fund_match(q) else "contains"
+    stmt, total = _unique_fund_query(
+        session, q=q, fund_family=fund_family, q_match=q_match
+    )
     counts: dict[str, int] = {}
     uncategorized = 0
     for row in session.execute(stmt).all():

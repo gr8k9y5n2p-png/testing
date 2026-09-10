@@ -114,6 +114,12 @@ def _ensure_search_indexes(engine: Engine) -> None:
             "CREATE INDEX IF NOT EXISTS ix_dist_publication_stage "
             "ON distribution_estimates (publication_stage)"
         )
+    if "ix_dist_fund_search" not in existing:
+        statements.append(
+            "CREATE INDEX IF NOT EXISTS ix_dist_fund_search "
+            "ON distribution_estimates ("
+            "ticker, fund_identifier, fund_name, fund_family, as_of, ingested_at, id)"
+        )
     if not statements:
         return
     with engine.begin() as conn:
