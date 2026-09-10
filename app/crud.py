@@ -9,8 +9,9 @@ from sqlalchemy.orm import Session
 
 from app.aliases import alias_fund_identifier, enrich_class_a_fields
 from app.categories import canonical_category, resolve_category
-from app.models import AmountUnit, CoverageGap, DistributionEstimate, EstimateType, IngestRun, PublicationStage
+from app.models import AmountUnit, CoverageGap, DistributionEstimate, IngestRun, PublicationStage
 from app.schemas import DistributionIn, fund_identifier, make_upsert_key
+from app.sources.parser import is_ingestible_distribution_amount
 
 _ESTIMATE_STAGES = (
     PublicationStage.preliminary_estimate.value,
@@ -47,6 +48,12 @@ def upsert_records(
     now = datetime.now(timezone.utc)
     collapsed: dict[str, DistributionIn] = {}
     order: list[str] = []
+    ingestible: list[DistributionIn] = []
+    for record in records:
+        if not is_ingestible_distribution_amount(record.estimate_type, record.amount_unit):
+            continue
+        ingestible.append(record)
+    records = ingestible
     for record in records:
         ident = fund_identifier(record.ticker, record.fund_name, record.fund_family)
         key = make_upsert_key(
@@ -136,6 +143,7 @@ def _filter_stmt(
     ex_date_from: date | None = None,
     ex_date_to: date | None = None,
     publication_stage: str | None = None,
+    needs_review: bool | None = None,
 ) -> Select[tuple[DistributionEstimate]]:
     stmt: Select[tuple[DistributionEstimate]] = select(DistributionEstimate)
     if q:
@@ -194,6 +202,8 @@ def _filter_stmt(
         stmt = stmt.where(DistributionEstimate.ex_date >= ex_date_from)
     if ex_date_to:
         stmt = stmt.where(DistributionEstimate.ex_date <= ex_date_to)
+    if needs_review is not None:
+        stmt = stmt.where(DistributionEstimate.needs_review.is_(needs_review))
     return stmt
 
 
@@ -212,6 +222,7 @@ def search_distributions(
     ex_date_from: date | None = None,
     ex_date_to: date | None = None,
     publication_stage: str | None = None,
+    needs_review: bool | None = None,
     page: int = 1,
     page_size: int = 50,
 ) -> tuple[list[DistributionEstimate], int]:
@@ -228,6 +239,7 @@ def search_distributions(
         ex_date_from=ex_date_from,
         ex_date_to=ex_date_to,
         publication_stage=publication_stage,
+        needs_review=needs_review,
     )
     total = session.scalar(select(func.count()).select_from(stmt.subquery())) or 0
     page = max(page, 1)
@@ -408,20 +420,14 @@ def list_matching(
 def scrub_qdi_percent_characterizations(session: Session) -> int:
     """Delete stored QDI / QSTCG % of income rows.
 
-    Capital Group YE tax tables (and similar 1099 books) published
-    "% of dividends that are qualified" — not a distribution amount.
-    Render's SQLite disk survives redeploy, so seed must delete these
-    or they stay in Search / paid-history after the parser skip lands.
+    Deletes every leftover amount_unit=percent row (QDI % of income and
+    any other characterization percent). Cap Group YE books and any other
+    family. Render's SQLite disk survives redeploy, so seed must delete
+    these or they stay in Search / paid-history after the parser skip lands.
     """
     result = session.execute(
         delete(DistributionEstimate).where(
             DistributionEstimate.amount_unit == AmountUnit.percent.value,
-            DistributionEstimate.estimate_type.in_(
-                (
-                    EstimateType.qualified_dividend.value,
-                    EstimateType.qualified_short_term_gains.value,
-                )
-            ),
         )
     )
     session.flush()

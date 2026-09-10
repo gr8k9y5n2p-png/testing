@@ -4,7 +4,14 @@ from decimal import Decimal
 from pathlib import Path
 
 from app.models import AmountUnit, EstimateType, PublicationStage
-from app.sources.parser import infer_stage, parse_amount, parse_capital_group_html, split_fund_and_ticker
+from app.sources.parser import (
+    infer_stage,
+    is_ingestible_distribution_amount,
+    parse_amount,
+    parse_capital_group_html,
+    parse_distribution_html,
+    split_fund_and_ticker,
+)
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "american_funds"
 
@@ -30,6 +37,45 @@ def test_parse_amount_dollar_and_range() -> None:
 
     assert parse_amount("—") is None
     assert parse_amount("") is None
+
+    bare = parse_amount("100%")
+    assert bare and bare.amount == Decimal("100")
+    assert bare.unit == AmountUnit.percent
+    assert not is_ingestible_distribution_amount(
+        EstimateType.qualified_dividend, AmountUnit.percent, amount_text="100%"
+    )
+    assert not is_ingestible_distribution_amount(
+        EstimateType.long_term_capital_gains,
+        AmountUnit.percent,
+        amount_text="41.94%",
+        unit_hint=AmountUnit.per_share,
+    )
+    assert is_ingestible_distribution_amount(
+        EstimateType.total_capital_gains,
+        AmountUnit.percent_of_nav,
+        amount_text="3% – 5%",
+        unit_hint=AmountUnit.percent_of_nav,
+    )
+    assert is_ingestible_distribution_amount(
+        EstimateType.qualified_dividend,
+        AmountUnit.per_share,
+        amount_text="$0.18",
+    )
+    assert is_ingestible_distribution_amount(
+        EstimateType.ordinary_income,
+        AmountUnit.per_share,
+        amount_text="$0.42",
+    )
+    assert is_ingestible_distribution_amount(
+        EstimateType.special_dividend,
+        AmountUnit.per_share,
+        amount_text="$0.34",
+    )
+    assert is_ingestible_distribution_amount(
+        EstimateType.return_of_capital,
+        AmountUnit.per_share,
+        amount_text="$0.05",
+    )
 
 
 def test_midyear_fixture_normalizes_live_markup() -> None:
@@ -182,6 +228,64 @@ def test_cap_group_qdi_percent_is_not_a_distribution() -> None:
         and r.estimate_type == EstimateType.qualified_dividend
     ]
     assert gfa_qdi == []
+
+
+def test_qualified_dividend_per_share_column_is_ingested() -> None:
+    """Real $/share QDI (and other tax characters) are distributions — keep them."""
+    html = """
+    <html><head><meta name="date" content="2025-12-15"/></head>
+    <body>
+    <table>
+      <tr>
+        <th>Fund</th>
+        <th>Ordinary Income</th>
+        <th>Qualified Dividend</th>
+        <th>Short-Term Capital Gains</th>
+        <th>Long-Term Capital Gains</th>
+        <th>Special Dividend</th>
+        <th>Return of Capital</th>
+      </tr>
+      <tr>
+        <td>AGTHX — The Growth Fund of America</td>
+        <td>$0.4200</td>
+        <td>$0.1800</td>
+        <td>$0.0500</td>
+        <td>$2.1500</td>
+        <td>$0.3400</td>
+        <td>$0.0100</td>
+      </tr>
+    </table>
+    </body></html>
+    """
+    records = parse_distribution_html(html, source_url="fixture://qdi-dollars", fund_family="American Funds")
+    by_type = {r.estimate_type: r for r in records if r.ticker == "AGTHX"}
+    assert by_type[EstimateType.ordinary_income].amount == Decimal("0.4200")
+    assert by_type[EstimateType.qualified_dividend].amount == Decimal("0.1800")
+    assert by_type[EstimateType.qualified_dividend].amount_unit == AmountUnit.per_share
+    assert by_type[EstimateType.short_term_capital_gains].amount == Decimal("0.0500")
+    assert by_type[EstimateType.long_term_capital_gains].amount == Decimal("2.1500")
+    assert by_type[EstimateType.special_dividend].amount == Decimal("0.3400")
+    assert by_type[EstimateType.return_of_capital].amount == Decimal("0.0100")
+    assert all(r.amount_unit == AmountUnit.per_share for r in records)
+
+
+def test_bare_percent_cell_in_dollar_table_is_not_ingested() -> None:
+    html = """
+    <html><body>
+    <table>
+      <tr><th>Fund</th><th>Per Share Amount</th></tr>
+      <tr><td>The Growth Fund of America®</td><td>41.94%</td></tr>
+      <tr><td>AMCAP Fund</td><td>$3.5365</td></tr>
+    </table>
+    </body></html>
+    """
+    records = parse_distribution_html(html, source_url="fixture://bare-pct", fund_family="American Funds")
+    assert not any("%" in (r.raw_payload or {}).get("row_text", [""])[1] and r.amount_unit == AmountUnit.percent for r in records)
+    assert not any(r.amount_unit == AmountUnit.percent for r in records)
+    amcap = next(r for r in records if r.fund_name == "AMCAP Fund")
+    assert amcap.amount == Decimal("3.5365")
+    assert amcap.amount_unit == AmountUnit.per_share
+    assert not any(r.fund_name == "The Growth Fund of America" for r in records)
 
 
 def test_infer_stage_midyear_paid_vs_estimate() -> None:

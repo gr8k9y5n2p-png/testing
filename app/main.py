@@ -81,7 +81,7 @@ def _seed_fixture_if_empty() -> None:
                 continue
             try:
                 with app_db.SessionLocal() as session:
-                    result = fetch_and_ingest(session, source.slug, mode)
+                    result = fetch_and_ingest(session, source.slug, mode, review_outliers=False)
                     session.commit()
                     created_total += int(result.created or 0)
             except Exception:
@@ -100,6 +100,15 @@ def _seed_fixture_if_empty() -> None:
             )
         except Exception:
             logger.exception("Fixture NAV seed failed; continuing with null NAV")
+        try:
+            from app.services.quality import flag_category_outliers
+
+            with app_db.SessionLocal() as session:
+                flagged = flag_category_outliers(session)
+                session.commit()
+            logger.info("Category-outlier review flagged=%s", flagged)
+        except Exception:
+            logger.exception("Category-outlier review failed; continuing")
         _seed_state["created"] = created_total
         _seed_state["status"] = "complete"
         logger.info("Fixture seed complete created=%s", created_total)

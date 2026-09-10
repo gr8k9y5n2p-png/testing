@@ -34,15 +34,6 @@ def _ingest_amcap_pair(client: TestClient) -> None:
                     "publication_stage": "paid",
                     "source_url": "https://www.capitalgroup.com/individual/service-and-support/tax-center/midyear-cap-gains.html",
                 },
-                {
-                    "fund_family": "American Funds",
-                    "fund_name": "AMCAP Fund",
-                    "estimate_type": "qualified_dividend",
-                    "amount": "100",
-                    "amount_unit": "percent",
-                    "as_of": "2026-01-22",
-                    "source_url": "https://example.invalid/qdi",
-                },
             ]
         },
     )
@@ -124,8 +115,33 @@ def test_illustrate_per_share_requires_nav(client: TestClient) -> None:
     assert Decimal(component["estimated_tax"]) == Decimal("11051.56")
 
 
-def test_illustrate_skips_qdi_percent_and_unknown_id(client: TestClient) -> None:
+def test_illustrate_skips_qdi_percent_and_unknown_id(client: TestClient, session) -> None:
     _ingest_amcap_pair(client)
+    from datetime import date
+
+    from app.models import AmountUnit, DistributionEstimate, EstimateType
+    from app.schemas import make_upsert_key
+
+    leftover = DistributionEstimate(
+        upsert_key=make_upsert_key(
+            fund_family="American Funds",
+            fund_identifier_value="amcap-fund",
+            share_class=None,
+            estimate_type=EstimateType.qualified_dividend.value,
+            as_of=date(2026, 1, 22),
+            ex_date=None,
+        ),
+        fund_family="American Funds",
+        fund_name="AMCAP Fund",
+        fund_identifier="amcap-fund",
+        estimate_type=EstimateType.qualified_dividend.value,
+        amount=Decimal("100"),
+        amount_unit=AmountUnit.percent.value,
+        as_of=date(2026, 1, 22),
+        source_url="https://example.invalid/qdi",
+    )
+    session.add(leftover)
+    session.commit()
     qdi = client.get("/distributions", params={"estimate_type": "qualified_dividend"}).json()["items"][0]
     response = client.post(
         "/illustrate",

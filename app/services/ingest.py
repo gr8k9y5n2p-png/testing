@@ -9,7 +9,12 @@ from app.config import settings
 from app.crud import record_ingest_run, upsert_records
 from app.models import IngestRun
 from app.schemas import DistributionIn, IngestItemOut, IngestResponse
-from app.sources.parser import NormalizedRecord, is_qdi_percent_characterization
+from app.services.quality import flag_category_outliers
+from app.sources.parser import (
+    NormalizedRecord,
+    is_ingestible_distribution_amount,
+    is_qdi_percent_characterization,
+)
 from app.sources.registry import resolve_families
 
 
@@ -49,11 +54,29 @@ def _items_from_stored(stored: list) -> list[IngestItemOut]:
 
 
 def ingest_records(session: Session, records: list[DistributionIn]) -> IngestResponse:
+    skipped = sum(
+        1
+        for record in records
+        if not is_ingestible_distribution_amount(record.estimate_type, record.amount_unit)
+    )
     created, updated, stored = upsert_records(session, records)
-    return IngestResponse(created=created, updated=updated, items=_items_from_stored(stored))
+    flagged = flag_category_outliers(session)
+    return IngestResponse(
+        created=created,
+        updated=updated,
+        skipped_characterization=skipped,
+        category_outliers_flagged=flagged,
+        items=_items_from_stored(stored),
+    )
 
 
-def fetch_and_ingest(session: Session, fund_family: str, mode: str | None) -> IngestResponse:
+def fetch_and_ingest(
+    session: Session,
+    fund_family: str,
+    mode: str | None,
+    *,
+    review_outliers: bool = True,
+) -> IngestResponse:
     fetch_mode = (mode or settings.fetch_mode).lower()
     try:
         sources = resolve_families(fund_family)
@@ -62,6 +85,7 @@ def fetch_and_ingest(session: Session, fund_family: str, mode: str | None) -> In
 
     created_total = 0
     updated_total = 0
+    skipped_total = 0
     items: list[IngestItemOut] = []
     urls: list[str] = []
     families_run: list[str] = []
@@ -83,12 +107,18 @@ def fetch_and_ingest(session: Session, fund_family: str, mode: str | None) -> In
             continue
         try:
             result = source.fetch(mode=fetch_mode)
-            incoming = [
-                normalized_to_in(r)
-                for r in result.records
-                if not is_qdi_percent_characterization(r.estimate_type, r.amount_unit)
-            ]
+            incoming = []
+            skipped = 0
+            for raw in result.records:
+                if not is_ingestible_distribution_amount(
+                    raw.estimate_type,
+                    raw.amount_unit,
+                ) or is_qdi_percent_characterization(raw.estimate_type, raw.amount_unit):
+                    skipped += 1
+                    continue
+                incoming.append(normalized_to_in(raw))
             created, updated, stored = upsert_records(session, incoming)
+            skipped_total += skipped
             run.status = "success"
             run.finished_at = datetime.now(timezone.utc)
             run.records_created = created
@@ -121,9 +151,12 @@ def fetch_and_ingest(session: Session, fund_family: str, mode: str | None) -> In
             detail="No implemented fund-family adapters matched the request.",
         )
 
+    flagged = flag_category_outliers(session) if review_outliers else 0
     return IngestResponse(
         created=created_total,
         updated=updated_total,
+        skipped_characterization=skipped_total,
+        category_outliers_flagged=flagged,
         fund_family=families_run[0] if len(families_run) == 1 else "all",
         mode=fetch_mode,
         source_urls=urls,
