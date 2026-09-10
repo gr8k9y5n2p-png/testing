@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { FundEstimateView } from "@/data/types";
 import { COPY, ADD_TO_UNIVERSE, DATA_API_UNAVAILABLE, LISTS_AWAITING_ESTIMATE } from "@/lib/copy";
 import { fundPickerCoverageLabel } from "@/lib/data-api/coverage-status";
@@ -58,6 +58,7 @@ export function FundPicker({
   const [remoteUnavailable, setRemoteUnavailable] = useState(false);
   const [notInUniverse, setNotInUniverse] = useState(false);
   const [requesting, setRequesting] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const q = query.trim();
@@ -96,6 +97,17 @@ export function FundPicker({
       window.clearTimeout(handle);
     };
   }, [query]);
+
+  useEffect(() => {
+    if (!open) return;
+    function onPointerDown(event: PointerEvent) {
+      const root = rootRef.current;
+      if (!root || root.contains(event.target as Node)) return;
+      setOpen(false);
+    }
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, [open]);
 
   const matches = useMemo(
     () => fundPickerMatches(funds, remoteFunds, query),
@@ -162,7 +174,7 @@ export function FundPicker({
   }
 
   return (
-    <div className="relative">
+    <div className="relative" ref={rootRef}>
       <label htmlFor={inputId} className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.12em] text-faint">
         {label}
       </label>
@@ -193,9 +205,6 @@ export function FundPicker({
               return;
             }
             showSuggestions(query);
-          }}
-          onBlur={() => {
-            window.setTimeout(() => setOpen(false), 120);
           }}
           onKeyDown={(event) => {
             if (event.key === "Escape") {

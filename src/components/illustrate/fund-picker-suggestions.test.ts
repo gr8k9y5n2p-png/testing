@@ -34,6 +34,7 @@ describe("fund typeahead empty-query wiring", () => {
     assert.match(picker, /showSuggestions\(query\)/);
     assert.match(picker, /showSuggestions\(next\)/);
     assert.doesNotMatch(picker, /setOpen\(true\)/);
+    assert.doesNotMatch(picker, /onBlur=/);
   });
 
   it("TickerField does not recommend funds on empty focus", () => {
