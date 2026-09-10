@@ -180,6 +180,8 @@ curl -s 'http://127.0.0.1:8000/distributions?limit=50&offset=0' | jq
 curl -s 'http://127.0.0.1:8000/distributions?ex_date_from=2026-06-01&ex_date_to=2026-06-30' | jq
 # Paid History — year window + category (same strings as GET /funds/categories)
 curl -s 'http://127.0.0.1:8000/distributions?publication_stage=final&ex_date_from=2025-01-01&ex_date_to=2025-12-31&category=Large%20Blend&limit=50' | jq '{total,page,page_size,categories:[.items[].category]|unique}'
+# Paid History — highest Dist $/Share in the filtered year book (sort after filters, before limit)
+curl -s 'http://127.0.0.1:8000/distributions?publication_stage=final&ex_date_from=2025-01-01&ex_date_to=2025-12-31&sort=amount&order=desc&limit=50' | jq '{total,page,page_size,amounts:[.items[].amount]}'
 # Multi-year / estimate-vs-actual (same fund_identifier, different as_of + publication_stage)
 curl -s 'http://127.0.0.1:8000/distributions?fund_identifier=amcap-fund&as_of_from=2024-01-01&as_of_to=2024-12-31' | jq
 curl -s 'http://127.0.0.1:8000/distributions?fund_identifier=amcap-fund&publication_stage=preliminary_estimate' | jq
@@ -971,6 +973,8 @@ Rebuild the catalog with `python3 scripts/build_fund_categories.py` (add `--yaho
 `GET /distributions` still uses `page` / `page_size` / `total`. Website may send `limit` / `offset` as aliases (`limit` → `page_size`, `offset` → `page = floor(offset / page_size) + 1`). The response keeps `page` / `page_size`.
 
 `GET /distributions` already supports `as_of_from` / `as_of_to`, `publication_stage`, `fund_identifier` (exact slug or ticker identity), `fund_family`, and **`category`** (same Morningstar-style strings as `GET /funds` / `GET /funds/categories`). `category` is an exact match on the fund’s category (case/hyphen insensitive via `canonical_category`). Unknown names return `{ items: [], total: 0 }`. Filtered `total` includes `category` combined with the other query filters so Website Paid History can page `ex_date_from` / `ex_date_to` + `fund_family` + `category` without walking the book. Category is resolved from fund identity metadata (same source as `/funds`) — the filter does not hydrate `raw_payload` or add a schema column.
+
+**`sort` / `order` (Website Paid History column sort):** optional. Applied **after** the filters above and **before** `limit`/`offset` so `total` is unchanged and page 1 of `sort=amount&order=desc` is the highest Dist $/Share in the filtered set (not just the current page). Aliases: `sort_by` → `sort`, `sort_dir` → `order`. Fields: `amount` (numeric Dist $/share — `amount` with `amount_unit=per_share` only; SQL NULL last; does not invent zeros), `ex_date`, `ticker`, `fund_name`, `as_of`. When `sort` is omitted, the current default order is preserved (`as_of` desc, `fund_name`, `estimate_type`) even if `order` is sent. When `sort` is set and `order` is omitted: `amount` / `ex_date` / `as_of` default to `desc`; `ticker` / `fund_name` default to `asc`. ORDER BY uses stored columns / `ix_dist_*` — not `raw_payload`.
 
 **Compare estimate vs paid for one fund:**
 
