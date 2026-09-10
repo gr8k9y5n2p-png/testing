@@ -6,7 +6,6 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
-from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.aliases import display_cusip, display_ticker
@@ -19,7 +18,7 @@ from app.crud import (
     search_distributions,
     search_funds,
 )
-from app.db import get_session
+from app.db import get_session, ping_db, read_with_lock_retry
 from app.schemas import (
     CoverageGapIn,
     CoverageGapOut,
@@ -80,17 +79,13 @@ router = APIRouter()
 
 
 @router.get("/health", response_model=HealthOut, tags=["ops"])
-def health(session: Session = Depends(get_session)) -> HealthOut:
-    db_status = "ok"
-    try:
-        session.execute(text("SELECT 1"))
-    except Exception as exc:  # pragma: no cover - connection failures
-        db_status = f"error: {exc}"
+def health() -> HealthOut:
+    """Liveness: HTTP 200 as soon as the process is listening, even mid-seed."""
     from app.main import seed_status
 
     return HealthOut(
-        status="ok" if db_status == "ok" else "degraded",
-        db=db_status,
+        status="ok",
+        db=ping_db(),
         registered_families=[s.slug for s in list_sources()],
         seed=seed_status(),
     )
@@ -227,13 +222,18 @@ def list_funds(
     session: Session = Depends(get_session),
 ) -> FundListOut:
     """Unique funds already in the distribution store. For Website Search / Sample Estimates."""
-    rows, total = search_funds(
-        session, q=q, fund_family=fund_family, category=category, limit=limit, offset=offset
-    )
-    navs = get_nav_map(
-        session,
-        [listed_ticker(row.ticker, row.fund_identifier) for row in rows],
-    )
+
+    def _load() -> tuple[list, int, dict]:
+        found, count = search_funds(
+            session, q=q, fund_family=fund_family, category=category, limit=limit, offset=offset
+        )
+        navs_by_ticker = get_nav_map(
+            session,
+            [listed_ticker(row.ticker, row.fund_identifier) for row in found],
+        )
+        return found, count, navs_by_ticker
+
+    rows, total, navs = read_with_lock_retry(_load)
     items = []
     for row in rows:
         ticker = display_ticker(row.ticker, row.fund_identifier)

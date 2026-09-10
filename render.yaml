@@ -17,7 +17,12 @@ services:
         value: fixture
       - key: SEED_ON_START
         value: "true"
-        # Background full fixture ingest (all families). /health stays up; see health.seed.
+        # Background seed. Empty disk: full fixture book. Warm /var/data disk:
+        # densify missing families / changed fixture files only (no full rebuild).
+        # /health is liveness (200 as soon as HTTP listens). See README Render notes.
+      - key: SEED_FORCE_FULL
+        value: "false"
+        # Set true only to rebuild every family from fixtures on next boot.
       - key: DATABASE_URL
         value: sqlite:////var/data/distributions.db
       - key: CORS_ORIGINS

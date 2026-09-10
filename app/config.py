@@ -40,6 +40,8 @@ class Settings(BaseSettings):
     cors_origins: str = DEFAULT_CORS_ORIGINS
     cors_origin_regex: str = DEFAULT_CORS_ORIGIN_REGEX
     seed_on_start: bool = False
+    # Re-ingest every family on boot even when the disk book is already populated.
+    seed_force_full: bool = False
     # Flag a per_share row when it is more than ±pct from the category
     # median (same calendar year + estimate_type). 50 → median × 1.5 / 0.5.
     # Never auto-deletes or invents amounts.

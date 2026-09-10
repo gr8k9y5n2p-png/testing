@@ -14,7 +14,6 @@ from fastapi.responses import JSONResponse
 
 from app import __version__
 from app.api import router
-from app import db as app_db
 from app.config import settings
 from app.db import init_db
 from app.services.illustrate import NEEDS_NAV_OR_SHARES, NEEDS_NAV_OR_SHARES_MESSAGE, NeedsNavOrShares
@@ -48,87 +47,15 @@ def _should_seed_on_start() -> bool:
 
 
 def _seed_fixture_if_empty() -> None:
-    """Ingest every registered family from fixtures (same as POST /ingest/fetch all).
+    """Seed fixtures on boot without blocking HTTP.
 
-    Used on SEED_ON_START / Vercel boot and by tests. Commits per family so a
-    mid-book failure still leaves a thick DB. Does not invent amounts.
+    Empty disk: full fixture ingest (same records as POST /ingest/fetch all).
+    Warm Render disk: densify only missing families or changed fixture files.
+    Does not invent amounts. Commits per family.
     """
-    from app.services.ingest import fetch_and_ingest
-    from app.sources.registry import list_sources
+    from app.services.boot_seed import run_boot_seed
 
-    if app_db.SessionLocal is None:
-        return
-    with _seed_lock:
-        if _seed_state["status"] == "running":
-            return
-        _seed_state["status"] = "running"
-        _seed_state["error"] = None
-    created_total = 0
-    mode = settings.fetch_mode or "fixture"
-    try:
-        try:
-            from app.crud import scrub_qdi_percent_characterizations, scrub_stale_preliminary_estimates
-
-            with app_db.SessionLocal() as session:
-                removed = scrub_qdi_percent_characterizations(session)
-                stale = scrub_stale_preliminary_estimates(session)
-                session.commit()
-            if removed:
-                logger.info("Scrubbed %s QDI percent characterization rows", removed)
-            if stale:
-                logger.info("Scrubbed %s stale preliminary_estimate rows", stale)
-        except Exception:
-            logger.exception("QDI / stale-prelim scrub failed; continuing")
-        for source in list_sources():
-            if not source.implemented:
-                continue
-            try:
-                with app_db.SessionLocal() as session:
-                    result = fetch_and_ingest(session, source.slug, mode, review_outliers=False)
-                    session.commit()
-                    created_total += int(result.created or 0)
-            except Exception:
-                logger.exception("Fixture seed failed for %s; continuing", source.slug)
-        try:
-            from app.crud import scrub_stale_preliminary_estimates as scrub_stale_after_seed
-
-            with app_db.SessionLocal() as session:
-                stale = scrub_stale_after_seed(session)
-                session.commit()
-            if stale:
-                logger.info("Post-seed scrubbed %s stale preliminary_estimate rows", stale)
-        except Exception:
-            logger.exception("Post-seed stale-prelim scrub failed; continuing")
-        try:
-            from app.services.nav import refresh_navs
-
-            with app_db.SessionLocal() as session:
-                nav = refresh_navs(session, mode=mode if mode in {"fixture", "live", "auto"} else "fixture")
-                session.commit()
-            logger.info(
-                "Fixture NAV seed created=%s updated=%s unknown=%s",
-                nav.created,
-                nav.updated,
-                nav.unknown,
-            )
-        except Exception:
-            logger.exception("Fixture NAV seed failed; continuing with null NAV")
-        try:
-            from app.services.quality import flag_category_outliers
-
-            with app_db.SessionLocal() as session:
-                flagged = flag_category_outliers(session)
-                session.commit()
-            logger.info("Category-outlier review flagged=%s", flagged)
-        except Exception:
-            logger.exception("Category-outlier review failed; continuing")
-        _seed_state["created"] = created_total
-        _seed_state["status"] = "complete"
-        logger.info("Fixture seed complete created=%s", created_total)
-    except Exception as exc:
-        _seed_state["status"] = "error"
-        _seed_state["error"] = str(exc)
-        logger.exception("Fixture seed aborted")
+    run_boot_seed(_seed_state, _seed_lock)
 
 
 def _start_background_seed() -> None:
@@ -144,23 +71,9 @@ def _start_background_seed() -> None:
 async def lifespan(_app: FastAPI):
     _ensure_sqlite_dir()
     init_db()
-    # Persistent Render disk keeps mis-parsed QDI % rows across deploys.
-    if app_db.SessionLocal is not None:
-        try:
-            from app.crud import scrub_qdi_percent_characterizations, scrub_stale_preliminary_estimates
-
-            with app_db.SessionLocal() as session:
-                removed = scrub_qdi_percent_characterizations(session)
-                stale = scrub_stale_preliminary_estimates(session)
-                session.commit()
-            if removed:
-                logger.info("Boot-scrubbed %s QDI percent characterization rows", removed)
-            if stale:
-                logger.info("Boot-scrubbed %s stale preliminary_estimate rows", stale)
-        except Exception:
-            logger.exception("Boot QDI / stale-prelim scrub failed; continuing")
     if _should_seed_on_start():
-        # /health must come up before the full book finishes (~11k fixture rows).
+        # Listen immediately. Scrub + delta seed run in a background thread so
+        # Render's /health probe is not blocked by fixture ingest or SQLite writes.
         _start_background_seed()
     yield
 
