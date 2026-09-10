@@ -175,6 +175,21 @@ describe("Lists upcoming rows", () => {
     assert.deepEqual(upcomingEstimateTypeAmounts(AGTHX_PAID_ROWS, TODAY), emptyEstimateTypes());
   });
 
+  it("does not double Dist $/sh when ticker= and Upcoming snapshot rows are the same", () => {
+    const list = listRowFromFund({
+      ticker: "FBGRX",
+      fund: null,
+      distributionRows: [...FBGRX_ROWS, ...FBGRX_ROWS],
+      found: true,
+      today: TODAY,
+    });
+    // latest snapshot still groups one as_of|stage|ex key; amounts add.
+    // BFF must dedupe before this helper — lock the helper to one snapshot sum.
+    assert.ok(
+      list.distPerShare != null && Math.abs(list.distPerShare - 21.021) < 1e-6,
+    );
+  });
+
   it("fills LTCG from upcoming estimateTypeLines when raw snapshot rows are missing", () => {
     const fund = hydrate("FBGRX", "Blue Chip Growth", "Fidelity", 312.26, FBGRX_ROWS);
     const list = listRowFromFund({

@@ -8,6 +8,7 @@ import { withPeerContext } from "@/data/queries";
 import type { FundEstimateView } from "@/data/types";
 import { isRemoteDataApi } from "@/lib/data-api/config";
 import {
+  dedupeRows,
   distributionRowsForTickers,
   loadDistributionsForFundPage,
   loadFundIdentityByTicker,
@@ -103,10 +104,10 @@ export async function loadListRowsFromDataApi(input: {
   ]);
 
   const identities = identitiesResult.value;
-  const distRows = [
+  const distRows = dedupeRows([
     ...distResult.value,
     ...distributionRowsForTickers(upcomingRowsResult.value, tickers),
-  ];
+  ]);
 
   const hydrated = distRows.length
     ? withPeerContext(aggregateDistributions(distRows, input.today))

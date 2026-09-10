@@ -25,7 +25,7 @@ export type DistributionRowQuery = {
   asOfFrom?: string;
 };
 
-function dedupeRows(rows: DataDistribution[]): DataDistribution[] {
+export function dedupeRows(rows: DataDistribution[]): DataDistribution[] {
   const seen = new Set<string>();
   const out: DataDistribution[] = [];
   for (const row of rows) {

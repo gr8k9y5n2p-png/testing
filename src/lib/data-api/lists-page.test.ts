@@ -13,6 +13,7 @@ describe("Lists Data API hydrate", () => {
     assert.match(lists, /loadFundIdentityByTicker/);
     assert.match(lists, /loadDistributionsForFundPage/);
     assert.match(lists, /loadUpcomingDistributionRows/);
+    assert.match(lists, /dedupeRows/);
     assert.match(lists, /hydrateAll/);
     assert.match(lists, /rowsForTicker/);
     assert.match(lists, /listRowFromFund/);

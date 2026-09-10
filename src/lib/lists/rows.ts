@@ -200,8 +200,14 @@ export function upcomingEstimateTypeAmounts(
       row.amount_unit === "per_share" && !isRollupTotal(row.estimate_type),
   );
   let totalCapitalGains: number | null = null;
+  const seenIds = new Set<string>();
 
   for (const row of snapshot) {
+    const id = (row.id ?? "").trim();
+    if (id) {
+      if (seenIds.has(id)) continue;
+      seenIds.add(id);
+    }
     if (hasTypedPerShare && isRollupTotal(row.estimate_type)) continue;
     if ((row.amount_unit ?? "").trim().toLowerCase() !== "per_share") continue;
     const value = midpoint(row);
