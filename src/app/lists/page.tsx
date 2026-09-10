@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Disclaimer } from "@/components/Disclaimer";
 import { CoverageProvider } from "@/components/coverage/CoverageProvider";
 import { ListsWorkspace } from "@/components/lists/ListsWorkspace";
-import { getDistributionRepository } from "@/data";
 import { COPY, LISTS_DETAIL, LISTS_HEADING } from "@/lib/copy";
 import { loadCoverageSnapshot } from "@/lib/data-api/coverage";
 import { parseListsQueryTickers } from "@/lib/lists/parse-tickers";
@@ -24,16 +23,12 @@ export default async function ListsPage({
 }) {
   const params = await searchParams;
   const initialTickers = parseListsQueryTickers(params);
-  const repository = await getDistributionRepository();
-  const [funds, coverage] = await Promise.all([
-    repository.search(),
-    loadCoverageSnapshot(),
-  ]);
+  const coverage = await loadCoverageSnapshot();
 
   return (
     <main className="mx-auto w-full max-w-7xl px-4 pb-16 pt-6 sm:px-6 lg:px-8">
       <CoverageProvider families={coverage.families}>
-        <ListsWorkspace funds={funds} initialTickers={initialTickers} />
+        <ListsWorkspace funds={[]} initialTickers={initialTickers} />
       </CoverageProvider>
       <Disclaimer className="mt-8 text-xs leading-relaxed text-muted" />
     </main>
