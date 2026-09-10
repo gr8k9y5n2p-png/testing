@@ -274,10 +274,10 @@ function hydrationScore(fund: FundEstimateView): number {
   if (fund.recordDate || fund.exDate || fund.payableDate) score += 1;
   if (fund.bucket === "upcoming") score += 10;
   if (fund.bucket === "paid" && fund.hasEstimate !== true) score += 1;
-  // Weekly / dist-day NAV from GET /funds + /distributions. A distributions-only
-  // duplicate must not win a tie and drop the live print.
-  if (fund.nav > 0) score += 2;
-  if (fund.navAsOf) score += 1;
+  // Weekly NAV from GET /funds. Score it above paid-history-only dumps so
+  // a distributions duplicate cannot hide the live print on a tie.
+  if (fund.nav > 0) score += 5;
+  if (fund.navAsOf) score += 2;
   if (fund.navOnDistributionDay != null && fund.navOnDistributionDay > 0) score += 1;
   return score;
 }
@@ -296,9 +296,13 @@ export function mergeFundLists(
       order.push(key);
       continue;
     }
-    if (hydrationScore(fund) > hydrationScore(prev)) {
-      map.set(key, fund);
-    }
+    // Paid-history-rich /distributions dumps can outscore an upcoming row
+    // that already has GET /funds weekly NAV. Keep the richer row, but
+    // never drop a live nav_per_share print.
+    const winner =
+      hydrationScore(fund) > hydrationScore(prev) ? fund : prev;
+    const other = winner === fund ? prev : fund;
+    map.set(key, overlayWeeklyNav(winner, other));
   }
   return order.map((key) => map.get(key)!);
 }

@@ -388,6 +388,70 @@ describe("Search hydrate from /distributions", () => {
     assert.equal(merged[0].navAsOf, "2026-09-08");
   });
 
+  it("keeps weekly NAV when a paid-history dump outscores the upcoming row", () => {
+    const upcomingWithNav = mergeFundWithDistributions(
+      mapFundsApiItem({
+        ticker: "FBGRX",
+        fund_name: "Blue Chip Growth",
+        fund_family: "Fidelity",
+        has_estimate: true,
+        nav_per_share: "312.260010",
+        nav_as_of: "2026-09-08",
+      }),
+      withPeerContext(
+        aggregateDistributions(
+          [
+            row({
+              id: "fbgrx-ltcg-up",
+              ticker: "FBGRX",
+              fund_family: "Fidelity",
+              fund_name: "Blue Chip Growth",
+              estimate_type: "long_term_capital_gains",
+              amount: "21.021000",
+              amount_unit: "per_share",
+              publication_stage: "preliminary_estimate",
+              as_of: "2026-07-31",
+              ex_date: "2026-09-11",
+              payable_date: "2026-09-14",
+            }),
+          ],
+          "2026-09-10",
+        ),
+      )[0],
+    );
+    const dumpWithHistory = {
+      ...upcomingWithNav,
+      nav: 0,
+      navAsOf: null,
+      paidHistory: [
+        {
+          asOfDate: "2026-01-22",
+          recordDate: "2025-12-12",
+          exDate: "2025-12-12",
+          payableDate: "2025-12-15",
+          publicationStage: "final",
+          estimatedDistributionAmount: 5.073,
+          estimatedOrdinaryIncome: 0,
+          estimatedCapitalGains: 5.073,
+          estimatedDistributionPctNav: 0,
+          publishedPctOfNav: null,
+          distributionYear: 2025,
+        },
+      ],
+    };
+    assert.ok(upcomingWithNav.nav > 0);
+    assert.equal(dumpWithHistory.nav, 0);
+    assert.ok(
+      (dumpWithHistory.paidHistory?.length ?? 0) >
+        (upcomingWithNav.paidHistory?.length ?? 0),
+    );
+    const merged = mergeFundLists([upcomingWithNav], [dumpWithHistory]);
+    assert.equal(merged.length, 1);
+    assert.equal(merged[0].nav, 312.26001);
+    assert.equal(merged[0].navAsOf, "2026-09-08");
+    assert.ok(Math.abs(merged[0].estimatedDistributionAmount - 21.021) < 1e-6);
+  });
+
   it("overlays live weekly NAV onto a distributions-only selected fund", () => {
     const selected = mergeFundWithDistributions(
       mapFundsApiItem({
