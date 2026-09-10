@@ -14,6 +14,7 @@ import {
   illustrationsByCalendarYear,
   selectComponentsForYear,
   taxDollarsFromComponent,
+  perShareAmountFromComponent,
   GROWTH_TAX_EMPTY_LABEL,
   GROWTH_TAX_TYPE_COLORS,
   GROWTH_TAX_UNDISCLOSED_LABEL,
@@ -495,6 +496,83 @@ describe("buildGrowthTaxByTypeModel", () => {
   });
 });
 
+describe("Per Share $/share mode", () => {
+  it("reads amount when amount_unit is per_share and skips percent rows", () => {
+    assert.equal(
+      perShareAmountFromComponent({ amount: 8.364, amount_unit: "per_share" }),
+      8.364,
+    );
+    assert.equal(
+      perShareAmountFromComponent({ amount: 1.25, amount_unit: "percent_of_nav" }),
+      null,
+    );
+    assert.equal(
+      perShareAmountFromComponent({ amount: null, amount_unit: "per_share" }),
+      null,
+    );
+    assert.equal(
+      perShareAmountFromComponent({ amount: 8.364, amount_unit: "percent" }),
+      null,
+    );
+  });
+
+  it("puts AGTHX YE2025 LTCG $8.364 on the LTCG stack and does not invent missing types", () => {
+    const year = growthTaxYearFromIllustration(
+      "AGTHX",
+      2025,
+      illustration(true, [
+        component({
+          estimate_type: "long_term_capital_gains",
+          amount: 8.364,
+          amount_unit: "per_share",
+          as_of: "2026-01-15",
+          ex_date: "2025-12-17",
+          payable_date: "2025-12-17",
+          estimated_tax_dollars: 28985,
+          distribution_dollars: 94594,
+        }),
+        component({
+          estimate_type: "ordinary_income",
+          amount: 2.1,
+          amount_unit: "percent_of_nav",
+          as_of: "2026-01-15",
+          ex_date: "2025-12-17",
+          payable_date: "2025-12-17",
+          estimated_tax_dollars: 400,
+        }),
+      ]),
+      UI_DEFAULT_TAX_RATES,
+      true,
+      undefined,
+      "per_share",
+    );
+    assert.equal(year.amounts.long_term_capital_gains, 8.364);
+    assert.equal(year.amounts.ordinary_income, null);
+    assert.equal(year.total, 8.364);
+    assert.equal(formatGrowthTaxCell(8.364, "paid", "type", "per_share"), "$8.364");
+  });
+
+  it("keeps tax $ when Per Share is off", () => {
+    const year = growthTaxYearFromIllustration(
+      "AGTHX",
+      2025,
+      illustration(true, [
+        component({
+          estimate_type: "long_term_capital_gains",
+          amount: 8.364,
+          amount_unit: "per_share",
+          as_of: "2026-01-15",
+          ex_date: "2025-12-17",
+          payable_date: "2025-12-17",
+          estimated_tax_dollars: 1500,
+        }),
+      ]),
+    );
+    assert.equal(year.amounts.long_term_capital_gains, 1500);
+    assert.equal(formatGrowthTaxCell(1500, "paid"), "$1,500");
+  });
+});
+
 describe("Growth & Tax chrome locks", () => {
   it("titles the Compare module Growth & Tax and does not keep the old tax-drag pair", () => {
     const moduleSource = readFileSync(
@@ -524,6 +602,17 @@ describe("Growth & Tax chrome locks", () => {
     assert.match(chart, /Announced \(unpaid\)/);
     assert.doesNotMatch(chart, /rotate\(-/);
     assert.match(chart, /fundSeries\.map/);
+    assert.match(chart, /data-bar-ticker/);
+    assert.match(chart, /% ann\./);
+    assert.match(moduleSource, /Per Share/);
+    assert.match(moduleSource, /annualizedFromRows/);
+    const seriesSource = readFileSync(
+      join(here, "growth-tax-series.ts"),
+      "utf8",
+    );
+    assert.match(seriesSource, /commonInceptionYear/);
+    assert.match(seriesSource, /compareInceptionFromYear/);
+    assert.match(seriesSource, /compareInceptionToYear/);
     assert.doesNotMatch(chart, /strokeDasharray=\{row\.dashed/);
     assert.equal(GROWTH_TAX_TYPE_COLORS.long_term_capital_gains, "#b42318");
     assert.equal(GROWTH_TAX_TYPE_COLORS.ordinary_income, "#1b7a72");

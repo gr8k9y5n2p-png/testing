@@ -1,4 +1,4 @@
-import { formatUsd } from "@/lib/format";
+import { formatUsd } from "../format.ts";
 
 /** Keep growth / tax $ axes in the 4–6 tick band. Never emit a crowded stack. */
 export const MIN_MONEY_TICKS = 4;
