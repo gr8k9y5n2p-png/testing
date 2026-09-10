@@ -3,7 +3,10 @@ import { test } from "node:test";
 import { withPeerContext } from "./queries.ts";
 import {
   FUND_PAGE_SIZE,
+  PAID_HISTORY_PAGE_SIZE,
+  PAID_HISTORY_PAGE_SIZE_MAX,
   clampPageSize,
+  clampPaidHistoryPageSize,
   fundPageSearchParams,
   offsetToPage,
   paginateViews,
@@ -44,6 +47,16 @@ test("default page size is 50 and clamps to 1–200", () => {
   assert.equal(clampPageSize(undefined), 50);
   assert.equal(clampPageSize(0), 1);
   assert.equal(clampPageSize(500), 200);
+});
+
+test("Paid History page size clamps to 1–50", () => {
+  assert.equal(PAID_HISTORY_PAGE_SIZE, 50);
+  assert.equal(PAID_HISTORY_PAGE_SIZE_MAX, 50);
+  assert.equal(clampPaidHistoryPageSize(undefined), 50);
+  assert.equal(clampPaidHistoryPageSize(0), 1);
+  assert.equal(clampPaidHistoryPageSize(1), 1);
+  assert.equal(clampPaidHistoryPageSize(25), 25);
+  assert.equal(clampPaidHistoryPageSize(200), 50);
 });
 
 test("paginateViews returns items + total for limit/offset", () => {
@@ -129,4 +142,30 @@ test("parseFundPageQuery and offsetToPage match the Data contract", () => {
   assert.equal(upcoming.upcoming, true);
   const upcomingParams = fundPageSearchParams({ upcoming: true, limit: 200 });
   assert.equal(upcomingParams.get("upcoming"), "1");
+
+  const paid = parseFundPageQuery(
+    new URLSearchParams(
+      "paid_history=1&limit=200&year=2025&fund_family=Vanguard&category=Large%20Blend",
+    ),
+  );
+  assert.equal(paid.paidHistory, true);
+  assert.equal(paid.limit, 50, "Paid History user window clamps to 1–50");
+  assert.equal(paid.year, 2025);
+  assert.equal(paid.family, "Vanguard");
+  assert.equal(paid.category, "Large Blend");
+  const paidParams = fundPageSearchParams({
+    paidHistory: true,
+    limit: 25,
+    offset: 50,
+    year: 2025,
+    family: "Fidelity",
+    category: "Large Growth",
+  });
+  assert.equal(paidParams.get("paid_history"), "1");
+  assert.equal(paidParams.get("limit"), "25");
+  assert.equal(paidParams.get("page_size"), "25");
+  assert.equal(paidParams.get("page"), "3");
+  assert.equal(paidParams.get("year"), "2025");
+  assert.equal(paidParams.get("fund_family"), "Fidelity");
+  assert.equal(paidParams.get("category"), "Large Growth");
 });

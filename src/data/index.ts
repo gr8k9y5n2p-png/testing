@@ -51,8 +51,12 @@ export {
 export {
   FUND_PAGE_SIZE,
   FUND_PAGE_SIZE_MAX,
+  PAID_HISTORY_PAGE_SIZE,
+  PAID_HISTORY_PAGE_SIZE_MAX,
+  PAID_HISTORY_PAGE_SIZES,
   clampOffset,
   clampPageSize,
+  clampPaidHistoryPageSize,
   paginateViews,
   parseFundPageQuery,
 } from "./pagination";

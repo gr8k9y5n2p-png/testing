@@ -34,6 +34,16 @@ describe("Search Upcoming / Announced module chrome", () => {
     assert.match(dashboard, /currentPaidHistoryYear/);
     assert.match(dashboard, /mergeTaxYears/);
     assert.match(dashboard, /FUND_PAGE_SIZE/);
+    assert.match(dashboard, /paid_history/);
+    assert.match(dashboard, /PAID_HISTORY_PAGE_SIZE/);
+    assert.match(dashboard, /PAID_HISTORY_PAGE_SIZES/);
+    assert.match(dashboard, /paidFunds/);
+    assert.match(dashboard, /<ResultsTable/);
+    assert.doesNotMatch(
+      dashboard,
+      /EmptyState/,
+      "Paid History must stay mounted when Upcoming is empty",
+    );
     assert.doesNotMatch(
       dashboard,
       /query: scopedTicker,/,

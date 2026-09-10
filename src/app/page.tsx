@@ -7,6 +7,7 @@ import {
   mergeFundLists,
   mergeTaxYears,
 } from "@/data";
+import { FUND_CATEGORIES } from "@/data/types";
 import { loadCoverageSnapshot } from "@/lib/data-api/coverage";
 import { loadUpcomingAnnouncedFromDataApi } from "@/lib/data-api/distributions";
 import { loadFundPageFromDataApi } from "@/lib/data-api/funds-page";
@@ -79,13 +80,27 @@ export default async function Home({
     collectTaxYearsFromFunds(funds),
     focused?.years,
   );
+  const families = [
+    ...new Set([
+      ...facets.families,
+      ...coverage.families.map((family) => family.display_name),
+      "American Funds",
+    ]),
+  ]
+    .filter((name) => name && name !== "—")
+    .sort();
+  const categories = [
+    ...new Set([...facets.categories, ...FUND_CATEGORIES]),
+  ]
+    .filter((name) => name && name !== "—")
+    .sort();
 
   return (
     <main className="mx-auto w-full max-w-7xl px-4 pb-16 pt-6 sm:px-6 lg:px-8">
       <AftertaxApp
         funds={funds}
         highlights={highlights}
-        facets={{ ...facets, years }}
+        facets={{ families, categories, years }}
         coverageFamilies={coverage.families}
         checkout={checkoutFromSearchParams(params.checkout)}
         ticker={ticker}

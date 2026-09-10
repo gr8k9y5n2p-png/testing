@@ -20,6 +20,7 @@ import {
   loadDistributionsForFundPage,
   loadUpcomingAnnouncedFromDataApi,
 } from "@/lib/data-api/distributions";
+import { loadPaidHistoryPageFromDataApi } from "@/lib/data-api/paid-history-page";
 import { fetchDataApi } from "@/lib/data-api/fetch";
 
 export { mapFundsApiItem, type FundsApiItem } from "@/data/funds-list";
@@ -60,6 +61,9 @@ export async function loadFundPageFromDataApi(
   query: FundPageQuery = {},
 ): Promise<FundPageResult | null> {
   if (!isRemoteDataApi()) return null;
+  if (query.paidHistory) {
+    return loadPaidHistoryPageFromDataApi(query);
+  }
   if (query.upcoming) {
     try {
       const items = await loadUpcomingAnnouncedFromDataApi();

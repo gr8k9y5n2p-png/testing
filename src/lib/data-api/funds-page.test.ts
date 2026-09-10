@@ -48,11 +48,14 @@ describe("Search / Sample Estimates fund page", () => {
     const fundsPage = readFileSync(join(here, "funds-page.ts"), "utf8");
     assert.match(fundsPage, /navOnly/);
     assert.match(fundsPage, /query\.upcoming/);
+    assert.match(fundsPage, /query\.paidHistory/);
+    assert.match(fundsPage, /loadPaidHistoryPageFromDataApi/);
     assert.match(repo, /loadUpcomingAnnouncedFromDataApi/);
     assert.match(repo, /if \(upcoming\.length\)/);
     assert.match(source, /upcoming/);
     const page = readFileSync(join(here, "../../app/page.tsx"), "utf8");
     assert.match(page, /loadUpcomingAnnouncedFromDataApi/);
+    assert.match(page, /FUND_CATEGORIES/);
     assert.doesNotMatch(page, /getDistributionRepository/);
     const app = readFileSync(join(here, "../../components/AftertaxApp.tsx"), "utf8");
     assert.match(app, /upcoming=1|upcoming", "1"/);

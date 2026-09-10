@@ -19,9 +19,20 @@ export type DistributionRowQuery = {
   ticker?: string;
   fundIdentifier?: string;
   fundFamily?: string;
+  category?: string;
   publicationStage?: string;
+  year?: number;
+  page?: number;
+  pageSize?: number;
   exDateFrom?: string;
   asOfFrom?: string;
+};
+
+export type DistributionPageResult = {
+  items: DataDistribution[];
+  total: number;
+  page: number;
+  pageSize: number;
 };
 
 function dedupeRows(rows: DataDistribution[]): DataDistribution[] {
@@ -43,43 +54,92 @@ function dedupeRows(rows: DataDistribution[]): DataDistribution[] {
   return out;
 }
 
+function distributionSearchParams(query: DistributionRowQuery): URLSearchParams {
+  const page = Math.max(1, Math.trunc(query.page ?? 1));
+  const pageSize = Math.min(
+    DISTRIBUTION_PAGE_SIZE,
+    Math.max(1, Math.trunc(query.pageSize ?? DISTRIBUTION_PAGE_SIZE)),
+  );
+  const params = new URLSearchParams();
+  params.set("page", String(page));
+  params.set("page_size", String(pageSize));
+  if (query.q?.trim()) params.set("q", query.q.trim());
+  if (query.ticker?.trim()) {
+    params.set("ticker", normalizeTickerSymbol(query.ticker));
+  }
+  if (query.fundIdentifier?.trim()) {
+    params.set("fund_identifier", query.fundIdentifier.trim());
+  }
+  if (query.fundFamily?.trim()) {
+    params.set("fund_family", query.fundFamily.trim());
+  }
+  if (query.category?.trim()) {
+    params.set("category", query.category.trim());
+    params.set("fund_category", query.category.trim());
+  }
+  if (query.publicationStage?.trim()) {
+    params.set("publication_stage", query.publicationStage.trim());
+  }
+  if (query.year && Number.isFinite(query.year)) {
+    params.set("year", String(query.year));
+    params.set("tax_year", String(query.year));
+  }
+  if (query.exDateFrom?.trim()) {
+    params.set("ex_date_from", query.exDateFrom.trim());
+  }
+  if (query.asOfFrom?.trim()) {
+    params.set("as_of_from", query.asOfFrom.trim());
+  }
+  return params;
+}
+
+/** One GET /distributions page. Never walks the book. */
+export async function loadDistributionPage(
+  query: DistributionRowQuery = {},
+): Promise<DistributionPageResult> {
+  const page = Math.max(1, Math.trunc(query.page ?? 1));
+  const pageSize = Math.min(
+    DISTRIBUTION_PAGE_SIZE,
+    Math.max(1, Math.trunc(query.pageSize ?? DISTRIBUTION_PAGE_SIZE)),
+  );
+  const params = distributionSearchParams({ ...query, page, pageSize });
+  const response = await fetchDataApi(`/distributions?${params.toString()}`);
+  if (!response.ok) {
+    return { items: [], total: 0, page, pageSize };
+  }
+  const payload = (await response.json()) as {
+    items?: DataDistribution[];
+    data?: DataDistribution[];
+    total?: number;
+    count?: number;
+  };
+  const items = Array.isArray(payload.items)
+    ? payload.items
+    : Array.isArray(payload.data)
+      ? payload.data
+      : [];
+  const total =
+    typeof payload.total === "number"
+      ? payload.total
+      : typeof payload.count === "number"
+        ? payload.count
+        : items.length;
+  return { items, total, page, pageSize };
+}
+
 export async function loadDistributionRows(
   query: DistributionRowQuery = {},
 ): Promise<DataDistribution[]> {
   const items: DataDistribution[] = [];
   for (let page = 1; page <= DISTRIBUTION_MAX_PAGES; page += 1) {
-    const params = new URLSearchParams();
-    params.set("page", String(page));
-    params.set("page_size", String(DISTRIBUTION_PAGE_SIZE));
-    if (query.q?.trim()) params.set("q", query.q.trim());
-    if (query.ticker?.trim()) {
-      params.set("ticker", normalizeTickerSymbol(query.ticker));
-    }
-    if (query.fundIdentifier?.trim()) {
-      params.set("fund_identifier", query.fundIdentifier.trim());
-    }
-    if (query.fundFamily?.trim()) {
-      params.set("fund_family", query.fundFamily.trim());
-    }
-    if (query.publicationStage?.trim()) {
-      params.set("publication_stage", query.publicationStage.trim());
-    }
-    if (query.exDateFrom?.trim()) {
-      params.set("ex_date_from", query.exDateFrom.trim());
-    }
-    if (query.asOfFrom?.trim()) {
-      params.set("as_of_from", query.asOfFrom.trim());
-    }
-    const response = await fetchDataApi(`/distributions?${params.toString()}`);
-    if (!response.ok) break;
-    const payload = (await response.json()) as {
-      items?: DataDistribution[];
-      total?: number;
-    };
-    const pageItems = Array.isArray(payload.items) ? payload.items : [];
-    items.push(...pageItems);
-    if (pageItems.length < DISTRIBUTION_PAGE_SIZE) break;
-    if (typeof payload.total === "number" && items.length >= payload.total) break;
+    const result = await loadDistributionPage({
+      ...query,
+      page,
+      pageSize: DISTRIBUTION_PAGE_SIZE,
+    });
+    items.push(...result.items);
+    if (result.items.length < DISTRIBUTION_PAGE_SIZE) break;
+    if (items.length >= result.total) break;
   }
   return items;
 }

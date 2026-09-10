@@ -3,6 +3,9 @@
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import {
   FUND_PAGE_SIZE,
+  PAID_HISTORY_PAGE_SIZE,
+  PAID_HISTORY_PAGE_SIZES,
+  clampPaidHistoryPageSize,
   paginateViews,
   type FundPageResult,
 } from "@/data/pagination";
@@ -13,7 +16,6 @@ import {
 } from "@/data";
 import { collectTaxYearsFromFunds, mergeTaxYears } from "@/data/tax-years";
 import type { Facets, FundEstimateView, SearchFilters } from "@/data/types";
-import { EmptyState } from "@/components/EmptyState";
 import { ResultsTable } from "@/components/ResultsTable";
 import { SearchToolbar } from "@/components/SearchToolbar";
 import type { SortDirection, SortKey } from "@/lib/format";
@@ -29,6 +31,7 @@ async function fetchFundPage(query: {
   limit: number;
   offset: number;
   upcoming?: boolean;
+  paidHistory?: boolean;
 }): Promise<FundPageResult> {
   const params = new URLSearchParams();
   params.set("limit", String(query.limit));
@@ -36,6 +39,7 @@ async function fetchFundPage(query: {
   params.set("sort", query.sort);
   params.set("direction", query.direction);
   if (query.upcoming) params.set("upcoming", "1");
+  if (query.paidHistory) params.set("paid_history", "1");
   if (query.filters.query) params.set("q", query.filters.query);
   if (!query.filters.query && query.filters.family) {
     params.set("family", query.filters.family);
@@ -120,6 +124,14 @@ export function Dashboard({
   const [page, setPage] = useState<FundPageResult>(() =>
     paginateViews(funds, { limit: FUND_PAGE_SIZE, offset: 0 }),
   );
+  const [paidLimit, setPaidLimit] = useState(PAID_HISTORY_PAGE_SIZE);
+  const [paidOffset, setPaidOffset] = useState(0);
+  const [paidPage, setPaidPage] = useState<FundPageResult>({
+    items: [],
+    total: 0,
+    limit: PAID_HISTORY_PAGE_SIZE,
+    offset: 0,
+  });
   const [focusedItems, setFocusedItems] = useState<FundEstimateView[]>([]);
   const [pageYears, setPageYears] = useState<number[]>(() =>
     mergeTaxYears(facets.years, collectTaxYearsFromFunds(funds)),
@@ -127,6 +139,14 @@ export function Dashboard({
   const [appliedKey, setAppliedKey] = useState(() =>
     pageRequestKey({}, "fundName", "asc", 0),
   );
+  const paidYear = deferredFilters.year ?? currentPaidHistoryYear();
+  const paidRequestKey = JSON.stringify({
+    family: requestFilters.family ?? "",
+    category: requestFilters.category ?? "",
+    year: paidYear,
+    limit: paidLimit,
+    offset: paidOffset,
+  });
 
   const requestKey = pageRequestKey(
     requestFilters,
@@ -171,6 +191,35 @@ export function Dashboard({
   }, [funds, offset, requestFilters, requestKey, sortDirection, sortKey]);
 
   useEffect(() => {
+    let cancelled = false;
+    void fetchFundPage({
+      filters: { ...requestFilters, year: paidYear },
+      sort: sortKey,
+      direction: sortDirection,
+      limit: paidLimit,
+      offset: paidOffset,
+      paidHistory: true,
+    })
+      .then((next) => {
+        if (cancelled) return;
+        setPaidPage(next);
+        setPageYears((current) => mergeTaxYears(current, next.years));
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setPaidPage({
+          items: [],
+          total: 0,
+          limit: paidLimit,
+          offset: paidOffset,
+        });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [paidLimit, paidOffset, paidRequestKey, paidYear, requestFilters, sortDirection, sortKey]);
+
+  useEffect(() => {
     if (!scopedTicker) {
       setFocusedItems([]);
       return;
@@ -198,9 +247,14 @@ export function Dashboard({
   const toolbarFacets = useMemo<Facets>(
     () => ({
       ...facets,
-      years: mergeTaxYears(facets.years, pageYears, collectTaxYearsFromFunds(page.items)),
+      years: mergeTaxYears(
+        facets.years,
+        pageYears,
+        collectTaxYearsFromFunds(page.items),
+        collectTaxYearsFromFunds(paidPage.items),
+      ),
     }),
-    [facets, page.items, pageYears],
+    [facets, page.items, pageYears, paidPage.items],
   );
 
   const tableFunds = useMemo(
@@ -229,13 +283,23 @@ export function Dashboard({
     [tableFunds],
   );
 
-  const hasActiveFilters = Boolean(filters.family || filters.category);
+  const paidFunds = useMemo(
+    () => [...focusedItems, ...paidPage.items],
+    [focusedItems, paidPage.items],
+  );
+
 
   const rangeLabel = `${upcomingCount} unpaid announced`;
 
   function applyFilters(next: SearchFilters) {
     setFilters(next);
     setOffset(0);
+    setPaidOffset(0);
+  }
+
+  function applyPaidLimit(next: number) {
+    setPaidLimit(clampPaidHistoryPageSize(next));
+    setPaidOffset(0);
   }
 
   function toggleSort(key: SortKey) {
@@ -273,37 +337,38 @@ export function Dashboard({
         onChange={applyFilters}
       />
       <div className={isPending ? "opacity-70 transition-opacity" : ""}>
-        {tableFunds.length === 0 ? (
-          <EmptyState
-            hasActiveFilters={hasActiveFilters}
-            universeEmpty={funds.length === 0}
-            onClear={() => applyFilters({ year: currentPaidHistoryYear() })}
-          />
-        ) : (
-          <ResultsTable
-            funds={tableFunds}
-            onIllustrate={onIllustrate}
-            sortKey={sortKey}
-            sortDirection={sortDirection}
-            onSort={toggleSort}
-            year={filters.year ?? currentPaidHistoryYear()}
-            years={toolbarFacets.years}
-            onYear={(nextYear) =>
-              applyFilters({ ...filters, year: nextYear })
-            }
-            highlightedTicker={scopedTicker}
-            page={
-              upcomingCount > FUND_PAGE_SIZE
-                ? {
-                    total: upcomingCount,
-                    limit: FUND_PAGE_SIZE,
-                    offset,
-                    onOffset: setOffset,
-                  }
-                : undefined
-            }
-          />
-        )}
+        <ResultsTable
+          funds={tableFunds}
+          paidFunds={paidFunds}
+          onIllustrate={onIllustrate}
+          sortKey={sortKey}
+          sortDirection={sortDirection}
+          onSort={toggleSort}
+          year={paidYear}
+            years={mergeTaxYears(toolbarFacets.years, [paidYear])}
+          onYear={(nextYear) =>
+            applyFilters({ ...filters, year: nextYear })
+          }
+          highlightedTicker={scopedTicker}
+          page={
+            upcomingCount > FUND_PAGE_SIZE
+              ? {
+                  total: upcomingCount,
+                  limit: FUND_PAGE_SIZE,
+                  offset,
+                  onOffset: setOffset,
+                }
+              : undefined
+          }
+          paidPage={{
+            total: paidPage.total,
+            limit: paidPage.limit,
+            offset: paidPage.offset,
+            onOffset: setPaidOffset,
+            onLimit: applyPaidLimit,
+            limitOptions: PAID_HISTORY_PAGE_SIZES,
+          }}
+        />
       </div>
     </section>
   );

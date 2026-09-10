@@ -48,6 +48,8 @@ type SamplePage = {
   limit: number;
   offset: number;
   onOffset: (offset: number) => void;
+  onLimit?: (limit: number) => void;
+  limitOptions?: readonly number[];
 };
 
 function estimatePct(fund: FundEstimateView): string {
@@ -81,6 +83,8 @@ export function ResultsTable({
   sortDirection: sortDirectionProp,
   onSort,
   page,
+  paidFunds,
+  paidPage,
   year,
   years,
   onYear,
@@ -92,6 +96,9 @@ export function ResultsTable({
   sortDirection?: SortDirection;
   onSort?: (key: SortKey) => void;
   page?: SamplePage;
+  /** Server-paged Paid History year book. Never derived from Upcoming. */
+  paidFunds?: FundEstimateView[];
+  paidPage?: SamplePage;
   /** Paid history year toggle. Upcoming stays unpaid announced only. */
   year?: number;
   years?: number[];
@@ -105,7 +112,7 @@ export function ResultsTable({
   const sortDirection = sortDirectionProp ?? localSortDirection;
   const coverage = useCoverage();
   const { upcoming } = splitFundsByBucket(funds);
-  const paid = paidHistoryViews(funds, year);
+  const paid = paidHistoryViews(paidFunds ?? funds, year);
   const serverSorted = Boolean(onSort);
 
   function toggleSort(key: SortKey) {
@@ -124,7 +131,7 @@ export function ResultsTable({
   }
 
   const sourceByHistoryId = new Map<string, FundEstimateView>();
-  for (const fund of funds) {
+  for (const fund of [...funds, ...(paidFunds ?? [])]) {
     sourceByHistoryId.set(fund.id, fund);
     if (fund.bucket === "paid") continue;
     for (const event of fund.paidHistory) {
@@ -176,6 +183,7 @@ export function ResultsTable({
         year={year}
         years={years}
         onYear={onYear}
+        page={paidPage}
       />
     </div>
   );
@@ -245,7 +253,7 @@ function FundSection({
                 role="group"
                 aria-label="Paid History year"
               >
-                {years.map((option) => (
+                {(year && !years.includes(year) ? [year, ...years] : years).map((option) => (
                   <button
                     key={option}
                     type="button"
@@ -580,12 +588,17 @@ function PaginationBar({
   limit,
   offset,
   onOffset,
+  onLimit,
+  limitOptions,
   label = `${SEARCH_UPCOMING_HEADING} pages`,
 }: SamplePage & { label?: string }) {
   const page = Math.floor(offset / limit) + 1;
   const pages = Math.max(1, Math.ceil(total / limit));
   const from = total === 0 ? 0 : offset + 1;
   const to = Math.min(offset + limit, total);
+  const sizes = limitOptions?.length
+    ? [...new Set([...limitOptions, limit])].sort((a, b) => a - b)
+    : null;
   return (
     <nav
       aria-label={label}
@@ -595,6 +608,23 @@ function PaginationBar({
         {from}–{to} of {total}
       </p>
       <div className="flex items-center gap-1">
+        {onLimit && sizes ? (
+          <label className="mr-1 flex items-center gap-1 text-[10px] text-muted">
+            <span className="sr-only">Funds per page</span>
+            <select
+              aria-label="Funds per page"
+              className="h-6 rounded border border-line bg-surface px-1 text-[11px] leading-none text-ink"
+              value={limit}
+              onChange={(event) => onLimit(Number(event.target.value))}
+            >
+              {sizes.map((size) => (
+                <option key={size} value={size}>
+                  {size}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
         <button
           type="button"
           disabled={offset <= 0}

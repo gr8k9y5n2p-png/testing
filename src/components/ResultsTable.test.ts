@@ -74,10 +74,16 @@ describe("ResultsTable Search pager placement", () => {
     assert.ok(paid > upcoming, "Paid history mounts below Upcoming");
     assert.doesNotMatch(layout, /<PaginationBar/, "no inter-module pager strip");
     assert.match(layout, /page=\{page\}/);
+    assert.match(layout, /page=\{paidPage\}/);
     assert.equal(
       (layout.match(/page=\{page\}/g) ?? []).length,
       1,
       "Upcoming receives the hybrid page controls",
+    );
+    assert.equal(
+      (layout.match(/page=\{paidPage\}/g) ?? []).length,
+      1,
+      "Paid History receives its own year-book pager",
     );
 
     const fundSection = source.slice(
@@ -105,5 +111,7 @@ describe("ResultsTable Search pager placement", () => {
     assert.doesNotMatch(pager, /rounded-lg border border-line bg-surface/);
     assert.doesNotMatch(pager, /h-9 /);
     assert.doesNotMatch(pager, /py-2\.5/);
+    assert.match(pager, /Funds per page/);
+    assert.match(pager, /onLimit/);
   });
 });
