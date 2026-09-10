@@ -25,7 +25,8 @@ Vanguard is the first-choice ICI book: official Primary Layout PDFs on the advis
 - `python -m app.cli refresh-nav` to refresh NAV / last liquid close only (Yahoo, fixture fallback)
 - Idempotent upserts on `(fund_family, fund identifier, share class, estimate type, as_of, ex-date)`
 - Search API with filters, text search, and pagination
-- `GET /funds` — paginated **unique funds** from the stored book (`limit`/`offset`/`total`/`category`, plus weekly `nav_per_share` / `nav_as_of` / `nav_source`) for Website Search / Sample Estimates / Versus Category. Does not invent funds, categories, or NAV.
+- `GET /funds` — paginated **unique funds** from the stored book (`limit`/`offset`/`total`/`category` / `coverage_status`, plus weekly `nav_per_share` / `nav_as_of` / `nav_source`) for Website Search / Sample Estimates / Versus Category. Does not invent funds, categories, NAV, or estimates.
+- `GET /funds/lookup?ticker=` — exact ticker lookup. In-book → `coverage_status` `awaiting_estimate` | `estimate_announced`. Miss → **404** `not_in_universe` (UI: Add to universe). Never conflate a miss with Awaiting Estimate.
 - `GET /funds/categories` — distinct Morningstar-style categories with stored-fund counts (plus `uncategorized` / `coverage_pct`)
 - `POST /illustrate` — server-side tax-impact math for a dollar holding (Website Engineering owns the UI)
 - `POST /illustrate/portfolio` — book-level review with coverage % and explicit gaps
@@ -154,6 +155,8 @@ curl -s -X POST http://127.0.0.1:8000/ingest/distributions \
 # Search — unique funds (Website Sample Estimates / Search table)
 curl -s 'http://127.0.0.1:8000/funds?limit=50&offset=0' | jq
 curl -s 'http://127.0.0.1:8000/funds?q=AMCAP&limit=50&offset=0' | jq
+curl -s 'http://127.0.0.1:8000/funds/lookup?ticker=AGTHX' | jq '{ticker,has_estimate,coverage_status}'
+curl -s 'http://127.0.0.1:8000/funds/lookup?ticker=ZZZZZ' | jq
 curl -s 'http://127.0.0.1:8000/funds?fund_family=Vanguard&limit=50&offset=0' | jq
 curl -s 'http://127.0.0.1:8000/funds?category=Large+Growth&limit=50&offset=0' | jq
 curl -s 'http://127.0.0.1:8000/funds/categories' | jq '{coverage_pct,uncategorized,total_funds,items:[.items[:5]]}'
@@ -878,6 +881,8 @@ The upsert key includes `as_of` and `ex_date`, so a September preliminary, a Dec
 ```
 GET /funds?limit=50&offset=0
 GET /funds?q=AMCAP&limit=50&offset=0
+GET /funds?q=ZZZZZ&limit=50&offset=0
+GET /funds/lookup?ticker=AGTHX
 GET /funds?fund_family=Vanguard&limit=50&offset=0
 ```
 
@@ -900,6 +905,7 @@ Response: `{ "items", "limit", "offset", "total" }`. Each item is a stored fund 
   "category": "Large Growth",
   "latest_as_of": "2025-12-15",
   "has_estimate": true,
+  "coverage_status": "estimate_announced",
   "nav_per_share": "45.700000",
   "nav_as_of": "2026-09-08",
   "nav_source": "yahoo_last_close"
@@ -907,6 +913,23 @@ Response: `{ "items", "limit", "offset", "total" }`. Each item is a stored fund 
 ```
 
 `ticker` is null when the stored book is name-keyed and no Class A / Investor A alias exists. `category` is null when no trusted Morningstar-style category is known — **null > wrong**. `nav_per_share` / `nav_as_of` / `nav_source` are the latest weekly NAV print (Yahoo last regular close preferred). They stay **null** when unknown — never invented. Website Search / Sample Estimates / illustrate should read these instead of asking the advisor for NAV. `has_estimate` is true only when an unpaid `preliminary_estimate` / `updated_estimate` still has a **future** `ex_date` or `payable_date` (and no `final` / `paid` row for that fund + calendar year). Past-season prelims do not flip the flag. Ingest deletes (and will not re-seed) a past prelim once a same-fund, same-year final/paid exists — leftover past prelims with no matching final are kept and never invented into a final. `total` is the unique-fund count, not the distribution-row count.
+
+**`coverage_status` (Eric 2026-09-10 — never conflate awaiting vs not in book; never invent estimates):**
+
+| Value | Where | Website UI |
+| --- | --- | --- |
+| `awaiting_estimate` | In-book `GET /funds` item when `has_estimate=false` (no future unpaid prelim) | **Awaiting Estimate** |
+| `estimate_announced` | In-book item when `has_estimate=true` (unpaid manager-published estimate) | Show the stored estimate — do not invent amounts |
+| `not_in_universe` | Ticker lookup **miss only** | **Add to universe** → `POST /request/ticker` |
+
+`GET /funds` items are always in-book, so they never return `not_in_universe`. Locked examples after fixture ingest: **AGTHX** → `awaiting_estimate`; **FBGRX** → `estimate_announced`.
+
+**Ticker miss (not in the book):**
+
+- `GET /funds?q=ZZZZZ` → `{ "items": [], "total": 0 }` — empty list. This is **not** Awaiting Estimate.
+- `GET /funds/lookup?ticker=ZZZZZ` → **404** `{ "coverage_status": "not_in_universe", "ticker": "ZZZZZ", "message": "…", "add_to_universe": "POST /request/ticker" }`
+
+Website **Add to universe** must `POST /request/ticker` (see **Website Submit-ticker** below). Do not invent a fund row or a distribution amount while the ticker is queued.
 
 `GET /funds/categories` returns `{ items: [{ category, fund_count }], uncategorized, total_funds, categorized, coverage_pct }` so Website can populate a Versus Category picker and compute averages / +/- vs category from `GET /funds?category=…` (average the illustrated tax fields of funds that share `category`).
 
@@ -1098,9 +1121,11 @@ Response:
 
 `GET /requests/tickers?status=queued` lists recent requests (`status` filter optional).
 
-**Website Submit-ticker aliases** (same SQLite `ticker_requests` table; no auth for beta):
+**Website Submit-ticker / Add to universe** (same SQLite `ticker_requests` table; no auth for beta):
 
-`POST /request/ticker` body `{ ticker, note?, source? }` — ticker is uppercased.
+When Search / lookup returns **not in book** (`GET /funds?q=` empty list or `GET /funds/lookup` 404 `not_in_universe`), Website shows **Add to universe** and POSTs here — not “Awaiting Estimate”.
+
+`POST /request/ticker` body `{ ticker, note?, source? }` — ticker is uppercased. This is the intake Website should call.
 
 | HTTP | `status` | When |
 | --- | --- | --- |

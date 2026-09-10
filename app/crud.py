@@ -29,6 +29,16 @@ class FundSummary(NamedTuple):
     latest_as_of: date | None
     has_estimate: bool
     category: str | None = None
+    coverage_status: str = "awaiting_estimate"
+
+
+def coverage_status_for_in_book_fund(*, has_estimate: bool) -> str:
+    """In-book funds only: awaiting_estimate | estimate_announced.
+
+    Never returns ``not_in_universe`` (that is a ticker-lookup miss only).
+    Never invents an estimate — ``has_estimate`` is the live unpaid-prelim flag.
+    """
+    return "estimate_announced" if has_estimate else "awaiting_estimate"
 
 
 def _midpoint(record: DistributionIn) -> Decimal | None:
@@ -328,19 +338,21 @@ def _unique_fund_query(
 
 
 def _summary_from_row(row, live_estimate_ids: set[str] | None = None) -> FundSummary:
+    has_estimate = bool(live_estimate_ids and row.fund_identifier in live_estimate_ids)
     return FundSummary(
         fund_identifier=row.fund_identifier,
         fund_name=row.fund_name,
         fund_family=row.fund_family,
         ticker=row.ticker,
         latest_as_of=row.latest_as_of,
-        has_estimate=bool(live_estimate_ids and row.fund_identifier in live_estimate_ids),
+        has_estimate=has_estimate,
         category=resolve_category(
             ticker=row.ticker,
             fund_identifier=row.fund_identifier,
             fund_name=row.fund_name,
             fund_family=row.fund_family,
         ),
+        coverage_status=coverage_status_for_in_book_fund(has_estimate=has_estimate),
     )
 
 

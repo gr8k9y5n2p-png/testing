@@ -149,12 +149,14 @@ def test_funds_unique_total_and_pagination_math(client: TestClient) -> None:
     assert by_id["VFIAX"]["category"] == "Large Blend"
     assert by_id["VFIAX"]["latest_as_of"] == "2025-12-01"
     assert by_id["VFIAX"]["has_estimate"] is True
+    assert by_id["VFIAX"]["coverage_status"] == "estimate_announced"
     assert by_id["VFIAX"]["nav_per_share"] is None
     assert by_id["VFIAX"]["nav_as_of"] is None
     assert by_id["VFIAX"]["nav_source"] is None
     assert by_id["VBIAX"]["category"] == "Moderate Allocation"
     assert by_id["DODIX"]["latest_as_of"] == "2025-12-15"
     assert by_id["DODIX"]["has_estimate"] is False
+    assert by_id["DODIX"]["coverage_status"] == "awaiting_estimate"
     assert by_id["DODIX"]["category"] == "Intermediate Core Bond"
 
     page1 = client.get("/funds", params={"limit": 2, "offset": 0})
@@ -195,6 +197,7 @@ def test_funds_q_and_family_filters(client: TestClient) -> None:
     missing = client.get("/funds", params={"q": "ZZNOTAREALFUND"})
     assert missing.json()["total"] == 0
     assert missing.json()["items"] == []
+    assert "coverage_status" not in missing.json()
 
 
 def test_funds_category_filter_and_catalog(client: TestClient) -> None:
