@@ -82,6 +82,21 @@ def test_copy_preserves_null_versus_zero_and_checksum(tmp_path) -> None:
         dest.dispose()
 
 
+def test_copy_requires_dest_tables(tmp_path) -> None:
+    src = make_engine(f"sqlite:///{tmp_path / 'src-empty-dest.db'}")
+    dest = make_engine(f"sqlite:///{tmp_path / 'dest-no-schema.db'}")
+    try:
+        _seed_source(src)
+        try:
+            copy_all(src, dest)
+            raise AssertionError("expected CopyVerifyError")
+        except CopyVerifyError as exc:
+            assert "alembic upgrade head" in str(exc)
+    finally:
+        src.dispose()
+        dest.dispose()
+
+
 def test_copy_refuses_nonempty_dest(tmp_path) -> None:
     src = make_engine(f"sqlite:///{tmp_path / 'src2.db'}")
     dest = make_engine(f"sqlite:///{tmp_path / 'dest2.db'}")

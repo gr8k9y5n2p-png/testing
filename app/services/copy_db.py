@@ -43,6 +43,11 @@ def _column_keys(model: type) -> list[str]:
     return [prop.key for prop in inspect(model).column_attrs]
 
 
+def missing_copy_tables(engine: Engine) -> list[str]:
+    names = set(inspect(engine).get_table_names())
+    return [model.__tablename__ for model in COPY_MODELS if model.__tablename__ not in names]
+
+
 def row_mapping(obj: Any) -> dict[str, Any]:
     return {key: getattr(obj, key) for key in _column_keys(type(obj))}
 
@@ -110,6 +115,11 @@ def copy_all(
     truncate_dest: bool = False,
 ) -> dict[str, int]:
     """Batch-copy every mapped table. Dest must be empty unless truncate_dest."""
+    missing = missing_copy_tables(dest)
+    if missing:
+        raise CopyVerifyError(
+            f"destination missing tables {missing}. Run `alembic upgrade head` on dest first."
+        )
     src_factory = sessionmaker(bind=source, autoflush=False, expire_on_commit=False)
     dst_factory = sessionmaker(bind=dest, autoflush=False, expire_on_commit=False)
     copied: dict[str, int] = {}
