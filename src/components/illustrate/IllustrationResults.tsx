@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import type { FundEstimate } from "@/data/types";
 import { isUpcomingFund, publicationStageLabel } from "@/data/distribution-bucket";
-import { hideUpcomingAmounts, paidEventsForFund } from "@/data/hydrate-funds";
+import { hideUpcomingAmounts } from "@/data/hydrate-funds";
 import type { IllustrationComponent, IllustrateResponse } from "@/lib/illustrate/types";
 import {
   illustrationComponentBucket,
@@ -12,7 +12,6 @@ import {
 import { DistributionDateStrip } from "@/components/DistributionDateStrip";
 import { Disclaimer } from "@/components/Disclaimer";
 import {
-  PAID_HISTORY_EMPTY,
   UPCOMING_UNAVAILABLE_DETAIL,
   UPCOMING_UNAVAILABLE_HEADLINE,
 } from "@/lib/copy";
@@ -59,8 +58,6 @@ export function IllustrationResults({
   const upcomingTotals = upcomingIllustrationTotals(upcomingComponents);
   const catalogUpcoming =
     fund != null && isUpcomingFund(fund) && !hideUpcomingAmounts(fund);
-  // Paid history is GET /distributions only — never illustration component $.
-  const paidEvents = fund ? paidEventsForFund(fund) : [];
 
   return (
     <div className="space-y-4">
@@ -126,47 +123,6 @@ export function IllustrationResults({
           )
         }
       />
-      <section className="rounded-xl border border-line bg-paper px-3 py-2">
-        <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
-          <h3 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-ink">
-            Paid history
-          </h3>
-          <p className="text-[10px] text-muted">past · not upcoming</p>
-        </div>
-        {paidEvents.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-line px-4 py-6 text-sm text-muted">
-            {PAID_HISTORY_EMPTY}
-          </p>
-        ) : (
-          <ul className="divide-y divide-line overflow-hidden rounded-md border border-line bg-surface">
-            {paidEvents.map((event) => (
-              <li
-                key={`${event.asOfDate}-${event.exDate ?? ""}-${event.distributionYear}`}
-                className="flex flex-wrap items-start justify-between gap-3 px-3 py-2.5"
-              >
-                <div>
-                  <p className="text-sm text-ink">
-                    {event.distributionYear} ·{" "}
-                    {publicationStageLabel(event.publicationStage) || "Paid"}
-                  </p>
-                  <DistributionDateStrip
-                    fund={{ ...event, bucket: "paid" }}
-                    compact
-                    showPayable
-                    className="mt-1"
-                  />
-                </div>
-                <p className="text-right font-mono text-sm text-ink">
-                  {formatUsd(event.estimatedDistributionAmount, 4)} / sh
-                  <span className="mt-0.5 block text-[11px] text-faint">
-                    {formatSoftPct(pctOfNavForFund(event))} of NAV
-                  </span>
-                </p>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
 
       {warnings.length > 0 ? (
         <ul className="space-y-1 text-xs text-muted">

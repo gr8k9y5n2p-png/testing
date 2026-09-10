@@ -28,6 +28,7 @@ import {
   type IllustrateResponse,
   type TaxRates,
 } from "@/lib/illustrate/types";
+import { IllustrationPaidHistory } from "@/components/illustrate/IllustrationPaidHistory";
 import { IllustrationResults } from "@/components/illustrate/IllustrationResults";
 import { TaxRateFields } from "@/components/illustrate/TaxRateFields";
 
@@ -300,87 +301,90 @@ function IllustrationWorkspace({ fund }: { fund: FundEstimateView }) {
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-12">
-      <div className="space-y-4 lg:col-span-5">
-        <label className="block">
-          <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.12em] text-faint">
-            Holding
-          </span>
-          <div className="relative">
-            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-faint">
-              $
-            </span>
-            <input
-              inputMode="decimal"
-              value={holdingInput}
-              onChange={(event) => setHoldingInput(event.target.value)}
-              onBlur={(event) => commitHolding(event.target.value)}
-              className="h-12 w-full rounded-md border border-line bg-paper pl-7 pr-3 font-mono text-base text-ink"
-            />
-          </div>
-        </label>
-        <div className="flex flex-wrap gap-2">
-          <UnitToggle
-            active={unit === AMOUNT_UNITS.percent_of_nav}
-            onClick={() => setUnit(AMOUNT_UNITS.percent_of_nav)}
-            label="% of NAV"
-          />
-          <UnitToggle
-            active={unit === AMOUNT_UNITS.per_share}
-            onClick={() => setUnit(AMOUNT_UNITS.per_share)}
-            label="$ / share"
-          />
-        </div>
-        {needsNav ? (
+    <div className="space-y-6">
+      <div className="grid gap-6 lg:grid-cols-12">
+        <div className="space-y-4 lg:col-span-5">
           <label className="block">
             <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.12em] text-faint">
-              NAV per share
+              Holding
             </span>
-            <input
-              type="number"
-              min={0.01}
-              step={0.01}
-              value={navInput}
-              onChange={(event) => setNavInput(event.target.value)}
-              className="h-10 w-full rounded-md border border-line bg-paper px-3 font-mono text-sm"
-            />
-            <span className="mt-1 block text-[11px] text-faint">
-              Required for per_share amounts. Share count = holding ÷ NAV.
-            </span>
+            <div className="relative">
+              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-faint">
+                $
+              </span>
+              <input
+                inputMode="decimal"
+                value={holdingInput}
+                onChange={(event) => setHoldingInput(event.target.value)}
+                onBlur={(event) => commitHolding(event.target.value)}
+                className="h-12 w-full rounded-md border border-line bg-paper pl-7 pr-3 font-mono text-base text-ink"
+              />
+            </div>
           </label>
-        ) : (
-          <p className="text-xs text-faint">
-            {metadataNav != null
-              ? `% of NAV uses weekly NAV (${formatWeeklyNavLabel(fund)}) so Dist $ = est $/share × (holding ÷ NAV).`
-              : "% of NAV sends holding dollars. Missing weekly NAV stays undisclosed — never invented. Switch to $ / share to enter a price."}
-          </p>
-        )}
-        <TaxRateFields
-          rates={rates}
-          combine={combine}
-          onRatesChange={setRates}
-          onCombineChange={setCombine}
-        />
-      </div>
-      <div className="lg:col-span-7">
-        {navError ? (
-          <p className="rounded-md border border-below/20 bg-below-soft px-4 py-3 text-sm text-below">
-            {navError}
-          </p>
-        ) : loading && !result ? (
-          <div className="h-64 animate-pulse rounded-md bg-paper" />
-        ) : error ? (
-          <p className="rounded-md border border-below/20 bg-below-soft px-4 py-3 text-sm text-below">
-            {error}
-          </p>
-        ) : result ? (
-          <IllustrationResults
-            result={result}
-            fund={fund}
-            holdingDollars={holding}
+          <div className="flex flex-wrap gap-2">
+            <UnitToggle
+              active={unit === AMOUNT_UNITS.percent_of_nav}
+              onClick={() => setUnit(AMOUNT_UNITS.percent_of_nav)}
+              label="% of NAV"
+            />
+            <UnitToggle
+              active={unit === AMOUNT_UNITS.per_share}
+              onClick={() => setUnit(AMOUNT_UNITS.per_share)}
+              label="$ / share"
+            />
+          </div>
+          {needsNav ? (
+            <label className="block">
+              <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.12em] text-faint">
+                NAV per share
+              </span>
+              <input
+                type="number"
+                min={0.01}
+                step={0.01}
+                value={navInput}
+                onChange={(event) => setNavInput(event.target.value)}
+                className="h-10 w-full rounded-md border border-line bg-paper px-3 font-mono text-sm"
+              />
+              <span className="mt-1 block text-[11px] text-faint">
+                Required for per_share amounts. Share count = holding ÷ NAV.
+              </span>
+            </label>
+          ) : (
+            <p className="text-xs text-faint">
+              {metadataNav != null
+                ? `% of NAV uses weekly NAV (${formatWeeklyNavLabel(fund)}) so Dist $ = est $/share × (holding ÷ NAV).`
+                : "% of NAV sends holding dollars. Missing weekly NAV stays undisclosed — never invented. Switch to $ / share to enter a price."}
+            </p>
+          )}
+          <TaxRateFields
+            rates={rates}
+            combine={combine}
+            onRatesChange={setRates}
+            onCombineChange={setCombine}
           />
-        ) : null}
+        </div>
+        <div className="lg:col-span-7">
+          {navError ? (
+            <p className="rounded-md border border-below/20 bg-below-soft px-4 py-3 text-sm text-below">
+              {navError}
+            </p>
+          ) : loading && !result ? (
+            <div className="h-64 animate-pulse rounded-md bg-paper" />
+          ) : error ? (
+            <p className="rounded-md border border-below/20 bg-below-soft px-4 py-3 text-sm text-below">
+              {error}
+            </p>
+          ) : result ? (
+            <IllustrationResults
+              result={result}
+              fund={fund}
+              holdingDollars={holding}
+            />
+          ) : null}
+        </div>
       </div>
+      <IllustrationPaidHistory fund={fund} />
     </div>
   );
 }

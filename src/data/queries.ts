@@ -1,8 +1,14 @@
 import { pctOfNavForFund } from "../lib/illustrate/nav-math.ts";
-import { chicagoTodayIso, isoDate, splitFundsByBucket } from "./distribution-bucket.ts";
+import {
+  chicagoTodayIso,
+  isoDate,
+  normalizePublicationStage,
+  splitFundsByBucket,
+} from "./distribution-bucket.ts";
 import {
   mergeFundLists,
   mergeFundWithDistributions,
+  paidEventsForFund,
   preferFinalPaidEvents,
 } from "./hydrate-funds.ts";
 import { collectTaxYearsFromFunds } from "./tax-years.ts";
@@ -185,6 +191,27 @@ export function paidHistoryYearOf(
 /** Chicago calendar year for Search Paid History default / year-end wipe. */
 export function currentPaidHistoryYear(now = new Date()): number {
   return Number(chicagoTodayIso(now).slice(0, 4));
+}
+
+/** Dollar Illustration Paid History is the prior Chicago calendar year only. */
+export function priorPaidHistoryYear(now = new Date()): number {
+  return currentPaidHistoryYear(now) - 1;
+}
+
+/**
+ * Finals / paid from `/distributions` for the prior calendar year.
+ * Current-year midyear paids stay out of Dollar Illustration Paid History.
+ */
+export function illustrationPriorYearPaidEvents(
+  fund: Parameters<typeof paidEventsForFund>[0],
+  now = new Date(),
+): ReturnType<typeof paidEventsForFund> {
+  const year = priorPaidHistoryYear(now);
+  return paidEventsForFund(fund).filter((event) => {
+    const stage = normalizePublicationStage(event.publicationStage);
+    if (stage !== "final" && stage !== "paid") return false;
+    return paidHistoryYearOf(event) === year;
+  });
 }
 
 /**

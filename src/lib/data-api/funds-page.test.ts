@@ -75,13 +75,22 @@ describe("Search / Sample Estimates fund page", () => {
     );
     assert.match(results, /upcomingIllustrationTotals/);
     assert.match(results, /splitIllustrationComponents/);
-    assert.match(results, /paidEventsForFund/);
-    assert.match(results, /Paid history/);
     assert.match(results, /catalogUpcoming/);
     assert.match(results, /pctOfNavForFund|historicalPctOfNav/);
     assert.doesNotMatch(results, /result\.totals/);
+    assert.doesNotMatch(results, /paidEventsForFund/);
     assert.doesNotMatch(results, /paidComponents/);
     assert.doesNotMatch(results, /components=\{paid/);
+    const paid = readFileSync(
+      join(here, "../../components/illustrate/IllustrationPaidHistory.tsx"),
+      "utf8",
+    );
+    const panel = readFileSync(
+      join(here, "../../components/illustrate/IllustratePanel.tsx"),
+      "utf8",
+    );
+    assert.match(panel, /IllustrationPaidHistory/);
+    assert.match(paid, /illustrationPaidTypeRows/);
     assert.match(bucket, /every fund \(not ticker-specific\)/);
     assert.match(bucket, /`final` and `paid` are Paid history/);
     assert.doesNotMatch(bucket, /ABALX|AMCPX|ticker ===/);

@@ -17,6 +17,12 @@ export type PaidDistributionEvent = {
   navOnDistributionDay?: number | null;
   navOnDistributionDayAsOf?: string | null;
   navOnDistributionDaySource?: string | null;
+  /** Published estimate_type lines for this paid snapshot. $0 still listed. */
+  estimateTypeLines?: Array<{
+    estimateType: string;
+    amount: number;
+    amountUnit: string;
+  }>;
 };
 
 export const UPCOMING_STAGES = new Set(["preliminary_estimate", "updated_estimate"]);
@@ -240,6 +246,7 @@ export function toPaidEvent(
     navOnDistributionDay?: number | null;
     navOnDistributionDayAsOf?: string | null;
     navOnDistributionDaySource?: string | null;
+    estimateTypeLines?: PaidDistributionEvent["estimateTypeLines"];
   },
 ): PaidDistributionEvent {
   return {
@@ -257,6 +264,7 @@ export function toPaidEvent(
     navOnDistributionDay: row.navOnDistributionDay ?? null,
     navOnDistributionDayAsOf: row.navOnDistributionDayAsOf ?? null,
     navOnDistributionDaySource: row.navOnDistributionDaySource ?? null,
+    estimateTypeLines: row.estimateTypeLines,
   };
 }
 

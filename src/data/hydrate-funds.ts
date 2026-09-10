@@ -99,6 +99,7 @@ export function paidEventsForFund(
     | "navOnDistributionDaySource"
     | "distributionYear"
     | "paidHistory"
+    | "estimateTypeLines"
   >,
 ): PaidDistributionEvent[] {
   const extras = fund.paidHistory ?? [];
@@ -117,6 +118,7 @@ export function paidEventsForFund(
     navOnDistributionDay: fund.navOnDistributionDay,
     navOnDistributionDayAsOf: fund.navOnDistributionDayAsOf,
     navOnDistributionDaySource: fund.navOnDistributionDaySource,
+    estimateTypeLines: fund.estimateTypeLines,
     distributionYear: fund.distributionYear,
   });
   if (!hasPaidEventSignal(own)) return preferFinalPaidEvents(extras);

@@ -243,6 +243,7 @@ describe("universe Upcoming / Fund Manager Estimated Distributions", () => {
       "../components/DeltaBadge.tsx",
       "../components/HighlightCard.tsx",
       "../components/illustrate/IllustrationResults.tsx",
+      "../components/illustrate/IllustrationPaidHistory.tsx",
       "../components/illustrate/FundPicker.tsx",
       "../lib/illustrate/illustration-upcoming.ts",
       "../lib/illustrate/publication-stage.ts",
@@ -262,6 +263,14 @@ describe("universe Upcoming / Fund Manager Estimated Distributions", () => {
       join(here, "../components/illustrate/IllustrationResults.tsx"),
       "utf8",
     );
+    const paid = readFileSync(
+      join(here, "../components/illustrate/IllustrationPaidHistory.tsx"),
+      "utf8",
+    );
+    const panel = readFileSync(
+      join(here, "../components/illustrate/IllustratePanel.tsx"),
+      "utf8",
+    );
     const bucket = readFileSync(join(here, "distribution-bucket.ts"), "utf8");
     const catalog = readFileSync(join(here, "funds-list.ts"), "utf8");
     assert.match(table, /splitFundsByBucket/);
@@ -274,9 +283,11 @@ describe("universe Upcoming / Fund Manager Estimated Distributions", () => {
     assert.match(highlights, /highlightsCalendarYear/);
     assert.match(highlights, /withPeerContext\(scoped\)/);
     assert.match(badges, /hideUpcomingAmounts/);
-    assert.match(results, /paidEventsForFund/);
-    assert.match(results, /Paid history/);
+    assert.doesNotMatch(results, /paidEventsForFund/);
     assert.doesNotMatch(results, /paidComponents/);
+    assert.match(panel, /IllustrationPaidHistory/);
+    assert.match(paid, /illustrationPaidTypeRows/);
+    assert.match(paid, /SEARCH_PAID_HISTORY_HEADING/);
     assert.match(bucket, /hasDisclosedUpcomingAmount/);
     assert.match(bucket, /isStaleAnnouncedOnly/);
     assert.match(catalog, /never invent an/);

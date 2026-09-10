@@ -166,20 +166,32 @@ describe("Dollar Illustration Upcoming gate", () => {
     assert.doesNotMatch(source, /result\.totals/);
   });
 
-  it("IllustrationResults mounts Paid history from /distributions, not illustrate components", () => {
-    const source = readFileSync(
+  it("Dollar Illustration Paid History is full-bleed prior-year /distributions, not illustrate components", () => {
+    const results = readFileSync(
       join(here, "../../components/illustrate/IllustrationResults.tsx"),
       "utf8",
     );
-    assert.match(source, /paidEventsForFund/);
-    assert.match(source, /PAID_HISTORY_EMPTY/);
-    assert.match(source, /Paid history/);
-    assert.doesNotMatch(source, /paidComponents/);
-    assert.doesNotMatch(source, /components=\{paid/);
-    assert.doesNotMatch(
-      source,
-      /paidComponents\.length === 0/,
+    const panel = readFileSync(
+      join(here, "../../components/illustrate/IllustratePanel.tsx"),
+      "utf8",
     );
+    const paid = readFileSync(
+      join(here, "../../components/illustrate/IllustrationPaidHistory.tsx"),
+      "utf8",
+    );
+    assert.match(panel, /IllustrationPaidHistory/);
+    assert.match(panel, /space-y-6/);
+    assert.match(panel, /<\/div>\s*<IllustrationPaidHistory/);
+    assert.doesNotMatch(results, /paidEventsForFund/);
+    assert.doesNotMatch(results, /IllustrationPaidHistory/);
+    assert.doesNotMatch(results, /paidComponents/);
+    assert.doesNotMatch(results, /components=\{paid/);
+    assert.match(paid, /illustrationPaidTypeRows/);
+    assert.match(paid, /\$ \/ Share/);
+    assert.match(paid, /% of NAV/);
+    assert.match(paid, /Announced/);
+    assert.match(paid, /Ex-Date/);
+    assert.doesNotMatch(paid, /Payable/);
   });
 
   it("still-future unpaid prelims with omitted illustrate stage stay Upcoming", () => {

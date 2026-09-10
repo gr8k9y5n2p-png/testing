@@ -307,6 +307,7 @@ export function aggregateDistributions(
           navOnDistributionDay: snapshot.navOnDistributionDay,
           navOnDistributionDayAsOf: snapshot.navOnDistributionDayAsOf,
           navOnDistributionDaySource: snapshot.navOnDistributionDaySource,
+          estimateTypeLines: estimateTypeLinesFromRows(snapshot.rows),
           distributionYear:
             Number((snapshot.asOf ?? snapshot.exDate ?? "").slice(0, 4)) ||
             new Date().getUTCFullYear(),

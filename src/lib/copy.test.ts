@@ -19,6 +19,8 @@ describe("Sample Estimates empty copy", () => {
     );
     assert.match(source, /SEARCH_PAID_HISTORY_HEADING = "Paid History"/);
     assert.match(source, /selected calendar year/);
+    assert.match(source, /ILLUSTRATION_PAID_HISTORY_DETAIL/);
+    assert.match(source, /prior calendar year only/);
     assert.match(source, /LISTS_HEADING = "Lists"/);
     assert.match(source, /LISTS_DIST_COLUMN = "Estimated \$ Distribution\/share"/);
     assert.match(source, /never invented from paid history/);
