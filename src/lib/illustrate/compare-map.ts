@@ -1,4 +1,5 @@
 import { formatUsd } from "@/lib/format";
+import { userFacingNotes } from "@/lib/illustrate/user-facing-notes";
 import {
   scaleNormalizedHoldingDollars,
   scaleUpcomingToHolding,
@@ -304,7 +305,7 @@ export function toTaxDeltaCardModel(
     metrics,
     upcoming: upcomingSides,
     inceptionLabel: window,
-    notes: response.notes,
+    notes: userFacingNotes(response.notes),
   };
 }
 

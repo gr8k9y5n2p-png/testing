@@ -73,8 +73,10 @@ describe("friends-beta Portfolio / Compare chrome", () => {
     assert.match(results, /userFacingNotes/);
     assert.match(card, /userFacingNotes/);
     assert.match(notes, /sample seed math/);
-    assert.match(notes, /NODE_ENV === "production"/);
+    assert.match(notes, /allowDemoEngine/);
     assert.match(notes, /MOCK\\s\*\\\/illustrate/);
+    const runtime = read("../data-api/runtime-env.ts");
+    assert.match(runtime, /NODE_ENV === "production"/);
     assert.doesNotMatch(results, /Set NEXT_PUBLIC_ILLUSTRATE_URL to swap/);
     assert.ok(
       new RegExp(String.raw`MOCK\s*/illustrate|sample seed math`).test(footer),
@@ -84,15 +86,22 @@ describe("friends-beta Portfolio / Compare chrome", () => {
   it("proxies /api/illustrate to the live Data API when Vercel env is set", () => {
     const illustrate = read("../../app/api/illustrate/route.ts");
     const portfolio = read("../../app/api/illustrate/portfolio/route.ts");
+    const compare = read("../../app/api/illustrate/compare/route.ts");
+    const portfolioCompare = read("../../app/api/illustrate/portfolio/compare/route.ts");
+    const helper = read("illustrate-route.ts");
     const panel = read("../../components/illustrate/IllustratePanel.tsx");
-    assert.match(illustrate, /getLiveIllustrateUrl\("\/illustrate"\)/);
-    assert.match(illustrate, /proxyLiveDataApiPost/);
+    assert.match(illustrate, /proxyLiveOrDemo/);
     assert.match(illustrate, /Illustrate is unavailable from the Data API/);
+    assert.match(helper, /allowDemoEngine/);
+    assert.match(helper, /getLiveIllustrateUrl/);
+    assert.match(helper, /stripMockChromeFromPayload/);
     assert.ok(
-      illustrate.indexOf("getLiveIllustrateUrl") < illustrate.indexOf("mockIllustrate"),
+      helper.indexOf("getLiveIllustrateUrl") < helper.indexOf("options.mock"),
       "live proxy must run before the localhost mock engine",
     );
-    assert.match(portfolio, /getLiveIllustrateUrl\("\/illustrate\/portfolio"\)/);
+    assert.match(portfolio, /proxyLiveOrDemo/);
+    assert.match(compare, /proxyLiveOrDemo/);
+    assert.match(portfolioCompare, /proxyLiveOrDemo/);
     assert.match(panel, /emptyIllustrateResponse/);
   });
 });

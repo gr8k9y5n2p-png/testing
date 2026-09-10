@@ -1,4 +1,9 @@
-import { dataApiUrl } from "@/lib/data-api/config";
+import {
+  allowDemoEngine,
+  dataApiUrl,
+  readRuntimeEnv,
+  sameOriginApiUrl,
+} from "@/lib/data-api/config";
 import { mockCompareResponse } from "@/lib/illustrate/compare-fixture";
 import { toDataApiCompareBody } from "@/lib/illustrate/compare-request";
 import type {
@@ -11,14 +16,14 @@ import { gateCompareUpcoming } from "@/lib/illustrate/upcoming-compare";
 import { userFacingNotes } from "@/lib/illustrate/user-facing-notes";
 
 export function getCompareEndpoint(): string {
-  if (process.env.NEXT_PUBLIC_COMPARE_URL?.trim()) {
-    return process.env.NEXT_PUBLIC_COMPARE_URL.replace(/\/$/, "");
-  }
+  if (typeof window !== "undefined") return sameOriginApiUrl("/illustrate/compare");
+  const override = readRuntimeEnv("NEXT_PUBLIC_COMPARE_URL");
+  if (override) return override.replace(/\/$/, "");
   return dataApiUrl("/illustrate/compare");
 }
 
-export function isMockCompareEndpoint(endpoint = getCompareEndpoint()): boolean {
-  return endpoint.startsWith("/");
+export function isMockCompareEndpoint(_endpoint = getCompareEndpoint()): boolean {
+  return allowDemoEngine();
 }
 
 function num(value: unknown, fallback = 0): number {
@@ -97,7 +102,7 @@ function normalizeIllustration(raw: unknown, fallbackLabel: string) {
       state_tax: numOrNull(totals.state_tax ?? row.state_tax),
       effective_tax_on_holding: rate,
     },
-    notes: Array.isArray(row.notes) ? row.notes.map(String) : [],
+    notes: userFacingNotes(row.notes),
     ...(row.year != null ? { year: row.year } : {}),
     ...(row.as_of != null
       ? { as_of: String(row.as_of) }
@@ -248,7 +253,10 @@ export async function postIllustrateCompare(
     }
   } catch (error) {
     if (!remote) {
-      return mockCompareResponse(payload);
+      return normalizeCompareResponse(
+        mockCompareResponse(payload) as unknown as Record<string, unknown>,
+        "mock",
+      );
     }
     throw error;
   }
