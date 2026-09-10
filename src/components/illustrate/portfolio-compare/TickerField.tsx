@@ -252,6 +252,9 @@ export function TickerField({
                       {fund.ticker}
                     </span>
                     <span className="block text-[11px] text-muted">{fund.fundName}</span>
+                    {fund.family ? (
+                      <span className="block text-[11px] text-faint">{fund.family}</span>
+                    ) : null}
                   </span>
                 </button>
               </li>

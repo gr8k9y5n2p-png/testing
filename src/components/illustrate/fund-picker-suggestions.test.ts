@@ -51,3 +51,28 @@ describe("fund typeahead empty-query wiring", () => {
     assert.match(growth, /list="growth-tax-funds"/);
   });
 });
+
+describe("fund typeahead suggestion identity", () => {
+  it("FundPicker suggestion rows keep ticker, name, and family only", () => {
+    const picker = read("FundPicker.tsx");
+    assert.ok(picker.includes("{fund.fundName}"));
+    assert.ok(picker.includes("{fund.ticker} · {fund.family}"));
+    assert.doesNotMatch(picker, /DistributionDateStrip/);
+    assert.doesNotMatch(picker, /useCoverage/);
+    assert.doesNotMatch(picker, /fund\.bucket === "paid" \? "Paid" : "Upcoming"/);
+    assert.doesNotMatch(picker, />\s*Paid\s*</);
+    assert.doesNotMatch(picker, />\s*Upcoming\s*</);
+    assert.doesNotMatch(picker, />\s*Live\s*</);
+    assert.doesNotMatch(picker, />\s*Gap\s*</);
+  });
+
+  it("TickerField suggestion rows stay identity-only", () => {
+    const field = read("portfolio-compare/TickerField.tsx");
+    assert.ok(field.includes("{fund.ticker}"));
+    assert.ok(field.includes("{fund.fundName}"));
+    assert.ok(field.includes("{fund.family}"));
+    assert.doesNotMatch(field, /DistributionDateStrip/);
+    assert.doesNotMatch(field, /useCoverage/);
+    assert.doesNotMatch(field, /"Paid"|"Upcoming"|"Live"|"Gap"/);
+  });
+});
