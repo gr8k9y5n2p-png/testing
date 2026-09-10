@@ -4,8 +4,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { FundEstimateView } from "@/data/types";
 import { tickerSlotBorderClass } from "@/components/illustrate/ticker-slot-border";
 import {
+  ADD_TO_UNIVERSE,
+  DATA_API_UNAVAILABLE,
   LISTS_ADD,
   LISTS_ANNOUNCED_COLUMN,
+  LISTS_AWAITING_ESTIMATE,
   LISTS_DETAIL,
   LISTS_DIST_COLUMN,
   LISTS_EMPTY,
@@ -18,6 +21,10 @@ import {
   LISTS_RECORD_COLUMN,
   SEARCH_UPCOMING_KICKER,
 } from "@/lib/copy";
+import {
+  noticeForTickerRequest,
+  requestTicker,
+} from "@/lib/data-api/request-ticker";
 import { formatOptionalDate, formatUsd } from "@/lib/format";
 import { formatSoftNav, formatSoftPct, SOFT_DASH } from "@/lib/illustrate/nav-math";
 import { UPCOMING_AMOUNT_UNAVAILABLE } from "@/lib/illustrate/portfolio-compare-copy";
@@ -80,12 +87,16 @@ function DistCell({ row }: { row: ListRow }) {
   if (row.status === "loading") {
     return <span className="font-mono text-[11px] text-faint">…</span>;
   }
-  if (row.status === "not_found") {
+  if (row.status === "not_found" || row.status === "unavailable") {
     return (
       <span className="font-mono text-[11px] leading-snug text-muted">{SOFT_DASH}</span>
     );
   }
-  if (row.status === "undisclosed" || row.distPerShare == null) {
+  if (
+    row.status === "undisclosed" ||
+    row.status === "awaiting_estimate" ||
+    row.distPerShare == null
+  ) {
     return (
       <span className="font-mono text-[11px] leading-snug text-muted">
         {UPCOMING_AMOUNT_UNAVAILABLE}
@@ -122,6 +133,7 @@ export function ListsWorkspace({
   initialRows?: ListRow[];
 }) {
   const [draft, setDraft] = useState("");
+  const [notice, setNotice] = useState<string | null>(null);
   const [tickers, setTickers] = useState<string[]>(initialTickers);
   const [rowsByTicker, setRowsByTicker] = useState<Record<string, ListRow>>(() => {
     const map: Record<string, ListRow> = {};
@@ -225,6 +237,11 @@ export function ListsWorkspace({
         {LISTS_HEADING}
       </h1>
       <p className="mt-2 max-w-2xl text-sm text-muted">{LISTS_DETAIL}</p>
+      {notice ? (
+        <p className="mt-3 text-sm text-muted" role="status">
+          {notice}
+        </p>
+      ) : null}
 
       <form
         className="mt-6 flex flex-col gap-2 sm:flex-row sm:items-center"
@@ -287,7 +304,8 @@ export function ListsWorkspace({
                 const pct =
                   row.status === "upcoming"
                     ? formatSoftPct(row.pctOfNav)
-                    : row.status === "undisclosed"
+                    : row.status === "undisclosed" ||
+                        row.status === "awaiting_estimate"
                       ? UPCOMING_AMOUNT_UNAVAILABLE
                       : SOFT_DASH;
                 return (
@@ -296,6 +314,7 @@ export function ListsWorkspace({
                       <TickerStackItem
                         row={row}
                         onRemove={() => onRemove(row.ticker)}
+                        onNotice={setNotice}
                       />
                     </td>
                     <td className="whitespace-nowrap px-3 py-3 text-right">
@@ -361,9 +380,11 @@ export function ListsWorkspace({
 function TickerStackItem({
   row,
   onRemove,
+  onNotice,
 }: {
   row: ListRow;
   onRemove: () => void;
+  onNotice?: (message: string) => void;
 }) {
   return (
     <div
@@ -378,14 +399,35 @@ function TickerStackItem({
             {row.fundName}
           </p>
         ) : null}
-        {row.status === "not_found" ? (
+        {row.status === "unavailable" ? (
           <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">
-            {LISTS_NOT_FOUND}
+            {DATA_API_UNAVAILABLE}
           </p>
         ) : null}
-        {row.status === "undisclosed" ? (
+        {row.status === "not_found" ? (
+          <div className="mt-0.5">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">
+              {LISTS_NOT_FOUND}
+            </p>
+            <button
+              type="button"
+              className="mt-1 text-left text-[11px] font-medium text-accent hover:underline"
+              onClick={() => {
+                void requestTicker({ ticker: row.ticker, source: "web" }).then(
+                  (result) => {
+                    const message = noticeForTickerRequest(result, "web");
+                    if (message) onNotice?.(message);
+                  },
+                );
+              }}
+            >
+              {ADD_TO_UNIVERSE}
+            </button>
+          </div>
+        ) : null}
+        {row.status === "undisclosed" || row.status === "awaiting_estimate" ? (
           <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">
-            {UPCOMING_AMOUNT_UNAVAILABLE}
+            {LISTS_AWAITING_ESTIMATE}
           </p>
         ) : null}
       </div>

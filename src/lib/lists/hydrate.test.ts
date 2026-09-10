@@ -26,6 +26,9 @@ describe("Lists client hydrate", () => {
     );
     const upcoming = { ...emptyListRow("FBGRX", "upcoming"), found: true };
     assert.equal(needsListHydrate(upcoming, 0), false);
+    const awaiting = { ...emptyListRow("AGTHX", "awaiting_estimate"), found: true };
+    assert.equal(needsListHydrate(awaiting, 0), false);
+    assert.equal(needsListHydrate(emptyListRow("AGTHX", "unavailable"), 0), true);
     assert.equal(listHydrateBackoffMs(0), 0);
     assert.ok(listHydrateBackoffMs(1) > 0);
   });
@@ -56,7 +59,8 @@ describe("Lists client hydrate", () => {
         Math.abs(rows[0].distPerShare - 21.021) < 1e-6,
     );
     const failed = listRowsAfterFailedHydrate(["FBGRX"]);
-    assert.equal(failed[0]?.status, "not_found");
+    assert.equal(failed[0]?.status, "unavailable");
+    assert.notEqual(failed[0]?.status, "not_found");
   });
 
   it("keeps ListsWorkspace on no-store retry instead of first-paint NOT FOUND", () => {
@@ -71,5 +75,8 @@ describe("Lists client hydrate", () => {
     assert.match(route, /status:\s*503/);
     assert.match(route, /Cache-Control": "no-store"/);
     assert.match(route, /upstream/);
+    assert.match(workspace, /LISTS_AWAITING_ESTIMATE/);
+    assert.match(workspace, /ADD_TO_UNIVERSE/);
+    assert.match(workspace, /DATA_API_UNAVAILABLE/);
   });
 });

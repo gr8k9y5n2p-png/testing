@@ -11,7 +11,11 @@ export function needsListHydrate(
 ): boolean {
   if (attempt >= maxAttempts) return false;
   if (!row) return true;
-  return row.status === "loading" || row.status === "not_found";
+  return (
+    row.status === "loading" ||
+    row.status === "not_found" ||
+    row.status === "unavailable"
+  );
 }
 
 export function listHydrateBackoffMs(
@@ -35,5 +39,5 @@ export function listRowsFromApiResponse(
 }
 
 export function listRowsAfterFailedHydrate(tickers: readonly string[]): ListRow[] {
-  return tickers.map((ticker) => emptyListRow(ticker, "not_found"));
+  return tickers.map((ticker) => emptyListRow(ticker, "unavailable"));
 }

@@ -46,7 +46,13 @@ const TYPE_ALIASES: Record<string, ListEstimateType> = {
   qdi: "qualified_dividend",
 };
 
-export type ListRowStatus = "loading" | "upcoming" | "undisclosed" | "not_found";
+export type ListRowStatus =
+  | "loading"
+  | "upcoming"
+  | "awaiting_estimate"
+  | "undisclosed"
+  | "not_found"
+  | "unavailable";
 
 export type ListRow = {
   ticker: string;
@@ -364,7 +370,8 @@ export function listRowFromFund(input: {
     return emptyListRow(ticker, "not_found");
   }
   if (!fund && !snapshot.length) {
-    return emptyListRow(ticker, found ? "undisclosed" : "not_found");
+    const row = emptyListRow(ticker, found ? "awaiting_estimate" : "not_found");
+    return found ? { ...row, found: true } : row;
   }
 
   const upcoming = hasUpcomingEstimate(fund, distributionRows, input.today);
@@ -410,7 +417,7 @@ export function listRowFromFund(input: {
     fundName,
     family,
     found: true,
-    status: upcoming ? "upcoming" : "undisclosed",
+    status: upcoming ? "upcoming" : "awaiting_estimate",
     nav,
     navAsOf: fund?.navAsOf ?? null,
     distPerShare,

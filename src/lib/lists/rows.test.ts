@@ -164,7 +164,8 @@ describe("Lists upcoming rows", () => {
       found: true,
       today: TODAY,
     });
-    assert.equal(list.status, "undisclosed");
+    assert.equal(list.status, "awaiting_estimate");
+    assert.equal(list.found, true);
     assert.ok(list.nav != null && Math.abs(list.nav - 88.42) < 1e-6);
     assert.equal(list.distPerShare, null);
     assert.equal(list.pctOfNav, null);

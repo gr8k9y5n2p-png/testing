@@ -2,10 +2,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { FundEstimateView } from "@/data/types";
-import { COPY } from "@/lib/copy";
+import { COPY, ADD_TO_UNIVERSE, DATA_API_UNAVAILABLE, LISTS_AWAITING_ESTIMATE } from "@/lib/copy";
+import { fundPickerCoverageLabel } from "@/lib/data-api/coverage-status";
+import { fetchFundsSearch } from "@/lib/data-api/funds-client";
 import {
   looksLikeExactTicker,
+  noticeForTickerRequest,
   notifyPortfolioTickerMiss,
+  requestTicker,
 } from "@/lib/data-api/request-ticker";
 import { usePortfolioMissRequest } from "@/lib/data-api/use-portfolio-miss";
 import { useSearchMissRequest } from "@/lib/data-api/use-search-miss";
@@ -15,24 +19,6 @@ import { shouldOpenFundSuggestions } from "@/components/illustrate/fund-picker-s
 import { tickerSlotBorderClass } from "@/components/illustrate/ticker-slot-border";
 
 const REMOTE_SEARCH_DEBOUNCE_MS = 220;
-
-async function fetchRemoteFunds(query: string): Promise<FundEstimateView[]> {
-  const params = new URLSearchParams();
-  params.set("q", query);
-  params.set("limit", "20");
-  params.set("offset", "0");
-  const response = await fetch(`/api/funds?${params.toString()}`);
-  if (!response.ok) return [];
-  const body = (await response.json()) as {
-    items?: FundEstimateView[];
-    data?: FundEstimateView[];
-  };
-  return Array.isArray(body.items)
-    ? body.items
-    : Array.isArray(body.data)
-      ? body.data
-      : [];
-}
 
 export function FundPicker({
   funds,
@@ -69,6 +55,8 @@ export function FundPicker({
   const [open, setOpen] = useState(false);
   const [remoteFunds, setRemoteFunds] = useState<FundEstimateView[]>([]);
   const [remotePending, setRemotePending] = useState(false);
+  const [remoteUnavailable, setRemoteUnavailable] = useState(false);
+  const [requesting, setRequesting] = useState(false);
 
   useEffect(() => {
     const q = query.trim();
@@ -78,16 +66,22 @@ export function FundPicker({
         if (!cancelled) {
           setRemoteFunds([]);
           setRemotePending(false);
+          setRemoteUnavailable(false);
         }
         return;
       }
       if (!cancelled) setRemotePending(true);
-      void fetchRemoteFunds(q)
-        .then((items) => {
-          if (!cancelled) setRemoteFunds(items);
+      void fetchFundsSearch<FundEstimateView>(q)
+        .then((result) => {
+          if (cancelled) return;
+          setRemoteUnavailable(result.unavailable);
+          setRemoteFunds(result.unavailable ? [] : result.items);
         })
         .catch(() => {
-          if (!cancelled) setRemoteFunds([]);
+          if (!cancelled) {
+            setRemoteFunds([]);
+            setRemoteUnavailable(true);
+          }
         })
         .finally(() => {
           if (!cancelled) setRemotePending(false);
@@ -104,25 +98,28 @@ export function FundPicker({
     [funds, query, remoteFunds],
   );
 
+  const typedTicker = query.trim().toUpperCase();
+  const exactTicker = looksLikeExactTicker(typedTicker);
   const tickerInUniverse = useMemo(() => {
     const key = query.trim().toUpperCase();
     if (!key) return false;
     return (
       remotePending ||
+      remoteUnavailable ||
       funds.some((fund) => fund.ticker.toUpperCase() === key) ||
       remoteFunds.some((fund) => fund.ticker.toUpperCase() === key)
     );
-  }, [funds, query, remoteFunds, remotePending]);
+  }, [funds, query, remoteFunds, remotePending, remoteUnavailable]);
 
   useSearchMissRequest(
-    reportSearchMiss ? query : "",
+    reportSearchMiss && !remoteUnavailable ? query : "",
     matches.length,
     tickerInUniverse,
     onNotice,
   );
 
   usePortfolioMissRequest(
-    reportPortfolioMiss && !reportSearchMiss ? query : "",
+    reportPortfolioMiss && !reportSearchMiss && !remoteUnavailable ? query : "",
     matches.length,
     tickerInUniverse,
     onNotice,
@@ -146,6 +143,18 @@ export function FundPicker({
     setQuery("");
     setOpen(false);
     onClear?.();
+  }
+
+  async function addToUniverse() {
+    if (!exactTicker || requesting) return;
+    setRequesting(true);
+    try {
+      const result = await requestTicker({ ticker: typedTicker, source: "web" });
+      const message = noticeForTickerRequest(result, "web");
+      if (message) onNotice?.(message);
+    } finally {
+      setRequesting(false);
+    }
   }
 
   return (
@@ -231,32 +240,56 @@ export function FundPicker({
         <ul className="absolute z-20 mt-1 max-h-72 w-full overflow-auto rounded-md border border-line bg-surface shadow-lg">
           {matches.length === 0 ? (
             <li className="px-3 py-3 text-sm text-muted">
-              {remotePending ? "Searching…" : "No funds match."}
-            </li>
-          ) : (
-            matches.map((fund) => (
-              <li key={fund.id}>
+              {remotePending ? (
+                "Searching…"
+              ) : remoteUnavailable ? (
+                DATA_API_UNAVAILABLE
+              ) : exactTicker ? (
                 <button
                   type="button"
-                  className="flex w-full items-start gap-3 px-3 py-2.5 text-left hover:bg-paper"
+                  className="text-left text-sm font-medium text-accent hover:underline"
                   onMouseDown={(event) => event.preventDefault()}
-                  onClick={() => {
-                    onSelect(fund);
-                    setQuery("");
-                    setOpen(false);
-                  }}
+                  onClick={() => void addToUniverse()}
+                  disabled={requesting}
                 >
-                  <span className="min-w-0">
-                    <span className="block text-sm font-medium text-ink">
-                      {fund.fundName}
-                    </span>
-                    <span className="font-mono text-[11px] text-faint">
-                      {fund.ticker} · {fund.family}
-                    </span>
-                  </span>
+                  {ADD_TO_UNIVERSE}
                 </button>
-              </li>
-            ))
+              ) : (
+                "No funds match."
+              )}
+            </li>
+          ) : (
+            matches.map((fund) => {
+              const coverage = fundPickerCoverageLabel(fund);
+              return (
+                <li key={fund.id}>
+                  <button
+                    type="button"
+                    className="flex w-full items-start gap-3 px-3 py-2.5 text-left hover:bg-paper"
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => {
+                      onSelect(fund);
+                      setQuery("");
+                      setOpen(false);
+                    }}
+                  >
+                    <span className="min-w-0">
+                      <span className="block text-sm font-medium text-ink">
+                        {fund.fundName}
+                        {coverage ? (
+                          <span className="ml-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">
+                            {LISTS_AWAITING_ESTIMATE}
+                          </span>
+                        ) : null}
+                      </span>
+                      <span className="font-mono text-[11px] text-faint">
+                        {fund.ticker} · {fund.family}
+                      </span>
+                    </span>
+                  </button>
+                </li>
+              );
+            })
           )}
         </ul>
       ) : null}

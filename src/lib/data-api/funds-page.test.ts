@@ -19,6 +19,16 @@ describe("Search / Sample Estimates fund page", () => {
     const fundsList = readFileSync(join(here, "../../data/funds-list.ts"), "utf8");
     assert.match(fundsList, /nav_per_share/);
     assert.match(fundsList, /nav_as_of/);
+    assert.match(source, /fetchFundsPage/);
+    assert.match(source, /attempt < 3/);
+    const route = readFileSync(join(here, "../../app/api/funds/route.ts"), "utf8");
+    assert.match(route, /status:\s*503/);
+    assert.match(route, /error: "upstream"/);
+    assert.match(route, /Cache-Control": "no-store"/);
+    assert.doesNotMatch(
+      route,
+      /if \(isRemoteDataApi\(\)\) \{\s*return Response\.json\(\{\s*source: \{ kind: "live", label: "Data API \/funds unavailable" \}/,
+    );
   });
 
   it("hydrates a browse page prefix instead of skipping all ticker GETs", () => {
@@ -102,7 +112,7 @@ describe("Search / Sample Estimates fund page", () => {
       "utf8",
     );
     assert.match(panel, /IllustrationPaidHistory/);
-    assert.match(paid, /illustrationPaidTypeRows/);
+    assert.match(paid, /illustrationPaidHistoryMatrix/);
     assert.match(bucket, /every fund \(not ticker-specific\)/);
     assert.match(bucket, /`final` and `paid` are Paid history/);
     assert.doesNotMatch(bucket, /ABALX|AMCPX|ticker ===/);

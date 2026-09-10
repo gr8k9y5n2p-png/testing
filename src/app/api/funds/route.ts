@@ -25,18 +25,22 @@ export async function GET(request: Request) {
     });
   }
 
-  // Remote Data is set but /funds 404'd or failed — do not dump /distributions.
+  // Remote Data is set but /funds 5xx'd or failed — never a 200 empty catalog.
   if (isRemoteDataApi()) {
-    return Response.json({
-      source: { kind: "live", label: "Data API /funds unavailable" },
-      items: [],
-      total: 0,
-      limit,
-      offset,
-      count: 0,
-      data: [],
-      years: [],
-    });
+    return Response.json(
+      {
+        error: "upstream",
+        source: { kind: "live", label: "Data API /funds unavailable" },
+        items: [],
+        total: 0,
+        limit,
+        offset,
+        count: 0,
+        data: [],
+        years: [],
+      },
+      { status: 503, headers: { "Cache-Control": "no-store" } },
+    );
   }
 
   const repository = await getDistributionRepository();

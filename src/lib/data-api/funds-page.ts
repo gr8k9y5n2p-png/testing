@@ -72,20 +72,13 @@ export async function loadFundPageFromDataApi(
         years: collectTaxYearsFromFunds(items),
       };
     } catch {
-      return {
-        items: [],
-        total: 0,
-        limit: clampPageSize(query.limit),
-        offset: 0,
-        years: [],
-      };
+      // Down is not an empty Upcoming catalog — caller returns 503.
+      return null;
     }
   }
   const params = fundPageSearchParams(query);
   try {
-    const response = await fetchDataApi(`/funds?${params.toString()}`, {
-      fallbackPath: `/funds?${params.toString()}`,
-    });
+    const response = await fetchFundsPage(params);
     if (!response.ok) return null;
     const payload = (await response.json()) as PagePayload;
     const raw = Array.isArray(payload.items)
@@ -142,4 +135,19 @@ async function hydrateFundPage(
   } catch {
     return items;
   }
+}
+
+async function fetchFundsPage(params: URLSearchParams): Promise<Response> {
+  let last: Response | null = null;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      last = await fetchDataApi(`/funds?${params.toString()}`, {
+        fallbackPath: `/funds?${params.toString()}`,
+      });
+      if (last.ok || last.status < 500 || attempt === 2) return last;
+    } catch (error) {
+      if (attempt === 2) throw error;
+    }
+  }
+  return last ?? new Response(null, { status: 502 });
 }

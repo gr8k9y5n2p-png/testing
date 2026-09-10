@@ -2,65 +2,66 @@
 
 import { useEffect, useState } from "react";
 import type { FundEstimate, FundEstimateView } from "@/data/types";
-import { publicationStageLabel } from "@/data/distribution-bucket";
 import {
+  DATA_API_UNAVAILABLE,
   ILLUSTRATION_PAID_HISTORY_DETAIL,
   ILLUSTRATION_PAID_HISTORY_KICKER,
   PAID_HISTORY_EMPTY,
   SEARCH_PAID_HISTORY_HEADING,
 } from "@/lib/copy";
-import { formatOptionalDate, formatUsd } from "@/lib/format";
+import { fetchFundsSearch } from "@/lib/data-api/funds-client";
+import { formatUsd } from "@/lib/format";
 import { formatSoftPct } from "@/lib/illustrate/nav-math";
+import { GROWTH_TAX_TYPE_LABELS } from "@/lib/illustrate/growth-tax-by-type";
 import {
-  illustrationPaidHistoryYear,
-  illustrationPaidTypeRows,
+  illustrationPaidHistoryMatrix,
+  illustrationPaidHistoryYears,
+  type IllustrationPaidMatrixCell,
 } from "@/lib/illustrate/illustration-paid-history";
 
 const ESTIMATE_LABELS: Record<string, string> = {
-  ordinary_income: "Ordinary income",
-  long_term_capital_gains: "Long-term capital gains",
-  short_term_capital_gains: "Short-term capital gains",
-  qualified_dividend: "Qualified dividends",
+  ...GROWTH_TAX_TYPE_LABELS,
+  ordinary_income: "Ordinary",
+  long_term_capital_gains: "LTCG",
+  short_term_capital_gains: "STCG",
+  qualified_dividend: "QDI",
   total_capital_gains: "Total capital gains",
-  special_dividend: "Special dividend",
-  return_of_capital: "Return of capital",
+  special_dividend: "Special",
+  return_of_capital: "ROC",
 };
 
-/** Full ticker hydrate so prior-year finals come from GET /distributions. */
-async function fetchTickerDistributions(
-  ticker: string,
-): Promise<FundEstimateView | null> {
-  const params = new URLSearchParams();
-  params.set("q", ticker);
-  params.set("limit", "5");
-  const response = await fetch(`/api/funds?${params.toString()}`);
-  if (!response.ok) return null;
-  const body = (await response.json()) as {
-    items?: FundEstimateView[];
-    data?: FundEstimateView[];
-  };
-  const items = Array.isArray(body.items)
-    ? body.items
-    : Array.isArray(body.data)
-      ? body.data
-      : [];
-  return (
-    items.find((row) => row.ticker.trim().toUpperCase() === ticker) ?? null
-  );
+function formatMatrixCell(cell: IllustrationPaidMatrixCell): string {
+  if (cell.perShare != null) {
+    return `${formatUsd(cell.perShare, 4)} / sh`;
+  }
+  if (cell.pctOfNav != null) {
+    return formatSoftPct(cell.pctOfNav);
+  }
+  return "—";
 }
 
 export function IllustrationPaidHistory({ fund }: { fund: FundEstimate }) {
   const [hydrated, setHydrated] = useState<FundEstimateView | null>(null);
+  const [unavailable, setUnavailable] = useState(false);
 
   useEffect(() => {
     const ticker = fund.ticker.trim().toUpperCase();
     setHydrated(null);
+    setUnavailable(false);
     if (!ticker || ticker === "—") {
       return;
     }
     let cancelled = false;
-    void fetchTickerDistributions(ticker).then((match) => {
-      if (!cancelled) setHydrated(match);
+    void fetchFundsSearch<FundEstimateView>(ticker, 5).then((result) => {
+      if (cancelled) return;
+      if (result.unavailable) {
+        setUnavailable(true);
+        return;
+      }
+      const match = result.items.find(
+        (row) => row.ticker.trim().toUpperCase() === ticker,
+      );
+      setHydrated(match ?? null);
     });
     return () => {
       cancelled = true;
@@ -68,8 +69,9 @@ export function IllustrationPaidHistory({ fund }: { fund: FundEstimate }) {
   }, [fund.ticker]);
 
   const source = hydrated ?? fund;
-  const year = illustrationPaidHistoryYear();
-  const rows = illustrationPaidTypeRows(source);
+  const years = illustrationPaidHistoryYears();
+  const matrix = illustrationPaidHistoryMatrix(source);
+  const empty = matrix.rows.length === 0;
 
   return (
     <section
@@ -88,53 +90,43 @@ export function IllustrationPaidHistory({ fund }: { fund: FundEstimate }) {
             {SEARCH_PAID_HISTORY_HEADING}
           </h3>
           <p className="mt-1 max-w-3xl text-sm text-muted">
-            {year} · {ILLUSTRATION_PAID_HISTORY_DETAIL}
+            {years[0]}–{years[years.length - 1]} · {ILLUSTRATION_PAID_HISTORY_DETAIL}
           </p>
         </div>
       </header>
-      {rows.length === 0 ? (
-        <p className="px-4 py-6 text-sm text-muted">{PAID_HISTORY_EMPTY}</p>
+      {empty ? (
+        <p className="px-4 py-6 text-sm text-muted">
+          {unavailable ? DATA_API_UNAVAILABLE : PAID_HISTORY_EMPTY}
+        </p>
       ) : (
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead className="bg-surface text-[11px] font-semibold uppercase tracking-[0.1em] text-faint">
               <tr>
                 <th className="px-4 py-2 text-left">Component</th>
-                <th className="px-4 py-2 text-right">$ / Share</th>
-                <th className="px-4 py-2 text-right">% of NAV</th>
-                <th className="px-4 py-2 text-left">Announced</th>
-                <th className="px-4 py-2 text-left">Record</th>
-                <th className="px-4 py-2 text-left">Ex-Date</th>
+                {matrix.years.map((year) => (
+                  <th key={year} className="px-4 py-2 text-right">
+                    {year}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
-              {rows.map((row) => (
-                <tr key={row.key}>
-                  <td className="px-4 py-2.5">
-                    <span className="block text-ink">
-                      {row.estimateType
-                        ? (ESTIMATE_LABELS[row.estimateType] ?? row.estimateType)
-                        : "—"}
-                    </span>
-                    <span className="font-mono text-[11px] text-faint">
-                      {publicationStageLabel(row.stage) || "—"}
-                    </span>
+              {matrix.rows.map((row) => (
+                <tr key={row.estimateType || "distribution"}>
+                  <td className="px-4 py-2.5 text-ink">
+                    {row.estimateType
+                      ? (ESTIMATE_LABELS[row.estimateType] ?? row.estimateType)
+                      : "—"}
                   </td>
-                  <td className="px-4 py-2.5 text-right font-mono">
-                    {row.perShare == null ? "—" : `${formatUsd(row.perShare, 4)} / sh`}
-                  </td>
-                  <td className="px-4 py-2.5 text-right font-mono">
-                    {formatSoftPct(row.pctOfNav)}
-                  </td>
-                  <td className="px-4 py-2.5 font-mono text-muted">
-                    {formatOptionalDate(row.asOfDate)}
-                  </td>
-                  <td className="px-4 py-2.5 font-mono text-muted">
-                    {formatOptionalDate(row.recordDate)}
-                  </td>
-                  <td className="px-4 py-2.5 font-mono text-muted">
-                    {formatOptionalDate(row.exDate)}
-                  </td>
+                  {matrix.years.map((year) => (
+                    <td
+                      key={year}
+                      className="px-4 py-2.5 text-right font-mono tabular-nums"
+                    >
+                      {formatMatrixCell(row.cells[year] ?? { perShare: null, pctOfNav: null, amountUnit: null })}
+                    </td>
+                  ))}
                 </tr>
               ))}
             </tbody>

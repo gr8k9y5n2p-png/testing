@@ -193,7 +193,7 @@ export function currentPaidHistoryYear(now = new Date()): number {
   return Number(chicagoTodayIso(now).slice(0, 4));
 }
 
-/** Dollar Illustration Paid History is the prior Chicago calendar year only. */
+/** Latest completed Chicago calendar year (end of the 5-year lookback). */
 export function priorPaidHistoryYear(now = new Date()): number {
   return currentPaidHistoryYear(now) - 1;
 }
