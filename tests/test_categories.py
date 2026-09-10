@@ -75,6 +75,42 @@ def test_name_rules_high_confidence() -> None:
     assert resolve_category(fund_name="T. Rowe Price Retirement 2060") == "Target-Date 2060"
     assert resolve_category(fund_name="Vanguard GNMA Fund Admiral Shares") == "Intermediate Government"
     assert resolve_category(fund_name="AQR Equity Market Neutral Fund") == "Market Neutral"
+    assert resolve_category(fund_name="Fidelity Asset Manager 20%") == "Conservative Allocation"
+    assert resolve_category(fund_name="Fidelity Asset Manager 40%") == "Moderately Conservative Allocation"
+    assert resolve_category(fund_name="Fidelity Asset Manager 60%") == "Moderate Allocation"
+    assert resolve_category(fund_name="Fidelity Asset Manager 85%") == "Aggressive Allocation"
+    assert resolve_category(fund_name="Vanguard LifeStrategy Conservative Growth Fund") == (
+        "Moderately Conservative Allocation"
+    )
+    assert resolve_category(fund_name="Vanguard LifeStrategy Growth Fund") == "Aggressive Allocation"
+    assert resolve_category(fund_name="Vanguard LifeStrategy Income Fund") == "Conservative Allocation"
+    assert resolve_category(fund_name="Vanguard Global Wellesley Income Fund Admiral Shares") == (
+        "Global Conservative Allocation"
+    )
+    assert resolve_category(fund_name="Vanguard Global Wellington Fund Investor Shares") == (
+        "Global Allocation"
+    )
+    assert resolve_category(fund_name="Vanguard STAR Fund") == "Moderate Allocation"
+    assert resolve_category(fund_name="MFS U.S. Government Cash Reserve Fund All Classes") == (
+        "Money Market-Taxable"
+    )
+    assert resolve_category(fund_name="MFS Core Equity Fund Class I") == "Large Blend"
+    assert resolve_category(fund_name="Massachusetts Investors Growth Stock Fund Class B") == (
+        "Large Growth"
+    )
+    assert resolve_category(fund_name="AMG Systematica Trend-Enhanced Markets Fund Class I") == (
+        "Systematic Trend"
+    )
+    assert resolve_category(fund_name="American Century Vp Inflation Protection Fund Class-I") == (
+        "Inflation-Protected Bond"
+    )
+    assert resolve_category(fund_name="GMO Ultra-Short Income ETF") == "Ultrashort Bond"
+    assert resolve_category(fund_name="Schwab Prime Advantage Money Fund—Investor Shares") == (
+        "Money Market-Taxable"
+    )
+    assert resolve_category(fund_name="Schwab AMT Tax-Free Money Fund—Investor Shares") == (
+        "Money Market-Tax-Free"
+    )
     # Maturity-year bond is not a target-date vintage.
     assert resolve_category(fund_name="American Century Zero Coupon 2025 Fund Investor") is None
     # Target-risk mix without a published style word stays null (Yahoo/issuer map only).

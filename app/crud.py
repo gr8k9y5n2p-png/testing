@@ -418,12 +418,14 @@ def list_matching(
 
 
 def scrub_qdi_percent_characterizations(session: Session) -> int:
-    """Delete stored QDI / QSTCG % of income rows.
+    """Delete stored characterization-percent rows (not $/share tax characters).
 
-    Deletes every leftover amount_unit=percent row (QDI % of income and
-    any other characterization percent). Cap Group YE books and any other
-    family. Render's SQLite disk survives redeploy, so seed must delete
-    these or they stay in Search / paid-history after the parser skip lands.
+    Removes leftover ``amount_unit=percent`` rows — including every
+    ``qualified_dividend`` / QSTCG "% of dividends that are qualified" cell —
+    from Cap Group and any other family. Does not delete ``per_share`` or
+    ``percent_of_nav`` ordinary_income / ST-LT gains / QDI / special / ROC.
+    Render's SQLite disk survives redeploy, so seed must delete these or they
+    stay in Search / paid-history after the parser skip lands.
     """
     result = session.execute(
         delete(DistributionEstimate).where(

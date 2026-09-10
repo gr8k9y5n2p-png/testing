@@ -308,6 +308,22 @@ _CURATED_TICKERS: dict[str, str] = {
     "VSMAX": "Small Blend",
     "VBIAX": "Moderate Allocation",
     "VBINX": "Moderate Allocation",
+    "VGSTX": "Moderate Allocation",
+    "VASIX": "Conservative Allocation",
+    "VSCGX": "Moderately Conservative Allocation",
+    "VSMGX": "Moderate Allocation",
+    "VASGX": "Aggressive Allocation",
+    "VGYAX": "Global Conservative Allocation",
+    "VGWIX": "Global Conservative Allocation",
+    "VGWAX": "Global Allocation",
+    "VGWLX": "Global Allocation",
+    "FASIX": "Conservative Allocation",
+    "FTANX": "Conservative Allocation",
+    "FFANX": "Moderately Conservative Allocation",
+    "FASMX": "Moderate Allocation",
+    "FSANX": "Moderate Allocation",
+    "FASGX": "Moderately Aggressive Allocation",
+    "FAMRX": "Aggressive Allocation",
     "VBTLX": "Intermediate Core Bond",
     "BND": "Intermediate Core Bond",
     "VTIAX": "Foreign Large Blend",
@@ -479,6 +495,9 @@ _TROWE_RETIREMENT_YEAR_RE = re.compile(
     r"\bretirement(?:\s+blend|\s+i)?\s+(20[0-7]\d)\b",
     re.I,
 )
+# Fidelity Asset Manager publishes the equity mix in the name (same bands as
+# Yahoo Allocation--X% to Y% Equity). Not a 60/40 guess.
+_ASSET_MANAGER_PCT_RE = re.compile(r"\basset\s+manager\s+(\d+)\s*%", re.I)
 
 
 def _norm_key(value: str) -> str:
@@ -637,6 +656,7 @@ def _name_category(fund_name: str | None) -> str | None:
         "tips",
         "inflation linked",
         "inflation protected",
+        "inflation protection",
         "income trust",
         "credit",
         "loan",
@@ -646,8 +666,18 @@ def _name_category(fund_name: str | None) -> str | None:
         "high income",
         "ginnie mae",
         "gnma",
+        "mortgage",
     )
-    is_money = _has_any(blob, "money market", "government money", "treasury money")
+    is_money = _has_any(
+        blob,
+        "money market",
+        "government money",
+        "treasury money",
+        "money fund",
+        "prime money",
+        "tax free money",
+        "tax-free money",
+    ) or (_has_any(blob, "cash reserve") and _has_any(blob, "government", "treasury"))
     is_reit = _has_any(blob, "real estate", "reit", "realty")
     is_alloc = _has_any(
         blob,
@@ -668,6 +698,51 @@ def _name_category(fund_name: str | None) -> str | None:
 
     if _has_any(blob, "market neutral"):
         return "Market Neutral"
+
+    asset_mgr = _ASSET_MANAGER_PCT_RE.search(name)
+    if asset_mgr:
+        pct = int(asset_mgr.group(1))
+        if pct <= 30:
+            return "Conservative Allocation"
+        if pct < 50:
+            return "Moderately Conservative Allocation"
+        if pct < 70:
+            return "Moderate Allocation"
+        if pct < 85:
+            return "Moderately Aggressive Allocation"
+        return "Aggressive Allocation"
+
+    # Issuer-published target-risk / balanced series (not a generic "growth fund").
+    if _has_any(blob, "lifestrategy", "life strategy"):
+        if "conservative growth" in blob:
+            return "Moderately Conservative Allocation"
+        if "moderate growth" in blob:
+            return "Moderate Allocation"
+        if "income" in blob:
+            return "Conservative Allocation"
+        if "growth" in blob:
+            return "Aggressive Allocation"
+    if "markettrack" in blob or "market track" in blob:
+        if _has_any(blob, "all equity", "growth"):
+            return "Aggressive Allocation"
+        if "balanced" in blob or "conservative" in blob:
+            return "Moderate Allocation" if "balanced" in blob else "Conservative Allocation"
+    if "global wellesley" in blob:
+        return "Global Conservative Allocation"
+    if "global wellington" in blob:
+        return "Global Allocation"
+    if re.search(r"\bvanguard star\b", blob) or blob.endswith(" star fund"):
+        return "Moderate Allocation"
+    if "massachusetts investors growth stock" in blob:
+        return "Large Growth"
+    if "blended research core equity" in blob or re.search(r"\bmfs core equity\b", blob):
+        return "Large Blend"
+    if re.search(r"\bmfs global equity\b", blob):
+        return "World Large-Stock Blend"
+    if re.search(r"\bmfs growth allocation\b", blob):
+        return "Aggressive Allocation"
+    if re.search(r"\bmfs global total return\b", blob):
+        return "Global Allocation"
 
     # American Century One Choice target-risk (not vintage) portfolios.
     if "one choice" in blob and "portfolio" in blob and not _YEAR_ONLY_RE.search(name):
@@ -731,8 +806,16 @@ def _name_category(fund_name: str | None) -> str | None:
     if _has_any(blob, "blockchain", "digital asset", "bitcoin", "crypto"):
         if not is_bond:
             return "Equity Digital Assets"
-    if _has_any(blob, "managed futures"):
+    if _has_any(
+        blob,
+        "managed futures",
+        "systematica trend",
+        "trend enhanced",
+        "trend total return",
+    ):
         return "Systematic Trend"
+    if _has_any(blob, "ultra short income", "ultrashort income", "ultra-short income"):
+        return "Ultrashort Bond"
 
     if is_bond:
         if _has_any(blob, "high yield", "high-yield", "high income municipal", "high income muni"):
@@ -743,8 +826,18 @@ def _name_category(fund_name: str | None) -> str | None:
             return "High Yield Bond"
         if _has_any(blob, "emerging") and _has_any(blob, "bond", "debt", "local currency"):
             return "Emerging Markets Bond"
-        if _has_any(blob, "tips", "inflation linked", "inflation protected", "inflation-linked", "inflation-protected"):
+        if _has_any(
+            blob,
+            "tips",
+            "inflation linked",
+            "inflation protected",
+            "inflation protection",
+            "inflation-linked",
+            "inflation-protected",
+        ):
             return "Inflation-Protected Bond"
+        if _has_any(blob, "low duration", "limited duration"):
+            return "Short-Term Bond"
         if _has_any(blob, "california") and _has_any(blob, "muni", "municipal", "tax exempt"):
             return "Muni California Long" if _has_any(blob, "long") else "Muni California Intermediate"
         if _has_any(blob, "new york") and _has_any(blob, "muni", "municipal", "tax exempt"):
