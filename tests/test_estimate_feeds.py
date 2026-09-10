@@ -275,7 +275,7 @@ def test_coverage_exposes_estimate_feed_readiness(session) -> None:
 
     victory = by_slug["victory"]
     assert victory.estimate_feed_ready is True
-    assert victory.history_years == [2024, 2025]
+    assert victory.history_years == [2022, 2023, 2024, 2025]
     assert "MMEAX" in victory.performance_tickers
     assert "VETAX" in victory.performance_tickers
 
