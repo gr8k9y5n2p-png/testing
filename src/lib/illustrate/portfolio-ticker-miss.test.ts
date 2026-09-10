@@ -27,8 +27,10 @@ describe("Portfolio / Compare slot ticker miss wiring", () => {
     const column = read("../../components/illustrate/portfolio-compare/AllocationColumn.tsx");
     assert.match(field, /notifyPortfolioTickerMiss/);
     assert.match(field, /tickerMissEmptyLabel/);
+    assert.match(field, /fetchFundsSearch/);
     assert.doesNotMatch(field, /fetch\(/);
     assert.doesNotMatch(field, /\/request\/ticker/);
+    assert.doesNotMatch(field, /NEXT_PUBLIC_DATA_API_URL/);
     assert.match(compare, /NoticeToast/);
     assert.match(compare, /useNoticeToast/);
     assert.match(compare, /onNotice=\{onNotice\}/);

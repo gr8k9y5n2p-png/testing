@@ -83,6 +83,43 @@ export function parseFundsApiResponse<T = unknown>(
   return { items: [], unavailable: false };
 }
 
+/** Same-origin Website BFF. Search / Compare / Portfolio share this path. */
+export const FUNDS_SEARCH_PATH = "/api/funds";
+
+/**
+ * Autocomplete query for apex GET /api/funds.
+ * Identity-only (`nav_only=1`) so AGTHX (has_estimate=false) stays in the
+ * book. Paid History must pass `{ navOnly: false }` to hydrate /distributions.
+ * Do not call Data `/funds` from the picker — seed lag there is not a miss.
+ */
+export function fundsSearchParams(
+  query: string,
+  limit = 20,
+  options?: { navOnly?: boolean },
+): URLSearchParams {
+  const params = new URLSearchParams();
+  params.set("q", query.trim());
+  params.set("limit", String(limit));
+  params.set("offset", "0");
+  if (options?.navOnly !== false) {
+    params.set("nav_only", "1");
+  }
+  return params;
+}
+
+/**
+ * Add to universe only when the shared /api/funds search returned no rows.
+ * Prefix / name hits (BLAC → BlackRock) stay selectable even without an
+ * exact ticker token.
+ */
+export function fundsSearchNotInUniverse(
+  items: readonly unknown[],
+  query: string,
+): boolean {
+  if (items.length > 0) return false;
+  return looksLikeExactTicker(query);
+}
+
 export async function fetchFundsSearch<T = unknown>(
   query: string,
   limit = 20,
@@ -90,26 +127,15 @@ export async function fetchFundsSearch<T = unknown>(
 ): Promise<FundsApiClientResult<T>> {
   const q = query.trim();
   if (!q) return { items: [], unavailable: false };
-  const params = new URLSearchParams();
-  params.set("q", q);
-  params.set("limit", String(limit));
-  params.set("offset", "0");
-  // Autocomplete is identity-only so AGTHX (has_estimate=false) stays
-  // searchable. Paid History must omit nav_only so /distributions
-  // finals/paid hydrate the 5-year matrix.
-  if (options?.navOnly !== false) {
-    params.set("nav_only", "1");
-  }
+  const params = fundsSearchParams(q, limit, options);
   try {
-    const response = await fetch(`/api/funds?${params.toString()}`, {
+    const response = await fetch(`${FUNDS_SEARCH_PATH}?${params.toString()}`, {
       cache: "no-store",
     });
     const body = await response.json().catch(() => null);
     const page = parseFundsApiResponse<T>(response.ok, body);
     if (page.unavailable) return page;
-    if (fundsPageHasExactTicker(page.items, q) || !looksLikeExactTicker(q)) {
-      return page;
-    }
+    if (!fundsSearchNotInUniverse(page.items, q)) return page;
     return { items: page.items, unavailable: false, notInUniverse: true };
   } catch {
     return { items: [], unavailable: true };
