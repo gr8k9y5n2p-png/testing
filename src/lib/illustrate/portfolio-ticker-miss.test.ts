@@ -43,7 +43,8 @@ describe("Portfolio / Compare slot ticker miss wiring", () => {
     const hook = read("../data-api/use-portfolio-miss.ts");
     assert.match(picker, /usePortfolioMissRequest/);
     assert.match(picker, /notifyPortfolioTickerMiss/);
-    assert.match(picker, /tickerMissEmptyLabel/);
+    assert.match(picker, /searchPickerEmptyState/);
+    assert.match(picker, /ADD_TO_UNIVERSE/);
     assert.match(picker, /reportPortfolioMiss/);
     assert.match(homepage, /CompareWorkspace as HomepageFundCompare/);
     assert.match(workspace, /onNotice=\{onNotice\}/);
@@ -56,7 +57,7 @@ describe("Portfolio / Compare slot ticker miss wiring", () => {
     assert.match(hook, /source=portfolio/);
     assert.doesNotMatch(hook, /source=search_miss/);
     assert.match(picker, /if \(!q\)/);
-    assert.match(picker, /\/api\/funds/);
+    assert.match(picker, /fetchFundsSearch/);
     assert.doesNotMatch(picker, /\/request\/ticker/);
     assert.doesNotMatch(homepage, /fetch\(/);
     assert.doesNotMatch(rail, /\/request\/ticker/);

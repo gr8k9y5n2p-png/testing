@@ -119,6 +119,12 @@ export interface FundEstimate {
    * "—" / Undisclosed — never invent $0 from the catalog flag or history.
    */
   hasEstimate?: boolean;
+  /**
+   * Data `coverage_status` when published (`awaiting_estimate` |
+   * `estimate_announced` | `not_in_universe`). Prefer this over inferring
+   * from `has_estimate`.
+   */
+  coverageStatus?: string | null;
 }
 
 export interface FundEstimateView extends FundEstimate {

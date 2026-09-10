@@ -46,6 +46,21 @@ test("mapFundsApiItem reads live weekly NAV and does not invent a miss", () => {
   assert.equal(missing.navAsOf, null);
 });
 
+test("mapFundsApiItem keeps published coverage_status without inventing Upcoming", () => {
+  const view = mapFundsApiItem({
+    ticker: "AGTHX",
+    fund_name: "The Growth Fund of America",
+    fund_family: "American Funds",
+    has_estimate: false,
+    coverage_status: "awaiting_estimate",
+    nav_per_share: "88.419998",
+  });
+  assert.equal(view.coverageStatus, "awaiting_estimate");
+  assert.equal(view.hasEstimate, false);
+  assert.equal(view.bucket, "paid");
+  assert.equal(view.nav, 88.419998);
+});
+
 test("mapFundsApiItem accepts a null ticker without inventing one", () => {
   const view = mapFundsApiItem({
     ticker: null,

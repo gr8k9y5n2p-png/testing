@@ -12,8 +12,10 @@ import {
 } from "@/lib/illustrate/compare-request";
 import { formatOptionalDate, formatUsd } from "@/lib/format";
 import {
+  fillNavPerShareInput,
   formatSoftPct,
   formatWeeklyNavLabel,
+  parsePositiveNav,
   pctOfNavForFund,
 } from "@/lib/illustrate/nav-math";
 import { seedNavLookup } from "@/lib/illustrate/seed-nav";
@@ -61,23 +63,24 @@ export function IllustratePanel({
   selected: FundEstimateView | null;
 }) {
   const coverage = useCoverage();
+  const selectedTicker = selected?.ticker.trim().toUpperCase() ?? "";
   const [identityNav, setIdentityNav] = useState<FundEstimateView | null>(null);
-  const fund = selected ? overlayWeeklyNav(selected, identityNav) : null;
+  const identityForSelected =
+    identityNav &&
+    selectedTicker &&
+    identityNav.ticker.trim().toUpperCase() === selectedTicker
+      ? identityNav
+      : null;
+  const fund = selected ? overlayWeeklyNav(selected, identityForSelected) : null;
   const live = fund ? coverage.isLive(fund.family) : true;
   const meta = fund ? coverage.familyMeta(fund.family) : undefined;
 
   useEffect(() => {
-    if (!selected) {
-      setIdentityNav(null);
-      return;
-    }
-    const ticker = selected.ticker.trim().toUpperCase();
-    if (!ticker || ticker === "—") {
-      setIdentityNav(null);
+    if (!selectedTicker || selectedTicker === "—") {
       return;
     }
     let cancelled = false;
-    void fetchWeeklyNavIdentity(ticker)
+    void fetchWeeklyNavIdentity(selectedTicker)
       .then((identity) => {
         if (!cancelled) setIdentityNav(identity);
       })
@@ -87,7 +90,7 @@ export function IllustratePanel({
     return () => {
       cancelled = true;
     };
-  }, [selected]);
+  }, [selectedTicker]);
 
   return (
     <section
@@ -218,10 +221,10 @@ function IllustrationWorkspace({ fund }: { fund: FundEstimateView }) {
   const mock = isMockIllustrate();
   const navLookup = mock ? seedNavLookup : undefined;
   const metadataNav = navFromFundMetadata(fund.ticker, fund.nav, navLookup);
+  const liveNav = metadataNav ?? parsePositiveNav(fund.nav);
   const [unit, setUnit] = useState<AmountUnit>(AMOUNT_UNITS.percent_of_nav);
-  const [navInput, setNavInput] = useState(
-    metadataNav != null ? String(metadataNav) : fund.nav > 0 ? String(fund.nav) : "",
-  );
+  const [navTyped, setNavTyped] = useState("");
+  const navInput = fillNavPerShareInput(navTyped, liveNav);
   const [result, setResult] = useState<IllustrateResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -343,7 +346,7 @@ function IllustrationWorkspace({ fund }: { fund: FundEstimateView }) {
                 min={0.01}
                 step={0.01}
                 value={navInput}
-                onChange={(event) => setNavInput(event.target.value)}
+                onChange={(event) => setNavTyped(event.target.value)}
                 className="h-10 w-full rounded-md border border-line bg-paper px-3 font-mono text-sm"
               />
               <span className="mt-1 block text-[11px] text-faint">
@@ -384,7 +387,7 @@ function IllustrationWorkspace({ fund }: { fund: FundEstimateView }) {
           ) : null}
         </div>
       </div>
-      <IllustrationPaidHistory fund={fund} />
+      <IllustrationPaidHistory key={fund.ticker} fund={fund} />
     </div>
   );
 }
