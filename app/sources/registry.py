@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from functools import lru_cache
+
 from app.sources.american_funds import AmericanFundsSource
 from app.sources.base import FundSource
 from app.sources.families import (
@@ -404,6 +406,7 @@ _ALIASES = {
 }
 
 
+@lru_cache(maxsize=1)
 def _sources() -> dict[str, FundSource]:
     ordered = [
         BlackRockSource(),
@@ -528,6 +531,12 @@ def list_sources() -> list[FundSource]:
         _sources().values(),
         key=lambda s: (s.aum_rank is None, s.aum_rank or 99, s.slug),
     )
+
+
+@lru_cache(maxsize=1)
+def registered_family_slugs() -> tuple[str, ...]:
+    """Stable slug list for /health. Avoids reconstructing 113 sources per probe."""
+    return tuple(source.slug for source in list_sources())
 
 
 def get_source(slug: str) -> FundSource:

@@ -70,6 +70,20 @@ def test_sqlite_file_uses_wal(engine) -> None:
     assert str(mode).lower() == "wal"
 
 
+def test_sqlite_file_uses_null_pool(engine) -> None:
+    from sqlalchemy.pool import NullPool
+
+    assert isinstance(engine.pool, NullPool)
+
+
+def test_sqlite_search_indexes_exist(engine) -> None:
+    from sqlalchemy import inspect
+
+    names = {idx.get("name") for idx in inspect(engine).get_indexes("distribution_estimates")}
+    assert "ix_dist_fund_identifier" in names
+    assert "ix_dist_publication_stage" in names
+
+
 def test_read_with_lock_retry_recovers_from_locked() -> None:
     from app.db import read_with_lock_retry
 
@@ -198,3 +212,41 @@ def test_seed_on_start_loads_full_fixture_book(client: TestClient) -> None:
     assert sgenx.status_code == 200
     assert sgenx.json()["total"] >= 1
     _reset_seed_state()
+
+
+def test_concurrent_funds_burst_leaves_health_green(client: TestClient) -> None:
+    """Acceptance: 8-way Search burst returns 200 and does not take /health down."""
+    import asyncio
+
+    import anyio
+    from httpx import ASGITransport, AsyncClient
+
+    from app.main import app
+
+    for family in ("american_funds", "fidelity"):
+        fetched = client.post("/ingest/fetch", json={"fund_family": family, "mode": "fixture"})
+        assert fetched.status_code == 200, fetched.text
+
+    tickers = ["FBGRX", "AGTHX", "FCNTX", "ABALX"]
+
+    async def burst() -> tuple[list[int], list[int], list[str]]:
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as ac:
+            responses = await asyncio.gather(
+                *[ac.get("/funds", params={"q": ticker}) for ticker in tickers for _ in range(2)]
+            )
+            healths = [await ac.get("/health") for _ in range(5)]
+            return (
+                [response.status_code for response in responses],
+                [health.status_code for health in healths],
+                [health.json()["status"] for health in healths],
+            )
+
+    fund_codes, health_codes, health_status = anyio.run(burst)
+    assert fund_codes == [200] * 8
+    assert health_codes == [200] * 5
+    assert health_status == ["ok"] * 5
+    for ticker in tickers:
+        found = client.get("/funds", params={"q": ticker})
+        assert found.status_code == 200
+        assert found.json()["total"] >= 1

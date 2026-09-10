@@ -8,6 +8,7 @@ from sqlalchemy import create_engine, event, inspect, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
+from sqlalchemy.pool import NullPool, StaticPool
 
 from app.config import settings
 
@@ -29,7 +30,7 @@ def _sqlite_file_url(url: str) -> bool:
 def _sqlite_connect_args(url: str) -> dict:
     if url.startswith("sqlite"):
         # timeout is sqlite3 busy-wait seconds; WAL lets readers proceed during seed.
-        return {"check_same_thread": False, "timeout": 8.0}
+        return {"check_same_thread": False, "timeout": 15.0}
     return {}
 
 
@@ -50,9 +51,11 @@ def configure_engine(database_url: str) -> Engine:
     if connect_args:
         kwargs["connect_args"] = connect_args
         if database_url in {"sqlite://", "sqlite:///:memory:"}:
-            from sqlalchemy.pool import StaticPool
-
             kwargs["poolclass"] = StaticPool
+        elif _sqlite_file_url(database_url):
+            # File SQLite + QueuePool deadlocks under concurrent /funds
+            # (pool wait + writer lock). One connection per checkout.
+            kwargs["poolclass"] = NullPool
     _engine = create_engine(database_url, **kwargs)
 
     if database_url.startswith("sqlite"):
@@ -63,8 +66,9 @@ def configure_engine(database_url: str) -> Engine:
             cursor.execute("PRAGMA foreign_keys=ON")
             if _sqlite_file_url(database_url):
                 cursor.execute("PRAGMA journal_mode=WAL")
-                cursor.execute("PRAGMA busy_timeout=8000")
+                cursor.execute("PRAGMA busy_timeout=15000")
                 cursor.execute("PRAGMA synchronous=NORMAL")
+                cursor.execute("PRAGMA temp_store=MEMORY")
             cursor.close()
 
     SessionLocal = sessionmaker(bind=_engine, autoflush=False, expire_on_commit=False, class_=Session)
@@ -93,12 +97,37 @@ def _ensure_quality_columns(engine: Engine) -> None:
             conn.execute(text(statement))
 
 
+def _ensure_search_indexes(engine: Engine) -> None:
+    """Add search indexes on existing SQLite disks (create_all will not ALTER)."""
+    inspector = inspect(engine)
+    if "distribution_estimates" not in inspector.get_table_names():
+        return
+    existing = {idx.get("name") for idx in inspector.get_indexes("distribution_estimates")}
+    statements: list[str] = []
+    if "ix_dist_fund_identifier" not in existing:
+        statements.append(
+            "CREATE INDEX IF NOT EXISTS ix_dist_fund_identifier "
+            "ON distribution_estimates (fund_identifier)"
+        )
+    if "ix_dist_publication_stage" not in existing:
+        statements.append(
+            "CREATE INDEX IF NOT EXISTS ix_dist_publication_stage "
+            "ON distribution_estimates (publication_stage)"
+        )
+    if not statements:
+        return
+    with engine.begin() as conn:
+        for statement in statements:
+            conn.execute(text(statement))
+
+
 def init_db() -> None:
     from app import models  # noqa: F401
 
     engine = get_engine()
     Base.metadata.create_all(engine)
     _ensure_quality_columns(engine)
+    _ensure_search_indexes(engine)
 
 
 def ping_db() -> str:

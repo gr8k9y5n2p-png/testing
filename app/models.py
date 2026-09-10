@@ -45,6 +45,8 @@ class DistributionEstimate(Base):
         Index("ix_dist_family", "fund_family"),
         Index("ix_dist_ticker", "ticker"),
         Index("ix_dist_fund_name", "fund_name"),
+        Index("ix_dist_fund_identifier", "fund_identifier"),
+        Index("ix_dist_publication_stage", "publication_stage"),
         Index("ix_dist_estimate_type", "estimate_type"),
         Index("ix_dist_as_of", "as_of"),
         Index("ix_dist_ex_date", "ex_date"),
