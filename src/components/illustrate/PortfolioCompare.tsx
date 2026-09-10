@@ -48,7 +48,7 @@ export type PortfolioCompareProps = {
   funds?: PortfolioFundOption[];
   taxRates?: Partial<TaxRates>;
   className?: string;
-  /** Dedicated Portfolio tab / standalone demo use h1; nested mounts can use h2. */
+  /** Dedicated Portfolios tab / standalone demo use h1; nested mounts can use h2. */
   headingAs?: "h1" | "h2";
   /** Website wires Export + freemium. Omit to hide the button. */
   onExport?: (result: PortfolioCompareResponse, bookDollars: number) => void;
@@ -236,10 +236,10 @@ export function PortfolioCompare({
         <div>
           <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-faint">
             <span aria-hidden className="inline-block size-1.5 rounded-full bg-tax-less" />
-            Aftertax · Portfolio
+            Aftertax · Portfolios
           </p>
           <Heading className="mt-1 font-serif text-3xl tracking-tight text-ink">
-            Portfolio
+            Portfolios
           </Heading>
         </div>
         <div className="flex flex-wrap items-end gap-3">

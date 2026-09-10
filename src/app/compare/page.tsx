@@ -10,7 +10,7 @@ import { parseCompareQueryTickers } from "@/lib/illustrate/compare-workspace";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Aftertax — compare funds",
+  title: "Aftertax — Compare",
   description: `${COPY.sub} Growth, tax drag, and upcoming for up to six tickers.`,
 };
 

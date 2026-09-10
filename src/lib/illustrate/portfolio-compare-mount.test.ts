@@ -12,7 +12,7 @@ describe("Website PortfolioCompare mounts", () => {
     assert.deepEqual(WEBSITE_PORTFOLIO_HOLDINGS, []);
   });
 
-  it("titles the Portfolio tab Portfolio, not Portfolio comparison", () => {
+  it("titles the Portfolios tab Portfolios, not Portfolio comparison", () => {
     const compare = readFileSync(
       join(here, "../../components/illustrate/PortfolioCompare.tsx"),
       "utf8",
@@ -22,10 +22,10 @@ describe("Website PortfolioCompare mounts", () => {
       "utf8",
     );
     const page = readFileSync(join(here, "../../app/portfolio/page.tsx"), "utf8");
-    assert.match(compare, />\s*Portfolio\s*</);
+    assert.match(compare, />\s*Portfolios\s*</);
     assert.doesNotMatch(compare, /Portfolio comparison/);
-    assert.match(homepage, /aria-label="Portfolio"/);
-    assert.match(page, /Aftertax — Portfolio/);
+    assert.match(homepage, /aria-label="Portfolios"/);
+    assert.match(page, /Aftertax — Portfolios/);
   });
 
   it("does not inject smoke tickers from Website mounts", () => {
