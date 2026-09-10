@@ -15,6 +15,7 @@ import {
   type ChartPad,
   type YearLayout,
 } from "@/lib/charts/shared-axis";
+import { fundSeriesColor } from "@/lib/charts/series-colors";
 import { formatUsd } from "@/lib/format";
 import { isRemovableGrowthSeries } from "@/lib/illustrate/growth-selection";
 import type { GrowthLineSeries } from "@/lib/illustrate/growth-tax-series";
@@ -433,6 +434,22 @@ export function GrowthAndTaxChart({
             taxModel.series.map((row, seriesIndex) => {
               const x = axis.barX(yearIndex, seriesIndex) + axis.barW / 2;
               const fontSize = axis.count >= 5 ? 6.5 : axis.count >= 3 ? 8 : 9;
+              const compact = axis.count >= 4;
+              if (compact) {
+                return (
+                  <g key={`bar-ticker-${year}-${row.ticker}`}>
+                    <title>{row.ticker}</title>
+                    <circle
+                      data-bar-ticker={row.ticker}
+                      data-bar-year={year}
+                      cx={x}
+                      cy={height - 36}
+                      r={2.4}
+                      fill={fundSeriesColor(seriesIndex)}
+                    />
+                  </g>
+                );
+              }
               return (
                 <text
                   key={`bar-ticker-${year}-${row.ticker}`}
