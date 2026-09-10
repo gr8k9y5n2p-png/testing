@@ -82,6 +82,7 @@ def test_sqlite_search_indexes_exist(engine) -> None:
     names = {idx.get("name") for idx in inspect(engine).get_indexes("distribution_estimates")}
     assert "ix_dist_fund_identifier" in names
     assert "ix_dist_publication_stage" in names
+    assert "ix_dist_fund_search" in names
 
 
 def test_read_with_lock_retry_recovers_from_locked() -> None:
