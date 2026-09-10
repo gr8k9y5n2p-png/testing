@@ -921,7 +921,9 @@ def test_search_multi_year_top_families(client: TestClient) -> None:
     )
 
     civix = client.get("/distributions", params={"fund_identifier": "CIVIX", "page_size": 50})
-    assert {"2024", "2025"} <= {item["as_of"][:4] for item in civix.json()["items"] if item.get("as_of")}
+    assert {"2021", "2022", "2023", "2024", "2025"} <= {
+        item["as_of"][:4] for item in civix.json()["items"] if item.get("as_of")
+    }
 
     maptx = client.get("/distributions", params={"fund_identifier": "MAPTX", "page_size": 50})
     assert {"2021", "2022", "2023", "2024", "2025"} <= {

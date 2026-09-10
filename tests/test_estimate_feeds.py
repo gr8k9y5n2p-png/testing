@@ -297,7 +297,7 @@ def test_coverage_exposes_estimate_feed_readiness(session) -> None:
 
     causeway = by_slug["causeway"]
     assert causeway.estimate_feed_ready is True
-    assert causeway.history_years == [2024, 2025]
+    assert causeway.history_years == [2021, 2022, 2023, 2024, 2025]
     assert "CIVIX" in causeway.performance_tickers
 
     matthews = by_slug["matthews_asia"]

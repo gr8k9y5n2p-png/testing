@@ -215,6 +215,23 @@ def test_coverage_lookback_wave3_thin_mf_families(client: TestClient) -> None:
     assert "never invented" in " ".join(lookback["notes"]).lower()
 
 
+def test_coverage_lookback_wave5_causeway_matthews(client: TestClient) -> None:
+    for family in ("causeway", "matthews_asia"):
+        fetched = client.post("/ingest/fetch", json={"fund_family": family, "mode": "fixture"})
+        assert fetched.status_code == 200, fetched.text
+    lookback = client.get("/coverage").json()["lookback_5y"]
+    by_year = lookback["funds_with_finals_by_year"]
+    by_year_mf = lookback["funds_with_finals_by_year_mf"]
+    assert by_year["2021"] >= 15
+    assert by_year["2022"] >= 15
+    assert by_year["2023"] >= 15
+    assert by_year["2024"] >= 15
+    assert by_year["2025"] >= 15
+    assert lookback["funds_with_5y_mf"] >= 15
+    assert by_year_mf["2021"] >= 15
+    assert "never invented" in " ".join(lookback["notes"]).lower()
+
+
 def test_coverage_lookback_wave4_nt_mfs_allspring(client: TestClient) -> None:
     for family in ("northern_trust", "mfs", "allspring"):
         fetched = client.post("/ingest/fetch", json={"fund_family": family, "mode": "fixture"})

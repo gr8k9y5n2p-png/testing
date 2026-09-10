@@ -494,7 +494,13 @@ class CausewaySource(HtmlTableSource):
         "Official 2024 final PDF: "
         "https://www.causewaycap.com/wp-content/uploads/2024_Causeway-Funds-Final-Distributions.pdf "
         "(CIVIX ST $0.1324 / LT $1.1868; CGVIX ST $1.0338 / LT $1.8282; "
-        "CEMIX published $0.0000 ST/LT stored)."
+        "CEMIX published $0.0000 ST/LT stored). "
+        "Wave 5 lookback: official 2021–2023 final PDFs on the same "
+        "`YYYY_Causeway-Funds-Final-Distributions.pdf` path "
+        "(CIVIX 2021 income $0.3170 / published $0.0000 ST/LT stored; "
+        "2022 income $0.2834; 2023 ST $0.1678 / LT $0.1748). "
+        "Concentrated Equity CCENX / CCEVX is on 2021–2022 only — later years "
+        "unmatched, not invented."
     )
     live_limitations = (
         "Year-end book is PDF. Weekly walk uses the resources hub + 2025 final PDF; "
@@ -523,6 +529,27 @@ class CausewaySource(HtmlTableSource):
                 name="2024_final_distributions",
                 url="https://www.causewaycap.com/wp-content/uploads/2024_Causeway-Funds-Final-Distributions.pdf",
                 fixture="2024_final_distributions.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="2023_final_distributions",
+                url="https://www.causewaycap.com/wp-content/uploads/2023_Causeway-Funds-Final-Distributions.pdf",
+                fixture="2023_final_distributions.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="2022_final_distributions",
+                url="https://www.causewaycap.com/wp-content/uploads/2022_Causeway-Funds-Final-Distributions.pdf",
+                fixture="2022_final_distributions.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="2021_final_distributions",
+                url="https://www.causewaycap.com/wp-content/uploads/2021_Causeway-Funds-Final-Distributions.pdf",
+                fixture="2021_final_distributions.html",
                 live=False,
                 role="history",
             ),
@@ -627,9 +654,17 @@ class MatthewsAsiaSource(HtmlTableSource):
         "Record 12/16/2025; ex/pay 12/17/2025. "
         "Schedule-only page (no amounts): "
         "https://www.matthewsasia.com/resources/distributions-tax/distribution-dates/ "
-        "Official product-page paid history for existing Investor heroes MEGMX / MAPTX / MINDX "
+        "Official product-page paid history for Investor heroes MEGMX / MAPTX / MINDX "
         "covers 2021–2024 (e.g. MAPTX 2024 income $0.58609 / LT $0.99319 / 8.0% of NAV; "
-        "MINDX 2024 ST $1.41120 / LT $2.39476 / 12.7% of NAV). No new thin tickers."
+        "MINDX 2024 ST $1.41120 / LT $2.39476 / 12.7% of NAV). "
+        "Wave 5 lookback adds official Investor product-page December YE 2021–2025 "
+        "for MAPIX / MSMLX / MCHFX / MASGX / MCSMX "
+        "(MAPIX 2021 LT $2.31785 / 2025 income $0.26050; "
+        "MSMLX 2021 ST $1.52123 / 2025 income $0.38648; "
+        "MCHFX 2022 LT $1.09205 / 2025 income $0.23320). "
+        "December YE only so quarterly MAPIX income is not summed. "
+        "MPACX has no 2025 YE row; MJFOX has no 2023 YE row; MATFX stops at 2023 — "
+        "gaps, not invented."
     )
     live_limitations = (
         "Live product HTML is public but nested class/accordion tables may not parse. "
