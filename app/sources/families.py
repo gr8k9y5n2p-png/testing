@@ -180,7 +180,7 @@ class FidelitySource(HtmlTableSource):
         "through FIMIX (204 tickers; FCNTX Dec LT $1.62700 / Feb LT $0.40000; "
         "FBGRX Dec LT $2.51300 / Sep ST $1.33300 LT $12.18700). Later range "
         "fetches of that timestamp replay a 2024 digest — N–Z not invented. "
-        "2022–2023 DPL6 HTML is still not in CDX (HPDY SPA). FCNTX 2022–2023 "
+        "2022–2023 DPL6 HTML is still not in CDX (HPDY SPA; Wave 3 re-probe). FCNTX 2022–2023 "
         "uses the official retail prospectus financial highlights (income "
         "$0.08 / $0.08 and net realized gain $1.36 / $0.61) stored as "
         "ordinary_income + total_capital_gains — ST/LT not published, not "

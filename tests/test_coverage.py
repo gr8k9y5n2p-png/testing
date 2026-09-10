@@ -197,6 +197,24 @@ def test_coverage_lookback_wave2_american_funds_invesco(client: TestClient) -> N
     assert "mutual funds" in " ".join(lookback["notes"]).lower()
 
 
+def test_coverage_lookback_wave3_thin_mf_families(client: TestClient) -> None:
+    for family in ("bny_mellon", "columbia_threadneedle", "dimensional"):
+        fetched = client.post("/ingest/fetch", json={"fund_family": family, "mode": "fixture"})
+        assert fetched.status_code == 200, fetched.text
+    lookback = client.get("/coverage").json()["lookback_5y"]
+    by_year = lookback["funds_with_finals_by_year"]
+    by_year_mf = lookback["funds_with_finals_by_year_mf"]
+    assert by_year["2021"] >= 7
+    assert by_year["2022"] >= 30
+    assert by_year["2023"] >= 40
+    assert by_year["2024"] >= 40
+    assert by_year["2025"] >= 40
+    assert lookback["funds_with_5y_mf"] >= 7
+    assert by_year_mf["2022"] >= 30
+    assert by_year_mf["2023"] >= 40
+    assert "never invented" in " ".join(lookback["notes"]).lower()
+
+
 def test_coverage_gap_implemented_family(client: TestClient) -> None:
     response = client.post(
         "/coverage/gaps",

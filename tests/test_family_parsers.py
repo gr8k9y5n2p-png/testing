@@ -930,6 +930,106 @@ def test_next_tier_fixtures() -> None:
     )
     assert lbsax.amount == Decimal("1.38581")
     assert lbsax.publication_stage == PublicationStage.final
+    elgax_2024 = next(
+        r
+        for r in columbia_2024
+        if r.ticker == "ELGAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert elgax_2024.amount == Decimal("0.72066")
+    legax_2024 = next(
+        r
+        for r in columbia_2024
+        if r.ticker == "LEGAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert legax_2024.amount == Decimal("4.05105")
+    assert len({r.ticker for r in columbia_2024 if r.ticker}) >= 40
+
+    columbia_2022 = parse_distribution_html(
+        (ROOT / "columbia_threadneedle" / "2022_year_end_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://columbia-2022",
+        fund_family="Columbia Threadneedle",
+    )
+    lbsax_2022 = next(
+        r
+        for r in columbia_2022
+        if r.ticker == "LBSAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert lbsax_2022.amount == Decimal("0.56114")
+    cblax_2022 = next(
+        r
+        for r in columbia_2022
+        if r.ticker == "CBLAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert cblax_2022.amount == Decimal("1.55549")
+    assert lbsax_2022.publication_stage == PublicationStage.final
+    assert len({r.ticker for r in columbia_2022 if r.ticker}) >= 30
+
+    bny_2021 = parse_distribution_html(
+        (ROOT / "bny_mellon" / "2021_paid_year_end.html").read_text(encoding="utf-8"),
+        source_url="fixture://bny-2021",
+        fund_family="BNY Mellon / Dreyfus",
+    )
+    dgagx_2021 = next(
+        r
+        for r in bny_2021
+        if r.ticker == "DGAGX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert dgagx_2021.amount == Decimal("1.6171")
+    dagvx_2021 = next(
+        r
+        for r in bny_2021
+        if r.ticker == "DAGVX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert dagvx_2021.amount == Decimal("6.714")
+    assert {r.ticker for r in bny_2021 if r.ticker} >= {
+        "DGAGX",
+        "DAGVX",
+        "DREVX",
+        "DREQX",
+        "DNLDX",
+        "PGROX",
+        "DGLAX",
+    }
+
+    dfa_2023 = parse_distribution_html(
+        (ROOT / "dimensional" / "2023_tax_sheet_paid.html").read_text(encoding="utf-8"),
+        source_url="fixture://dfa-2023",
+        fund_family="Dimensional Fund Advisors",
+    )
+    disvx_2023 = next(
+        r
+        for r in dfa_2023
+        if r.ticker == "DISVX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert disvx_2023.amount == Decimal("0.02562")
+    dfqtx_2023 = next(
+        r
+        for r in dfa_2023
+        if r.ticker == "DFQTX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert dfqtx_2023.amount == Decimal("0.13191")
+    assert disvx_2023.publication_stage == PublicationStage.final
+    assert not any(r.amount_unit.value == "percent" for r in dfa_2023)
+
+    dfa_2025_paid = parse_distribution_html(
+        (ROOT / "dimensional" / "2025_tax_sheet_paid.html").read_text(encoding="utf-8"),
+        source_url="fixture://dfa-2025-paid",
+        fund_family="Dimensional Fund Advisors",
+    )
+    disvx_2025_paid = next(
+        r
+        for r in dfa_2025_paid
+        if r.ticker == "DISVX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert disvx_2025_paid.amount == Decimal("1.05997")
+    dfelx_2025_paid = next(
+        r
+        for r in dfa_2025_paid
+        if r.ticker == "DFELX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert dfelx_2025_paid.amount == Decimal("1.23371")
 
 
 def test_third_tier_fixtures() -> None:

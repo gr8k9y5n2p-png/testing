@@ -66,7 +66,8 @@ class FranklinTempletonSource(HtmlTableSource):
         "`.../SMDLX-section-19-notice-12-31-2025` (paid $0.149600 / RoC $0.073334). "
         "2024 sibling `.../ft-section-19-notice-12-31-2024` (income $0.0387 / RoC $0.0038). "
         "ICI reports hub is a JS SPA; no public filled Primary Layout download. "
-        "≥$1B open-end (FKINX) amounts were not on a scrapeable family PDF — skipped."
+        "≥$1B open-end (FKINX) amounts were not on a scrapeable family PDF — skipped. "
+        "Wave 3: open-end estimate hub remains a JS SPA — no YE 2021–2023 MF book ingested."
     )
     live_limitations = (
         "Open-end December estimate tool is JavaScript-rendered. "
@@ -110,10 +111,14 @@ class BnyMellonSource(HtmlTableSource):
         "ETF estimate book "
         "https://www.bny.com/content/dam/im/documents/manual/tax-forms/2025-exchange-traded-funds-estimated-capital-gains.pdf "
         "(12 ETFs; published $0.00 total CG stored). "
-        "Paid YE for DGAGX (≥$1B Investor class) from the public product page "
-        "https://www.bny.com/investments/us/en/intermediary/products/lt/fund/"
-        "bny-mellon-appreciation-fund-inc.html "
-        "(2025 LT $6.4552; 2024 LT $5.6247; 2023 LT $1.9798; 2022 LT $2.7106). "
+        "Paid December YE from official product-page Distributions History tables "
+        "for DGAGX / DAGVX / DREVX / DREQX / DNLDX / PGROX / DGLAX (2021–2025). "
+        "Appreciation DGAGX: 2025 LT $6.4552; 2024 LT $5.6247; 2023 LT $1.9798; "
+        "2022 LT $2.7106; 2021 LT $1.6171. Dynamic Value DAGVX 2021 LT $6.7140. "
+        "OI is published NQ+Q dividends; ST is published NQ+Q ST; published $0 omitted. "
+        "DMCVX / PEOPX product URLs 404. Research Growth page prints DREQX "
+        "(DWOAX Class A not on that table). Family 2021 estimate PDF URLs were 0-byte; "
+        "2023 Dreyfus estimate PDF is preliminary — not YE finals. "
         "No public filled ICI file. 2024 family estimate PDF URL was empty."
     )
     live_limitations = "Estimates are PDF, not an HTML grid. Fixture transcribes the public PDF / product table."
@@ -162,6 +167,13 @@ class BnyMellonSource(HtmlTableSource):
                 name="2022_paid_year_end",
                 url=product,
                 fixture="2022_paid_year_end.html",
+                live=False,
+                large_aum_only=True,
+            ),
+            PageSpec(
+                name="2021_paid_year_end",
+                url=product,
+                fixture="2021_paid_year_end.html",
                 live=False,
                 large_aum_only=True,
             ),
@@ -401,6 +413,16 @@ class DimensionalSource(HtmlTableSource):
         "https://www.dimensional.com/chmedia/332797/source/download/2024-distributions.pdf "
         "is the full MF/ETF table (DISVX income $0.305 / LT $0.184; DFELX income "
         "$0.288 / LT $0.012; DFQTX income $0.101 / published $0.000 CG stored). "
+        "Official tax-center paid sheets (not the 332797 year-alias trap): "
+        "2023 Mutual Funds Tax Sheet "
+        "https://www.dimensional.com/chmedia/480410/source/download/2023-tax-sheet-mutual-fund-(main).pdf "
+        "(Paid in 2023; DISVX NII $0.796370 / LT $0.025620; DFQTX NII $0.432810 / LT $0.131910; "
+        "dashes omitted) and 2025 Tax Sheet Main "
+        "https://www.dimensional.com/chmedia/480267/source/download/2025-Tax-Sheet-Main.pdf "
+        "(Paid in 2025; DISVX NII $1.159770 / LT $1.059970; DFELX ST $0.752160 / LT $1.233710). "
+        "QDI % / DRD / 163(j) pages skipped. Tickers mapped from the 2024 December book. "
+        "2021–2022 tax-sheet siblings were not on the live tax center; "
+        ".../332797/.../2021|2022|2023-distributions.pdf alias the 2024 December file. "
         "No public filled ICI file. Tax center: https://www.dimensional.com/us-en/tax"
     )
     live_limitations = "Year-end book is PDF. Fixture transcribes public paid/estimate rows."
@@ -421,6 +443,18 @@ class DimensionalSource(HtmlTableSource):
                 fixture="2024_capital_gain_distributions.html",
                 live=False,
             ),
+            PageSpec(
+                name="2023_tax_sheet_paid",
+                url="https://www.dimensional.com/chmedia/480410/source/download/2023-tax-sheet-mutual-fund-(main).pdf",
+                fixture="2023_tax_sheet_paid.html",
+                live=False,
+            ),
+            PageSpec(
+                name="2025_tax_sheet_paid",
+                url="https://www.dimensional.com/chmedia/480267/source/download/2025-Tax-Sheet-Main.pdf",
+                fixture="2025_tax_sheet_paid.html",
+                live=False,
+            ),
         ]
 
 
@@ -435,13 +469,21 @@ class ColumbiaThreadneedleSource(HtmlTableSource):
         "(e.g. IEVAX 0.86–1.25% of 5/31 NAV; ELGAX 18.62–21.95%). "
         "2024 YE finals "
         "https://www.columbiathreadneedleus.com/binaries/content/assets/cti/public/2024-cap-gains---mutual-funds.pdf "
-        "(LBSAX LT $1.38581; ELGAX LT $4.05105; IEVAX $0 CG not stored). "
-        "No public filled ICI file. 2023 YE PDF URL was 404. "
+        "(December Class A; LBSAX LT $1.38581; LEGAX Large Cap Growth LT $4.05105; "
+        "ELGAX is Select Large Cap Growth Dec LT $0.72066). "
+        "2022 YE finals "
+        "https://www.columbiathreadneedleus.com/binaries/content/assets/cti/public/2022_cap_gains_year_end.pdf "
+        "(LBSAX LT $0.56114; CBLAX LT $1.55549; published $0 omitted). "
+        "June midyear rows skipped. 2021 book is estimates (ranges) — not YE finals. "
+        "2023/2025 YE sibling URLs 404. No public filled ICI file. "
         "The 2025 mid-year all-funds PDF is wrap-unsafe (share-class % ranges "
         "interleaved with $0.00 fund headers) — not a column-safe full extract. "
         "Investor hub: https://www.columbiathreadneedleus.com/investor"
     )
-    live_limitations = "Estimates are PDF. Fixture transcribes the public mid-year ranges and 2024 YE rows."
+    live_limitations = (
+        "Estimates are PDF. Fixture transcribes the public mid-year ranges and "
+        "2022 / 2024 YE Class A December rows."
+    )
 
     def pages(self) -> list[PageSpec]:
         cti = "https://www.columbiathreadneedleus.com/binaries/content/assets/cti/public"
@@ -459,7 +501,14 @@ class ColumbiaThreadneedleSource(HtmlTableSource):
                 url=f"{cti}/2024-cap-gains---mutual-funds.pdf",
                 fixture="2024_year_end_distributions.html",
                 live=False,
-                large_aum_only=True,
+                large_aum_only=False,
+            ),
+            PageSpec(
+                name="2022_year_end_distributions",
+                url=f"{cti}/2022_cap_gains_year_end.pdf",
+                fixture="2022_year_end_distributions.html",
+                live=False,
+                large_aum_only=False,
             ),
         ]
 
