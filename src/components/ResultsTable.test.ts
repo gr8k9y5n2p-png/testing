@@ -39,6 +39,12 @@ describe("ResultsTable Search Paid history", () => {
     assert.match(source, /PAID_HISTORY_EMPTY/);
     assert.match(source, /Dist \$\/sh/);
     assert.match(source, /% NAV/);
+    assert.match(source, /Aftertax % of NAV/);
+    assert.match(source, /estimatePct\(fund\)/);
+    assert.doesNotMatch(source, /Ordinary income/);
+    assert.doesNotMatch(source, /Capital gains/);
+    assert.doesNotMatch(source, /estimatedCapitalGains/);
+    assert.doesNotMatch(source, /estimatedOrdinaryIncome/);
   });
 
   it("renders a visible Paid History module header, not only the kicker chip", () => {

@@ -55,6 +55,14 @@ export function isRollupEstimateType(type: string | null | undefined): boolean {
   return (type ?? "").trim().toLowerCase() === "total";
 }
 
+export function isPercentOfNavUnit(unit: string | null | undefined): boolean {
+  return (unit ?? "").trim().toLowerCase() === "percent_of_nav";
+}
+
+export function isPerShareUnit(unit: string | null | undefined): boolean {
+  return (unit ?? "").trim().toLowerCase() === "per_share";
+}
+
 export function paidHistoryTypeLabel(estimateType: string): string {
   return PAID_HISTORY_TYPE_LABELS[estimateType] ?? estimateType;
 }
@@ -106,27 +114,24 @@ export function illustrationPaidTypeRows(
   const rows: IllustrationPaidTypeRow[] = [];
   for (const event of illustrationPriorYearPaidEvents(fund, now)) {
     const lines = (event.estimateTypeLines ?? []).filter(
-      (line) => !isRollupEstimateType(line.estimateType),
+      (line) =>
+        !isRollupEstimateType(line.estimateType) && isPerShareUnit(line.amountUnit),
     );
     if (lines.length) {
       for (const line of lines) {
-        const publishedPct =
-          line.amountUnit === "percent_of_nav" ? line.amount : null;
         rows.push({
           key: `${event.asOfDate}:${event.exDate ?? ""}:${line.estimateType}:${line.amountUnit}`,
           estimateType: line.estimateType,
-          perShare: line.amountUnit === "per_share" ? line.amount : null,
-          pctOfNav:
-            publishedPct ??
-            pctOfNavForFund({
-              estimatedDistributionAmount: line.amount,
-              publishedPctOfNav: null,
-              estimatedDistributionPctNav: null,
-              navOnDistributionDay: event.navOnDistributionDay,
-              publicationStage: event.publicationStage,
-              exDate: event.exDate,
-              payableDate: event.payableDate,
-            }),
+          perShare: line.amount,
+          pctOfNav: pctOfNavForFund({
+            estimatedDistributionAmount: line.amount,
+            publishedPctOfNav: null,
+            estimatedDistributionPctNav: null,
+            navOnDistributionDay: event.navOnDistributionDay,
+            publicationStage: event.publicationStage,
+            exDate: event.exDate,
+            payableDate: event.payableDate,
+          }),
           asOfDate: event.asOfDate,
           recordDate: event.recordDate,
           exDate: event.exDate,
@@ -323,7 +328,8 @@ function upcomingTypeLines(fund: PaidMatrixFund): EstimateTypeLine[] {
   if (!hasCurrentYearUnpaidEstimate(fund)) return [];
   if (hideUpcomingAmounts(fund)) return [];
   return (fund.estimateTypeLines ?? []).filter(
-    (line) => !isRollupEstimateType(line.estimateType),
+    (line) =>
+      !isRollupEstimateType(line.estimateType) && isPerShareUnit(line.amountUnit),
   );
 }
 
@@ -378,7 +384,8 @@ export function illustrationPaidHistoryMatrix(
     const year = paidHistoryYearOf(event);
     const asOf = event.asOfDate ?? "";
     const lines = (event.estimateTypeLines ?? []).filter(
-      (line) => !isRollupEstimateType(line.estimateType),
+      (line) =>
+        !isRollupEstimateType(line.estimateType) && isPerShareUnit(line.amountUnit),
     );
     const typed = lines.length
       ? lines

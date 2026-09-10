@@ -16,7 +16,7 @@ import {
   withPeerContext,
 } from "./queries.ts";
 import { isUpcomingFund } from "./distribution-bucket.ts";
-import { formatWeeklyNavLabel } from "../lib/illustrate/nav-math.ts";
+import { formatWeeklyNavLabel, pctOfNavForFund } from "../lib/illustrate/nav-math.ts";
 
 const TODAY = "2026-09-10";
 
@@ -211,6 +211,10 @@ describe("Search Upcoming still-future unpaid prelims", () => {
       ),
       "STCG $0 still lists as an announced type",
     );
+    assert.ok(
+      Math.abs(fund.estimatedCapitalGains - 21.021) < 1e-6,
+      "percent_of_nav TCG must not add into Capital Gains $",
+    );
     const withWeeklyNav = mergeFundWithDistributions(
       mapFundsApiItem({
         ticker: "FBGRX",
@@ -249,6 +253,76 @@ describe("Search Upcoming still-future unpaid prelims", () => {
       ),
       "2025 final stays in Paid history, not Upcoming",
     );
+  });
+
+  it("does not add FGRIX percent_of_nav 7.49 into Capital Gains $", () => {
+    const rows: DataDistribution[] = [
+      row({
+        id: "fgrix-ltcg",
+        ticker: "FGRIX",
+        fund_name: "Growth & Income",
+        estimate_type: "long_term_capital_gains",
+        amount: "5.552000",
+        amount_unit: "per_share",
+        ex_date: "2026-09-11",
+        payable_date: "2026-09-14",
+        as_of: "2026-07-31",
+        publication_stage: "preliminary_estimate",
+      }),
+      row({
+        id: "fgrix-stcg",
+        ticker: "FGRIX",
+        fund_name: "Growth & Income",
+        estimate_type: "short_term_capital_gains",
+        amount: "0.109000",
+        amount_unit: "per_share",
+        ex_date: "2026-09-11",
+        payable_date: "2026-09-14",
+        as_of: "2026-07-31",
+        publication_stage: "preliminary_estimate",
+      }),
+      row({
+        id: "fgrix-tcg",
+        ticker: "FGRIX",
+        fund_name: "Growth & Income",
+        estimate_type: "total_capital_gains",
+        amount: "7.490000",
+        amount_unit: "percent_of_nav",
+        ex_date: "2026-09-11",
+        payable_date: "2026-09-14",
+        as_of: "2026-07-31",
+        publication_stage: "preliminary_estimate",
+      }),
+    ];
+    const fund = hydrate("FGRIX", "Growth & Income", "Fidelity", true, rows);
+    assert.equal(fund.bucket, "upcoming");
+    assert.ok(Math.abs(fund.estimatedDistributionAmount - 5.661) < 1e-6);
+    assert.ok(Math.abs(fund.estimatedCapitalGains - 5.661) < 1e-6);
+    assert.equal(fund.estimatedOrdinaryIncome, 0);
+    assert.ok(
+      fund.publishedPctOfNav != null && Math.abs(fund.publishedPctOfNav - 7.49) < 1e-6,
+      "manager % stays on publishedPctOfNav only",
+    );
+    assert.equal(
+      Math.abs(fund.estimatedCapitalGains - 13.151) < 1e-6,
+      false,
+      "7.49 percent_of_nav must not be added as dollars",
+    );
+    const live = overlayWeeklyNav(
+      fund,
+      mapFundsApiItem({
+        ticker: "FGRIX",
+        fund_name: "Growth & Income",
+        fund_family: "Fidelity",
+        has_estimate: true,
+        nav_per_share: "76.36",
+        nav_as_of: "2026-09-08",
+      }),
+    );
+    const pct = pctOfNavForFund(live, TODAY);
+    assert.ok(pct != null);
+    assert.equal(Number(pct.toFixed(2)), 7.41);
+    assert.ok(Math.abs(pct - (5.661 / 76.36) * 100) < 1e-9);
   });
 
   it("lists every unpaid announced fund — not only the selected ticker", () => {

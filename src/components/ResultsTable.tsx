@@ -568,14 +568,7 @@ function ExpandedDetails({ fund }: { fund: FundEstimateView }) {
     <dl className="mt-3 grid max-w-md grid-cols-2 gap-x-4 gap-y-2 rounded-md bg-paper px-3 py-2.5 text-xs text-muted">
       <Field label="CUSIP" value={fund.cusip} />
       <Field label="NAV" value={formatWeeklyNavLabel(fund)} />
-      <Field
-        label="Ordinary income"
-        value={formatUsd(fund.estimatedOrdinaryIncome, 4)}
-      />
-      <Field
-        label="Capital gains"
-        value={formatUsd(fund.estimatedCapitalGains, 4)}
-      />
+      <Field label="Aftertax % of NAV" value={estimatePct(fund)} />
       <Field label="Year" value={String(fund.distributionYear)} />
       <Field label="Share class" value={fund.shareClass} />
     </dl>
