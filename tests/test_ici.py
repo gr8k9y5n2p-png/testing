@@ -27,6 +27,9 @@ def test_large_aum_allowlist_covers_heroes() -> None:
         "GLD",
         "VNQ",
         "BNDX",
+        "VGT",
+        "VCIT",
+        "SCHA",
         "VTSAX",
         "VTIAX",
         "VOO",
@@ -157,9 +160,11 @@ def test_parse_ici_primary_2021_and_2025_ongoing() -> None:
     )
     assert voo.amount == Decimal("1.771000")
     assert len({r.ticker for r in y2025}) >= 200
-    assert {"VTSAX", "VOO", "VWENX", "VPMAX", "VFINX", "VNQ", "BNDX"} <= {r.ticker for r in y2025}
+    assert {"VTSAX", "VOO", "VWENX", "VPMAX", "VFINX", "VNQ", "BNDX", "VGT", "VCIT", "VTEB"} <= {r.ticker for r in y2025}
     vnq = next(r for r in y2025 if r.ticker == "VNQ" and r.estimate_type == EstimateType.ordinary_income)
     assert vnq.amount == Decimal("0.800500")
+    vgt = next(r for r in y2025 if r.ticker == "VGT" and r.estimate_type == EstimateType.ordinary_income)
+    assert vgt.amount == Decimal("0.757000")
     bndx_ye = next(
         r
         for r in y2025

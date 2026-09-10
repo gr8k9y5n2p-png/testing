@@ -130,7 +130,7 @@ def test_full_book_american_funds_invesco_dimensional() -> None:
 
 def test_full_book_vanguard_ici_and_next_wave() -> None:
     vg_funds, vg_tickers = _funds_and_tickers(VanguardSource())
-    assert {"VFIAX", "VTSAX", "VOO", "VFINX", "VNQ", "BNDX"} <= vg_tickers
+    assert {"VFIAX", "VTSAX", "VOO", "VFINX", "VNQ", "BNDX", "VGT", "VCIT", "VTEB", "VONG"} <= vg_tickers
     assert len(vg_tickers) >= 250
 
     bny_funds, bny_tickers = _funds_and_tickers(BnyMellonSource())
@@ -237,7 +237,25 @@ def test_full_book_artisan_ici_and_first_eagle() -> None:
     assert len(ssga_funds) >= 160
 
     schwab_funds, schwab_tickers = _funds_and_tickers(SchwabSource())
-    assert {"SWTSX", "SWPPX", "SWANX", "SWSSX", "SWISX", "SWLGX", "SCHD", "SCHX", "SCHB", "SCHF", "SCHG"} <= schwab_tickers
+    assert {
+        "SWTSX",
+        "SWPPX",
+        "SWANX",
+        "SWSSX",
+        "SWISX",
+        "SWLGX",
+        "SCHD",
+        "SCHX",
+        "SCHB",
+        "SCHF",
+        "SCHG",
+        "SCHA",
+        "SCHM",
+        "SCHE",
+        "SCHV",
+        "SCHZ",
+        "FNDF",
+    } <= schwab_tickers
     assert len(schwab_tickers) >= 70
     assert len(schwab_funds) >= 70
 

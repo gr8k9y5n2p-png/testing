@@ -31,6 +31,11 @@ MEGA = (
     "VNQ",
     "ARKK",
     "BNDX",
+    "VGT",
+    "VCIT",
+    "SCHA",
+    "SCHM",
+    "SCHE",
 )
 
 
