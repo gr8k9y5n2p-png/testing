@@ -179,6 +179,16 @@ def list_distributions(
         default=None,
         description="If true, only rows flagged for data-quality review (e.g. category_outlier).",
     ),
+    category: str | None = Query(
+        default=None,
+        description=(
+            "Optional Morningstar-style category filter (e.g. Large Blend). "
+            "Same vocabulary as GET /funds and GET /funds/categories. "
+            "Case/hyphen insensitive exact match on the fund's category. "
+            "Unknown names return an empty list (total=0). "
+            "Filters via fund identity (not raw_payload)."
+        ),
+    ),
     session: Session = Depends(get_session),
 ) -> DistributionListOut:
     page, page_size = resolve_page_from_limit_offset(
@@ -198,6 +208,7 @@ def list_distributions(
         ex_date_to=ex_date_to,
         publication_stage=publication_stage,
         needs_review=needs_review,
+        category=category,
         page=page,
         page_size=page_size,
     )
