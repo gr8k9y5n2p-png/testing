@@ -1,19 +1,25 @@
 /**
- * Homepage Paid History: finals/paid from GET /distributions, paged by funds.
- * Walks the year-filtered book server-side so `total` is the filtered fund
- * count — never Data's global row total. Never hydrates the book in the
- * browser. Never pulls Upcoming prelims.
+ * Homepage Paid History: finals/paid from GET /distributions.
+ *
+ * Pages the year window with `limit`/`offset` + `ex_date_from`/`ex_date_to`.
+ * Never walks successive Data pages. Family is `fund_family`.
+ * Category is Data `category` (same strings as `/funds/categories`).
+ * A 400 on `category` retries once without it (#127 may not be on Render).
+ * Never hydrates the book in the browser. Never pulls Upcoming prelims.
  */
 
-import { aggregateDistributions, type DataDistribution } from "@/data/aggregate-distributions";
 import { normalizePublicationStage } from "@/data/distribution-bucket";
+import type { FundPageQuery, FundPageResult } from "@/data/pagination";
 import {
-  clampPaidHistoryPageSize,
-  type FundPageQuery,
-  type FundPageResult,
-} from "@/data/pagination";
-import { pagePaidHistoryFunds } from "@/data/paid-history-book";
-import { withPeerContext } from "@/data/queries";
+  emptyPaidHistoryPage,
+  loadPaidHistoryPage,
+  paidHistoryCategoryParam,
+  paidHistoryExDateWindow,
+  shouldRetryPaidHistoryWithoutCategory,
+  PAID_HISTORY_SOURCE_UNAVAILABLE,
+  type PaidHistoryDataPage,
+  type PaidHistoryFetchWindow,
+} from "@/data/paid-history-walk";
 import { isRemoteDataApi } from "@/lib/data-api/config";
 import {
   loadDistributionPage,
@@ -24,99 +30,95 @@ export {
   filterPaidHistoryFunds,
   pagePaidHistoryFunds,
 } from "@/data/paid-history-book";
+export {
+  isTrustworthyFilteredRowTotal,
+  loadPaidHistoryPage,
+  paidHistoryCategoryParam,
+  paidHistoryExDateWindow,
+  shouldRetryPaidHistoryWithoutCategory,
+  PAID_HISTORY_BUDGET_MS,
+  PAID_HISTORY_DATA_PAGE_SIZE,
+  PAID_HISTORY_MAX_FETCH_ROUNDS,
+  PAID_HISTORY_SOURCE_LIVE,
+  PAID_HISTORY_SOURCE_PARTIAL,
+  PAID_HISTORY_SOURCE_UNAVAILABLE,
+} from "@/data/paid-history-walk";
 
-/** Data `/distributions` max `page_size`. User windows stay 1–50 funds. */
-export const PAID_HISTORY_DATA_PAGE_SIZE = 200;
-/** Safety cap on year-filtered Data pages (200 rows each, final+paid). */
-export const PAID_HISTORY_WALK_MAX_PAGES = 64;
-const PAID_HISTORY_WALK_BATCH = 8;
-
-function isFinalOrPaidRow(row: DataDistribution): boolean {
+function isFinalOrPaidRow(row: { publication_stage: string | null }): boolean {
   const stage = normalizePublicationStage(row.publication_stage);
   return stage === "final" || stage === "paid";
 }
 
-function emptyPaidPage(query: FundPageQuery): FundPageResult {
-  const limit = clampPaidHistoryPageSize(query.limit);
-  return {
-    items: [],
-    total: 0,
-    limit,
-    offset: 0,
-    years: [],
-  };
-}
-
-async function fetchFinalsAndPaids(
-  query: FundPageQuery,
-  page: number,
-): Promise<{ rows: DataDistribution[]; short: boolean }> {
-  const shared = {
-    q: query.query,
-    fundFamily: query.family,
-    category: query.category,
-    year: query.year,
-    page,
-    pageSize: PAID_HISTORY_DATA_PAGE_SIZE,
-  };
-  const [finals, paids]: DistributionPageResult[] = await Promise.all([
-    loadDistributionPage({ ...shared, publicationStage: "final" }),
-    loadDistributionPage({ ...shared, publicationStage: "paid" }),
-  ]);
-  const rows = [...finals.items, ...paids.items].filter(isFinalOrPaidRow);
-  const short =
-    finals.items.length < PAID_HISTORY_DATA_PAGE_SIZE &&
-    paids.items.length < PAID_HISTORY_DATA_PAGE_SIZE;
-  return { rows, short };
-}
-
-/**
- * Year / Family / Category filtered finals+paid. Stops on a short Data page
- * so a thin year is one request — never uses the unfiltered row `total`.
- */
-export async function loadPaidHistoryDistributionRows(
-  query: FundPageQuery,
-): Promise<DataDistribution[]> {
-  const first = await fetchFinalsAndPaids(query, 1);
-  const rows = [...first.rows];
-  if (first.short) return rows;
-
-  for (
-    let start = 2;
-    start <= PAID_HISTORY_WALK_MAX_PAGES;
-    start += PAID_HISTORY_WALK_BATCH
-  ) {
-    const pages = Array.from(
-      {
-        length: Math.min(
-          PAID_HISTORY_WALK_BATCH,
-          PAID_HISTORY_WALK_MAX_PAGES - start + 1,
-        ),
-      },
-      (_, index) => start + index,
-    );
-    const batch = await Promise.all(
-      pages.map((page) => fetchFinalsAndPaids(query, page)),
-    );
-    for (const part of batch) rows.push(...part.rows);
-    if (batch.some((part) => part.short)) break;
+function combinedFilteredTotal(
+  finals: DistributionPageResult,
+  paids: DistributionPageResult,
+): number | undefined {
+  const parts: number[] = [];
+  if (finals.ok && Number.isFinite(finals.total) && finals.total >= 0) {
+    parts.push(finals.total);
   }
-  return rows;
+  if (paids.ok && Number.isFinite(paids.total) && paids.total >= 0) {
+    parts.push(paids.total);
+  }
+  if (!parts.length) return undefined;
+  return parts.reduce((sum, value) => sum + value, 0);
+}
+
+export async function fetchPaidHistoryDataPage(
+  query: FundPageQuery,
+  window: PaidHistoryFetchWindow,
+): Promise<PaidHistoryDataPage> {
+  const { exDateFrom, exDateTo } = paidHistoryExDateWindow(query.year);
+  const category = paidHistoryCategoryParam(query.category);
+  const shared = {
+    fundFamily: query.family,
+    category,
+    exDateFrom,
+    exDateTo,
+    limit: window.limit,
+    offset: window.offset,
+    signal: window.signal,
+  };
+
+  const loadPair = (categoryFilter: string | undefined) =>
+    Promise.all([
+      loadDistributionPage({
+        ...shared,
+        category: categoryFilter,
+        publicationStage: "final",
+      }),
+      loadDistributionPage({
+        ...shared,
+        category: categoryFilter,
+        publicationStage: "paid",
+      }),
+    ]);
+
+  let [finals, paids]: DistributionPageResult[] = await loadPair(category);
+  if (
+    shouldRetryPaidHistoryWithoutCategory(category, [finals.status, paids.status])
+  ) {
+    [finals, paids] = await loadPair(undefined);
+  }
+  const rows = [...finals.items, ...paids.items].filter(isFinalOrPaidRow);
+  const failed = !finals.ok && !paids.ok;
+  return {
+    rows,
+    failed,
+    filteredTotal: failed ? undefined : combinedFilteredTotal(finals, paids),
+  };
 }
 
 export async function loadPaidHistoryPageFromDataApi(
   query: FundPageQuery = {},
 ): Promise<FundPageResult> {
-  const empty = emptyPaidPage(query);
+  const empty = emptyPaidHistoryPage(query, PAID_HISTORY_SOURCE_UNAVAILABLE);
   if (!isRemoteDataApi()) return empty;
 
   try {
-    const rows = await loadPaidHistoryDistributionRows(query);
-    if (!rows.length) return empty;
-    return pagePaidHistoryFunds(
-      withPeerContext(aggregateDistributions(rows)),
-      query,
-    );
+    return await loadPaidHistoryPage(query, {
+      fetchPage: fetchPaidHistoryDataPage,
+    });
   } catch {
     return empty;
   }

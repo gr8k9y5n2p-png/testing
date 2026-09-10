@@ -52,5 +52,6 @@ export function pagePaidHistoryFunds(
     limit,
     offset,
     years: collectTaxYearsFromFunds(filtered),
+    hasMore: false,
   };
 }

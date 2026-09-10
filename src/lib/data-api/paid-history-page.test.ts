@@ -9,6 +9,19 @@ import {
   filterPaidHistoryFunds,
   pagePaidHistoryFunds,
 } from "../../data/paid-history-book.ts";
+import {
+  isTrustworthyFilteredRowTotal,
+  loadPaidHistoryPage,
+  paidHistoryCategoryParam,
+  paidHistoryExDateWindow,
+  shouldRetryPaidHistoryWithoutCategory,
+  PAID_HISTORY_MAX_FETCH_ROUNDS,
+  PAID_HISTORY_SOURCE_LIVE,
+  PAID_HISTORY_SOURCE_PARTIAL,
+  PAID_HISTORY_SOURCE_UNAVAILABLE,
+  type PaidHistoryDataPage,
+  type PaidHistoryFetchWindow,
+} from "../../data/paid-history-walk.ts";
 import { PAID_HISTORY_PAGE_SIZES } from "../../data/pagination.ts";
 import { paidHistoryViews, withPeerContext } from "../../data/queries.ts";
 import type { FundEstimateView } from "../../data/types.ts";
@@ -78,19 +91,40 @@ describe("Search Paid History year-book page", () => {
     const dists = readFileSync(join(here, "distributions.ts"), "utf8");
     const dashboard = readFileSync(join(here, "../../components/Dashboard.tsx"), "utf8");
     const table = readFileSync(join(here, "../../components/ResultsTable.tsx"), "utf8");
+    const walk = readFileSync(join(here, "../../data/paid-history-walk.ts"), "utf8");
     assert.match(source, /publicationStage: "final"/);
     assert.match(source, /publicationStage: "paid"/);
     assert.match(source, /isFinalOrPaidRow/);
     assert.match(book, /isUpcomingFund/);
     assert.match(source, /pagePaidHistoryFunds/);
-    assert.match(source, /loadPaidHistoryDistributionRows/);
-    assert.match(source, /PAID_HISTORY_DATA_PAGE_SIZE = 200/);
-    assert.doesNotMatch(source, /Math\.max\(finals\.total/);
-    assert.doesNotMatch(source, /finals\.total|paids\.total/);
+    assert.match(source, /loadPaidHistoryPage/);
+    assert.match(source, /fundFamily: query\.family/);
+    assert.match(source, /paidHistoryCategoryParam/);
+    assert.match(source, /shouldRetryPaidHistoryWithoutCategory/);
+    assert.match(source, /exDateFrom/);
+    assert.match(source, /exDateTo/);
+    assert.match(source, /limit: window\.limit/);
+    assert.match(source, /offset: window\.offset/);
+    assert.match(walk, /ex_date_from/);
+    assert.match(walk, /ex_date_to/);
+    assert.match(walk, /PAID_HISTORY_MAX_FETCH_ROUNDS = 2/);
+    assert.match(walk, /PAID_HISTORY_BUDGET_MS = 8_000/);
+    assert.equal(PAID_HISTORY_MAX_FETCH_ROUNDS, 2);
+    assert.doesNotMatch(walk, /PAID_HISTORY_WALK_MAX_PAGES/);
+    assert.doesNotMatch(walk, /PAID_HISTORY_MAX_DATA_PAGES/);
+    assert.doesNotMatch(walk, /WALK_BATCH/);
+    assert.doesNotMatch(walk, /page_size=200 until short/);
+    assert.doesNotMatch(source, /loadPaidHistoryDistributionRows/);
+    assert.doesNotMatch(source, /year: query\.year/);
     assert.doesNotMatch(source, /DISTRIBUTION_MAX_PAGES/);
     assert.doesNotMatch(source, /preliminary_estimate/);
     assert.doesNotMatch(source, /updated_estimate/);
     assert.doesNotMatch(source, /SAMPLE_FUNDS|from ["']@\/data\/seed["']/);
+    assert.match(dists, /ex_date_to/);
+    assert.match(dists, /params\.set\("limit"/);
+    assert.match(dists, /params\.set\("offset"/);
+    assert.match(dists, /params\.set\("category"/);
+    assert.doesNotMatch(dists, /fund_category/);
     assert.match(dists, /loadDistributionPage/);
     assert.match(dists, /Never walks the book/);
     assert.match(dashboard, /paid_history/);
@@ -266,5 +300,244 @@ describe("Search Paid History year-book page", () => {
     assert.equal(page2of10.total, 40);
     assert.equal(page2of10.offset, 10);
     assert.notEqual(page2of10.items[0]?.ticker, funds[0]?.ticker);
+  });
+});
+
+function finalRow(
+  ticker: string,
+  year: number,
+  extras: Partial<DataDistribution> = {},
+): DataDistribution {
+  return row({
+    id: `${ticker}-${year}`,
+    ticker,
+    fund_identifier: ticker,
+    fund_name: ticker,
+    estimate_type: "long_term_capital_gains",
+    amount: "0.250000",
+    amount_unit: "per_share",
+    as_of: `${year}-12-15`,
+    ex_date: `${year}-12-12`,
+    payable_date: `${year}-12-15`,
+    publication_stage: "final",
+    fund_family: extras.fund_family ?? "Fidelity",
+    category: extras.category ?? "Large Blend",
+    ...extras,
+  });
+}
+
+function dataPage(
+  rows: DataDistribution[],
+  patch: Partial<PaidHistoryDataPage> = {},
+): PaidHistoryDataPage {
+  return {
+    rows,
+    failed: false,
+    filteredTotal: rows.length,
+    ...patch,
+  };
+}
+
+describe("Paid History year-window paging", () => {
+  it("does not walk page_size=200 until short — at most two Data rounds", () => {
+    const walk = readFileSync(join(here, "../../data/paid-history-walk.ts"), "utf8");
+    assert.match(walk, /PAID_HISTORY_MAX_FETCH_ROUNDS = 2/);
+    assert.match(walk, /deadline/);
+    assert.equal(PAID_HISTORY_MAX_FETCH_ROUNDS, 2);
+    assert.doesNotMatch(walk, /for \(let page = 1/);
+    assert.doesNotMatch(walk, /while \(true\)/);
+    assert.doesNotMatch(walk, /page_size=200/);
+  });
+
+  it("maps a calendar year to ex_date_from / ex_date_to", () => {
+    assert.deepEqual(paidHistoryExDateWindow(2026), {
+      exDateFrom: "2026-01-01",
+      exDateTo: "2026-12-31",
+    });
+    assert.deepEqual(paidHistoryExDateWindow(2025), {
+      exDateFrom: "2025-01-01",
+      exDateTo: "2025-12-31",
+    });
+    assert.deepEqual(paidHistoryExDateWindow(undefined), {});
+  });
+
+  it("year=2026 page 2 clamps to page 1 with rows when the filtered book fits", async () => {
+    const rows = Array.from({ length: 17 }, (_, index) =>
+      finalRow(`T${String(index + 1).padStart(2, "0")}`, 2026),
+    );
+    const offsets: number[] = [];
+    const fetchPage = async (
+      _query: unknown,
+      window: PaidHistoryFetchWindow,
+    ) => {
+      offsets.push(window.offset);
+      if (window.offset >= 17) {
+        return dataPage([], { filteredTotal: 17 });
+      }
+      return dataPage(rows, { filteredTotal: 17 });
+    };
+
+    const page2 = await loadPaidHistoryPage(
+      { year: 2026, limit: 50, offset: 50 },
+      { fetchPage },
+    );
+    assert.ok(offsets.length <= PAID_HISTORY_MAX_FETCH_ROUNDS);
+    assert.deepEqual(offsets, [50, 0]);
+    assert.equal(page2.total, 17);
+    assert.equal(page2.items.length, 17, "page 2 clamps back onto the year book");
+    assert.equal(page2.offset, 0);
+    assert.equal(page2.hasMore, false);
+    assert.equal(page2.sourceLabel, PAID_HISTORY_SOURCE_LIVE);
+    assert.ok(page2.items.some((fund) => fund.ticker === "T01"));
+  });
+
+  it("dense-year path uses the year-window filtered total and one Data fetch", async () => {
+    const calls: number[] = [];
+    const fetchPage = async (
+      _query: unknown,
+      window: PaidHistoryFetchWindow,
+    ) => {
+      calls.push(window.offset);
+      const rows = Array.from({ length: window.limit }, (_, index) =>
+        finalRow(
+          `D${String(window.offset + index).padStart(4, "0")}`,
+          2025,
+        ),
+      );
+      return dataPage(rows, { filteredTotal: 800 });
+    };
+
+    const page1 = await loadPaidHistoryPage(
+      { year: 2025, limit: 50, offset: 0 },
+      { fetchPage },
+    );
+    assert.equal(calls.length, 1, "no walk — one year-window page");
+    assert.ok(calls.length < 100, "must not attempt 100+ Data calls");
+    assert.equal(page1.items.length, 50);
+    assert.equal(page1.total, 800, "pager uses the filtered Data total");
+    assert.equal(page1.hasMore, true);
+    assert.notEqual(Math.ceil(page1.total / page1.limit), 511);
+    assert.equal(page1.sourceLabel, PAID_HISTORY_SOURCE_PARTIAL);
+
+    const page2 = await loadPaidHistoryPage(
+      { year: 2025, limit: 50, offset: 50 },
+      { fetchPage },
+    );
+    assert.equal(page2.items.length, 50);
+    assert.equal(page2.offset, 50);
+    assert.equal(page2.total, 800);
+    assert.notEqual(page2.items[0]?.ticker, page1.items[0]?.ticker);
+    assert.equal(page2.hasMore, true);
+  });
+
+  it("ignores an unfiltered global row total on a thin year page", () => {
+    assert.equal(isTrustworthyFilteredRowTotal(17, 50, 25515, 0), false);
+    assert.equal(isTrustworthyFilteredRowTotal(17, 50, 17, 0), true);
+    assert.equal(isTrustworthyFilteredRowTotal(50, 50, 800, 0), true);
+  });
+
+  it("502 / timeout returns honest empty and does not hang", async () => {
+    const failed = await loadPaidHistoryPage(
+      { year: 2026, limit: 50, offset: 0 },
+      { fetchPage: async () => ({ rows: [], failed: true }) },
+    );
+    assert.equal(failed.items.length, 0);
+    assert.equal(failed.total, 0);
+    assert.equal(failed.sourceLabel, PAID_HISTORY_SOURCE_UNAVAILABLE);
+
+    const timedOut = await loadPaidHistoryPage(
+      { year: 2026, limit: 50, offset: 0 },
+      {
+        fetchPage: async () => {
+          const error = new Error("aborted");
+          error.name = "AbortError";
+          throw error;
+        },
+      },
+    );
+    assert.equal(timedOut.items.length, 0);
+    assert.equal(timedOut.sourceLabel, PAID_HISTORY_SOURCE_UNAVAILABLE);
+  });
+
+  it("passes Family as fund_family and Category through on the year window", async () => {
+    const seen: Array<{
+      year?: number;
+      family?: string;
+      category?: string;
+      limit: number;
+      offset: number;
+    }> = [];
+    await loadPaidHistoryPage(
+      {
+        year: 2026,
+        family: "Fidelity",
+        category: "Large Growth",
+        limit: 50,
+        offset: 0,
+      },
+      {
+        fetchPage: async (query, window) => {
+          seen.push({
+            year: query.year,
+            family: query.family,
+            category: query.category,
+            limit: window.limit,
+            offset: window.offset,
+          });
+          return dataPage([
+            finalRow("FBGRX", 2026, {
+              fund_family: "Fidelity",
+              category: "Large Growth",
+            }),
+          ]);
+        },
+      },
+    );
+    assert.deepEqual(seen, [
+      {
+        year: 2026,
+        family: "Fidelity",
+        category: "Large Growth",
+        limit: 50,
+        offset: 0,
+      },
+    ]);
+    assert.deepEqual(paidHistoryExDateWindow(seen[0]?.year), {
+      exDateFrom: "2026-01-01",
+      exDateTo: "2026-12-31",
+    });
+  });
+
+  it("wires Category as the Data category param and retries once on 400", () => {
+    assert.equal(paidHistoryCategoryParam("Large Blend"), "Large Blend");
+    assert.equal(paidHistoryCategoryParam("  Large Growth  "), "Large Growth");
+    assert.equal(paidHistoryCategoryParam(""), undefined);
+    assert.equal(paidHistoryCategoryParam(undefined), undefined);
+    assert.equal(
+      shouldRetryPaidHistoryWithoutCategory("Large Blend", [400, 200]),
+      true,
+    );
+    assert.equal(
+      shouldRetryPaidHistoryWithoutCategory("Large Blend", [200, 200]),
+      false,
+    );
+    assert.equal(shouldRetryPaidHistoryWithoutCategory(undefined, [400]), false);
+    const source = readFileSync(join(here, "paid-history-page.ts"), "utf8");
+    assert.match(source, /loadPair\(undefined\)/);
+    assert.match(source, /categoryFilter/);
+  });
+
+  it("does not drop funds when Category is selected but Data rows have no category", async () => {
+    const result = await loadPaidHistoryPage(
+      { year: 2026, category: "Large Growth", limit: 50, offset: 0 },
+      {
+        fetchPage: async () =>
+          dataPage([
+            finalRow("MFEGX", 2026, { category: null, fund_category: null }),
+          ]),
+      },
+    );
+    assert.equal(result.items.length, 1);
+    assert.equal(result.items[0]?.ticker, "MFEGX");
   });
 });

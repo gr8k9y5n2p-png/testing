@@ -42,6 +42,20 @@ describe("Search Upcoming / Announced module chrome", () => {
     assert.match(dashboard, /onPaidFamily/);
     assert.match(dashboard, /onPaidCategory/);
     assert.match(dashboard, /setPaidOffset\(0\)/);
+    assert.match(
+      dashboard,
+      /onPaidFamily=\{\(family\) => applyFilters\(\{ \.\.\.filters, family \}\)\}/,
+    );
+    assert.match(
+      dashboard,
+      /onPaidCategory=\{\(category\) => applyFilters\(\{ \.\.\.filters, category \}\)\}/,
+    );
+    const apply = dashboard.slice(
+      dashboard.indexOf("function applyFilters"),
+      dashboard.indexOf("function applyPaidLimit"),
+    );
+    assert.match(apply, /setPaidOffset\(0\)/);
+    assert.match(apply, /setOffset\(0\)/);
     assert.match(dashboard, /<ResultsTable/);
     assert.doesNotMatch(
       dashboard,

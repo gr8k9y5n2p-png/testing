@@ -5,6 +5,8 @@ import { DATA_SOURCE } from "@/data/types";
 import { isRemoteDataApi } from "@/lib/data-api/config";
 import { loadFundPageFromDataApi } from "@/lib/data-api/funds-page";
 
+export const maxDuration = 15;
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const query = parseFundPageQuery(searchParams);
@@ -16,7 +18,9 @@ export async function GET(request: Request) {
     return Response.json({
       source: {
         kind: "live",
-        label: query.paidHistory ? "Data API /distributions" : "Data API /funds",
+        label: query.paidHistory
+          ? (live.sourceLabel ?? "Data API /distributions")
+          : "Data API /funds",
       },
       items: live.items,
       total: live.total,
@@ -25,6 +29,7 @@ export async function GET(request: Request) {
       count: live.items.length,
       data: live.items,
       years: live.years ?? collectTaxYearsFromFunds(live.items),
+      hasMore: live.hasMore === true,
     });
   }
 

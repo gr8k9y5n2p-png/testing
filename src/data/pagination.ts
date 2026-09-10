@@ -44,6 +44,13 @@ export type FundPageResult = {
   offset: number;
   /** Tax years observed on this page / Data payload. Never an invented range. */
   years?: number[];
+  /**
+   * More funds may exist beyond this window. Set when a Data page was full
+   * and the filtered fund count is not yet known — never a global row total.
+   */
+  hasMore?: boolean;
+  /** Honest live / partial / unavailable label for `/api/funds`. */
+  sourceLabel?: string;
 };
 
 export function clampPageSize(value: number | string | null | undefined): number {

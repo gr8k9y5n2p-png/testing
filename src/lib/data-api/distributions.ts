@@ -24,8 +24,12 @@ export type DistributionRowQuery = {
   year?: number;
   page?: number;
   pageSize?: number;
+  limit?: number;
+  offset?: number;
   exDateFrom?: string;
+  exDateTo?: string;
   asOfFrom?: string;
+  signal?: AbortSignal;
 };
 
 export type DistributionPageResult = {
@@ -33,6 +37,8 @@ export type DistributionPageResult = {
   total: number;
   page: number;
   pageSize: number;
+  ok: boolean;
+  status: number;
 };
 
 function dedupeRows(rows: DataDistribution[]): DataDistribution[] {
@@ -55,14 +61,23 @@ function dedupeRows(rows: DataDistribution[]): DataDistribution[] {
 }
 
 function distributionSearchParams(query: DistributionRowQuery): URLSearchParams {
-  const page = Math.max(1, Math.trunc(query.page ?? 1));
   const pageSize = Math.min(
     DISTRIBUTION_PAGE_SIZE,
-    Math.max(1, Math.trunc(query.pageSize ?? DISTRIBUTION_PAGE_SIZE)),
+    Math.max(
+      1,
+      Math.trunc(query.pageSize ?? query.limit ?? DISTRIBUTION_PAGE_SIZE),
+    ),
   );
+  const offset =
+    query.offset != null
+      ? Math.max(0, Math.trunc(query.offset))
+      : Math.max(0, (Math.max(1, Math.trunc(query.page ?? 1)) - 1) * pageSize);
+  const page = Math.floor(offset / pageSize) + 1;
   const params = new URLSearchParams();
   params.set("page", String(page));
   params.set("page_size", String(pageSize));
+  params.set("limit", String(pageSize));
+  params.set("offset", String(offset));
   if (query.q?.trim()) params.set("q", query.q.trim());
   if (query.ticker?.trim()) {
     params.set("ticker", normalizeTickerSymbol(query.ticker));
@@ -75,7 +90,6 @@ function distributionSearchParams(query: DistributionRowQuery): URLSearchParams 
   }
   if (query.category?.trim()) {
     params.set("category", query.category.trim());
-    params.set("fund_category", query.category.trim());
   }
   if (query.publicationStage?.trim()) {
     params.set("publication_stage", query.publicationStage.trim());
@@ -87,6 +101,9 @@ function distributionSearchParams(query: DistributionRowQuery): URLSearchParams 
   if (query.exDateFrom?.trim()) {
     params.set("ex_date_from", query.exDateFrom.trim());
   }
+  if (query.exDateTo?.trim()) {
+    params.set("ex_date_to", query.exDateTo.trim());
+  }
   if (query.asOfFrom?.trim()) {
     params.set("as_of_from", query.asOfFrom.trim());
   }
@@ -97,15 +114,30 @@ function distributionSearchParams(query: DistributionRowQuery): URLSearchParams 
 export async function loadDistributionPage(
   query: DistributionRowQuery = {},
 ): Promise<DistributionPageResult> {
-  const page = Math.max(1, Math.trunc(query.page ?? 1));
   const pageSize = Math.min(
     DISTRIBUTION_PAGE_SIZE,
-    Math.max(1, Math.trunc(query.pageSize ?? DISTRIBUTION_PAGE_SIZE)),
+    Math.max(
+      1,
+      Math.trunc(query.pageSize ?? query.limit ?? DISTRIBUTION_PAGE_SIZE),
+    ),
   );
-  const params = distributionSearchParams({ ...query, page, pageSize });
-  const response = await fetchDataApi(`/distributions?${params.toString()}`);
+  const offset =
+    query.offset != null
+      ? Math.max(0, Math.trunc(query.offset))
+      : Math.max(0, (Math.max(1, Math.trunc(query.page ?? 1)) - 1) * pageSize);
+  const page = Math.floor(offset / pageSize) + 1;
+  const params = distributionSearchParams({
+    ...query,
+    page,
+    pageSize,
+    limit: pageSize,
+    offset,
+  });
+  const response = await fetchDataApi(`/distributions?${params.toString()}`, {
+    signal: query.signal,
+  });
   if (!response.ok) {
-    return { items: [], total: 0, page, pageSize };
+    return { items: [], total: 0, page, pageSize, ok: false, status: response.status };
   }
   const payload = (await response.json()) as {
     items?: DataDistribution[];
@@ -124,7 +156,7 @@ export async function loadDistributionPage(
       : typeof payload.count === "number"
         ? payload.count
         : items.length;
-  return { items, total, page, pageSize };
+  return { items, total, page, pageSize, ok: true, status: response.status };
 }
 
 export async function loadDistributionRows(

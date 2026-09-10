@@ -118,5 +118,11 @@ describe("ResultsTable Search pager placement", () => {
     assert.doesNotMatch(pager, /py-2\.5/);
     assert.match(pager, /Funds per page/);
     assert.match(pager, /onLimit/);
+    assert.match(pager, /hasMore/);
+    assert.match(pager, /of \{total\}/);
+    assert.match(pager, /hasMore \? "\+" : ""/);
+    assert.match(pager, /hasMore \? `\$\{page\}\+` : `\$\{page\}\/\$\{pages\}`/);
+    assert.match(pager, /!hasMore && offset \+ limit >= total/);
+    assert.doesNotMatch(pager, /25515/);
   });
 });
