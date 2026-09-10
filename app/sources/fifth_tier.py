@@ -424,7 +424,13 @@ class VictorySource(HtmlTableSource):
         "is covered by the included `amundi` adapter (Eric 2026-09-08). "
         "2024 final Class A book: "
         "https://investor.vcm.com/assets/resources-mutualfunddoc/Victory-Funds-2024-Final-Ordinary-Income-and-Capital-Gains.pdf "
-        "(Integrity Discovery MMEAX ST $0.801347 / LT $3.015874 / 8.95% of NAV)."
+        "(Integrity Discovery MMEAX ST $0.801347 / LT $3.015874 / 8.95% of NAV). "
+        "Wave 7 lookback: official 2022 hyphenated + 2023 space-encoded I/II finals "
+        "(MMEAX 2022 LT $2.389672 / 2023 LT $0.390522; VETAX 2022 LT $2.782434 / "
+        "2023 LT $2.095967), 2023–2024 RS MF books (RSGRX 2023 LT $0.036599 / "
+        "2024 LT $2.023191; VIP series omitted), and 2023–2024 Portfolios III "
+        "(USSPX 2023 LT $0.515883 / 2024 LT $1.855318). 2021 I/II / RS / III "
+        "sibling URLs still 404 — unmatched / Undisclosed."
     )
     live_limitations = (
         "Integrity/Sycamore/RS/USAA books are PDF. Weekly walk uses the tax-center "
@@ -474,6 +480,48 @@ class VictorySource(HtmlTableSource):
                 name="2024_final_ordinary_income_and_capital_gains",
                 url="https://investor.vcm.com/assets/resources-mutualfunddoc/Victory-Funds-2024-Final-Ordinary-Income-and-Capital-Gains.pdf",
                 fixture="2024_final_ordinary_income_and_capital_gains.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="2024_rs_final_ordinary_income_and_capital_gains",
+                url="https://investor.vcm.com/assets/resources-mutualfunddoc/Victory-RS-and-VVI-Funds-2024-Final-Ordinary-Income-and-Capital-Gains.pdf",
+                fixture="2024_rs_final_ordinary_income_and_capital_gains.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="2024_portfolios_iii_final_ordinary_income_and_capital_gains",
+                url="https://investor.vcm.com/assets/resources-mutualfunddoc/Victory-Portfolios-III-Mutual-Funds-2024-Final-Income-and-Capital-Gain-Distributions.pdf",
+                fixture="2024_portfolios_iii_final_ordinary_income_and_capital_gains.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="2023_final_ordinary_income_and_capital_gains",
+                url="https://investor.vcm.com/assets/resources-mutualfunddoc/Victory%20Funds%202023%20Final%20Ordinary%20Income%20and%20Capital%20Gains.pdf",
+                fixture="2023_final_ordinary_income_and_capital_gains.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="2023_rs_final_ordinary_income_and_capital_gains",
+                url="https://investor.vcm.com/assets/resources-mutualfunddoc/Victory%20RS%20and%20VVI%202023%20Final%20Ordinary%20Income%20and%20Capital%20Gains.pdf",
+                fixture="2023_rs_final_ordinary_income_and_capital_gains.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="2023_portfolios_iii_final_ordinary_income_and_capital_gains",
+                url="https://investor.vcm.com/assets/resources-mutualfunddoc/Victory%20Portfolios%20III%202023%20Final%20Capital%20Gain%20and%20Income%20Distributions.pdf",
+                fixture="2023_portfolios_iii_final_ordinary_income_and_capital_gains.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="2022_final_ordinary_income_and_capital_gains",
+                url="https://investor.vcm.com/assets/resources-mutualfunddoc/Victory-Funds-2022-Final-Ordinary-Income-and-Capital-Gains.pdf",
+                fixture="2022_final_ordinary_income_and_capital_gains.html",
                 live=False,
                 role="history",
             ),

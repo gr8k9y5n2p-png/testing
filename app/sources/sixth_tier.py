@@ -571,11 +571,20 @@ class AlgerSource(HtmlTableSource):
         "Small Cap Growth Institutional I ALSRX LT $0.4912 / 2.7% of NAV). "
         "Record 12/16/2025; ex/pay 12/17/2025. Published $0.00 amounts are stored. "
         "The PDF lists International Small Cap A as ALCZX (same ticker as Opportunities Z) — that row is omitted. "
-        "Distrib_FUNDS_2024.pdf 404; no official 2024 ST/LT book stored."
+        "Wave 7 lookback: official unversioned Distrib_FUNDS.pdf Wayback "
+        "20230330013818 is the 2022 paid book (ACAAX LT $0.8384; ALARX LT $0.9783; "
+        "SPECX LT $0.3918). Tickers attached only where the 2025 book prints the "
+        "same fund name + class. Global Focus / International Focus / Weatherbie "
+        "Enduring Growth 2022 name rows omitted (2025 names differ — not invented). "
+        "Official Distrib_ETFS.pdf is the 2025 ETF book (ATFV ST $0.07080; FRTY "
+        "income $0.04095; AWEG LT $0.45647) plus Wayback 2021 (FRTY ST $1.0687) "
+        "and 2023 (ATFV income $0.0015). Distrib_FUNDS_2024.pdf 404; no official "
+        "2023/2024 MF ST/LT book stored."
     )
     live_limitations = (
-        "Year-end book is PDF. Weekly walk uses the DividendsDistributions hub + 2025 PDF; "
-        "empty/PDF-bytes pages are no-op success. 2024 official URL missing."
+        "Year-end book is PDF. Weekly walk uses the DividendsDistributions hub + 2025 "
+        "MF/ETF PDFs; empty/PDF-bytes pages are no-op success. 2023/2024 MF official "
+        "URLs missing."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -595,6 +604,35 @@ class AlgerSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
+            ),
+            PageSpec(
+                name="2025_etf_dividends_and_distributions",
+                url="https://www.alger.com/AlgerDocuments/Distrib_ETFS.pdf",
+                fixture="2025_etf_dividends_and_distributions.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
+            PageSpec(
+                name="2022_dividends_and_distributions",
+                url="https://www.alger.com/AlgerDocuments/Distrib_FUNDS.pdf",
+                fixture="2022_dividends_and_distributions.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="2023_etf_dividends_and_distributions",
+                url="https://www.alger.com/AlgerDocuments/Distrib_ETFs.pdf",
+                fixture="2023_etf_dividends_and_distributions.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="2021_etf_dividends_and_distributions",
+                url="https://www.alger.com/AlgerDocuments/Distrib_ETFs.pdf",
+                fixture="2021_etf_dividends_and_distributions.html",
+                live=False,
+                role="history",
             ),
         ]
 

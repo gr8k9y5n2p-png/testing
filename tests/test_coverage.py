@@ -232,6 +232,22 @@ def test_coverage_lookback_wave5_causeway_matthews(client: TestClient) -> None:
     assert "never invented" in " ".join(lookback["notes"]).lower()
 
 
+def test_coverage_lookback_wave7_victory_alger(client: TestClient) -> None:
+    for family in ("victory", "alger"):
+        fetched = client.post("/ingest/fetch", json={"fund_family": family, "mode": "fixture"})
+        assert fetched.status_code == 200, fetched.text
+    lookback = client.get("/coverage").json()["lookback_5y"]
+    by_year = lookback["funds_with_finals_by_year"]
+    by_year_mf = lookback["funds_with_finals_by_year_mf"]
+    assert by_year["2022"] >= 70
+    assert by_year["2023"] >= 50
+    assert by_year["2024"] >= 15
+    assert by_year["2025"] >= 80
+    assert by_year_mf["2022"] >= 70
+    assert by_year_mf["2023"] >= 50
+    assert "never invented" in " ".join(lookback["notes"]).lower()
+
+
 def test_coverage_lookback_wave6_american_beacon(client: TestClient) -> None:
     fetched = client.post("/ingest/fetch", json={"fund_family": "american_beacon", "mode": "fixture"})
     assert fetched.status_code == 200, fetched.text

@@ -2425,6 +2425,80 @@ def test_fifth_tier_fixtures() -> None:
     assert mmeax_24.amount == Decimal("3.015874")
     assert str(mmeax_24.as_of)[:4] == "2024"
 
+    victory_2023 = parse_distribution_html(
+        (ROOT / "victory" / "2023_final_ordinary_income_and_capital_gains.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://victory-2023",
+        fund_family="Victory Capital",
+    )
+    mmeax_23 = next(
+        r
+        for r in victory_2023
+        if r.ticker == "MMEAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert mmeax_23.amount == Decimal("0.390522")
+    assert mmeax_23.publication_stage == PublicationStage.final
+    assert str(mmeax_23.as_of)[:4] == "2023"
+    vetax_23 = next(
+        r
+        for r in victory_2023
+        if r.ticker == "VETAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert vetax_23.amount == Decimal("2.095967")
+
+    victory_2022 = parse_distribution_html(
+        (ROOT / "victory" / "2022_final_ordinary_income_and_capital_gains.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://victory-2022",
+        fund_family="Victory Capital",
+    )
+    mmeax_22 = next(
+        r
+        for r in victory_2022
+        if r.ticker == "MMEAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert mmeax_22.amount == Decimal("2.389672")
+    assert mmeax_22.publication_stage == PublicationStage.final
+    assert str(mmeax_22.as_of)[:4] == "2022"
+    vetax_22 = next(
+        r
+        for r in victory_2022
+        if r.ticker == "VETAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert vetax_22.amount == Decimal("2.782434")
+    assert {r.ticker for r in victory_2022 if r.ticker} >= {"MMEAX", "VETAX", "SSGSX"}
+
+    victory_rs_2023 = parse_distribution_html(
+        (ROOT / "victory" / "2023_rs_final_ordinary_income_and_capital_gains.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://victory-rs-2023",
+        fund_family="Victory Capital",
+    )
+    rsgrx_23 = next(
+        r
+        for r in victory_rs_2023
+        if r.ticker == "RSGRX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert rsgrx_23.amount == Decimal("0.036599")
+    assert not any("VIP" in (r.fund_name or "") for r in victory_rs_2023)
+
+    victory_iii_2023 = parse_distribution_html(
+        (ROOT / "victory" / "2023_portfolios_iii_final_ordinary_income_and_capital_gains.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://victory-iii-2023",
+        fund_family="Victory Capital",
+    )
+    usspx_23 = next(
+        r
+        for r in victory_iii_2023
+        if r.ticker == "USSPX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert usspx_23.amount == Decimal("0.515883")
+
 
 def test_sixth_tier_fixtures() -> None:
     sei = parse_distribution_html(
@@ -2836,6 +2910,65 @@ def test_sixth_tier_fixtures() -> None:
         if r.ticker == "CHUSX" and r.estimate_type == EstimateType.long_term_capital_gains
     )
     assert chusx.amount == Decimal("2.4670")
+
+    alger_2022 = parse_distribution_html(
+        (ROOT / "alger" / "2022_dividends_and_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://alger/2022",
+        fund_family="Alger / Fred Alger",
+    )
+    acaax_22 = next(
+        r
+        for r in alger_2022
+        if r.ticker == "ACAAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert acaax_22.amount == Decimal("0.8384")
+    assert acaax_22.publication_stage == PublicationStage.final
+    assert str(acaax_22.as_of)[:4] == "2022"
+    alarx_22 = next(
+        r
+        for r in alger_2022
+        if r.ticker == "ALARX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert alarx_22.amount == Decimal("0.9783")
+    specx_22 = next(
+        r
+        for r in alger_2022
+        if r.ticker == "SPECX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert specx_22.amount == Decimal("0.3918")
+    assert not any(r.ticker == "CHUSX" for r in alger_2022)
+    assert {r.ticker for r in alger_2022 if r.ticker} >= {"ACAAX", "ALARX", "SPECX", "ALBAX"}
+
+    alger_etf_2025 = parse_distribution_html(
+        (ROOT / "alger" / "2025_etf_dividends_and_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://alger/etf-2025",
+        fund_family="Alger / Fred Alger",
+    )
+    aweg = next(
+        r
+        for r in alger_etf_2025
+        if r.ticker == "AWEG" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert aweg.amount == Decimal("0.45647")
+
+    alger_etf_2021 = parse_distribution_html(
+        (ROOT / "alger" / "2021_etf_dividends_and_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://alger/etf-2021",
+        fund_family="Alger / Fred Alger",
+    )
+    frty_21 = next(
+        r
+        for r in alger_etf_2021
+        if r.ticker == "FRTY" and r.estimate_type == EstimateType.short_term_capital_gains
+    )
+    assert frty_21.amount == Decimal("1.0687")
+    assert frty_21.publication_stage == PublicationStage.final
 
     harding = parse_distribution_html(
         (ROOT / "harding_loevner" / "2025_year_end_distributions.html").read_text(
