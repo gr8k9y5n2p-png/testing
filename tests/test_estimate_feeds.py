@@ -100,7 +100,9 @@ def test_coverage_exposes_estimate_feed_readiness(session) -> None:
     assert fidelity.estimate_feed_status == "prelim_updated"
     assert any("FIIS_SP52_DPL6" in url for url in fidelity.estimate_feed_urls)
     assert fidelity.has_multi_year_history is True
+    assert fidelity.history_years == [2021, 2022, 2023, 2024, 2025, 2026]
     assert "FBGRX" in fidelity.performance_tickers
+    assert "FCNTX" in fidelity.performance_tickers
 
     amundi = by_slug["amundi"]
     assert amundi.estimate_feed_status == "prelim_updated"

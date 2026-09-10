@@ -127,7 +127,7 @@ app = FastAPI(
         "POST /illustrate/portfolio/compare is Current vs Proposed Allocation; "
         "GET /performance and POST /performance/growth are Growth of $X charts "
         "(independent of tax endpoints); "
-        "GET /coverage and POST /coverage/gaps support Aftertax portfolio review."
+        "GET /coverage (including lookback_5y) and POST /coverage/gaps support Aftertax portfolio review."
     ),
     version=__version__,
     lifespan=lifespan,

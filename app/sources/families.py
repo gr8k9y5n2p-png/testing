@@ -176,10 +176,23 @@ class FidelitySource(HtmlTableSource):
         "paid DPL6 book from the Wayback id_ snapshot captured 2025-03-21 "
         "(FBGRX Dec LT $1.66900 / Sep LT $11.08100; FCNTX Dec LT $0.85500; "
         "FDGRX Dec LT $3.57500; 350 tickers). "
-        "2021–2023 prior-year HTML is not in the CDX set (HPDY tool is SPA). "
+        "2021 DPL6 is the Wayback 20221209193656id_ capture: verified 2021 rows "
+        "through FIMIX (204 tickers; FCNTX Dec LT $1.62700 / Feb LT $0.40000; "
+        "FBGRX Dec LT $2.51300 / Sep ST $1.33300 LT $12.18700). Later range "
+        "fetches of that timestamp replay a 2024 digest — N–Z not invented. "
+        "2022–2023 DPL6 HTML is still not in CDX (HPDY SPA). FCNTX 2022–2023 "
+        "uses the official retail prospectus financial highlights (income "
+        "$0.08 / $0.08 and net realized gain $1.36 / $0.61) stored as "
+        "ordinary_income + total_capital_gains — ST/LT not published, not "
+        "invented. No QDI % columns. "
         "Hub: https://www.fidelity.com/mutual-funds/information/overview"
     )
-    live_limitations = "Live HTML tables on institutional.fidelity.com are supported (current estimates + prior-year paid). The live DPL6 URL rotates to the latest prior year — 2024 is fixture-only."
+    live_limitations = (
+        "Live HTML tables on institutional.fidelity.com are supported "
+        "(current estimates + prior-year paid). The live DPL6 URL rotates to "
+        "the latest prior year — 2021 and 2024 are fixture-only. 2022–2023 "
+        "DPL6 is unpublished in CDX; FCNTX highlights are prospectus-only."
+    )
 
     def pages(self) -> list[PageSpec]:
         dpl6 = "https://institutional.fidelity.com/app/tabbed/products/FIIS_SP10_DPL6.html?navId=324"
@@ -202,6 +215,18 @@ class FidelitySource(HtmlTableSource):
                 name="prior_year_distributions_2024",
                 url=dpl6,
                 fixture="prior_year_distributions_2024.html",
+                live=False,
+            ),
+            PageSpec(
+                name="prior_year_distributions_2021",
+                url=dpl6,
+                fixture="prior_year_distributions_2021.html",
+                live=False,
+            ),
+            PageSpec(
+                name="financial_highlights_2022_2023",
+                url="https://institutional.fidelity.com/app/funds-and-products/22/fidelity-contrafund-fcntx.html",
+                fixture="financial_highlights_2022_2023.html",
                 live=False,
             ),
         ]
@@ -303,7 +328,8 @@ class JPMorganSource(HtmlTableSource):
         "Official 2024 Section 19a Appendix A PDFs "
         "section-19a-notice-mutual-funds-dec-13-2024.pdf and "
         "section-19a-etf-notice-12-2024.pdf publish unsplit estimated CG $/share "
-        "(SEEGX / JLGMX 2024 LT mapping $0.79868). 2023 sibling 19a URLs 404."
+        "(SEEGX / JLGMX 2024 LT mapping $0.79868). 2023/2022/2021 sibling 19a "
+        "URLs re-probed 2026-09-10 still 404 — not invented."
     )
     live_limitations = "No scrapeable HTML grid; 19a books are PDF. Fixture / partner ingest only."
 
@@ -410,7 +436,9 @@ class InvescoSource(HtmlTableSource):
         "https://www.invesco.com/us/en/accounts/tax-center/open-end-tax-guide.html "
         "(2023–2025 most funds / REIT / SteelPath). No stable public file URL "
         "was fetchable from this environment (JS / 406) — PDF/HTML archives remain "
-        "the supported path until an ICI download URL is confirmed."
+        "the supported path until an ICI download URL is confirmed. 2021–2023 "
+        "ICI/HTML books were re-probed for the 5-year lookback and are still "
+        "not fetchable — not invented."
     )
     live_limitations = "Estimates are PDF/PR/contentdetail, not an HTML grid. Fixture mode transcribes the public tables."
 
