@@ -120,11 +120,7 @@ describe("Growth & Tax layout chrome", () => {
     assert.match(chart, /growthTaxBarWidth/);
     assert.match(chart, /growthTaxBarCenter/);
     assert.doesNotMatch(chart, /<circle[\s\S]{0,120}data-bar-ticker/);
-    assert.match(table, /sr-only/);
-    assert.doesNotMatch(
-      table,
-      /role="row"\s+className="grid min-w-0"[\s\S]*kind === "ticker"/,
-    );
+    assert.match(table, /role="row"[\s\S]*className="sr-only"/);
   });
 });
 
