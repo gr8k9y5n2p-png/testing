@@ -124,4 +124,9 @@ test("parseFundPageQuery and offsetToPage match the Data contract", () => {
   );
   assert.equal(navOnly.query, "FBGRX");
   assert.equal(navOnly.navOnly, true);
+
+  const upcoming = parseFundPageQuery(new URLSearchParams("upcoming=1&limit=200"));
+  assert.equal(upcoming.upcoming, true);
+  const upcomingParams = fundPageSearchParams({ upcoming: true, limit: 200 });
+  assert.equal(upcomingParams.get("upcoming"), "1");
 });

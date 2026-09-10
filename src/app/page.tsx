@@ -2,11 +2,13 @@ import { redirect } from "next/navigation";
 import { AftertaxApp, type CheckoutReturn } from "@/components/AftertaxApp";
 import {
   collectTaxYearsFromFunds,
-  getDistributionRepository,
+  getFacets,
+  getHighlights,
   mergeFundLists,
   mergeTaxYears,
 } from "@/data";
 import { loadCoverageSnapshot } from "@/lib/data-api/coverage";
+import { loadUpcomingAnnouncedFromDataApi } from "@/lib/data-api/distributions";
 import { loadFundPageFromDataApi } from "@/lib/data-api/funds-page";
 import { firstSearchParam } from "@/lib/illustrate/fund-history";
 import {
@@ -60,18 +62,17 @@ export default async function Home({
   if (firstParam(params.tab) === "lists") {
     redirect(listsTickersPath(parseListsQueryTickers(params)));
   }
-  const repository = await getDistributionRepository();
   const ticker = firstSearchParam(params.ticker);
-  const [catalog, focused, highlights, facets, coverage] = await Promise.all([
-    repository.search(),
+  const [catalog, focused, coverage] = await Promise.all([
+    loadUpcomingAnnouncedFromDataApi(),
     ticker
       ? loadFundPageFromDataApi({ query: ticker, limit: 10, offset: 0 })
       : Promise.resolve(null),
-    repository.highlights(5),
-    repository.facets(),
     loadCoverageSnapshot(),
   ]);
   const funds = mergeFundLists(catalog, focused?.items ?? []);
+  const highlights = getHighlights(funds, 5);
+  const facets = getFacets(funds);
   const years = mergeTaxYears(
     facets.years,
     coverage.years,

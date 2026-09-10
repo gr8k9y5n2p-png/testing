@@ -1,16 +1,16 @@
 import { aggregateDistributions, type DataDistribution } from "@/data/aggregate-distributions";
-import { mapFundsApiItem, type FundsApiItem } from "@/data/funds-list";
 import {
   findHydratedFund,
   indexFundsByIdentity,
   mergeFundWithDistributions,
 } from "@/data/hydrate-funds";
-import { fundPageSearchParams } from "@/data/pagination";
 import { withPeerContext } from "@/data/queries";
 import type { FundEstimateView } from "@/data/types";
 import { isRemoteDataApi } from "@/lib/data-api/config";
-import { loadDistributionsForFundPage } from "@/lib/data-api/distributions";
-import { fetchDataApi } from "@/lib/data-api/fetch";
+import {
+  loadDistributionsForFundPage,
+  loadFundIdentityByTicker,
+} from "@/lib/data-api/distributions";
 import { normalizeTickerSymbol } from "@/lib/data-api/request-ticker";
 import {
   emptyListRow,
@@ -41,39 +41,8 @@ async function mapPool<T, R>(
   return results;
 }
 
-function isFundsApiItem(row: unknown): row is FundsApiItem {
-  if (!row || typeof row !== "object") return false;
-  const record = row as Record<string, unknown>;
-  return (
-    "fund_name" in record ||
-    "fund_identifier" in record ||
-    "fundName" in record ||
-    "ticker" in record
-  );
-}
-
 async function loadFundIdentity(ticker: string): Promise<FundEstimateView | null> {
-  const params = fundPageSearchParams({ query: ticker, limit: 10, offset: 0 });
-  try {
-    const response = await fetchDataApi(`/funds?${params.toString()}`, {
-      fallbackPath: `/funds?${params.toString()}`,
-    });
-    if (!response.ok) return null;
-    const payload = (await response.json()) as {
-      items?: unknown[];
-      data?: unknown[];
-    };
-    const raw = Array.isArray(payload.items)
-      ? payload.items
-      : Array.isArray(payload.data)
-        ? payload.data
-        : [];
-    if (!raw.every(isFundsApiItem)) return null;
-    const items = raw.map((row) => mapFundsApiItem(row));
-    return items.find((item) => item.ticker === ticker) ?? null;
-  } catch {
-    return null;
-  }
+  return loadFundIdentityByTicker(ticker);
 }
 
 function rowsForTicker(rows: DataDistribution[], ticker: string): DataDistribution[] {
@@ -126,12 +95,13 @@ export async function loadListRowsFromDataApi(input: {
       : fromDists
         ? withPeerContext([fromDists])[0]
         : null;
-    const found = Boolean(identity || fromDists);
+    const snapshotRows = rowsForTicker(distRows, ticker);
+    const found = Boolean(identity || fromDists || snapshotRows.length);
     if (!found) return emptyListRow(ticker, "not_found");
     return listRowFromFund({
       ticker,
       fund,
-      distributionRows: rowsForTicker(distRows, ticker),
+      distributionRows: snapshotRows,
       found: true,
       today: input.today,
     });

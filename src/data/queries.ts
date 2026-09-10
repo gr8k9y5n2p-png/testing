@@ -227,7 +227,9 @@ export function buildSearchTableFunds(
 ): FundEstimateView[] {
   const family = filters.family;
   const category = filters.category;
-  const upcoming = splitFundsByBucket(catalog).upcoming.filter((fund) => {
+  const upcoming = splitFundsByBucket(
+    mergeFundLists(pageItems, catalog),
+  ).upcoming.filter((fund) => {
     if (family && fund.family !== family) return false;
     if (category && fund.category !== category) return false;
     return true;

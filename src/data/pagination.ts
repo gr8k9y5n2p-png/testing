@@ -26,6 +26,8 @@ export type FundPageQuery = SearchFilters & {
   direction?: SortDirection;
   /** Skip /distributions hydrate — weekly NAV identity only. */
   navOnly?: boolean;
+  /** Search Upcoming universe — unpaid announced only. */
+  upcoming?: boolean;
 };
 
 export type FundPageResult = {
@@ -88,6 +90,7 @@ export function parseFundPageQuery(
     limit,
     offset,
     navOnly: searchParams.get("nav_only") === "1",
+    upcoming: searchParams.get("upcoming") === "1",
   };
 }
 
@@ -133,5 +136,7 @@ export function fundPageSearchParams(query: FundPageQuery): URLSearchParams {
   if (query.year) params.set("year", String(query.year));
   if (query.sort) params.set("sort", query.sort);
   if (query.direction) params.set("direction", query.direction);
+  if (query.navOnly) params.set("nav_only", "1");
+  if (query.upcoming) params.set("upcoming", "1");
   return params;
 }

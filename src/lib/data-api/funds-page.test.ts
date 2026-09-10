@@ -40,12 +40,24 @@ describe("Search / Sample Estimates fund page", () => {
     assert.match(source, /preliminary_estimate/);
     assert.match(source, /updated_estimate/);
     assert.match(source, /attachWeeklyNavFromFunds/);
+    assert.match(source, /attachWeeklyNavBestEffort/);
+    assert.match(source, /hasEstimate: true/);
     assert.match(source, /nav_per_share|mapFundsApiItem/);
     assert.match(source, /attempt < 2/);
+    assert.doesNotMatch(source, /for \(const ticker of missing\)/);
     const fundsPage = readFileSync(join(here, "funds-page.ts"), "utf8");
     assert.match(fundsPage, /navOnly/);
+    assert.match(fundsPage, /query\.upcoming/);
     assert.match(repo, /loadUpcomingAnnouncedFromDataApi/);
-    assert.match(repo, /mergeFundLists\(upcoming/);
+    assert.match(repo, /if \(upcoming\.length\)/);
+    assert.match(source, /upcoming/);
+    const page = readFileSync(join(here, "../../app/page.tsx"), "utf8");
+    assert.match(page, /loadUpcomingAnnouncedFromDataApi/);
+    assert.doesNotMatch(page, /getDistributionRepository/);
+    const app = readFileSync(join(here, "../../components/AftertaxApp.tsx"), "utf8");
+    assert.match(app, /upcoming=1|upcoming", "1"/);
+    const lists = readFileSync(join(here, "../../app/api/lists/route.ts"), "utf8");
+    assert.doesNotMatch(lists, /getDistributionRepository/);
   });
 
   it("keeps paid/final history off the has_estimate Upcoming gate", () => {

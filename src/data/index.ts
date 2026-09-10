@@ -9,6 +9,7 @@ export {
   paidEventsForFund,
   preferFinalPaidEvents,
 } from "./hydrate-funds";
+export { fundPickerMatches } from "./fund-picker-matches";
 export {
   buildSearchTableFunds,
   computeCategoryAverages,

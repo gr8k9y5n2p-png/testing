@@ -167,12 +167,35 @@ export async function loadDistributionsForFundPage(input: {
   return dedupeRows(rows);
 }
 
+function isFundsApiItem(row: unknown): row is FundsApiItem {
+  if (!row || typeof row !== "object") return false;
+  const record = row as Record<string, unknown>;
+  return (
+    "fund_name" in record ||
+    "fund_identifier" in record ||
+    "fundName" in record ||
+    "ticker" in record
+  );
+}
+
+/** Accept `{ items }`, `{ data }`, or a bare array. One bad row does not drop the page. */
+function fundsApiItemsFromPayload(payload: unknown): FundsApiItem[] {
+  if (Array.isArray(payload)) return payload.filter(isFundsApiItem);
+  if (!payload || typeof payload !== "object") return [];
+  const record = payload as { items?: unknown; data?: unknown };
+  const raw = Array.isArray(record.items)
+    ? record.items
+    : Array.isArray(record.data)
+      ? record.data
+      : [];
+  return raw.filter(isFundsApiItem);
+}
+
 /**
- * Search Upcoming / Announced universe: every unpaid manager-published
- * prelim/updated row the Data API exposes (`publication_stage` + still-future
- * `ex_date_from`). Never invent, never page through GET /funds identity.
+ * GET /funds identity (weekly `nav_per_share`). Retries. Never require
+ * `has_estimate` — Lists / Search still need NAV when the catalog flag is stale.
  */
-async function loadFundIdentityByTicker(
+export async function loadFundIdentityByTicker(
   ticker: string,
 ): Promise<FundEstimateView | null> {
   const key = ticker.trim().toUpperCase();
@@ -187,15 +210,7 @@ async function loadFundIdentityByTicker(
         if (attempt < 2) continue;
         return null;
       }
-      const payload = (await response.json()) as {
-        items?: FundsApiItem[];
-        data?: FundsApiItem[];
-      };
-      const items = Array.isArray(payload.items)
-        ? payload.items
-        : Array.isArray(payload.data)
-          ? payload.data
-          : [];
+      const items = fundsApiItemsFromPayload(await response.json());
       const match = items.find(
         (row) => (row.ticker ?? "").trim().toUpperCase() === key,
       );
@@ -230,15 +245,24 @@ async function attachWeeklyNavFromFunds(
     const ticker = ident.ticker.trim().toUpperCase();
     if (ticker) byTicker.set(ticker, ident);
   }
-  const missing = tickers.filter((ticker) => !byTicker.has(ticker));
-  for (const ticker of missing) {
-    const ident = await loadFundIdentityByTicker(ticker);
-    if (ident) byTicker.set(ticker, ident);
-  }
   return funds.map((fund) => {
     const ident = byTicker.get(fund.ticker.trim().toUpperCase());
     return ident ? mergeFundWithDistributions(ident, fund) : fund;
   });
+}
+
+const NAV_ATTACH_BUDGET_MS = 2500;
+
+async function attachWeeklyNavBestEffort(
+  funds: FundEstimateView[],
+): Promise<FundEstimateView[]> {
+  if (!funds.length) return funds;
+  return Promise.race([
+    attachWeeklyNavFromFunds(funds),
+    new Promise<FundEstimateView[]>((resolve) => {
+      setTimeout(() => resolve(funds), NAV_ATTACH_BUDGET_MS);
+    }),
+  ]).catch(() => funds);
 }
 
 export async function loadUpcomingAnnouncedFromDataApi(
@@ -257,9 +281,11 @@ export async function loadUpcomingAnnouncedFromDataApi(
     ]);
     if (!rows.length) return [];
     const upcoming = withPeerContext(aggregateDistributions(rows, today)).filter(
-      (fund) => isUpcomingFund(fund, today),
+      (fund) => isUpcomingFund({ ...fund, hasEstimate: true }, today),
     );
-    return attachWeeklyNavFromFunds(upcoming);
+    // Weekly NAV is best-effort. Never drop unpaid announced because identity
+    // fan-out is slow or Render dropped GET /funds.
+    return attachWeeklyNavBestEffort(upcoming);
   } catch {
     return [];
   }

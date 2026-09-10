@@ -1,4 +1,3 @@
-import { getDistributionRepository } from "@/data";
 import { loadListRowsFromDataApi } from "@/lib/data-api/lists-page";
 import { parseTickerList } from "@/lib/lists/parse-tickers";
 
@@ -11,9 +10,7 @@ export async function GET(request: Request) {
       .filter(Boolean)
       .join(","),
   );
-  const repository = await getDistributionRepository();
-  const catalog = await repository.search();
-  const items = await loadListRowsFromDataApi({ tickers, catalog });
+  const items = await loadListRowsFromDataApi({ tickers });
   return Response.json({
     items,
     tickers,

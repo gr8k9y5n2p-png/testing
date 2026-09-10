@@ -29,7 +29,8 @@ describe("fund typeahead empty-query wiring", () => {
   it("FundPicker does not open or fill matches until the user types", () => {
     const picker = read("FundPicker.tsx");
     assert.match(picker, /shouldOpenFundSuggestions/);
-    assert.match(picker, /if \(!query\.trim\(\)\) return \[\]/);
+    assert.match(picker, /fundPickerMatches/);
+    assert.match(picker, /fundPickerMatches\(funds, remoteFunds, query\)/);
     assert.match(picker, /showSuggestions\(query\)/);
     assert.match(picker, /showSuggestions\(next\)/);
     assert.doesNotMatch(picker, /setOpen\(true\)/);

@@ -12,7 +12,10 @@ import {
 import { hideUpcomingAmounts } from "../../data/hydrate-funds.ts";
 import type { FundEstimateView } from "../../data/types.ts";
 import { GROWTH_TAX_TYPE_LABELS } from "../illustrate/growth-tax-by-type.ts";
-import { pctOfNavForFund } from "../illustrate/nav-math.ts";
+import {
+  parsePositiveNav,
+  resolvePctOfNav,
+} from "../illustrate/nav-math.ts";
 
 /** Data API component types the Lists table shows as their own columns. */
 export const LIST_ESTIMATE_TYPES = [
@@ -222,9 +225,77 @@ export function upcomingEstimateTypeAmounts(
   return amounts;
 }
 
-function hasUpcomingEstimate(fund: FundEstimateView | null | undefined): boolean {
+function snapshotField(
+  rows: DataDistribution[],
+  field: "as_of" | "record_date" | "ex_date" | "payable_date",
+): string | null {
+  const dates = rows
+    .map((row) => isoDate(row[field]))
+    .filter((value): value is string => Boolean(value))
+    .sort();
+  return dates.at(-1) ?? null;
+}
+
+function snapshotNav(rows: DataDistribution[]): number | null {
+  for (const row of rows) {
+    const nav = parsePositiveNav(row.nav_on_distribution_day);
+    if (nav != null) return nav;
+  }
+  return null;
+}
+
+function snapshotStage(rows: DataDistribution[]): string | null {
+  for (const row of rows) {
+    const stage = (row.publication_stage ?? "").trim();
+    if (stage) return stage;
+  }
+  return null;
+}
+
+function snapshotFundName(rows: DataDistribution[]): string | null {
+  for (const row of rows) {
+    const name = (row.fund_name ?? "").trim();
+    if (name && name !== "—") return name;
+  }
+  return null;
+}
+
+function snapshotFamily(rows: DataDistribution[]): string | null {
+  for (const row of rows) {
+    const family = (row.fund_family ?? "").trim();
+    if (family && family !== "—") return family;
+  }
+  return null;
+}
+
+function distTotalFromTypes(
+  amounts: Record<ListEstimateType, number | null>,
+): number | null {
+  let sum = 0;
+  let any = false;
+  for (const type of LIST_ESTIMATE_TYPES) {
+    const value = amounts[type];
+    if (value == null) continue;
+    any = true;
+    sum += value;
+  }
+  return any ? sum : null;
+}
+
+/**
+ * Unpaid /distributions snapshots win even when catalog identity is
+ * `has_estimate: false` / paid (merge miss). Do not invent from paid/finals.
+ */
+function hasUpcomingEstimate(
+  fund: FundEstimateView | null | undefined,
+  distributionRows: DataDistribution[],
+  today?: string,
+): boolean {
+  if (latestUpcomingSnapshot(distributionRows, today).length) {
+    return true;
+  }
   if (!fund) return false;
-  return isUpcomingFund(fund) && !hideUpcomingAmounts(fund);
+  return isUpcomingFund(fund, today) && !hideUpcomingAmounts(fund);
 }
 
 export function listRowFromFund(input: {
@@ -236,29 +307,77 @@ export function listRowFromFund(input: {
 }): ListRow {
   const ticker = input.ticker.trim().toUpperCase();
   const fund = input.fund ?? null;
-  const found = input.found ?? Boolean(fund && (fund.ticker === ticker || fund.nav > 0 || fund.fundName !== "—"));
-  if (!found || !fund) {
+  const distributionRows = input.distributionRows ?? [];
+  const snapshot = latestUpcomingSnapshot(distributionRows, input.today);
+  const found =
+    input.found ??
+    Boolean(
+      snapshot.length ||
+        (fund &&
+          (fund.ticker === ticker || fund.nav > 0 || fund.fundName !== "—")),
+    );
+  if (!found && !fund && !snapshot.length) {
     return emptyListRow(ticker, "not_found");
   }
+  if (!fund && !snapshot.length) {
+    return emptyListRow(ticker, found ? "undisclosed" : "not_found");
+  }
 
-  const upcoming = hasUpcomingEstimate(fund);
-  const nav = fund.nav > 0 ? fund.nav : null;
+  const upcoming = hasUpcomingEstimate(fund, distributionRows, input.today);
+  const estimateTypes = upcoming
+    ? upcomingEstimateTypeAmounts(distributionRows, input.today)
+    : emptyEstimateTypes();
+  const distFromTypes = distTotalFromTypes(estimateTypes);
+  const distFromFund =
+    upcoming && fund && Number.isFinite(fund.estimatedDistributionAmount)
+      ? fund.estimatedDistributionAmount
+      : null;
+  const distPerShare = upcoming
+    ? distFromTypes ?? (distFromFund != null && distFromFund > 0 ? distFromFund : null)
+    : null;
+  const nav =
+    (fund && fund.nav > 0 ? fund.nav : null) ?? snapshotNav(snapshot);
+  const pctOfNav = upcoming
+    ? resolvePctOfNav({
+        publishedPctNav: fund?.publishedPctOfNav ?? null,
+        perShare: distPerShare,
+        weeklyNav: nav,
+        navOnDistributionDay:
+          fund?.navOnDistributionDay ?? snapshotNav(snapshot),
+        publicationStage: fund?.publicationStage ?? snapshotStage(snapshot),
+        exDate: snapshotField(snapshot, "ex_date") ?? fund?.exDate ?? null,
+        payableDate:
+          snapshotField(snapshot, "payable_date") ?? fund?.payableDate ?? null,
+        today: input.today,
+      })
+    : null;
+  const fundName =
+    (fund?.fundName && fund.fundName !== "—" ? fund.fundName : null) ??
+    snapshotFundName(snapshot);
+  const family =
+    (fund?.family && fund.family !== "—" ? fund.family : null) ??
+    snapshotFamily(snapshot);
+
   return {
     ticker,
-    fundName: fund.fundName && fund.fundName !== "—" ? fund.fundName : null,
-    family: fund.family && fund.family !== "—" ? fund.family : null,
+    fundName,
+    family,
     found: true,
     status: upcoming ? "upcoming" : "undisclosed",
     nav,
-    navAsOf: fund.navAsOf ?? null,
-    distPerShare: upcoming ? fund.estimatedDistributionAmount : null,
-    pctOfNav: upcoming ? pctOfNavForFund(fund, input.today) : null,
-    estimateTypes: upcoming
-      ? upcomingEstimateTypeAmounts(input.distributionRows ?? [], input.today)
-      : emptyEstimateTypes(),
-    asOfDate: upcoming ? isoDate(fund.asOfDate) : null,
-    recordDate: upcoming ? isoDate(fund.recordDate) : null,
-    exDate: upcoming ? isoDate(fund.exDate) : null,
+    navAsOf: fund?.navAsOf ?? null,
+    distPerShare,
+    pctOfNav,
+    estimateTypes,
+    asOfDate: upcoming
+      ? snapshotField(snapshot, "as_of") ?? isoDate(fund?.asOfDate)
+      : null,
+    recordDate: upcoming
+      ? snapshotField(snapshot, "record_date") ?? isoDate(fund?.recordDate)
+      : null,
+    exDate: upcoming
+      ? snapshotField(snapshot, "ex_date") ?? isoDate(fund?.exDate)
+      : null,
   };
 }
 

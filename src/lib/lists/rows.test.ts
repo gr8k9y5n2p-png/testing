@@ -181,6 +181,62 @@ describe("Lists upcoming rows", () => {
     assert.equal(list.distPerShare, null);
     assert.equal(list.nav, null);
   });
+
+  it("hydrates FBGRX from unpaid snapshots when identity is has_estimate:false / paid", () => {
+    const identity = mapFundsApiItem({
+      ticker: "FBGRX",
+      fund_name: "Blue Chip Growth",
+      fund_family: "Fidelity",
+      nav_per_share: 312.26,
+      has_estimate: false,
+    });
+    const fund = mergeFundWithDistributions(identity, null);
+    assert.equal(fund.hasEstimate, false);
+    assert.equal(fund.bucket, "paid");
+    const list = listRowFromFund({
+      ticker: "FBGRX",
+      fund,
+      distributionRows: FBGRX_ROWS,
+      found: true,
+      today: TODAY,
+    });
+    assert.equal(list.status, "upcoming");
+    assert.ok(list.nav != null && Math.abs(list.nav - 312.26) < 1e-4);
+    assert.ok(
+      list.distPerShare != null && Math.abs(list.distPerShare - 21.021) < 1e-6,
+    );
+    assert.ok(list.pctOfNav != null && list.pctOfNav > 0);
+    assert.equal(list.asOfDate, "2026-07-31");
+    assert.equal(list.exDate, "2026-09-11");
+    assert.ok(
+      list.estimateTypes.long_term_capital_gains != null &&
+        Math.abs(list.estimateTypes.long_term_capital_gains - 21.021) < 1e-6,
+    );
+    assert.equal(list.estimateTypes.short_term_capital_gains, 0);
+    assert.equal(list.estimateTypes.ordinary_income, null);
+    assert.equal(list.estimateTypes.qualified_dividend, null);
+  });
+
+  it("hydrates FBGRX columns from unpaid rows when catalog identity is missing", () => {
+    const list = listRowFromFund({
+      ticker: "FBGRX",
+      fund: null,
+      distributionRows: FBGRX_ROWS,
+      found: true,
+      today: TODAY,
+    });
+    assert.equal(list.status, "upcoming");
+    assert.ok(list.nav != null && Math.abs(list.nav - 312.26001) < 1e-4);
+    assert.ok(
+      list.distPerShare != null && Math.abs(list.distPerShare - 21.021) < 1e-6,
+    );
+    assert.equal(list.asOfDate, "2026-07-31");
+    assert.equal(list.exDate, "2026-09-11");
+    assert.ok(
+      list.estimateTypes.long_term_capital_gains != null &&
+        Math.abs(list.estimateTypes.long_term_capital_gains - 21.021) < 1e-6,
+    );
+  });
 });
 
 describe("Lists chrome lock", () => {

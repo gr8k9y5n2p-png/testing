@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { overlayWeeklyNav } from "@/data/hydrate-funds";
+import { getHighlights } from "@/data/queries";
+import { mergeFundLists, overlayWeeklyNav } from "@/data/hydrate-funds";
 import type { Facets, FundEstimateView, HighlightSets } from "@/data/types";
 import { Dashboard } from "@/components/Dashboard";
 import { DemoBanner } from "@/components/DemoBanner";
@@ -83,9 +84,14 @@ function AftertaxAppInner({
   ticker?: string | null;
 }) {
   const router = useRouter();
+  const [liveUpcoming, setLiveUpcoming] = useState<FundEstimateView[]>([]);
+  const book = useMemo(
+    () => mergeFundLists(liveUpcoming, funds),
+    [funds, liveUpcoming],
+  );
   const focusedFund = useMemo(
-    () => (ticker ? resolveFundView(funds, ticker) ?? null : null),
-    [funds, ticker],
+    () => (ticker ? resolveFundView(book, ticker) ?? null : null),
+    [book, ticker],
   );
   const [picked, setPicked] = useState<FundEstimateView | null | undefined>(
     undefined,
@@ -144,6 +150,31 @@ function AftertaxAppInner({
   }, [router]);
 
   useEffect(() => {
+    let cancelled = false;
+    const params = new URLSearchParams();
+    params.set("upcoming", "1");
+    params.set("limit", "200");
+    params.set("offset", "0");
+    void fetch(`/api/funds?${params.toString()}`)
+      .then((response) => (response.ok ? response.json() : null))
+      .then((body: { items?: FundEstimateView[]; data?: FundEstimateView[] } | null) => {
+        if (cancelled || !body) return;
+        const items = Array.isArray(body.items)
+          ? body.items
+          : Array.isArray(body.data)
+            ? body.data
+            : [];
+        setLiveUpcoming(items);
+      })
+      .catch(() => {
+        if (!cancelled) setLiveUpcoming([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
     if (!ticker) return;
     if (focusedFund && !coverage.isLive(focusedFund.family)) {
       void reportCoverageGap({
@@ -161,7 +192,7 @@ function AftertaxAppInner({
       setPaywallOpen(true);
       return;
     }
-    const catalog = funds.find(
+    const catalog = book.find(
       (row) =>
         row.ticker.trim().toUpperCase() === fund.ticker.trim().toUpperCase(),
     );
@@ -204,7 +235,7 @@ function AftertaxAppInner({
   return (
     <>
       <Hero
-        funds={funds}
+        funds={book}
         selected={selected}
         remaining={freemium.remaining}
         unlimited={freemium.unlimited}
@@ -244,9 +275,12 @@ function AftertaxAppInner({
           <DemoBanner />
         </div>
         <div className="mt-8">
-          <HighlightsSection highlights={highlights} onSelect={selectFund} />
+          <HighlightsSection
+            highlights={liveUpcoming.length ? getHighlights(book, 5) : highlights}
+            onSelect={selectFund}
+          />
           <Dashboard
-            funds={funds}
+            funds={book}
             facets={facets}
             onIllustrate={selectFund}
             onNotice={onNotice}
