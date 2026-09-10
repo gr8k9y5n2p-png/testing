@@ -7,6 +7,8 @@ import {
   growthTaxChartPad,
   startAmountLabel,
   startAmountLabelX,
+  underBarTickerFontSize,
+  underBarTickerLabel,
 } from "@/lib/charts/growth-tax-layout";
 import { formatCompactUsd, niceMoneyScale } from "@/lib/charts/money-axis";
 import {
@@ -15,7 +17,6 @@ import {
   type ChartPad,
   type YearLayout,
 } from "@/lib/charts/shared-axis";
-import { fundSeriesColor } from "@/lib/charts/series-colors";
 import { formatUsd } from "@/lib/format";
 import { isRemovableGrowthSeries } from "@/lib/illustrate/growth-selection";
 import type { GrowthLineSeries } from "@/lib/illustrate/growth-tax-series";
@@ -433,23 +434,8 @@ export function GrowthAndTaxChart({
           {years.map((year, yearIndex) =>
             taxModel.series.map((row, seriesIndex) => {
               const x = axis.barX(yearIndex, seriesIndex) + axis.barW / 2;
-              const fontSize = axis.count >= 5 ? 6.5 : axis.count >= 3 ? 8 : 9;
-              const compact = axis.count >= 4;
-              if (compact) {
-                return (
-                  <g key={`bar-ticker-${year}-${row.ticker}`}>
-                    <title>{row.ticker}</title>
-                    <circle
-                      data-bar-ticker={row.ticker}
-                      data-bar-year={year}
-                      cx={x}
-                      cy={height - 36}
-                      r={2.4}
-                      fill={fundSeriesColor(seriesIndex)}
-                    />
-                  </g>
-                );
-              }
+              const fontSize = underBarTickerFontSize(axis.count);
+              const label = underBarTickerLabel(row.ticker, axis.barW, fontSize);
               return (
                 <text
                   key={`bar-ticker-${year}-${row.ticker}`}
@@ -462,7 +448,8 @@ export function GrowthAndTaxChart({
                   fontSize={fontSize}
                   fontFamily="ui-monospace, monospace"
                 >
-                  {row.ticker}
+                  <title>{row.ticker}</title>
+                  {label}
                 </text>
               );
             }),

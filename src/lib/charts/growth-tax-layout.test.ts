@@ -10,6 +10,8 @@ import {
   labelSitsOffPlot,
   startAmountLabel,
   startAmountLabelX,
+  underBarTickerFontSize,
+  underBarTickerLabel,
 } from "./growth-tax-layout.ts";
 import { SHARED_CHART_WIDTH, yearLayout } from "./shared-axis.ts";
 import { formatCompactUsd } from "./money-axis.ts";
@@ -108,5 +110,19 @@ describe("Growth & Tax layout chrome", () => {
     assert.match(moduleSource, /growthTaxChartPad/);
     assert.match(moduleSource, /GrowthAndTaxTable/);
     assert.match(moduleSource, /axis=\{axis\}/);
+    assert.match(chart, /underBarTickerLabel/);
+    assert.match(chart, /data-bar-ticker/);
+    assert.doesNotMatch(chart, /<circle[\s\S]{0,120}data-bar-ticker/);
+  });
+});
+
+describe("underBarTickerLabel", () => {
+  it("keeps full tickers for 1–3 fund bar widths and shortens at 6", () => {
+    const wide = underBarTickerLabel("AGTHX", 28, underBarTickerFontSize(2));
+    assert.equal(wide, "AGTHX");
+    const six = underBarTickerLabel("AGTHX", 10.6, underBarTickerFontSize(6));
+    assert.ok(six.length >= 3);
+    assert.equal(six, six.toUpperCase());
+    assert.ok("AGTHX".startsWith(six));
   });
 });

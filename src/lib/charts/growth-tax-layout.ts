@@ -15,6 +15,25 @@ export const AXIS_LABEL_GAP_PX = 8;
 /** 9px ui-monospace advance — used only to size the left gutter. */
 export const AXIS_CHAR_PX = 5.6;
 
+/** Centered under-bar ticker. Truncates only when the bar is too narrow (4–6 funds). */
+export function underBarTickerLabel(
+  ticker: string,
+  barW: number,
+  fontSize: number,
+): string {
+  const key = ticker.trim().toUpperCase();
+  const advance = Math.max(fontSize * 0.6, 1);
+  const maxChars = Math.max(3, Math.floor((barW + 3) / advance));
+  return key.length <= maxChars ? key : key.slice(0, maxChars);
+}
+
+export function underBarTickerFontSize(fundCount: number): number {
+  if (fundCount >= 6) return 5.5;
+  if (fundCount >= 5) return 6;
+  if (fundCount >= 3) return 8;
+  return 9;
+}
+
 export function estimateAxisLabelWidth(text: string): number {
   return Math.ceil(Math.max(text.length, 1) * AXIS_CHAR_PX);
 }
