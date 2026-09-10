@@ -11,8 +11,6 @@ import {
 } from "@/lib/data-api/request-ticker";
 import { usePortfolioMissRequest } from "@/lib/data-api/use-portfolio-miss";
 import { useSearchMissRequest } from "@/lib/data-api/use-search-miss";
-import { DistributionDateStrip } from "@/components/DistributionDateStrip";
-import { useCoverage } from "@/components/coverage/CoverageProvider";
 import { shouldClearFundPickerSelection } from "@/components/illustrate/fund-picker-clear";
 import { shouldOpenFundSuggestions } from "@/components/illustrate/fund-picker-suggestions";
 
@@ -71,7 +69,6 @@ export function FundPicker({
   const [open, setOpen] = useState(false);
   const [remoteFunds, setRemoteFunds] = useState<FundEstimateView[]>([]);
   const [remotePending, setRemotePending] = useState(false);
-  const coverage = useCoverage();
 
   useEffect(() => {
     const q = query.trim();
@@ -239,7 +236,7 @@ export function FundPicker({
               <li key={fund.id}>
                 <button
                   type="button"
-                  className="flex w-full items-start justify-between gap-3 px-3 py-2.5 text-left hover:bg-paper"
+                  className="flex w-full items-start gap-3 px-3 py-2.5 text-left hover:bg-paper"
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => {
                     onSelect(fund);
@@ -254,32 +251,6 @@ export function FundPicker({
                     <span className="font-mono text-[11px] text-faint">
                       {fund.ticker} · {fund.family}
                     </span>
-                    <DistributionDateStrip
-                      fund={fund}
-                      compact
-                      showPayable
-                      className="mt-1"
-                    />
-                  </span>
-                  <span className="mt-0.5 flex shrink-0 flex-col items-end gap-1">
-                    <span
-                      className={`rounded-sm px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] ${
-                        fund.bucket === "paid"
-                          ? "bg-notice text-muted"
-                          : "bg-above-soft text-above"
-                      }`}
-                    >
-                      {fund.bucket === "paid" ? "Paid" : "Upcoming"}
-                    </span>
-                    {!coverage.isLive(fund.family) ? (
-                      <span className="rounded-sm bg-notice px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">
-                        Gap
-                      </span>
-                    ) : (
-                      <span className="rounded-sm bg-above-soft px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-above">
-                        Live
-                      </span>
-                    )}
                   </span>
                 </button>
               </li>
