@@ -65,8 +65,12 @@ class FranklinTempletonSource(HtmlTableSource):
         "and ClearBridge Tactical Dividend Income Class C (SMDLX) "
         "`.../SMDLX-section-19-notice-12-31-2025` (paid $0.149600 / RoC $0.073334). "
         "2024 sibling `.../ft-section-19-notice-12-31-2024` (income $0.0387 / RoC $0.0038). "
+        "Official 2025 closed-end calendar-year DIST-SUMM "
+        "https://www.franklintempleton.com/forms-literature/download/DIST-SUMM "
+        "(FT income $0.341 / LT $0.145 / RoC $0.024; EMO income $0.756 / RoC $3.504; "
+        "WDI income $1.931). Royce-branded CEFs stay on the Royce adapter. "
         "ICI reports hub is a JS SPA; no public filled Primary Layout download. "
-        "≥$1B open-end (FKINX) amounts were not on a scrapeable family PDF — skipped. "
+        "≥$1B open-end (FKINX / PEYAX) amounts were not on a scrapeable family PDF — skipped. "
         "Wave 3: open-end estimate hub remains a JS SPA — no YE 2021–2023 MF book ingested."
     )
     live_limitations = (
@@ -94,6 +98,12 @@ class FranklinTempletonSource(HtmlTableSource):
                 name="ft_section_19a_2024",
                 url="https://www.franklintempleton.com/forms-literature/download/ft-section-19-notice-12-31-2024",
                 fixture="2024_section_19a.html",
+                live=False,
+            ),
+            PageSpec(
+                name="2025_cef_distribution_summary",
+                url="https://www.franklintempleton.com/forms-literature/download/DIST-SUMM",
+                fixture="2025_cef_distribution_summary.html",
                 live=False,
             ),
         ]
@@ -189,14 +199,17 @@ class NuveenSource(HtmlTableSource):
         "Estimated 2025 annual taxable distributions (as of 10/31/2025) live in "
         "Nuveen’s document viewer "
         "https://documents.nuveen.com/Documents/Nuveen/Default.aspx?uniqueId=3c3be13d-d800-48e2-a537-c251162ab9f4 "
-        "(e.g. Core Equity TIIRX LT $1.97 / 6.49% of NAV). Hub: "
+        "and the same uniqueId with download=1 is the official PDF "
+        "(Core Equity TIIRX LT $1.97 / 6.49% of NAV; Dividend Growth NSBAX ST $0.04 / "
+        "LT $4.89 / 7.39% of NAV; Equity Index TINRX ST $0.21 / LT $0.33). Hub: "
         "https://www.nuveen.com/en-us/investments/tax-information-forms-and-applications. "
-        "The document-viewer URL returns a JavaScript shell (no fetchable PDF in this "
-        "environment) — remaining funds not transcribed. "
-        "No public filled ICI file. 2024 posted files are tax-character letters "
-        "(QDI / DRD / US-gov %), not ST/LT $/share — skipped, not invented."
+        "Wave 9 transcribes the full mutual-fund share-class book (~521 tickers). "
+        "Manager-printed $- is stored as published $0.00. Managed Accounts / SMA "
+        "portfolios omitted. Live viewer URL is a JavaScript shell — fixture fallback. "
+        "No public filled ICI file. 2024–2025 posted tax-character letters "
+        "(QDI / DRD / US-gov / exempt %) are not ST/LT $/share — skipped, not invented."
     )
-    live_limitations = "Estimate book is a PDF viewer, not scrapeable HTML. Fixture transcribes public rows."
+    live_limitations = "Estimate book is a PDF viewer, not scrapeable HTML. Fixture transcribes the public PDF."
 
     def pages(self) -> list[PageSpec]:
         return [

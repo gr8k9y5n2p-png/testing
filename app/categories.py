@@ -453,6 +453,22 @@ _CURATED_TICKERS: dict[str, str] = {
     "INIVX": "Equity Precious Metals",
     "MWMIX": "Large Blend",
     "NWHOX": "Technology",
+    "TIIRX": "Large Blend",
+    "TIGRX": "Large Blend",
+    "TINRX": "Large Blend",
+    "NSBAX": "Large Blend",
+    "FFEIX": "Large Value",
+    "EMO": "Natural Resources",
+    "WDI": "High Yield Bond",
+    "EMD": "Emerging Markets Bond",
+    "EMF": "Diversified Emerging Markets",
+    "TDF": "China Region",
+    "PIM": "Multisector Bond",
+    "PMM": "High Yield Muni",
+    "PMO": "Muni National Long",
+    "PPT": "Multisector Bond",
+    "HIO": "High Yield Bond",
+    "HYI": "High Yield Bond",
 }
 
 _CURATED_IDENTIFIERS: dict[str, str] = {
