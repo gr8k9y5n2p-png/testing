@@ -260,7 +260,7 @@ function addLineToCell(
       });
     }
   } else if (line.amountUnit === "percent_of_nav") {
-    next.pctOfNav = (next.pctOfNav ?? 0) + line.amount;
+    // Aftertax % is Dist ÷ NAV only. Manager percent_of_nav is not copied.
     if (!next.amountUnit) next.amountUnit = "percent_of_nav";
   }
   return next;
@@ -354,7 +354,7 @@ export function illustrationFundCardTypeRows(
       estimateType,
       label: fundCardTypeLabel(estimateType),
       perShare: line?.amountUnit === "per_share" ? line.amount : null,
-      pctOfNav: line?.amountUnit === "percent_of_nav" ? line.amount : null,
+      pctOfNav: null,
       amountUnit: line?.amountUnit ?? null,
       awaiting,
     };

@@ -117,6 +117,36 @@ function sortableIsoDate(value: string | null | undefined): string | null {
   return Number.isNaN(parsed.getTime()) ? null : value;
 }
 
+/**
+ * Aftertax % of NAV for Search sort: Dist $/share ÷ the correct NAV series.
+ * Upcoming → weekly NAV. Paid/final → nav on distribution day.
+ * Never manager-published percent_of_nav / estimatedDistributionPctNav.
+ * Mirrors `pctOfNavForFund` without importing nav-math (cycle).
+ */
+function aftertaxPctOfNavForSort(fund: FundEstimateView): number | null {
+  const perShare = Number(fund.estimatedDistributionAmount);
+  if (!Number.isFinite(perShare)) return null;
+  const stage = (fund.publicationStage ?? "").trim().toLowerCase();
+  const day = fund.exDate ?? fund.payableDate ?? "";
+  const paid =
+    stage === "final" ||
+    stage === "paid" ||
+    (day.length >= 10 && day <= new Date().toISOString().slice(0, 10));
+  const nav = paid ? fund.navOnDistributionDay : fund.nav;
+  if (nav == null || !(Number(nav) > 0)) return null;
+  return (perShare / Number(nav)) * 100;
+}
+
+function compareOptionalPct(
+  left: number | null,
+  right: number | null,
+): number {
+  if (left == null && right == null) return 0;
+  if (left == null) return 1;
+  if (right == null) return -1;
+  return left - right;
+}
+
 function compareFunds(
   a: FundEstimateView,
   b: FundEstimateView,
@@ -134,6 +164,11 @@ function compareFunds(
       return compareOptionalIsoDates(a.recordDate, b.recordDate);
     case "exDate":
       return compareOptionalIsoDates(a.exDate, b.exDate);
+    case "estimatedDistributionPctNav":
+      return compareOptionalPct(
+        aftertaxPctOfNavForSort(a),
+        aftertaxPctOfNavForSort(b),
+      );
     default:
       return a[key] - b[key];
   }

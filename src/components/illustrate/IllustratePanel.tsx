@@ -154,7 +154,6 @@ function formatFundCardTypeAmount(
   row: ReturnType<typeof illustrationFundCardTypeRows>[number],
 ): string {
   if (row.perShare != null) return `${formatUsd(row.perShare, 4)} / sh`;
-  if (row.pctOfNav != null) return formatSoftPct(row.pctOfNav);
   return "—";
 }
 

@@ -122,10 +122,11 @@ export function withPeerContext(funds: FundEstimate[]): FundEstimateView[] {
     const categoryAveragePctNav = averages.get(categoryPeerKey(fund)) ?? 0;
     return {
       ...fund,
-      estimatedDistributionPctNav: pct ?? fund.estimatedDistributionPctNav,
+      // Aftertax live/historical % only. Never manager-published percent_of_nav.
+      estimatedDistributionPctNav: pct ?? 0,
       categoryAveragePctNav: roundTo(categoryAveragePctNav, 4),
       vsCategoryPctNav: roundTo(
-        (pct ?? fund.estimatedDistributionPctNav) - categoryAveragePctNav,
+        pct == null ? 0 : pct - categoryAveragePctNav,
         4,
       ),
     };

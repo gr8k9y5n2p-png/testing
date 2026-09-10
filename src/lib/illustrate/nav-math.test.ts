@@ -7,6 +7,7 @@ import { mapFundsApiItem } from "../../data/funds-list.ts";
 import { aggregateDistributions, type DataDistribution } from "../../data/aggregate-distributions.ts";
 import { mergeFundWithDistributions } from "../../data/hydrate-funds.ts";
 import { paidHistoryViews, withPeerContext } from "../../data/queries.ts";
+import { sortFunds } from "../format.ts";
 import {
   fillNavPerShareInput,
   formatSoftPct,
@@ -320,5 +321,55 @@ describe("Search hydrate live NAV fields", () => {
     assert.match(panel, /mock \? seedNavLookup/);
     assert.match(fundsList, /nav_per_share/);
     assert.match(fundsList, /parsePositiveNav/);
+
+    const queries = readFileSync(join(here, "../../data/queries.ts"), "utf8");
+    const format = readFileSync(join(here, "../format.ts"), "utf8");
+    const compareCopy = readFileSync(
+      join(here, "portfolio-compare-copy.ts"),
+      "utf8",
+    );
+    const lists = readFileSync(join(here, "../lists/rows.ts"), "utf8");
+    assert.doesNotMatch(queries, /pct \?\? fund\.estimatedDistributionPctNav/);
+    assert.match(queries, /estimatedDistributionPctNav: pct \?\? 0/);
+    assert.match(format, /aftertaxPctOfNavForSort/);
+    assert.match(format, /case "estimatedDistributionPctNav"/);
+    assert.doesNotMatch(compareCopy, /\?\?[\s\n]+row\.pctOfNav/);
+    assert.match(lists, /upcomingPctOfNav\(distPerShare, nav\)/);
+  });
+
+  it("withPeerContext overwrites stored published % with Dist ÷ weekly NAV", () => {
+    const [view] = withPeerContext([
+      {
+        id: "fcpgx",
+        fundName: "Small Cap Growth",
+        ticker: "FCPGX",
+        cusip: "000000000",
+        family: "Fidelity",
+        category: "Small Growth",
+        shareClass: "A",
+        nav: 42.94,
+        estimatedDistributionAmount: 7.277,
+        estimatedOrdinaryIncome: 0,
+        estimatedCapitalGains: 7.277,
+        estimatedDistributionPctNav: 7.08,
+        publishedPctOfNav: 7.08,
+        publishedAt: "2026-07-31",
+        asOfDate: "2026-07-31",
+        recordDate: "2026-12-12",
+        exDate: "2026-12-15",
+        payableDate: "2026-12-17",
+        publicationStage: "preliminary_estimate",
+        bucket: "upcoming",
+        paidHistory: [],
+        distributionYear: 2026,
+      },
+    ]);
+    assert.ok(view);
+    assert.equal(Number(view.estimatedDistributionPctNav.toFixed(1)), 16.9);
+    assert.ok(Math.abs(view.estimatedDistributionPctNav - (7.277 / 42.94) * 100) < 1e-9);
+    assert.equal(
+      sortFunds([view], "estimatedDistributionPctNav", "desc")[0]?.ticker,
+      "FCPGX",
+    );
   });
 });
