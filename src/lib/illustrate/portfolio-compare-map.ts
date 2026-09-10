@@ -33,6 +33,7 @@ export {
   pctOfNavFromDist,
   publicationBucket,
   totalUpcomingTax,
+  holdingInUniverse,
   upcomingFromHolding,
   upcomingHoldingsForSide,
   upcomingRowsForSide,

@@ -11,7 +11,7 @@ import {
   TAX_DRAG_CARD_DETAIL,
   TAX_IMPACT_DELTA_DETAIL,
   UPCOMING_MODULE_HEADING,
-  UPCOMING_UNAVAILABLE_HEADLINE,
+  upcomingEmptyHeadline,
   YEAR_TAX_DETAIL,
   YEAR_TAX_EMPTY,
   YEAR_TAX_HEADING,
@@ -54,6 +54,7 @@ export type PortfolioCompareExportUpcoming = {
   estimatedTax: number | null;
   available: boolean;
   covered: boolean;
+  inUniverse: boolean;
   stageLabel: string;
   announcedDate: string | null;
   recordDate: string | null;
@@ -88,6 +89,7 @@ export type PortfolioCompareExportModel = {
 function sideModel(
   result: PortfolioCompareResponse,
   side: "current" | "proposed",
+  universeTickers?: ReadonlySet<string>,
 ): PortfolioCompareExportSide {
   const allocation = result[side];
   const filled = portfolioBookFilled(allocation);
@@ -104,7 +106,7 @@ function sideModel(
       weightPct: holding.weight_pct ?? null,
       holdingDollars: holding.holding_dollars,
     })),
-    upcoming: upcomingHoldingsForSide(allocation, side).map((row) => ({
+    upcoming: upcomingHoldingsForSide(allocation, side, undefined, universeTickers).map((row) => ({
       ticker: row.ticker,
       distributionDollars: row.distributionDollars,
       distributionPerShare: row.distributionPerShare,
@@ -114,6 +116,7 @@ function sideModel(
       estimatedTax: row.estimatedTax,
       available: row.available,
       covered: row.covered,
+      inUniverse: row.inUniverse,
       stageLabel: formatStageLabel(row.stage),
       announcedDate: row.announcedDate,
       recordDate: row.recordDate,
@@ -126,6 +129,7 @@ function sideModel(
 export function toPortfolioCompareExportModel(
   result: PortfolioCompareResponse,
   bookDollars: number,
+  universeTickers?: ReadonlySet<string>,
 ): PortfolioCompareExportModel {
   const canCompare = canComparePortfolioBooks(result);
   const impact = canCompare
@@ -136,8 +140,8 @@ export function toPortfolioCompareExportModel(
     bookDollars,
     generatedAt: new Date().toISOString(),
     source: result.source ?? "unknown",
-    current: sideModel(result, "current"),
-    proposed: sideModel(result, "proposed"),
+    current: sideModel(result, "current", universeTickers),
+    proposed: sideModel(result, "proposed", universeTickers),
     yearTax: calendarYearTaxTable(result),
     delta: {
       estimatedTax: canCompare ? result.deltas.estimated_tax : 0,
@@ -186,7 +190,7 @@ function sideHtml(side: PortfolioCompareExportSide): string {
       <p class="metric">Total tax impact <strong>${escapeHtml(
         side.upcoming.some((row) => row.available)
           ? money(side.totalUpcomingTax)
-          : UPCOMING_UNAVAILABLE_HEADLINE,
+          : upcomingEmptyHeadline(side.upcoming),
       )}</strong></p>
       <h3>Holdings</h3>
       <table>
@@ -196,7 +200,7 @@ function sideHtml(side: PortfolioCompareExportSide): string {
       <h3>${UPCOMING_MODULE_HEADING}</h3>
       <table>
         <thead><tr><th>Ticker</th><th>${DIST_AMOUNT_COLUMN}</th><th>${PCT_OF_NAV_COLUMN}</th><th>${DOLLAR_IMPACT_COLUMN}</th><th>${ANNOUNCED_COLUMN}</th><th>${RECORD_COLUMN}</th><th>${EX_COLUMN}</th></tr></thead>
-        <tbody>${upcoming || `<tr><td colspan="7" class="muted">${escapeHtml(side.holdings.length ? UPCOMING_UNAVAILABLE_HEADLINE : EMPTY_BOOK_INVITE)}</td></tr>`}</tbody>
+        <tbody>${upcoming || `<tr><td colspan="7" class="muted">${escapeHtml(side.holdings.length ? upcomingEmptyHeadline(side.upcoming) : EMPTY_BOOK_INVITE)}</td></tr>`}</tbody>
       </table>
     </section>`;
 }

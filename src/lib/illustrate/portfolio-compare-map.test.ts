@@ -828,6 +828,12 @@ describe("PortfolioCompare distribution tables", () => {
     assert.equal(rows[2]?.exDate, "2026-09-20");
     assert.equal(rows[3]?.available, false);
     assert.equal(rows[3]?.covered, false);
+    assert.equal(rows[0]?.inUniverse, true);
+    assert.equal(
+      upcomingHoldingsForSide(book, "current", TODAY, new Set(["AGTHX", "DODIX", "AMCAP"]))[3]
+        ?.inUniverse,
+      false,
+    );
     assert.equal(upcomingRowsForSide(book, "current", TODAY).length, 1);
   });
 
@@ -859,10 +865,10 @@ describe("PortfolioCompare distribution tables", () => {
     assert.equal(rows[0]?.available, true);
   });
 
-  it("formats stacked ticker lines as undisclosed / N/A instead of $0", () => {
+  it("formats stacked ticker lines as Awaiting Estimate / N/A instead of $0", () => {
     assert.equal(
       upcomingDistributionLine({ available: false, distributionDollars: null }),
-      "Est. Distribution: Undisclosed",
+      "Est. Distribution: Awaiting Estimate",
     );
     assert.equal(
       upcomingEstimatedTaxLine({
@@ -870,7 +876,7 @@ describe("PortfolioCompare distribution tables", () => {
         covered: true,
         estimatedTax: null,
       }),
-      "Estimated Tax: Undisclosed",
+      "Estimated Tax: Awaiting Estimate",
     );
     assert.doesNotMatch(
       upcomingDistributionLine({ available: false, distributionDollars: null }),
@@ -902,7 +908,15 @@ describe("PortfolioCompare distribution tables", () => {
     );
     assert.equal(
       upcomingPctOfNavAmount({ available: false, pctOfNav: null }),
-      "Undisclosed",
+      "Awaiting Estimate",
+    );
+    assert.equal(
+      upcomingPctOfNavAmount({
+        available: false,
+        inUniverse: false,
+        pctOfNav: null,
+      }),
+      "Add to universe",
     );
   });
 

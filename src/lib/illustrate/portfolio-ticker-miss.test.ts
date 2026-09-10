@@ -26,6 +26,7 @@ describe("Portfolio / Compare slot ticker miss wiring", () => {
     const compare = read("../../components/illustrate/PortfolioCompare.tsx");
     const column = read("../../components/illustrate/portfolio-compare/AllocationColumn.tsx");
     assert.match(field, /notifyPortfolioTickerMiss/);
+    assert.match(field, /tickerMissEmptyLabel/);
     assert.doesNotMatch(field, /fetch\(/);
     assert.doesNotMatch(field, /\/request\/ticker/);
     assert.match(compare, /NoticeToast/);
@@ -42,12 +43,15 @@ describe("Portfolio / Compare slot ticker miss wiring", () => {
     const hook = read("../data-api/use-portfolio-miss.ts");
     assert.match(picker, /usePortfolioMissRequest/);
     assert.match(picker, /notifyPortfolioTickerMiss/);
+    assert.match(picker, /tickerMissEmptyLabel/);
     assert.match(picker, /reportPortfolioMiss/);
     assert.match(homepage, /CompareWorkspace as HomepageFundCompare/);
     assert.match(workspace, /onNotice=\{onNotice\}/);
     assert.match(workspace, /NoticeToast/);
     assert.match(rail, /reportPortfolioMiss/);
     assert.match(rail, /pendingPeer \?/);
+    assert.match(rail, /Add to universe/);
+    assert.doesNotMatch(rail, /Not available \/ undisclosed/);
     assert.match(hook, /requestTickerOnPortfolioMiss/);
     assert.match(hook, /source=portfolio/);
     assert.doesNotMatch(hook, /source=search_miss/);

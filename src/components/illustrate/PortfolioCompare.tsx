@@ -98,6 +98,10 @@ export function PortfolioCompare({
   exportLabel = "Export",
 }: PortfolioCompareProps) {
   const funds = useMemo(() => catalogFunds(fundsProp ?? []), [fundsProp]);
+  const universeTickers = useMemo(
+    () => new Set(funds.map((fund) => fund.ticker.trim().toUpperCase()).filter(Boolean)),
+    [funds],
+  );
   const [bookDollars, setBookDollars] = useState(bookDollarsProp);
   const [bookInput, setBookInput] = useState(formatBookInput(bookDollarsProp));
   const [currentUnit, setCurrentUnit] = useState<AllocationUnit>("pct");
@@ -210,10 +214,16 @@ export function PortfolioCompare({
       .map((holding) => [holding.ticker.trim().toUpperCase(), holding.nav]),
   );
   const currentUpcomingHoldings = result
-    ? withUpcomingNav(upcomingHoldingsForSide(result.current, "current"), navByTicker)
+    ? withUpcomingNav(
+        upcomingHoldingsForSide(result.current, "current", undefined, universeTickers),
+        navByTicker,
+      )
     : [];
   const proposedUpcomingHoldings = result
-    ? withUpcomingNav(upcomingHoldingsForSide(result.proposed, "proposed"), navByTicker)
+    ? withUpcomingNav(
+        upcomingHoldingsForSide(result.proposed, "proposed", undefined, universeTickers),
+        navByTicker,
+      )
     : [];
   const yearTax = result ? calendarYearTaxTable(result) : null;
   const uniqueNavPrompt = navNeeded
@@ -391,7 +401,7 @@ export function PortfolioCompare({
 
       <p className="mt-5 text-center text-[10px] leading-relaxed text-faint">
         Weights × Portfolio Value → dollars. Missing or uncovered values stay
-        N/A or Undisclosed.
+        N/A, Awaiting Estimate, or Add to universe.
       </p>
       <CompactDisclaimer className="mt-1 text-center text-[10px] leading-relaxed text-faint" />
       <NoticeToast message={notice} onDismiss={dismissNotice} />

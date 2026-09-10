@@ -40,7 +40,13 @@ export function HomepagePortfolioCompare({
         headingAs="h1"
         onExport={(result, bookDollars) => {
           // Freemium gate stays stubbed on beta — export is available.
-          exportToPdf(toPortfolioCompareExportModel(result, bookDollars));
+          exportToPdf(
+            toPortfolioCompareExportModel(
+              result,
+              bookDollars,
+              new Set(catalog.map((fund) => fund.ticker.toUpperCase())),
+            ),
+          );
         }}
       />
     </section>

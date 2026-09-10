@@ -7,6 +7,7 @@ import { tickerSlotBorderClass } from "@/components/illustrate/ticker-slot-borde
 import {
   looksLikeExactTicker,
   notifyPortfolioTickerMiss,
+  tickerMissEmptyLabel,
 } from "@/lib/data-api/request-ticker";
 import type { PortfolioFundOption } from "@/lib/illustrate/portfolio-compare-types";
 import {
@@ -61,9 +62,10 @@ export function TickerField({
   const canClear = Boolean(display || hasSelection);
 
   function commitUnknown(typed: string) {
+    const tickerInUniverse = Boolean(findExactFund(funds, typed));
     setCleared(false);
     onSelect({ ticker: typed, fundName: "", nav: null });
-    notifyPortfolioTickerMiss(typed, false, onNotice);
+    notifyPortfolioTickerMiss(typed, tickerInUniverse, onNotice);
   }
 
   function clearSelection() {
@@ -232,7 +234,14 @@ export function TickerField({
           className="absolute z-30 mt-1 max-h-60 w-[min(100%,20rem)] overflow-auto rounded-md border border-line bg-surface shadow-lg"
         >
           {matches.length === 0 ? (
-            <li className="px-3 py-2.5 text-sm text-muted">No funds match.</li>
+            <li className="px-3 py-2.5 text-sm text-muted">
+              {tickerMissEmptyLabel({
+                query: open ? query : ticker,
+                tickerInUniverse: Boolean(
+                  findExactFund(funds, open ? query : ticker),
+                ),
+              })}
+            </li>
           ) : (
             matches.map((fund) => (
               <li key={fund.ticker} role="option" aria-selected={fund.ticker === ticker}>

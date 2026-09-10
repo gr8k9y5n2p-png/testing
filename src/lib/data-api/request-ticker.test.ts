@@ -3,6 +3,7 @@ import { afterEach, describe, it } from "node:test";
 import {
   isValidTickerSymbol,
   looksLikeExactTicker,
+  tickerMissEmptyLabel,
   normalizeTickerRequestResponse,
   normalizeTickerSymbol,
   noticeForTickerRequest,
@@ -77,6 +78,33 @@ describe("ticker request normalize", () => {
       shouldReportPortfolioMiss({ ticker: "", tickerInUniverse: false }),
       false,
     );
+  });
+
+  it("labels Compare / Portfolio slot misses Add to universe, not No funds match", () => {
+    assert.equal(
+      tickerMissEmptyLabel({ query: "ZZZZY", tickerInUniverse: false }),
+      "Add to universe",
+    );
+    assert.equal(
+      tickerMissEmptyLabel({ query: "AMCPX", tickerInUniverse: true }),
+      "No funds match.",
+    );
+    assert.equal(
+      tickerMissEmptyLabel({
+        query: "growth fund",
+        tickerInUniverse: false,
+      }),
+      "No funds match.",
+    );
+    assert.equal(
+      tickerMissEmptyLabel({
+        query: "ZZZZY",
+        tickerInUniverse: false,
+        pending: true,
+      }),
+      "Searching…",
+    );
+    assert.equal(TICKER_REQUEST.addToUniverse, "Add to universe");
   });
 
   it("reports a miss only for an exact ticker with no local row", () => {

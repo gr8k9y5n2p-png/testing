@@ -134,6 +134,8 @@ export {
   requestTickerOnPortfolioMiss,
   notifyPortfolioTickerMiss,
   shouldReportPortfolioMiss,
+  tickerMissEmptyLabel,
+  TICKER_REQUEST,
   TICKER_REQUEST_SOURCES,
   noticeForTickerRequest,
 } from "@/lib/request-ticker";

@@ -22,6 +22,10 @@ export const TICKER_REQUEST = {
   noteLabel: "Note (optional)",
   submit: "Request",
   submitting: "Sending…",
+  /** Compare / Portfolio slot miss — not Search “No funds match.” */
+  addToUniverse: "Add to universe",
+  noFundsMatch: "No funds match.",
+  searching: "Searching…",
 } as const;
 
 /**
@@ -264,6 +268,26 @@ export function shouldReportPortfolioMiss(input: {
   tickerInUniverse: boolean;
 }): boolean {
   return looksLikeExactTicker(input.ticker) && !input.tickerInUniverse;
+}
+
+/**
+ * Compare / Portfolio picker empty row.
+ * Exact ticker outside the universe → Add to universe (intake).
+ * Name / partial misses keep “No funds match.”
+ */
+export function tickerMissEmptyLabel(input: {
+  query: string;
+  tickerInUniverse: boolean;
+  pending?: boolean;
+}): string {
+  if (input.pending) return TICKER_REQUEST.searching;
+  if (shouldReportPortfolioMiss({
+    ticker: input.query,
+    tickerInUniverse: input.tickerInUniverse,
+  })) {
+    return TICKER_REQUEST.addToUniverse;
+  }
+  return TICKER_REQUEST.noFundsMatch;
 }
 
 async function requestDedupedTicker(

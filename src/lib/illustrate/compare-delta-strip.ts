@@ -1,6 +1,9 @@
 import { formatUsd } from "../format.ts";
 import type { CompareUpcomingDistribution } from "./compare-types.ts";
-import { UPCOMING_UNAVAILABLE_HEADLINE } from "./portfolio-compare-copy.ts";
+import {
+  upcomingEmptyLabel,
+  UPCOMING_AWAITING_ESTIMATE,
+} from "./portfolio-compare-copy.ts";
 
 export const COMPARE_DELTA_STRIP_HOLDING_DOLLARS = 10_000;
 
@@ -99,17 +102,18 @@ export function reservedDeltaStrip(
     {
       key: "upcoming_tax",
       label: COMPARE_DELTA_STRIP_LABELS.upcoming_tax,
-      headline: UPCOMING_UNAVAILABLE_HEADLINE,
+      headline: UPCOMING_AWAITING_ESTIMATE,
       detail: "unpaid announced",
       reserved: true,
     },
   ];
 }
 
-/** Single fund: pair Δ stays reserved. Upcoming is unpaid announced or Undisclosed. */
+/** Single fund: pair Δ stays reserved. Upcoming is unpaid announced or Awaiting / Add. */
 export function deltaStripFromSingleUpcoming(
   upcoming: { announced: boolean; dollars: number | null } | null | undefined,
   holdingDollars = COMPARE_DELTA_STRIP_HOLDING_DOLLARS,
+  inUniverse = true,
 ): CompareDeltaStripItem[] {
   const items = reservedDeltaStrip(holdingDollars);
   const announced = Boolean(upcoming?.announced);
@@ -121,7 +125,7 @@ export function deltaStripFromSingleUpcoming(
       headline:
         announced && dollars != null
           ? formatUsd(Math.round(dollars), 0)
-          : UPCOMING_UNAVAILABLE_HEADLINE,
+          : upcomingEmptyLabel(inUniverse),
       reserved: !(announced && dollars != null),
     };
   });

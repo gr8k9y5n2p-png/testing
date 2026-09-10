@@ -7,14 +7,14 @@ import {
   EX_COLUMN,
   PCT_OF_NAV_COLUMN,
   RECORD_COLUMN,
-  UPCOMING_AMOUNT_UNAVAILABLE,
+  isUpcomingEmptyAmount,
   UPCOMING_MODULE_DETAIL,
   UPCOMING_MODULE_HEADING,
   UPCOMING_SOFT_DASH,
-  UPCOMING_UNAVAILABLE_DETAIL,
-  UPCOMING_UNAVAILABLE_HEADLINE,
   upcomingDistributionPerShareAmount,
   upcomingDollarImpactAmount,
+  upcomingEmptyDetail,
+  upcomingEmptyHeadline,
   upcomingPctOfNavAmount,
 } from "@/lib/illustrate/portfolio-compare-copy";
 import type { UpcomingRow } from "@/lib/illustrate/portfolio-compare-map";
@@ -125,10 +125,10 @@ export function UpcomingTable({
         {!anyAvailable ? (
           <div className="px-1 py-5">
             <p className="font-serif text-base tracking-tight text-ink">
-              {UPCOMING_UNAVAILABLE_HEADLINE}
+              {upcomingEmptyHeadline(rows)}
             </p>
             <p className="mt-1 text-[12px] leading-relaxed text-muted">
-              {UPCOMING_UNAVAILABLE_DETAIL}
+              {upcomingEmptyDetail(rows)}
             </p>
           </div>
         ) : null}
@@ -158,27 +158,19 @@ export function UpcomingTable({
                     <td className="px-2 py-2 align-top text-right">
                       <MetricCell
                         value={perShare}
-                        undisclosed={
-                          perShare === UPCOMING_AMOUNT_UNAVAILABLE ||
-                          perShare === UPCOMING_SOFT_DASH
-                        }
+                        undisclosed={isUpcomingEmptyAmount(perShare)}
                       />
                     </td>
                     <td className="px-2 py-2 align-top text-right">
                       <MetricCell
                         value={pct}
-                        undisclosed={
-                          pct === UPCOMING_AMOUNT_UNAVAILABLE || pct === UPCOMING_SOFT_DASH
-                        }
+                        undisclosed={isUpcomingEmptyAmount(pct)}
                       />
                     </td>
                     <td className="px-2 py-2 align-top text-right">
                       <MetricCell
                         value={impact}
-                        undisclosed={
-                          impact === UPCOMING_AMOUNT_UNAVAILABLE ||
-                          impact === UPCOMING_SOFT_DASH
-                        }
+                        undisclosed={isUpcomingEmptyAmount(impact)}
                       />
                     </td>
                     <td className="px-2 py-2 align-top">
