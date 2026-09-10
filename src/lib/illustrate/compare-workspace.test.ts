@@ -326,6 +326,16 @@ describe("compare upcoming rows", () => {
     assert.equal(row.estimatedTax, null);
   });
 
+  it("builds Upcoming rows from filled slots before tax loads", () => {
+    const rows = upcomingRowsFromCompareTickers([
+      { ticker: "ZZZZY", fund: null, upcoming: null },
+    ]);
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0]?.ticker, "ZZZZY");
+    assert.equal(rows[0]?.inUniverse, false);
+    assert.equal(rows[0]?.available, false);
+  });
+
   it("moves catalog Upcoming to Paid History when ex-date has passed, including $0", () => {
     const afterEx = upcomingRowForCompareTicker({
       ticker: "ZEROX",

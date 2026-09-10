@@ -252,19 +252,28 @@ export function CompareWorkspace({
   const upcomingRows = useMemo(
     () =>
       upcomingRowsFromCompareTickers(
-        activeLoaded.map((item) => ({
-          ticker: item.ticker,
-          fund: item.fund,
-          holdingDollars,
-          navPerShare:
-            navOverrides[item.ticker] ??
-            (item.fund && item.fund.nav > 0 ? item.fund.nav : null),
-          upcoming: item.tax
-            ? toUpcomingSummary(item.tax.summary.upcoming_taxable_distribution, "left")
-            : null,
-        })),
+        filledTickers.map((ticker, index) => {
+          const loadedRow = activeLoaded.find((item) => item.ticker === ticker);
+          const fund =
+            resolveFundView(funds, ticker) ?? loadedRow?.fund ?? null;
+          return {
+            ticker,
+            fund,
+            holdingDollars,
+            navPerShare:
+              navOverrides[ticker] ??
+              (fund && fund.nav > 0 ? fund.nav : null),
+            upcoming: loadedRow?.tax
+              ? toUpcomingSummary(
+                  loadedRow.tax.summary.upcoming_taxable_distribution,
+                  "left",
+                )
+              : null,
+            index,
+          };
+        }),
       ),
-    [activeLoaded, holdingDollars, navOverrides],
+    [activeLoaded, filledTickers, funds, holdingDollars, navOverrides],
   );
   const prefetchTax = useMemo(
     () =>
@@ -286,20 +295,31 @@ export function CompareWorkspace({
     ) {
       return deltaStripFromPairMetrics(pairMetrics.metrics, holdingDollars);
     }
-    if (activeLoaded.length === 1) {
+    if (filledTickers.length === 1) {
+      const ticker = filledTickers[0];
+      const loadedRow = activeLoaded.find((item) => item.ticker === ticker);
       return deltaStripFromSingleUpcoming(
-        activeLoaded[0]?.tax
+        loadedRow?.tax
           ? toUpcomingSummary(
-              activeLoaded[0].tax.summary.upcoming_taxable_distribution,
+              loadedRow.tax.summary.upcoming_taxable_distribution,
               "left",
             )
           : null,
         holdingDollars,
-        Boolean(activeLoaded[0]?.fund),
+        Boolean(resolveFundView(funds, ticker) ?? loadedRow?.fund),
       );
     }
     return reservedDeltaStrip(holdingDollars);
-  }, [activeLoaded, combineState, holdingDollars, pairMetrics, pairReady, taxRates]);
+  }, [
+    activeLoaded,
+    combineState,
+    filledTickers,
+    funds,
+    holdingDollars,
+    pairMetrics,
+    pairReady,
+    taxRates,
+  ]);
 
   function commitHolding(raw: string) {
     const next = parseCompareHoldingDollars(raw, holdingDollars);
