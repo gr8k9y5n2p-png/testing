@@ -271,6 +271,7 @@ def infer_stage(*texts: str, source_url: str = "") -> PublicationStage | None:
         return None
 
     is_estimate = "estimate" in combined
+    is_estimate_page = "estimate" in blob
     is_updated = "updated" in blob or "revised" in blob
     is_preliminary = "preliminary" in blob
     is_midyear = bool(MIDYEAR_HORIZON_RE.search(combined))
@@ -279,6 +280,15 @@ def infer_stage(*texts: str, source_url: str = "") -> PublicationStage | None:
         return PublicationStage.preliminary_estimate
     if is_updated and is_estimate:
         return PublicationStage.updated_estimate
+    # Official paid YE books sometimes live at estimated-*.pdf paths
+    # (Northern Trust). Page copy saying paid year-end wins over the filename.
+    if (
+        "paid" in blob
+        and YEAR_END_HORIZON_RE.search(blob)
+        and not is_estimate_page
+        and not is_preliminary
+    ):
+        return PublicationStage.final
     if is_estimate:
         return PublicationStage.preliminary_estimate
     if is_midyear:

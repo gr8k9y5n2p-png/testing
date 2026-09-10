@@ -329,3 +329,21 @@ def test_infer_stage_midyear_paid_vs_estimate() -> None:
         )
         == PublicationStage.paid
     )
+    assert (
+        infer_stage(
+            "Northern Funds equity 2024 year-end paid capital gain distributions",
+            source_url=(
+                "https://ntam.northerntrust.com/content/dam/northerntrust/"
+                "investment-management/global/en/documents/account-resources/"
+                "tax-center/estimated-capital-gains-2024.pdf"
+            ),
+        )
+        == PublicationStage.final
+    )
+    assert (
+        infer_stage(
+            "Macquarie 2025 capital gains distribution estimates as of September 30, 2025",
+            source_url="https://mim.fgsfulfillment.com/download.aspx?sku=CGE-RET",
+        )
+        == PublicationStage.preliminary_estimate
+    )

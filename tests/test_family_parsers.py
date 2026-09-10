@@ -599,6 +599,22 @@ def test_next_tier_fixtures() -> None:
         if r.ticker == "NOSIX" and r.estimate_type == EstimateType.long_term_capital_gains
     )
     assert nosix.amount == Decimal("1.182288")
+    nt_2025_official = parse_distribution_html(
+        (ROOT / "northern_trust" / "2025_capital_gain_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url=(
+            "https://ntam.northerntrust.com/content/dam/ntam/us/en/documents/"
+            "account-resources/tax-center/all-investor/estimated-capital-gains-2025.pdf"
+        ),
+        fund_family="Northern Trust",
+    )
+    nosix_2025_official = next(
+        r
+        for r in nt_2025_official
+        if r.ticker == "NOSIX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert nosix_2025_official.publication_stage == PublicationStage.final
     nomix = next(
         r
         for r in nt
@@ -756,6 +772,23 @@ def test_next_tier_fixtures() -> None:
     )
     assert nosix_2024.amount == Decimal("0.699110")
     assert str(nosix_2024.as_of) == "2024-12-19"
+    nt_2024_official = parse_distribution_html(
+        (ROOT / "northern_trust" / "2024_capital_gain_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url=(
+            "https://ntam.northerntrust.com/content/dam/northerntrust/"
+            "investment-management/global/en/documents/account-resources/"
+            "tax-center/estimated-capital-gains-2024.pdf"
+        ),
+        fund_family="Northern Trust",
+    )
+    nosix_2024_official = next(
+        r
+        for r in nt_2024_official
+        if r.ticker == "NOSIX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert nosix_2024_official.publication_stage == PublicationStage.final
 
     nt_2021 = parse_distribution_html(
         (ROOT / "northern_trust" / "2021_capital_gain_distributions.html").read_text(
@@ -1282,6 +1315,18 @@ def test_third_tier_fixtures() -> None:
     )
     assert wfmix_2021.amount == Decimal("3.75956")
     assert sgrnx_2021.amount == Decimal("8.36656")
+    eivix_2021 = next(
+        r
+        for r in allspring_2021
+        if r.ticker == "EIVIX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert eivix_2021.amount == Decimal("2.51286")
+    emgnx_2021 = next(
+        r
+        for r in allspring_2021
+        if r.ticker == "EMGNX" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert emgnx_2021.amount == Decimal("0.18764")
 
     janus_2024 = parse_distribution_html(
         (ROOT / "janus_henderson" / "2024_distribution_estimates.html").read_text(encoding="utf-8"),
@@ -1508,6 +1553,18 @@ def test_third_tier_fixtures() -> None:
         if r.ticker == "MIGHX" and r.estimate_type == EstimateType.long_term_capital_gains
     )
     assert mighx_paid.amount == Decimal("4.20618")
+    mrgax_paid = next(
+        r
+        for r in mfs_paid
+        if r.ticker == "MRGAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert mrgax_paid.amount == Decimal("6.24390")
+    magwx_paid = next(
+        r
+        for r in mfs_paid
+        if r.ticker == "MAGWX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert magwx_paid.amount == Decimal("1.26392")
 
     mighx_years = {}
     for year, fname, expected in (
@@ -1541,6 +1598,18 @@ def test_third_tier_fixtures() -> None:
         if r.ticker == "MEIAX" and r.estimate_type == EstimateType.long_term_capital_gains
     )
     assert meiax_lt.amount == Decimal("1.01429")
+    mdidx_2021 = next(
+        r
+        for r in meiax_2021
+        if r.ticker == "MDIDX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert mdidx_2021.amount == Decimal("0.20404")
+    mrgax_2021 = next(
+        r
+        for r in meiax_2021
+        if r.ticker == "MRGAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert mrgax_2021.amount == Decimal("2.03573")
     assert str(meiax_lt.record_date) == "2021-12-15"
     assert str(meiax_lt.ex_date) == "2021-12-16"
     assert str(meiax_lt.payable_date) == "2021-12-17"
@@ -1742,6 +1811,19 @@ def test_fourth_tier_fixtures() -> None:
         if r.ticker == "WSTAX" and r.estimate_type == EstimateType.long_term_capital_gains
     )
     assert wstax.amount == Decimal("10.051")
+
+    mac_2025_paid = parse_distribution_html(
+        (ROOT / "macquarie" / "2025_paid_capital_gains.html").read_text(encoding="utf-8"),
+        source_url="https://mim.fgsfulfillment.com/download.aspx?sku=CGE-RET-ACT",
+        fund_family="Macquarie / Delaware Funds",
+    )
+    wstax_2025_paid = next(
+        r
+        for r in mac_2025_paid
+        if r.ticker == "WSTAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert wstax_2025_paid.amount == Decimal("10.603")
+    assert wstax_2025_paid.publication_stage == PublicationStage.final
 
     first_eagle = parse_distribution_html(
         (ROOT / "first_eagle" / "2025_estimated_income_and_gains.html").read_text(
@@ -1975,6 +2057,19 @@ def test_fourth_tier_fixtures() -> None:
         if r.ticker == "WSTAX" and r.estimate_type == EstimateType.long_term_capital_gains
     )
     assert wstax_2023.amount == Decimal("5.331")
+
+    mac_2022 = parse_distribution_html(
+        (ROOT / "macquarie" / "2022_paid_capital_gains.html").read_text(encoding="utf-8"),
+        source_url="https://mim.fgsfulfillment.com/download.aspx?sku=CGE-RET-ACT-2022",
+        fund_family="Macquarie / Delaware Funds",
+    )
+    wstax_2022 = next(
+        r
+        for r in mac_2022
+        if r.ticker == "WSTAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert wstax_2022.amount == Decimal("12.373")
+    assert wstax_2022.publication_stage == PublicationStage.final
     assert str(wstax_2023.record_date) == "2023-12-01"
     assert str(wstax_2023.ex_date) == "2023-12-04"
     assert str(wstax_2023.payable_date) == "2023-12-05"
