@@ -261,9 +261,11 @@ def test_search_history_as_of_and_stage(client: TestClient) -> None:
         },
     )
     assert prelim.status_code == 200
-    assert prelim.json()["total"] >= 2  # 2024 + 2025 estimate snapshots
-    stages = {item["publication_stage"] for item in prelim.json()["items"]}
-    assert stages == {"preliminary_estimate"}
+    # 2024/2025 prelims are scrubbed once same-year finals exist.
+    assert all(
+        not (item.get("ex_date") or item.get("as_of") or "").startswith(("2024", "2025"))
+        for item in prelim.json()["items"]
+    )
 
     year_2024 = client.get(
         "/distributions",
@@ -455,15 +457,15 @@ def test_search_multi_year_top_families(client: TestClient) -> None:
     }
     stages = {item["publication_stage"] for item in fbgrx.json()["items"]}
     assert "final" in stages
-    assert "preliminary_estimate" in stages
 
     trbcx_2022 = client.get(
         "/distributions",
         params={"fund_identifier": "TRBCX", "as_of_from": "2022-01-01", "as_of_to": "2022-12-31", "page_size": 50},
     )
-    assert trbcx_2022.json()["total"] >= 2  # prelim + final
+    assert trbcx_2022.json()["total"] >= 1
     stages_2022 = {item["publication_stage"] for item in trbcx_2022.json()["items"]}
-    assert {"preliminary_estimate", "final"} <= stages_2022
+    assert "final" in stages_2022
+    assert "preliminary_estimate" not in stages_2022
     assert any(
         Decimal(item["amount"]) == Decimal("6.039400")
         and item["publication_stage"] == "final"
@@ -473,7 +475,7 @@ def test_search_multi_year_top_families(client: TestClient) -> None:
 
     trbcx_years = client.get("/distributions", params={"fund_identifier": "TRBCX", "page_size": 50})
     as_ofs = {item["as_of"] for item in trbcx_years.json()["items"] if item.get("as_of")}
-    assert len(as_ofs) >= 5  # 2022 prelim + 2022–2025 finals
+    assert len(as_ofs) >= 4  # 2022–2025 finals; 2022 prelim scrubbed once final exists
 
     franchise_2024 = client.get(
         "/distributions",
@@ -531,7 +533,6 @@ def test_search_multi_year_top_families(client: TestClient) -> None:
     dgagx_years = {item["as_of"][:4] for item in dgagx.json()["items"] if item.get("as_of")}
     assert {"2022", "2023", "2024", "2025"} <= dgagx_years
     dgagx_stages = {item["publication_stage"] for item in dgagx.json()["items"]}
-    assert "preliminary_estimate" in dgagx_stages
     assert "final" in dgagx_stages
 
     swtsx = client.get("/distributions", params={"fund_identifier": "SWTSX", "page_size": 50})
@@ -971,11 +972,12 @@ def test_compare_hero_yoy_fixture_bars(client: TestClient) -> None:
         json={
             "mode": "yoy",
             "holding_dollars": 100000,
+            "nav_per_share": 45.70,
             "tax_rates": {},
             "selectors": {"fund_identifier": "amcap-fund"},
             "periods": [
-                {"year": 2024, "as_of": "2024-09-18"},
-                {"year": 2025, "as_of": "2025-09-19"},
+                {"year": 2024},
+                {"year": 2025},
             ],
         },
     )

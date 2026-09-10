@@ -66,9 +66,9 @@ def test_fixture_fetch_and_search_filters(client: TestClient) -> None:
     assert dates.json()["total"] >= 1
     assert all(item["ex_date"].startswith("2026-06") for item in dates.json()["items"])
 
-    pct = client.get("/distributions", params={"estimate_type": "total_capital_gains"})
-    assert pct.json()["total"] >= 1
-    assert any(item["amount_unit"] == "percent_of_nav" for item in pct.json()["items"])
+    ltcg = client.get("/distributions", params={"estimate_type": "long_term_capital_gains"})
+    assert ltcg.json()["total"] >= 1
+    assert any(item["amount_unit"] == "per_share" for item in ltcg.json()["items"])
 
     page1 = client.get("/distributions", params={"page": 1, "page_size": 5})
     page2 = client.get("/distributions", params={"page": 2, "page_size": 5})

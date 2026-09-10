@@ -13,6 +13,8 @@ def _record(
     amount: str,
     as_of: str,
     publication_stage: str | None = None,
+    ex_date: str | None = None,
+    payable_date: str | None = None,
 ) -> dict:
     payload = {
         "fund_family": fund_family,
@@ -25,6 +27,10 @@ def _record(
     }
     if publication_stage:
         payload["publication_stage"] = publication_stage
+    if ex_date:
+        payload["ex_date"] = ex_date
+    if payable_date:
+        payload["payable_date"] = payable_date
     return payload
 
 
@@ -42,6 +48,8 @@ def _seed_unique_funds(client: TestClient) -> None:
                     amount="1.10",
                     as_of="2025-11-15",
                     publication_stage="preliminary_estimate",
+                    ex_date="2026-12-16",
+                    payable_date="2026-12-17",
                 ),
                 _record(
                     fund_family="Vanguard",

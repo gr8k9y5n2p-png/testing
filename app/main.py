@@ -67,15 +67,18 @@ def _seed_fixture_if_empty() -> None:
     mode = settings.fetch_mode or "fixture"
     try:
         try:
-            from app.crud import scrub_qdi_percent_characterizations
+            from app.crud import scrub_qdi_percent_characterizations, scrub_stale_preliminary_estimates
 
             with app_db.SessionLocal() as session:
                 removed = scrub_qdi_percent_characterizations(session)
+                stale = scrub_stale_preliminary_estimates(session)
                 session.commit()
             if removed:
                 logger.info("Scrubbed %s QDI percent characterization rows", removed)
+            if stale:
+                logger.info("Scrubbed %s stale preliminary_estimate rows", stale)
         except Exception:
-            logger.exception("QDI percent scrub failed; continuing")
+            logger.exception("QDI / stale-prelim scrub failed; continuing")
         for source in list_sources():
             if not source.implemented:
                 continue
@@ -86,6 +89,16 @@ def _seed_fixture_if_empty() -> None:
                     created_total += int(result.created or 0)
             except Exception:
                 logger.exception("Fixture seed failed for %s; continuing", source.slug)
+        try:
+            from app.crud import scrub_stale_preliminary_estimates as scrub_stale_after_seed
+
+            with app_db.SessionLocal() as session:
+                stale = scrub_stale_after_seed(session)
+                session.commit()
+            if stale:
+                logger.info("Post-seed scrubbed %s stale preliminary_estimate rows", stale)
+        except Exception:
+            logger.exception("Post-seed stale-prelim scrub failed; continuing")
         try:
             from app.services.nav import refresh_navs
 
@@ -134,15 +147,18 @@ async def lifespan(_app: FastAPI):
     # Persistent Render disk keeps mis-parsed QDI % rows across deploys.
     if app_db.SessionLocal is not None:
         try:
-            from app.crud import scrub_qdi_percent_characterizations
+            from app.crud import scrub_qdi_percent_characterizations, scrub_stale_preliminary_estimates
 
             with app_db.SessionLocal() as session:
                 removed = scrub_qdi_percent_characterizations(session)
+                stale = scrub_stale_preliminary_estimates(session)
                 session.commit()
             if removed:
                 logger.info("Boot-scrubbed %s QDI percent characterization rows", removed)
+            if stale:
+                logger.info("Boot-scrubbed %s stale preliminary_estimate rows", stale)
         except Exception:
-            logger.exception("Boot QDI percent scrub failed; continuing")
+            logger.exception("Boot QDI / stale-prelim scrub failed; continuing")
     if _should_seed_on_start():
         # /health must come up before the full book finishes (~11k fixture rows).
         _start_background_seed()
