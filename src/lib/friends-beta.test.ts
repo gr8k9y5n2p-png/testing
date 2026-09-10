@@ -108,7 +108,7 @@ describe("friends-beta gate decision", () => {
     );
   });
 
-  it("challenges Search / Portfolio / Compare without a cookie", () => {
+  it("challenges Search / Compare / Portfolios without a cookie", () => {
     for (const pathname of ["/", "/portfolio", "/compare"]) {
       assert.deepEqual(
         friendsBetaGateDecision({ password: "secret", pathname }),

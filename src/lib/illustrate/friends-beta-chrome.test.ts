@@ -26,7 +26,7 @@ describe("friends-beta Portfolio / Compare chrome", () => {
       assert.doesNotMatch(source, /tax from Data API TBD/);
     }
     assert.doesNotMatch(portfolio, /sample \|\| !result/);
-    assert.match(portfolio, /Aftertax · Portfolio/);
+    assert.match(portfolio, /Aftertax · Portfolios/);
     assert.doesNotMatch(card, /model\.sample \? "Sample"/);
     assert.doesNotMatch(growth, /Aftertax · Sample/);
     assert.doesNotMatch(strip, / · demo/);
