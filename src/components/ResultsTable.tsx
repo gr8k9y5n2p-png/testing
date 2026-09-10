@@ -253,7 +253,7 @@ function FundSection({
                 role="group"
                 aria-label="Paid History year"
               >
-                {years.map((option) => (
+                {(year && !years.includes(year) ? [year, ...years] : years).map((option) => (
                   <button
                     key={option}
                     type="button"

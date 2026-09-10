@@ -345,7 +345,7 @@ export function Dashboard({
           sortDirection={sortDirection}
           onSort={toggleSort}
           year={paidYear}
-          years={toolbarFacets.years}
+            years={mergeTaxYears(toolbarFacets.years, [paidYear])}
           onYear={(nextYear) =>
             applyFilters({ ...filters, year: nextYear })
           }
