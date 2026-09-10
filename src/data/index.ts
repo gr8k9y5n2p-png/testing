@@ -22,8 +22,10 @@ export {
 export {
   distributionBucket,
   eventDateOf,
+  hasDisclosedUpcomingAmount,
   isoDate,
   isPastDistribution,
+  isStaleAnnouncedOnly,
   isUpcomingFund,
   publicationStageLabel,
 } from "./distribution-bucket";

@@ -1,3 +1,4 @@
+import { isUpcomingFund } from "../../data/distribution-bucket.ts";
 import type { FundEstimateView } from "../../data/types.ts";
 import { MAX_GROWTH_FUNDS } from "../charts/series-colors.ts";
 import { trailingCalendarPeriods } from "./compare-request.ts";
@@ -423,9 +424,9 @@ export function upcomingRowForCompareTicker(input: {
   };
 }
 
-/** has_estimate false is never Upcoming — every fund, not a per-ticker exception. */
+/** Unpaid future announcement only — never catalog $0 / stale as_of placeholders. */
 function catalogIsUnpaidAnnounced(fund?: FundEstimateView | null): boolean {
-  if (!fund || fund.hasEstimate === false || fund.bucket !== "upcoming") {
+  if (!fund || !isUpcomingFund(fund)) {
     return false;
   }
   return (

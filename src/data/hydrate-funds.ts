@@ -1,4 +1,5 @@
 import {
+  hasDisclosedUpcomingAmount,
   normalizePublicationStage,
   toPaidEvent,
   UPCOMING_STAGES,
@@ -11,9 +12,20 @@ import type { FundEstimate, FundEstimateView } from "./types.ts";
  * Paid / final YE history must never be hidden just because that flag is false.
  */
 export function hideUpcomingAmounts(
-  fund: Pick<FundEstimate, "bucket" | "hasEstimate">,
+  fund: Pick<FundEstimate, "bucket" | "hasEstimate"> &
+    Partial<
+      Pick<
+        FundEstimate,
+        | "estimatedDistributionAmount"
+        | "estimatedDistributionPctNav"
+        | "estimatedOrdinaryIncome"
+        | "estimatedCapitalGains"
+      >
+    >,
 ): boolean {
-  return fund.bucket !== "paid" && fund.hasEstimate === false;
+  if (fund.bucket === "paid") return false;
+  if (fund.hasEstimate === false) return true;
+  return !hasDisclosedUpcomingAmount(fund);
 }
 
 function isFinalOrPaidStage(stage: string | null | undefined): boolean {
@@ -154,9 +166,10 @@ export function findHydratedFund<T extends Pick<FundEstimate, "ticker" | "id">>(
   return undefined;
 }
 
-function catalogBucket(fund: Pick<FundEstimate, "hasEstimate" | "bucket">): FundEstimate["bucket"] {
-  if (fund.hasEstimate === false) return "paid";
-  return fund.bucket === "paid" ? "paid" : "upcoming";
+function catalogBucket(): FundEstimate["bucket"] {
+  // GET /funds identity is never Upcoming. A true unpaid future announcement
+  // has to come from /distributions — do not invent $0 UPDATED ESTIMATE rows.
+  return "paid";
 }
 
 /**
@@ -172,14 +185,18 @@ export function mergeFundWithDistributions(
     return {
       ...fund,
       paidHistory: [],
-      bucket: catalogBucket(fund),
+      bucket: catalogBucket(),
       hasEstimate: fund.hasEstimate === true,
     };
   }
 
   // Every fund: catalog `has_estimate: false` means unpaid Upcoming = none.
-  // Do not let paid/final YE rows or illustration math flip any ticker.
-  const hasUpcoming = fromDists.bucket === "upcoming" && fund.hasEstimate !== false;
+  // Do not let paid/final YE rows, stale announced-only dates, or $0
+  // placeholders flip any ticker into Upcoming.
+  const hasUpcoming =
+    fromDists.bucket === "upcoming" &&
+    fund.hasEstimate !== false &&
+    hasDisclosedUpcomingAmount(fromDists);
   return {
     ...fund,
     cusip: fund.cusip || fromDists.cusip,

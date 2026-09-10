@@ -27,8 +27,9 @@ export function mapFundsApiItem(row: FundsApiItem): FundEstimateView {
   const identifier = (row.fund_identifier ?? ticker ?? "").trim();
   const asOf = (row.latest_as_of ?? "").slice(0, 10);
   const year = Number(asOf.slice(0, 4)) || new Date().getUTCFullYear();
-  // Unpaid Upcoming only. `latest_as_of` is the newest distribution as_of
-  // (often a paid YE date) — never an Upcoming announce by itself.
+  // Catalog identity only. `has_estimate` / `latest_as_of` never invent an
+  // Upcoming row — `$0` + invented `updated_estimate` leaked the whole book.
+  // Upcoming requires an unpaid /distributions estimate that has not paid.
   const hasEstimate = Boolean(row.has_estimate);
   return {
     id: `fund:${identifier || ticker || row.fund_name || "unknown"}`,
@@ -50,8 +51,8 @@ export function mapFundsApiItem(row: FundsApiItem): FundEstimateView {
     recordDate: null,
     exDate: null,
     payableDate: null,
-    publicationStage: hasEstimate ? "updated_estimate" : null,
-    bucket: hasEstimate ? "upcoming" : "paid",
+    publicationStage: null,
+    bucket: "paid",
     paidHistory: [],
     distributionYear: year,
     categoryAveragePctNav: 0,

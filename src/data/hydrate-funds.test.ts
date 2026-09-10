@@ -163,6 +163,68 @@ describe("Search hydrate from /distributions", () => {
     assert.equal(splitFundsByBucket([merged]).upcoming.length, 0);
   });
 
+  it("does not invent Upcoming from catalog has_estimate + $0 latest_as_of", () => {
+    const catalogs = [
+      mapFundsApiItem({
+        ticker: null,
+        fund_name: "AB All Market Total Return Portfolio",
+        fund_family: "AllianceBernstein",
+        fund_identifier: "ab-all-market-total-return-portfolio",
+        latest_as_of: "2025-10-31",
+        has_estimate: true,
+      }),
+      mapFundsApiItem({
+        ticker: null,
+        fund_name: "AB Global Real Estate Investment Fund",
+        fund_family: "AllianceBernstein",
+        latest_as_of: "2023-10-31",
+        has_estimate: true,
+      }),
+    ];
+    for (const catalog of catalogs) {
+      assert.equal(catalog.bucket, "paid");
+      assert.equal(catalog.publicationStage, null);
+      assert.equal(catalog.estimatedDistributionAmount, 0);
+      const missing = mergeFundWithDistributions(catalog, null);
+      assert.equal(missing.bucket, "paid");
+      assert.equal(splitFundsByBucket([catalog, missing]).upcoming.length, 0);
+      assert.equal(paidHistoryViews([catalog, missing]).length, 0);
+    }
+  });
+
+  it("keeps a $0 stale updated_estimate from /distributions out of Upcoming", () => {
+    const catalog = mapFundsApiItem({
+      ticker: "CABNX",
+      fund_name: "AB Global Risk Allocation Fund, Inc.",
+      fund_family: "AllianceBernstein",
+      latest_as_of: "2025-10-31",
+      has_estimate: true,
+    });
+    const staleZero: DataDistribution[] = [
+      row({
+        id: "ab-stale",
+        ticker: "CABNX",
+        fund_name: "AB Global Risk Allocation Fund, Inc.",
+        fund_family: "AllianceBernstein",
+        fund_identifier: "cabnx",
+        estimate_type: "total_capital_gains",
+        amount: "0.000000",
+        amount_unit: "per_share",
+        publication_stage: "updated_estimate",
+        as_of: "2025-10-31",
+        record_date: null,
+        ex_date: null,
+        payable_date: null,
+      }),
+    ];
+    const aggregated = aggregateDistributions(staleZero, "2026-09-09")[0];
+    assert.equal(aggregated.bucket, "paid");
+    const merged = mergeFundWithDistributions(catalog, aggregated);
+    assert.equal(merged.bucket, "paid");
+    assert.equal(merged.hasEstimate, false);
+    assert.equal(splitFundsByBucket([merged]).upcoming.length, 0);
+  });
+
   it("does not leak FXAIX/VFIAX latest_as_of YE dates into Upcoming", () => {
     const catalogs = [
       mapFundsApiItem({
@@ -346,8 +408,23 @@ describe("Search hydrate from /distributions", () => {
       false,
     );
     assert.equal(
-      hideUpcomingAmounts({ bucket: "upcoming", hasEstimate: true }),
+      hideUpcomingAmounts({
+        bucket: "upcoming",
+        hasEstimate: true,
+        estimatedDistributionAmount: 3,
+      }),
       false,
+    );
+    assert.equal(
+      hideUpcomingAmounts({
+        bucket: "upcoming",
+        hasEstimate: true,
+        estimatedDistributionAmount: 0,
+        estimatedDistributionPctNav: 0,
+        estimatedOrdinaryIncome: 0,
+        estimatedCapitalGains: 0,
+      }),
+      true,
     );
   });
 });

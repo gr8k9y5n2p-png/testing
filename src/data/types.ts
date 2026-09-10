@@ -100,10 +100,11 @@ export interface FundEstimate {
   paidHistory: PaidDistributionEvent[];
   distributionYear: number;
   /**
-   * Unpaid Upcoming / manager prelim only (`GET /funds.has_estimate`).
-   * False is correct when the fund has paid/final YE history but no unpaid
-   * estimate. Paid history must still render those distribution rows.
-   * Upcoming UI shows "—" / Undisclosed — never invent $0 from history.
+   * Catalog hint (`GET /funds.has_estimate`). False means unpaid Upcoming is
+   * none. True is not enough to list a fund in Upcoming — that still needs a
+   * real unpaid /distributions estimate that has not paid. Paid history must
+   * still render paid/final rows when this flag is false. Upcoming UI shows
+   * "—" / Undisclosed — never invent $0 from the catalog flag or history.
    */
   hasEstimate?: boolean;
 }
