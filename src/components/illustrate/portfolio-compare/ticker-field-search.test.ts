@@ -31,25 +31,22 @@ describe("Compare / Portfolio live /api/funds autocomplete", () => {
     assert.equal(matches[0]?.fundName, "The Growth Fund of America");
   });
 
-  it("surfaces BlackRock prefix hits for BLAC from live search, not a local catalog", () => {
+  it("surfaces Blackrock family and iShares name hits from live search", () => {
     const remote = [
       toTickerFieldOption({
-        ticker: "MDLVX",
-        fund_name: "BlackRock Advantage Large Cap Value Inv A",
+        ticker: "BACPX",
+        fund_name: "BlackRock Allocation Target Shares",
         fund_family: "BlackRock",
       }),
       toTickerFieldOption({
-        ticker: "MDCHX",
-        fund_name: "BlackRock Emerging Markets K",
-        fund_family: "BlackRock",
+        ticker: "IVV",
+        fund_name: "iShares Core S&P 500 ETF",
+        fund_family: "iShares",
       }),
     ].filter((row): row is NonNullable<typeof row> => row != null);
-    const matches = tickerFieldMatches([], remote, "BLAC");
-    assert.equal(matches.length, 2);
-    assert.equal(
-      matches.every((fund) => /blackrock/i.test(`${fund.fundName} ${fund.family}`)),
-      true,
-    );
+    const matches = tickerFieldMatches([], remote, "Blackrock");
+    assert.equal(matches.some((fund) => fund.ticker === "BACPX"), true);
+    assert.equal(matches.some((fund) => fund.ticker === "IVV"), true);
   });
 
   it("does not require has_estimate or a heroes catalog to keep the identity row", () => {
@@ -70,10 +67,12 @@ describe("Compare / Portfolio live /api/funds autocomplete", () => {
     const workspace = read("../CompareWorkspace.tsx");
     const column = read("AllocationColumn.tsx");
     assert.match(field, /fetchFundsSearch/);
+    assert.match(field, /fetchFundsSearch\(q\)/);
     assert.match(field, /tickerFieldMatches/);
     assert.match(field, /toTickerFieldOption/);
     assert.match(field, /REMOTE_SEARCH_DEBOUNCE_MS/);
     assert.match(field, /searchPickerEmptyState/);
+    assert.doesNotMatch(field, /event\.target\.value\.toUpperCase\(\)/);
     assert.doesNotMatch(field, /NEXT_PUBLIC_DATA_API_URL/);
     assert.doesNotMatch(field, /aftertax-data-api/);
     assert.doesNotMatch(field, /has_estimate/);

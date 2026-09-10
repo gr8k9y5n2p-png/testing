@@ -67,6 +67,24 @@ describe("Search a fund FBGRX match", () => {
     assert.ok(Math.abs(matches[0]!.nav - 88.419998) < 1e-6);
   });
 
+  it("matches Blackrock on fund family and iShares fund_name from live /api/funds hits", () => {
+    const blackrock = mapFundsApiItem({
+      ticker: "BACPX",
+      fund_name: "BlackRock Allocation Target Shares",
+      fund_family: "BlackRock",
+      has_estimate: false,
+    });
+    const ishares = mapFundsApiItem({
+      ticker: "IVV",
+      fund_name: "iShares Core S&P 500 ETF",
+      fund_family: "iShares",
+      has_estimate: false,
+    });
+    const matches = fundPickerMatches([], [blackrock, ishares], "Blackrock");
+    assert.equal(matches.some((fund) => fund.ticker === "BACPX"), true);
+    assert.equal(matches.some((fund) => fund.ticker === "IVV"), true);
+  });
+
   it("FundPicker always hits /api/funds for a typed query, not only search_miss", () => {
     const picker = readFileSync(
       join(here, "../components/illustrate/FundPicker.tsx"),

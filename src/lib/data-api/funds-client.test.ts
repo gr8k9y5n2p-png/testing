@@ -122,8 +122,10 @@ describe("GET /api/funds client parse", () => {
     assert.equal(params.get("nav_only"), "1");
     assert.equal(params.get("upcoming"), null);
     assert.equal(params.get("has_estimate"), null);
-    const prefix = fundsSearchParams("BLAC");
-    assert.equal(prefix.get("q"), "BLAC");
+    const family = fundsSearchParams("Blackrock");
+    assert.equal(family.get("q"), "Blackrock");
+    const cased = fundsSearchParams("BlackRock");
+    assert.equal(cased.get("q"), "BlackRock");
   });
 
   it("marks Add to universe only when shared search returned no rows", () => {
