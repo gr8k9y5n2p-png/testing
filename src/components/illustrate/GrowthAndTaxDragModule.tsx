@@ -8,8 +8,8 @@ import {
   MAX_GROWTH_FUNDS,
   fundSeriesColor,
 } from "@/lib/charts/series-colors";
+import { growthTaxChartPad } from "@/lib/charts/growth-tax-layout";
 import {
-  SHARED_CHART_PAD,
   SHARED_CHART_WIDTH,
   yearLayout,
 } from "@/lib/charts/shared-axis";
@@ -223,9 +223,11 @@ export function GrowthAndTaxDragModule({
     );
   }
 
+  const pad = useMemo(() => growthTaxChartPad(principal), [principal]);
+  const fundCount = Math.max(taxModel.tickers.length, selected.length, 1);
   const axis = useMemo(
-    () => yearLayout(years, selected.length, SHARED_CHART_WIDTH, SHARED_CHART_PAD),
-    [selected.length, years],
+    () => yearLayout(years, fundCount, SHARED_CHART_WIDTH, pad),
+    [fundCount, pad, years],
   );
 
   const remaining = PERFORMANCE_FIXTURE_TICKERS.filter(
@@ -375,29 +377,36 @@ export function GrowthAndTaxDragModule({
           </div>
         ) : (
           <>
-            <GrowthAndTaxChart
-              years={years}
-              growthSeries={growthSeries}
-              taxModel={taxModel}
-              startDollars={principal}
-              loading={loading}
-              axis={axis}
-              emptyLabel={
-                selected.length === 0 ? "No fund series" : PERFORMANCE_UNAVAILABLE_LABEL
-              }
-              emptyHint={selected.length === 0 ? "" : PERFORMANCE_UNAVAILABLE_HINT}
-              onRemoveSeries={removeFund}
-            />
-            {missingTickers.length > 0 && growthSeries.some((row) => !row.dashed) ? (
-              <p className="mt-2 text-[11px] text-faint">
-                {missingTickers.join(", ")}: {PERFORMANCE_UNAVAILABLE_LABEL}
-              </p>
-            ) : null}
-            <GrowthAndTaxTable
-              model={taxModel}
-              loading={loading}
-              className="mt-5"
-            />
+            <div className="overflow-x-auto">
+              <div className="min-w-[40rem]">
+                <GrowthAndTaxChart
+                  years={years}
+                  growthSeries={growthSeries}
+                  taxModel={taxModel}
+                  startDollars={principal}
+                  loading={loading}
+                  pad={pad}
+                  axis={axis}
+                  emptyLabel={
+                    selected.length === 0 ? "No fund series" : PERFORMANCE_UNAVAILABLE_LABEL
+                  }
+                  emptyHint={selected.length === 0 ? "" : PERFORMANCE_UNAVAILABLE_HINT}
+                  onRemoveSeries={removeFund}
+                />
+                {missingTickers.length > 0 && growthSeries.some((row) => !row.dashed) ? (
+                  <p className="mt-2 text-[11px] text-faint">
+                    {missingTickers.join(", ")}: {PERFORMANCE_UNAVAILABLE_LABEL}
+                  </p>
+                ) : null}
+                <GrowthAndTaxTable
+                  model={taxModel}
+                  loading={loading}
+                  className="mt-1"
+                  axis={axis}
+                  pad={pad}
+                />
+              </div>
+            </div>
           </>
         )}
       </div>

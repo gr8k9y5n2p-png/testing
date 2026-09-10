@@ -2,11 +2,17 @@
 
 import { useId } from "react";
 import { END_LABEL_MIN_GAP, staggerEndLabels } from "@/lib/charts/end-labels";
+import {
+  AXIS_LABEL_GAP_PX,
+  growthTaxChartPad,
+  startAmountLabel,
+  startAmountLabelX,
+} from "@/lib/charts/growth-tax-layout";
 import { formatCompactUsd, niceMoneyScale } from "@/lib/charts/money-axis";
 import {
-  SHARED_CHART_PAD,
   SHARED_CHART_WIDTH,
   yearLayout,
+  type ChartPad,
   type YearLayout,
 } from "@/lib/charts/shared-axis";
 import { formatUsd } from "@/lib/format";
@@ -27,6 +33,7 @@ export type GrowthAndTaxChartProps = {
   startDollars: number;
   loading?: boolean;
   className?: string;
+  pad?: ChartPad;
   axis?: YearLayout;
   emptyLabel?: string;
   emptyHint?: string;
@@ -44,6 +51,7 @@ export function GrowthAndTaxChart({
   startDollars,
   loading = false,
   className = "",
+  pad: padProp,
   axis: axisProp,
   emptyLabel = "No fund series",
   emptyHint = "",
@@ -72,8 +80,10 @@ export function GrowthAndTaxChart({
   }
 
   const width = SHARED_CHART_WIDTH;
-  const pad = SHARED_CHART_PAD;
+  const pad = padProp ?? growthTaxChartPad(startDollars);
   const axis = axisProp ?? yearLayout(years, Math.max(taxModel.tickers.length, 1), width, pad);
+  const startLabel = startAmountLabel(startDollars);
+  const startLabelX = startAmountLabelX(pad.left);
   const growthInner = GROWTH_H - pad.top - ZERO_GAP;
   const taxInner = TAX_H - pad.bottom - ZERO_GAP;
   const zeroY = pad.top + growthInner;
@@ -167,6 +177,14 @@ export function GrowthAndTaxChart({
           aria-hidden
         >
           <defs>
+            <clipPath id={`gt-plot-${hatchId}`}>
+              <rect
+                x={pad.left}
+                y={pad.top}
+                width={Math.max(1, width - pad.left - pad.right)}
+                height={Math.max(1, height - pad.top - pad.bottom)}
+              />
+            </clipPath>
             <pattern
               id={`gt-hatch-${hatchId}`}
               width="5"
@@ -196,6 +214,7 @@ export function GrowthAndTaxChart({
 
           {growthScale.ticks.map((tick) => {
             const y = growthY(tick);
+            const isStart = Math.abs(tick - startDollars) < 1e-6;
             return (
               <g key={`g-${tick}`}>
                 <line
@@ -206,19 +225,34 @@ export function GrowthAndTaxChart({
                   className="stroke-line"
                   strokeWidth={1}
                 />
-                <text
-                  x={pad.left - 6}
-                  y={y + 3}
-                  textAnchor="end"
-                  className="fill-faint"
-                  fontSize={9}
-                  fontFamily="ui-monospace, monospace"
-                >
-                  {formatCompactUsd(tick)}
-                </text>
+                {isStart ? null : (
+                  <text
+                    x={pad.left - AXIS_LABEL_GAP_PX}
+                    y={y + 3}
+                    textAnchor="end"
+                    className="fill-faint"
+                    fontSize={9}
+                    fontFamily="ui-monospace, monospace"
+                  >
+                    {formatCompactUsd(tick)}
+                  </text>
+                )}
               </g>
             );
           })}
+
+          <text
+            data-start-label
+            data-start-x={startLabelX.toFixed(1)}
+            x={startLabelX}
+            y={growthY(startDollars) + 3}
+            textAnchor="end"
+            className="fill-faint"
+            fontSize={9}
+            fontFamily="ui-monospace, monospace"
+          >
+            {startLabel}
+          </text>
 
           {taxScale.ticks
             .filter((tick) => tick > 0)
@@ -235,7 +269,7 @@ export function GrowthAndTaxChart({
                     strokeWidth={1}
                   />
                   <text
-                    x={pad.left - 6}
+                    x={pad.left - AXIS_LABEL_GAP_PX}
                     y={y + 3}
                     textAnchor="end"
                     className="fill-faint"
@@ -257,7 +291,7 @@ export function GrowthAndTaxChart({
             strokeWidth={1.15}
           />
           <text
-            x={pad.left - 6}
+            x={pad.left - AXIS_LABEL_GAP_PX}
             y={zeroY + 3}
             textAnchor="end"
             className="fill-faint"
@@ -267,6 +301,7 @@ export function GrowthAndTaxChart({
             $0
           </text>
 
+          <g clipPath={`url(#gt-plot-${hatchId})`}>
           {fundSeries.map((row) => {
             const d = polyline(row.points, years, xCenter, growthY);
             if (!d) return null;
@@ -293,6 +328,7 @@ export function GrowthAndTaxChart({
               </g>
             );
           })}
+          </g>
 
           {endLabels.map((label) => {
             const leader = Math.abs(label.labelY - label.y) > 6;

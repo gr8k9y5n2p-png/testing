@@ -1,3 +1,10 @@
+import { GrowthTaxTypeLegend } from "@/components/illustrate/GrowthAndTaxChart";
+import { growthTaxChartPad, growthTaxTableLayout } from "@/lib/charts/growth-tax-layout";
+import {
+  SHARED_CHART_WIDTH,
+  type ChartPad,
+  type YearLayout,
+} from "@/lib/charts/shared-axis";
 import {
   GROWTH_TAX_ESTIMATE_TYPES,
   GROWTH_TAX_TYPE_COLORS,
@@ -5,16 +12,21 @@ import {
   formatGrowthTaxCell,
   type GrowthTaxByTypeModel,
 } from "@/lib/illustrate/growth-tax-by-type";
-import { GrowthTaxTypeLegend } from "@/components/illustrate/GrowthAndTaxChart";
 
 export function GrowthAndTaxTable({
   model,
   loading = false,
   className = "",
+  axis,
+  pad: padProp,
+  width = SHARED_CHART_WIDTH,
 }: {
   model: GrowthTaxByTypeModel;
   loading?: boolean;
   className?: string;
+  axis?: YearLayout;
+  pad?: ChartPad;
+  width?: number;
 }) {
   if (loading) {
     return (
@@ -30,100 +42,188 @@ export function GrowthAndTaxTable({
     return null;
   }
 
+  const pad = padProp ?? growthTaxChartPad(0);
+  const layout = growthTaxTableLayout(
+    model.years,
+    model.tickers.length,
+    width,
+    pad,
+    axis,
+  );
+
   return (
     <div className={`w-full ${className}`}>
-      <div className="overflow-x-auto">
-        <table className="min-w-full border-collapse text-sm">
-          <thead>
-            <tr>
-              <th className="py-1.5 pr-3 text-left text-[10px] font-semibold uppercase tracking-[0.12em] text-faint">
-                {"\u00a0"}
-              </th>
-              {model.years.map((year, yearIndex) =>
-                model.tickers.map((ticker, tickerIndex) => (
-                  <th
-                    key={`${year}-${ticker}`}
-                    className={`px-1.5 py-1.5 text-center font-mono text-[11px] font-medium text-ink ${
-                      yearIndex > 0 && tickerIndex === 0 ? "border-l border-line" : ""
+      <div
+        data-growth-tax-table
+        role="table"
+        aria-label="Distribution tax by calendar year"
+        className="w-full text-sm"
+      >
+        <div role="row" className="grid" style={{ gridTemplateColumns: layout.template }}>
+          {layout.columns.map((column, index) => {
+            if (column.kind === "stub") {
+              return (
+                <div
+                  key={`h-stub`}
+                  role="columnheader"
+                  className="py-1.5 pr-2 text-left text-[10px] font-semibold uppercase tracking-[0.12em] text-faint"
+                >
+                  {"\u00a0"}
+                </div>
+              );
+            }
+            if (column.kind === "ticker") {
+              const year = model.years[column.yearIndex];
+              const ticker = model.tickers[column.seriesIndex];
+              return (
+                <div
+                  key={`h-${year}-${ticker}`}
+                  role="columnheader"
+                  className={`px-0.5 py-1.5 text-center font-mono text-[11px] font-medium text-ink ${
+                    column.yearIndex > 0 && column.seriesIndex === 0
+                      ? "border-l border-line"
+                      : ""
+                  }`}
+                >
+                  <span className="sr-only">{year} </span>
+                  {ticker}
+                </div>
+              );
+            }
+            return (
+              <div
+                key={`h-${column.kind}-${index}`}
+                aria-hidden
+                className={
+                  column.kind === "lead" && column.yearIndex > 0
+                    ? "border-l border-line"
+                    : ""
+                }
+              />
+            );
+          })}
+        </div>
+
+        {GROWTH_TAX_ESTIMATE_TYPES.map((type) => (
+          <div
+            key={type}
+            role="row"
+            className="grid border-t border-line"
+            style={{ gridTemplateColumns: layout.template }}
+          >
+            {layout.columns.map((column, index) => {
+              if (column.kind === "stub") {
+                return (
+                  <div
+                    key={`${type}-stub`}
+                    role="rowheader"
+                    className="py-1.5 pr-2 text-left text-[12px] font-medium text-muted"
+                  >
+                    <span className="inline-flex items-center gap-1.5">
+                      <span
+                        aria-hidden
+                        className="inline-block size-1.5 shrink-0 rounded-full"
+                        style={{ background: GROWTH_TAX_TYPE_COLORS[type] }}
+                      />
+                      {GROWTH_TAX_TYPE_LABELS[type]}
+                    </span>
+                  </div>
+                );
+              }
+              if (column.kind === "ticker") {
+                const year = model.years[column.yearIndex];
+                const row = model.series[column.seriesIndex];
+                const cell = row?.years[column.yearIndex];
+                const value = cell?.amounts[type] ?? null;
+                const status = cell?.status ?? "empty";
+                return (
+                  <div
+                    key={`${type}-${year}-${row?.ticker ?? column.seriesIndex}`}
+                    role="cell"
+                    className={`px-0.5 py-1.5 text-center font-mono text-[12px] tabular-nums ${
+                      value == null ? "text-faint" : "text-ink"
+                    } ${
+                      column.yearIndex > 0 && column.seriesIndex === 0
+                        ? "border-l border-line"
+                        : ""
                     }`}
                   >
-                    {ticker}
-                  </th>
-                )),
-              )}
-            </tr>
-          </thead>
-          <tbody>
-            {GROWTH_TAX_ESTIMATE_TYPES.map((type) => (
-              <tr key={type} className="border-t border-line">
-                <th
-                  scope="row"
-                  className="py-1.5 pr-3 text-left text-[12px] font-medium text-muted"
+                    <span className="inline-flex items-center justify-center gap-0.5">
+                      {formatGrowthTaxCell(value, status)}
+                      {status === "announced" && value != null ? <HatchGlyph /> : null}
+                    </span>
+                  </div>
+                );
+              }
+              return (
+                <div
+                  key={`${type}-${column.kind}-${index}`}
+                  aria-hidden
+                  className={
+                    column.kind === "lead" && column.yearIndex > 0
+                      ? "border-l border-line"
+                      : ""
+                  }
+                />
+              );
+            })}
+          </div>
+        ))}
+
+        <div
+          role="row"
+          className="grid border-t border-line-strong"
+          style={{ gridTemplateColumns: layout.template }}
+        >
+          {layout.columns.map((column, index) => {
+            if (column.kind === "stub") {
+              return (
+                <div
+                  key="total-stub"
+                  role="rowheader"
+                  className="py-2 pr-2 text-left text-[12px] font-semibold text-ink"
                 >
-                  <span className="inline-flex items-center gap-1.5">
-                    <span
-                      aria-hidden
-                      className="inline-block size-1.5 rounded-full"
-                      style={{ background: GROWTH_TAX_TYPE_COLORS[type] }}
-                    />
-                    {GROWTH_TAX_TYPE_LABELS[type]}
+                  Total
+                </div>
+              );
+            }
+            if (column.kind === "ticker") {
+              const year = model.years[column.yearIndex];
+              const row = model.series[column.seriesIndex];
+              const cell = row?.years[column.yearIndex];
+              const status = cell?.status ?? "empty";
+              return (
+                <div
+                  key={`total-${year}-${row?.ticker ?? column.seriesIndex}`}
+                  role="cell"
+                  className={`px-0.5 py-2 text-center font-mono text-[12px] font-medium tabular-nums ${
+                    cell?.total == null ? "text-faint" : "text-ink"
+                  } ${
+                    column.yearIndex > 0 && column.seriesIndex === 0
+                      ? "border-l border-line"
+                      : ""
+                  }`}
+                >
+                  <span className="inline-flex items-center justify-center gap-0.5">
+                    {formatGrowthTaxCell(cell?.total ?? null, status, "total")}
+                    {status === "announced" && cell?.total != null ? <HatchGlyph /> : null}
                   </span>
-                </th>
-                {model.years.map((year, yearIndex) =>
-                  model.series.map((row, tickerIndex) => {
-                    const cell = row.years[yearIndex];
-                    const value = cell?.amounts[type] ?? null;
-                    const status = cell?.status ?? "empty";
-                    return (
-                      <td
-                        key={`${type}-${year}-${row.ticker}`}
-                        className={`px-1.5 py-1.5 text-center font-mono text-[12px] tabular-nums ${
-                          value == null ? "text-faint" : "text-ink"
-                        } ${yearIndex > 0 && tickerIndex === 0 ? "border-l border-line" : ""}`}
-                      >
-                        <span className="inline-flex items-center justify-center gap-0.5">
-                          {formatGrowthTaxCell(value, status)}
-                          {status === "announced" && value != null ? (
-                            <HatchGlyph />
-                          ) : null}
-                        </span>
-                      </td>
-                    );
-                  }),
-                )}
-              </tr>
-            ))}
-            <tr className="border-t border-line-strong">
-              <th
-                scope="row"
-                className="py-2 pr-3 text-left text-[12px] font-semibold text-ink"
-              >
-                Total
-              </th>
-              {model.years.map((year, yearIndex) =>
-                model.series.map((row, tickerIndex) => {
-                  const cell = row.years[yearIndex];
-                  const status = cell?.status ?? "empty";
-                  return (
-                    <td
-                      key={`total-${year}-${row.ticker}`}
-                      className={`px-1.5 py-2 text-center font-mono text-[12px] font-medium tabular-nums ${
-                        cell?.total == null ? "text-faint" : "text-ink"
-                      } ${yearIndex > 0 && tickerIndex === 0 ? "border-l border-line" : ""}`}
-                    >
-                      <span className="inline-flex items-center justify-center gap-0.5">
-                        {formatGrowthTaxCell(cell?.total ?? null, status, "total")}
-                        {status === "announced" && cell?.total != null ? (
-                          <HatchGlyph />
-                        ) : null}
-                      </span>
-                    </td>
-                  );
-                }),
-              )}
-            </tr>
-          </tbody>
-        </table>
+                </div>
+              );
+            }
+            return (
+              <div
+                key={`total-${column.kind}-${index}`}
+                aria-hidden
+                className={
+                  column.kind === "lead" && column.yearIndex > 0
+                    ? "border-l border-line"
+                    : ""
+                }
+              />
+            );
+          })}
+        </div>
       </div>
       <GrowthTaxTypeLegend className="mt-4" />
     </div>
