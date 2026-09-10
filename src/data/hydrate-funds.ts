@@ -191,8 +191,7 @@ export function mergeFundWithDistributions(
   }
 
   // Every fund: catalog `has_estimate: false` means unpaid Upcoming = none.
-  // Do not let paid/final YE rows, stale announced-only dates, or $0
-  // placeholders flip any ticker into Upcoming.
+  // Do not let paid/final YE rows or $0 placeholders flip any ticker.
   const hasUpcoming =
     fromDists.bucket === "upcoming" &&
     fund.hasEstimate !== false &&

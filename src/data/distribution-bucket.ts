@@ -99,11 +99,11 @@ function isUnpaidPrelimStage(stage: string | null): boolean {
  * Shared Upcoming / Fund Manager Estimated Distributions classifier for
  * every fund (not ticker-specific). Upcoming = unpaid preliminary_estimate
  * or updated_estimate only, and only when payable/ex/record are not already
- * past and the announcement is not a stale as_of-only leftover.
- * `final` and `paid` are Paid history — never Upcoming, even with
+ * past. `final` and `paid` are Paid history — never Upcoming, even with
  * future event dates or holding-scaled illustration dollars.
  * A future event date without a prelim/estimate stage does not invent Upcoming.
- * Identity / `latest_as_of`-only rows stay paid history.
+ * Identity / `latest_as_of`-only rows stay paid history. `$0` catalog
+ * leftovers are dropped by `isUpcomingFund`, not by treating as_of as paid.
  */
 export function distributionBucket(
   dates: DistributionDateFields,
@@ -113,8 +113,7 @@ export function distributionBucket(
   if (
     stage === "final" ||
     (stage && PAID_STAGES.has(stage)) ||
-    isPastDistribution(dates, today) ||
-    isStaleAnnouncedOnly(dates, today)
+    isPastDistribution(dates, today)
   ) {
     return "paid";
   }
@@ -148,8 +147,9 @@ export function hasDisclosedUpcomingAmount(fund: UpcomingAmountFields): boolean 
 /**
  * Universe Upcoming gate for Search Sample Estimates, Highlights, and badges.
  * A fund appears only with a true unpaid future announced distribution:
- * unpaid prelim/updated, not past record/ex/payable, not a stale announced-only
- * date, and not a `$0` / empty fake row. `has_estimate: false` is never Upcoming.
+ * unpaid prelim/updated, not past record/ex/payable, and not a `$0` / empty
+ * fake row. A past announcement of an unpaid estimate still qualifies when
+ * dollars exist (sell-before-record). `has_estimate: false` is never Upcoming.
  * Never invent from paid/final history, catalog identity, or illustration math.
  */
 export function isUpcomingFund<

@@ -230,7 +230,7 @@ test("finals-only rows never become Upcoming for any fund (future YE dates or mi
   );
 });
 
-test("stale announced-only estimates (no remaining unpaid event) are not Upcoming", () => {
+test("stale announced-only $0 placeholders are not Upcoming", () => {
   const oct2023 = {
     asOfDate: "2023-10-31",
     recordDate: null,
@@ -247,19 +247,32 @@ test("stale announced-only estimates (no remaining unpaid event) are not Upcomin
   };
   assert.equal(isStaleAnnouncedOnly(oct2023, TODAY), true);
   assert.equal(isStaleAnnouncedOnly(oct2025, TODAY), true);
-  assert.equal(distributionBucket(oct2023, TODAY), "paid");
-  assert.equal(distributionBucket(oct2025, TODAY), "paid");
   assert.equal(
     isUpcomingFund(
       {
         bucket: "upcoming",
         hasEstimate: true,
         estimatedDistributionAmount: 0,
+        estimatedDistributionPctNav: 0,
         ...oct2023,
       },
       TODAY,
     ),
     false,
+  );
+  assert.equal(
+    isUpcomingFund(
+      {
+        bucket: "upcoming",
+        hasEstimate: true,
+        estimatedDistributionAmount: 19.71,
+        asOfDate: "2026-07-31",
+        publicationStage: "preliminary_estimate",
+      },
+      TODAY,
+    ),
+    true,
+    "unpaid announced dollars with dates still TBD stay Upcoming",
   );
 });
 

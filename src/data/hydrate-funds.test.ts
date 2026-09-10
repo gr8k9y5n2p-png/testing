@@ -218,7 +218,6 @@ describe("Search hydrate from /distributions", () => {
       }),
     ];
     const aggregated = aggregateDistributions(staleZero, "2026-09-09")[0];
-    assert.equal(aggregated.bucket, "paid");
     const merged = mergeFundWithDistributions(catalog, aggregated);
     assert.equal(merged.bucket, "paid");
     assert.equal(merged.hasEstimate, false);
