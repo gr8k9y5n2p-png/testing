@@ -3,6 +3,9 @@ import { describe, it } from "node:test";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { paidHistoryViews } from "../data/queries.ts";
+import { sortFunds } from "../lib/format.ts";
+import type { FundEstimateView } from "../data/types.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const source = readFileSync(join(here, "ResultsTable.tsx"), "utf8");
@@ -39,9 +42,13 @@ describe("ResultsTable Search Paid history", () => {
     assert.match(source, /PAID_HISTORY_EMPTY/);
     assert.match(source, /Dist \$\/sh/);
     assert.match(source, /column="estimatedDistributionAmount"/);
-    assert.doesNotMatch(
+    assert.match(
       source,
-      /label="Dist \$\/sh"[\s\S]*column="estimatedDistributionPctNav"/,
+      /label="Dist \$\/sh"[\s\S]*?column="estimatedDistributionAmount"/,
+    );
+    assert.match(
+      source,
+      /label="% NAV"[\s\S]*?column="estimatedDistributionPctNav"/,
     );
     assert.match(source, /% NAV/);
     assert.match(source, /Aftertax % of NAV/);
@@ -86,7 +93,122 @@ describe("ResultsTable Paid History column sort", () => {
     assert.match(results, /sortDirection/);
     assert.match(results, /currently displayed Paid History rows/);
     assert.doesNotMatch(results, /serverSorted \? paid : sortFunds\(paid/);
+    assert.doesNotMatch(results, /serverSorted \? upcoming : sortFunds/);
     assert.match(source, /column="estimatedDistributionAmount"/);
+  });
+
+  it("makes every data column header sortable on the shared Upcoming and Paid History table", () => {
+    const header = source.slice(
+      source.indexOf("<tr>"),
+      source.indexOf("</tr>"),
+    );
+    assert.match(header, /label="Ticker"[\s\S]*?column="fundName"/);
+    assert.match(header, /label="Family"[\s\S]*?column="family"/);
+    assert.match(
+      header,
+      /label="Dist \$\/sh"[\s\S]*?column="estimatedDistributionAmount"/,
+    );
+    assert.match(
+      header,
+      /label="% NAV"[\s\S]*?column="estimatedDistributionPctNav"/,
+    );
+    assert.match(header, /label="Announced"[\s\S]*?column="asOfDate"/);
+    assert.match(header, /label="Record"[\s\S]*?column="recordDate"/);
+    assert.match(header, /label="Ex-div"[\s\S]*?column="exDate"/);
+    assert.match(header, /label="Payable"[\s\S]*?column="payableDate"/);
+    assert.doesNotMatch(header, /<th className="px-3 py-2.5 text-right">% NAV<\/th>/);
+    assert.doesNotMatch(header, /<th className="px-3 py-2.5">Record<\/th>/);
+    assert.doesNotMatch(header, /<th className="px-3 py-2.5">Ex-div<\/th>/);
+    assert.doesNotMatch(header, /<th className="px-3 py-2.5">Payable<\/th>/);
+  });
+
+  it("reorders currently displayed Paid History rows for Dist $/Share, % NAV, and Ex-div", () => {
+    function paid(
+      ticker: string,
+      patch: Partial<FundEstimateView> = {},
+    ): FundEstimateView {
+      return {
+        id: ticker,
+        fundName: ticker,
+        ticker,
+        cusip: "000000000",
+        family: "Fidelity",
+        category: "Large Blend",
+        shareClass: "A",
+        nav: 50,
+        estimatedDistributionAmount: 1,
+        estimatedOrdinaryIncome: 0.2,
+        estimatedCapitalGains: 0.8,
+        estimatedDistributionPctNav: 2,
+        publishedAt: "2026-06-15",
+        asOfDate: "2026-06-15",
+        recordDate: "2026-06-12",
+        exDate: "2026-06-15",
+        payableDate: "2026-06-17",
+        publicationStage: "final",
+        bucket: "paid",
+        paidHistory: [],
+        distributionYear: 2026,
+        categoryAveragePctNav: 0,
+        vsCategoryPctNav: 0,
+        navOnDistributionDay: 100,
+        ...patch,
+      };
+    }
+
+    const displayed = paidHistoryViews(
+      [
+        paid("LOW", {
+          estimatedDistributionAmount: 0.25,
+          navOnDistributionDay: 100,
+          exDate: "2026-12-15",
+        }),
+        paid("HIGH", {
+          estimatedDistributionAmount: 21.021,
+          navOnDistributionDay: 100,
+          exDate: "2026-09-01",
+        }),
+        paid("MID", {
+          estimatedDistributionAmount: 2.5,
+          navOnDistributionDay: 100,
+          exDate: null,
+        }),
+      ],
+      2026,
+    );
+
+    assert.deepEqual(
+      sortFunds(displayed, "estimatedDistributionAmount", "desc").map(
+        (fund) => fund.ticker,
+      ),
+      ["HIGH", "MID", "LOW"],
+    );
+    assert.deepEqual(
+      sortFunds(displayed, "estimatedDistributionAmount", "asc").map(
+        (fund) => fund.ticker,
+      ),
+      ["LOW", "MID", "HIGH"],
+    );
+    assert.deepEqual(
+      sortFunds(displayed, "estimatedDistributionPctNav", "desc").map(
+        (fund) => fund.ticker,
+      ),
+      ["HIGH", "MID", "LOW"],
+    );
+    assert.deepEqual(
+      sortFunds(displayed, "estimatedDistributionPctNav", "asc").map(
+        (fund) => fund.ticker,
+      ),
+      ["LOW", "MID", "HIGH"],
+    );
+    assert.deepEqual(
+      sortFunds(displayed, "exDate", "desc").map((fund) => fund.ticker),
+      ["LOW", "HIGH", "MID"],
+    );
+    assert.deepEqual(
+      sortFunds(displayed, "exDate", "asc").map((fund) => fund.ticker),
+      ["HIGH", "LOW", "MID"],
+    );
   });
 });
 
