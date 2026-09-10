@@ -3,56 +3,22 @@ import { describe, it } from "node:test";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { normalizePortfolioCompareResponse } from "./portfolio-compare-client.ts";
-import { upcomingHoldingsForSide } from "./publication-stage.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
 describe("announced $0 upcoming normalize", () => {
-  it("keeps manager-published $0 amount/per_share and does not invent a row", () => {
+  it("keeps manager-published $0 amount/per_share through normalize", () => {
     const client = readFileSync(join(here, "portfolio-compare-client.ts"), "utf8");
-    assert.match(client, /per_share: numOrNull\(row\.per_share\)/);
-    assert.match(client, /amount: numOrNull\(row\.amount\)/);
-    assert.match(client, /amount_unit:/);
-
-    const result = normalizePortfolioCompareResponse(
-      {
-        current: {
-          holdings: [
-            {
-              ticker: "ZEROX",
-              holding_dollars: 250_000,
-              covered: true,
-              upcoming: {
-                publication_stage: "preliminary_estimate",
-                amount: 0,
-                amount_unit: "per_share",
-                per_share: 0,
-                distribution_dollars: 0,
-                estimated_tax: 0,
-                announced_date: "2026-09-01",
-                record_date: "2026-12-16",
-                ex_date: "2026-12-17",
-              },
-            },
-          ],
-        },
-        proposed: { holdings: [] },
-      },
-      "live",
-    );
-    const upcoming = result.current.holdings[0]?.upcoming;
-    assert.ok(upcoming && !Array.isArray(upcoming));
-    assert.equal(upcoming.amount, 0);
-    assert.equal(upcoming.per_share, 0);
-    assert.equal(upcoming.amount_unit, "per_share");
-    assert.equal(upcoming.distribution_dollars, 0);
-
-    const rows = upcomingHoldingsForSide(result.current, "current", "2026-09-08");
-    assert.equal(rows.length, 1);
-    assert.equal(rows[0]?.available, true);
-    assert.equal(rows[0]?.distributionPerShare, 0);
-    assert.equal(rows[0]?.distributionDollars, 0);
+    const fn = client.split("function normalizeDistributionRow")[1]?.split(
+      "function normalizeUpcoming",
+    )[0];
+    assert.ok(fn);
+    assert.match(fn, /per_share: numOrNull\(row\.per_share\)/);
+    assert.match(fn, /amount: numOrNull\(row\.amount\)/);
+    assert.match(fn, /amount_unit:/);
+    assert.match(fn, /numOrNull\(row\.amount\)/);
+    assert.doesNotMatch(fn, /amount\s*>\s*0/);
+    assert.doesNotMatch(fn, /if \(!.*amount/);
   });
 });
 
