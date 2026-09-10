@@ -49,9 +49,9 @@ export const SEARCH_UPCOMING_HEADING = "Upcoming / Announced";
 export const SEARCH_UPCOMING_DETAIL =
   "Announced distributions that have not paid out yet. Past record/ex/payable dates stay in Paid history below.";
 export const SEARCH_UPCOMING_KICKER = "unpaid announced · not paid history";
-export const SEARCH_PAID_HISTORY_HEADING = "Paid history";
+export const SEARCH_PAID_HISTORY_HEADING = "Paid History";
 export const SEARCH_PAID_HISTORY_DETAIL =
-  "Paid and final distributions from GET /distributions. Never invented from Upcoming.";
+  "Paid and final distributions from GET /distributions for the selected calendar year. Prior-year rows drop off when the year ends. Never invented from Upcoming.";
 export const SEARCH_PAID_HISTORY_KICKER = "past · not upcoming";
 
 /** Lists tab — ticker paste list + unpaid announced estimates. */

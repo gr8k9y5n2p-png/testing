@@ -7,9 +7,9 @@ import {
   type FundPageResult,
 } from "@/data/pagination";
 import {
-  mergeFundLists,
-  mergeFundWithDistributions,
-  searchFunds,
+  buildSearchTableFunds,
+  currentPaidHistoryYear,
+  splitFundsByBucket,
 } from "@/data";
 import { collectTaxYearsFromFunds, mergeTaxYears } from "@/data/tax-years";
 import type { Facets, FundEstimateView, SearchFilters } from "@/data/types";
@@ -87,22 +87,6 @@ function pageRequestKey(
   });
 }
 
-function hydratePageItems(
-  items: FundEstimateView[],
-  catalog: FundEstimateView[],
-  filters: SearchFilters,
-  scopedTicker?: string,
-): FundEstimateView[] {
-  const hydrated = items.map((item) => {
-    const fromCatalog = catalog.find(
-      (fund) => fund.ticker.toUpperCase() === item.ticker.toUpperCase(),
-    );
-    return fromCatalog ? mergeFundWithDistributions(item, fromCatalog) : item;
-  });
-  if (scopedTicker) return hydrated;
-  return mergeFundLists(hydrated, searchFunds(catalog, filters));
-}
-
 export function Dashboard({
   funds,
   facets,
@@ -113,20 +97,20 @@ export function Dashboard({
   facets: Facets;
   onIllustrate?: (fund: FundEstimateView) => void;
   onNotice?: (message: string) => void;
-  /** Selected Search ticker — hydrates Upcoming / Paid history for that fund. */
+  /** Selected Search ticker — highlight / hydrate in place. Never shrinks Upcoming. */
   ticker?: string | null;
 }) {
-  const [filters, setFilters] = useState<SearchFilters>({});
+  const [filters, setFilters] = useState<SearchFilters>(() => ({
+    year: currentPaidHistoryYear(),
+  }));
   const deferredFilters = useDeferredValue(filters);
   const scopedTicker = ticker?.trim().toUpperCase() || undefined;
   const requestFilters = useMemo<SearchFilters>(
     () => ({
-      ...deferredFilters,
-      query: scopedTicker,
-      family: scopedTicker ? undefined : deferredFilters.family,
-      category: scopedTicker ? undefined : deferredFilters.category,
+      family: deferredFilters.family,
+      category: deferredFilters.category,
     }),
-    [deferredFilters, scopedTicker],
+    [deferredFilters.category, deferredFilters.family],
   );
   const [sortKey, setSortKey] = useState<SortKey>("fundName");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
@@ -134,6 +118,7 @@ export function Dashboard({
   const [page, setPage] = useState<FundPageResult>(() =>
     paginateViews(funds, { limit: FUND_PAGE_SIZE, offset: 0 }),
   );
+  const [focusedItems, setFocusedItems] = useState<FundEstimateView[]>([]);
   const [pageYears, setPageYears] = useState<number[]>(() =>
     mergeTaxYears(facets.years, collectTaxYearsFromFunds(funds)),
   );
@@ -145,18 +130,17 @@ export function Dashboard({
     requestFilters,
     sortKey,
     sortDirection,
-    scopedTicker ? 0 : offset,
+    offset,
   );
 
   useEffect(() => {
     let cancelled = false;
-    const pageOffset = scopedTicker ? 0 : offset;
     void fetchFundPage({
       filters: requestFilters,
       sort: sortKey,
       direction: sortDirection,
       limit: FUND_PAGE_SIZE,
-      offset: pageOffset,
+      offset,
     })
       .then((next) => {
         if (cancelled) return;
@@ -171,7 +155,7 @@ export function Dashboard({
           sort: sortKey,
           direction: sortDirection,
           limit: FUND_PAGE_SIZE,
-          offset: pageOffset,
+          offset,
         });
         setPage(fallback);
         setPageYears((current) =>
@@ -182,7 +166,31 @@ export function Dashboard({
     return () => {
       cancelled = true;
     };
-  }, [funds, offset, requestFilters, requestKey, scopedTicker, sortDirection, sortKey]);
+  }, [funds, offset, requestFilters, requestKey, sortDirection, sortKey]);
+
+  useEffect(() => {
+    if (!scopedTicker) {
+      setFocusedItems([]);
+      return;
+    }
+    let cancelled = false;
+    void fetchFundPage({
+      filters: { query: scopedTicker },
+      sort: sortKey,
+      direction: sortDirection,
+      limit: 10,
+      offset: 0,
+    })
+      .then((next) => {
+        if (!cancelled) setFocusedItems(next.items);
+      })
+      .catch(() => {
+        if (!cancelled) setFocusedItems([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [scopedTicker, sortDirection, sortKey]);
 
   const isPending = filters !== deferredFilters || appliedKey !== requestKey;
   const toolbarFacets = useMemo<Facets>(
@@ -195,20 +203,33 @@ export function Dashboard({
 
   const tableFunds = useMemo(
     () =>
-      hydratePageItems(page.items, funds, requestFilters, scopedTicker),
-    [funds, page.items, requestFilters, scopedTicker],
+      buildSearchTableFunds(
+        funds,
+        [...focusedItems, ...page.items],
+        {
+          family: deferredFilters.family,
+          category: deferredFilters.category,
+        },
+        scopedTicker,
+      ),
+    [
+      deferredFilters.category,
+      deferredFilters.family,
+      focusedItems,
+      funds,
+      page.items,
+      scopedTicker,
+    ],
   );
 
-  const hasActiveFilters = Boolean(
-    filters.family || filters.category || filters.year || scopedTicker,
+  const upcomingCount = useMemo(
+    () => splitFundsByBucket(tableFunds).upcoming.length,
+    [tableFunds],
   );
 
-  const rangeLabel = useMemo(() => {
-    if (page.total === 0) return `0 of ${page.total} funds`;
-    const from = page.offset + 1;
-    const to = Math.min(page.offset + page.items.length, page.total);
-    return `${from}–${to} of ${page.total} funds`;
-  }, [page]);
+  const hasActiveFilters = Boolean(filters.family || filters.category);
+
+  const rangeLabel = `${upcomingCount} unpaid announced`;
 
   function applyFilters(next: SearchFilters) {
     setFilters(next);
@@ -250,11 +271,11 @@ export function Dashboard({
         onChange={applyFilters}
       />
       <div className={isPending ? "opacity-70 transition-opacity" : ""}>
-        {page.total === 0 && tableFunds.length === 0 ? (
+        {tableFunds.length === 0 ? (
           <EmptyState
             hasActiveFilters={hasActiveFilters}
             universeEmpty={funds.length === 0}
-            onClear={() => applyFilters({})}
+            onClear={() => applyFilters({ year: currentPaidHistoryYear() })}
           />
         ) : (
           <ResultsTable
@@ -263,16 +284,17 @@ export function Dashboard({
             sortKey={sortKey}
             sortDirection={sortDirection}
             onSort={toggleSort}
-            year={filters.year}
+            year={filters.year ?? currentPaidHistoryYear()}
+            highlightedTicker={scopedTicker}
             page={
-              scopedTicker
-                ? undefined
-                : {
-                    total: page.total,
-                    limit: page.limit,
-                    offset: page.offset,
+              upcomingCount > FUND_PAGE_SIZE
+                ? {
+                    total: upcomingCount,
+                    limit: FUND_PAGE_SIZE,
+                    offset,
                     onOffset: setOffset,
                   }
+                : undefined
             }
           />
         )}

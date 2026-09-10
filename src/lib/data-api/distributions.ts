@@ -1,4 +1,5 @@
 import { aggregateDistributions, type DataDistribution } from "@/data/aggregate-distributions";
+import { isUpcomingFund, utcTodayIso } from "@/data/distribution-bucket";
 import { withPeerContext } from "@/data/queries";
 import type { FundEstimateView } from "@/data/types";
 import { looksLikeExactTicker, normalizeTickerSymbol } from "@/lib/data-api/request-ticker";
@@ -16,6 +17,9 @@ export type DistributionRowQuery = {
   ticker?: string;
   fundIdentifier?: string;
   fundFamily?: string;
+  publicationStage?: string;
+  exDateFrom?: string;
+  asOfFrom?: string;
 };
 
 function dedupeRows(rows: DataDistribution[]): DataDistribution[] {
@@ -54,6 +58,15 @@ export async function loadDistributionRows(
     }
     if (query.fundFamily?.trim()) {
       params.set("fund_family", query.fundFamily.trim());
+    }
+    if (query.publicationStage?.trim()) {
+      params.set("publication_stage", query.publicationStage.trim());
+    }
+    if (query.exDateFrom?.trim()) {
+      params.set("ex_date_from", query.exDateFrom.trim());
+    }
+    if (query.asOfFrom?.trim()) {
+      params.set("as_of_from", query.asOfFrom.trim());
     }
     const response = await fetchDataApi(`/distributions?${params.toString()}`);
     if (!response.ok) break;
@@ -150,6 +163,34 @@ export async function loadDistributionsForFundPage(input: {
   }
 
   return dedupeRows(rows);
+}
+
+/**
+ * Search Upcoming / Announced universe: every unpaid manager-published
+ * prelim/updated row the Data API exposes (`publication_stage` + still-future
+ * `ex_date_from`). Never invent, never page through GET /funds identity.
+ */
+export async function loadUpcomingAnnouncedFromDataApi(
+  today = utcTodayIso(),
+): Promise<FundEstimateView[]> {
+  try {
+    const rows = dedupeRows([
+      ...(await loadDistributionRows({
+        publicationStage: "preliminary_estimate",
+        exDateFrom: today,
+      })),
+      ...(await loadDistributionRows({
+        publicationStage: "updated_estimate",
+        exDateFrom: today,
+      })),
+    ]);
+    if (!rows.length) return [];
+    return withPeerContext(aggregateDistributions(rows, today)).filter((fund) =>
+      isUpcomingFund(fund, today),
+    );
+  } catch {
+    return [];
+  }
 }
 
 export async function loadFundsFromDataApi(): Promise<FundEstimateView[] | null> {

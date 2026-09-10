@@ -248,6 +248,7 @@ function hydrationScore(fund: FundEstimateView): number {
   if (fund.estimatedDistributionAmount) score += 3;
   if (fund.publicationStage) score += 1;
   if (fund.recordDate || fund.exDate || fund.payableDate) score += 1;
+  if (fund.bucket === "upcoming") score += 10;
   if (fund.bucket === "paid" && fund.hasEstimate !== true) score += 1;
   // Weekly / dist-day NAV from GET /funds + /distributions. A distributions-only
   // duplicate must not win a tie and drop the live print.

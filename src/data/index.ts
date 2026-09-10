@@ -9,7 +9,9 @@ export {
   preferFinalPaidEvents,
 } from "./hydrate-funds";
 export {
+  buildSearchTableFunds,
   computeCategoryAverages,
+  currentPaidHistoryYear,
   emptyHighlightSets,
   fundFromPaidEvent,
   getFacets,

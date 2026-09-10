@@ -7,6 +7,8 @@ import {
   paidEventsForFund,
 } from "./hydrate-funds.ts";
 import {
+  buildSearchTableFunds,
+  currentPaidHistoryYear,
   paidHistoryViews,
   paidHistoryYearOf,
   splitFundsByBucket,
@@ -212,6 +214,92 @@ describe("Search Upcoming still-future unpaid prelims", () => {
     );
   });
 
+  it("lists every unpaid announced fund — not only the selected ticker", () => {
+    const unpaidTickers = [
+      "FBCVX",
+      "FBGRX",
+      "FCPGX",
+      "FCPVX",
+      "FDGFX",
+      "FGMNX",
+      "FGRIX",
+      "FIREX",
+      "FLPSX",
+      "FLVCX",
+      "FOCPX",
+      "FRIFX",
+      "FVDFX",
+    ];
+    const upcomingFunds = unpaidTickers.map((ticker) =>
+      hydrate(
+        ticker,
+        ticker,
+        "Fidelity",
+        true,
+        [
+          row({
+            id: `${ticker}-ltcg`,
+            ticker,
+            fund_name: ticker,
+            fund_family: "Fidelity",
+            estimate_type: "long_term_capital_gains",
+            amount: ticker === "FBGRX" ? "21.021000" : "1.250000",
+            amount_unit: "per_share",
+            ex_date: "2026-09-11",
+            payable_date: "2026-09-14",
+            as_of: "2026-07-31",
+            publication_stage: "preliminary_estimate",
+          }),
+        ],
+      ),
+    );
+    const agthx = hydrate("AGTHX", "The Growth Fund of America", "American Funds", false, [
+      row({
+        id: "agthx-final",
+        ticker: "AGTHX",
+        fund_name: "The Growth Fund of America",
+        fund_family: "American Funds",
+        estimate_type: "long_term_capital_gains",
+        amount: "2.000000",
+        amount_unit: "per_share",
+        ex_date: "2025-12-15",
+        payable_date: "2025-12-16",
+        as_of: "2025-12-31",
+        publication_stage: "final",
+      }),
+    ]);
+    assert.equal(isUpcomingFund(agthx, TODAY), false);
+    const book = [...upcomingFunds, agthx];
+    const { upcoming, paid } = splitFundsByBucket(book);
+    assert.equal(upcoming.length, 13, "Upcoming must list the full unpaid announced set");
+    assert.deepEqual(
+      upcoming.map((fund) => fund.ticker).sort(),
+      [...unpaidTickers].sort(),
+    );
+    assert.equal(
+      upcoming.some((fund) => fund.ticker === "AGTHX"),
+      false,
+      "paid-only AGTHX must not appear in Upcoming",
+    );
+    assert.ok(paid.some((fund) => fund.ticker === "AGTHX"));
+
+    const fbgrx = upcoming.find((fund) => fund.ticker === "FBGRX");
+    assert.ok(fbgrx);
+    assert.ok(Math.abs(fbgrx.estimatedDistributionAmount - 21.021) < 1e-6);
+
+    const selected = buildSearchTableFunds(book, [fbgrx], {}, "FBGRX");
+    const selectedSplit = splitFundsByBucket(selected);
+    assert.equal(
+      selectedSplit.upcoming.length,
+      13,
+      "selecting FBGRX must not shrink the Upcoming universe",
+    );
+    assert.equal(
+      selectedSplit.upcoming.some((fund) => fund.ticker === "AGTHX"),
+      false,
+    );
+  });
+
   it("does not invent Upcoming from AMCPX/CGHM midyear paids", () => {
     const amcpx = hydrate("AMCPX", "AMCAP Fund", "American Funds", true, AMCPX_ROWS);
     const cghm = hydrate(
@@ -263,6 +351,32 @@ describe("Search Paid history 2026 midyear paids", () => {
           row.exDate === "2026-06-29",
       ),
       "CGHM combined 2026 midyear paid must appear",
+    );
+  });
+
+  it("defaults Paid History to the current calendar year and drops prior-year rows", () => {
+    const prior = hydrate(
+      "FBGRX",
+      "Blue Chip Growth",
+      "Fidelity",
+      true,
+      FBGRX_ROWS,
+    );
+    const current = hydrate("AMCPX", "AMCAP Fund", "American Funds", true, AMCPX_ROWS);
+    const year = currentPaidHistoryYear(new Date("2026-09-10T12:00:00Z"));
+    assert.equal(year, 2026);
+    const history = paidHistoryViews([prior, current], year);
+    assert.equal(
+      history.some((row) => Math.abs(row.estimatedDistributionAmount - 5.073) < 1e-6),
+      false,
+      "2025 FBGRX final must drop after the calendar-year default",
+    );
+    assert.ok(
+      history.some(
+        (row) =>
+          row.ticker === "AMCPX" &&
+          Math.abs(row.estimatedDistributionAmount - 3.5365) < 1e-6,
+      ),
     );
   });
 

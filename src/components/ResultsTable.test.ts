@@ -40,6 +40,21 @@ describe("ResultsTable Search Paid history", () => {
     assert.match(source, /Dist \$\/sh/);
     assert.match(source, /% NAV/);
   });
+
+  it("renders a visible Paid History module header, not only the kicker chip", () => {
+    const paidCall = source.slice(
+      source.indexOf("title={SEARCH_PAID_HISTORY_HEADING}"),
+      source.indexOf("function FundSection"),
+    );
+    assert.match(paidCall, /showHeading/);
+    const fundSection = source.slice(
+      source.indexOf("function FundSection"),
+      source.indexOf("function EstimateRow"),
+    );
+    assert.match(fundSection, /<h3 className="font-serif text-xl tracking-tight text-ink">\{title\}<\/h3>/);
+    assert.match(fundSection, /\{description\}/);
+    assert.match(fundSection, /showHeading \? \(/);
+  });
 });
 
 describe("ResultsTable Search pager placement", () => {

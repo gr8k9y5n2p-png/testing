@@ -30,7 +30,14 @@ describe("Search Upcoming / Announced module chrome", () => {
     assert.doesNotMatch(dashboard, /type="search"/);
     assert.match(dashboard, /params.set\("q"/);
     assert.match(dashboard, /scopedTicker/);
+    assert.match(dashboard, /buildSearchTableFunds/);
+    assert.match(dashboard, /currentPaidHistoryYear/);
     assert.match(dashboard, /mergeTaxYears/);
     assert.match(dashboard, /FUND_PAGE_SIZE/);
+    assert.doesNotMatch(
+      dashboard,
+      /query: scopedTicker,/,
+      "selected ticker must not replace the Upcoming universe query",
+    );
   });
 });

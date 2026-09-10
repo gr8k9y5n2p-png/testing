@@ -31,6 +31,18 @@ describe("Search / Sample Estimates fund page", () => {
     );
   });
 
+  it("loads Search Upcoming from unpaid announced distributions, not GET /funds page 1", () => {
+    const source = readFileSync(join(here, "distributions.ts"), "utf8");
+    const repo = readFileSync(join(here, "../../data/repository.ts"), "utf8");
+    assert.match(source, /loadUpcomingAnnouncedFromDataApi/);
+    assert.match(source, /publication_stage/);
+    assert.match(source, /ex_date_from/);
+    assert.match(source, /preliminary_estimate/);
+    assert.match(source, /updated_estimate/);
+    assert.match(repo, /loadUpcomingAnnouncedFromDataApi/);
+    assert.match(repo, /mergeFundLists\(upcoming/);
+  });
+
   it("keeps paid/final history off the has_estimate Upcoming gate", () => {
     const table = readFileSync(
       join(here, "../../components/ResultsTable.tsx"),

@@ -17,7 +17,8 @@ describe("Sample Estimates empty copy", () => {
       source,
       /Announced distributions that have not paid out yet\. Past record\/ex\/payable dates stay in Paid history below\./,
     );
-    assert.match(source, /SEARCH_PAID_HISTORY_HEADING = "Paid history"/);
+    assert.match(source, /SEARCH_PAID_HISTORY_HEADING = "Paid History"/);
+    assert.match(source, /selected calendar year/);
     assert.match(source, /LISTS_HEADING = "Lists"/);
     assert.match(source, /LISTS_DIST_COLUMN = "Estimated \$ Distribution\/share"/);
     assert.match(source, /never invented from paid history/);
