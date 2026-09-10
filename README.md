@@ -166,6 +166,8 @@ curl -s 'http://127.0.0.1:8000/distributions?q=AMCAP&estimate_type=long_term_cap
 curl -s 'http://127.0.0.1:8000/distributions?ticker=CGHM' | jq
 curl -s 'http://127.0.0.1:8000/distributions?limit=50&offset=0' | jq
 curl -s 'http://127.0.0.1:8000/distributions?ex_date_from=2026-06-01&ex_date_to=2026-06-30' | jq
+# Paid History — year window + category (same strings as GET /funds/categories)
+curl -s 'http://127.0.0.1:8000/distributions?publication_stage=final&ex_date_from=2025-01-01&ex_date_to=2025-12-31&category=Large%20Blend&limit=50' | jq '{total,page,page_size,categories:[.items[].category]|unique}'
 # Multi-year / estimate-vs-actual (same fund_identifier, different as_of + publication_stage)
 curl -s 'http://127.0.0.1:8000/distributions?fund_identifier=amcap-fund&as_of_from=2024-01-01&as_of_to=2024-12-31' | jq
 curl -s 'http://127.0.0.1:8000/distributions?fund_identifier=amcap-fund&publication_stage=preliminary_estimate' | jq
@@ -935,7 +937,7 @@ Website **Add to universe** must `POST /request/ticker` (see **Website Submit-ti
 
 `GET /funds/categories` returns `{ items: [{ category, fund_count }], uncategorized, total_funds, categorized, coverage_pct }` so Website can populate a Versus Category picker and compute averages / +/- vs category from `GET /funds?category=…` (average the illustrated tax fields of funds that share `category`).
 
-`category` is also attached on `GET /distributions` items and on illustrate / portfolio-illustrate responses wherever fund metadata already appears (`IllustrationComponent.category`, `PortfolioHoldingOut.category`). It is identity-level metadata, not a distribution amount, and is never invented.
+`category` is also attached on `GET /distributions` items and on illustrate / portfolio-illustrate responses wherever fund metadata already appears (`IllustrationComponent.category`, `PortfolioHoldingOut.category`). It is identity-level metadata, not a distribution amount, and is never invented. Website Paid History can filter rows with the same `category` query param (`GET /distributions?category=Large+Blend&ex_date_from=…`).
 
 See **Fund category (Versus Category)** below for coverage and how unknowns stay null.
 
@@ -954,7 +956,7 @@ Rebuild the catalog with `python3 scripts/build_fund_categories.py` (add `--yaho
 
 `GET /distributions` still uses `page` / `page_size` / `total`. Website may send `limit` / `offset` as aliases (`limit` → `page_size`, `offset` → `page = floor(offset / page_size) + 1`). The response keeps `page` / `page_size`.
 
-`GET /distributions` already supports `as_of_from` / `as_of_to`, `publication_stage`, and `fund_identifier` (exact slug or ticker identity).
+`GET /distributions` already supports `as_of_from` / `as_of_to`, `publication_stage`, `fund_identifier` (exact slug or ticker identity), `fund_family`, and **`category`** (same Morningstar-style strings as `GET /funds` / `GET /funds/categories`). `category` is an exact match on the fund’s category (case/hyphen insensitive via `canonical_category`). Unknown names return `{ items: [], total: 0 }`. Filtered `total` includes `category` combined with the other query filters so Website Paid History can page `ex_date_from` / `ex_date_to` + `fund_family` + `category` without walking the book. Category is resolved from fund identity metadata (same source as `/funds`) — the filter does not hydrate `raw_payload` or add a schema column.
 
 **Compare estimate vs paid for one fund:**
 

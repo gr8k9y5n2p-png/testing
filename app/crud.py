@@ -235,6 +235,7 @@ def _filter_stmt(
     ex_date_to: date | None = None,
     publication_stage: str | None = None,
     needs_review: bool | None = None,
+    fund_identifiers: list[str] | None = None,
     columns: tuple | None = None,
     q_match: str = "contains",
 ) -> Select:
@@ -291,6 +292,8 @@ def _filter_stmt(
         stmt = stmt.where(DistributionEstimate.ex_date <= ex_date_to)
     if needs_review is not None:
         stmt = stmt.where(DistributionEstimate.needs_review.is_(needs_review))
+    if fund_identifiers:
+        stmt = stmt.where(DistributionEstimate.fund_identifier.in_(fund_identifiers))
     return stmt
 
 
@@ -310,9 +313,17 @@ def search_distributions(
     ex_date_to: date | None = None,
     publication_stage: str | None = None,
     needs_review: bool | None = None,
+    category: str | None = None,
     page: int = 1,
     page_size: int = 50,
 ) -> tuple[list[DistributionEstimate], int]:
+    fund_identifiers = None
+    if category and category.strip():
+        fund_identifiers = fund_identifiers_matching_category(
+            session, category=category, q=q, fund_family=fund_family
+        )
+        if not fund_identifiers:
+            return [], 0
     stmt = _filter_stmt(
         q=q,
         fund_family=fund_family,
@@ -327,6 +338,7 @@ def search_distributions(
         ex_date_to=ex_date_to,
         publication_stage=publication_stage,
         needs_review=needs_review,
+        fund_identifiers=fund_identifiers,
     )
     total = session.scalar(select(func.count()).select_from(stmt.subquery())) or 0
     page = max(page, 1)
@@ -431,6 +443,34 @@ def _summary_from_row(row, live_estimate_ids: set[str] | None = None) -> FundSum
         ),
         coverage_status=coverage_status_for_in_book_fund(has_estimate=has_estimate),
     )
+
+
+def fund_identifiers_matching_category(
+    session: Session,
+    *,
+    category: str,
+    q: str | None = None,
+    fund_family: str | None = None,
+) -> list[str]:
+    """Identifiers whose ``/funds`` category equals ``category``.
+
+    Same ``canonical_category`` / ``resolve_category`` vocabulary as
+    ``GET /funds`` and ``GET /funds/categories``. Loads identity columns
+    only (``ix_dist_fund_search``) — never hydrates ``raw_payload`` and
+    never walks the full estimate book. Unknown names return ``[]``.
+    """
+    wanted = canonical_category(category)
+    if wanted is None:
+        return []
+    q_match = "indexed" if prefer_indexed_fund_match(q) else "contains"
+    stmt, _total = _unique_fund_query(
+        session, q=q, fund_family=fund_family, q_match=q_match
+    )
+    return [
+        row.fund_identifier
+        for row in session.execute(stmt).all()
+        if _summary_from_row(row).category == wanted
+    ]
 
 
 def search_funds(
