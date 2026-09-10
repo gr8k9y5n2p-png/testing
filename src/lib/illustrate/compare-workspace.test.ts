@@ -281,6 +281,8 @@ describe("compare upcoming rows", () => {
     assert.doesNotMatch(source, /estimatedDistributionPctNav/);
     assert.doesNotMatch(source, /ticker === ["'][A-Z0-9]+["']/);
     const stage = readFileSync(join(here, "publication-stage.ts"), "utf8");
+    assert.match(stage, /pctOfNavForUnpaidOrPaid/);
+    assert.match(stage, /nav_on_distribution_day/);
     assert.doesNotMatch(stage, /ticker === ["'][A-Z0-9]+["']/);
   });
 
@@ -407,6 +409,39 @@ describe("compare upcoming rows", () => {
     assert.equal(row.exDate, "2026-12-17");
     assert.equal(row.ordinaryPerShare, 0);
     assert.equal(row.capitalGainsPerShare, 0);
+  });
+
+  it("locks FCPGX Upcoming % of NAV to Dist $/share ÷ weekly NAV", () => {
+    const row = upcomingRowForCompareTicker({
+      ticker: "FCPGX",
+      fund: view("FCPGX", {
+        estimatedDistributionAmount: 7.277,
+        estimatedDistributionPctNav: 12,
+        nav: 42.94,
+        navOnDistributionDay: 37.09,
+        publicationStage: "preliminary_estimate",
+        bucket: "upcoming",
+      }),
+      upcoming: {
+        dollars: 185,
+        announced: true,
+        asOf: "2026-08-29",
+        publicationStage: "preliminary_estimate",
+      },
+      index: 0,
+    });
+    assert.equal(row.available, true);
+    assert.equal(row.bucket, "upcoming");
+    assert.equal(row.distributionPerShare, 7.277);
+    assert.equal(row.navPerShare, 42.94);
+    assert.equal(row.navOnDistributionDay, null);
+    assert.equal(Number(row.pctOfNav?.toFixed(1)), 16.9);
+    assert.notEqual(
+      Number(row.pctOfNav?.toFixed(1)),
+      Number((((7.277 / 37.09) * 100).toFixed(1))),
+      "Upcoming must not use nav_on_distribution_day",
+    );
+    assert.notEqual(Number(row.pctOfNav?.toFixed(1)), 12, "never manager percent_of_nav");
   });
 
   it("computes Dist $ and % of NAV from unpaid $/share ÷ weekly NAV", () => {

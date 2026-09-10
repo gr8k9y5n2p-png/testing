@@ -267,6 +267,7 @@ export function upcomingRowForCompareTicker(input: {
     pctOfNav: upcomingPctOfNavFromPerShare(perShare, nav),
     navPerShare: nav,
     navAsOf: fund?.navAsOf ?? null,
+    navOnDistributionDay: null,
     distributionPerShare: perShare,
     ordinaryPerShare,
     capitalGainsPerShare,

@@ -1,3 +1,4 @@
+import { historicalPctOfNav, pctOfNavForUnpaidOrPaid } from "./nav-math.ts";
 import {
   upcomingDistDollarsFromPerShare,
   upcomingPctOfNavFromPerShare,
@@ -25,13 +26,16 @@ export type UpcomingRow = {
   /** Holding $ used to derive % of NAV. Null when unknown. */
   holdingDollars: number | null;
   /**
-   * Display % of NAV = est $/share ÷ weekly NAV when both exist.
+   * Upcoming: Dist $/share ÷ weekly nav_per_share.
+   * Paid / historical: Dist $/share ÷ nav_on_distribution_day.
    * Never invent a manager rate from Dist $ / holding $ alone.
    */
   pctOfNav: number | null;
-  /** Weekly NAV (`nav_per_share` from Data when live). Soft-null when absent. */
+  /** Weekly NAV (`nav_per_share`). Upcoming % of NAV only. */
   navPerShare: number | null;
   navAsOf: string | null;
+  /** Ex-day NAV. Paid / historical % of NAV only — never weekly. */
+  navOnDistributionDay: number | null;
   /** Manager unpaid prelim $/share. Never invent. */
   distributionPerShare: number | null;
   ordinaryPerShare: number | null;
@@ -380,32 +384,44 @@ function toTableRow(
   const dist = num(event.distribution_dollars);
   const holdingDollars = num(holding.holding_dollars);
   const ticker = holdingTicker(holding);
-  const nav =
+  const weeklyNav =
     num(event.nav_per_share) ??
     num(holding.nav_per_share);
+  const navOnDistributionDay = num(event.nav_on_distribution_day);
   const perShare =
     num(event.per_share) ??
     (event.amount_unit === "per_share" ? num(event.amount) : null);
-  const resolvedPerShare = resolveUpcomingPerShare({
-    distributionPerShare: perShare,
-    distributionDollars: dist,
-    holdingDollars,
-    navPerShare: nav,
-  });
+  const paid = bucket === "paid_history";
+  // Paid % of NAV must not back out $/share from Dist $ ÷ weekly shares.
+  const resolvedPerShare = paid
+    ? perShare
+    : resolveUpcomingPerShare({
+        distributionPerShare: perShare,
+        distributionDollars: dist,
+        holdingDollars,
+        navPerShare: weeklyNav,
+      });
   return {
     key: `${side}-${holding.holding_index}-${ticker}-${index}-${bucket}-${eventIndex}`,
     ticker,
     fundName: holding.fund_name || ticker,
     side,
     sideLabel: side === "current" ? "Current" : "Proposed",
-    distributionDollars:
-      dist ?? upcomingDistDollarsFromPerShare(resolvedPerShare, holdingDollars, nav),
+    distributionDollars: paid
+      ? dist
+      : dist ?? upcomingDistDollarsFromPerShare(resolvedPerShare, holdingDollars, weeklyNav),
     distributionDollarsMin: num(event.distribution_dollars_min),
     distributionDollarsMax: num(event.distribution_dollars_max),
     holdingDollars,
-    pctOfNav: upcomingPctOfNavFromPerShare(resolvedPerShare, nav),
-    navPerShare: nav,
+    pctOfNav: pctOfNavForUnpaidOrPaid({
+      unpaid: !paid,
+      perShare: resolvedPerShare,
+      weeklyNav,
+      navOnDistributionDay,
+    }),
+    navPerShare: weeklyNav,
     navAsOf: isoDate(event.nav_as_of) ?? isoDate(holding.nav_as_of),
+    navOnDistributionDay,
     distributionPerShare: resolvedPerShare,
     ordinaryPerShare: null,
     capitalGainsPerShare: null,
@@ -444,6 +460,7 @@ function emptyUpcomingRow(
     pctOfNav: null,
     navPerShare: num(holding.nav_per_share),
     navAsOf: isoDate(holding.nav_as_of),
+    navOnDistributionDay: null,
     distributionPerShare: null,
     ordinaryPerShare: null,
     capitalGainsPerShare: null,
@@ -592,7 +609,7 @@ export function distributionHasPayable(rows: UpcomingRow[]): boolean {
  * Sum of unpaid announced tax. Null estimated_tax is skipped (not $0).
  * No upcoming rows → 0; the UI uses `hasUpcoming` so a miss is undisclosed.
  */
-/** Attach known NAV for $ / share. Never invent a price. */
+/** Attach known weekly NAV for unpaid Upcoming. Never rewrite paid/historical %. */
 export function withUpcomingNav(
   rows: UpcomingRow[],
   navByTicker: Record<string, number | null | undefined> | Map<string, number | null | undefined>,
@@ -602,6 +619,15 @@ export function withUpcomingNav(
       ? navByTicker
       : new Map(Object.entries(navByTicker));
   return rows.map((row) => {
+    if (row.bucket === "paid_history") {
+      return {
+        ...row,
+        pctOfNav: historicalPctOfNav(
+          row.distributionPerShare,
+          row.navOnDistributionDay,
+        ),
+      };
+    }
     const lookedUp = lookup.get(row.ticker) ?? lookup.get(row.ticker.toUpperCase());
     const nav =
       row.navPerShare != null && row.navPerShare > 0

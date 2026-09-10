@@ -62,6 +62,7 @@ export {
   historicalPctOfNav,
   parsePositiveNav,
   pctOfNavForFund,
+  pctOfNavForUnpaidOrPaid,
   resolvePctOfNav,
   upcomingDistDollars,
   upcomingPctOfNav,

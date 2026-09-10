@@ -1,12 +1,15 @@
 /**
- * Eric-locked NAV math for Search / Dollar Illustration.
+ * Eric-locked NAV math (2026-09-10) for Search / Compare / Portfolio / Lists.
  *
  * Upcoming Dist $ = est $/share × (holding $ ÷ weekly nav_per_share)
- * Upcoming % of NAV = est $/share ÷ weekly nav_per_share
- * Historical % of NAV = dist $/share ÷ nav_on_distribution_day
- *   (never today's weekly NAV)
+ * Upcoming / live unpaid % of NAV = Dist $/share ÷ latest weekly nav_per_share
+ *   (FCPGX $7.277 ÷ $42.94 = 16.9%). Never manager percent_of_nav unless
+ *   the UI explicitly labels that print manager-published.
+ * Paid / historical % of NAV = Dist $/share ÷ nav_on_distribution_day
+ *   (ex-day NAV). Never today's weekly NAV.
  *
- * Published amount_unit=percent_of_nav is left as-is.
+ * Published amount_unit=percent_of_nav is left as-is only when callers
+ * pass it as an explicit manager-published print.
  * Missing estimate or NAV → null → UI "—". Never invent.
  */
 
@@ -103,6 +106,20 @@ export function historicalPctOfNav(
   const nav = parsePositiveNav(navOnDistributionDay);
   if (perShare == null || nav == null) return null;
   return (perShare / nav) * 100;
+}
+
+/**
+ * Split NAV series by publication: weekly for unpaid Upcoming, day NAV
+ * for paid / historical. Callers must not pass weekly NAV as day NAV.
+ */
+export function pctOfNavForUnpaidOrPaid(input: {
+  unpaid: boolean;
+  perShare: unknown;
+  weeklyNav: unknown;
+  navOnDistributionDay: unknown;
+}): number | null {
+  if (input.unpaid) return upcomingPctOfNav(input.perShare, input.weeklyNav);
+  return historicalPctOfNav(input.perShare, input.navOnDistributionDay);
 }
 
 /**

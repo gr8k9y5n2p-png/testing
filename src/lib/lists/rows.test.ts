@@ -206,6 +206,11 @@ describe("Lists upcoming rows", () => {
       list.distPerShare != null && Math.abs(list.distPerShare - 21.021) < 1e-6,
     );
     assert.ok(list.pctOfNav != null && list.pctOfNav > 0);
+    assert.equal(
+      Number(list.pctOfNav.toFixed(2)),
+      Number((((21.021 / 312.26) * 100).toFixed(2))),
+      "Lists Upcoming % of NAV is Dist $/share ÷ weekly NAV",
+    );
     assert.equal(list.asOfDate, "2026-07-31");
     assert.equal(list.exDate, "2026-09-11");
     assert.ok(
@@ -235,6 +240,47 @@ describe("Lists upcoming rows", () => {
     assert.ok(
       list.estimateTypes.long_term_capital_gains != null &&
         Math.abs(list.estimateTypes.long_term_capital_gains - 21.021) < 1e-6,
+    );
+  });
+
+  it("locks FCPGX Lists Upcoming % of NAV to Dist $/share ÷ weekly NAV", () => {
+    const identity = mapFundsApiItem({
+      ticker: "FCPGX",
+      fund_name: "Small Cap Growth",
+      fund_family: "Fidelity",
+      nav_per_share: 42.94,
+      has_estimate: true,
+    });
+    const list = listRowFromFund({
+      ticker: "FCPGX",
+      fund: {
+        ...mergeFundWithDistributions(identity, null),
+        publishedPctOfNav: 12,
+        navOnDistributionDay: 37.09,
+        publicationStage: "final",
+      },
+      distributionRows: [
+        row({
+          id: "fcpgx-ltcg",
+          ticker: "FCPGX",
+          fund_name: "Small Cap Growth",
+          estimate_type: "long_term_capital_gains",
+          amount: "7.277000",
+          amount_unit: "per_share",
+          ex_date: "2026-12-15",
+          publication_stage: "preliminary_estimate",
+        }),
+      ],
+      found: true,
+      today: TODAY,
+    });
+    assert.equal(list.status, "upcoming");
+    assert.equal(list.distPerShare, 7.277);
+    assert.equal(Number(list.pctOfNav?.toFixed(1)), 16.9);
+    assert.notEqual(Number(list.pctOfNav?.toFixed(1)), 12);
+    assert.notEqual(
+      Number(list.pctOfNav?.toFixed(1)),
+      Number((((7.277 / 37.09) * 100).toFixed(1))),
     );
   });
 });

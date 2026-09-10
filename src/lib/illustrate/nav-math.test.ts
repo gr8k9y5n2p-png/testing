@@ -14,6 +14,7 @@ import {
   historicalPctOfNav,
   parsePositiveNav,
   pctOfNavForFund,
+  pctOfNavForUnpaidOrPaid,
   resolvePctOfNav,
   SOFT_DASH,
   upcomingDistDollars,
@@ -62,6 +63,49 @@ describe("Eric-locked NAV math", () => {
     assert.equal(
       upcomingPctOfNav(est, ABALX_WEEKLY_NAV),
       (est / ABALX_WEEKLY_NAV) * 100,
+    );
+  });
+
+  it("locks FCPGX unpaid % of NAV to Dist $/share ÷ weekly NAV (16.9%)", () => {
+    const fcpgx = upcomingPctOfNav(7.277, 42.94);
+    assert.ok(fcpgx != null);
+    assert.equal(Number(fcpgx.toFixed(1)), 16.9);
+    assert.equal(
+      Number(
+        pctOfNavForUnpaidOrPaid({
+          unpaid: true,
+          perShare: 7.277,
+          weeklyNav: 42.94,
+          navOnDistributionDay: 37.09,
+        })?.toFixed(1),
+      ),
+      16.9,
+      "unpaid must ignore nav_on_distribution_day",
+    );
+  });
+
+  it("uses dist-day NAV for paid % of NAV and never weekly", () => {
+    const paid = pctOfNavForUnpaidOrPaid({
+      unpaid: false,
+      perShare: ABALX_YE_PER_SHARE,
+      weeklyNav: ABALX_WEEKLY_NAV,
+      navOnDistributionDay: ABALX_YE_NAV,
+    });
+    assert.ok(paid != null);
+    assert.equal(Number(paid.toFixed(2)), 5.73);
+    assert.notEqual(
+      Number(paid.toFixed(2)),
+      Number((((ABALX_YE_PER_SHARE / ABALX_WEEKLY_NAV) * 100).toFixed(2))),
+    );
+    assert.equal(
+      pctOfNavForUnpaidOrPaid({
+        unpaid: false,
+        perShare: ABALX_YE_PER_SHARE,
+        weeklyNav: ABALX_WEEKLY_NAV,
+        navOnDistributionDay: null,
+      }),
+      null,
+      "paid with no day NAV stays undisclosed — never fall back to weekly",
     );
   });
 

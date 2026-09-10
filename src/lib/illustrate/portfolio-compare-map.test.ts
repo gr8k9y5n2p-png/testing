@@ -24,6 +24,7 @@ import {
   upcomingFromHolding,
   upcomingHoldingsForSide,
   upcomingRowsForSide,
+  withUpcomingNav,
 } from "./publication-stage.ts";
 
 const TODAY = "2026-09-08";
@@ -1023,6 +1024,103 @@ describe("PortfolioCompare distribution tables", () => {
       }),
       /\$0/,
     );
+  });
+
+  it("uses Dist $/share ÷ weekly NAV for unpaid Upcoming, never day NAV", () => {
+    const book = allocation([
+      holding({
+        ticker: "FCPGX",
+        nav_per_share: 42.94,
+        upcoming: {
+          publication_stage: "preliminary_estimate",
+          per_share: 7.277,
+          amount: 7.277,
+          amount_unit: "per_share",
+          percent_of_nav: 12,
+          nav_on_distribution_day: 37.09,
+          distribution_dollars: null,
+          record_date: "2026-12-12",
+          ex_date: "2026-12-15",
+        },
+      }),
+    ]);
+    const rows = upcomingHoldingsForSide(book, "current", TODAY);
+    assert.equal(rows[0]?.available, true);
+    assert.equal(rows[0]?.distributionPerShare, 7.277);
+    assert.equal(rows[0]?.navPerShare, 42.94);
+    assert.equal(rows[0]?.navOnDistributionDay, 37.09);
+    assert.equal(Number(rows[0]?.pctOfNav?.toFixed(1)), 16.9);
+    assert.notEqual(Number(rows[0]?.pctOfNav?.toFixed(1)), 12);
+    assert.equal(
+      upcomingPctOfNavAmount({
+        available: true,
+        pctOfNav: rows[0]?.pctOfNav ?? null,
+        distributionPerShare: 7.277,
+        navPerShare: 42.94,
+      }),
+      "16.95%",
+    );
+  });
+
+  it("uses Dist $/share ÷ nav_on_distribution_day for paid history, never weekly", () => {
+    const book = allocation([
+      holding({
+        ticker: "ABALX",
+        nav_per_share: 40.849998,
+        paid_history: [
+          {
+            publication_stage: "paid",
+            per_share: 2.125,
+            amount: 2.125,
+            amount_unit: "per_share",
+            nav_per_share: 40.849998,
+            nav_on_distribution_day: 37.09,
+            distribution_dollars: 2100,
+            as_of: "2025-12-15",
+            record_date: "2025-12-15",
+            ex_date: "2025-12-15",
+            payable_date: "2025-12-16",
+          },
+        ],
+      }),
+    ]);
+    const paid = paidHistoryRowsForSide(book, "current", TODAY);
+    assert.equal(paid.length, 1);
+    assert.equal(paid[0]?.bucket, "paid_history");
+    assert.equal(paid[0]?.distributionPerShare, 2.125);
+    assert.equal(paid[0]?.navPerShare, 40.849998);
+    assert.equal(paid[0]?.navOnDistributionDay, 37.09);
+    assert.equal(Number(paid[0]?.pctOfNav?.toFixed(2)), 5.73);
+    assert.notEqual(
+      Number(paid[0]?.pctOfNav?.toFixed(2)),
+      Number((((2.125 / 40.849998) * 100).toFixed(2))),
+      "paid % of NAV must not use weekly nav_per_share",
+    );
+
+    const rewritten = withUpcomingNav(paid, { ABALX: 40.849998 });
+    assert.equal(Number(rewritten[0]?.pctOfNav?.toFixed(2)), 5.73);
+    assert.equal(rewritten[0]?.navOnDistributionDay, 37.09);
+  });
+
+  it("leaves paid % of NAV null when day NAV is missing — never weekly fallback", () => {
+    const book = allocation([
+      holding({
+        ticker: "ABALX",
+        nav_per_share: 40.85,
+        paid_history: [
+          {
+            publication_stage: "final",
+            per_share: 2.125,
+            amount_unit: "per_share",
+            nav_per_share: 40.85,
+            as_of: "2025-12-15",
+            ex_date: "2025-12-15",
+          },
+        ],
+      }),
+    ]);
+    const paid = paidHistoryRowsForSide(book, "current", TODAY);
+    assert.equal(paid[0]?.pctOfNav, null);
   });
 
   it("uses issuer-published percent_of_nav only and never derives a rate", () => {

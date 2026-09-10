@@ -41,11 +41,10 @@ const ESTIMATE_LABELS: Record<string, string> = {
 export function IllustrationResults({
   result,
   fund,
-  holdingDollars,
 }: {
   result: IllustrateResponse;
   fund?: FundEstimate | null;
-  /** Holding $ so Upcoming can show % of NAV without inventing a rate. */
+  /** Kept for callers; Upcoming % of NAV uses $/share ÷ weekly NAV. */
   holdingDollars?: number | null;
 }) {
   const { components } = result;
@@ -97,7 +96,6 @@ export function IllustrationResults({
         wellClassName="bg-surface"
         components={upcomingComponents}
         fund={fund}
-        holdingDollars={holdingDollars}
         empty={
           catalogUpcoming && fund ? (
             <div className="flex flex-wrap items-start justify-between gap-3 px-3 py-3">
@@ -140,31 +138,18 @@ export function IllustrationResults({
 function componentPctOfNav(
   component: IllustrationComponent,
   fund?: FundEstimate | null,
-  holdingDollars?: number | null,
 ): string {
-  const published = parseFiniteNumber(component.percent_of_nav);
-  if (published != null) return formatSoftPct(published);
+  const unit = (component.amount_unit ?? "").trim().toLowerCase();
+  const perShare =
+    unit === "percent_of_nav" ? null : parseFiniteNumber(component.amount);
 
-  const perShare = parseFiniteNumber(component.amount);
   if (usesDistributionDayNav(component)) {
     return formatSoftPct(
       historicalPctOfNav(perShare, component.nav_on_distribution_day),
     );
   }
 
-  const weekly = parsePositiveNav(fund?.nav);
-  const fromWeekly = upcomingPctOfNav(perShare, weekly);
-  if (fromWeekly != null) return formatSoftPct(fromWeekly);
-
-  if (
-    component.amount_unit === "percent_of_nav" &&
-    component.distribution_dollars != null &&
-    holdingDollars != null &&
-    holdingDollars > 0
-  ) {
-    return formatSoftPct((component.distribution_dollars / holdingDollars) * 100);
-  }
-  return "—";
+  return formatSoftPct(upcomingPctOfNav(perShare, parsePositiveNav(fund?.nav)));
 }
 
 function ComponentTable({
@@ -174,7 +159,6 @@ function ComponentTable({
   components,
   fund,
   empty,
-  holdingDollars,
 }: {
   heading: string;
   kicker: string;
@@ -182,7 +166,6 @@ function ComponentTable({
   components: IllustrationComponent[];
   fund?: FundEstimate | null;
   empty?: ReactNode;
-  holdingDollars?: number | null;
 }) {
   return (
     <div className={`overflow-hidden rounded-xl border border-line ${wellClassName}`}>
@@ -241,7 +224,7 @@ function ComponentTable({
                 )}
               </td>
               <td className="px-3 py-2 text-right font-mono">
-                {componentPctOfNav(component, fund, holdingDollars)}
+                {componentPctOfNav(component, fund)}
               </td>
               <td className="px-3 py-2 text-right font-mono text-muted">
                 {formatOptionalRate(component.effective_rate)}

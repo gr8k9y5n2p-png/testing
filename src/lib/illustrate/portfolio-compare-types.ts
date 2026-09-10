@@ -87,9 +87,13 @@ export type PortfolioDistributionRow = PortfolioDistributionDates & {
   per_share?: number | null;
   amount?: number | null;
   amount_unit?: string | null;
-  /** Weekly NAV from Data #74. Soft-null when absent. */
+  /** Weekly NAV from Data #74. Soft-null when absent. Upcoming % of NAV only. */
   nav_per_share?: number | null;
   nav_as_of?: string | null;
+  /** Ex-day NAV. Paid / historical % of NAV only — never weekly. */
+  nav_on_distribution_day?: number | null;
+  nav_on_distribution_day_as_of?: string | null;
+  nav_on_distribution_day_source?: string | null;
   publication_stage?: PublicationStage | null;
 };
 
