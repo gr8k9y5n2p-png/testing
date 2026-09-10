@@ -16,29 +16,23 @@ export function SearchToolbar({
   }
 
   const selectClass =
-    "h-10 rounded-md border border-line bg-surface px-2.5 text-sm text-ink";
+    "h-10 w-full min-w-[10rem] rounded-md border border-line bg-surface px-2.5 text-sm text-ink";
+  const years = facets.years;
+  const selectedYear = filters.year;
+  const yearOptions =
+    selectedYear && !years.includes(selectedYear)
+      ? [selectedYear, ...years]
+      : years;
 
   return (
     <div className="mb-4 rounded-lg border border-line bg-surface p-3 shadow-[0_1px_2px_rgba(26,29,26,0.04)]">
-      <div className="grid gap-3 lg:grid-cols-12">
-        <label className="block lg:col-span-6">
-          <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.12em] text-faint">
-            Search
-          </span>
-          <input
-            type="search"
-            value={filters.query ?? ""}
-            onChange={(event) => update("query", event.target.value)}
-            placeholder="Fund name, ticker, CUSIP, family, category, or year"
-            className="h-10 w-full rounded-md border border-line bg-paper px-3 text-sm text-ink placeholder:text-faint"
-          />
-        </label>
-        <label className="block lg:col-span-2">
+      <div className="flex flex-wrap items-end justify-start gap-3">
+        <label className="block">
           <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.12em] text-faint">
             Family
           </span>
           <select
-            className={`${selectClass} w-full`}
+            className={selectClass}
             value={filters.family ?? ""}
             onChange={(event) => update("family", event.target.value)}
           >
@@ -50,12 +44,12 @@ export function SearchToolbar({
             ))}
           </select>
         </label>
-        <label className="block lg:col-span-2">
+        <label className="block">
           <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.12em] text-faint">
             Category
           </span>
           <select
-            className={`${selectClass} w-full`}
+            className={selectClass}
             value={filters.category ?? ""}
             onChange={(event) => update("category", event.target.value)}
           >
@@ -67,13 +61,13 @@ export function SearchToolbar({
             ))}
           </select>
         </label>
-        <div className="flex flex-col lg:col-span-2">
+        <div className="flex flex-col">
           <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.12em] text-faint">
             Year
           </span>
           <div className="flex gap-2">
             <select
-              className={`${selectClass} min-w-0 flex-1`}
+              className={selectClass}
               value={filters.year ?? ""}
               onChange={(event) =>
                 update("year", event.target.value ? Number(event.target.value) : undefined)
@@ -81,7 +75,7 @@ export function SearchToolbar({
               aria-label="Distribution year"
             >
               <option value="">All years</option>
-              {facets.years.map((year) => (
+              {yearOptions.map((year) => (
                 <option key={year} value={year}>
                   {year}
                 </option>

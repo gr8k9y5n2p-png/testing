@@ -1,6 +1,7 @@
 import { pctOfNavForFund } from "../lib/illustrate/nav-math.ts";
 import { isoDate, splitFundsByBucket } from "./distribution-bucket.ts";
 import { preferFinalPaidEvents } from "./hydrate-funds.ts";
+import { collectTaxYearsFromFunds } from "./tax-years.ts";
 import type {
   DistributionBucket,
   Facets,
@@ -154,10 +155,7 @@ export function searchFunds(
 export function getFacets(funds: FundEstimate[]): Facets {
   const families = [...new Set(funds.map((fund) => fund.family))].sort();
   const categories = [...new Set(funds.map((fund) => fund.category))].sort();
-  const years = [...new Set(funds.map((fund) => fund.distributionYear))].sort(
-    (a, b) => b - a,
-  );
-  return { families, categories, years };
+  return { families, categories, years: collectTaxYearsFromFunds(funds) };
 }
 
 function hasPaidHistorySignal(fund: FundEstimateView): boolean {

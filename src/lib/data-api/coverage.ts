@@ -4,6 +4,7 @@ import {
   type CoverageTier,
   type FundFamilyCoverage,
 } from "@/lib/coverage";
+import { taxYearsFromPayload } from "@/data/tax-years";
 
 export type DataFundFamily = {
   slug: string;
@@ -22,6 +23,8 @@ export type DataCoverageSnapshot = {
   implemented_pct: number;
   logged_gap_count: number;
   families: FundFamilyCoverage[];
+  /** Tax years Data enumerated. Empty when coverage omits them — never invented. */
+  years: number[];
 };
 
 function asTier(value: string | undefined, implemented?: boolean): CoverageTier {
@@ -67,6 +70,7 @@ export async function loadCoverageSnapshot(): Promise<DataCoverageSnapshot> {
           implemented_pct: Number(raw.implemented_pct ?? 0),
           logged_gap_count: Number(raw.logged_gap_count ?? 0),
           families,
+          years: taxYearsFromPayload(raw),
         };
       }
     }
@@ -77,7 +81,8 @@ export async function loadCoverageSnapshot(): Promise<DataCoverageSnapshot> {
   try {
     const familiesRes = await fetchDataApi("/fund-families");
     if (familiesRes.ok) {
-      const families = parseFamilies(await familiesRes.json());
+      const raw = await familiesRes.json();
+      const families = parseFamilies(raw);
       if (families.length) {
         const live = families.filter((f) => f.coverage_tier === "live").length;
         return {
@@ -87,6 +92,7 @@ export async function loadCoverageSnapshot(): Promise<DataCoverageSnapshot> {
           implemented_pct: families.length ? Math.round((1000 * live) / families.length) / 10 : 0,
           logged_gap_count: 0,
           families,
+          years: taxYearsFromPayload(raw),
         };
       }
     }
@@ -102,5 +108,6 @@ export async function loadCoverageSnapshot(): Promise<DataCoverageSnapshot> {
     implemented_pct: Math.round((1000 * live) / TOP_ADVISOR_FAMILIES.length) / 10,
     logged_gap_count: 0,
     families: TOP_ADVISOR_FAMILIES,
+    years: [],
   };
 }

@@ -12,6 +12,8 @@ describe("Search / Sample Estimates fund page", () => {
     assert.match(source, /hydrateFundPage/);
     assert.match(source, /loadDistributionsForFundPage/);
     assert.match(source, /mergeFundWithDistributions/);
+    assert.match(source, /taxYearsFromPayload/);
+    assert.match(source, /collectTaxYearsFromFunds/);
     assert.match(source, /has_estimate/);
     assert.doesNotMatch(source, /SAMPLE_FUNDS|from ["']@\/data\/seed["']/);
     const fundsList = readFileSync(join(here, "../../data/funds-list.ts"), "utf8");

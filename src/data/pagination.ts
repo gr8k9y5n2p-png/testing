@@ -31,6 +31,8 @@ export type FundPageResult = {
   total: number;
   limit: number;
   offset: number;
+  /** Tax years observed on this page / Data payload. Never an invented range. */
+  years?: number[];
 };
 
 export function clampPageSize(value: number | string | null | undefined): number {

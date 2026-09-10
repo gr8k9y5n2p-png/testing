@@ -13,6 +13,7 @@ import {
   type FundPageResult,
 } from "@/data/pagination";
 import { withPeerContext } from "@/data/queries";
+import { collectTaxYearsFromFunds, mergeTaxYears, taxYearsFromPayload } from "@/data/tax-years";
 import type { FundEstimateView } from "@/data/types";
 import { isRemoteDataApi } from "@/lib/data-api/config";
 import { loadDistributionsForFundPage } from "@/lib/data-api/distributions";
@@ -81,7 +82,13 @@ export async function loadFundPageFromDataApi(
         : typeof payload.count === "number"
           ? payload.count
           : items.length;
-    return { items, total, limit, offset };
+    return {
+      items,
+      total,
+      limit,
+      offset,
+      years: mergeTaxYears(taxYearsFromPayload(payload), collectTaxYearsFromFunds(items)),
+    };
   } catch {
     return null;
   }

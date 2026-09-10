@@ -11,6 +11,7 @@ describe("live Search / Sample Estimates repository", () => {
     const source = readFileSync(join(here, "repository.ts"), "utf8");
     assert.doesNotMatch(source, /SAMPLE_FUNDS|from ["']\.\/seed["']|mergeFunds/);
     assert.match(source, /loadFundsFromDataApi/);
+    assert.match(source, /loadTaxYearsFromDataApi/);
     assert.match(source, /apiFunds \?\? \[\]/);
     assert.match(source, /Never merge or fall back to seed\.ts/);
   });

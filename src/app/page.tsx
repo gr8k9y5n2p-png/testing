@@ -1,6 +1,11 @@
 import { redirect } from "next/navigation";
 import { AftertaxApp, type CheckoutReturn } from "@/components/AftertaxApp";
-import { getDistributionRepository, mergeFundLists } from "@/data";
+import {
+  collectTaxYearsFromFunds,
+  getDistributionRepository,
+  mergeFundLists,
+  mergeTaxYears,
+} from "@/data";
 import { loadCoverageSnapshot } from "@/lib/data-api/coverage";
 import { loadFundPageFromDataApi } from "@/lib/data-api/funds-page";
 import { firstSearchParam } from "@/lib/illustrate/fund-history";
@@ -54,13 +59,19 @@ export default async function Home({
     loadCoverageSnapshot(),
   ]);
   const funds = mergeFundLists(catalog, focused?.items ?? []);
+  const years = mergeTaxYears(
+    facets.years,
+    coverage.years,
+    collectTaxYearsFromFunds(funds),
+    focused?.years,
+  );
 
   return (
     <main className="mx-auto w-full max-w-7xl px-4 pb-16 pt-6 sm:px-6 lg:px-8">
       <AftertaxApp
         funds={funds}
         highlights={highlights}
-        facets={facets}
+        facets={{ ...facets, years }}
         coverageFamilies={coverage.families}
         checkout={checkoutFromSearchParams(params.checkout)}
         ticker={ticker}
