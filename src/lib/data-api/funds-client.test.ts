@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  FUNDS_SEARCH_PATH,
   fundsPageHasExactTicker,
+  fundsSearchNotInUniverse,
+  fundsSearchParams,
   parseFundsApiResponse,
   searchPickerEmptyState,
 } from "./funds-client.ts";
@@ -108,5 +111,38 @@ describe("GET /api/funds client parse", () => {
     });
     assert.equal(parsed.unavailable, false);
     assert.deepEqual(parsed.items, []);
+  });
+
+  it("builds the same apex /api/funds?q= autocomplete URL Search uses", () => {
+    const params = fundsSearchParams("AGTHX");
+    assert.equal(FUNDS_SEARCH_PATH, "/api/funds");
+    assert.equal(params.get("q"), "AGTHX");
+    assert.equal(params.get("limit"), "20");
+    assert.equal(params.get("offset"), "0");
+    assert.equal(params.get("nav_only"), "1");
+    assert.equal(params.get("upcoming"), null);
+    assert.equal(params.get("has_estimate"), null);
+    const prefix = fundsSearchParams("BLAC");
+    assert.equal(prefix.get("q"), "BLAC");
+  });
+
+  it("marks Add to universe only when shared search returned no rows", () => {
+    assert.equal(fundsSearchNotInUniverse([], "AGTHX"), true);
+    assert.equal(fundsSearchNotInUniverse([], "BLAC"), true);
+    assert.equal(
+      fundsSearchNotInUniverse(
+        [{ ticker: "MDLVX", fundName: "BlackRock Advantage Large Cap Value" }],
+        "BLAC",
+      ),
+      false,
+    );
+    assert.equal(
+      fundsSearchNotInUniverse(
+        [{ ticker: "AGTHX", fundName: "The Growth Fund of America" }],
+        "AGTHX",
+      ),
+      false,
+    );
+    assert.equal(fundsSearchNotInUniverse([], "BlackRock"), false);
   });
 });

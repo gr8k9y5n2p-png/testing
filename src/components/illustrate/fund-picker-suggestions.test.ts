@@ -40,6 +40,7 @@ describe("fund typeahead empty-query wiring", () => {
     const field = read("portfolio-compare/TickerField.tsx");
     assert.match(field, /shouldOpenFundSuggestions/);
     assert.match(field, /if \(!needle\) return \[\]/);
+    assert.match(field, /tickerFieldMatches/);
     assert.match(field, /showSuggestions\(next\)/);
     assert.match(field, /showSuggestions\(ticker\)/);
     assert.doesNotMatch(field, /if \(!needle\) return pool\.slice\(0,\s*8\)/);

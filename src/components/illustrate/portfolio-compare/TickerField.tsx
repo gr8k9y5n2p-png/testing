@@ -1,9 +1,17 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { shouldClearFundPickerSelection } from "@/components/illustrate/fund-picker-clear";
 import { shouldOpenFundSuggestions } from "@/components/illustrate/fund-picker-suggestions";
 import { tickerSlotBorderClass } from "@/components/illustrate/ticker-slot-border";
+import {
+  ADD_TO_UNIVERSE,
+  DATA_API_UNAVAILABLE,
+} from "@/lib/copy";
+import {
+  fetchFundsSearch,
+  searchPickerEmptyState,
+} from "@/lib/data-api/funds-client";
 import {
   looksLikeExactTicker,
   notifyPortfolioTickerMiss,
@@ -15,6 +23,12 @@ import {
   tickerFieldDisplay,
   tickerFieldSubtitle,
 } from "@/components/illustrate/portfolio-compare/ticker-field-clear";
+import {
+  tickerFieldMatches,
+  toTickerFieldOption,
+} from "@/components/illustrate/portfolio-compare/ticker-field-search";
+
+const REMOTE_SEARCH_DEBOUNCE_MS = 220;
 
 function findExactFund(funds: PortfolioFundOption[], ticker: string) {
   const key = ticker.trim().toUpperCase();
@@ -53,6 +67,10 @@ export function TickerField({
   const [query, setQuery] = useState(ticker);
   const [open, setOpen] = useState(false);
   const [cleared, setCleared] = useState(false);
+  const [remoteFunds, setRemoteFunds] = useState<PortfolioFundOption[]>([]);
+  const [remotePending, setRemotePending] = useState(false);
+  const [remoteUnavailable, setRemoteUnavailable] = useState(false);
+  const [notInUniverse, setNotInUniverse] = useState(false);
   const pickedRef = useRef(false);
   const hasSelection = Boolean((ticker || fundName) && !cleared);
   const display = tickerFieldDisplay({ open, query, ticker, cleared });
@@ -61,8 +79,54 @@ export function TickerField({
     : tickerFieldSubtitle({ fundName, cleared });
   const canClear = Boolean(display || hasSelection);
 
+  useEffect(() => {
+    const q = query.trim();
+    let cancelled = false;
+    if (!q) {
+      setRemoteFunds([]);
+      setRemotePending(false);
+      setRemoteUnavailable(false);
+      setNotInUniverse(false);
+      return;
+    }
+    setRemotePending(true);
+    const handle = window.setTimeout(() => {
+      void fetchFundsSearch(q)
+        .then((result) => {
+          if (cancelled) return;
+          setRemoteUnavailable(result.unavailable);
+          setNotInUniverse(result.notInUniverse === true);
+          setRemoteFunds(
+            result.unavailable
+              ? []
+              : result.items
+                  .map(toTickerFieldOption)
+                  .filter((row): row is PortfolioFundOption => row != null),
+          );
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setRemoteFunds([]);
+            setRemoteUnavailable(true);
+            setNotInUniverse(false);
+          }
+        })
+        .finally(() => {
+          if (!cancelled) setRemotePending(false);
+        });
+    }, REMOTE_SEARCH_DEBOUNCE_MS);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(handle);
+    };
+  }, [query]);
+
   function commitUnknown(typed: string) {
-    const tickerInUniverse = Boolean(findExactFund(funds, typed));
+    const tickerInUniverse =
+      remotePending ||
+      remoteUnavailable ||
+      remoteFunds.length > 0 ||
+      Boolean(findExactFund(funds, typed));
     setCleared(false);
     onSelect({ ticker: typed, fundName: "", nav: null });
     notifyPortfolioTickerMiss(typed, tickerInUniverse, onNotice);
@@ -77,15 +141,10 @@ export function TickerField({
   }
 
   const matches = useMemo(() => {
-    const needle = (open ? query : cleared ? "" : ticker).trim().toLowerCase();
+    const needle = (open ? query : cleared ? "" : ticker).trim();
     if (!needle) return [];
-    return funds
-      .filter((fund) => {
-        const haystack = `${fund.ticker} ${fund.fundName} ${fund.family ?? ""}`.toLowerCase();
-        return haystack.includes(needle);
-      })
-      .slice(0, 8);
-  }, [cleared, funds, open, query, ticker]);
+    return tickerFieldMatches(funds, remoteFunds, needle);
+  }, [cleared, funds, open, query, remoteFunds, ticker]);
 
   function showSuggestions(value: string) {
     setOpen(shouldOpenFundSuggestions(value));
@@ -153,7 +212,7 @@ export function TickerField({
                 return;
               }
               if (typed !== ticker) {
-                const match = findExactFund(funds, typed);
+                const match = findExactFund([...remoteFunds, ...funds], typed);
                 if (match) {
                   onSelect(match);
                   return;
@@ -193,7 +252,7 @@ export function TickerField({
               event.preventDefault();
               const typed = query.trim().toUpperCase();
               if (!typed) return;
-              const exact = findExactFund(funds, typed);
+              const exact = findExactFund([...remoteFunds, ...funds], typed);
               const match = exact ?? matches[0];
               if (match) {
                 pickedRef.current = true;
@@ -235,12 +294,40 @@ export function TickerField({
         >
           {matches.length === 0 ? (
             <li className="px-3 py-2.5 text-sm text-muted">
-              {tickerMissEmptyLabel({
-                query: open ? query : ticker,
-                tickerInUniverse: Boolean(
-                  findExactFund(funds, open ? query : ticker),
-                ),
-              })}
+              {(() => {
+                const typedQuery = (open ? query : ticker).trim();
+                const empty = searchPickerEmptyState({
+                  pending: remotePending,
+                  unavailable: remoteUnavailable,
+                  notInUniverse,
+                  exactTicker: looksLikeExactTicker(typedQuery),
+                });
+                if (empty === "searching") return "Searching…";
+                if (empty === "unavailable") return DATA_API_UNAVAILABLE;
+                if (empty === "add_to_universe") {
+                  return (
+                    <button
+                      type="button"
+                      className="text-left text-sm font-medium text-accent hover:underline"
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() => {
+                        if (!looksLikeExactTicker(typedQuery)) return;
+                        pickedRef.current = true;
+                        commitUnknown(typedQuery.toUpperCase());
+                        setQuery(typedQuery.toUpperCase());
+                        setOpen(false);
+                      }}
+                    >
+                      {ADD_TO_UNIVERSE}
+                    </button>
+                  );
+                }
+                return tickerMissEmptyLabel({
+                  query: typedQuery,
+                  tickerInUniverse: true,
+                  pending: remotePending,
+                });
+              })()}
             </li>
           ) : (
             matches.map((fund) => (
