@@ -661,7 +661,12 @@ pay any capital gains for the associated Ex Date and Pay Date listed at this tim
 
 
 
-<table id="estimatedCapitalGainsTable" class="distributionGrid afc-margin-bottom">
+		<!-- Record / Record Date / Date of Record is not a published column on
+		     FIIS_SP52_DPL6 (live re-check 2026-09-10 via clearingcustody mirror).
+		     Headers are Fund Name / Ex Date / Pay Date / NAV / % of NAV /
+		     Short-Term / Long-Term / Total Per Share / As of*. Do not invent
+		     record_date from ex-1. See fixtures/fidelity/RECORD_DATE.md. -->
+		<table id="estimatedCapitalGainsTable" class="distributionGrid afc-margin-bottom">
 	<thead>
 		<tr class="afc-background-color-transparent afc-padding">
 			<th colspan="5" class="afc-background-color-transparent">&nbsp;</th>

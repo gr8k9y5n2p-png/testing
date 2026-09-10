@@ -304,6 +304,53 @@ def _normalize_header(text: str) -> str:
     return re.sub(r"[^a-z0-9]+", " ", text.lower()).strip()
 
 
+_WEEKDAY_RE = r"(?:mon|tues|wednes|thurs|fri|satur|sun)day,?\s+"
+_PROSE_DATE_RE = (
+    r"(?:(?:january|february|march|april|may|june|july|august|september|"
+    r"october|november|december)\s+\d{1,2},?\s+20\d{2}|"
+    r"\d{1,2}/\d{1,2}/(?:20)?\d{2})"
+)
+
+
+def _extract_labeled_prose_date(text: str, labels: tuple[str, ...]) -> date | None:
+    """Parse a calendar date sitting next to a published Record/Ex/Pay label.
+
+    Requires an actual date token. Glossary copy such as Fidelity's
+    "usually the business day prior to the ex-dividend date" does not match.
+    """
+    if not text:
+        return None
+    label = "|".join(re.escape(item) for item in labels)
+    pattern = re.compile(
+        rf"(?:{label})\s+(?:of\s+|is\s+|[:–—-]\s*)(?:{_WEEKDAY_RE})?({_PROSE_DATE_RE})",
+        re.I,
+    )
+    match = pattern.search(text)
+    if not match:
+        return None
+    return _parse_mdy(match.group(1), None)
+
+
+def extract_page_published_dates(html_or_text: str) -> dict[str, date | None]:
+    """Page-level Record / Ex / Payable dates when the manager prints them in prose.
+
+    Used as a fallback only when a row has no column value. Does not invent
+    record_date from ex_date.
+    """
+    text = clean_text(html_or_text)
+    return {
+        "record_date": _extract_labeled_prose_date(
+            text, ("record date", "date of record")
+        ),
+        "ex_date": _extract_labeled_prose_date(
+            text, ("ex-date", "ex date", "ex-dividend date", "ex dividend date")
+        ),
+        "payable_date": _extract_labeled_prose_date(
+            text, ("payable date", "pay date", "payment date")
+        ),
+    }
+
+
 _QDI_PERCENT_TYPES = frozenset(
     {
         EstimateType.qualified_dividend,
@@ -388,7 +435,13 @@ def classify_header(text: str, table_title: str) -> ColSpec | None:
         return None
     if "ex date" in h or "ex dividend" in h or h in {"ex", "exdividend date"}:
         return ColSpec("ex_date")
-    if "record date" in h or h == "record":
+    # Record / Record Date / Date of Record / Rec Date — only when the
+    # manager prints a column. Never invent from ex-1.
+    if (
+        "record date" in h
+        or "date of record" in h
+        or h in {"record", "rec date", "rec dt", "dt of record"}
+    ):
         return ColSpec("record_date")
     if any(k in h for k in ("payment date", "payable", "pay date")) or (
         "reinvest" in h and "nav" not in h and "price" not in h
@@ -518,6 +571,7 @@ def parse_distribution_html(
     page_title = cell_text(soup.find("title")) or cell_text(soup.find("h1"))
     page_heading = cell_text(soup.find("h1"))
     page_stage = infer_stage(page_title, page_heading, source_url=source_url)
+    page_dates = extract_page_published_dates(soup.get_text(" "))
 
     records: list[NormalizedRecord] = []
     column_map: dict[int, ColSpec] = {}
@@ -599,12 +653,20 @@ def parse_distribution_html(
             if is_excluded_product(fund_name, ticker):
                 continue
 
-            rec_date = _parse_mdy(values.get("record_date", ""), default_year)
-            ex_date = _parse_mdy(values.get("ex_date", ""), default_year)
-            payable = _parse_mdy(values.get("payable_date", ""), default_year)
+            rec_date = _parse_mdy(values.get("record_date", ""), default_year) or page_dates.get(
+                "record_date"
+            )
+            ex_date = _parse_mdy(values.get("ex_date", ""), default_year) or page_dates.get(
+                "ex_date"
+            )
+            payable = _parse_mdy(values.get("payable_date", ""), default_year) or page_dates.get(
+                "payable_date"
+            )
             row_as_of = _parse_mdy(values.get("as_of", ""), default_year) or page_as_of
             if rec_date and payable and payable < rec_date and payable.month == 1:
                 payable = date(rec_date.year + 1, payable.month, payable.day)
+            # Manager printed Record but not Ex: same calendar day is published,
+            # not an invented offset. Never the reverse (ex → record).
             if rec_date and ex_date is None:
                 ex_date = rec_date
 

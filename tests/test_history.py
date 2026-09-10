@@ -315,6 +315,8 @@ def test_fidelity_prior_year_and_estimate_coexist() -> None:
     assert est_lt.amount == Decimal("21.021")
     assert str(est_lt.as_of) == "2026-07-31"
     assert str(est_lt.ex_date) == "2026-09-11"
+    assert est_lt.record_date is None
+    assert paid_lt.record_date is None
     # Reinvest NAV must not be parsed as a payable date or a dollar amount.
     assert paid_lt.payable_date is not None
     assert str(paid_lt.payable_date) == "2025-09-15"

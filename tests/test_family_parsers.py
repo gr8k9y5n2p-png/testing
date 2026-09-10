@@ -193,6 +193,14 @@ def test_fidelity_fixture() -> None:
     assert pct.amount == Decimal("7.08")
     assert str(lt.ex_date) == "2026-09-11"
     assert str(lt.as_of) == "2026-07-31"
+    assert lt.record_date is None
+    fbcvx = next(
+        r
+        for r in records
+        if r.ticker == "FBCVX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert fbcvx.record_date is None
+    assert str(fbcvx.ex_date) == "2026-09-11"
 
 
 def test_blackrock_ishares_fixture() -> None:
@@ -3793,6 +3801,16 @@ def test_eleventh_tier_fixtures() -> None:
         if r.ticker == "CCALX" and r.estimate_type == EstimateType.long_term_capital_gains
     )
     assert ccalx.amount == Decimal("19.71")
+    assert ccalx.record_date is None
+    assert ccalx.ex_date is None
+    assert ccalx.payable_date is None
+    cmirx = next(
+        r
+        for r in conestoga
+        if r.ticker == "CMIRX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert cmirx.amount == Decimal("0.31")
+    assert cmirx.record_date is None
 
     kopernik = parse_distribution_html(
         (ROOT / "kopernik" / "2025_final_distributions.html").read_text(encoding="utf-8"),
