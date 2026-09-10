@@ -51,6 +51,22 @@ export type PaidHistoryWalkOptions = {
   fetchPage: PaidHistoryPageFetcher;
 };
 
+/** Morningstar-style string, same values as GET `/funds/categories`. */
+export function paidHistoryCategoryParam(
+  category?: string,
+): string | undefined {
+  const value = category?.trim();
+  return value || undefined;
+}
+
+/** #127 may not be on Render yet — a 400 on `category` is retry-without, not empty. */
+export function shouldRetryPaidHistoryWithoutCategory(
+  category: string | undefined,
+  statuses: readonly number[],
+): boolean {
+  return Boolean(paidHistoryCategoryParam(category)) && statuses.includes(400);
+}
+
 export function paidHistoryExDateWindow(year?: number): {
   exDateFrom?: string;
   exDateTo?: string;

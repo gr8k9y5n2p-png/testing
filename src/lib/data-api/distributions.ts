@@ -38,6 +38,7 @@ export type DistributionPageResult = {
   page: number;
   pageSize: number;
   ok: boolean;
+  status: number;
 };
 
 function dedupeRows(rows: DataDistribution[]): DataDistribution[] {
@@ -89,7 +90,6 @@ function distributionSearchParams(query: DistributionRowQuery): URLSearchParams 
   }
   if (query.category?.trim()) {
     params.set("category", query.category.trim());
-    params.set("fund_category", query.category.trim());
   }
   if (query.publicationStage?.trim()) {
     params.set("publication_stage", query.publicationStage.trim());
@@ -137,7 +137,7 @@ export async function loadDistributionPage(
     signal: query.signal,
   });
   if (!response.ok) {
-    return { items: [], total: 0, page, pageSize, ok: false };
+    return { items: [], total: 0, page, pageSize, ok: false, status: response.status };
   }
   const payload = (await response.json()) as {
     items?: DataDistribution[];
@@ -156,7 +156,7 @@ export async function loadDistributionPage(
       : typeof payload.count === "number"
         ? payload.count
         : items.length;
-  return { items, total, page, pageSize, ok: true };
+  return { items, total, page, pageSize, ok: true, status: response.status };
 }
 
 export async function loadDistributionRows(

@@ -3,7 +3,8 @@
  *
  * Pages the year window with `limit`/`offset` + `ex_date_from`/`ex_date_to`.
  * Never walks successive Data pages. Family is `fund_family`.
- * Category is passed through when present — Data may not filter it yet.
+ * Category is Data `category` (same strings as `/funds/categories`).
+ * A 400 on `category` retries once without it (#127 may not be on Render).
  * Never hydrates the book in the browser. Never pulls Upcoming prelims.
  */
 
@@ -12,7 +13,9 @@ import type { FundPageQuery, FundPageResult } from "@/data/pagination";
 import {
   emptyPaidHistoryPage,
   loadPaidHistoryPage,
+  paidHistoryCategoryParam,
   paidHistoryExDateWindow,
+  shouldRetryPaidHistoryWithoutCategory,
   PAID_HISTORY_SOURCE_UNAVAILABLE,
   type PaidHistoryDataPage,
   type PaidHistoryFetchWindow,
@@ -30,7 +33,9 @@ export {
 export {
   isTrustworthyFilteredRowTotal,
   loadPaidHistoryPage,
+  paidHistoryCategoryParam,
   paidHistoryExDateWindow,
+  shouldRetryPaidHistoryWithoutCategory,
   PAID_HISTORY_BUDGET_MS,
   PAID_HISTORY_DATA_PAGE_SIZE,
   PAID_HISTORY_MAX_FETCH_ROUNDS,
@@ -64,20 +69,37 @@ export async function fetchPaidHistoryDataPage(
   window: PaidHistoryFetchWindow,
 ): Promise<PaidHistoryDataPage> {
   const { exDateFrom, exDateTo } = paidHistoryExDateWindow(query.year);
+  const category = paidHistoryCategoryParam(query.category);
   const shared = {
     fundFamily: query.family,
-    // Pass through only — Data may not honor category yet. Do not invent.
-    category: query.category?.trim() || undefined,
+    category,
     exDateFrom,
     exDateTo,
     limit: window.limit,
     offset: window.offset,
     signal: window.signal,
   };
-  const [finals, paids]: DistributionPageResult[] = await Promise.all([
-    loadDistributionPage({ ...shared, publicationStage: "final" }),
-    loadDistributionPage({ ...shared, publicationStage: "paid" }),
-  ]);
+
+  const loadPair = (categoryFilter: string | undefined) =>
+    Promise.all([
+      loadDistributionPage({
+        ...shared,
+        category: categoryFilter,
+        publicationStage: "final",
+      }),
+      loadDistributionPage({
+        ...shared,
+        category: categoryFilter,
+        publicationStage: "paid",
+      }),
+    ]);
+
+  let [finals, paids]: DistributionPageResult[] = await loadPair(category);
+  if (
+    shouldRetryPaidHistoryWithoutCategory(category, [finals.status, paids.status])
+  ) {
+    [finals, paids] = await loadPair(undefined);
+  }
   const rows = [...finals.items, ...paids.items].filter(isFinalOrPaidRow);
   const failed = !finals.ok && !paids.ok;
   return {

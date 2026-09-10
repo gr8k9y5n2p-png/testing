@@ -12,7 +12,9 @@ import {
 import {
   isTrustworthyFilteredRowTotal,
   loadPaidHistoryPage,
+  paidHistoryCategoryParam,
   paidHistoryExDateWindow,
+  shouldRetryPaidHistoryWithoutCategory,
   PAID_HISTORY_MAX_FETCH_ROUNDS,
   PAID_HISTORY_SOURCE_LIVE,
   PAID_HISTORY_SOURCE_PARTIAL,
@@ -97,6 +99,8 @@ describe("Search Paid History year-book page", () => {
     assert.match(source, /pagePaidHistoryFunds/);
     assert.match(source, /loadPaidHistoryPage/);
     assert.match(source, /fundFamily: query\.family/);
+    assert.match(source, /paidHistoryCategoryParam/);
+    assert.match(source, /shouldRetryPaidHistoryWithoutCategory/);
     assert.match(source, /exDateFrom/);
     assert.match(source, /exDateTo/);
     assert.match(source, /limit: window\.limit/);
@@ -119,6 +123,8 @@ describe("Search Paid History year-book page", () => {
     assert.match(dists, /ex_date_to/);
     assert.match(dists, /params\.set\("limit"/);
     assert.match(dists, /params\.set\("offset"/);
+    assert.match(dists, /params\.set\("category"/);
+    assert.doesNotMatch(dists, /fund_category/);
     assert.match(dists, /loadDistributionPage/);
     assert.match(dists, /Never walks the book/);
     assert.match(dashboard, /paid_history/);
@@ -500,6 +506,25 @@ describe("Paid History year-window paging", () => {
       exDateFrom: "2026-01-01",
       exDateTo: "2026-12-31",
     });
+  });
+
+  it("wires Category as the Data category param and retries once on 400", () => {
+    assert.equal(paidHistoryCategoryParam("Large Blend"), "Large Blend");
+    assert.equal(paidHistoryCategoryParam("  Large Growth  "), "Large Growth");
+    assert.equal(paidHistoryCategoryParam(""), undefined);
+    assert.equal(paidHistoryCategoryParam(undefined), undefined);
+    assert.equal(
+      shouldRetryPaidHistoryWithoutCategory("Large Blend", [400, 200]),
+      true,
+    );
+    assert.equal(
+      shouldRetryPaidHistoryWithoutCategory("Large Blend", [200, 200]),
+      false,
+    );
+    assert.equal(shouldRetryPaidHistoryWithoutCategory(undefined, [400]), false);
+    const source = readFileSync(join(here, "paid-history-page.ts"), "utf8");
+    assert.match(source, /loadPair\(undefined\)/);
+    assert.match(source, /categoryFilter/);
   });
 
   it("does not drop funds when Category is selected but Data rows have no category", async () => {
