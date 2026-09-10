@@ -224,6 +224,7 @@ describe("Search hydrate live NAV fields", () => {
     assert.match(panel, /Estimate types/);
     assert.match(panel, /overlayWeeklyNav/);
     assert.match(panel, /\/api\/funds/);
+    assert.match(panel, /nav_only/);
     assert.doesNotMatch(panel, /Weekly NAV/);
     assert.match(panel, /mock \? seedNavLookup/);
     assert.match(fundsList, /nav_per_share/);

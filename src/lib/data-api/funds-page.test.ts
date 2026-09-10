@@ -41,6 +41,9 @@ describe("Search / Sample Estimates fund page", () => {
     assert.match(source, /updated_estimate/);
     assert.match(source, /attachWeeklyNavFromFunds/);
     assert.match(source, /nav_per_share|mapFundsApiItem/);
+    assert.match(source, /attempt < 2/);
+    const fundsPage = readFileSync(join(here, "funds-page.ts"), "utf8");
+    assert.match(fundsPage, /navOnly/);
     assert.match(repo, /loadUpcomingAnnouncedFromDataApi/);
     assert.match(repo, /mergeFundLists\(upcoming/);
   });

@@ -42,6 +42,7 @@ async function fetchWeeklyNavIdentity(
   const params = new URLSearchParams();
   params.set("q", ticker);
   params.set("limit", "5");
+  params.set("nav_only", "1");
   const response = await fetch(`/api/funds?${params.toString()}`);
   if (!response.ok) return null;
   const body = (await response.json()) as {

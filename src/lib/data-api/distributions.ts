@@ -175,18 +175,37 @@ export async function loadDistributionsForFundPage(input: {
 async function loadFundIdentityByTicker(
   ticker: string,
 ): Promise<FundEstimateView | null> {
-  const params = new URLSearchParams();
-  params.set("q", ticker);
-  params.set("limit", "5");
-  params.set("offset", "0");
-  const response = await fetchDataApi(`/funds?${params.toString()}`);
-  if (!response.ok) return null;
-  const payload = (await response.json()) as { items?: FundsApiItem[] };
-  const items = Array.isArray(payload.items) ? payload.items : [];
-  const match = items.find(
-    (row) => (row.ticker ?? "").trim().toUpperCase() === ticker,
-  );
-  return match ? mapFundsApiItem(match) : null;
+  const key = ticker.trim().toUpperCase();
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      const params = new URLSearchParams();
+      params.set("q", key);
+      params.set("limit", "5");
+      params.set("offset", "0");
+      const response = await fetchDataApi(`/funds?${params.toString()}`);
+      if (!response.ok) {
+        if (attempt < 2) continue;
+        return null;
+      }
+      const payload = (await response.json()) as {
+        items?: FundsApiItem[];
+        data?: FundsApiItem[];
+      };
+      const items = Array.isArray(payload.items)
+        ? payload.items
+        : Array.isArray(payload.data)
+          ? payload.data
+          : [];
+      const match = items.find(
+        (row) => (row.ticker ?? "").trim().toUpperCase() === key,
+      );
+      return match ? mapFundsApiItem(match) : null;
+    } catch {
+      if (attempt < 2) continue;
+      return null;
+    }
+  }
+  return null;
 }
 
 async function attachWeeklyNavFromFunds(
@@ -208,8 +227,13 @@ async function attachWeeklyNavFromFunds(
   const byTicker = new Map<string, FundEstimateView>();
   for (const ident of identities) {
     if (!ident) continue;
-    const key = ident.ticker.trim().toUpperCase();
-    if (key) byTicker.set(key, ident);
+    const ticker = ident.ticker.trim().toUpperCase();
+    if (ticker) byTicker.set(ticker, ident);
+  }
+  const missing = tickers.filter((ticker) => !byTicker.has(ticker));
+  for (const ticker of missing) {
+    const ident = await loadFundIdentityByTicker(ticker);
+    if (ident) byTicker.set(ticker, ident);
   }
   return funds.map((fund) => {
     const ident = byTicker.get(fund.ticker.trim().toUpperCase());
