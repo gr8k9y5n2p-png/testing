@@ -261,6 +261,7 @@ describe("Dollar Illustration prior-year Paid History", () => {
     assert.doesNotMatch(results, /paidEventsForFund/);
     assert.match(paid, /w-full/);
     assert.match(paid, /illustrationPaidTypeRows/);
-    assert.match(paid, /prior calendar year/);
+    assert.match(paid, /ILLUSTRATION_PAID_HISTORY_KICKER/);
+    assert.match(paid, /ILLUSTRATION_PAID_HISTORY_DETAIL/);
   });
 });
