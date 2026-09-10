@@ -11,6 +11,8 @@ describe("Lists Data API hydrate", () => {
     const lists = readFileSync(join(here, "lists-page.ts"), "utf8");
     const dists = readFileSync(join(here, "distributions.ts"), "utf8");
     assert.match(lists, /loadFundIdentityByTicker/);
+    assert.match(lists, /loadFundLookupFromDataApi/);
+    assert.match(lists, /identityFailed/);
     assert.match(lists, /loadDistributionsForFundPage/);
     assert.match(lists, /loadUpcomingDistributionRows/);
     assert.match(lists, /dedupeRows/);

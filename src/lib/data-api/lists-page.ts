@@ -14,6 +14,7 @@ import {
   loadFundIdentityByTicker,
   loadUpcomingDistributionRows,
 } from "@/lib/data-api/distributions";
+import { loadFundLookupFromDataApi } from "@/lib/data-api/fund-lookup";
 import { normalizeTickerSymbol } from "@/lib/data-api/request-ticker";
 import {
   emptyListRow,
@@ -85,9 +86,31 @@ export async function loadListRowsFromDataApi(input: {
     (input.catalog ?? []).map((fund) => [fund.ticker.trim().toUpperCase(), fund]),
   );
 
+  const identityFailed = new Set<string>();
   const [identitiesResult, distResult, upcomingRowsResult] = await Promise.all([
     isRemoteDataApi()
-      ? settled(mapPool(tickers, TICKER_FETCH_CONCURRENCY, loadFundIdentity), [])
+      ? mapPool(tickers, TICKER_FETCH_CONCURRENCY, async (ticker) => {
+          try {
+            const fund = await loadFundIdentity(ticker);
+            if (fund && fund.nav > 0) return fund;
+            const lookup = await loadFundLookupFromDataApi(ticker);
+            if (lookup.kind === "found") return lookup.fund;
+            if (lookup.kind === "unavailable") identityFailed.add(ticker);
+            return fund;
+          } catch {
+            identityFailed.add(ticker);
+            try {
+              const lookup = await loadFundLookupFromDataApi(ticker);
+              if (lookup.kind === "found") {
+                identityFailed.delete(ticker);
+                return lookup.fund;
+              }
+            } catch {
+              /* still failed */
+            }
+            return null;
+          }
+        }).then((value) => ({ value, failed: identityFailed.size > 0 }))
       : Promise.resolve({
           value: tickers.map((ticker) => catalogIndex.get(ticker) ?? null),
           failed: false,
@@ -129,7 +152,7 @@ export async function loadListRowsFromDataApi(input: {
     const found = Boolean(identity || fromDists || snapshotRows.length || fund);
     if (!found) {
       const upstreamFailed =
-        identitiesResult.failed ||
+        identityFailed.has(ticker) ||
         distResult.failed ||
         upcomingRowsResult.failed;
       if (upstreamFailed) {

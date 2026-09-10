@@ -26,8 +26,18 @@ describe("Lists client hydrate", () => {
     );
     const upcoming = { ...emptyListRow("FBGRX", "upcoming"), found: true };
     assert.equal(needsListHydrate(upcoming, 0), false);
-    const awaiting = { ...emptyListRow("AGTHX", "awaiting_estimate"), found: true };
+    const awaiting = {
+      ...emptyListRow("AGTHX", "awaiting_estimate"),
+      found: true,
+      nav: 88.42,
+    };
     assert.equal(needsListHydrate(awaiting, 0), false);
+    const awaitingNoNav = {
+      ...emptyListRow("AGTHX", "awaiting_estimate"),
+      found: true,
+      nav: null,
+    };
+    assert.equal(needsListHydrate(awaitingNoNav, 0), true);
     assert.equal(needsListHydrate(emptyListRow("AGTHX", "unavailable"), 0), true);
     assert.equal(listHydrateBackoffMs(0), 0);
     assert.ok(listHydrateBackoffMs(1) > 0);

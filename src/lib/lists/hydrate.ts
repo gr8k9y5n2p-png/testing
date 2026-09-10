@@ -11,11 +11,16 @@ export function needsListHydrate(
 ): boolean {
   if (attempt >= maxAttempts) return false;
   if (!row) return true;
-  return (
+  if (
     row.status === "loading" ||
     row.status === "not_found" ||
     row.status === "unavailable"
-  );
+  ) {
+    return true;
+  }
+  // Found via paid /distributions only — keep asking /funds for weekly NAV.
+  if (row.status === "awaiting_estimate" && row.nav == null) return true;
+  return false;
 }
 
 export function listHydrateBackoffMs(
