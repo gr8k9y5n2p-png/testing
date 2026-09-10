@@ -15,6 +15,25 @@ export const AXIS_LABEL_GAP_PX = 8;
 /** 9px ui-monospace advance — used only to size the left gutter. */
 export const AXIS_CHAR_PX = 5.6;
 
+/**
+ * Drawn bar width. Slots stay full-width so the type table can still
+ * fit dollar cells; the inverted stacks themselves stay slim.
+ */
+export const GROWTH_TAX_MAX_BAR_W = 18;
+
+export function growthTaxBarWidth(barW: number): number {
+  return Math.max(1, Math.min(barW, GROWTH_TAX_MAX_BAR_W));
+}
+
+/** Left edge of the slim bar, centered inside the full slot. */
+export function growthTaxBarX(barX: number, barW: number): number {
+  return barX + (barW - growthTaxBarWidth(barW)) / 2;
+}
+
+export function growthTaxBarCenter(barX: number, barW: number): number {
+  return barX + barW / 2;
+}
+
 /** Centered under-bar ticker. Truncates only when the bar is too narrow (4–6 funds). */
 export function underBarTickerLabel(
   ticker: string,

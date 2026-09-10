@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 import {
   scaleNormalizedHoldingDollars,
   scaleUpcomingToHolding,
-} from "./compare-map.ts";
+} from "./holding-scale.ts";
 
 describe("compare holding scale", () => {
   it("rescales $10k-normalized pair dollars to the shared holding", () => {

@@ -62,7 +62,7 @@ export function GrowthAndTaxTable({
       >
         <div
           role="row"
-          className="grid min-w-0"
+          className="sr-only"
           style={{ gridTemplateColumns: layout.template }}
         >
           {layout.columns.map((column, index) => {

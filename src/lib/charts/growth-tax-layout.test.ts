@@ -5,6 +5,10 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   columnLeftEdges,
+  GROWTH_TAX_MAX_BAR_W,
+  growthTaxBarCenter,
+  growthTaxBarWidth,
+  growthTaxBarX,
   growthTaxChartPad,
   growthTaxTableLayout,
   labelSitsOffPlot,
@@ -112,7 +116,43 @@ describe("Growth & Tax layout chrome", () => {
     assert.match(moduleSource, /axis=\{axis\}/);
     assert.match(chart, /underBarTickerLabel/);
     assert.match(chart, /data-bar-ticker/);
+    assert.match(chart, /data-year-label/);
+    assert.match(chart, /growthTaxBarWidth/);
+    assert.match(chart, /growthTaxBarCenter/);
     assert.doesNotMatch(chart, /<circle[\s\S]{0,120}data-bar-ticker/);
+    assert.match(table, /sr-only/);
+    assert.doesNotMatch(
+      table,
+      /role="row"\s+className="grid min-w-0"[\s\S]*kind === "ticker"/,
+    );
+  });
+});
+
+describe("growthTaxBarWidth slims inverted stacks", () => {
+  it("caps wide 1–2 fund slots and leaves 6-fund bars alone", () => {
+    assert.equal(growthTaxBarWidth(78.5), GROWTH_TAX_MAX_BAR_W);
+    assert.equal(growthTaxBarWidth(37.7), GROWTH_TAX_MAX_BAR_W);
+    assert.equal(growthTaxBarWidth(10.6), 10.6);
+    assert.ok(GROWTH_TAX_MAX_BAR_W < 28);
+    assert.equal(growthTaxBarX(100, 40), 100 + (40 - GROWTH_TAX_MAX_BAR_W) / 2);
+    assert.equal(growthTaxBarCenter(100, 40), 120);
+  });
+
+  it("keeps the ticker at the bar-stack center for 1–6 funds", () => {
+    const years = [2022, 2023, 2024, 2025];
+    const pad = growthTaxChartPad(10_000);
+    for (const funds of [1, 2, 3, 4, 5, 6]) {
+      const axis = yearLayout(years, funds, SHARED_CHART_WIDTH, pad);
+      for (let yearIndex = 0; yearIndex < years.length; yearIndex += 1) {
+        for (let seriesIndex = 0; seriesIndex < funds; seriesIndex += 1) {
+          const left = axis.barX(yearIndex, seriesIndex);
+          const visualX = growthTaxBarX(left, axis.barW);
+          const visualW = growthTaxBarWidth(axis.barW);
+          const tickerX = growthTaxBarCenter(left, axis.barW);
+          assert.ok(Math.abs(tickerX - (visualX + visualW / 2)) < 0.05);
+        }
+      }
+    }
   });
 });
 

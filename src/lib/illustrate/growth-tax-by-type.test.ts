@@ -597,7 +597,7 @@ describe("Growth & Tax chrome locks", () => {
     assert.doesNotMatch(workspace, /CompareAnnualTable/);
     assert.doesNotMatch(workspace, /CalendarYearTaxTable/);
     assert.match(workspace, /TaxRateFields/);
-    assert.match(workspace, /compareTaxRequestFields|lockedTaxRates|toDataApiTaxRates/);
+    assert.match(workspace, /yoyTaxDragCompareRequest|lockedTaxRates|toDataApiTaxRates/);
     assert.match(workspace, /UpcomingTable/);
     assert.match(chart, /Announced \(unpaid\)/);
     assert.doesNotMatch(chart, /rotate\(-/);
