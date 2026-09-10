@@ -105,7 +105,11 @@ export function GrowthAndTaxChart({
       row.years.map((year) => (year.total == null ? 0 : Math.abs(year.total))),
     ),
   );
-  const taxScale = niceMoneyScale(0, Math.max(taxPeak, 50), 0);
+  const taxScale = niceMoneyScale(
+    0,
+    Math.max(taxPeak, taxModel.unit === "per_share" ? 1 : 50),
+    0,
+  );
 
   const xCenter = (index: number) => axis.center(index);
   const growthY = (value: number) => {
@@ -435,7 +439,7 @@ export function GrowthAndTaxChart({
                   data-bar-ticker={row.ticker}
                   data-bar-year={year}
                   x={x}
-                  y={height - 22}
+                  y={height - 34}
                   textAnchor="middle"
                   className="fill-ink"
                   fontSize={fontSize}
@@ -451,7 +455,7 @@ export function GrowthAndTaxChart({
             <text
               key={year}
               x={xCenter(index)}
-              y={height - 8}
+              y={height - 12}
               textAnchor="middle"
               className="fill-muted"
               fontSize={10}
