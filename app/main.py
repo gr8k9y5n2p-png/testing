@@ -66,6 +66,16 @@ def _seed_fixture_if_empty() -> None:
     created_total = 0
     mode = settings.fetch_mode or "fixture"
     try:
+        try:
+            from app.crud import scrub_qdi_percent_characterizations
+
+            with app_db.SessionLocal() as session:
+                removed = scrub_qdi_percent_characterizations(session)
+                session.commit()
+            if removed:
+                logger.info("Scrubbed %s QDI percent characterization rows", removed)
+        except Exception:
+            logger.exception("QDI percent scrub failed; continuing")
         for source in list_sources():
             if not source.implemented:
                 continue
@@ -112,6 +122,18 @@ def _start_background_seed() -> None:
 async def lifespan(_app: FastAPI):
     _ensure_sqlite_dir()
     init_db()
+    # Persistent Render disk keeps mis-parsed QDI % rows across deploys.
+    if app_db.SessionLocal is not None:
+        try:
+            from app.crud import scrub_qdi_percent_characterizations
+
+            with app_db.SessionLocal() as session:
+                removed = scrub_qdi_percent_characterizations(session)
+                session.commit()
+            if removed:
+                logger.info("Boot-scrubbed %s QDI percent characterization rows", removed)
+        except Exception:
+            logger.exception("Boot QDI percent scrub failed; continuing")
     if _should_seed_on_start():
         # /health must come up before the full book finishes (~11k fixture rows).
         _start_background_seed()

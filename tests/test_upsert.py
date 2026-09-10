@@ -6,8 +6,8 @@ from decimal import Decimal
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.crud import upsert_records
-from app.models import AmountUnit, DistributionEstimate, EstimateType
+from app.crud import scrub_qdi_percent_characterizations, upsert_records
+from app.models import AmountUnit, DistributionEstimate, EstimateType, PublicationStage
 from app.schemas import DistributionIn
 
 
@@ -51,3 +51,36 @@ def test_new_as_of_creates_new_snapshot(session: Session) -> None:
     session.commit()
     count = session.scalar(select(func.count()).select_from(DistributionEstimate))
     assert count == 2
+
+
+def test_scrub_deletes_qdi_percent_characterization_rows(session: Session) -> None:
+    upsert_records(
+        session,
+        [
+            _record(),
+            _record(
+                fund_name="The Growth Fund of America",
+                ticker="AGTHX",
+                estimate_type=EstimateType.qualified_dividend,
+                amount=Decimal("100"),
+                amount_unit=AmountUnit.percent,
+                ex_date=None,
+                as_of=date(2026, 1, 22),
+                publication_stage=PublicationStage.final,
+                source_url=(
+                    "https://www.capitalgroup.com/individual/service-and-support/"
+                    "tax-center/2025-year-end-distributions.html"
+                ),
+            ),
+        ],
+    )
+    session.commit()
+    assert session.scalar(select(func.count()).select_from(DistributionEstimate)) == 2
+
+    removed = scrub_qdi_percent_characterizations(session)
+    session.commit()
+    assert removed == 1
+    remaining = list(session.scalars(select(DistributionEstimate)).all())
+    assert len(remaining) == 1
+    assert remaining[0].estimate_type == EstimateType.long_term_capital_gains.value
+    assert remaining[0].amount_unit == AmountUnit.per_share.value

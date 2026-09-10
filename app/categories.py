@@ -199,6 +199,28 @@ _CATEGORY_ALIASES: dict[str, str] = {
     "intermediate-term bond": "Intermediate Core Bond",
     "intermediate term bond": "Intermediate Core Bond",
     "diversified emerging mkts": "Diversified Emerging Markets",
+    # Yahoo fundProfile / Morningstar US Category spellings.
+    "allocation 15% to 30% equity": "Conservative Allocation",
+    "allocation 30% to 50% equity": "Moderately Conservative Allocation",
+    "allocation 50% to 70% equity": "Moderate Allocation",
+    "allocation 70% to 85% equity": "Moderately Aggressive Allocation",
+    "allocation 85%+ equity": "Aggressive Allocation",
+    "target date retirement": "Retirement Income",
+    "target-date retirement": "Retirement Income",
+    "target date 2060+": "Target-Date 2060",
+    "target-date 2060+": "Target-Date 2060",
+    "target date 2065+": "Target-Date 2065",
+    "target-date 2065+": "Target-Date 2065",
+    "equity market neutral": "Market Neutral",
+    "world allocation": "Global Allocation",
+    "global moderate allocation": "Global Allocation",
+    "global moderately conservative allocation": "Global Conservative Allocation",
+    "global bond usd hedged": "World Bond-USD Hedged",
+    "emerging markets local currency bond": "Emerging Markets Bond",
+    "emerging-markets local-currency bond": "Emerging Markets Bond",
+    "government mortgage backed bond": "Intermediate Government",
+    "short term inflation protected bond": "Inflation-Protected Bond",
+    "focused region": "Miscellaneous Region",
 }
 
 _SPACE_RE = re.compile(r"[\s_\-/]+")
@@ -438,6 +460,25 @@ _TARGET_YEAR_RE = re.compile(
     re.I,
 )
 _YEAR_ONLY_RE = re.compile(r"\b(20(?:0[0-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-9]|6[0-9]|7[0-9]))\b")
+# Issuer vintage series that ARE target-date (Morningstar Target-Date *), not
+# maturity-year bonds. Year in the name is the glide-path vintage.
+_ISSUER_TARGET_SERIES = (
+    "lifepath",
+    "life path",
+    "one choice",
+    "freedom",
+    "lifetime",
+    "smartretirement",
+    "smart retirement",
+    "target date",
+    "target-date",
+    "target retirement",
+    "targetdate",
+)
+_TROWE_RETIREMENT_YEAR_RE = re.compile(
+    r"\bretirement(?:\s+blend|\s+i)?\s+(20[0-7]\d)\b",
+    re.I,
+)
 
 
 def _norm_key(value: str) -> str:
@@ -493,38 +534,7 @@ def reload_catalog() -> None:
     _load_catalog.cache_clear()
 
 
-def _target_date_category(name: str) -> str | None:
-    blob = name.lower()
-    lifepath = "lifepath" in blob or "life path" in blob
-    targetish = any(
-        token in blob
-        for token in (
-            "target date",
-            "target-date",
-            "target retirement",
-            "target-date",
-            "targetdate",
-        )
-    ) or ("target" in blob and _YEAR_ONLY_RE.search(name))
-    if not targetish and not lifepath:
-        if re.search(r"retirement income", blob) and not _YEAR_ONLY_RE.search(name):
-            return "Retirement Income"
-        return None
-    match = _TARGET_YEAR_RE.search(name)
-    year_s = None
-    if match:
-        year_s = match.group(1) or match.group(2)
-    if year_s is None and (targetish or lifepath):
-        years = _YEAR_ONLY_RE.findall(name)
-        if len(years) == 1:
-            year_s = years[0]
-    if year_s is None:
-        if lifepath and "retirement" in blob:
-            return "Retirement Income"
-        if re.search(r"retirement income", blob) and not _YEAR_ONLY_RE.search(name):
-            return "Retirement Income"
-        return None
-    year = int(year_s)
+def _year_to_target_date(year: int) -> str | None:
     if year <= 2010:
         return "Target-Date 2000-2010"
     if year == 2015:
@@ -552,6 +562,44 @@ def _target_date_category(name: str) -> str | None:
     if year >= 2070:
         return "Target-Date 2070+"
     return None
+
+
+def _target_date_category(name: str) -> str | None:
+    blob = name.lower()
+    # Maturity-year bonds (e.g. Zero Coupon 2025) are not target-date.
+    if "zero coupon" in blob or "zero-coupon" in blob:
+        return None
+    if "target allocation" in blob or "target payout" in blob:
+        return None
+    series = any(token in blob for token in _ISSUER_TARGET_SERIES)
+    lifepath = "lifepath" in blob or "life path" in blob
+    targetish = series or (
+        "target" in blob and _YEAR_ONLY_RE.search(name) and "allocation" not in blob
+    )
+    trowe = _TROWE_RETIREMENT_YEAR_RE.search(name)
+    if not targetish and not lifepath and not trowe:
+        if re.search(r"retirement income", blob) and not _YEAR_ONLY_RE.search(name):
+            return "Retirement Income"
+        return None
+    match = _TARGET_YEAR_RE.search(name)
+    year_s = None
+    if match:
+        year_s = match.group(1) or match.group(2)
+    if year_s is None and trowe:
+        year_s = trowe.group(1)
+    if year_s is None and (targetish or lifepath):
+        years = _YEAR_ONLY_RE.findall(name)
+        if len(years) == 1:
+            year_s = years[0]
+    if year_s is None:
+        if (lifepath or series) and re.search(
+            r"\b(?:in retirement|retirement)\b", blob
+        ):
+            return "Retirement Income"
+        if re.search(r"retirement income", blob) and not _YEAR_ONLY_RE.search(name):
+            return "Retirement Income"
+        return None
+    return _year_to_target_date(int(year_s))
 
 
 def _has_any(blob: str, *needles: str) -> bool:
@@ -596,6 +644,8 @@ def _name_category(fund_name: str | None) -> str | None:
         "debt",
         "high yield",
         "high income",
+        "ginnie mae",
+        "gnma",
     )
     is_money = _has_any(blob, "money market", "government money", "treasury money")
     is_reit = _has_any(blob, "real estate", "reit", "realty")
@@ -615,6 +665,22 @@ def _name_category(fund_name: str | None) -> str | None:
         if _has_any(blob, "muni", "municipal", "tax exempt", "tax-exempt", "tax free", "tax-free"):
             return "Money Market-Tax-Free"
         return "Money Market-Taxable"
+
+    if _has_any(blob, "market neutral"):
+        return "Market Neutral"
+
+    # American Century One Choice target-risk (not vintage) portfolios.
+    if "one choice" in blob and "portfolio" in blob and not _YEAR_ONLY_RE.search(name):
+        if "in retirement" in blob:
+            return "Retirement Income"
+        if "very conservative" in blob:
+            return "Conservative Allocation"
+        if "conservative" in blob and "aggressive" not in blob:
+            return "Conservative Allocation"
+        if "aggressive" in blob:
+            return "Aggressive Allocation"
+        if "moderate" in blob:
+            return "Moderate Allocation"
 
     if _has_any(blob, "preferred"):
         return "Preferred Stock"
@@ -701,13 +767,13 @@ def _name_category(fund_name: str | None) -> str | None:
             return "Ultrashort Bond"
         if _has_any(blob, "world bond", "global bond", "international bond"):
             return "World Bond"
-        gov = _has_any(blob, "government", "treasury", "gnma", "mortgage")
+        gov = _has_any(blob, "government", "treasury", "gnma", "ginnie mae", "mortgage")
         if _has_any(blob, "short"):
             return "Short Government" if gov and "mortgage" not in blob else "Short-Term Bond"
         if _has_any(blob, "long"):
             return "Long Government" if gov and "mortgage" not in blob else "Long-Term Bond"
         if gov and not _has_any(blob, "aggregate", "total bond", "core"):
-            if "mortgage" in blob or "gnma" in blob:
+            if "mortgage" in blob or "gnma" in blob or "ginnie mae" in blob:
                 return "Intermediate Government"
             return "Intermediate Government"
         if _has_any(

@@ -84,11 +84,9 @@ def test_year_end_fixture_dates_without_year_and_extra_tables() -> None:
     )
     assert special.amount == Decimal("0.3400")
 
-    qdi = next(
-        r for r in records if r.fund_name == "American Balanced Fund" and r.estimate_type == EstimateType.qualified_dividend
-    )
-    assert qdi.amount == Decimal("41.94")
-    assert qdi.amount_unit == AmountUnit.percent
+    # "% of dividends that are qualified" is 1099 character, not a distribution.
+    assert not any(r.estimate_type == EstimateType.qualified_dividend for r in records)
+    assert not any(r.amount_unit == AmountUnit.percent for r in records)
 
     # Continuation tables reuse the previous header row (no <th> Fund/Ex-date).
     portfolio = next(
@@ -132,6 +130,58 @@ def test_estimate_fixture_percent_of_nav_ranges() -> None:
 
     cgdv = next(r for r in records if r.ticker == "CGDV")
     assert "Dividend Value" in cgdv.fund_name
+
+
+_CAP_GROUP_QDI_PERCENT_HTML = """
+<html><head><meta name="date" content="2026-01-22"/></head>
+<body>
+<table>
+<tr><th colspan="3"><h4>Funds that paid qualified dividends</h4></th></tr>
+<tr>
+  <th>Fund</th>
+  <th>Qualified dividend income percentage*</th>
+  <th>Qualified short-term capital gains percentage</th>
+</tr>
+<tr>
+  <td>The Growth Fund of America®</td>
+  <td>100.00</td>
+  <td>—</td>
+</tr>
+<tr>
+  <td>American Balanced Fund®</td>
+  <td>41.94%</td>
+  <td>—</td>
+</tr>
+</table>
+</body></html>
+"""
+
+
+def test_cap_group_qdi_percent_is_not_a_distribution() -> None:
+    """AGTHX 100% qualified is % of income — do not store a dollar/percent row."""
+    records = parse_capital_group_html(
+        _CAP_GROUP_QDI_PERCENT_HTML,
+        source_url="https://www.capitalgroup.com/individual/service-and-support/tax-center/2025-year-end-distributions.html",
+    )
+    assert records == []
+
+    html = (FIXTURES / "year_end_2025_distributions.html").read_text(encoding="utf-8")
+    ye = parse_capital_group_html(
+        html,
+        source_url="https://www.capitalgroup.com/individual/service-and-support/tax-center/2025-year-end-distributions.html",
+    )
+    agthx = [r for r in ye if r.ticker == "AGTHX"]
+    assert agthx, "YE fixture must still emit AGTHX dollar distributions"
+    assert all(r.estimate_type != EstimateType.qualified_dividend for r in agthx)
+    assert all(r.amount_unit != AmountUnit.percent for r in agthx)
+    assert all(r.amount != Decimal("100") or r.amount_unit != AmountUnit.percent for r in agthx)
+    gfa_qdi = [
+        r
+        for r in ye
+        if r.fund_name == "The Growth Fund of America"
+        and r.estimate_type == EstimateType.qualified_dividend
+    ]
+    assert gfa_qdi == []
 
 
 def test_infer_stage_midyear_paid_vs_estimate() -> None:

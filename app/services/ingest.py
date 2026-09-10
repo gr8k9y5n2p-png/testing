@@ -9,7 +9,7 @@ from app.config import settings
 from app.crud import record_ingest_run, upsert_records
 from app.models import IngestRun
 from app.schemas import DistributionIn, IngestItemOut, IngestResponse
-from app.sources.parser import NormalizedRecord
+from app.sources.parser import NormalizedRecord, is_qdi_percent_characterization
 from app.sources.registry import resolve_families
 
 
@@ -83,7 +83,11 @@ def fetch_and_ingest(session: Session, fund_family: str, mode: str | None) -> In
             continue
         try:
             result = source.fetch(mode=fetch_mode)
-            incoming = [normalized_to_in(r) for r in result.records]
+            incoming = [
+                normalized_to_in(r)
+                for r in result.records
+                if not is_qdi_percent_characterization(r.estimate_type, r.amount_unit)
+            ]
             created, updated, stored = upsert_records(session, incoming)
             run.status = "success"
             run.finished_at = datetime.now(timezone.utc)

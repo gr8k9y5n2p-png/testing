@@ -285,11 +285,46 @@ def _normalize_header(text: str) -> str:
     return re.sub(r"[^a-z0-9]+", " ", text.lower()).strip()
 
 
+_QDI_PERCENT_TYPES = frozenset(
+    {
+        EstimateType.qualified_dividend,
+        EstimateType.qualified_short_term_gains,
+        EstimateType.qualified_dividend.value,
+        EstimateType.qualified_short_term_gains.value,
+    }
+)
+_PERCENT_UNITS = frozenset({AmountUnit.percent, AmountUnit.percent.value})
+
+
+def is_qdi_percent_characterization(
+    estimate_type: EstimateType | str | None,
+    amount_unit: AmountUnit | str | None,
+) -> bool:
+    """True for 1099-DIV "% of dividends that are qualified" rows.
+
+    Those are character / % of income, not a $/share or % of NAV distribution.
+    Do not ingest them and never invent a replacement QDI dollar amount.
+    """
+    if estimate_type is None or amount_unit is None:
+        return False
+    et = estimate_type.value if isinstance(estimate_type, EstimateType) else str(estimate_type)
+    unit = amount_unit.value if isinstance(amount_unit, AmountUnit) else str(amount_unit)
+    return et in _QDI_PERCENT_TYPES and unit in _PERCENT_UNITS
+
+
 def classify_header(text: str, table_title: str) -> ColSpec | None:
     h = _normalize_header(text)
     if not h:
         return None
     title = table_title.lower()
+    # Cap Group YE tax tables (and similar issuer 1099 books) publish
+    # "% of dividends that are qualified" / QSTCG % of income. Not a distribution.
+    if "qualified dividend" in h or (
+        "qualified" in h and ("percent" in h or "%" in text.lower())
+    ):
+        return None
+    if "short term" in h and "qualified" in h:
+        return None
     if h in {"fund", "fund name", "name"} or h.endswith("mutual fund"):
         return ColSpec("fund")
     if h in {"ticker", "symbol", "ticker symbol", "nasdaq"}:
@@ -313,13 +348,9 @@ def classify_header(text: str, table_title: str) -> ColSpec | None:
     if "long term" in h:
         unit = AmountUnit.percent_of_nav if "%" in h or "percent" in h or "nav" in h else AmountUnit.per_share
         return ColSpec("amount", EstimateType.long_term_capital_gains, unit)
-    if "short term" in h and "qualified" in h:
-        return ColSpec("amount", EstimateType.qualified_short_term_gains, AmountUnit.percent)
     if "short term" in h:
         unit = AmountUnit.percent_of_nav if "%" in h or "percent" in h or "nav" in h else AmountUnit.per_share
         return ColSpec("amount", EstimateType.short_term_capital_gains, unit)
-    if "qualified dividend" in h:
-        return ColSpec("amount", EstimateType.qualified_dividend, AmountUnit.percent)
     if "special dividend" in h:
         return ColSpec("amount", EstimateType.special_dividend, AmountUnit.per_share)
     if "return of capital" in h or h in {"roc"}:
@@ -339,7 +370,8 @@ def classify_header(text: str, table_title: str) -> ColSpec | None:
         if "special" in title:
             return ColSpec("amount", EstimateType.special_dividend, AmountUnit.per_share)
         if "qualified" in title:
-            return ColSpec("amount", EstimateType.qualified_dividend, AmountUnit.percent)
+            # Table is a QDI / "% qualified" characterization book, not $/share.
+            return None
         if "income" in title:
             return ColSpec("amount", EstimateType.ordinary_income, AmountUnit.per_share)
         return ColSpec("amount", EstimateType.total, AmountUnit.per_share)
@@ -534,8 +566,8 @@ def parse_distribution_html(
                 estimate_type = spec.estimate_type or EstimateType.other
                 if dist_type is not None:
                     estimate_type = dist_type
-                if spec.estimate_type == EstimateType.qualified_dividend:
-                    unit = AmountUnit.percent
+                if is_qdi_percent_characterization(estimate_type, unit):
+                    continue
                 records.append(
                     NormalizedRecord(
                         fund_family=fund_family,

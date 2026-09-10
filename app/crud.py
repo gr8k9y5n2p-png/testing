@@ -4,12 +4,12 @@ from datetime import date, datetime, timezone
 from decimal import Decimal
 from typing import NamedTuple
 
-from sqlalchemy import Select, case, func, or_, select
+from sqlalchemy import Select, case, delete, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.aliases import alias_fund_identifier, enrich_class_a_fields
 from app.categories import canonical_category, resolve_category
-from app.models import CoverageGap, DistributionEstimate, IngestRun, PublicationStage
+from app.models import AmountUnit, CoverageGap, DistributionEstimate, EstimateType, IngestRun, PublicationStage
 from app.schemas import DistributionIn, fund_identifier, make_upsert_key
 
 _ESTIMATE_STAGES = (
@@ -403,6 +403,29 @@ def list_matching(
             ).limit(limit)
         ).all()
     )
+
+
+def scrub_qdi_percent_characterizations(session: Session) -> int:
+    """Delete stored QDI / QSTCG % of income rows.
+
+    Capital Group YE tax tables (and similar 1099 books) published
+    "% of dividends that are qualified" — not a distribution amount.
+    Render's SQLite disk survives redeploy, so seed must delete these
+    or they stay in Search / paid-history after the parser skip lands.
+    """
+    result = session.execute(
+        delete(DistributionEstimate).where(
+            DistributionEstimate.amount_unit == AmountUnit.percent.value,
+            DistributionEstimate.estimate_type.in_(
+                (
+                    EstimateType.qualified_dividend.value,
+                    EstimateType.qualified_short_term_gains.value,
+                )
+            ),
+        )
+    )
+    session.flush()
+    return int(result.rowcount or 0)
 
 
 def record_ingest_run(session: Session, run: IngestRun) -> IngestRun:

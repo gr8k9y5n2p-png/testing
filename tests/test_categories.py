@@ -61,6 +61,24 @@ def test_name_rules_high_confidence() -> None:
     assert (
         resolve_category(fund_name="iShares Large Cap Max Buffer Dec ETF") == "Defined Outcome"
     )
+    assert resolve_category(fund_name="American Century One Choice 2065 Portfolio Investor") == (
+        "Target-Date 2065"
+    )
+    assert resolve_category(
+        fund_name="American Century One Choice Blend+ In Retirement Port Investor"
+    ) == "Retirement Income"
+    assert resolve_category(fund_name="American Century One Choice Portfolio: Aggressive Investor") == (
+        "Aggressive Allocation"
+    )
+    assert resolve_category(fund_name="Fidelity Freedom 2060") == "Target-Date 2060"
+    assert resolve_category(fund_name="MFS Lifetime 2025 Fund") == "Target-Date 2025"
+    assert resolve_category(fund_name="T. Rowe Price Retirement 2060") == "Target-Date 2060"
+    assert resolve_category(fund_name="Vanguard GNMA Fund Admiral Shares") == "Intermediate Government"
+    assert resolve_category(fund_name="AQR Equity Market Neutral Fund") == "Market Neutral"
+    # Maturity-year bond is not a target-date vintage.
+    assert resolve_category(fund_name="American Century Zero Coupon 2025 Fund Investor") is None
+    # Target-risk mix without a published style word stays null (Yahoo/issuer map only).
+    assert resolve_category(fund_name="BlackRock 60/40 Target Allocation Fund") is None
 
 
 def test_ambiguous_names_stay_null() -> None:
@@ -78,6 +96,11 @@ def test_canonical_category_aliases() -> None:
     assert canonical_category("large growth") == "Large Growth"
     assert canonical_category("Large-Cap Growth") == "Large Growth"
     assert canonical_category("muni national intermediate") == "Muni National Interm"
+    assert canonical_category("Allocation--50% to 70% Equity") == "Moderate Allocation"
+    assert canonical_category("Allocation--15% to 30% Equity") == "Conservative Allocation"
+    assert canonical_category("Target-Date Retirement") == "Retirement Income"
+    assert canonical_category("Equity Market Neutral") == "Market Neutral"
+    assert canonical_category("World Allocation") == "Global Allocation"
     assert canonical_category("not-a-real-category") is None
     assert canonical_category("") is None
     assert canonical_category(None) is None

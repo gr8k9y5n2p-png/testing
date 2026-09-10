@@ -137,6 +137,26 @@ def test_distributions_alias_search_agthx_amcap_amcpx(client: TestClient) -> Non
     }
 
 
+def test_agthx_search_has_no_qdi_percent_row(client: TestClient) -> None:
+    fetched = client.post("/ingest/fetch", json={"fund_family": "american_funds", "mode": "fixture"})
+    assert fetched.status_code == 200, fetched.text
+
+    response = client.get("/distributions", params={"ticker": "AGTHX", "page_size": 100})
+    assert response.status_code == 200
+    items = response.json()["items"]
+    assert items, "AGTHX must still have dollar distributions"
+    assert all(item["estimate_type"] != "qualified_dividend" for item in items)
+    assert all(item["amount_unit"] != "percent" for item in items)
+    assert not any(
+        item["estimate_type"] == "qualified_dividend" and item.get("amount") == "100.000000"
+        for item in items
+    )
+
+    qdi = client.get("/distributions", params={"estimate_type": "qualified_dividend", "page_size": 100})
+    assert qdi.status_code == 200
+    assert qdi.json()["total"] == 0
+
+
 def test_distributions_alias_search_blackrock_jpmorgan(client: TestClient) -> None:
     """Name-keyed BR / JPM books resolve newly mapped Investor A / Class A tickers."""
     br = client.post("/ingest/fetch", json={"fund_family": "blackrock", "mode": "fixture"})
