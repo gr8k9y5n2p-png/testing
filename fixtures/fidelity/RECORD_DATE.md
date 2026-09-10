@@ -37,6 +37,8 @@ the table**. That glossary heuristic is not a published per-fund Record Date.
 | Source | Record? |
 | --- | --- |
 | Prior-year paid DPL6 `FIIS_SP10_DPL6` (`prior_year_distributions.html`) | No — Fund / Ex Date / Pay Date / Reinvest NAV / Dividends / ST / LT / Total |
+| Advisor estimate DPL2 `FIIS_SP52_DPL2_DSC1` (A/C/M/I/Z `shareClassId`) | No — same estimate columns as DPL6 |
+| Advisor prior-year DPL2 `FIIS_SP10_DPL2_DSC1` (A/C/M/I/Z `shareClassId`) | No — same paid columns as DPL6 |
 | Filled ICI Primary Layout for these fiscal estimates | Not published (blank ici.org templates are not a feed) |
 | ETF Annual-Distribution-Calendar PDF | Yes, Record Date — **ETF schedule only**, not this mutual-fund estimate book |
 | Retail distributions hub (`fidelity.com/mutual-funds/information/distributions`) | JS SPA; not a second column set |

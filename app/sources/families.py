@@ -234,9 +234,21 @@ class FidelitySource(HtmlTableSource):
         "ordinary_income + total_capital_gains — ST/LT not published, not "
         "invented. No QDI % columns. "
         "Hub: https://www.fidelity.com/mutual-funds/information/overview. "
+        "Wave 10 share-class densify: Fidelity Advisor Funds are a separate "
+        "official DPL (not on retail FIIS_SP52/SP10_DPL6). Full A/C/M/I/Z "
+        "filter ``shareClassId=1SC3SC10SC9SC50805SC50405SC50855SC`` on "
+        "https://institutional.fidelity.com/app/tabbed/products/FIIS_SP52_DPL2_DSC1.html "
+        "and FIIS_SP10_DPL2_DSC1.html. Default DPL2 without the filter is "
+        "Class I-heavy. 2025 paid book is **799** Advisor tickers (0 overlap "
+        "with retail DPL6): FAGAX / FAGCX Growth Opp Dec LT $8.58500; "
+        "FTRIX Mega Cap Stock Dec LT $0.27700 / Aug LT $0.65700; "
+        "FCIGX Small Cap Growth Dec LT $0.77100 / Sep LT $1.46100. "
+        "2026 Advisor estimate sleeve (seasonal upcoming only) includes "
+        "FCIGX ST $0.355 / LT $6.922 / 17.30% of NAV (as of 2026-07-31). "
         "Record date: the midyear estimate table (FIIS_SP52_DPL6) and prior-year "
         "paid DPL6 print Fund / Ex Date / Pay Date / NAV / % of NAV / ST / LT / "
         "Total / As of — no Record / Record Date / Date of Record column. "
+        "Advisor DPL2 uses the same columns. "
         "Fidelity's Cap-Gains Q&A (literature 779188) defines Record Date as "
         "usually the business day prior to ex and states that only Ex-Date and "
         "Pay Date are disclosed in the table. No filled ICI Primary Layout for "
@@ -245,15 +257,27 @@ class FidelitySource(HtmlTableSource):
     )
     live_limitations = (
         "Live HTML tables on institutional.fidelity.com are supported "
-        "(current estimates + prior-year paid). The live DPL6 URL rotates to "
-        "the latest prior year — 2021 and 2024 are fixture-only. 2022–2023 "
+        "(current estimates + prior-year paid, including Advisor DPL2). "
+        "The live DPL6 / DPL2 prior-year URLs rotate to "
+        "the latest prior year — 2021 and 2024 retail DPL6 are fixture-only. 2022–2023 "
         "DPL6 is unpublished in CDX; FCNTX highlights are prospectus-only. "
-        "Estimate + paid DPL6 omit Record Date; ETF Annual-Distribution-Calendar "
+        "Advisor A/C/M/I/Z requires the shareClassId query; without it the "
+        "live table is Class I-heavy. "
+        "Estimate + paid DPL omit Record Date; ETF Annual-Distribution-Calendar "
         "PDF prints Record but is not this mutual-fund estimate book."
     )
 
     def pages(self) -> list[PageSpec]:
         dpl6 = "https://institutional.fidelity.com/app/tabbed/products/FIIS_SP10_DPL6.html?navId=324"
+        advisor_classes = "shareClassId=1SC3SC10SC9SC50805SC50405SC50855SC"
+        advisor_est = (
+            "https://institutional.fidelity.com/app/tabbed/products/"
+            f"FIIS_SP52_DPL2_DSC1.html?navId=320&{advisor_classes}"
+        )
+        advisor_prior = (
+            "https://institutional.fidelity.com/app/tabbed/products/"
+            f"FIIS_SP10_DPL2_DSC1.html?navId=320&{advisor_classes}"
+        )
         return [
             PageSpec(
                 name="estimated_capital_gains",
@@ -264,9 +288,23 @@ class FidelitySource(HtmlTableSource):
                 empty_ok=True,
             ),
             PageSpec(
+                name="advisor_estimated_capital_gains",
+                url=advisor_est,
+                fixture="advisor_estimated_capital_gains.html",
+                live=True,
+                role="estimate",
+                empty_ok=True,
+            ),
+            PageSpec(
                 name="prior_year_distributions",
                 url=dpl6,
                 fixture="prior_year_distributions.html",
+                live=True,
+            ),
+            PageSpec(
+                name="advisor_prior_year_distributions",
+                url=advisor_prior,
+                fixture="advisor_prior_year_distributions.html",
                 live=True,
             ),
             PageSpec(
