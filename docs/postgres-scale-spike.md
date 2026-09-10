@@ -9,7 +9,9 @@
 
 Friends / soft beta can stay on SQLite. Cutover is for official public / paid scale — after this plan is approved and the implementation tickets below are done.
 
-**Data | Engineering — read first:** [Locked coordination rules](#2-locked-data--engineering-coordination-do-not-relax) · [Draft entity list](#3-draft-entity-list-confirm-against-live-ingest) · [Schema freeze](#5-schema-freeze)
+**Data | Engineering — read first:** [Locked coordination rules](#2-locked-data--engineering-coordination-do-not-relax) · [Draft entity list](#3-draft-entity-list-confirmed-2026-09-10) · [Schema freeze](#5-schema-freeze)
+
+**Confirmed (2026-09-10)** by Data | Engineering — all §3 entities/keys OK. Non-blocking migrate constraints in [§3.9](#39-non-blocking-migrate-constraints-confirmed).
 
 ---
 
@@ -57,7 +59,7 @@ Hero-bar math lives in `app/services/nav.py` (Eric lock 2026-09-09) and `app/sch
 
 ### 2.3 Efficient ingest
 
-- Delta / upsert by **natural keys** (see [§3](#3-draft-entity-list-confirm-against-live-ingest)). Same `as_of` + ex-date + type updates; a new `as_of` inserts.
+- Delta / upsert by **natural keys** (see [§3](#3-draft-entity-list-confirmed-2026-09-10)). Same `as_of` + ex-date + type updates; a new `as_of` inserts.
 - **No full re-seed on boot.** Warm disk / warm Postgres: densify missing families or changed fixture fingerprints only. `SEED_FORCE_FULL=true` is intentional-only (OOM risk on Starter; worse at 32k rows).
 - **Weekly scrape:** locked target is **Sunday 6:00 America/Chicago** for estimates **and** NAV.  
   **Current Action** (`.github/workflows/weekly-ingest.yml`) is `0 14 * * 0` and `0 14 * * 1` (Sun + Mon 14:00 UTC ≈ **9:00 CT** CDT). Align the cron at implementation — **do not change the live workflow in this spike.**  
@@ -83,9 +85,11 @@ Densify stays on **SQLite** until cutover. Full protocol (verbatim agreement + m
 
 ---
 
-## 3. Draft entity list (confirm against live ingest)
+## 3. Draft entity list (confirmed 2026-09-10)
 
-Data | Engineering: confirm these entities, natural keys, and indexes against live ingest before any Alembic revision. Surrogate `id` values are `VARCHAR(36)` UUID text — **not** the upsert identity.
+**Confirmed (2026-09-10)** by Data | Engineering — all §3 entities/keys OK against live ingest.
+
+Surrogate `id` values are `VARCHAR(36)` UUID text — **not** the upsert identity.
 
 Logical names used in freeze pings (`funds`, `distributions`, `fund_navs`, seed paths) map to the physical tables below.
 
@@ -101,7 +105,9 @@ Logical names used in freeze pings (`funds`, `distributions`, `fund_navs`, seed 
 | Unique | `uq_distribution_upsert_key` (`upsert_key`) |
 | Identity fields | `fund_family`, `fund_identifier` (ticker or slugified name; Class A alias may replace name), `ticker`, `share_class`, `estimate_type`, `as_of`, `ex_date` |
 | Amounts | `amount` / `amount_min` / `amount_max` `Numeric(18,6)` — **0 allowed**; null = unknown |
-| Stage | `publication_stage`: `preliminary_estimate` / `updated_estimate` / `final` / `paid` |
+| Unit | `amount_unit`: `per_share` \| `percent_of_nav` (bare `percent` is not ingested). **Load-bearing** for Website $ vs % — preserve exactly. |
+| Stage | `publication_stage`: `preliminary_estimate` / `updated_estimate` / `final` / `paid`. **Load-bearing** with `amount_unit` for Website $ vs % rules — preserve exactly. |
+| Dist-day NAV (API) | Response fields `nav_on_distribution_day`, `nav_on_distribution_day_as_of`, `nav_on_distribution_day_source` — joined from `fund_nav_history`, **not** stored on this table. Migrate must keep exposing them on dist rows. |
 | Audit | `raw_payload` JSON — **not selected on Search** |
 | Quality | `needs_review`, `review_reason`, `data_quality_flags` |
 
@@ -188,6 +194,14 @@ Website Add-to-universe. Never invents amounts.
 Adding either as a real table is a **ping-required** product change, not a cutover requirement.
 
 Local dump of physical columns/indexes: `python3 scripts/schema_inventory.py`.
+
+### 3.9 Non-blocking migrate constraints (confirmed)
+
+Data | Engineering confirm — **do not block** densify or this spike. Implementation must honor:
+
+1. **Dist rows expose `nav_on_distribution_day*`.** `GET /distributions` and illustrate attach `nav_on_distribution_day`, `nav_on_distribution_day_as_of`, `nav_on_distribution_day_source` (join from `fund_nav_history` on ex/payable; null if unknown). These are **API fields**, not columns on `distribution_estimates`. Migrate must **preserve that exposure** even though history lives in `fund_nav_history`. Do not drop the join, the history table, or the response fields. Do not substitute weekly `fund_navs` for a past distribution day.
+2. **`publication_stage` + `amount_unit` are load-bearing** for Website $ vs % rules. Preserve enum values exactly (`per_share` vs `percent_of_nav`; stages `preliminary_estimate` / `updated_estimate` / `final` / `paid`). Do not remap, merge, or drop them in Alembic or the copy.
+3. **Soft freeze tip** is still post-#117/#118 on `cursor/fund-distribution-ingest-api-85ed`. Densify remains **additive-only** (new rows/families, category/NAV/history fills).
 
 ---
 
@@ -312,7 +326,7 @@ The Action schedule is **not** the locked Sunday 6:00 CT target (see [§2.3](#23
 
 Locked agreement with Data | Engineering. **SPIKE ONLY** — this section documents the protocol; it does not migrate production.
 
-Densify **stays on SQLite** until cutover. This spike inventories/drafts against tip of `cursor/fund-distribution-ingest-api-85ed` (post-#117 / #118).
+Densify **stays on SQLite** until cutover. Soft-freeze tip is still post-#117/#118 on `cursor/fund-distribution-ingest-api-85ed`. Densify remains **additive-only**.
 
 ### 5.1 Agreement (verbatim)
 
@@ -366,6 +380,8 @@ Pause densify **schema** changes for **~24–48 hours** during migrate + dual-ru
 - Table/column renames or PK type change (native UUID = **breaking — do not**)
 - Dropping `raw_payload` or `ix_dist_fund_search`
 - Production `DATABASE_URL`, `WEB_CONCURRENCY`, disk mount, Render secrets
+- `publication_stage` and `amount_unit` values (Website $ vs % — [§3.9](#39-non-blocking-migrate-constraints-confirmed))
+- Dist-row API fields `nav_on_distribution_day*` (joined from `fund_nav_history`; not weekly NAV)
 
 **Not frozen — keep going on SQLite:**
 
@@ -382,7 +398,7 @@ Pause densify **schema** changes for **~24–48 hours** during migrate + dual-ru
 
 ### 6.1 Proposed table / type changes
 
-Keep the **same seven tables and unique keys** so a row-for-row copy is possible and densify upserts stay stable. See [§3](#3-draft-entity-list-confirm-against-live-ingest).
+Keep the **same seven tables and unique keys** so a row-for-row copy is possible and densify upserts stay stable. See [§3](#3-draft-entity-list-confirmed-2026-09-10) (confirmed 2026-09-10).
 
 | Current | Postgres recommendation | Breaking? | Why |
 |---|---|---|---|
@@ -599,6 +615,7 @@ Print and tick only after implementation PRs land and Eric says go.
 - [ ] Copy a **frozen snapshot** of `/var/data/distributions.db` (service SSH / disk file). Production keeps serving SQLite.
 - [ ] Verify counts + fixture checksums + Search / lookup / coverage / illustrate.
 - [ ] Accuracy sample: AGTHX `awaiting_estimate` vs a live `estimate_announced` ticker; lookback missing years stay Undisclosed (not $0); historical `%` uses dist-day NAV; live `%` uses weekly NAV; announced `amount=0` still stores if present.
+- [ ] Dist rows still expose `nav_on_distribution_day*` (joined from `fund_nav_history`, not weekly NAV). `publication_stage` + `amount_unit` values unchanged.
 - [ ] Watch preview RSS and PG `active_connections` under an 8-way `/funds` burst.
 - [ ] Leave production `WEB_CONCURRENCY=1` and sqlite URL untouched.
 
@@ -635,7 +652,7 @@ Print and tick only after implementation PRs land and Eric says go.
 
 | File | Role |
 |---|---|
-| `docs/postgres-scale-spike.md` | This plan (coordination rules, **draft entity list**, freeze, Render/cost). |
+| `docs/postgres-scale-spike.md` | This plan (coordination rules, **confirmed** entity list, freeze, Render/cost). |
 | `docs/render.postgres-launch.example.yaml` | Proposed Blueprint. **Not wired to the live service.** |
 | `scripts/schema_inventory.py` | Prints SQLAlchemy tables/indexes locally. Does not connect to Render. |
 
@@ -645,7 +662,7 @@ No cutover code, no production `DATABASE_URL` rewrite in `render.yaml`.
 
 ## 12. Open items for Eric
 
-1. **Data | Engineering:** confirm [§3 draft entity list](#3-draft-entity-list-confirm-against-live-ingest) (natural keys + indexes) against live ingest.
+1. ~~Data | Engineering confirm §3 entity list~~ — **Confirmed (2026-09-10)**; honor [§3.9](#39-non-blocking-migrate-constraints-confirmed) at implementation.
 2. Greenlight **Basic-1gb** (~+$19) vs try **Basic-256mb** first on a preview copy.
 3. Stay **Starter + 2 workers** vs budget **Standard** if boot RSS is scary.
 4. Who can copy `/var/data/distributions.db` (SSH) for the snapshot — this agent must not touch live disks.
