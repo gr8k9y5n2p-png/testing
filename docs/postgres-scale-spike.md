@@ -79,7 +79,7 @@ There is **no `funds` table**. A “fund” is `COUNT(DISTINCT fund_identifier)`
 
 ### 2.5 Schema freeze (summary)
 
-Densify stays on **SQLite** until cutover. Full protocol: [§5](#5-schema-freeze). Breaking Postgres-only type/PK changes are called out in [§6.1](#61-proposed-table--type-changes).
+Densify stays on **SQLite** until cutover. Full protocol (verbatim agreement + mapping): [§5](#5-schema-freeze). Breaking Postgres-only type/PK changes are called out in [§6.1](#61-proposed-table--type-changes).
 
 ---
 
@@ -310,35 +310,44 @@ The Action schedule is **not** the locked Sunday 6:00 CT target (see [§2.3](#23
 
 ## 5. Schema freeze
 
-Agreement with Data | Engineering. Densify **stays on SQLite** until cutover. This spike only inventories/drafts against tip of `cursor/fund-distribution-ingest-api-85ed` (post-#117 / #118).
+Locked agreement with Data | Engineering. **SPIKE ONLY** — this section documents the protocol; it does not migrate production.
 
-### 5.1 Soft freeze (now → greenlight)
+Densify **stays on SQLite** until cutover. This spike inventories/drafts against tip of `cursor/fund-distribution-ingest-api-85ed` (post-#117 / #118).
+
+### 5.1 Agreement (verbatim)
+
+- **Soft freeze now:** spike inventories/drafts against tip of `cursor/fund-distribution-ingest-api-85ed` (post-#117/#118). Densify stays **additive-only** (new rows/families, category/NAV/history fills). Engineering **pings Scale** before migrations that change columns/types/indexes on core tables: **funds**, **distributions**, **fund_navs**, **seed paths**.
+- **Hard freeze when Eric greenlights cutover:** pause densify schema changes for **~24–48h** during migrate + dual-run; ingest may still **upsert into the frozen shape**.
+- **No ping needed:** new distribution/NAV/category rows via existing upserts; weekly scrape.
+- **Ping required:** new columns, renamed fields, dropping `raw_payload` reliance, seed-on-start behavior, worker/DB URL config.
+
+### 5.2 Soft freeze (now → greenlight)
 
 Densify is **additive-only**: new distribution/NAV/history rows, new families, category-map fills, lookback years. No column/type/index redesign on core entities.
 
-**Core entities for ping** (logical → physical):
+**Core entities for ping** (logical name in the agreement → physical table):
 
 | Logical (Data \| Eng) | Physical table(s) |
 |---|---|
-| funds | derived from `distribution_estimates.fund_identifier` (no table) |
+| funds | derived from `distribution_estimates.fund_identifier` (**no `funds` table**) |
 | distributions | `distribution_estimates` |
 | fund_navs | `fund_navs` + `fund_nav_history` |
 | seed paths | `seed_family_state`, boot densify, `SEED_*` env |
 
 Engineering **pings Scale** before any migration that changes columns, types, or indexes on those.
 
-### 5.2 Hard freeze (when Eric greenlights cutover)
+### 5.3 Hard freeze (when Eric greenlights cutover)
 
 Pause densify **schema** changes for **~24–48 hours** during migrate + dual-run. Ingest may still **upsert into the frozen shape** (new rows / updated `upsert_key` documents). Then re-copy SQLite → Postgres (or replay ingest) before traffic moves.
 
-### 5.3 No ping needed
+### 5.4 No ping needed
 
 - New distribution / NAV / category **rows** via existing upserts
 - Weekly scrape (estimates + NAV) into the current keys
 - Fixture HTML / parser / adapter densify that does not change the schema
 - Soft-beta traffic on live SQLite
 
-### 5.4 Ping Scale required
+### 5.5 Ping Scale required
 
 - New columns or renamed fields
 - Dropping or changing `raw_payload` reliance (Search must keep it off the hot path; dropping the column is a product/audit change)
@@ -347,7 +356,7 @@ Pause densify **schema** changes for **~24–48 hours** during migrate + dual-ru
 - New first-class `funds` or `categories` table
 - Changing `make_upsert_key` or unique keys on `fund_navs` / `fund_nav_history`
 
-### 5.5 Frozen vs not frozen (copy validity)
+### 5.6 Frozen vs not frozen (copy validity)
 
 **Frozen until cutover:**
 
