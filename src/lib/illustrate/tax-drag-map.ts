@@ -249,17 +249,20 @@ export function illustrationVintageYear(
   if (!illustration) return 0;
   const extra = illustration as CompareIllustration & {
     year?: unknown;
-    as_of?: unknown;
   };
-  const first = Array.isArray(illustration.components)
-    ? (illustration.components[0] as { as_of?: unknown; ex_date?: unknown } | undefined)
-    : undefined;
+  const components = Array.isArray(illustration.components)
+    ? illustration.components
+    : [];
+  for (const raw of components) {
+    const row = raw as { ex_date?: unknown; payable_date?: unknown };
+    const fromDates =
+      calendarYearFromUnknown(row.ex_date) ||
+      calendarYearFromUnknown(row.payable_date);
+    if (fromDates > 0) return fromDates;
+  }
   return (
     calendarYearFromUnknown(extra.year) ||
-    calendarYearFromUnknown(extra.as_of) ||
-    calendarYearFromUnknown(illustration.label) ||
-    calendarYearFromUnknown(first?.as_of) ||
-    calendarYearFromUnknown(first?.ex_date)
+    calendarYearFromUnknown(illustration.label)
   );
 }
 

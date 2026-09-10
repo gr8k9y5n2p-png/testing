@@ -7,6 +7,7 @@ import type { CompareIllustration, CompareResponse } from "./compare-types.ts";
 import {
   buildGrowthTaxByTypeModel,
   canonicalizeEstimateType,
+  distDollarsFromComponent,
   foldEstimateTypeAmounts,
   formatGrowthTaxCell,
   growthTaxYearFromIllustration,
@@ -50,11 +51,12 @@ function component(patch: Record<string, unknown>) {
 function illustration(
   matched: boolean,
   components: ReturnType<typeof component>[] = [],
+  holdingDollars = 10_000,
 ): CompareIllustration {
   return {
     label: "AGTHX",
     matched,
-    holding_dollars: 10_000,
+    holding_dollars: holdingDollars,
     components,
     totals: {
       estimated_tax: components.reduce(
@@ -158,6 +160,49 @@ describe("tax from Dist $ × rates", () => {
     );
   });
 
+  it("recomputes AGTHX YE2025 LTCG Dist $ from amount × (holding / live NAV)", () => {
+    const ltcg = component({
+      estimate_type: "long_term_capital_gains",
+      amount: 8.364,
+      amount_unit: "per_share",
+      as_of: "2026-01-15",
+      ex_date: "2025-12-17",
+      payable_date: "2025-12-17",
+      publication_stage: "final",
+      distribution_dollars: 115_981,
+      estimated_tax_dollars: 28_985,
+      effective_rate: 0.25,
+      rate_key: "long_term_capital_gains",
+    });
+    const live = { holdingDollars: 1_000_000, navPerShare: 88.42 };
+    const dist = distDollarsFromComponent(ltcg, live);
+    assert.ok(dist != null);
+    assert.equal(Math.round(dist), 94_594);
+    assert.notEqual(
+      Math.round(distDollarsFromComponent(ltcg, { holdingDollars: 1_000_000, navPerShare: 72.14 }) ?? 0),
+      94_594,
+    );
+
+    const tax = taxDollarsFromComponent(ltcg, UI_DEFAULT_TAX_RATES, true, live);
+    assert.ok(tax != null && dist != null);
+    assert.equal(Math.round(tax), Math.round(dist * 0.25));
+    assert.notEqual(Math.round(tax), 28_985);
+
+    const missing = taxDollarsFromComponent(
+      component({
+        estimate_type: "long_term_capital_gains",
+        amount: null,
+        amount_unit: "per_share",
+        distribution_dollars: null,
+        estimated_tax_dollars: null,
+      }),
+      UI_DEFAULT_TAX_RATES,
+      true,
+      live,
+    );
+    assert.equal(missing, null);
+  });
+
   it("does not tax return_of_capital unless Data sent tax $", () => {
     assert.equal(
       taxDollarsFromComponent(
@@ -238,6 +283,79 @@ describe("paid vs announced year selection", () => {
     );
     assert.equal(year.status, "empty");
     assert.equal(year.total, null);
+  });
+
+  it("buckets YE paid Dec 17, 2025 from ex_date and does not repeat it in 2026", () => {
+    const paidYe = component({
+      estimate_type: "long_term_capital_gains",
+      amount: 8.364,
+      amount_unit: "per_share",
+      as_of: "2026-01-15",
+      ex_date: "2025-12-17",
+      payable_date: "2025-12-17",
+      publication_stage: "final",
+      estimated_tax_dollars: 28_985,
+      rate_key: "long_term_capital_gains",
+    });
+    const live = { holdingDollars: 1_000_000, navPerShare: 88.42 };
+    const yeIllustration = illustration(true, [paidYe], 1_000_000);
+    const response = yoy([
+      {
+        year: 2026,
+        as_of: "2026-01-15",
+        left: yeIllustration,
+        right: yeIllustration,
+        deltas: {
+          distribution_dollars: 0,
+          estimated_tax: 0,
+          effective_tax_on_holding: 0,
+        },
+      },
+    ]);
+
+    const byYear = illustrationsByCalendarYear(response);
+    assert.equal(byYear.has(2025), true);
+    assert.equal(byYear.has(2026), false);
+
+    const model = buildGrowthTaxByTypeModel(
+      [
+        {
+          ticker: "AGTHX",
+          tax: response,
+          holdingDollars: 1_000_000,
+          navPerShare: 88.42,
+        },
+        { ticker: "FCNTX", tax: null },
+      ],
+      [2022, 2023, 2024, 2025, 2026],
+      UI_DEFAULT_TAX_RATES,
+      true,
+    );
+    const agthx = model.series[0];
+    const y2025 = agthx?.years.find((cell) => cell.year === 2025);
+    const y2026 = agthx?.years.find((cell) => cell.year === 2026);
+    assert.equal(y2025?.status, "paid");
+    assert.ok(y2025?.amounts.long_term_capital_gains != null);
+    assert.ok(Math.abs((y2025?.amounts.long_term_capital_gains ?? 0) - 8.364 * (1_000_000 / 88.42) * 0.25) < 0.01);
+    assert.equal(y2026?.status, "empty");
+    assert.equal(y2026?.total, null);
+    assert.equal(formatGrowthTaxCell(y2026?.total ?? null, y2026?.status ?? "empty", "total"), GROWTH_TAX_UNDISCLOSED_LABEL);
+    assert.equal(y2025?.amounts.qualified_dividend, null);
+    assert.equal(y2025?.amounts.special_dividend, null);
+    assert.equal(y2025?.amounts.return_of_capital, null);
+
+    const fcntx = model.series[1];
+    assert.ok(fcntx?.years.filter((cell) => cell.year <= 2023).every((cell) => cell.status === "empty"));
+
+    const only2026 = growthTaxYearFromIllustration(
+      "AGTHX",
+      2026,
+      yeIllustration,
+      UI_DEFAULT_TAX_RATES,
+      true,
+      live,
+    );
+    assert.equal(only2026.status, "empty");
   });
 });
 
@@ -409,5 +527,15 @@ describe("Growth & Tax chrome locks", () => {
     assert.doesNotMatch(chart, /strokeDasharray=\{row\.dashed/);
     assert.equal(GROWTH_TAX_TYPE_COLORS.long_term_capital_gains, "#b42318");
     assert.equal(GROWTH_TAX_TYPE_COLORS.ordinary_income, "#1b7a72");
+    const byType = readFileSync(join(here, "growth-tax-by-type.ts"), "utf8");
+    const load = readFileSync(join(here, "growth-tax-load.ts"), "utf8");
+    assert.match(byType, /upcomingDistDollars/);
+    assert.match(byType, /componentCalendarYear/);
+    assert.match(byType, /Never `as_of`/);
+    assert.doesNotMatch(byType, /calendarYearFromUnknown\(extra\.as_of\)/);
+    assert.doesNotMatch(byType, /calendarYearFromUnknown\(first\?\.as_of\)/);
+    assert.match(load, /preferLiveWeeklyNav/);
+    assert.match(moduleSource, /holdingDollars:\s*principal/);
+    assert.match(moduleSource, /navPerShare:\s*row\.navPerShare/);
   });
 });

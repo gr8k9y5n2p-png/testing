@@ -1,37 +1,33 @@
-import { fundSeriesColor } from "@/lib/charts/series-colors";
-import { yearEndGrowth } from "@/lib/charts/shared-axis";
-import { postIllustrateCompare } from "@/lib/illustrate/compare-client";
+import { fundSeriesColor } from "../charts/series-colors.ts";
+import { yearEndGrowth } from "../charts/shared-axis.ts";
 import {
   compareSideFromFund,
   compareTaxRequestFields,
-  navFromFundMetadata,
-  positiveNav,
+  preferLiveWeeklyNav,
   trailingCalendarPeriods,
   yoyTaxDragCompareRequest,
-} from "@/lib/illustrate/compare-request";
-import type { ComparePeriodIn, CompareRequest, CompareResponse } from "@/lib/illustrate/compare-types";
-import type { TaxRates } from "@/lib/illustrate/types";
+} from "./compare-request.ts";
+import type { ComparePeriodIn, CompareRequest, CompareResponse } from "./compare-types.ts";
+import type { TaxRates } from "./types.ts";
 import {
   mapFundsWithOptionalPerformance,
   missingPerformanceTickers,
-} from "@/lib/illustrate/growth-tax-series";
-import { seedNavLookup } from "@/lib/illustrate/seed-nav";
-import { fetchPerformanceIfAvailable } from "@/lib/performance/client";
-import { defaultPerformanceMode } from "@/lib/performance/mode";
+} from "./growth-tax-series.ts";
+import { defaultPerformanceMode } from "../performance/mode.ts";
 import {
   DEFAULT_START_DOLLARS,
   type PerformanceQuery,
   type PerformanceResponse,
-} from "@/lib/performance/types";
+} from "../performance/types.ts";
 
-export type { GrowthLineSeries } from "@/lib/illustrate/growth-tax-series";
+export type { GrowthLineSeries } from "./growth-tax-series.ts";
 export {
   annualizedFromRows,
   calendarYearsFromRows,
   growthLinesFromRows,
   taxSeriesFromRows,
   windowedGrowth,
-} from "@/lib/illustrate/growth-tax-series";
+} from "./growth-tax-series.ts";
 
 export type GrowthFundInput = {
   ticker: string;
@@ -51,6 +47,8 @@ export type LoadedGrowthFund = {
   tax: CompareResponse | null;
   /** fund_vs_fund: this fund is `left` or `right`. YoY uses `auto`. */
   taxSide: "left" | "right" | "auto";
+  /** Live weekly / catalog NAV used for Dist $. Seed only when no live print. */
+  navPerShare?: number | null;
 };
 
 export type GrowthTaxLoadResult = {
@@ -70,8 +68,14 @@ export type GrowthTaxLoaders = {
 };
 
 const defaultLoaders: GrowthTaxLoaders = {
-  loadPerformance: fetchPerformanceIfAvailable,
-  loadCompare: postIllustrateCompare,
+  async loadPerformance(request, init) {
+    const { fetchPerformanceIfAvailable } = await import("@/lib/performance/client");
+    return fetchPerformanceIfAvailable(request, init);
+  },
+  async loadCompare(request, init) {
+    const { postIllustrateCompare } = await import("@/lib/illustrate/compare-client");
+    return postIllustrateCompare(request, init);
+  },
 };
 
 export type GrowthTaxPrefetch = {
@@ -131,9 +135,11 @@ export async function loadGrowthAndTaxDrag(
     const ticker = input.ticker.trim().toUpperCase();
     const lastClose =
       performance?.fund.points[performance.fund.points.length - 1]?.adj_close;
-    const nav =
-      navFromFundMetadata(ticker, input.navPerShare, seedNavLookup) ??
-      positiveNav(lastClose);
+    const nav = preferLiveWeeklyNav({
+      ticker,
+      catalogNav: input.navPerShare,
+      weeklyNav: lastClose,
+    });
     return { input, index, ticker, performance, nav };
   });
 
@@ -206,6 +212,7 @@ export async function loadGrowthAndTaxDrag(
           performance: row.performance,
           tax: prefetched.tax,
           taxSide: prefetched.taxSide ?? "auto",
+          navPerShare: row.nav ?? null,
         };
       }
       let tax: CompareResponse | null = pair;
@@ -240,6 +247,7 @@ export async function loadGrowthAndTaxDrag(
         performance: row.performance,
         tax,
         taxSide,
+        navPerShare: row.nav ?? null,
       };
     }),
   );

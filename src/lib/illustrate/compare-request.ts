@@ -161,6 +161,27 @@ export function navFromFundMetadata(
   return positiveNav(lookup?.(key));
 }
 
+/**
+ * Dist $ uses live weekly / catalog `nav_per_share`, never SAMPLE seed when
+ * a live print exists. AGTHX seed $72.14 must not win over weekly $88.42.
+ *
+ * Proven live catalog (differs from seed) wins. Otherwise weekly NAV, then
+ * catalog, then seed as last resort.
+ */
+export function preferLiveWeeklyNav(input: {
+  ticker?: string | null;
+  catalogNav?: unknown;
+  weeklyNav?: unknown;
+  lookup?: NavLookup;
+}): number | undefined {
+  const catalog = positiveNav(input.catalogNav);
+  const weekly = positiveNav(input.weeklyNav);
+  const seed = navFromFundMetadata(input.ticker, undefined, input.lookup);
+  if (catalog != null && seed != null && catalog !== seed) return catalog;
+  if (weekly != null) return weekly;
+  return catalog ?? seed;
+}
+
 export const PER_SHARE_NAV_REQUIRED =
   "Enter NAV per share to illustrate $ / share amounts.";
 

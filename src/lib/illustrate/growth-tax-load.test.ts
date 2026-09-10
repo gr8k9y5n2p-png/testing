@@ -366,8 +366,11 @@ describe("3-fund Compare Growth & Tax", () => {
     );
     assert.match(workspace, /prefetchTax=\{prefetchTax\}/);
     assert.match(load, /prefetchTax/);
+    assert.match(load, /preferLiveWeeklyNav/);
     assert.match(moduleSource, /settledKey !== fetchKey && rows == null/);
     assert.match(moduleSource, /if \(controller\.signal\.aborted\) return/);
+    assert.match(moduleSource, /holdingDollars:\s*principal/);
+    assert.match(moduleSource, /navPerShare:\s*row\.navPerShare/);
   });
 });
 
