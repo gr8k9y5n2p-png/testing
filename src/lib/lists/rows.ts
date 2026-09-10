@@ -12,10 +12,7 @@ import {
 import { hideUpcomingAmounts } from "../../data/hydrate-funds.ts";
 import type { FundEstimateView } from "../../data/types.ts";
 import { GROWTH_TAX_TYPE_LABELS } from "../illustrate/growth-tax-by-type.ts";
-import {
-  parsePositiveNav,
-  resolvePctOfNav,
-} from "../illustrate/nav-math.ts";
+import { parsePositiveNav, upcomingPctOfNav } from "../illustrate/nav-math.ts";
 
 /** Data API component types the Lists table shows as their own columns. */
 export const LIST_ESTIMATE_TYPES = [
@@ -244,14 +241,6 @@ function snapshotNav(rows: DataDistribution[]): number | null {
   return null;
 }
 
-function snapshotStage(rows: DataDistribution[]): string | null {
-  for (const row of rows) {
-    const stage = (row.publication_stage ?? "").trim();
-    if (stage) return stage;
-  }
-  return null;
-}
-
 function snapshotFundName(rows: DataDistribution[]): string | null {
   for (const row of rows) {
     const name = (row.fund_name ?? "").trim();
@@ -337,20 +326,7 @@ export function listRowFromFund(input: {
     : null;
   const nav =
     (fund && fund.nav > 0 ? fund.nav : null) ?? snapshotNav(snapshot);
-  const pctOfNav = upcoming
-    ? resolvePctOfNav({
-        publishedPctNav: fund?.publishedPctOfNav ?? null,
-        perShare: distPerShare,
-        weeklyNav: nav,
-        navOnDistributionDay:
-          fund?.navOnDistributionDay ?? snapshotNav(snapshot),
-        publicationStage: fund?.publicationStage ?? snapshotStage(snapshot),
-        exDate: snapshotField(snapshot, "ex_date") ?? fund?.exDate ?? null,
-        payableDate:
-          snapshotField(snapshot, "payable_date") ?? fund?.payableDate ?? null,
-        today: input.today,
-      })
-    : null;
+  const pctOfNav = upcoming ? upcomingPctOfNav(distPerShare, nav) : null;
   const fundName =
     (fund?.fundName && fund.fundName !== "—" ? fund.fundName : null) ??
     snapshotFundName(snapshot);

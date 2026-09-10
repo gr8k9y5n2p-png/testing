@@ -104,6 +104,19 @@ function normalizeDistributionRow(raw: unknown): PortfolioDistributionRow | null
         : String(row.amount_unit ?? row.amountUnit),
     nav_per_share: numOrNull(row.nav_per_share ?? row.navPerShare),
     nav_as_of: isoOrNull(row.nav_as_of ?? row.navAsOf),
+    nav_on_distribution_day: numOrNull(
+      row.nav_on_distribution_day ?? row.navOnDistributionDay,
+    ),
+    nav_on_distribution_day_as_of: isoOrNull(
+      row.nav_on_distribution_day_as_of ?? row.navOnDistributionDayAsOf,
+    ),
+    nav_on_distribution_day_source:
+      row.nav_on_distribution_day_source == null &&
+      row.navOnDistributionDaySource == null
+        ? null
+        : String(
+            row.nav_on_distribution_day_source ?? row.navOnDistributionDaySource,
+          ),
     as_of: isoOrNull(row.as_of),
     announced_date: isoOrNull(row.announced_date ?? row.announcedDate),
     record_date: isoOrNull(row.record_date ?? row.recordDate),

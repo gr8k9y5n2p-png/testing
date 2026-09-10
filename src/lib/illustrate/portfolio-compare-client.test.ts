@@ -17,6 +17,7 @@ describe("announced $0 upcoming normalize", () => {
     assert.match(fn, /amount: numOrNull\(row\.amount\)/);
     assert.match(fn, /amount_unit:/);
     assert.match(fn, /numOrNull\(row\.amount\)/);
+    assert.match(fn, /nav_on_distribution_day:/);
     assert.doesNotMatch(fn, /amount\s*>\s*0/);
     assert.doesNotMatch(fn, /if \(!.*amount/);
   });
