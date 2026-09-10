@@ -8,6 +8,7 @@ import { aggregateDistributions, type DataDistribution } from "../../data/aggreg
 import { mergeFundWithDistributions } from "../../data/hydrate-funds.ts";
 import { paidHistoryViews, withPeerContext } from "../../data/queries.ts";
 import {
+  fillNavPerShareInput,
   formatSoftPct,
   formatWeeklyNavLabel,
   historicalPctOfNav,
@@ -227,7 +228,24 @@ describe("Search hydrate live NAV fields", () => {
     assert.match(panel, /nav_only/);
     assert.doesNotMatch(panel, /Weekly NAV/);
     assert.match(panel, /mock \? seedNavLookup/);
+    assert.match(panel, /fillNavPerShareInput/);
     assert.match(fundsList, /nav_per_share/);
     assert.match(fundsList, /parsePositiveNav/);
+  });
+
+  it("soft-fills NAV PER SHARE from live nav_per_share and never overwrites a typed price", () => {
+    assert.equal(fillNavPerShareInput("", 312.26001), "312.26001");
+    assert.equal(fillNavPerShareInput("  ", 312.26), "312.26");
+    assert.equal(fillNavPerShareInput("0", 312.26), "312.26");
+    assert.equal(fillNavPerShareInput("310.00", 312.26), "310.00");
+    assert.equal(fillNavPerShareInput("", 0), "");
+    assert.equal(fillNavPerShareInput("", null), "");
+    const panel = readFileSync(
+      join(here, "../../components/illustrate/IllustratePanel.tsx"),
+      "utf8",
+    );
+    assert.match(panel, /fillNavPerShareInput\(current, liveNav\)/);
+    assert.match(panel, /AMOUNT_UNITS\.per_share/);
+    assert.match(panel, /setNavInput\(\(current\) => fillNavPerShareInput/);
   });
 });

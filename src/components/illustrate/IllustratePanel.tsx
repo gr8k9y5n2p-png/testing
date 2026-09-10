@@ -12,8 +12,10 @@ import {
 } from "@/lib/illustrate/compare-request";
 import { formatOptionalDate, formatUsd } from "@/lib/format";
 import {
+  fillNavPerShareInput,
   formatSoftPct,
   formatWeeklyNavLabel,
+  parsePositiveNav,
   pctOfNavForFund,
 } from "@/lib/illustrate/nav-math";
 import { seedNavLookup } from "@/lib/illustrate/seed-nav";
@@ -218,10 +220,15 @@ function IllustrationWorkspace({ fund }: { fund: FundEstimateView }) {
   const mock = isMockIllustrate();
   const navLookup = mock ? seedNavLookup : undefined;
   const metadataNav = navFromFundMetadata(fund.ticker, fund.nav, navLookup);
+  const liveNav = metadataNav ?? parsePositiveNav(fund.nav);
   const [unit, setUnit] = useState<AmountUnit>(AMOUNT_UNITS.percent_of_nav);
-  const [navInput, setNavInput] = useState(
-    metadataNav != null ? String(metadataNav) : fund.nav > 0 ? String(fund.nav) : "",
+  const [navInput, setNavInput] = useState(() =>
+    fillNavPerShareInput("", liveNav),
   );
+
+  useEffect(() => {
+    setNavInput((current) => fillNavPerShareInput(current, liveNav));
+  }, [liveNav, fund.ticker]);
   const [result, setResult] = useState<IllustrateResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -329,7 +336,10 @@ function IllustrationWorkspace({ fund }: { fund: FundEstimateView }) {
             />
             <UnitToggle
               active={unit === AMOUNT_UNITS.per_share}
-              onClick={() => setUnit(AMOUNT_UNITS.per_share)}
+              onClick={() => {
+                setUnit(AMOUNT_UNITS.per_share);
+                setNavInput((current) => fillNavPerShareInput(current, liveNav));
+              }}
               label="$ / share"
             />
           </div>

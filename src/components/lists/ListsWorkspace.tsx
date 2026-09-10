@@ -27,10 +27,16 @@ import {
   removeTicker,
 } from "@/lib/lists/parse-tickers";
 import {
+  LIST_HYDRATE_MAX_ATTEMPTS,
+  listHydrateBackoffMs,
+  listRowsAfterFailedHydrate,
+  listRowsFromApiResponse,
+  needsListHydrate,
+} from "@/lib/lists/hydrate";
+import {
   emptyListRow,
   LIST_ESTIMATE_TYPE_LABELS,
   LIST_ESTIMATE_TYPES,
-  orderListRows,
   type ListRow,
 } from "@/lib/lists/rows";
 
@@ -41,12 +47,11 @@ async function fetchListRows(tickers: string[]): Promise<ListRow[]> {
   if (!tickers.length) return [];
   const params = new URLSearchParams();
   params.set("tickers", tickers.join(","));
-  const response = await fetch(`/api/lists?${params.toString()}`);
-  if (!response.ok) {
-    return tickers.map((ticker) => emptyListRow(ticker, "not_found"));
-  }
-  const body = (await response.json()) as { items?: ListRow[] };
-  return orderListRows(tickers, Array.isArray(body.items) ? body.items : []);
+  const response = await fetch(`/api/lists?${params.toString()}`, {
+    cache: "no-store",
+  });
+  const body = await response.json().catch(() => null);
+  return listRowsFromApiResponse(tickers, body, response.ok);
 }
 
 function SoftCell({
@@ -125,7 +130,6 @@ export function ListsWorkspace({
   });
   const rowsByTickerRef = useRef(rowsByTicker);
   rowsByTickerRef.current = rowsByTicker;
-  const inflight = useRef<Set<string>>(new Set());
 
   const rows = useMemo(
     () =>
@@ -141,20 +145,57 @@ export function ListsWorkspace({
   }, [tickers]);
 
   useEffect(() => {
-    const missing = tickers.filter(
-      (ticker) =>
-        !rowsByTickerRef.current[ticker] && !inflight.current.has(ticker),
-    );
-    if (!missing.length) return;
-    for (const ticker of missing) inflight.current.add(ticker);
-    void fetchListRows(missing).then((fetched) => {
-      setRowsByTicker((current) => {
-        const merged = { ...current };
-        for (const row of fetched) merged[row.ticker] = row;
-        return merged;
-      });
-      for (const ticker of missing) inflight.current.delete(ticker);
-    });
+    let cancelled = false;
+
+    function unresolved(): string[] {
+      return tickers.filter((ticker) =>
+        needsListHydrate(rowsByTickerRef.current[ticker], 0),
+      );
+    }
+
+    async function hydrate() {
+      for (let attempt = 0; attempt < LIST_HYDRATE_MAX_ATTEMPTS; attempt += 1) {
+        const missing = unresolved();
+        if (!missing.length || cancelled) return;
+        const wait = listHydrateBackoffMs(attempt);
+        if (wait) {
+          await new Promise((resolve) => window.setTimeout(resolve, wait));
+          if (cancelled) return;
+        }
+        try {
+          const fetched = await fetchListRows(missing);
+          if (cancelled) return;
+          setRowsByTicker((current) => {
+            const merged = { ...current };
+            for (const row of fetched) merged[row.ticker] = row;
+            return merged;
+          });
+          const stillMissing = missing.filter((ticker) => {
+            const row = fetched.find((item) => item.ticker === ticker);
+            return !row || row.status === "not_found" || row.status === "loading";
+          });
+          if (!stillMissing.length) return;
+        } catch {
+          if (cancelled) return;
+          if (attempt === LIST_HYDRATE_MAX_ATTEMPTS - 1) {
+            setRowsByTicker((current) => {
+              const merged = { ...current };
+              for (const row of listRowsAfterFailedHydrate(missing)) {
+                if (!merged[row.ticker] || merged[row.ticker]?.status === "loading") {
+                  merged[row.ticker] = row;
+                }
+              }
+              return merged;
+            });
+          }
+        }
+      }
+    }
+
+    void hydrate();
+    return () => {
+      cancelled = true;
+    };
   }, [tickers]);
 
   function commitDraft(raw = draft) {

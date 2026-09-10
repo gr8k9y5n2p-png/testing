@@ -175,6 +175,25 @@ describe("Lists upcoming rows", () => {
     assert.deepEqual(upcomingEstimateTypeAmounts(AGTHX_PAID_ROWS, TODAY), emptyEstimateTypes());
   });
 
+  it("fills LTCG from upcoming estimateTypeLines when raw snapshot rows are missing", () => {
+    const fund = hydrate("FBGRX", "Blue Chip Growth", "Fidelity", 312.26, FBGRX_ROWS);
+    const list = listRowFromFund({
+      ticker: "FBGRX",
+      fund,
+      distributionRows: [],
+      found: true,
+      today: TODAY,
+    });
+    assert.equal(list.status, "upcoming");
+    assert.ok(
+      list.estimateTypes.long_term_capital_gains != null &&
+        Math.abs(list.estimateTypes.long_term_capital_gains - 21.021) < 1e-6,
+    );
+    assert.ok(
+      list.distPerShare != null && Math.abs(list.distPerShare - 21.021) < 1e-6,
+    );
+  });
+
   it("keeps unknown tickers as not-found instead of dropping them", () => {
     const list = listRowFromFund({ ticker: "ZZZZZ", fund: null, found: false });
     assert.equal(list.status, "not_found");
@@ -259,6 +278,13 @@ describe("Lists chrome lock", () => {
     assert.match(workspace, /tickerSlotBorderClass/);
     assert.match(workspace, /history\.replaceState/);
     assert.doesNotMatch(workspace, /useRouter|router\.replace/);
+    assert.match(workspace, /cache:\s*"no-store"/);
+    assert.match(workspace, /needsListHydrate/);
+    assert.match(workspace, /listRowsFromApiResponse/);
+    assert.doesNotMatch(
+      workspace,
+      /return tickers\.map\(\(ticker\) => emptyListRow\(ticker, "not_found"\)\)/,
+    );
     assert.match(nav, /label:\s*"Lists"/);
     assert.match(nav, /href:\s*"\/lists"/);
   });

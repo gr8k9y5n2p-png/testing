@@ -3,6 +3,8 @@ import { parseTickerList } from "@/lib/lists/parse-tickers";
 
 export const dynamic = "force-dynamic";
 
+const NO_STORE = { "Cache-Control": "no-store" };
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const tickers = parseTickerList(
@@ -10,10 +12,26 @@ export async function GET(request: Request) {
       .filter(Boolean)
       .join(","),
   );
-  const items = await loadListRowsFromDataApi({ tickers });
-  return Response.json({
-    items,
-    tickers,
-    count: items.length,
-  });
+  try {
+    const items = await loadListRowsFromDataApi({ tickers });
+    return Response.json(
+      {
+        items,
+        tickers,
+        count: items.length,
+      },
+      { headers: NO_STORE },
+    );
+  } catch {
+    // Render 502 / timeout — do not persist as NOT FOUND. Client retries.
+    return Response.json(
+      {
+        items: [],
+        tickers,
+        count: 0,
+        error: "upstream",
+      },
+      { status: 503, headers: NO_STORE },
+    );
+  }
 }

@@ -268,6 +268,44 @@ function snapshotFamily(rows: DataDistribution[]): string | null {
   return null;
 }
 
+function estimateTypesFromFundLines(
+  fund: FundEstimateView | null,
+): Record<ListEstimateType, number | null> {
+  const amounts = emptyEstimateTypes();
+  if (!fund) return amounts;
+  let totalCapitalGains: number | null = null;
+  for (const line of fund.estimateTypeLines ?? []) {
+    if ((line.amountUnit ?? "").trim().toLowerCase() !== "per_share") continue;
+    if (!Number.isFinite(line.amount)) continue;
+    const kind = canonicalizeListEstimateType(line.estimateType);
+    if (kind === "skip") continue;
+    if (kind === "total_capital_gains") {
+      totalCapitalGains = (totalCapitalGains ?? 0) + line.amount;
+      continue;
+    }
+    amounts[kind] = (amounts[kind] ?? 0) + line.amount;
+  }
+  if (
+    totalCapitalGains != null &&
+    amounts.long_term_capital_gains == null &&
+    amounts.short_term_capital_gains == null
+  ) {
+    amounts.long_term_capital_gains = totalCapitalGains;
+  }
+  return amounts;
+}
+
+function mergeEstimateTypes(
+  primary: Record<ListEstimateType, number | null>,
+  fallback: Record<ListEstimateType, number | null>,
+): Record<ListEstimateType, number | null> {
+  const merged = emptyEstimateTypes();
+  for (const type of LIST_ESTIMATE_TYPES) {
+    merged[type] = primary[type] ?? fallback[type];
+  }
+  return merged;
+}
+
 function distTotalFromTypes(
   amounts: Record<ListEstimateType, number | null>,
 ): number | null {
@@ -325,7 +363,10 @@ export function listRowFromFund(input: {
 
   const upcoming = hasUpcomingEstimate(fund, distributionRows, input.today);
   const estimateTypes = upcoming
-    ? upcomingEstimateTypeAmounts(distributionRows, input.today)
+    ? mergeEstimateTypes(
+        upcomingEstimateTypeAmounts(distributionRows, input.today),
+        estimateTypesFromFundLines(fund),
+      )
     : emptyEstimateTypes();
   const distFromTypes = distTotalFromTypes(estimateTypes);
   const distFromFund =

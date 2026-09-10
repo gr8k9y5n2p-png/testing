@@ -32,6 +32,23 @@ export function parsePositiveNav(value: unknown): number | null {
 }
 
 /**
+ * Soft-fill Dollar Illustration NAV PER SHARE from live `nav_per_share`.
+ * Never overwrite a typed price. Empty / 0 / junk stay empty until a live
+ * weekly print exists.
+ */
+export function fillNavPerShareInput(
+  typedInput: unknown,
+  liveNav: unknown,
+): string {
+  if (parsePositiveNav(typedInput) != null) {
+    return String(typedInput).trim();
+  }
+  const nav = parsePositiveNav(liveNav);
+  if (nav != null) return String(nav);
+  return typeof typedInput === "string" ? typedInput : "";
+}
+
+/**
  * Distribution day is ex_date, else payable_date — matches Data.
  * Historical % of NAV uses that day's print when the day is on or before
  * today, or the row is `final` / `paid`. Never fall back to weekly NAV.

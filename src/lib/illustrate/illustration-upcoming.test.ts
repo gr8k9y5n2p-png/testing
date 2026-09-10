@@ -147,6 +147,7 @@ describe("Dollar Illustration Upcoming gate", () => {
     assert.match(panel, /seedNavLookup/);
     assert.match(panel, /mock \? seedNavLookup/);
     assert.match(panel, /illustrationRequestNav/);
+    assert.match(panel, /fillNavPerShareInput/);
     assert.match(panel, /perShareNavError/);
     assert.match(seed, /ticker:\s*"ABALX"[\s\S]*?nav:\s*34\.52/);
     const seedLookup = (ticker: string) =>

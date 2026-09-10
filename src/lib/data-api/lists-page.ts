@@ -8,8 +8,10 @@ import { withPeerContext } from "@/data/queries";
 import type { FundEstimateView } from "@/data/types";
 import { isRemoteDataApi } from "@/lib/data-api/config";
 import {
+  distributionRowsForTickers,
   loadDistributionsForFundPage,
   loadFundIdentityByTicker,
+  loadUpcomingDistributionRows,
 } from "@/lib/data-api/distributions";
 import { normalizeTickerSymbol } from "@/lib/data-api/request-ticker";
 import {
@@ -46,15 +48,21 @@ async function loadFundIdentity(ticker: string): Promise<FundEstimateView | null
 }
 
 function rowsForTicker(rows: DataDistribution[], ticker: string): DataDistribution[] {
-  return rows.filter((row) => {
-    const symbol = (row.ticker ?? "").trim().toUpperCase();
-    const ident = (row.fund_identifier ?? "").trim().toUpperCase();
-    return symbol === ticker || ident === ticker;
-  });
+  return distributionRowsForTickers(rows, [ticker]);
+}
+
+async function settled<T>(promise: Promise<T>, fallback: T): Promise<{ value: T; failed: boolean }> {
+  try {
+    return { value: await promise, failed: false };
+  } catch {
+    return { value: fallback, failed: true };
+  }
 }
 
 /**
  * Lists hydrate: GET /funds identity (NAV) + GET /distributions unpaid Upcoming.
+ * Also merges the Search Upcoming snapshot so a `ticker=` miss / Render 502
+ * does not paint FBGRX as not-found when Search already has the prelim.
  * Unknown tickers stay in order as not-found. Paid-only funds keep NAV and
  * never invent Upcoming from history.
  */
@@ -62,6 +70,10 @@ export async function loadListRowsFromDataApi(input: {
   tickers: string[];
   catalog?: FundEstimateView[];
   today?: string;
+  /** Test / injected ticker GETs. Production leaves this unset. */
+  distributionRows?: DataDistribution[];
+  /** Test / injected Search Upcoming snapshot. Production leaves this unset. */
+  upcomingRows?: DataDistribution[];
 }): Promise<ListRow[]> {
   const tickers = input.tickers
     .map((ticker) => normalizeTickerSymbol(ticker))
@@ -72,12 +84,29 @@ export async function loadListRowsFromDataApi(input: {
     (input.catalog ?? []).map((fund) => [fund.ticker.trim().toUpperCase(), fund]),
   );
 
-  const [identities, distRows] = await Promise.all([
+  const [identitiesResult, distResult, upcomingRowsResult] = await Promise.all([
     isRemoteDataApi()
-      ? mapPool(tickers, TICKER_FETCH_CONCURRENCY, loadFundIdentity)
-      : Promise.resolve(tickers.map((ticker) => catalogIndex.get(ticker) ?? null)),
-    loadDistributionsForFundPage({ tickers, hydrateAll: true }),
+      ? settled(mapPool(tickers, TICKER_FETCH_CONCURRENCY, loadFundIdentity), [])
+      : Promise.resolve({
+          value: tickers.map((ticker) => catalogIndex.get(ticker) ?? null),
+          failed: false,
+        }),
+    input.distributionRows
+      ? Promise.resolve({ value: input.distributionRows, failed: false })
+      : settled(
+          loadDistributionsForFundPage({ tickers, hydrateAll: true }),
+          [] as DataDistribution[],
+        ),
+    input.upcomingRows
+      ? Promise.resolve({ value: input.upcomingRows, failed: false })
+      : settled(loadUpcomingDistributionRows(input.today), [] as DataDistribution[]),
   ]);
+
+  const identities = identitiesResult.value;
+  const distRows = [
+    ...distResult.value,
+    ...distributionRowsForTickers(upcomingRowsResult.value, tickers),
+  ];
 
   const hydrated = distRows.length
     ? withPeerContext(aggregateDistributions(distRows, input.today))
@@ -96,8 +125,17 @@ export async function loadListRowsFromDataApi(input: {
         ? withPeerContext([fromDists])[0]
         : null;
     const snapshotRows = rowsForTicker(distRows, ticker);
-    const found = Boolean(identity || fromDists || snapshotRows.length);
-    if (!found) return emptyListRow(ticker, "not_found");
+    const found = Boolean(identity || fromDists || snapshotRows.length || fund);
+    if (!found) {
+      const upstreamFailed =
+        identitiesResult.failed ||
+        distResult.failed ||
+        upcomingRowsResult.failed;
+      if (upstreamFailed) {
+        throw new Error(`lists upstream miss for ${ticker}`);
+      }
+      return emptyListRow(ticker, "not_found");
+    }
     return listRowFromFund({
       ticker,
       fund,
