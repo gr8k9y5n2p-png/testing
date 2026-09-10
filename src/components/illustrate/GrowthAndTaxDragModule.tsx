@@ -17,6 +17,7 @@ import { formatUsd } from "@/lib/format";
 import type { ComparePeriodIn } from "@/lib/illustrate/compare-types";
 import { buildGrowthTaxByTypeModel } from "@/lib/illustrate/growth-tax-by-type";
 import {
+  annualizedFromRows,
   calendarYearsFromRows,
   growthLinesFromRows,
   loadGrowthAndTaxDrag,
@@ -79,6 +80,7 @@ export function GrowthAndTaxDragModule({
   const [missingTickers, setMissingTickers] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [settledKey, setSettledKey] = useState<string | null>(null);
+  const [perShare, setPerShare] = useState(false);
 
   const requestKey = JSON.stringify({
     funds: selected.map((fund) => fundKey(fund)),
@@ -186,8 +188,14 @@ export function GrowthAndTaxDragModule({
         years,
         rates,
         combineStateWithFederal,
+        perShare ? "per_share" : "tax",
       ),
-    [combineStateWithFederal, rates, rows, years],
+    [combineStateWithFederal, perShare, rates, rows, years],
+  );
+
+  const annualized = useMemo(
+    () => annualizedFromRows(rows, years, principal).filter((row) => !row.id.startsWith("bench-")),
+    [principal, rows, years],
   );
 
   function commitPrincipal() {
@@ -282,6 +290,15 @@ export function GrowthAndTaxDragModule({
           ) : (
             <p className="text-sm text-muted">{formatUsd(principal, 0)}</p>
           )}
+          <label className="flex h-9 items-center gap-2 text-[12px] text-ink">
+            <input
+              type="checkbox"
+              checked={perShare}
+              onChange={(event) => setPerShare(event.target.checked)}
+              className="size-3.5 rounded border-line accent-accent"
+            />
+            Per Share
+          </label>
           {allowAddFund && selected.length < MAX_GROWTH_FUNDS ? (
             adding ? (
               <form
@@ -392,6 +409,7 @@ export function GrowthAndTaxDragModule({
                   }
                   emptyHint={selected.length === 0 ? "" : PERFORMANCE_UNAVAILABLE_HINT}
                   onRemoveSeries={removeFund}
+                  annualized={annualized}
                 />
                 {missingTickers.length > 0 && growthSeries.some((row) => !row.dashed) ? (
                   <p className="mt-2 text-[11px] text-faint">

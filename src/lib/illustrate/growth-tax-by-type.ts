@@ -65,10 +65,13 @@ export type GrowthTaxFundSeries = {
   years: GrowthTaxFundYear[];
 };
 
+export type GrowthTaxValueMode = "tax" | "per_share";
+
 export type GrowthTaxByTypeModel = {
   years: number[];
   tickers: string[];
   series: GrowthTaxFundSeries[];
+  unit: GrowthTaxValueMode;
 };
 
 const TYPE_SET = new Set<string>(GROWTH_TAX_ESTIMATE_TYPES);
@@ -165,6 +168,7 @@ function asComponent(raw: unknown): IllustrationComponent | null {
     fund_name: String(row.fund_name ?? ""),
     estimate_type: estimateType,
     amount_unit: String(row.amount_unit ?? ""),
+    amount: numericOrNull(row.amount),
     publication_stage: row.publication_stage == null ? null : String(row.publication_stage),
     as_of: row.as_of == null ? null : String(row.as_of),
     record_date: row.record_date == null ? null : String(row.record_date),
@@ -237,6 +241,33 @@ export function taxDollarsFromComponent(
   const federal = rates[rateKey] ?? rates.ordinary_income;
   const state = combineState ? rates.state : 0;
   return dist * (federal + state);
+}
+
+function normalizeAmountUnit(raw: string): string {
+  return raw.trim().toLowerCase().replace(/[\s-]+/g, "_");
+}
+
+/** True for Data `amount_unit=per_share`. Percent rows are skipped. */
+export function isPerShareAmountUnit(raw: string | null | undefined): boolean {
+  const unit = normalizeAmountUnit(raw ?? "");
+  return unit === "per_share" || unit === "usd_per_share" || unit === "dollars_per_share";
+}
+
+export function isPercentAmountUnit(raw: string | null | undefined): boolean {
+  const unit = normalizeAmountUnit(raw ?? "");
+  return unit.includes("percent") || unit === "pct_of_nav" || unit === "pct";
+}
+
+/**
+ * Published $/share when `amount_unit=per_share`. Soft — missing amount
+ * or a percent row stays null (never invent from Dist $ / NAV).
+ */
+export function perShareAmountFromComponent(
+  component: Pick<IllustrationComponent, "amount" | "amount_unit">,
+): number | null {
+  if (isPercentAmountUnit(component.amount_unit)) return null;
+  if (!isPerShareAmountUnit(component.amount_unit)) return null;
+  return numericOrNull(component.amount);
 }
 
 function addAmount(amounts: GrowthTaxTypeAmounts, type: GrowthTaxEstimateType, value: number) {
@@ -318,6 +349,7 @@ export function growthTaxYearFromIllustration(
   illustration: CompareIllustration | null | undefined,
   rates?: TaxRates,
   combineState = true,
+  valueMode: GrowthTaxValueMode = "tax",
 ): GrowthTaxFundYear {
   const empty: GrowthTaxFundYear = {
     ticker,
@@ -337,7 +369,10 @@ export function growthTaxYearFromIllustration(
   const amounts = foldEstimateTypeAmounts(
     used.map((component) => ({
       estimate_type: component.estimate_type,
-      tax: taxDollarsFromComponent(component, rates, combineState),
+      tax:
+        valueMode === "per_share"
+          ? perShareAmountFromComponent(component)
+          : taxDollarsFromComponent(component, rates, combineState),
     })),
   );
   return {
@@ -356,12 +391,20 @@ export function growthTaxSeriesFromCompare(
   side: "left" | "right" | "auto" = "auto",
   rates?: TaxRates,
   combineState = true,
+  valueMode: GrowthTaxValueMode = "tax",
 ): GrowthTaxFundSeries {
   const byYear = response ? illustrationsByCalendarYear(response, side) : new Map();
   return {
     ticker,
     years: years.map((year) =>
-      growthTaxYearFromIllustration(ticker, year, byYear.get(year), rates, combineState),
+      growthTaxYearFromIllustration(
+        ticker,
+        year,
+        byYear.get(year),
+        rates,
+        combineState,
+        valueMode,
+      ),
     ),
   };
 }
@@ -376,11 +419,13 @@ export function buildGrowthTaxByTypeModel(
   years: number[],
   rates?: TaxRates,
   combineState = true,
+  valueMode: GrowthTaxValueMode = "tax",
 ): GrowthTaxByTypeModel {
   const tickers = rows.map((row) => row.ticker.trim().toUpperCase()).filter(Boolean);
   return {
     years,
     tickers,
+    unit: valueMode,
     series: rows.map((row) =>
       growthTaxSeriesFromCompare(
         row.ticker.trim().toUpperCase(),
@@ -389,6 +434,7 @@ export function buildGrowthTaxByTypeModel(
         row.taxSide ?? "auto",
         rates,
         combineState,
+        valueMode,
       ),
     ),
   };
@@ -409,11 +455,20 @@ export function formatGrowthTaxCell(
   value: number | null,
   status: GrowthTaxYearStatus,
   kind: "type" | "total" = "type",
+  unit: GrowthTaxValueMode = "tax",
 ): string {
   if (value == null) {
     return status === "empty" && kind === "total"
       ? GROWTH_TAX_UNDISCLOSED_LABEL
       : GROWTH_TAX_EMPTY_LABEL;
+  }
+  if (unit === "per_share") {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 3,
+    }).format(value);
   }
   return new Intl.NumberFormat("en-US", {
     style: "currency",

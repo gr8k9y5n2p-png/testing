@@ -66,6 +66,69 @@ export function missingPerformanceTickers(rows: GrowthSeriesRow[]): string[] {
     .map((row) => row.input.ticker.trim().toUpperCase());
 }
 
+function yearFromAsOf(raw: string | null | undefined): number | null {
+  if (raw == null || raw === "") return null;
+  const parsed = Number(String(raw).slice(0, 4));
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+/** Prefer compare `common_inception.from_year` / `from_as_of`. Soft if absent. */
+export function compareInceptionFromYear(
+  tax: CompareResponse | null | undefined,
+): number | null {
+  const inc = tax?.summary?.common_inception;
+  if (!inc) return null;
+  if (inc.from_year != null && inc.from_year > 0) return inc.from_year;
+  return yearFromAsOf(inc.from_as_of);
+}
+
+export function compareInceptionToYear(
+  tax: CompareResponse | null | undefined,
+): number | null {
+  const inc = tax?.summary?.common_inception;
+  if (!inc) return null;
+  if (inc.to_year != null && inc.to_year > 0) return inc.to_year;
+  return yearFromAsOf(inc.to_as_of);
+}
+
+/** First usable year for one fund. Soft — no pack and no tax → null. */
+export function fundInceptionYear(
+  row: GrowthSeriesRow,
+  taxMetric: TaxDragMetric,
+): number | null {
+  const fromApi = compareInceptionFromYear(row.tax);
+  if (fromApi != null) return fromApi;
+  const years: number[] = [];
+  if (performancePackIsUsable(row.performance) && row.performance) {
+    for (const point of yearEndGrowth(row.performance.fund.points)) {
+      years.push(point.year);
+    }
+  }
+  if (years.length === 0 && row.tax) {
+    for (const point of toTaxDragPeriods(row.tax, taxMetric, row.taxSide)) {
+      if (point.year > 0) years.push(point.year);
+    }
+  }
+  if (years.length === 0) return null;
+  return Math.min(...years);
+}
+
+/**
+ * Latest first-year across filled tickers. A later-inception fund clips
+ * the shared Growth & Tax window so early empty columns are omitted.
+ */
+export function commonInceptionYear(
+  rows: GrowthSeriesRow[] | null,
+  taxMetric: TaxDragMetric,
+): number | null {
+  if (!rows || rows.length === 0) return null;
+  const firsts = rows
+    .map((row) => fundInceptionYear(row, taxMetric))
+    .filter((year): year is number => year != null);
+  if (firsts.length === 0) return null;
+  return Math.max(...firsts);
+}
+
 export function calendarYearsFromRows(
   rows: GrowthSeriesRow[] | null,
   taxMetric: TaxDragMetric,
@@ -84,7 +147,10 @@ export function calendarYearsFromRows(
       }
     }
   }
-  return sketchYears([...set].sort((a, b) => a - b));
+  const sketched = sketchYears([...set].sort((a, b) => a - b));
+  const inception = commonInceptionYear(rows, taxMetric);
+  if (inception == null) return sketched;
+  return sketched.filter((year) => year >= inception);
 }
 
 export function windowedGrowth(

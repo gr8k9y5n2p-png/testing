@@ -168,7 +168,7 @@ export function GrowthAndTaxTable({
                     }`}
                   >
                     <span className="inline-flex items-center justify-center gap-0.5">
-                      {formatGrowthTaxCell(value, status)}
+                      {formatGrowthTaxCell(value, status, "type", model.unit)}
                       {status === "announced" && value != null ? <HatchGlyph /> : null}
                     </span>
                   </div>
@@ -224,7 +224,7 @@ export function GrowthAndTaxTable({
                   }`}
                 >
                   <span className="inline-flex items-center justify-center gap-0.5">
-                    {formatGrowthTaxCell(cell?.total ?? null, status, "total")}
+                    {formatGrowthTaxCell(cell?.total ?? null, status, "total", model.unit)}
                     {status === "announced" && cell?.total != null ? <HatchGlyph /> : null}
                   </span>
                 </div>

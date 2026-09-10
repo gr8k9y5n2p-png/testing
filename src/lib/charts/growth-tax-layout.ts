@@ -9,6 +9,8 @@ import {
 
 /** 12px stub ("Ordinary" + swatch) is wider than the $10k axis gutter. */
 export const GROWTH_TAX_STUB_MIN_PX = 90;
+/** Room for under-bar tickers + calendar year. */
+export const GROWTH_TAX_YEAR_AXIS_PX = 46;
 export const AXIS_LABEL_GAP_PX = 8;
 /** 9px ui-monospace advance — used only to size the left gutter. */
 export const AXIS_CHAR_PX = 5.6;
@@ -46,7 +48,11 @@ export function growthTaxChartPad(
     GROWTH_TAX_STUB_MIN_PX,
     widestAxis + AXIS_LABEL_GAP_PX + 4,
   );
-  return { ...base, left };
+  return {
+    ...base,
+    left,
+    bottom: Math.max(base.bottom, GROWTH_TAX_YEAR_AXIS_PX),
+  };
 }
 
 /** True when an end-anchored label sits entirely left of x = padLeft. */

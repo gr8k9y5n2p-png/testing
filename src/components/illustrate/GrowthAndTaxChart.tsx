@@ -22,6 +22,7 @@ import {
   GROWTH_TAX_ESTIMATE_TYPES,
   GROWTH_TAX_TYPE_COLORS,
   GROWTH_TAX_TYPE_LABELS,
+  formatGrowthTaxCell,
   lightenHex,
   type GrowthTaxByTypeModel,
 } from "@/lib/illustrate/growth-tax-by-type";
@@ -38,6 +39,7 @@ export type GrowthAndTaxChartProps = {
   emptyLabel?: string;
   emptyHint?: string;
   onRemoveSeries?: (id: string) => void;
+  annualized?: { id: string; value: number | null }[];
 };
 
 const GROWTH_H = 220;
@@ -56,6 +58,7 @@ export function GrowthAndTaxChart({
   emptyLabel = "No fund series",
   emptyHint = "",
   onRemoveSeries,
+  annualized = [],
 }: GrowthAndTaxChartProps) {
   const hatchId = useId().replace(/:/g, "");
 
@@ -147,7 +150,9 @@ export function GrowthAndTaxChart({
           Growth ({formatUsd(startDollars, 0)})
         </h3>
         <ul className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-ink">
-          {fundSeries.map((row) => (
+          {fundSeries.map((row) => {
+            const ann = annualized.find((item) => item.id === row.id);
+            return (
             <li key={row.id} className="flex items-center gap-1.5">
               <span
                 className="inline-block h-px w-4"
@@ -164,8 +169,17 @@ export function GrowthAndTaxChart({
                   ×
                 </button>
               ) : null}
+              {ann?.value != null ? (
+                <span
+                  className="inline-flex items-center rounded-full bg-paper px-2 py-0.5 text-[10px] font-medium"
+                  style={{ color: row.color }}
+                >
+                  {(ann.value * 100).toFixed(1)}% ann.
+                </span>
+              ) : null}
             </li>
-          ))}
+            );
+          })}
         </ul>
       </header>
 
@@ -276,7 +290,9 @@ export function GrowthAndTaxChart({
                     fontSize={9}
                     fontFamily="ui-monospace, monospace"
                   >
-                    {formatCompactUsd(-tick)}
+                    {taxModel.unit === "per_share"
+                      ? formatGrowthTaxCell(-tick, "paid", "type", "per_share")
+                      : formatCompactUsd(-tick)}
                   </text>
                 </g>
               );
@@ -405,6 +421,28 @@ export function GrowthAndTaxChart({
                     );
                   })}
                 </g>
+              );
+            }),
+          )}
+
+          {years.map((year, yearIndex) =>
+            taxModel.series.map((row, seriesIndex) => {
+              const x = axis.barX(yearIndex, seriesIndex) + axis.barW / 2;
+              const fontSize = axis.count >= 5 ? 6.5 : axis.count >= 3 ? 8 : 9;
+              return (
+                <text
+                  key={`bar-ticker-${year}-${row.ticker}`}
+                  data-bar-ticker={row.ticker}
+                  data-bar-year={year}
+                  x={x}
+                  y={height - 22}
+                  textAnchor="middle"
+                  className="fill-ink"
+                  fontSize={fontSize}
+                  fontFamily="ui-monospace, monospace"
+                >
+                  {row.ticker}
+                </text>
               );
             }),
           )}
