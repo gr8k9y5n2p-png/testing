@@ -112,6 +112,17 @@ def test_american_funds_paid_history_2021_2025() -> None:
         and r.estimate_type == EstimateType.long_term_capital_gains
     ]
     assert eupac_22 == []
+    ancfx_22 = next(
+        r
+        for r in records
+        if r.ticker == "ANCFX"
+        and r.estimate_type == EstimateType.long_term_capital_gains
+        and str(r.as_of) == "2022-12-16"
+    )
+    assert ancfx_22.amount == Decimal("0.8350")
+    assert not any(
+        r.ticker == "SMCWX" and r.as_of and r.as_of.year == 2022 for r in records
+    )
 
 
 def test_american_funds_tax_year_lookback_2021_2025() -> None:
