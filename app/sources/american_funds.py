@@ -57,7 +57,14 @@ class AmericanFundsSource(FundSource):
         "CGHM (inception 6/25/24) has no 2021–2023 history. Official 2024 and 2025 "
         "YE tables list CGHM with em-dash ST/LT (no capital gain — not stored as $0). "
         "The only published CG amounts today are 2026 midyear (LT $0.0030 / ST $0.0169). "
-        "Monthly income lives on the JS historical-distributions tool (SPA — skipped)."
+        "Monthly income lives on the JS historical-distributions tool (SPA — skipped). "
+        "Wave 14 adds ticker-keyed C / F-1 / F-2 / F-3 / R-1–R-6 / 529 classes from "
+        "each official product-page historicalDistributions JSON "
+        "(https://www.capitalgroup.com/individual/investments/fund/{TICKER}). "
+        "Class A stays on the name-keyed YE / alias map so upsert keys are not forked. "
+        "AMCFX 2025 LT $2.1509 / 2024 income $0.2434 / LT $2.5220; "
+        "GFAFX 2025 income $0.1920 / LT $8.3640; AMBFX 2025 income $0.1310 / LT $2.1250. "
+        "Published $0.0000 omitted. Unpublished December years unmatched."
     )
 
     def __init__(self, fixtures_dir: Path | None = None) -> None:
@@ -74,6 +81,7 @@ class AmericanFundsSource(FundSource):
             "https://www.capitalgroup.com/individual/investments/mutual-funds/details/amcap-a",
             "https://www.capitalgroup.com/individual/investments/mutual-funds/details/gfa-a",
             "https://www.capitalgroup.com/individual/investments/mutual-funds/details/ambal-a",
+            "https://www.capitalgroup.com/individual/investments/fund/AMCFX",
         ]
 
     def estimate_feed_urls(self) -> list[str]:
@@ -187,6 +195,12 @@ class AmericanFundsSource(FundSource):
                 "name": "year_end_2025_tax_year",
                 "url": YEAR_END_2025_URL,
                 "fixture": "year_end_2025_tax_year.html",
+                "live": False,
+            },
+            {
+                "name": "share_class_product_page_distributions",
+                "url": "https://www.capitalgroup.com/individual/investments/fund/AMCFX",
+                "fixture": "share_class_product_page_distributions.html",
                 "live": False,
             },
         ]

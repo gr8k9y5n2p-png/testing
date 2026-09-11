@@ -50,10 +50,13 @@ def test_fixture_fetch_and_search_filters(client: TestClient) -> None:
     payload = search.json()
     assert payload["total"] >= 1
     names = {item["fund_name"] for item in payload["items"]}
+    tickers = {item["ticker"] for item in payload["items"]}
     assert "AMCAP Fund" in names
+    assert "AMCPX" in tickers
     assert all(item["raw_payload"] is None for item in payload["items"])
-    assert all(item["ticker"] == "AMCPX" for item in payload["items"])
-    assert all(item["fund_identifier"] == "amcap-fund" for item in payload["items"])
+    class_a = [item for item in payload["items"] if item["ticker"] == "AMCPX"]
+    assert class_a
+    assert all(item["fund_identifier"] == "amcap-fund" for item in class_a)
 
     ticker = client.get("/distributions", params={"ticker": "CGHM"})
     assert ticker.json()["total"] >= 1

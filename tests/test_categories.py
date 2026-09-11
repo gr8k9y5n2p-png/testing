@@ -35,6 +35,9 @@ def test_curated_flagships() -> None:
     assert resolve_category(ticker="CBLAX") == "Moderate Allocation"
     assert resolve_category(ticker="LEGAX") == "Large Growth"
     assert resolve_category(ticker="LCCAX") == "Large Blend"
+    assert resolve_category(ticker="AMCFX", fund_name="AMCAP Fund F-2 shares") == "Large Growth"
+    assert resolve_category(ticker="GFAFX") == "Large Growth"
+    assert resolve_category(ticker="AMBFX") == "Moderate Allocation"
 
 
 def test_name_rules_high_confidence() -> None:
