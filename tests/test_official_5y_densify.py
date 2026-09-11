@@ -9,6 +9,7 @@ from app.models import AmountUnit, EstimateType, PublicationStage
 from app.services.lookback import LOOKBACK_YEARS, lookback_digest_from_rows
 from app.sources.american_funds import AmericanFundsSource
 from app.sources.aum import filter_large_aum
+from app.sources.families import BlackRockSource, VanguardSource
 from app.sources.fifth_tier import VictorySource
 from app.sources.fourth_tier import HartfordSource
 from app.sources.parser import NormalizedRecord
@@ -158,11 +159,84 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
             )
     digest = lookback_digest_from_rows(rows)
     # Official paid/final only. Missing years stay unmatched — never invent $0.
-    # 2,651 after #147 official 5y densify; Wave 17 leftover Vanguard ICI
-    # 2021–2025 adds leftover tickers that appear in every year (+62).
-    # Avantis leftover estimates do not raise this pin.
-    assert digest.funds_with_5y == 2713
-    assert digest.funds_with_5y_mf == 2211
-    assert digest.funds_with_5y_etf == 502
+    # 2,713 after Wave 17 leftover Vanguard ICI (+62 vs #147). Wave 2 official
+    # iShares stamped PDFs + VTIPX 2025 ICI raise in-book 5y without inventing
+    # unpublished gaps. Avantis leftover estimates do not raise this pin.
+    assert digest.funds_with_5y == 2741
+    assert digest.funds_with_5y_mf == 2212
+    assert digest.funds_with_5y_etf == 529
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
+
+
+def test_ishares_official_gapfill_adds_missing_years() -> None:
+    records = BlackRockSource().fetch(mode="fixture").records
+    soxx_2025 = next(
+        row
+        for row in records
+        if row.ticker == "SOXX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2025
+        and row.amount
+    )
+    assert soxx_2025.amount == Decimal("0.436272")
+    assert str(soxx_2025.ex_date) == "2025-12-16"
+    assert soxx_2025.publication_stage == PublicationStage.final
+
+    mbb_2021 = next(
+        row
+        for row in records
+        if row.ticker == "MBB"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount
+    )
+    assert mbb_2021.amount == Decimal("0.018858")
+    assert str(mbb_2021.ex_date) == "2021-10-01"
+
+    eirl_2022 = next(
+        row
+        for row in records
+        if row.ticker == "EIRL"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2022
+        and row.amount
+    )
+    assert eirl_2022.amount == Decimal("0.518078")
+
+    soxx_years = {
+        row.ex_date.year
+        for row in records
+        if row.ticker == "SOXX"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert set(LOOKBACK_YEARS) <= soxx_years
+
+
+def test_vanguard_vtipx_2025_official_ici() -> None:
+    records = VanguardSource().fetch(mode="fixture").records
+    vtipx_2025 = next(
+        row
+        for row in records
+        if row.ticker == "VTIPX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2025
+        and row.amount
+    )
+    assert vtipx_2025.amount == Decimal("0.350500")
+    assert str(vtipx_2025.ex_date) == "2025-12-17"
+    vtipx_years = {
+        row.ex_date.year
+        for row in records
+        if row.ticker == "VTIPX"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert set(LOOKBACK_YEARS) <= vtipx_years
