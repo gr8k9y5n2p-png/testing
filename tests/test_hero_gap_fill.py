@@ -188,5 +188,5 @@ def test_fixture_book_lookback_stays_official_only() -> None:
     # 2,440 on the Wave 16 leftover tip (#148); official 5y densify (AF
     # midyear/income + Hartford Class A hist) raises the merged book without
     # inventing unpublished gaps.
-    assert digest.funds_with_5y == 2562
+    assert digest.funds_with_5y == 2651
     assert digest.book_funds >= 7200
