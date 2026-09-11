@@ -24,11 +24,13 @@ describe("ResultsTable EstimateRow props", () => {
     const estimateCall = source.slice(start, source.indexOf("/>", start) + 2);
     assert.match(estimateCall, /<EstimateRow/);
     assert.match(estimateCall, /showPayable=\{showPayable\}/);
+    assert.match(estimateCall, /showAnnounced=\{showAnnounced\}/);
     const props = source.slice(
       source.indexOf("function EstimateRow"),
       source.indexOf("function onRowClick"),
     );
     assert.match(props, /showPayable: boolean/);
+    assert.match(props, /showAnnounced: boolean/);
   });
 });
 
@@ -78,6 +80,37 @@ describe("ResultsTable Search Paid history", () => {
     assert.match(fundSection, /All categories/);
     assert.match(fundSection, /Paid History family/);
     assert.match(fundSection, /Paid History category/);
+  });
+
+  it("omits the Announced column from Paid History and keeps it on Upcoming", () => {
+    const layout = source.slice(
+      source.indexOf("return ("),
+      source.indexOf("function FundSection"),
+    );
+    const upcoming = layout.slice(
+      layout.indexOf("title={SEARCH_UPCOMING_HEADING}"),
+      layout.indexOf("title={SEARCH_PAID_HISTORY_HEADING}"),
+    );
+    const paid = layout.slice(layout.indexOf("title={SEARCH_PAID_HISTORY_HEADING}"));
+    assert.match(upcoming, /showAnnounced/);
+    assert.doesNotMatch(upcoming, /showAnnounced=\{false\}/);
+    assert.match(paid, /showAnnounced=\{false\}/);
+
+    const fundSection = source.slice(
+      source.indexOf("function FundSection"),
+      source.indexOf("function EstimateRow"),
+    );
+    assert.match(fundSection, /showAnnounced \? \(/);
+    assert.match(
+      fundSection,
+      /label="Announced"[\s\S]*?column="asOfDate"/,
+    );
+    assert.match(fundSection, /label="Record"[\s\S]*?column="recordDate"/);
+    assert.match(fundSection, /label="Ex-div"[\s\S]*?column="exDate"/);
+    assert.match(fundSection, /label="Payable"[\s\S]*?column="payableDate"/);
+    assert.doesNotMatch(fundSection, /As-of|Notice/);
+    const mobileAnnounced = fundSection.indexOf('label="Announced"');
+    assert.ok(mobileAnnounced > fundSection.indexOf("showAnnounced ? ("));
   });
 });
 

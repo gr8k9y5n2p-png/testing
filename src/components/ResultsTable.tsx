@@ -182,6 +182,7 @@ export function ResultsTable({
         emptyHeadline={UPCOMING_UNAVAILABLE_HEADLINE}
         empty={UPCOMING_UNAVAILABLE_DETAIL}
         showPayable
+        showAnnounced
         page={page}
         highlightedTicker={highlightedTicker}
       />
@@ -198,6 +199,7 @@ export function ResultsTable({
         coverage={coverage}
         empty={PAID_HISTORY_EMPTY}
         showPayable
+        showAnnounced={false}
         showHeading
         highlightedTicker={highlightedTicker}
         year={year}
@@ -228,6 +230,7 @@ function FundSection({
   emptyHeadline,
   empty,
   showPayable,
+  showAnnounced = true,
   page,
   showHeading = false,
   highlightedTicker,
@@ -253,6 +256,8 @@ function FundSection({
   emptyHeadline?: string;
   empty: string;
   showPayable: boolean;
+  /** Upcoming only. Paid History omits as_of — it is often notice/payable, not announce. */
+  showAnnounced?: boolean;
   page?: SamplePage;
   showHeading?: boolean;
   highlightedTicker?: string;
@@ -387,7 +392,12 @@ function FundSection({
             <VirtualizedTable
               funds={funds}
               expandedId={expandedId}
-              columnCount={(onIllustrate ? 8 : 7) + (showPayable ? 1 : 0)}
+              columnCount={
+                6 +
+                (showAnnounced ? 1 : 0) +
+                (showPayable ? 1 : 0) +
+                (onIllustrate ? 1 : 0)
+              }
               header={
                 <tr>
                   <SortHeader
@@ -420,13 +430,15 @@ function FundSection({
                     onSort={onSort}
                     align="right"
                   />
-                  <SortHeader
-                    label="Announced"
-                    column="asOfDate"
-                    active={sortKey}
-                    direction={sortDirection}
-                    onSort={onSort}
-                  />
+                  {showAnnounced ? (
+                    <SortHeader
+                      label="Announced"
+                      column="asOfDate"
+                      active={sortKey}
+                      direction={sortDirection}
+                      onSort={onSort}
+                    />
+                  ) : null}
                   <SortHeader
                     label="Record"
                     column="recordDate"
@@ -466,6 +478,7 @@ function FundSection({
                   }
                   coverageGap={!coverage.isLive(fund.family)}
                   showPayable={showPayable}
+                  showAnnounced={showAnnounced}
                   onToggle={() =>
                     setExpandedId((current) =>
                       toggleExpandedId(current, fund.id),
@@ -513,7 +526,9 @@ function FundSection({
                   <DeltaBadge fund={fund} compact />
                 </div>
                 <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
-                  <Field label="Announced" value={formatOptionalDate(fund.asOfDate)} />
+                  {showAnnounced ? (
+                    <Field label="Announced" value={formatOptionalDate(fund.asOfDate)} />
+                  ) : null}
                   <Field label="Record" value={formatOptionalDate(fund.recordDate)} />
                   <Field label="Ex-div" value={formatOptionalDate(fund.exDate)} />
                   {showPayable ? (
@@ -573,6 +588,7 @@ function EstimateRow({
   highlighted,
   coverageGap,
   showPayable,
+  showAnnounced,
   onToggle,
   onIllustrate,
 }: {
@@ -581,6 +597,7 @@ function EstimateRow({
   highlighted?: boolean;
   coverageGap: boolean;
   showPayable: boolean;
+  showAnnounced: boolean;
   onToggle: () => void;
   onIllustrate?: (fund: FundEstimateView) => void;
 }) {
@@ -632,9 +649,11 @@ function EstimateRow({
       <td className="px-3 py-3 text-right font-mono text-ink">
         {estimatePct(fund)}
       </td>
-      <td className="whitespace-nowrap px-3 py-3 font-mono text-sm text-ink">
-        {formatOptionalDate(fund.asOfDate)}
-      </td>
+      {showAnnounced ? (
+        <td className="whitespace-nowrap px-3 py-3 font-mono text-sm text-ink">
+          {formatOptionalDate(fund.asOfDate)}
+        </td>
+      ) : null}
       <td className="whitespace-nowrap px-3 py-3 font-mono text-sm text-ink">
         {formatOptionalDate(fund.recordDate)}
       </td>
