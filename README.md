@@ -686,6 +686,8 @@ curl -s 'http://127.0.0.1:8000/performance?fund_identifier=the-growth-fund-of-am
 
 `disclaimers[]` always states that performance is illustrative only, is **not tax advice**, and that default series are ETF total-return proxies rather than official index levels.
 
+**Overnight gap fill (existing book, not net-new families):** Weekly NAV catalog backfill for tickers already in the fixture book that Wave 8 mega ETFs and later densify waves left without `nav_per_share` (Yahoo last regular close; never invented). Warm-disk boot (`SEED_FORCE_FULL` stays **off**) densifies those fixture quotes onto listed tickers that still have a null FundNav. `lookback_5y` calendar year is **ex_date, else payable_date, else as_of** so official multi-year tables that stamped one page-level as_of (Schwab ETF product pages: SCHD 2021–2025) count each paid year. Category catalog / conservative name rules fill known uncategorized identities (single-country MSCI → Miscellaneous Region; commodity strategy → Commodities Broad Basket). Skips stay unmatched. No schema / upsert-key change. No Manual Deploy from this work.
+
 ## Full-book fixture expansion (overnight wave)
 
 Goal: for **existing US-domiciled adapters**, ingest every **mutual fund and ETF** on the published distribution / capital-gains book — not 1–2 sample tickers. **Skip SMAs / separate accounts / institutional SMA sleeves** (drop those rows when a table mixes products). **Amundi / Pioneer is included** (Victory-hosted Pioneer tax center, Eric 2026-09-08). Do not invent amounts. Synthetic `ZZ*` parser samples stay samples. Large families should clear **>50 MF/ETF funds** when the public book lists that many.

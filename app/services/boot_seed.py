@@ -62,6 +62,27 @@ def nav_row_count(session: Session) -> int:
     return int(session.scalar(select(func.count()).select_from(FundNav)) or 0)
 
 
+def book_has_fixture_nav_gaps(session: Session) -> bool:
+    """True when a listed book ticker has a fixture NAV but no stored FundNav.
+
+    Warm-disk boot skips family re-parse (SEED_FORCE_FULL stays off). New densify
+    tickers still get weekly NAV from fixtures/nav/latest.json without a wipe.
+    """
+    from app.services.nav import fixture_quote, get_nav_map, list_nav_targets, load_fixture_catalog
+
+    targets = list_nav_targets(session)
+    if not targets:
+        return False
+    stored = get_nav_map(session, [row.ticker for row in targets])
+    catalog = load_fixture_catalog()
+    for target in targets:
+        if target.ticker in stored:
+            continue
+        if fixture_quote(target.ticker, catalog=catalog):
+            return True
+    return False
+
+
 def _state_map(session: Session) -> dict[str, SeedFamilyState]:
     rows = session.scalars(select(SeedFamilyState)).all()
     return {row.family_slug: row for row in rows}
@@ -208,24 +229,28 @@ def run_boot_seed(seed_state: dict[str, Any], seed_lock: Any) -> None:
                 logger.exception("Category-outlier review failed; continuing")
         else:
             with app_db.SessionLocal() as session:
-                if nav_row_count(session) == 0:
-                    try:
-                        from app.services.nav import refresh_navs
+                empty_nav = nav_row_count(session) == 0
+                gap_nav = False if empty_nav else book_has_fixture_nav_gaps(session)
+            if empty_nav or gap_nav:
+                try:
+                    from app.services.nav import refresh_navs
 
+                    with app_db.SessionLocal() as session:
                         nav = refresh_navs(
                             session, mode=mode if mode in {"fixture", "live", "auto"} else "fixture"
                         )
                         session.commit()
-                        logger.info(
-                            "Fixture NAV seed (empty nav table) created=%s updated=%s unknown=%s",
-                            nav.created,
-                            nav.updated,
-                            nav.unknown,
-                        )
-                    except Exception:
-                        logger.exception("Fixture NAV seed failed; continuing with null NAV")
-                else:
-                    logger.info("Boot seed skipped NAV refresh; disk already has NAV rows")
+                    logger.info(
+                        "Fixture NAV seed (%s) created=%s updated=%s unknown=%s",
+                        "empty nav table" if empty_nav else "missing fixture quotes",
+                        nav.created,
+                        nav.updated,
+                        nav.unknown,
+                    )
+                except Exception:
+                    logger.exception("Fixture NAV seed failed; continuing with null NAV")
+            else:
+                logger.info("Boot seed skipped NAV refresh; disk already has NAV rows")
 
         seed_state["created"] = created_total
         seed_state["status"] = "complete"
