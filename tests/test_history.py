@@ -559,7 +559,7 @@ def test_search_multi_year_top_families(client: TestClient) -> None:
     )
     ftf = client.get("/distributions", params={"fund_identifier": "FTF", "page_size": 20})
     assert any(
-        item["estimate_type"] == "ordinary_income" and Decimal(item["amount"]) == Decimal("0.0418")
+        item["estimate_type"] == "ordinary_income" and Decimal(item["amount"]) == Decimal("0.527")
         for item in ftf.json()["items"]
     )
     swtsx_2021 = client.get(
@@ -589,7 +589,7 @@ def test_search_multi_year_top_families(client: TestClient) -> None:
 
     lbsax = client.get("/distributions", params={"fund_identifier": "LBSAX", "page_size": 20})
     lbsax_years = {item["as_of"][:4] for item in lbsax.json()["items"] if item.get("as_of")}
-    assert {"2022", "2024"} <= lbsax_years
+    assert {"2022", "2024", "2025"} <= lbsax_years
     assert any(
         item["estimate_type"] == "long_term_capital_gains"
         and Decimal(item["amount"]) == Decimal("1.385810")

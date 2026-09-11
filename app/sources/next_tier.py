@@ -499,22 +499,29 @@ class ColumbiaThreadneedleSource(HtmlTableSource):
         "Public 2025 mid-year estimate PDF "
         "https://www.columbiathreadneedleus.com/binaries/content/assets/cti/public/2025-mid-year-cap-gain-estimates-all-funds.pdf "
         "(e.g. IEVAX 0.86–1.25% of 5/31 NAV; ELGAX 18.62–21.95%). "
+        "Wave 11 densifies official December YE PDFs to the full printed share-class book "
+        "(A/Advisor/C/Institutional/Institutional 2/Institutional 3/R/S) — not Class A only. "
+        "2025 YE finals "
+        "https://www.columbiathreadneedleus.com/binaries/content/assets/cti/public/2025-cap-gain-distributions---mutual-funds.pdf "
+        "(LBSAX LT $1.33133; CBLAX ST $0.38493 / LT $2.11142; LEGAX ST $0.23481 / LT $6.79982; "
+        "ELGAX ST $0.02832 / LT $0.87597; LCCAX ST $0.19063 / LT $2.53637; GSFTX / CDDRX same LT as LBSAX). "
         "2024 YE finals "
         "https://www.columbiathreadneedleus.com/binaries/content/assets/cti/public/2024-cap-gains---mutual-funds.pdf "
-        "(December Class A; LBSAX LT $1.38581; LEGAX Large Cap Growth LT $4.05105; "
-        "ELGAX is Select Large Cap Growth Dec LT $0.72066). "
+        "(LBSAX LT $1.38581; LEGAX LT $4.05105; ELGAX Select Large Cap Growth Dec LT $0.72066). "
         "2022 YE finals "
         "https://www.columbiathreadneedleus.com/binaries/content/assets/cti/public/2022_cap_gains_year_end.pdf "
         "(LBSAX LT $0.56114; CBLAX LT $1.55549; published $0 omitted). "
-        "June midyear rows skipped. 2021 book is estimates (ranges) — not YE finals. "
-        "2023/2025 YE sibling URLs 404. No public filled ICI file. "
+        "June midyear rows skipped. Published $0.00 December rows omitted. "
+        "Incomplete wrapped ticker tokens dropped — not invented. "
+        "2021 book is estimates (ranges) — not YE finals. "
+        "2023 YE sibling URL still 403/404. No public filled ICI file. "
         "The 2025 mid-year all-funds PDF is wrap-unsafe (share-class % ranges "
         "interleaved with $0.00 fund headers) — not a column-safe full extract. "
         "Investor hub: https://www.columbiathreadneedleus.com/investor"
     )
     live_limitations = (
-        "Estimates are PDF. Fixture transcribes the public mid-year ranges and "
-        "2022 / 2024 YE Class A December rows."
+        "Estimate and YE books are PDF. Fixture transcribes the public mid-year ranges "
+        "and 2022 / 2024 / 2025 YE December share-class rows."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -529,10 +536,19 @@ class ColumbiaThreadneedleSource(HtmlTableSource):
                 empty_ok=True,
             ),
             PageSpec(
+                name="2025_year_end_distributions",
+                url=f"{cti}/2025-cap-gain-distributions---mutual-funds.pdf",
+                fixture="2025_year_end_distributions.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
+            ),
+            PageSpec(
                 name="2024_year_end_distributions",
                 url=f"{cti}/2024-cap-gains---mutual-funds.pdf",
                 fixture="2024_year_end_distributions.html",
                 live=False,
+                role="history",
                 large_aum_only=False,
             ),
             PageSpec(

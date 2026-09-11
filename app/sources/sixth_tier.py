@@ -368,6 +368,18 @@ class FirstTrustSource(HtmlTableSource):
         "(ex/record 9/25/2025; pay 9/30/2025) is ordinary income "
         "(FVD $0.2519; FTHI $0.1710; FPE $0.0845; CIBR $0.0006). "
         "Printed LT column was blank — omitted, not stored as $0. "
+        "Wave 11 official December family declarations: "
+        "12/11/2025 156-ETF notice "
+        "https://www.ftportfolios.com/Common/ContentFileLoader.aspx?"
+        "ContentGUID=cf8dadde-0a3c-463c-b694-5111dbd18e39 "
+        "(ex/record 12/12/2025; pay 12/31/2025; 152 paired tickers; "
+        "FVD $0.3186; FTHI $0.1770; FPE $0.1220; CIBR $0.2084; "
+        "FTCB income $0.0950 / ST $0.0318 / LT $0.0473) "
+        "and 12/12/2024 159-ETF notice "
+        "https://www.ftportfolios.com/Common/ContentFileLoader.aspx?"
+        "ContentGUID=93a2ae96-a7c6-468c-b68b-8f516d1de5c4 "
+        "(147 paired tickers; FVD $0.2752; FTHI $0.1720). "
+        "Wrapped name rows the HTML table extractor could not pair are omitted, not invented. "
         "Interval / tender-offer First Trust Capital Management funds omitted. "
         "Coming-soon Vest rows omitted."
     )
@@ -396,6 +408,26 @@ class FirstTrustSource(HtmlTableSource):
                     "ContentGUID=865e45a8-c914-4704-bc74-7227c3cabaf5"
                 ),
                 fixture="2025_september_etf_distributions.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="2025_december_etf_distributions",
+                url=(
+                    "https://www.ftportfolios.com/Common/ContentFileLoader.aspx?"
+                    "ContentGUID=cf8dadde-0a3c-463c-b694-5111dbd18e39"
+                ),
+                fixture="2025_december_etf_distributions.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="2024_december_etf_distributions",
+                url=(
+                    "https://www.ftportfolios.com/Common/ContentFileLoader.aspx?"
+                    "ContentGUID=93a2ae96-a7c6-468c-b68b-8f516d1de5c4"
+                ),
+                fixture="2024_december_etf_distributions.html",
                 live=False,
                 role="history",
             ),

@@ -1113,7 +1113,58 @@ def test_next_tier_fixtures() -> None:
         if r.ticker == "LEGAX" and r.estimate_type == EstimateType.long_term_capital_gains
     )
     assert legax_2024.amount == Decimal("4.05105")
-    assert len({r.ticker for r in columbia_2024 if r.ticker}) >= 40
+    gsftx_2024 = next(
+        r
+        for r in columbia_2024
+        if r.ticker == "GSFTX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert gsftx_2024.amount == Decimal("1.38581")
+    assert len({r.ticker for r in columbia_2024 if r.ticker}) >= 180
+
+    columbia_2025 = parse_distribution_html(
+        (ROOT / "columbia_threadneedle" / "2025_year_end_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://columbia-2025",
+        fund_family="Columbia Threadneedle",
+    )
+    lbsax_2025 = next(
+        r
+        for r in columbia_2025
+        if r.ticker == "LBSAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert lbsax_2025.amount == Decimal("1.33133")
+    cblax_2025 = next(
+        r
+        for r in columbia_2025
+        if r.ticker == "CBLAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert cblax_2025.amount == Decimal("2.11142")
+    cblax_2025_st = next(
+        r
+        for r in columbia_2025
+        if r.ticker == "CBLAX" and r.estimate_type == EstimateType.short_term_capital_gains
+    )
+    assert cblax_2025_st.amount == Decimal("0.38493")
+    legax_2025 = next(
+        r
+        for r in columbia_2025
+        if r.ticker == "LEGAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert legax_2025.amount == Decimal("6.79982")
+    elgax_2025 = next(
+        r
+        for r in columbia_2025
+        if r.ticker == "ELGAX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert elgax_2025.amount == Decimal("0.87597")
+    cddrx_2025 = next(
+        r
+        for r in columbia_2025
+        if r.ticker == "CDDRX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert cddrx_2025.amount == Decimal("1.33133")
+    assert len({r.ticker for r in columbia_2025 if r.ticker}) >= 200
 
     columbia_2022 = parse_distribution_html(
         (ROOT / "columbia_threadneedle" / "2022_year_end_distributions.html").read_text(
@@ -3000,6 +3051,60 @@ def test_sixth_tier_fixtures() -> None:
     assert not any(
         r.estimate_type == EstimateType.long_term_capital_gains for r in first_trust_sept
     )
+
+    first_trust_dec_2025 = parse_distribution_html(
+        (ROOT / "first_trust" / "2025_december_etf_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://first-trust-dec-2025",
+        fund_family="First Trust",
+    )
+    fvd_dec = next(
+        r
+        for r in first_trust_dec_2025
+        if r.ticker == "FVD" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert fvd_dec.amount == Decimal("0.3186")
+    fthi_dec = next(
+        r
+        for r in first_trust_dec_2025
+        if r.ticker == "FTHI" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert fthi_dec.amount == Decimal("0.1770")
+    ftcb_lt = next(
+        r
+        for r in first_trust_dec_2025
+        if r.ticker == "FTCB" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert ftcb_lt.amount == Decimal("0.0473")
+    wcme = next(
+        r
+        for r in first_trust_dec_2025
+        if r.ticker == "WCME" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert wcme.amount == Decimal("0.0142")
+    assert len({r.ticker for r in first_trust_dec_2025 if r.ticker}) >= 150
+
+    first_trust_dec_2024 = parse_distribution_html(
+        (ROOT / "first_trust" / "2024_december_etf_distributions.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://first-trust-dec-2024",
+        fund_family="First Trust",
+    )
+    fvd_2024 = next(
+        r
+        for r in first_trust_dec_2024
+        if r.ticker == "FVD" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert fvd_2024.amount == Decimal("0.2752")
+    fthi_2024 = next(
+        r
+        for r in first_trust_dec_2024
+        if r.ticker == "FTHI" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert fthi_2024.amount == Decimal("0.1720")
+    assert len({r.ticker for r in first_trust_dec_2024 if r.ticker}) >= 140
 
     aqr = parse_distribution_html(
         (ROOT / "aqr" / "2025_estimated_distributions.html").read_text(encoding="utf-8"),
