@@ -27,10 +27,11 @@ MEGA_MISSING_NAV = (
     "VGT",
 )
 WAVE13 = ("MGTIX", "MFEIX", "TCAF", "THEQ")
+WAVE14_AF = ("AMCFX", "AMPCX", "FMACX", "RAFGX", "GFAFX", "AMBFX", "RGAFX")
 
 
 def test_existing_book_tickers_have_fixture_nav() -> None:
-    for ticker in MEGA_MISSING_NAV + WAVE13:
+    for ticker in MEGA_MISSING_NAV + WAVE13 + WAVE14_AF:
         quote = fixture_quote(ticker)
         assert quote is not None, f"{ticker} still missing weekly NAV fixture"
         assert quote.nav_per_share > 0
@@ -87,6 +88,9 @@ def test_country_etf_name_rules_are_conservative() -> None:
     assert resolve_category(fund_name="iShares MSCI All Country Asia ex Japan ETF") == (
         "Pacific/Asia ex-Japan Stk"
     )
+    # "Asia ex Japan" must never collapse to Japan Stock.
+    assert resolve_category(fund_name="iShares MSCI Asia ex-Japan ETF") == "Pacific/Asia ex-Japan Stk"
+    assert resolve_category(fund_name="Nuveen Lifecycle 2050 Fund") == "Target-Date 2050"
     assert resolve_category(fund_name="Harbor Growth Fund") is None
 
 

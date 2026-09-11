@@ -38,6 +38,9 @@ def test_curated_flagships() -> None:
     assert resolve_category(ticker="AMCFX", fund_name="AMCAP Fund F-2 shares") == "Large Growth"
     assert resolve_category(ticker="GFAFX") == "Large Growth"
     assert resolve_category(ticker="AMBFX") == "Moderate Allocation"
+    assert resolve_category(ticker="AMPCX", fund_name="AMCAP Fund C shares") == "Large Growth"
+    assert resolve_category(ticker="FMACX") == "Large Growth"
+    assert resolve_category(ticker="RAFGX") == "Large Growth"
 
 
 def test_name_rules_high_confidence() -> None:
@@ -85,6 +88,59 @@ def test_name_rules_high_confidence() -> None:
     )
     assert resolve_category(fund_name="Fidelity Freedom 2060") == "Target-Date 2060"
     assert resolve_category(fund_name="MFS Lifetime 2025 Fund") == "Target-Date 2025"
+    assert resolve_category(fund_name="Nuveen Lifecycle 2040 Fund") == "Target-Date 2040"
+    assert resolve_category(fund_name="Nuveen Lifecycle Index 2065 Fund") == "Target-Date 2065"
+    assert resolve_category(fund_name="Nuveen Lifecycle 2010 Fund") == "Target-Date 2000-2010"
+    assert resolve_category(fund_name="Nuveen Lifecycle 2070 Fund") == "Target-Date 2070+"
+    assert resolve_category(fund_name="Fidelity Blue Chip Growth - A") == "Large Growth"
+    assert resolve_category(fund_name="MFS Growth Fund Class R6 shares") == "Large Growth"
+    assert resolve_category(fund_name="MFS Research Fund Class I") == "Large Blend"
+    assert resolve_category(fund_name="MFS Blended Research Growth Equity Fund Class I") == (
+        "Large Growth"
+    )
+    assert resolve_category(fund_name="Hartford Checks and Balances Fund Class Y") == (
+        "Moderate Allocation"
+    )
+    assert resolve_category(fund_name="Invesco Select Risk: High Growth Investor Fund") == (
+        "Aggressive Allocation"
+    )
+    assert resolve_category(fund_name="Invesco Select Risk: Moderate Investor Fund") == (
+        "Moderate Allocation"
+    )
+    assert resolve_category(fund_name="Invesco Select Risk: Growth Investor Fund") == (
+        "Moderately Aggressive Allocation"
+    )
+    assert resolve_category(fund_name="Invesco Equity and Income Fund Class Y") == (
+        "Moderate Allocation"
+    )
+    assert resolve_category(fund_name="iShares Agency Bond ETF") == "Intermediate Government"
+    assert resolve_category(fund_name="iShares Fallen Angels USD Bond ETF") == "High Yield Bond"
+    assert resolve_category(fund_name="iShares Large Cap Core Active ETF") == "Large Blend"
+    assert resolve_category(fund_name="iShares U.S. Large Cap Premium Income Active ETF") == (
+        "Derivative Income"
+    )
+    assert resolve_category(fund_name="iShares Nasdaq Premium Income Active ETF") == (
+        "Derivative Income"
+    )
+    assert resolve_category(fund_name="iShares A.I. Innovation and Tech Active ETF") == "Technology"
+    assert resolve_category(fund_name="iShares MSCI BIC ETF") == "Diversified Emerging Markets"
+    assert resolve_category(fund_name="iShares ESG Aware MSCI USA Growth ETF") == "Large Growth"
+    assert resolve_category(fund_name="iShares ESG Aware MSCI USA Value ETF") == "Large Value"
+    assert resolve_category(fund_name="iShares ESG Aware MSCI USA Small-Cap ETF") == "Small Blend"
+    assert resolve_category(fund_name="iShares ESG Aware MSCI EM ETF") == (
+        "Diversified Emerging Markets"
+    )
+    assert resolve_category(fund_name="iShares Core Dividend Growth ETF") == "Large Value"
+    assert resolve_category(fund_name="iShares Select Dividend ETF") == "Large Value"
+    assert resolve_category(fund_name="iShares International Select Dividend ETF") == (
+        "Foreign Large Value"
+    )
+    assert resolve_category(fund_name="iShares MSCI USA Equal Weighted ETF") == "Large Blend"
+    assert resolve_category(fund_name="Nuveen Equity Index Fund") == "Large Blend"
+    assert resolve_category(fund_name="iShares U.S. Broker-Dealers & Securities Exchanges ETF") == (
+        "Financial"
+    )
+    assert resolve_category(fund_name="iShares Copper and Metals Mining ETF") == "Natural Resources"
     assert resolve_category(fund_name="T. Rowe Price Retirement 2060") == "Target-Date 2060"
     assert resolve_category(fund_name="Vanguard GNMA Fund Admiral Shares") == "Intermediate Government"
     assert resolve_category(fund_name="AQR Equity Market Neutral Fund") == "Market Neutral"
