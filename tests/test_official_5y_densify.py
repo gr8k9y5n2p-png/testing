@@ -9,9 +9,10 @@ from app.models import AmountUnit, EstimateType, PublicationStage
 from app.services.lookback import LOOKBACK_YEARS, lookback_digest_from_rows
 from app.sources.american_funds import AmericanFundsSource
 from app.sources.aum import filter_large_aum
-from app.sources.families import BlackRockSource, VanguardSource
+from app.sources.families import BlackRockSource, TRowePriceSource, VanguardSource
 from app.sources.fifth_tier import VictorySource
 from app.sources.fourth_tier import HartfordSource
+from app.sources.next_tier import SchwabSource
 from app.sources.sixth_tier import FirstTrustSource, VaneckSource, WisdomtreeSource
 from app.sources.parser import NormalizedRecord
 from app.sources.registry import list_sources
@@ -160,12 +161,12 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
             )
     digest = lookback_digest_from_rows(rows)
     # Official paid/final only. Missing years stay unmatched — never invent $0.
-    # 2,877 after official 5y wave 3. In-book hero gap-fill adds First Trust
-    # product-page leftover December 2024 rows (FPEI / RFDI / FTA / IGLD) —
-    # no new identities, unpublished years still unmatched.
-    assert digest.funds_with_5y == 2892
-    assert digest.funds_with_5y_mf == 2221
-    assert digest.funds_with_5y_etf == 671
+    # 2,892 after in-book hero gap-fill. Official 5y wave 4 adds Schwab MF
+    # product-page 2021–2024 history plus First Trust leftover midyear and
+    # T. Rowe 2023 ETF bond-table rows — no new identities.
+    assert digest.funds_with_5y == 2932
+    assert digest.funds_with_5y_mf == 2248
+    assert digest.funds_with_5y_etf == 684
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
 
@@ -449,3 +450,156 @@ def test_wisdomtree_official_december_income_and_2023_cg() -> None:
         and row.amount
     ]
     assert dgrw_2023 == []
+
+
+def test_schwab_in_book_product_page_history_fills_missing_years() -> None:
+    records = SchwabSource().fetch(mode="fixture").records
+    swanx_2021 = next(
+        row
+        for row in records
+        if row.ticker == "SWANX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount
+    )
+    assert swanx_2021.amount == Decimal("3.8250")
+    assert str(swanx_2021.ex_date) == "2021-12-16"
+    assert swanx_2021.publication_stage == PublicationStage.final
+
+    snxfx_2021 = next(
+        row
+        for row in records
+        if row.ticker == "SNXFX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount
+    )
+    assert snxfx_2021.amount == Decimal("1.2268")
+
+    swlsx_2021 = next(
+        row
+        for row in records
+        if row.ticker == "SWLSX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount
+    )
+    assert swlsx_2021.amount == Decimal("1.6176")
+
+    swanx_years = {
+        row.ex_date.year
+        for row in records
+        if row.ticker == "SWANX"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert set(LOOKBACK_YEARS) <= swanx_years
+
+
+def test_first_trust_leftover_midyear_fills_empty_december_years() -> None:
+    records = FirstTrustSource().fetch(mode="fixture").records
+    fpx_2021 = next(
+        row
+        for row in records
+        if row.ticker == "FPX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount
+    )
+    assert fpx_2021.amount == Decimal("0.080500")
+    assert str(fpx_2021.ex_date) == "2021-09-23"
+    assert fpx_2021.publication_stage == PublicationStage.final
+
+    fep_2022 = next(
+        row
+        for row in records
+        if row.ticker == "FEP"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2022
+        and row.amount
+    )
+    assert fep_2022.amount == Decimal("0.170700")
+
+    fsz_2023 = next(
+        row
+        for row in records
+        if row.ticker == "FSZ"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2023
+        and row.amount
+    )
+    assert fsz_2023.amount == Decimal("1.281000")
+
+    fpx_years = {
+        row.ex_date.year
+        for row in records
+        if row.ticker == "FPX"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert set(LOOKBACK_YEARS) <= fpx_years
+    # BGLD 2021 is still unpublished on the issuer Print=Y page.
+    bgld_2021 = [
+        row
+        for row in records
+        if row.ticker == "BGLD"
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount
+    ]
+    assert bgld_2021 == []
+
+
+def test_t_rowe_2023_etf_bond_table_leftover() -> None:
+    records = TRowePriceSource().fetch(mode="fixture").records
+    tagg_2023 = next(
+        row
+        for row in records
+        if row.ticker == "TAGG"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2023
+        and row.amount
+    )
+    assert tagg_2023.amount == Decimal("0.1504")
+    assert str(tagg_2023.ex_date) == "2023-12-22"
+    assert tagg_2023.publication_stage == PublicationStage.final
+
+    tbux_2023 = next(
+        row
+        for row in records
+        if row.ticker == "TBUX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2023
+        and row.amount
+    )
+    assert tbux_2023.amount == Decimal("0.2257")
+
+    tagg_years = {
+        row.ex_date.year
+        for row in records
+        if row.ticker == "TAGG"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert set(LOOKBACK_YEARS) <= tagg_years
+    # PREFX 2025 official YE row is all em-dash — unmatched, not $0.
+    prefx_2025 = [
+        row
+        for row in records
+        if row.ticker == "PREFX"
+        and row.ex_date
+        and row.ex_date.year == 2025
+        and row.amount
+    ]
+    assert prefx_2025 == []

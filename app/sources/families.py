@@ -723,7 +723,11 @@ class TRowePriceSource(HtmlTableSource):
         "omitted. Variable QA* share classes are not on the public ticker "
         "YE HTML — unmatched. "
         "Verified 2026-09-07; e.g. TRBCX LT $10.9575 (2025), $16.1515 (2024), $5.2095 (2023), "
-        "$6.0394 final / $5.75 prelim (2022), $16.03 (2021). Em-dash / Paid monthly omitted."
+        "$6.0394 final / $5.75 prelim (2022), $16.03 (2021). Em-dash / Paid monthly omitted. "
+        "Official 5y wave 4 adds the leftover 2023 ETF YE bond table from the same "
+        "public HTML (TAGG income $0.1504; TOTR $0.1713; TBUX $0.2257 / ST $0.0369 / "
+        "LT $0.0321). TCHP 2023 all em-dash omitted. PREFX / TEEFX / PRNHX / PRSCX "
+        "official YE rows that are all em-dash stay unmatched."
     )
     live_limitations = (
         "Live year-end HTML is supported for 2023–2025. "
