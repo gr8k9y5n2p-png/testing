@@ -216,6 +216,35 @@ def test_ambiguous_names_stay_null() -> None:
     assert resolve_category(fund_name="Harbor Growth Fund") is None
 
 
+def test_in_book_hero_gapfill_high_confidence_name_rules() -> None:
+    assert resolve_category(fund_name="MFS Government Securities Fund Class B") == (
+        "Intermediate Government"
+    )
+    assert resolve_category(fund_name="MFS Inflation-Adjusted Bond Fund Class B") == (
+        "Inflation-Protected Bond"
+    )
+    assert resolve_category(fund_name="MFS Total Return Fund Class B") == "Moderate Allocation"
+    assert resolve_category(fund_name="MFS New Discovery Value Fund Class B") == "Small Value"
+    assert resolve_category(fund_name="MFS Lifetime Income Fund Class B") == "Retirement Income"
+    assert resolve_category(fund_name="The Merger Fund Class A") == "Event Driven"
+    assert resolve_category(fund_name="Invesco Government & Agency Portfolio Institutional") == (
+        "Money Market-Taxable"
+    )
+    assert resolve_category(fund_name="Touchstone Sands Capital Select Growth Fund Class Y") == (
+        "Large Growth"
+    )
+    assert resolve_category(fund_name="Avantis International Equity Fund Institutional") == (
+        "Foreign Large Blend"
+    )
+    assert resolve_category(fund_name="AQR Large Cap Momentum Style Fund") == "Large Blend"
+    assert resolve_category(fund_name="Allspring Spectrum Aggressive Growth Fund Class A") == (
+        "Aggressive Allocation"
+    )
+    # Still never invent size-less / unpublished-style names.
+    assert resolve_category(fund_name="Invesco Income Fund") is None
+    assert resolve_category(fund_name="Allspring Asset Allocation Fund Class A") is None
+
+
 def test_canonical_category_aliases() -> None:
     assert canonical_category("large growth") == "Large Growth"
     assert canonical_category("Large-Cap Growth") == "Large Growth"

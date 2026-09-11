@@ -787,7 +787,7 @@ def _target_date_category(name: str) -> str | None:
             year_s = years[0]
     if year_s is None:
         if (lifepath or series) and re.search(
-            r"\b(?:in retirement|retirement)\b", blob
+            r"\b(?:in retirement|retirement|lifetime income)\b", blob
         ):
             return "Retirement Income"
         if re.search(r"retirement income", blob) and not _YEAR_ONLY_RE.search(name):
@@ -839,6 +839,13 @@ def _name_category(fund_name: str | None) -> str | None:
         "debt",
         "high yield",
         "high income",
+        "government securities",
+        "limited maturity",
+        "inflation adjusted",
+        "strategic income",
+        "flexible income",
+        "quality bond",
+        "active bond",
         "ginnie mae",
         "gnma",
         "mortgage",
@@ -852,6 +859,12 @@ def _name_category(fund_name: str | None) -> str | None:
         "prime money",
         "tax free money",
         "tax-free money",
+        "government & agency portfolio",
+        "government and agency portfolio",
+        "government agency portfolio",
+        "liquid assets portfolio",
+        "stic prime portfolio",
+        "invesco premier portfolio",
     ) or (_has_any(blob, "cash reserve") and _has_any(blob, "government", "treasury"))
     is_reit = _has_any(blob, "real estate", "reit", "realty")
     is_alloc = _has_any(
@@ -873,6 +886,14 @@ def _name_category(fund_name: str | None) -> str | None:
 
     if _has_any(blob, "market neutral"):
         return "Market Neutral"
+    if _has_any(
+        blob,
+        "event driven",
+        "event-driven",
+        "merger fund",
+        "merger arbitrage",
+    ):
+        return "Event Driven"
 
     asset_mgr = _ASSET_MANAGER_PCT_RE.search(name)
     if asset_mgr:
@@ -928,6 +949,95 @@ def _name_category(fund_name: str | None) -> str | None:
         return "Large Growth"
     if re.search(r"\bmfs global total return\b", blob):
         return "Global Allocation"
+    if "massachusetts investors trust" in blob:
+        return "Large Blend"
+    if "blended research value equity" in blob:
+        return "Large Value"
+    if "international new discovery" in blob:
+        return "Foreign Small/Mid Growth"
+    if "global new discovery" in blob:
+        return "World Small/Mid Stock"
+    if "new discovery value" in blob:
+        return "Small Value"
+    if re.search(r"\bintrinsic equity\b", blob):
+        return "Large Blend"
+    if "low volatility global equity" in blob:
+        return "World Large-Stock Blend"
+    if "low volatility equity" in blob:
+        return "Large Blend"
+    if "global alternative strategy" in blob:
+        return "Multistrategy"
+    if re.search(r"\btotal return fund\b", blob) and not is_bond:
+        return "Moderate Allocation"
+    if "research international" in blob:
+        return "Foreign Large Blend"
+    if re.search(r"\bequity income\b", blob) and not is_bond:
+        return "Large Value"
+    if "managed wealth" in blob:
+        return "Options Trading"
+    if "diversified income fund" in blob and not is_bond:
+        return "Conservative Allocation"
+    if "sands capital select growth" in blob:
+        return "Large Growth"
+    if "large cap focused" in blob:
+        return "Large Blend"
+    if "non us equity" in blob or "non-us equity" in blob:
+        return "Foreign Large Blend"
+    if "dividend equity" in blob or "dividend value" in blob:
+        return "Large Value"
+    if "capital growth" in blob and not is_bond and not _has_any(blob, "small", "mid"):
+        return "Large Growth"
+    if "focused growth" in blob and not is_bond and not _has_any(blob, "small", "mid"):
+        return "Large Growth"
+    if "innovative growth stock" in blob:
+        return "Large Growth"
+    if "developing markets" in blob and not is_bond:
+        return "Diversified Emerging Markets"
+    if "local markets fund" in blob:
+        return "Emerging Markets Bond"
+    if "all equity markets value" in blob:
+        return "World Large-Stock Value"
+    if "all equity markets" in blob:
+        return "World Large-Stock Blend"
+    if "all intl markets value" in blob:
+        return "Foreign Large Value"
+    if "all intl markets equity" in blob:
+        return "Foreign Large Blend"
+    if _has_any(blob, "responsible emg markets", "responsible emerging"):
+        return "Diversified Emerging Markets"
+    if "responsible intl equity" in blob or "responsible international equity" in blob:
+        return "Foreign Large Blend"
+    if "responsible u s equity" in blob or "responsible us equity" in blob:
+        return "Large Blend"
+    if re.search(r"\bu s quality\b", blob) or "us quality etf" in blob:
+        return "Large Blend"
+    if re.search(r"\bu s equity fund\b", blob) or "us equity fund" in blob:
+        if not _has_any(blob, "small", "mid"):
+            return "Large Blend"
+    if "momentum style" in blob:
+        if _has_any(blob, "international", "foreign"):
+            return "Foreign Large Blend"
+        if _has_any(blob, "small"):
+            return "Small Blend"
+        if _has_any(blob, "large"):
+            return "Large Blend"
+    if "defensive style" in blob and _has_any(blob, "international", "foreign"):
+        return "Foreign Large Blend"
+    if "diversified arbitrage" in blob:
+        return "Event Driven"
+    if "spectrum" in blob:
+        if "income allocation" in blob:
+            return "Conservative Allocation"
+        if "aggressive growth" in blob:
+            return "Aggressive Allocation"
+        if "conservative growth" in blob:
+            return "Moderately Conservative Allocation"
+        if "moderate growth" in blob:
+            return "Moderate Allocation"
+        if re.search(r"\bspectrum growth\b", blob):
+            return "Aggressive Allocation"
+    if "disciplined u s core" in blob or "disciplined us core" in blob:
+        return "Large Blend"
     if "blue chip growth" in blob:
         return "Large Growth"
     if "checks and balances" in blob:
@@ -961,7 +1071,14 @@ def _name_category(fund_name: str | None) -> str | None:
         return "Preferred Stock"
     if _has_any(blob, "convertible"):
         return "Convertibles"
-    if _has_any(blob, "bank loan", "senior loan", "floating rate loan"):
+    if _has_any(
+        blob,
+        "bank loan",
+        "senior loan",
+        "floating rate loan",
+        "senior floating rate",
+        "floating rate high income",
+    ):
         return "Bank Loan"
     # Classic 60/40 "Equity and Income" books — not a size-less growth guess.
     if "equity and income" in blob and not is_bond:
@@ -1038,7 +1155,7 @@ def _name_category(fund_name: str | None) -> str | None:
         return "Ultrashort Bond"
 
     if is_bond:
-        if _has_any(blob, "high yield", "high-yield", "high income municipal", "high income muni"):
+        if _has_any(blob, "high yield", "high-yield", "high income"):
             if _has_any(blob, "muni", "municipal", "tax exempt"):
                 return "High Yield Muni"
             if _has_any(blob, "emerging"):
@@ -1054,9 +1171,11 @@ def _name_category(fund_name: str | None) -> str | None:
             "inflation protection",
             "inflation-linked",
             "inflation-protected",
+            "inflation adjusted",
+            "inflation-adjusted",
         ):
             return "Inflation-Protected Bond"
-        if _has_any(blob, "low duration", "limited duration"):
+        if _has_any(blob, "low duration", "limited duration", "limited maturity"):
             return "Short-Term Bond"
         if _has_any(blob, "california") and _has_any(blob, "muni", "municipal", "tax exempt"):
             return "Muni California Long" if _has_any(blob, "long") else "Muni California Intermediate"
@@ -1070,10 +1189,14 @@ def _name_category(fund_name: str | None) -> str | None:
             if _has_any(blob, "long"):
                 return "Muni National Long"
             return "Muni National Interm"
-        if _has_any(blob, "multi sector", "multisector", "multi-sector", "strategic income"):
+        if _has_any(blob, "multi sector", "multisector", "multi-sector", "strategic income", "flexible income"):
             return "Multisector Bond"
+        if _has_any(blob, "total return bond", "active bond"):
+            return "Intermediate Core-Plus Bond"
         if _has_any(blob, "core plus", "core-plus"):
             return "Intermediate Core-Plus Bond"
+        if _has_any(blob, "quality bond"):
+            return "Intermediate Core Bond"
         if _has_any(blob, "corporate"):
             return "Corporate Bond"
         if _has_any(blob, "fallen angel"):
@@ -1083,6 +1206,8 @@ def _name_category(fund_name: str | None) -> str | None:
         if _has_any(blob, "ultra short", "ultrashort", "ultra-short"):
             return "Ultrashort Bond"
         if _has_any(blob, "world bond", "global bond", "international bond"):
+            return "World Bond"
+        if _has_any(blob, "global", "world", "international") and _has_any(blob, "bond"):
             return "World Bond"
         gov = _has_any(blob, "government", "treasury", "gnma", "ginnie mae", "mortgage")
         if _has_any(blob, "short"):
@@ -1143,6 +1268,8 @@ def _name_category(fund_name: str | None) -> str | None:
         "ex us",
         "ex-us",
         "exusa",
+        "non us",
+        "non-us",
         "developed market",
         "overseas",
         "acwi ex",
@@ -1228,6 +1355,8 @@ def _name_category(fund_name: str | None) -> str | None:
             return "Foreign Large Blend"
         if _has_any(blob, "select dividend", "high dividend"):
             return "Foreign Large Value"
+        if _has_any(blob, "equity", "stock") and not _has_any(blob, "new discovery"):
+            return "Foreign Large Blend"
         return None
 
     if world and not is_bond:
@@ -1238,6 +1367,8 @@ def _name_category(fund_name: str | None) -> str | None:
         if style == "Value":
             return "World Large-Stock Value"
         if style == "Blend" or _has_any(blob, "index", "acwi"):
+            return "World Large-Stock Blend"
+        if _has_any(blob, "equity", "stock") and not _has_any(blob, "new discovery"):
             return "World Large-Stock Blend"
         return None
 
@@ -1265,6 +1396,8 @@ def _name_category(fund_name: str | None) -> str | None:
     if size and not style and _has_any(blob, "core") and not _has_any(
         blob, "growth", "value", "plus"
     ):
+        style = "Blend"
+    if size and not style and _has_any(blob, "equity", "stock", "company", "focused"):
         style = "Blend"
     if size and style:
         if size == "Large":
