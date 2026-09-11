@@ -28,7 +28,11 @@ class AllspringSource(HtmlTableSource):
         "(2021 LT $2.30289 / 2025 LT $1.13272), Special Small Cap Value ESPNX "
         "(2021 LT $1.53975 / 2025 LT $2.4388), Emerging Markets Equity EMGNX "
         "December income only (2021 $0.18764 / 2025 $0.71107; no published CG). "
-        "Tickers are the official Class I identifiers printed on /i/ pages."
+        "Tickers are the official identifiers printed on each share-class page. "
+        "Wave 12 adds Class A / C / additional Institutional product pages "
+        "(WFPAX 2025 LT $4.26857; SGRAX LT $8.85612; WOFNX ST $0.40163 / LT $4.06281) "
+        "for 2021–2025 YE CG. Existing Institutional rows unchanged. Family "
+        "estimate PDFs stay gated."
     )
     live_limitations = (
         "Family estimate PDF is gated/image-based. Product-page tables put the date "
@@ -56,28 +60,24 @@ class AllspringSource(HtmlTableSource):
                 url="https://www.allspringglobal.com/investments/equity/mutual-funds/special-mid-cap-value/",
                 fixture="2024_paid_distributions.html",
                 live=False,
-                large_aum_only=True,
             ),
             PageSpec(
                 name="2023_paid_product_pages",
                 url="https://www.allspringglobal.com/investments/equity/mutual-funds/special-mid-cap-value/",
                 fixture="2023_paid_distributions.html",
                 live=False,
-                large_aum_only=True,
             ),
             PageSpec(
                 name="2022_paid_product_pages",
                 url="https://www.allspringglobal.com/investments/equity/mutual-funds/special-mid-cap-value/",
                 fixture="2022_paid_distributions.html",
                 live=False,
-                large_aum_only=True,
             ),
             PageSpec(
                 name="2021_paid_product_pages",
                 url="https://www.allspringglobal.com/investments/equity/mutual-funds/special-mid-cap-value/",
                 fixture="2021_paid_distributions.html",
                 live=False,
-                large_aum_only=True,
             ),
         ]
 

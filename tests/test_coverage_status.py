@@ -2,8 +2,13 @@
 
 from __future__ import annotations
 
+from datetime import date, datetime, timezone
+
 from app.crud import coverage_status_for_in_book_fund
 from fastapi.testclient import TestClient
+
+# Official Fidelity estimate DPL window for FBGRX (ex 2026-09-11 / pay 2026-09-14).
+_FBGRX_ESTIMATE_EX = date(2026, 9, 11)
 
 
 def test_in_book_coverage_status_helper() -> None:
@@ -39,14 +44,19 @@ def test_fbgrx_estimate_announced_after_fidelity_fixture(client: TestClient) -> 
     assert listed.json()["total"] == 1
     item = listed.json()["items"][0]
     assert item["ticker"] == "FBGRX"
-    assert item["has_estimate"] is True
-    assert item["coverage_status"] == "estimate_announced"
+    live = datetime.now(timezone.utc).date() < _FBGRX_ESTIMATE_EX
+    assert item["has_estimate"] is live
+    assert item["coverage_status"] == (
+        "estimate_announced" if live else "awaiting_estimate"
+    )
 
     lookup = client.get("/funds/lookup", params={"ticker": "FBGRX"})
     assert lookup.status_code == 200
     assert lookup.json()["ticker"] == "FBGRX"
-    assert lookup.json()["coverage_status"] == "estimate_announced"
-    assert lookup.json()["has_estimate"] is True
+    assert lookup.json()["has_estimate"] is live
+    assert lookup.json()["coverage_status"] == (
+        "estimate_announced" if live else "awaiting_estimate"
+    )
 
 
 def test_zzzzz_not_in_universe_and_add_to_universe_intake(client: TestClient) -> None:
