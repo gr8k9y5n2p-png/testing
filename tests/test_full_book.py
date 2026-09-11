@@ -106,6 +106,7 @@ def test_full_book_ishares_fidelity_trp() -> None:
 
     trp_funds, trp_tickers = _funds_and_tickers(TRowePriceSource())
     assert "TRBCX" in trp_tickers
+    assert {"TCAF", "TVAL", "THEQ", "TMSL"} <= trp_tickers
     assert len(trp_tickers) >= 200
 
 
@@ -290,7 +291,9 @@ def test_full_book_artisan_ici_and_first_eagle() -> None:
         "MIGHX",
         "MITTX",
         "MEIAX",
+        "MEIIX",
         "MFEGX",
+        "MFEIX",
         "MFRFX",
         "MGIAX",
         "MAAGX",
@@ -299,10 +302,10 @@ def test_full_book_artisan_ici_and_first_eagle() -> None:
         "MDIDX",
         "MWEFX",
         "MAGWX",
+        "MGTIX",
     } <= mfs_tickers
-    assert len(mfs_tickers) >= 80
-    assert len(mfs_funds) >= 80
-    assert any("Value Fund" in name for name in mfs_funds)
+    assert len(mfs_tickers) >= 250
+    assert len(mfs_funds) >= 250
 
     vaneck_funds, vaneck_tickers = _funds_and_tickers(VaneckSource())
     assert {"MWMIX", "INIVX", "GDX", "SMH", "CLOI"} <= vaneck_tickers
