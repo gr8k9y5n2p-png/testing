@@ -63,7 +63,12 @@ from app.sources.fourth_tier import (
     ThriventSource,
     WasatchSource,
 )
-from app.sources.third_tier import AmericanCenturySource, JanusHendersonSource, MfsSource
+from app.sources.third_tier import (
+    AmericanCenturySource,
+    DodgeCoxSource,
+    JanusHendersonSource,
+    MfsSource,
+)
 from app.sources.dws import DwsSource
 from app.sources.catalyst import CatalystSource
 from app.sources.sixth_tier import (
@@ -207,7 +212,7 @@ def test_full_book_harbor_voya_keep_heroes() -> None:
     assert len(thrivent_funds) >= 12
 
     calamos_funds, calamos_tickers = _funds_and_tickers(CalamosSource())
-    assert {"CVGRX", "CPLSX", "CAGCX", "CIGRX", "CVAAX"} <= calamos_tickers
+    assert {"CVGRX", "CPLSX", "CAGCX", "CIGRX", "CVAAX", "CANQ", "CCEF"} <= calamos_tickers
     assert len(calamos_funds) >= 12
 
     wasatch_funds, wasatch_tickers = _funds_and_tickers(WasatchSource())
@@ -304,9 +309,17 @@ def test_full_book_artisan_ici_and_first_eagle() -> None:
         "MWEFX",
         "MAGWX",
         "MGTIX",
+        "MDIKX",
+        "MEIGX",
+        "MIGFX",
+        "MFEBX",
     } <= mfs_tickers
-    assert len(mfs_tickers) >= 250
-    assert len(mfs_funds) >= 250
+    assert len(mfs_tickers) >= 600
+    assert len(mfs_funds) >= 600
+
+    dodge_funds, dodge_tickers = _funds_and_tickers(DodgeCoxSource())
+    assert {"DODGX", "DODIX", "DOXGX", "DODEX", "DOXIX"} <= dodge_tickers
+    assert len(dodge_tickers) >= 12
 
     vaneck_funds, vaneck_tickers = _funds_and_tickers(VaneckSource())
     assert {"MWMIX", "INIVX", "GDX", "SMH", "CLOI"} <= vaneck_tickers

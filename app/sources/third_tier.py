@@ -284,7 +284,14 @@ class DodgeCoxSource(HtmlTableSource):
         "PDF siblings 404; Dec YE 2021–2023 transcribed from the public product-page "
         "API https://api-v1.dodgeandcox.com/api/funds-distribution (DODIX Dec income "
         "$0.0570 / $0.1010 / $0.1290; DODGX Dec LT $3.3800 / $7.2500 / $3.9800). "
-        "March/June/September rows omitted so one as_of is not summed."
+        "March/June/September rows omitted so one as_of is not summed. "
+        "Wave 15 remaining US share classes from the same public API: Class X "
+        "(DOXGX / DOXBX / DOXIX / DOXFX / DOXWX / DOXLX), Global Stock I "
+        "(DODWX), Global Bond I (DODLX), and Emerging Markets Stock (DODEX). "
+        "Existing Class I flagships DODGX / DODIX / DODFX / DODBX stay on the "
+        "tax-letter fixtures. Worldwide / non-US / DOAA* omitted. Heroes: "
+        "DOXGX 2025 income $0.0446 / LT $1.1999; 2024 LT $12.0360; 2023 LT "
+        "$3.9800; 2022 LT $7.2500."
     )
     live_limitations = "Estimates and the tax letter are PDF. Fixtures transcribe those public tables."
 
@@ -332,6 +339,14 @@ class DodgeCoxSource(HtmlTableSource):
                 live=False,
                 large_aum_only=True,
             ),
+            PageSpec(
+                name="remaining_share_class_distributions",
+                url="https://api-v1.dodgeandcox.com/api/funds-distribution",
+                fixture="remaining_share_class_distributions.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
+            ),
         ]
 
 
@@ -366,7 +381,15 @@ class MfsSource(HtmlTableSource):
         "row; MRSAX 2021–2024 is December income only (no published ST/LT); "
         "BRWAX 2023 is income only (gaps, not invented). Same-Class-A aliases "
         "skipped (MFEBX=MEIAX, MWOHX=MWOFX). Class B / I / C / R* names map "
-        "to their own official product-page tickers. 2024 mfs_cg_fly_2024.pdf 404."
+        "to their own official product-page tickers. 2024 mfs_cg_fly_2024.pdf 404. "
+        "Wave 15 adds remaining official B / R1 / R2 / R3 / R4 Excel YE plus the "
+        "official Class A urlParameter MIGFX (Massachusetts Investors Growth A "
+        "on the product API; Wave 13 R3/A book ticker MIGHX is not re-emitted). "
+        "~290 new tickers; 2021–2025 December YE. Heroes: MDIKX 2025 income "
+        "$0.49478 / ST $0.04829 / LT $0.75145; MEIGX 2025 income $0.08916 / "
+        "LT $3.86919; MIGFX 2025 income $0.19720 / LT $4.20618; MFEBX (Value B) "
+        "2025 LT $3.86919. Per-class ordinary income is taken from that class "
+        "Excel (not copied from Class A). Published $0.00000 omitted."
     )
     live_limitations = "Estimates are PDF percent-of-NAV ranges. Fixture transcribes public rows."
 
@@ -500,6 +523,18 @@ class MfsSource(HtmlTableSource):
                     "&roleCode=usinv&locationCode=us&locale=en_US"
                 ),
                 fixture="2021_share_class_paid_year_end.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
+            ),
+            PageSpec(
+                name="remaining_share_class_paid_year_end",
+                url=(
+                    "https://www.mfs.com/MFSServices/products/v1/product/MDIKX/"
+                    "10YearsDistribution/download?shareCode=R2&productLineCode=WEB_FAMILYFUNDS"
+                    "&roleCode=usinv&locationCode=us&locale=en_US"
+                ),
+                fixture="remaining_share_class_paid_year_end.html",
                 live=False,
                 role="history",
                 large_aum_only=False,

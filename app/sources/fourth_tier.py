@@ -513,7 +513,10 @@ class CalamosSource(HtmlTableSource):
         "is the full paying-fund table (Growth Fund CVGRX LT $4.07 / 7.76% of Class A NAV; "
         "all-dash omitted). 2024 sibling "
         "2024-calamos-estimated-capital-gains.pdf (CVGRX ST $1.24 / LT $1.84). "
-        "2023 sibling filename 404."
+        "2023 sibling filename 404. Wave 15 official 2025 ETF paid PDF "
+        "2025-calamos-exchange-traded-funds-capital-gains.pdf (CANQ ST $0.08; "
+        "CCEF LT $0.19; ex/record 12/23/2025). Published dashes / 0.00% of NAV "
+        "omitted. Structured Protection and SROI all-dash PDFs noted, not invented."
     )
     live_limitations = "Estimate book is PDF. Fixture transcribes public Class A rows."
 
@@ -533,6 +536,14 @@ class CalamosSource(HtmlTableSource):
                 fixture="2024_estimated_capital_gains.html",
                 live=False,
                 large_aum_only=True,
+            ),
+            PageSpec(
+                name="2025_etf_paid_capital_gains",
+                url="https://www.calamos.com/globalassets/media/documents/tax-center/2025-calamos-exchange-traded-funds-capital-gains.pdf",
+                fixture="2025_etf_paid_capital_gains.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
             ),
         ]
 

@@ -447,6 +447,7 @@ _CURATED_TICKERS: dict[str, str] = {
     "JLGMX": "Large Growth",
     "TWCGX": "Large Growth",
     "MIGHX": "Large Growth",
+    "MIGFX": "Large Growth",
     "MGTIX": "Large Growth",
     "MIGNX": "Large Growth",
     "MIGDX": "Large Growth",
@@ -455,6 +456,20 @@ _CURATED_TICKERS: dict[str, str] = {
     "MFECX": "Large Growth",
     "MEIIX": "Large Value",
     "MEIKX": "Large Value",
+    "MEIGX": "Large Value",
+    "MEIHX": "Large Value",
+    "MEIJX": "Large Value",
+    "MFEBX": "Large Value",
+    "MDIKX": "Foreign Large Blend",
+    "MDIHX": "Foreign Large Blend",
+    "MDITX": "Foreign Large Blend",
+    "DOXGX": "Large Value",
+    "DOXBX": "Moderate Allocation",
+    "DOXIX": "Intermediate Core Bond",
+    "DOXFX": "Foreign Large Blend",
+    "DODEX": "Diversified Emerging Markets",
+    "DOXLX": "World Bond",
+    "DODLX": "World Bond",
     "MRGRX": "Large Blend",
     "MINIX": "Foreign Large Value",
     "MINJX": "Foreign Large Value",
@@ -879,6 +894,10 @@ def _name_category(fund_name: str | None) -> str | None:
         return "Moderate Allocation"
     if "massachusetts investors growth stock" in blob:
         return "Large Growth"
+    if "international diversification" in blob:
+        return "Foreign Large Blend"
+    if re.search(r"\bmfs value\b", blob):
+        return "Large Value"
     if "blended research core equity" in blob or re.search(r"\bmfs core equity\b", blob):
         return "Large Blend"
     if re.search(r"\bmfs global equity\b", blob):
