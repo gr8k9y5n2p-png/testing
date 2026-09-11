@@ -38,6 +38,15 @@ def test_curated_flagships() -> None:
     assert resolve_category(ticker="AMCFX", fund_name="AMCAP Fund F-2 shares") == "Large Growth"
     assert resolve_category(ticker="GFAFX") == "Large Growth"
     assert resolve_category(ticker="AMBFX") == "Moderate Allocation"
+    assert resolve_category(ticker="MDIKX", fund_name="MFS International Diversification Fund Class R2") == (
+        "Foreign Large Blend"
+    )
+    assert resolve_category(ticker="MEIGX", fund_name="MFS Value Fund Class R1") == "Large Value"
+    assert resolve_category(ticker="MIGFX", fund_name="Massachusetts Investors Growth Stock Fund Class A") == (
+        "Large Growth"
+    )
+    assert resolve_category(ticker="DOXGX", fund_name="Dodge & Cox Stock Fund - Class X") == "Large Value"
+    assert resolve_category(ticker="DOXIX") == "Intermediate Core Bond"
 
 
 def test_name_rules_high_confidence() -> None:

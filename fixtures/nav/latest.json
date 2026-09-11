@@ -2,7 +2,7 @@
   "field": "regular_close",
   "field_notes": "Last liquid close / mutual-fund NAV (Yahoo daily close, not adjclose). Null when unknown \u2014 never invented.",
   "as_of": "2026-09-11",
-  "count": 7937,
+  "count": 8238,
   "items": [
     {
       "ticker": "AAAFX",
@@ -9575,6 +9575,16 @@
       "fund_name": "BlackRock Income Fund"
     },
     {
+      "ticker": "BMSBX",
+      "nav_per_share": "16.970000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/BMSBX.html",
+      "fund_identifier": "BMSBX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Blended Research\u00ae Mid Cap Equity Fund Class B"
+    },
+    {
       "ticker": "BMSDX",
       "nav_per_share": "17.030001",
       "nav_as_of": "2026-09-09",
@@ -9603,6 +9613,46 @@
       "fund_identifier": "BMSLX",
       "fund_family": "MFS Investment Management",
       "fund_name": "MFS Blended Research Mid Cap Equity Fund Class I"
+    },
+    {
+      "ticker": "BMSRX",
+      "nav_per_share": "17.120000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/BMSRX.html",
+      "fund_identifier": "BMSRX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Blended Research\u00ae Mid Cap Equity Fund Class R1"
+    },
+    {
+      "ticker": "BMSSX",
+      "nav_per_share": "17.180000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/BMSSX.html",
+      "fund_identifier": "BMSSX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Blended Research\u00ae Mid Cap Equity Fund Class R2"
+    },
+    {
+      "ticker": "BMSTX",
+      "nav_per_share": "17.260000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/BMSTX.html",
+      "fund_identifier": "BMSTX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Blended Research\u00ae Mid Cap Equity Fund Class R3"
+    },
+    {
+      "ticker": "BMSVX",
+      "nav_per_share": "17.360000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/BMSVX.html",
+      "fund_identifier": "BMSVX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Blended Research\u00ae Mid Cap Equity Fund Class R4"
     },
     {
       "ticker": "BMSYX",
@@ -9915,6 +9965,16 @@
       "fund_name": "MFS Blended Research Emerging Markets Equity Fund All Classes"
     },
     {
+      "ticker": "BRKBX",
+      "nav_per_share": "22.940000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/BRKBX.html",
+      "fund_identifier": "BRKBX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Blended Research\u00ae Emerging Markets Equity Fund Class B"
+    },
+    {
       "ticker": "BRKCX",
       "nav_per_share": "23.160000",
       "nav_as_of": "2026-09-09",
@@ -9933,6 +9993,46 @@
       "fund_identifier": "BRKIX",
       "fund_family": "MFS Investment Management",
       "fund_name": "MFS Blended Research Emerging Markets Equity Fund Class I"
+    },
+    {
+      "ticker": "BRKRX",
+      "nav_per_share": "23.070000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/BRKRX.html",
+      "fund_identifier": "BRKRX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Blended Research\u00ae Emerging Markets Equity Fund Class R1"
+    },
+    {
+      "ticker": "BRKSX",
+      "nav_per_share": "23.190000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/BRKSX.html",
+      "fund_identifier": "BRKSX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Blended Research\u00ae Emerging Markets Equity Fund Class R2"
+    },
+    {
+      "ticker": "BRKTX",
+      "nav_per_share": "23.230000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/BRKTX.html",
+      "fund_identifier": "BRKTX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Blended Research\u00ae Emerging Markets Equity Fund Class R3"
+    },
+    {
+      "ticker": "BRKUX",
+      "nav_per_share": "23.370000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/BRKUX.html",
+      "fund_identifier": "BRKUX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Blended Research\u00ae Emerging Markets Equity Fund Class R4"
     },
     {
       "ticker": "BRKVX",
@@ -9995,6 +10095,16 @@
       "fund_name": "BlackRock Advantage International Fund"
     },
     {
+      "ticker": "BRSBX",
+      "nav_per_share": "15.870000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/BRSBX.html",
+      "fund_identifier": "BRSBX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Blended Research\u00ae Small Cap Equity Fund Class B"
+    },
+    {
       "ticker": "BRSDX",
       "nav_per_share": "17.150000",
       "nav_as_of": "2026-09-08",
@@ -10003,6 +10113,16 @@
       "fund_identifier": "mfs-blended-research-small-cap-equity-fund-all-classes",
       "fund_family": "MFS Investment Management",
       "fund_name": "MFS Blended Research Small Cap Equity Fund All Classes"
+    },
+    {
+      "ticker": "BRSHX",
+      "nav_per_share": "15.810000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/BRSHX.html",
+      "fund_identifier": "BRSHX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Blended Research\u00ae Small Cap Equity Fund Class C"
     },
     {
       "ticker": "BRSIX",
@@ -10015,6 +10135,56 @@
       "fund_name": "Bridgeway Ultra-Small Company Market Fund"
     },
     {
+      "ticker": "BRSJX",
+      "nav_per_share": "16.980000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/BRSJX.html",
+      "fund_identifier": "BRSJX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Blended Research\u00ae Small Cap Equity Fund Class I"
+    },
+    {
+      "ticker": "BRSPX",
+      "nav_per_share": "15.810000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/BRSPX.html",
+      "fund_identifier": "BRSPX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Blended Research\u00ae Small Cap Equity Fund Class R1"
+    },
+    {
+      "ticker": "BRSSX",
+      "nav_per_share": "16.640000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/BRSSX.html",
+      "fund_identifier": "BRSSX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Blended Research\u00ae Small Cap Equity Fund Class R2"
+    },
+    {
+      "ticker": "BRSTX",
+      "nav_per_share": "16.790000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/BRSTX.html",
+      "fund_identifier": "BRSTX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Blended Research\u00ae Small Cap Equity Fund Class R3"
+    },
+    {
+      "ticker": "BRSUX",
+      "nav_per_share": "17.000000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/BRSUX.html",
+      "fund_identifier": "BRSUX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Blended Research\u00ae Small Cap Equity Fund Class R4"
+    },
+    {
       "ticker": "BRSVX",
       "nav_per_share": "44.390000",
       "nav_as_of": "2026-08-14",
@@ -10023,6 +10193,16 @@
       "fund_identifier": "BRSVX",
       "fund_family": "Bridgeway",
       "fund_name": "Bridgeway Small-Cap Value Fund"
+    },
+    {
+      "ticker": "BRSYX",
+      "nav_per_share": "17.050000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/BRSYX.html",
+      "fund_identifier": "BRSYX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Blended Research\u00ae Small Cap Equity Fund Class R6"
     },
     {
       "ticker": "BRTR",
@@ -10045,6 +10225,86 @@
       "fund_name": "MFS Blended Research Value Equity Fund All Classes"
     },
     {
+      "ticker": "BRUEX",
+      "nav_per_share": "19.200000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/BRUEX.html",
+      "fund_identifier": "BRUEX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Blended Research\u00ae Value Equity Fund Class B"
+    },
+    {
+      "ticker": "BRUGX",
+      "nav_per_share": "18.940000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/BRUGX.html",
+      "fund_identifier": "BRUGX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Blended Research\u00ae Value Equity Fund Class C"
+    },
+    {
+      "ticker": "BRUHX",
+      "nav_per_share": "19.320000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/BRUHX.html",
+      "fund_identifier": "BRUHX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Blended Research\u00ae Value Equity Fund Class I"
+    },
+    {
+      "ticker": "BRUJX",
+      "nav_per_share": "19.130000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/BRUJX.html",
+      "fund_identifier": "BRUJX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Blended Research\u00ae Value Equity Fund Class R1"
+    },
+    {
+      "ticker": "BRUKX",
+      "nav_per_share": "19.190000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/BRUKX.html",
+      "fund_identifier": "BRUKX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Blended Research\u00ae Value Equity Fund Class R2"
+    },
+    {
+      "ticker": "BRULX",
+      "nav_per_share": "19.250000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/BRULX.html",
+      "fund_identifier": "BRULX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Blended Research\u00ae Value Equity Fund Class R3"
+    },
+    {
+      "ticker": "BRUMX",
+      "nav_per_share": "19.350000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/BRUMX.html",
+      "fund_identifier": "BRUMX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Blended Research\u00ae Value Equity Fund Class R4"
+    },
+    {
+      "ticker": "BRUNX",
+      "nav_per_share": "19.390000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/BRUNX.html",
+      "fund_identifier": "BRUNX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Blended Research\u00ae Value Equity Fund Class R6"
+    },
+    {
       "ticker": "BRUSX",
       "nav_per_share": "35.090000",
       "nav_as_of": "2026-09-08",
@@ -10063,6 +10323,16 @@
       "fund_identifier": "mfs-blended-research-growth-equity-fund-all-classes",
       "fund_family": "MFS Investment Management",
       "fund_name": "MFS Blended Research Growth Equity Fund All Classes"
+    },
+    {
+      "ticker": "BRWBX",
+      "nav_per_share": "27.530000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/BRWBX.html",
+      "fund_identifier": "BRWBX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Blended Research\u00ae Growth Equity Fund Class B"
     },
     {
       "ticker": "BRWCX",
@@ -10095,6 +10365,46 @@
       "fund_name": "MFS Blended Research Growth Equity Fund Class I"
     },
     {
+      "ticker": "BRWRX",
+      "nav_per_share": "27.530000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/BRWRX.html",
+      "fund_identifier": "BRWRX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Blended Research\u00ae Growth Equity Fund Class R1"
+    },
+    {
+      "ticker": "BRWSX",
+      "nav_per_share": "29.220000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/BRWSX.html",
+      "fund_identifier": "BRWSX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Blended Research\u00ae Growth Equity Fund Class R2"
+    },
+    {
+      "ticker": "BRWTX",
+      "nav_per_share": "29.590000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/BRWTX.html",
+      "fund_identifier": "BRWTX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Blended Research\u00ae Growth Equity Fund Class R3"
+    },
+    {
+      "ticker": "BRWUX",
+      "nav_per_share": "29.860000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/BRWUX.html",
+      "fund_identifier": "BRWUX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Blended Research\u00ae Growth Equity Fund Class R4"
+    },
+    {
       "ticker": "BRWVX",
       "nav_per_share": "30.170000",
       "nav_as_of": "2026-09-09",
@@ -10115,6 +10425,16 @@
       "fund_name": "MFS Blended Research International Equity Fund All Classes"
     },
     {
+      "ticker": "BRXBX",
+      "nav_per_share": "20.260000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/BRXBX.html",
+      "fund_identifier": "BRXBX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Blended Research\u00ae International Equity Fund Class B"
+    },
+    {
       "ticker": "BRXCX",
       "nav_per_share": "20.150000",
       "nav_as_of": "2026-09-09",
@@ -10133,6 +10453,46 @@
       "fund_identifier": "BRXIX",
       "fund_family": "MFS Investment Management",
       "fund_name": "MFS Blended Research International Equity Fund Class I"
+    },
+    {
+      "ticker": "BRXRX",
+      "nav_per_share": "19.950000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/BRXRX.html",
+      "fund_identifier": "BRXRX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Blended Research\u00ae International Equity Fund Class R1"
+    },
+    {
+      "ticker": "BRXSX",
+      "nav_per_share": "20.340000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/BRXSX.html",
+      "fund_identifier": "BRXSX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Blended Research\u00ae International Equity Fund Class R2"
+    },
+    {
+      "ticker": "BRXTX",
+      "nav_per_share": "20.570000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/BRXTX.html",
+      "fund_identifier": "BRXTX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Blended Research\u00ae International Equity Fund Class R3"
+    },
+    {
+      "ticker": "BRXUX",
+      "nav_per_share": "20.620000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/BRXUX.html",
+      "fund_identifier": "BRXUX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Blended Research\u00ae International Equity Fund Class R4"
     },
     {
       "ticker": "BRXVX",
@@ -10715,6 +11075,16 @@
       "fund_name": "BlackRock Short-Term California Muni Bond ETF"
     },
     {
+      "ticker": "CANQ",
+      "nav_per_share": "29.550000",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/CANQ?interval=1d&range=10d",
+      "fund_identifier": "CANQ",
+      "fund_family": "Calamos",
+      "fund_name": "Calamos Nasdaq Equity & Income ETF"
+    },
+    {
       "ticker": "CARFX",
       "nav_per_share": "7.550000",
       "nav_as_of": "2023-12-09",
@@ -11093,6 +11463,16 @@
       "fund_identifier": "CCEAX",
       "fund_family": "American Beacon",
       "fund_name": "American Beacon Continuous Capital Emerging Markets Fund"
+    },
+    {
+      "ticker": "CCEF",
+      "nav_per_share": "29.580000",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/CCEF?interval=1d&range=10d",
+      "fund_identifier": "CCEF",
+      "fund_family": "Calamos",
+      "fund_name": "Calamos CEF Income & Arbitrage ETF"
     },
     {
       "ticker": "CCEIX",
@@ -13275,6 +13655,46 @@
       "fund_name": "Columbia Real Estate Equity Fund Institutional"
     },
     {
+      "ticker": "CRHXX",
+      "nav_per_share": "1.000000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/CRHXX.html",
+      "fund_identifier": "CRHXX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "U.S. Government Cash Reserve Fund Class I"
+    },
+    {
+      "ticker": "CRJXX",
+      "nav_per_share": "1.000000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/CRJXX.html",
+      "fund_identifier": "CRJXX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "U.S. Government Cash Reserve Fund Class R3"
+    },
+    {
+      "ticker": "CRKXX",
+      "nav_per_share": "1.000000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/CRKXX.html",
+      "fund_identifier": "CRKXX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "U.S. Government Cash Reserve Fund Class R4"
+    },
+    {
+      "ticker": "CRMXX",
+      "nav_per_share": "1.000000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/CRMXX.html",
+      "fund_identifier": "CRMXX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "U.S. Government Cash Reserve Fund Class R2"
+    },
+    {
       "ticker": "CRPT",
       "nav_per_share": "14.810000",
       "nav_as_of": "2026-09-09",
@@ -13305,6 +13725,16 @@
       "fund_name": "Columbia Real Estate Equity Fund Institutional"
     },
     {
+      "ticker": "CRRXX",
+      "nav_per_share": "1.000000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/CRRXX.html",
+      "fund_identifier": "CRRXX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "U.S. Government Cash Reserve Fund Class R6"
+    },
+    {
       "ticker": "CRRYX",
       "nav_per_share": "16.650000",
       "nav_as_of": "2026-09-09",
@@ -13323,6 +13753,16 @@
       "fund_identifier": "CRTC",
       "fund_family": "DWS / Xtrackers",
       "fund_name": "Xtrackers US National Critical Technologies ETF"
+    },
+    {
+      "ticker": "CRVXX",
+      "nav_per_share": "1.000000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/CRVXX.html",
+      "fund_identifier": "CRVXX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "U.S. Government Cash Reserve Fund Class R1"
     },
     {
       "ticker": "CSAZX",
@@ -15635,6 +16075,46 @@
       "fund_name": "MFS Diversified Income Fund Class C"
     },
     {
+      "ticker": "DIFDX",
+      "nav_per_share": "12.730000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/DIFDX.html",
+      "fund_identifier": "DIFDX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Diversified Income Fund Class R1"
+    },
+    {
+      "ticker": "DIFEX",
+      "nav_per_share": "12.740000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/DIFEX.html",
+      "fund_identifier": "DIFEX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Diversified Income Fund Class R2"
+    },
+    {
+      "ticker": "DIFFX",
+      "nav_per_share": "12.750000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/DIFFX.html",
+      "fund_identifier": "DIFFX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Diversified Income Fund Class R3"
+    },
+    {
+      "ticker": "DIFGX",
+      "nav_per_share": "12.740000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/DIFGX.html",
+      "fund_identifier": "DIFGX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Diversified Income Fund Class R4"
+    },
+    {
       "ticker": "DIFHX",
       "nav_per_share": "12.800000",
       "nav_as_of": "2026-09-09",
@@ -15955,6 +16435,16 @@
       "fund_name": "Dodge & Cox Balanced Fund"
     },
     {
+      "ticker": "DODEX",
+      "nav_per_share": "14.770000",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/DODEX?interval=1d&range=10d",
+      "fund_identifier": "DODEX",
+      "fund_family": "Dodge & Cox",
+      "fund_name": "Dodge & Cox Emerging Markets Stock Fund"
+    },
+    {
       "ticker": "DODFX",
       "nav_per_share": "18.690001",
       "nav_as_of": "2026-09-08",
@@ -15983,6 +16473,26 @@
       "fund_identifier": "DODIX",
       "fund_family": "Dodge & Cox",
       "fund_name": "Dodge & Cox Income Fund"
+    },
+    {
+      "ticker": "DODLX",
+      "nav_per_share": "11.100000",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/DODLX?interval=1d&range=10d",
+      "fund_identifier": "DODLX",
+      "fund_family": "Dodge & Cox",
+      "fund_name": "Dodge & Cox Global Bond Fund - Class I"
+    },
+    {
+      "ticker": "DODWX",
+      "nav_per_share": "17.560000",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/DODWX?interval=1d&range=10d",
+      "fund_identifier": "DODWX",
+      "fund_family": "Dodge & Cox",
+      "fund_name": "Dodge & Cox Global Stock Fund - Class I"
     },
     {
       "ticker": "DOGG",
@@ -16023,6 +16533,66 @@
       "fund_identifier": "DON",
       "fund_family": "WisdomTree",
       "fund_name": "WisdomTree U.S. MidCap Dividend Fund"
+    },
+    {
+      "ticker": "DOXBX",
+      "nav_per_share": "13.950000",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/DOXBX?interval=1d&range=10d",
+      "fund_identifier": "DOXBX",
+      "fund_family": "Dodge & Cox",
+      "fund_name": "Dodge & Cox Balanced Fund - Class X"
+    },
+    {
+      "ticker": "DOXFX",
+      "nav_per_share": "18.450000",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/DOXFX?interval=1d&range=10d",
+      "fund_identifier": "DOXFX",
+      "fund_family": "Dodge & Cox",
+      "fund_name": "Dodge & Cox International Stock Fund - Class X"
+    },
+    {
+      "ticker": "DOXGX",
+      "nav_per_share": "17.810000",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/DOXGX?interval=1d&range=10d",
+      "fund_identifier": "DOXGX",
+      "fund_family": "Dodge & Cox",
+      "fund_name": "Dodge & Cox Stock Fund - Class X"
+    },
+    {
+      "ticker": "DOXIX",
+      "nav_per_share": "12.420000",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/DOXIX?interval=1d&range=10d",
+      "fund_identifier": "DOXIX",
+      "fund_family": "Dodge & Cox",
+      "fund_name": "Dodge & Cox Income Fund - Class X"
+    },
+    {
+      "ticker": "DOXLX",
+      "nav_per_share": "11.100000",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/DOXLX?interval=1d&range=10d",
+      "fund_identifier": "DOXLX",
+      "fund_family": "Dodge & Cox",
+      "fund_name": "Dodge & Cox Global Bond Fund - Class X"
+    },
+    {
+      "ticker": "DOXWX",
+      "nav_per_share": "17.570000",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/DOXWX?interval=1d&range=10d",
+      "fund_identifier": "DOXWX",
+      "fund_family": "Dodge & Cox",
+      "fund_name": "Dodge & Cox Global Stock Fund - Class X"
     },
     {
       "ticker": "DPREX",
@@ -16485,6 +17055,16 @@
       "fund_name": "MFS Global Alternative Strategy Fund Class C"
     },
     {
+      "ticker": "DVRFX",
+      "nav_per_share": "13.870000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/DVRFX.html",
+      "fund_identifier": "DVRFX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Global Alternative Strategy Fund Class R1"
+    },
+    {
       "ticker": "DVRIX",
       "nav_per_share": "14.720000",
       "nav_as_of": "2026-09-09",
@@ -16493,6 +17073,26 @@
       "fund_identifier": "DVRIX",
       "fund_family": "MFS Investment Management",
       "fund_name": "MFS Global Alternative Strategy Fund Class I"
+    },
+    {
+      "ticker": "DVRJX",
+      "nav_per_share": "14.630000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/DVRJX.html",
+      "fund_identifier": "DVRJX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Global Alternative Strategy Fund Class R3"
+    },
+    {
+      "ticker": "DVRKX",
+      "nav_per_share": "14.730000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/DVRKX.html",
+      "fund_identifier": "DVRKX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Global Alternative Strategy Fund Class R4"
     },
     {
       "ticker": "DVRLX",
@@ -16843,6 +17443,46 @@
       "fund_identifier": "EEMCX",
       "fund_family": "Columbia Threadneedle",
       "fund_name": "Columbia Emerging Markets Fund Class C"
+    },
+    {
+      "ticker": "EEMDX",
+      "nav_per_share": "12.590000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/EEMDX.html",
+      "fund_identifier": "EEMDX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Emerging Markets Equity Research Fund Class R1"
+    },
+    {
+      "ticker": "EEMEX",
+      "nav_per_share": "12.730000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/EEMEX.html",
+      "fund_identifier": "EEMEX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Emerging Markets Equity Research Fund Class R2"
+    },
+    {
+      "ticker": "EEMFX",
+      "nav_per_share": "12.780000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/EEMFX.html",
+      "fund_identifier": "EEMFX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Emerging Markets Equity Research Fund Class R3"
+    },
+    {
+      "ticker": "EEMGX",
+      "nav_per_share": "12.820000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/EEMGX.html",
+      "fund_identifier": "EEMGX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Emerging Markets Equity Research Fund Class R4"
     },
     {
       "ticker": "EEMHX",
@@ -17425,6 +18065,16 @@
       "fund_name": "MFS Emerging Markets Debt Local Currency Fund All Classes"
     },
     {
+      "ticker": "EMLBX",
+      "nav_per_share": "6.030000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/EMLBX.html",
+      "fund_identifier": "EMLBX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Emerging Markets Debt Local Currency Fund Class B"
+    },
+    {
       "ticker": "EMLCX",
       "nav_per_share": "6.040000",
       "nav_as_of": "2026-09-09",
@@ -17453,6 +18103,46 @@
       "fund_identifier": "EMLIX",
       "fund_family": "MFS Investment Management",
       "fund_name": "MFS Emerging Markets Debt Local Currency Fund Class I"
+    },
+    {
+      "ticker": "EMLJX",
+      "nav_per_share": "6.060000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/EMLJX.html",
+      "fund_identifier": "EMLJX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Emerging Markets Debt Local Currency Fund Class R1"
+    },
+    {
+      "ticker": "EMLKX",
+      "nav_per_share": "6.030000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/EMLKX.html",
+      "fund_identifier": "EMLKX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Emerging Markets Debt Local Currency Fund Class R2"
+    },
+    {
+      "ticker": "EMLLX",
+      "nav_per_share": "6.040000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/EMLLX.html",
+      "fund_identifier": "EMLLX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Emerging Markets Debt Local Currency Fund Class R3"
+    },
+    {
+      "ticker": "EMLMX",
+      "nav_per_share": "6.050000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/EMLMX.html",
+      "fund_identifier": "EMLMX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Emerging Markets Debt Local Currency Fund Class R4"
     },
     {
       "ticker": "EMLNX",
@@ -17765,6 +18455,16 @@
       "fund_name": "MFS Equity Income Fund All Classes"
     },
     {
+      "ticker": "EQNBX",
+      "nav_per_share": "25.790000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/EQNBX.html",
+      "fund_identifier": "EQNBX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Equity Income Fund Class B"
+    },
+    {
       "ticker": "EQNCX",
       "nav_per_share": "25.870001",
       "nav_as_of": "2026-09-09",
@@ -17783,6 +18483,46 @@
       "fund_identifier": "EQNIX",
       "fund_family": "MFS Investment Management",
       "fund_name": "MFS Equity Income Fund Class I"
+    },
+    {
+      "ticker": "EQNRX",
+      "nav_per_share": "25.810000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/EQNRX.html",
+      "fund_identifier": "EQNRX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Equity Income Fund Class R1"
+    },
+    {
+      "ticker": "EQNSX",
+      "nav_per_share": "25.810000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/EQNSX.html",
+      "fund_identifier": "EQNSX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Equity Income Fund Class R2"
+    },
+    {
+      "ticker": "EQNTX",
+      "nav_per_share": "25.800000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/EQNTX.html",
+      "fund_identifier": "EQNTX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Equity Income Fund Class R3"
+    },
+    {
+      "ticker": "EQNUX",
+      "nav_per_share": "25.770000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/EQNUX.html",
+      "fund_identifier": "EQNUX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Equity Income Fund Class R4"
     },
     {
       "ticker": "EQNVX",
@@ -34215,6 +34955,16 @@
       "fund_name": "MFS Global New Discovery Fund All Classes"
     },
     {
+      "ticker": "GLNBX",
+      "nav_per_share": "22.080000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/GLNBX.html",
+      "fund_identifier": "GLNBX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Global New Discovery Fund Class B"
+    },
+    {
       "ticker": "GLNCX",
       "nav_per_share": "22.120001",
       "nav_as_of": "2026-09-10",
@@ -34233,6 +34983,46 @@
       "fund_identifier": "GLNIX",
       "fund_family": "MFS Investment Management",
       "fund_name": "MFS Global New Discovery Fund Class I"
+    },
+    {
+      "ticker": "GLNJX",
+      "nav_per_share": "22.070000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/GLNJX.html",
+      "fund_identifier": "GLNJX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Global New Discovery Fund Class R1"
+    },
+    {
+      "ticker": "GLNKX",
+      "nav_per_share": "24.040000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/GLNKX.html",
+      "fund_identifier": "GLNKX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Global New Discovery Fund Class R2"
+    },
+    {
+      "ticker": "GLNLX",
+      "nav_per_share": "24.930000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/GLNLX.html",
+      "fund_identifier": "GLNLX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Global New Discovery Fund Class R3"
+    },
+    {
+      "ticker": "GLNMX",
+      "nav_per_share": "25.720000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/GLNMX.html",
+      "fund_identifier": "GLNMX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Global New Discovery Fund Class R4"
     },
     {
       "ticker": "GLNNX",
@@ -45965,6 +46755,16 @@
       "fund_name": "MFS Lifetime 2035 Fund All Classes"
     },
     {
+      "ticker": "LFEBX",
+      "nav_per_share": "19.660000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/LFEBX.html",
+      "fund_identifier": "LFEBX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Lifetime\u00ae 2035 Fund Class B"
+    },
+    {
       "ticker": "LFECX",
       "nav_per_share": "19.080000",
       "nav_as_of": "2026-09-10",
@@ -46015,6 +46815,46 @@
       "fund_name": "VanEck Long/Flat Trend ETF"
     },
     {
+      "ticker": "LFERX",
+      "nav_per_share": "19.330000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/LFERX.html",
+      "fund_identifier": "LFERX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Lifetime\u00ae 2035 Fund Class R1"
+    },
+    {
+      "ticker": "LFESX",
+      "nav_per_share": "19.560000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/LFESX.html",
+      "fund_identifier": "LFESX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Lifetime\u00ae 2035 Fund Class R2"
+    },
+    {
+      "ticker": "LFETX",
+      "nav_per_share": "19.560000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/LFETX.html",
+      "fund_identifier": "LFETX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Lifetime\u00ae 2035 Fund Class R3"
+    },
+    {
+      "ticker": "LFEUX",
+      "nav_per_share": "19.790000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/LFEUX.html",
+      "fund_identifier": "LFEUX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Lifetime\u00ae 2035 Fund Class R4"
+    },
+    {
       "ticker": "LFIAX",
       "nav_per_share": "24.760000",
       "nav_as_of": "2026-09-08",
@@ -46023,6 +46863,16 @@
       "fund_identifier": "mfs-lifetime-2055-fund-all-classes",
       "fund_family": "MFS Investment Management",
       "fund_name": "MFS Lifetime 2055 Fund All Classes"
+    },
+    {
+      "ticker": "LFIBX",
+      "nav_per_share": "24.510000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/LFIBX.html",
+      "fund_identifier": "LFIBX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Lifetime\u00ae 2055 Fund Class B"
     },
     {
       "ticker": "LFICX",
@@ -46053,6 +46903,46 @@
       "fund_identifier": "LFIKX",
       "fund_family": "MFS Investment Management",
       "fund_name": "MFS Lifetime 2055 Fund Class R"
+    },
+    {
+      "ticker": "LFIRX",
+      "nav_per_share": "23.980000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/LFIRX.html",
+      "fund_identifier": "LFIRX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Lifetime\u00ae 2055 Fund Class R1"
+    },
+    {
+      "ticker": "LFISX",
+      "nav_per_share": "24.410000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/LFISX.html",
+      "fund_identifier": "LFISX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Lifetime\u00ae 2055 Fund Class R2"
+    },
+    {
+      "ticker": "LFITX",
+      "nav_per_share": "24.420000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/LFITX.html",
+      "fund_identifier": "LFITX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Lifetime\u00ae 2055 Fund Class R3"
+    },
+    {
+      "ticker": "LFIUX",
+      "nav_per_share": "24.760000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/LFIUX.html",
+      "fund_identifier": "LFIUX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Lifetime\u00ae 2055 Fund Class R4"
     },
     {
       "ticker": "LFMIX",
@@ -46093,6 +46983,46 @@
       "fund_identifier": "LFTHX",
       "fund_family": "MFS Investment Management",
       "fund_name": "MFS Lifetime 2065 Fund Class I"
+    },
+    {
+      "ticker": "LFTJX",
+      "nav_per_share": "12.240000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/LFTJX.html",
+      "fund_identifier": "LFTJX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Lifetime\u00ae 2065 Fund Class R1"
+    },
+    {
+      "ticker": "LFTKX",
+      "nav_per_share": "12.230000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/LFTKX.html",
+      "fund_identifier": "LFTKX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Lifetime\u00ae 2065 Fund Class R2"
+    },
+    {
+      "ticker": "LFTLX",
+      "nav_per_share": "12.280000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/LFTLX.html",
+      "fund_identifier": "LFTLX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Lifetime\u00ae 2065 Fund Class R3"
+    },
+    {
+      "ticker": "LFTMX",
+      "nav_per_share": "12.340000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/LFTMX.html",
+      "fund_identifier": "LFTMX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Lifetime\u00ae 2065 Fund Class R4"
     },
     {
       "ticker": "LFTNX",
@@ -46805,6 +47735,16 @@
       "fund_name": "MFS Lifetime 2045 Fund All Classes"
     },
     {
+      "ticker": "LTMBX",
+      "nav_per_share": "22.900000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/LTMBX.html",
+      "fund_identifier": "LTMBX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Lifetime\u00ae 2045 Fund Class B"
+    },
+    {
       "ticker": "LTMDX",
       "nav_per_share": "22.459999",
       "nav_as_of": "2026-09-10",
@@ -46833,6 +47773,46 @@
       "fund_identifier": "LTMLX",
       "fund_family": "MFS Investment Management",
       "fund_name": "MFS Lifetime 2045 Fund Class R"
+    },
+    {
+      "ticker": "LTMRX",
+      "nav_per_share": "22.730000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/LTMRX.html",
+      "fund_identifier": "LTMRX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Lifetime\u00ae 2045 Fund Class R1"
+    },
+    {
+      "ticker": "LTMSX",
+      "nav_per_share": "22.860000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/LTMSX.html",
+      "fund_identifier": "LTMSX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Lifetime\u00ae 2045 Fund Class R2"
+    },
+    {
+      "ticker": "LTMTX",
+      "nav_per_share": "22.900000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/LTMTX.html",
+      "fund_identifier": "LTMTX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Lifetime\u00ae 2045 Fund Class R3"
+    },
+    {
+      "ticker": "LTMUX",
+      "nav_per_share": "23.190000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/LTMUX.html",
+      "fund_identifier": "LTMUX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Lifetime\u00ae 2045 Fund Class R4"
     },
     {
       "ticker": "LTNCX",
@@ -47175,6 +48155,16 @@
       "fund_name": "Lazard US Equity Focus Portfolio"
     },
     {
+      "ticker": "MAAFX",
+      "nav_per_share": "32.640000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MAAFX.html",
+      "fund_identifier": "MAAFX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Aggressive Growth Allocation Fund Class R1"
+    },
+    {
       "ticker": "MAAGX",
       "nav_per_share": "35.189999",
       "nav_as_of": "2026-09-08",
@@ -47183,6 +48173,36 @@
       "fund_identifier": "mfs-aggressive-growth-allocation-fund-all-classes",
       "fund_family": "MFS Investment Management",
       "fund_name": "MFS Aggressive Growth Allocation Fund All Classes"
+    },
+    {
+      "ticker": "MAAHX",
+      "nav_per_share": "34.330000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MAAHX.html",
+      "fund_identifier": "MAAHX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Aggressive Growth Allocation Fund Class R3"
+    },
+    {
+      "ticker": "MAALX",
+      "nav_per_share": "34.890000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MAALX.html",
+      "fund_identifier": "MAALX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Aggressive Growth Allocation Fund Class R4"
+    },
+    {
+      "ticker": "MACBX",
+      "nav_per_share": "17.140000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MACBX.html",
+      "fund_identifier": "MACBX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Conservative Allocation Fund Class B"
     },
     {
       "ticker": "MACFX",
@@ -47203,6 +48223,36 @@
       "fund_identifier": "MACIX",
       "fund_family": "MFS Investment Management",
       "fund_name": "MFS Conservative Allocation Fund Class I"
+    },
+    {
+      "ticker": "MACJX",
+      "nav_per_share": "17.180000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MACJX.html",
+      "fund_identifier": "MACJX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Conservative Allocation Fund Class R4"
+    },
+    {
+      "ticker": "MACKX",
+      "nav_per_share": "16.320000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MACKX.html",
+      "fund_identifier": "MACKX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Conservative Allocation Fund Class R1"
+    },
+    {
+      "ticker": "MACNX",
+      "nav_per_share": "16.960000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MACNX.html",
+      "fund_identifier": "MACNX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Conservative Allocation Fund Class R3"
     },
     {
       "ticker": "MACQX",
@@ -47245,6 +48295,16 @@
       "fund_name": "iShares U.S. Manufacturing ETF"
     },
     {
+      "ticker": "MAGEX",
+      "nav_per_share": "26.800000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MAGEX.html",
+      "fund_identifier": "MAGEX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Growth Allocation Fund Class R3"
+    },
+    {
       "ticker": "MAGG",
       "nav_per_share": "19.740000",
       "nav_as_of": "2026-09-08",
@@ -47253,6 +48313,26 @@
       "fund_identifier": "MAGG",
       "fund_family": "Madison",
       "fund_name": "Madison Aggregate Bond ETF"
+    },
+    {
+      "ticker": "MAGJX",
+      "nav_per_share": "27.130000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MAGJX.html",
+      "fund_identifier": "MAGJX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Growth Allocation Fund Class R4"
+    },
+    {
+      "ticker": "MAGMX",
+      "nav_per_share": "25.510000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MAGMX.html",
+      "fund_identifier": "MAGMX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Growth Allocation Fund Class R1"
     },
     {
       "ticker": "MAGQX",
@@ -47475,6 +48555,16 @@
       "fund_name": "Matthews Emerging Markets Sustainable Future Fund"
     },
     {
+      "ticker": "MAWAX",
+      "nav_per_share": "33.650000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MAWAX.html",
+      "fund_identifier": "MAWAX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Aggressive Growth Allocation Fund Class R2"
+    },
+    {
       "ticker": "MAXJ",
       "nav_per_share": "29.430000",
       "nav_as_of": "2026-09-09",
@@ -47483,6 +48573,26 @@
       "fund_identifier": "MAXJ",
       "fund_family": "BlackRock / iShares",
       "fund_name": "iShares Large Cap Max Buffer Jun ETF"
+    },
+    {
+      "ticker": "MBABX",
+      "nav_per_share": "9.020000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MBABX.html",
+      "fund_identifier": "MBABX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Alabama Municipal Bond Fund Class B"
+    },
+    {
+      "ticker": "MBAGX",
+      "nav_per_share": "34.230000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MBAGX.html",
+      "fund_identifier": "MBAGX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Aggressive Growth Allocation Fund Class B"
     },
     {
       "ticker": "MBAIX",
@@ -47495,6 +48605,16 @@
       "fund_name": "NYLI Balanced Fund"
     },
     {
+      "ticker": "MBARX",
+      "nav_per_share": "8.650000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MBARX.html",
+      "fund_identifier": "MBARX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Arkansas Municipal Bond Fund Class B"
+    },
+    {
       "ticker": "MBB",
       "nav_per_share": "91.480003",
       "nav_as_of": "2026-09-10",
@@ -47503,6 +48623,16 @@
       "fund_identifier": "MBB",
       "fund_family": "BlackRock / iShares",
       "fund_name": "iShares MBS ETF"
+    },
+    {
+      "ticker": "MBCAX",
+      "nav_per_share": "5.280000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MBCAX.html",
+      "fund_identifier": "MBCAX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "California Municipal Bond Fund Class B"
     },
     {
       "ticker": "MBDIX",
@@ -47515,6 +48645,26 @@
       "fund_name": "MFS Corporate Bond Fund Class I"
     },
     {
+      "ticker": "MBGAX",
+      "nav_per_share": "9.660000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MBGAX.html",
+      "fund_identifier": "MBGAX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Georgia Municipal Bond Fund Class B"
+    },
+    {
+      "ticker": "MBGWX",
+      "nav_per_share": "27.240000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MBGWX.html",
+      "fund_identifier": "MBGWX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Growth Allocation Fund Class B"
+    },
+    {
       "ticker": "MBLAX",
       "nav_per_share": "13.280000",
       "nav_as_of": "2026-09-08",
@@ -47525,6 +48675,46 @@
       "fund_name": "Madison Diversified Income Fund Class A"
     },
     {
+      "ticker": "MBMAX",
+      "nav_per_share": "9.790000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MBMAX.html",
+      "fund_identifier": "MBMAX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Massachusetts Municipal Bond Fund Class B"
+    },
+    {
+      "ticker": "MBMDX",
+      "nav_per_share": "9.590000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MBMDX.html",
+      "fund_identifier": "MBMDX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Maryland Municipal Bond Fund Class B"
+    },
+    {
+      "ticker": "MBMSX",
+      "nav_per_share": "8.510000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MBMSX.html",
+      "fund_identifier": "MBMSX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Mississippi Municipal Bond Fund Class B"
+    },
+    {
+      "ticker": "MBNCX",
+      "nav_per_share": "10.320000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MBNCX.html",
+      "fund_identifier": "MBNCX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "North Carolina Municipal Bond Fund Class B"
+    },
+    {
       "ticker": "MBND",
       "nav_per_share": "26.549999",
       "nav_as_of": "2026-09-09",
@@ -47533,6 +48723,66 @@
       "fund_identifier": "MBND",
       "fund_family": "State Street / SPDR",
       "fund_name": "State Street Nuveen Municipal Bond ETF"
+    },
+    {
+      "ticker": "MBNYX",
+      "nav_per_share": "9.560000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MBNYX.html",
+      "fund_identifier": "MBNYX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "New York Municipal Bond Fund Class B"
+    },
+    {
+      "ticker": "MBPAX",
+      "nav_per_share": "9.220000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MBPAX.html",
+      "fund_identifier": "MBPAX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Pennsylvania Municipal Bond Fund Class B"
+    },
+    {
+      "ticker": "MBRRX",
+      "nav_per_share": "12.020000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MBRRX.html",
+      "fund_identifier": "MBRRX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Corporate Bond Fund Class R2"
+    },
+    {
+      "ticker": "MBSCX",
+      "nav_per_share": "10.590000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MBSCX.html",
+      "fund_identifier": "MBSCX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "South Carolina Municipal Bond Fund Class B"
+    },
+    {
+      "ticker": "MBVAX",
+      "nav_per_share": "9.770000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MBVAX.html",
+      "fund_identifier": "MBVAX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Virginia Municipal Bond Fund Class B"
+    },
+    {
+      "ticker": "MBWVX",
+      "nav_per_share": "9.740000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MBWVX.html",
+      "fund_identifier": "MBWVX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "West Virginia Municipal Bond Fund Class B"
     },
     {
       "ticker": "MBXAX",
@@ -47575,6 +48825,16 @@
       "fund_name": "MFS Aggressive Growth Allocation Fund Class C"
     },
     {
+      "ticker": "MCARX",
+      "nav_per_share": "16.470000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MCARX.html",
+      "fund_identifier": "MCARX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Conservative Allocation Fund Class R2"
+    },
+    {
       "ticker": "MCAVX",
       "nav_per_share": "8.580000",
       "nav_as_of": "2026-09-10",
@@ -47615,6 +48875,46 @@
       "fund_name": "MFS Core Bond Fund Class I"
     },
     {
+      "ticker": "MCBGX",
+      "nav_per_share": "9.310000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MCBGX.html",
+      "fund_identifier": "MCBGX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Core Bond Fund Class R1"
+    },
+    {
+      "ticker": "MCBHX",
+      "nav_per_share": "9.310000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MCBHX.html",
+      "fund_identifier": "MCBHX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Core Bond Fund Class R2"
+    },
+    {
+      "ticker": "MCBJX",
+      "nav_per_share": "9.310000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MCBJX.html",
+      "fund_identifier": "MCBJX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Core Bond Fund Class R3"
+    },
+    {
+      "ticker": "MCBKX",
+      "nav_per_share": "9.320000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MCBKX.html",
+      "fund_identifier": "MCBKX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Core Bond Fund Class R4"
+    },
+    {
       "ticker": "MCBMX",
       "nav_per_share": "9.320000",
       "nav_as_of": "2026-09-10",
@@ -47625,6 +48925,16 @@
       "fund_name": "MFS Core Bond Fund Class R"
     },
     {
+      "ticker": "MCBVX",
+      "nav_per_share": "31.560000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MCBVX.html",
+      "fund_identifier": "MCBVX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Mid Cap Value Fund Class B"
+    },
+    {
       "ticker": "MCCAX",
       "nav_per_share": "5.290000",
       "nav_as_of": "2026-09-10",
@@ -47633,6 +48943,16 @@
       "fund_identifier": "MCCAX",
       "fund_family": "MFS Investment Management",
       "fund_name": "MFS California Municipal Bond Fund Class C"
+    },
+    {
+      "ticker": "MCCXX",
+      "nav_per_share": "1.000000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MCCXX.html",
+      "fund_identifier": "MCCXX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "U.S. Government Cash Reserve Fund Class C"
     },
     {
       "ticker": "MCFOX",
@@ -47775,6 +49095,16 @@
       "fund_name": "MFS Mid Cap Growth Fund Class R2 shares"
     },
     {
+      "ticker": "MCRXX",
+      "nav_per_share": "1.000000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MCRXX.html",
+      "fund_identifier": "MCRXX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "U.S. Government Cash Reserve Fund Class B"
+    },
+    {
       "ticker": "MCSAX",
       "nav_per_share": "4.650000",
       "nav_as_of": "2026-09-08",
@@ -47783,6 +49113,16 @@
       "fund_identifier": "mfs-commodity-strategy-fund-all-classes",
       "fund_family": "MFS Investment Management",
       "fund_name": "MFS Commodity Strategy Fund All Classes"
+    },
+    {
+      "ticker": "MCSFX",
+      "nav_per_share": "4.760000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MCSFX.html",
+      "fund_identifier": "MCSFX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Commodity Strategy Fund Class B"
     },
     {
       "ticker": "MCSHX",
@@ -47815,6 +49155,36 @@
       "fund_name": "Matthews China Innovators Fund"
     },
     {
+      "ticker": "MCSNX",
+      "nav_per_share": "4.740000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MCSNX.html",
+      "fund_identifier": "MCSNX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Commodity Strategy Fund Class R1"
+    },
+    {
+      "ticker": "MCSOX",
+      "nav_per_share": "4.710000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MCSOX.html",
+      "fund_identifier": "MCSOX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Commodity Strategy Fund Class R2"
+    },
+    {
+      "ticker": "MCSQX",
+      "nav_per_share": "4.730000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MCSQX.html",
+      "fund_identifier": "MCSQX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Commodity Strategy Fund Class R3"
+    },
+    {
       "ticker": "MCSRX",
       "nav_per_share": "4.750000",
       "nav_as_of": "2026-09-10",
@@ -47825,6 +49195,16 @@
       "fund_name": "MFS Commodity Strategy Fund Class R"
     },
     {
+      "ticker": "MCSTX",
+      "nav_per_share": "4.750000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MCSTX.html",
+      "fund_identifier": "MCSTX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Commodity Strategy Fund Class R4"
+    },
+    {
       "ticker": "MCVIX",
       "nav_per_share": "35.279999",
       "nav_as_of": "2026-09-10",
@@ -47833,6 +49213,16 @@
       "fund_identifier": "MCVIX",
       "fund_family": "MFS Investment Management",
       "fund_name": "MFS Mid Cap Value Fund Class I"
+    },
+    {
+      "ticker": "MCVRX",
+      "nav_per_share": "32.860000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MCVRX.html",
+      "fund_identifier": "MCVRX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Mid Cap Value Fund Class R2"
     },
     {
       "ticker": "MCVSX",
@@ -47975,6 +49365,16 @@
       "fund_name": "MFS International Diversification Fund All Classes"
     },
     {
+      "ticker": "MDIFX",
+      "nav_per_share": "30.470000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MDIFX.html",
+      "fund_identifier": "MDIFX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "International Diversification Fund Class B"
+    },
+    {
       "ticker": "MDIGX",
       "nav_per_share": "29.690001",
       "nav_as_of": "2026-09-10",
@@ -47983,6 +49383,16 @@
       "fund_identifier": "MDIGX",
       "fund_family": "MFS Investment Management",
       "fund_name": "MFS International Diversification Fund Class C"
+    },
+    {
+      "ticker": "MDIHX",
+      "nav_per_share": "30.420000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MDIHX.html",
+      "fund_identifier": "MDIHX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "International Diversification Fund Class R3"
     },
     {
       "ticker": "MDIIX",
@@ -48005,6 +49415,16 @@
       "fund_name": "MFS International Diversification Fund Class I"
     },
     {
+      "ticker": "MDIKX",
+      "nav_per_share": "30.100000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MDIKX.html",
+      "fund_identifier": "MDIKX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "International Diversification Fund Class R2"
+    },
+    {
       "ticker": "MDILX",
       "nav_per_share": "24.389999",
       "nav_as_of": "2026-09-08",
@@ -48013,6 +49433,26 @@
       "fund_identifier": "blackrock-international-fund",
       "fund_family": "BlackRock / iShares",
       "fund_name": "BlackRock International Fund"
+    },
+    {
+      "ticker": "MDIOX",
+      "nav_per_share": "29.060000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MDIOX.html",
+      "fund_identifier": "MDIOX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "International Diversification Fund Class R1"
+    },
+    {
+      "ticker": "MDITX",
+      "nav_per_share": "31.060000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MDITX.html",
+      "fund_identifier": "MDITX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "International Diversification Fund Class R4"
     },
     {
       "ticker": "MDIV",
@@ -48215,6 +49655,16 @@
       "fund_name": "MFS Emerging Markets Debt Fund All Classes"
     },
     {
+      "ticker": "MEDBX",
+      "nav_per_share": "12.590000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MEDBX.html",
+      "fund_identifier": "MEDBX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Emerging Markets Debt Fund Class B"
+    },
+    {
       "ticker": "MEDCX",
       "nav_per_share": "12.560000",
       "nav_as_of": "2026-09-10",
@@ -48223,6 +49673,46 @@
       "fund_identifier": "MEDCX",
       "fund_family": "MFS Investment Management",
       "fund_name": "MFS Emerging Markets Debt Fund Class C"
+    },
+    {
+      "ticker": "MEDDX",
+      "nav_per_share": "12.580000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MEDDX.html",
+      "fund_identifier": "MEDDX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Emerging Markets Debt Fund Class R1"
+    },
+    {
+      "ticker": "MEDEX",
+      "nav_per_share": "12.570000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MEDEX.html",
+      "fund_identifier": "MEDEX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Emerging Markets Debt Fund Class R2"
+    },
+    {
+      "ticker": "MEDFX",
+      "nav_per_share": "12.530000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MEDFX.html",
+      "fund_identifier": "MEDFX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Emerging Markets Debt Fund Class R3"
+    },
+    {
+      "ticker": "MEDGX",
+      "nav_per_share": "12.530000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MEDGX.html",
+      "fund_identifier": "MEDGX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Emerging Markets Debt Fund Class R4"
     },
     {
       "ticker": "MEDHX",
@@ -48305,6 +49795,26 @@
       "fund_name": "Meridian Hedged Equity Fund"
     },
     {
+      "ticker": "MEIGX",
+      "nav_per_share": "52.250000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MEIGX.html",
+      "fund_identifier": "MEIGX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Value Fund Class R1"
+    },
+    {
+      "ticker": "MEIHX",
+      "nav_per_share": "53.510000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MEIHX.html",
+      "fund_identifier": "MEIHX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Value Fund Class R3"
+    },
+    {
       "ticker": "MEIIX",
       "nav_per_share": "54.320000",
       "nav_as_of": "2026-09-10",
@@ -48313,6 +49823,16 @@
       "fund_identifier": "MEIIX",
       "fund_family": "MFS Investment Management",
       "fund_name": "MFS Value Fund Class I"
+    },
+    {
+      "ticker": "MEIJX",
+      "nav_per_share": "53.840000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MEIJX.html",
+      "fund_identifier": "MEIJX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Value Fund Class R4"
     },
     {
       "ticker": "MEIKX",
@@ -48335,6 +49855,16 @@
       "fund_name": "MFS Emerging Markets Equity Fund All Classes"
     },
     {
+      "ticker": "MEMBX",
+      "nav_per_share": "46.760000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MEMBX.html",
+      "fund_identifier": "MEMBX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Emerging Markets Equity Fund Class B"
+    },
+    {
       "ticker": "MEMCX",
       "nav_per_share": "45.549999",
       "nav_as_of": "2026-09-10",
@@ -48343,6 +49873,36 @@
       "fund_identifier": "MEMCX",
       "fund_family": "MFS Investment Management",
       "fund_name": "MFS Emerging Markets Equity Fund Class C"
+    },
+    {
+      "ticker": "MEMFX",
+      "nav_per_share": "45.860000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MEMFX.html",
+      "fund_identifier": "MEMFX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Emerging Markets Equity Fund Class R2"
+    },
+    {
+      "ticker": "MEMGX",
+      "nav_per_share": "50.800000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MEMGX.html",
+      "fund_identifier": "MEMGX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Emerging Markets Equity Fund Class R3"
+    },
+    {
+      "ticker": "MEMHX",
+      "nav_per_share": "50.760000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MEMHX.html",
+      "fund_identifier": "MEMHX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Emerging Markets Equity Fund Class R4"
     },
     {
       "ticker": "MEMIX",
@@ -48363,6 +49923,16 @@
       "fund_identifier": "MEMJX",
       "fund_family": "MFS Investment Management",
       "fund_name": "MFS Emerging Markets Equity Fund Class R"
+    },
+    {
+      "ticker": "MEMRX",
+      "nav_per_share": "44.190000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MEMRX.html",
+      "fund_identifier": "MEMRX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Emerging Markets Equity Fund Class R1"
     },
     {
       "ticker": "MEQAX",
@@ -48435,6 +50005,16 @@
       "fund_name": "MFS Arkansas Municipal Bond Fund All Classes"
     },
     {
+      "ticker": "MFBBX",
+      "nav_per_share": "12.000000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MFBBX.html",
+      "fund_identifier": "MFBBX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Corporate Bond Fund Class B"
+    },
+    {
       "ticker": "MFBCX",
       "nav_per_share": "11.980000",
       "nav_as_of": "2026-09-10",
@@ -48453,6 +50033,36 @@
       "fund_identifier": "mfs-corporate-bond-fund-all-classes",
       "fund_family": "MFS Investment Management",
       "fund_name": "MFS Corporate Bond Fund All Classes"
+    },
+    {
+      "ticker": "MFBGX",
+      "nav_per_share": "11.990000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MFBGX.html",
+      "fund_identifier": "MFBGX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Corporate Bond Fund Class R1"
+    },
+    {
+      "ticker": "MFBHX",
+      "nav_per_share": "12.020000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MFBHX.html",
+      "fund_identifier": "MFBHX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Corporate Bond Fund Class R3"
+    },
+    {
+      "ticker": "MFBJX",
+      "nav_per_share": "12.040000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MFBJX.html",
+      "fund_identifier": "MFBJX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Corporate Bond Fund Class R4"
     },
     {
       "ticker": "MFBKX",
@@ -48493,6 +50103,16 @@
       "fund_identifier": "MFCIX",
       "fund_family": "Meridian",
       "fund_name": "Meridian Contrarian Fund"
+    },
+    {
+      "ticker": "MFEBX",
+      "nav_per_share": "53.840000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MFEBX.html",
+      "fund_identifier": "MFEBX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Value Fund Class B"
     },
     {
       "ticker": "MFECX",
@@ -48595,6 +50215,56 @@
       "fund_name": "MFS Lifetime 2050 Fund Class R"
     },
     {
+      "ticker": "MFFMX",
+      "nav_per_share": "27.340000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MFFMX.html",
+      "fund_identifier": "MFFMX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Lifetime\u00ae 2050 Fund Class R1"
+    },
+    {
+      "ticker": "MFFNX",
+      "nav_per_share": "27.740000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MFFNX.html",
+      "fund_identifier": "MFFNX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Lifetime\u00ae 2050 Fund Class R2"
+    },
+    {
+      "ticker": "MFFOX",
+      "nav_per_share": "27.790000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MFFOX.html",
+      "fund_identifier": "MFFOX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Lifetime\u00ae 2050 Fund Class R3"
+    },
+    {
+      "ticker": "MFFPX",
+      "nav_per_share": "28.170000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MFFPX.html",
+      "fund_identifier": "MFFPX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Lifetime\u00ae 2050 Fund Class R4"
+    },
+    {
+      "ticker": "MFFRX",
+      "nav_per_share": "27.750000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MFFRX.html",
+      "fund_identifier": "MFFRX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Lifetime\u00ae 2050 Fund Class B"
+    },
+    {
       "ticker": "MFFSX",
       "nav_per_share": "28.459999",
       "nav_as_of": "2026-09-08",
@@ -48605,6 +50275,16 @@
       "fund_name": "MFS Lifetime 2050 Fund All Classes"
     },
     {
+      "ticker": "MFGBX",
+      "nav_per_share": "8.350000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MFGBX.html",
+      "fund_identifier": "MFGBX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Government Securities Fund Class B"
+    },
+    {
       "ticker": "MFGDX",
       "nav_per_share": "8.380000",
       "nav_as_of": "2026-09-10",
@@ -48613,6 +50293,36 @@
       "fund_identifier": "MFGDX",
       "fund_family": "MFS Investment Management",
       "fund_name": "MFS Government Securities Fund Class C"
+    },
+    {
+      "ticker": "MFGGX",
+      "nav_per_share": "8.350000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MFGGX.html",
+      "fund_identifier": "MFGGX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Government Securities Fund Class R1"
+    },
+    {
+      "ticker": "MFGHX",
+      "nav_per_share": "8.360000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MFGHX.html",
+      "fund_identifier": "MFGHX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Government Securities Fund Class R3"
+    },
+    {
+      "ticker": "MFGJX",
+      "nav_per_share": "8.360000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MFGJX.html",
+      "fund_identifier": "MFGJX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Government Securities Fund Class R4"
     },
     {
       "ticker": "MFGKX",
@@ -48685,6 +50395,16 @@
       "fund_name": "MFS Lifetime 2060 Fund All Classes"
     },
     {
+      "ticker": "MFJBX",
+      "nav_per_share": "19.860000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MFJBX.html",
+      "fund_identifier": "MFJBX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Lifetime\u00ae 2060 Fund Class B"
+    },
+    {
       "ticker": "MFJCX",
       "nav_per_share": "19.450001",
       "nav_as_of": "2026-09-10",
@@ -48693,6 +50413,26 @@
       "fund_identifier": "MFJCX",
       "fund_family": "MFS Investment Management",
       "fund_name": "MFS Lifetime 2060 Fund Class C"
+    },
+    {
+      "ticker": "MFJEX",
+      "nav_per_share": "19.890000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MFJEX.html",
+      "fund_identifier": "MFJEX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Lifetime\u00ae 2060 Fund Class R1"
+    },
+    {
+      "ticker": "MFJGX",
+      "nav_per_share": "19.750000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MFJGX.html",
+      "fund_identifier": "MFJGX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Lifetime\u00ae 2060 Fund Class R2"
     },
     {
       "ticker": "MFJIX",
@@ -48713,6 +50453,26 @@
       "fund_identifier": "MFJKX",
       "fund_family": "MFS Investment Management",
       "fund_name": "MFS Lifetime 2060 Fund Class R"
+    },
+    {
+      "ticker": "MFJTX",
+      "nav_per_share": "19.780000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MFJTX.html",
+      "fund_identifier": "MFJTX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Lifetime\u00ae 2060 Fund Class R3"
+    },
+    {
+      "ticker": "MFJUX",
+      "nav_per_share": "19.960000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MFJUX.html",
+      "fund_identifier": "MFJUX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Lifetime\u00ae 2060 Fund Class R4"
     },
     {
       "ticker": "MFLX",
@@ -48865,6 +50625,16 @@
       "fund_name": "MFS Massachusetts Municipal Bond Fund All Classes"
     },
     {
+      "ticker": "MFWBX",
+      "nav_per_share": "19.100000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MFWBX.html",
+      "fund_identifier": "MFWBX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Global Total Return Fund Class B"
+    },
+    {
       "ticker": "MFWCX",
       "nav_per_share": "18.610001",
       "nav_as_of": "2026-09-10",
@@ -48875,6 +50645,26 @@
       "fund_name": "MFS Global Total Return Fund Class C"
     },
     {
+      "ticker": "MFWGX",
+      "nav_per_share": "18.390000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MFWGX.html",
+      "fund_identifier": "MFWGX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Global Total Return Fund Class R1"
+    },
+    {
+      "ticker": "MFWHX",
+      "nav_per_share": "18.490000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MFWHX.html",
+      "fund_identifier": "MFWHX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Global Total Return Fund Class R3"
+    },
+    {
       "ticker": "MFWIX",
       "nav_per_share": "18.270000",
       "nav_as_of": "2026-09-10",
@@ -48883,6 +50673,16 @@
       "fund_identifier": "MFWIX",
       "fund_family": "MFS Investment Management",
       "fund_name": "MFS Global Total Return Fund Class I"
+    },
+    {
+      "ticker": "MFWJX",
+      "nav_per_share": "18.630000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MFWJX.html",
+      "fund_identifier": "MFWJX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Global Total Return Fund Class R4"
     },
     {
       "ticker": "MFWLX",
@@ -48915,6 +50715,16 @@
       "fund_name": "MFS West Virginia Municipal Bond Fund All Classes"
     },
     {
+      "ticker": "MGALX",
+      "nav_per_share": "26.230000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MGALX.html",
+      "fund_identifier": "MGALX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Growth Allocation Fund Class R2"
+    },
+    {
       "ticker": "MGATX",
       "nav_per_share": "8.730000",
       "nav_as_of": "2026-09-10",
@@ -48933,6 +50743,16 @@
       "fund_identifier": "mfs-global-opportunistic-bond-fund-all-classes",
       "fund_family": "MFS Investment Management",
       "fund_name": "MFS Global Opportunistic Bond Fund All Classes"
+    },
+    {
+      "ticker": "MGBBX",
+      "nav_per_share": "7.930000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MGBBX.html",
+      "fund_identifier": "MGBBX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Global Opportunistic Bond Fund Class B"
     },
     {
       "ticker": "MGBDX",
@@ -48955,6 +50775,46 @@
       "fund_name": "MFS Global Opportunistic Bond Fund Class I"
     },
     {
+      "ticker": "MGBKX",
+      "nav_per_share": "7.920000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MGBKX.html",
+      "fund_identifier": "MGBKX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Global Opportunistic Bond Fund Class R1"
+    },
+    {
+      "ticker": "MGBLX",
+      "nav_per_share": "7.920000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MGBLX.html",
+      "fund_identifier": "MGBLX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Global Opportunistic Bond Fund Class R2"
+    },
+    {
+      "ticker": "MGBMX",
+      "nav_per_share": "7.920000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MGBMX.html",
+      "fund_identifier": "MGBMX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Global Opportunistic Bond Fund Class R3"
+    },
+    {
+      "ticker": "MGBNX",
+      "nav_per_share": "7.930000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MGBNX.html",
+      "fund_identifier": "MGBNX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Global Opportunistic Bond Fund Class R4"
+    },
+    {
       "ticker": "MGBOX",
       "nav_per_share": "7.920000",
       "nav_as_of": "2026-09-10",
@@ -48963,6 +50823,16 @@
       "fund_identifier": "MGBOX",
       "fund_family": "MFS Investment Management",
       "fund_name": "MFS Global Opportunistic Bond Fund Class R"
+    },
+    {
+      "ticker": "MGBRX",
+      "nav_per_share": "18.240000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MGBRX.html",
+      "fund_identifier": "MGBRX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Global Total Return Fund Class R2"
     },
     {
       "ticker": "MGC",
@@ -49055,6 +50925,16 @@
       "fund_name": "MFS Global Real Estate Fund Class C"
     },
     {
+      "ticker": "MGLDX",
+      "nav_per_share": "17.280000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MGLDX.html",
+      "fund_identifier": "MGLDX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Global Real Estate Fund Class B"
+    },
+    {
       "ticker": "MGLIX",
       "nav_per_share": "17.120001",
       "nav_as_of": "2026-09-10",
@@ -49063,6 +50943,46 @@
       "fund_identifier": "MGLIX",
       "fund_family": "MFS Investment Management",
       "fund_name": "MFS Global Real Estate Fund Class I"
+    },
+    {
+      "ticker": "MGLJX",
+      "nav_per_share": "16.870000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MGLJX.html",
+      "fund_identifier": "MGLJX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Global Real Estate Fund Class R1"
+    },
+    {
+      "ticker": "MGLKX",
+      "nav_per_share": "17.140000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MGLKX.html",
+      "fund_identifier": "MGLKX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Global Real Estate Fund Class R2"
+    },
+    {
+      "ticker": "MGLLX",
+      "nav_per_share": "17.120000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MGLLX.html",
+      "fund_identifier": "MGLLX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Global Real Estate Fund Class R3"
+    },
+    {
+      "ticker": "MGLMX",
+      "nav_per_share": "17.150000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MGLMX.html",
+      "fund_identifier": "MGLMX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Global Real Estate Fund Class R4"
     },
     {
       "ticker": "MGLRX",
@@ -49135,6 +51055,16 @@
       "fund_name": "MFS International Growth Fund All Classes"
     },
     {
+      "ticker": "MGRBX",
+      "nav_per_share": "45.050000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MGRBX.html",
+      "fund_identifier": "MGRBX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "International Growth Fund Class B"
+    },
+    {
       "ticker": "MGRCX",
       "nav_per_share": "42.959999",
       "nav_as_of": "2026-09-10",
@@ -49173,6 +51103,46 @@
       "fund_identifier": "MGRO",
       "fund_family": "VanEck",
       "fund_name": "VanEck Morningstar Wide Moat Growth ETF"
+    },
+    {
+      "ticker": "MGRQX",
+      "nav_per_share": "43.420000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MGRQX.html",
+      "fund_identifier": "MGRQX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "International Growth Fund Class R2"
+    },
+    {
+      "ticker": "MGRRX",
+      "nav_per_share": "41.440000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MGRRX.html",
+      "fund_identifier": "MGRRX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "International Growth Fund Class R1"
+    },
+    {
+      "ticker": "MGRTX",
+      "nav_per_share": "48.490000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MGRTX.html",
+      "fund_identifier": "MGRTX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "International Growth Fund Class R3"
+    },
+    {
+      "ticker": "MGRVX",
+      "nav_per_share": "49.450000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MGRVX.html",
+      "fund_identifier": "MGRVX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "International Growth Fund Class R4"
     },
     {
       "ticker": "MGSEX",
@@ -49215,6 +51185,16 @@
       "fund_name": "Vanguard Mega Cap Value ETF"
     },
     {
+      "ticker": "MGVSX",
+      "nav_per_share": "8.350000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MGVSX.html",
+      "fund_identifier": "MGVSX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Government Securities Fund Class R2"
+    },
+    {
       "ticker": "MGWIX",
       "nav_per_share": "27.540001",
       "nav_as_of": "2026-09-10",
@@ -49255,6 +51235,16 @@
       "fund_name": "Western Asset Municipal High Income Fund Inc."
     },
     {
+      "ticker": "MHIBX",
+      "nav_per_share": "3.050000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MHIBX.html",
+      "fund_identifier": "MHIBX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "High Income Fund Class B"
+    },
+    {
       "ticker": "MHICX",
       "nav_per_share": "3.060000",
       "nav_as_of": "2026-09-10",
@@ -49265,6 +51255,26 @@
       "fund_name": "MFS High Income Fund Class C"
     },
     {
+      "ticker": "MHIGX",
+      "nav_per_share": "3.050000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MHIGX.html",
+      "fund_identifier": "MHIGX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "High Income Fund Class R1"
+    },
+    {
+      "ticker": "MHIHX",
+      "nav_per_share": "3.040000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MHIHX.html",
+      "fund_identifier": "MHIHX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "High Income Fund Class R3"
+    },
+    {
       "ticker": "MHIIX",
       "nav_per_share": "3.040000",
       "nav_as_of": "2026-09-10",
@@ -49273,6 +51283,16 @@
       "fund_identifier": "MHIIX",
       "fund_family": "MFS Investment Management",
       "fund_name": "MFS High Income Fund Class I"
+    },
+    {
+      "ticker": "MHIJX",
+      "nav_per_share": "3.060000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MHIJX.html",
+      "fund_identifier": "MHIJX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "High Income Fund Class R4"
     },
     {
       "ticker": "MHIKX",
@@ -49305,6 +51325,16 @@
       "fund_name": "MFS Global High Yield Fund All Classes"
     },
     {
+      "ticker": "MHOBX",
+      "nav_per_share": "5.640000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MHOBX.html",
+      "fund_identifier": "MHOBX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Global High Yield Fund Class B"
+    },
+    {
       "ticker": "MHOCX",
       "nav_per_share": "5.620000",
       "nav_as_of": "2026-09-10",
@@ -49323,6 +51353,46 @@
       "fund_identifier": "MHOIX",
       "fund_family": "MFS Investment Management",
       "fund_name": "MFS Global High Yield Fund Class I"
+    },
+    {
+      "ticker": "MHORX",
+      "nav_per_share": "5.630000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MHORX.html",
+      "fund_identifier": "MHORX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Global High Yield Fund Class R1"
+    },
+    {
+      "ticker": "MHOSX",
+      "nav_per_share": "5.640000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MHOSX.html",
+      "fund_identifier": "MHOSX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Global High Yield Fund Class R2"
+    },
+    {
+      "ticker": "MHOTX",
+      "nav_per_share": "5.750000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MHOTX.html",
+      "fund_identifier": "MHOTX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Global High Yield Fund Class R3"
+    },
+    {
+      "ticker": "MHOUX",
+      "nav_per_share": "5.660000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MHOUX.html",
+      "fund_identifier": "MHOUX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Global High Yield Fund Class R4"
     },
     {
       "ticker": "MHOVX",
@@ -49365,6 +51435,16 @@
       "fund_name": "MFS Inflation-Adjusted Bond Fund All Classes"
     },
     {
+      "ticker": "MIABX",
+      "nav_per_share": "8.740000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MIABX.html",
+      "fund_identifier": "MIABX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Inflation-Adjusted Bond Fund Class B"
+    },
+    {
       "ticker": "MIACX",
       "nav_per_share": "8.700000",
       "nav_as_of": "2026-09-10",
@@ -49385,6 +51465,16 @@
       "fund_name": "MFS Aggressive Growth Allocation Fund Class I"
     },
     {
+      "ticker": "MIAHX",
+      "nav_per_share": "8.800000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MIAHX.html",
+      "fund_identifier": "MIAHX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Inflation-Adjusted Bond Fund Class R3"
+    },
+    {
       "ticker": "MIAIX",
       "nav_per_share": "8.810000",
       "nav_as_of": "2026-09-10",
@@ -49393,6 +51483,16 @@
       "fund_identifier": "MIAIX",
       "fund_family": "MFS Investment Management",
       "fund_name": "MFS Inflation-Adjusted Bond Fund Class I"
+    },
+    {
+      "ticker": "MIAJX",
+      "nav_per_share": "8.800000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MIAJX.html",
+      "fund_identifier": "MIAJX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Inflation-Adjusted Bond Fund Class R4"
     },
     {
       "ticker": "MIAKX",
@@ -49405,6 +51505,16 @@
       "fund_name": "MFS Inflation-Adjusted Bond Fund Class R"
     },
     {
+      "ticker": "MIALX",
+      "nav_per_share": "8.650000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MIALX.html",
+      "fund_identifier": "MIALX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Inflation-Adjusted Bond Fund Class R1"
+    },
+    {
       "ticker": "MIAQX",
       "nav_per_share": "9.200000",
       "nav_as_of": "2026-09-08",
@@ -49413,6 +51523,16 @@
       "fund_identifier": "american-funds-multi-sector-income-fund",
       "fund_family": "American Funds",
       "fund_name": "American Funds Multi-Sector Income Fund"
+    },
+    {
+      "ticker": "MIATX",
+      "nav_per_share": "8.760000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MIATX.html",
+      "fund_identifier": "MIATX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Inflation-Adjusted Bond Fund Class R2"
     },
     {
       "ticker": "MIBLX",
@@ -49465,6 +51585,16 @@
       "fund_name": "MFS International New Discovery Fund All Classes"
     },
     {
+      "ticker": "MIDBX",
+      "nav_per_share": "33.880000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MIDBX.html",
+      "fund_identifier": "MIDBX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "International New Discovery Fund Class B"
+    },
+    {
       "ticker": "MIDCX",
       "nav_per_share": "32.580002",
       "nav_as_of": "2026-09-10",
@@ -49505,6 +51635,36 @@
       "fund_name": "Marsico Midcap Growth Focus Fund Institutional"
     },
     {
+      "ticker": "MIDGX",
+      "nav_per_share": "30.970000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MIDGX.html",
+      "fund_identifier": "MIDGX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "International New Discovery Fund Class R1"
+    },
+    {
+      "ticker": "MIDHX",
+      "nav_per_share": "34.740000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MIDHX.html",
+      "fund_identifier": "MIDHX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "International New Discovery Fund Class R3"
+    },
+    {
+      "ticker": "MIDJX",
+      "nav_per_share": "35.160000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MIDJX.html",
+      "fund_identifier": "MIDJX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "International New Discovery Fund Class R4"
+    },
+    {
       "ticker": "MIDLX",
       "nav_per_share": "36.759998",
       "nav_as_of": "2026-09-10",
@@ -49513,6 +51673,16 @@
       "fund_identifier": "MIDLX",
       "fund_family": "MFS Investment Management",
       "fund_name": "MFS International New Discovery Fund Class R"
+    },
+    {
+      "ticker": "MIDRX",
+      "nav_per_share": "33.740000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MIDRX.html",
+      "fund_identifier": "MIDRX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "International New Discovery Fund Class R2"
     },
     {
       "ticker": "MIEIX",
@@ -49583,6 +51753,16 @@
       "fund_identifier": "MIGDX",
       "fund_family": "MFS Investment Management",
       "fund_name": "Massachusetts Investors Growth Stock Fund Class C"
+    },
+    {
+      "ticker": "MIGFX",
+      "nav_per_share": "40.170000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MIGFX.html",
+      "fund_identifier": "MIGFX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Massachusetts Investors Growth Stock Fund Class A"
     },
     {
       "ticker": "MIGHX",
@@ -49663,6 +51843,16 @@
       "fund_identifier": "MIGYX",
       "fund_family": "Invesco",
       "fund_name": "Invesco Main Street Fund Class Y"
+    },
+    {
+      "ticker": "MIHRX",
+      "nav_per_share": "3.030000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MIHRX.html",
+      "fund_identifier": "MIHRX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "High Income Fund Class R2"
     },
     {
       "ticker": "MIIOX",
@@ -49775,6 +51965,16 @@
       "fund_name": "MFS International Intrinsic Value Fund Class R1 shares"
     },
     {
+      "ticker": "MIOBX",
+      "nav_per_share": "5.720000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MIOBX.html",
+      "fund_identifier": "MIOBX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Income Fund Class B"
+    },
+    {
       "ticker": "MIOCX",
       "nav_per_share": "5.700000",
       "nav_as_of": "2026-09-10",
@@ -49813,6 +52013,16 @@
       "fund_identifier": "MIRSX",
       "fund_family": "Victory Capital",
       "fund_name": "Victory Integrity Small/Mid-Cap Value Fund"
+    },
+    {
+      "ticker": "MIRTX",
+      "nav_per_share": "34.390000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MIRTX.html",
+      "fund_identifier": "MIRTX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Massachusetts Investors Trust Class R2"
     },
     {
       "ticker": "MISAX",
@@ -49875,6 +52085,16 @@
       "fund_name": "MFS Mississippi Municipal Bond Fund All Classes"
     },
     {
+      "ticker": "MITBX",
+      "nav_per_share": "35.400000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MITBX.html",
+      "fund_identifier": "MITBX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Massachusetts Investors Trust Class B"
+    },
+    {
       "ticker": "MITCX",
       "nav_per_share": "33.660000",
       "nav_as_of": "2026-09-10",
@@ -49883,6 +52103,36 @@
       "fund_identifier": "MITCX",
       "fund_family": "MFS Investment Management",
       "fund_name": "Massachusetts Investors Trust Class C"
+    },
+    {
+      "ticker": "MITDX",
+      "nav_per_share": "39.140000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MITDX.html",
+      "fund_identifier": "MITDX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Massachusetts Investors Trust Class R4"
+    },
+    {
+      "ticker": "MITGX",
+      "nav_per_share": "33.050000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MITGX.html",
+      "fund_identifier": "MITGX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Massachusetts Investors Trust Class R1"
+    },
+    {
+      "ticker": "MITHX",
+      "nav_per_share": "37.610000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MITHX.html",
+      "fund_identifier": "MITHX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Massachusetts Investors Trust Class R3"
     },
     {
       "ticker": "MITIX",
@@ -49995,6 +52245,46 @@
       "fund_name": "MFS International Value Fund Class C"
     },
     {
+      "ticker": "MKVDX",
+      "nav_per_share": "19.260000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MKVDX.html",
+      "fund_identifier": "MKVDX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "International Value Fund Class R1"
+    },
+    {
+      "ticker": "MKVEX",
+      "nav_per_share": "19.400000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MKVEX.html",
+      "fund_identifier": "MKVEX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "International Value Fund Class R2"
+    },
+    {
+      "ticker": "MKVFX",
+      "nav_per_share": "19.440000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MKVFX.html",
+      "fund_identifier": "MKVFX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "International Value Fund Class R3"
+    },
+    {
+      "ticker": "MKVGX",
+      "nav_per_share": "19.510000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MKVGX.html",
+      "fund_identifier": "MKVGX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "International Value Fund Class R4"
+    },
+    {
       "ticker": "MKVHX",
       "nav_per_share": "19.490000",
       "nav_as_of": "2026-09-10",
@@ -50045,6 +52335,16 @@
       "fund_name": "MFS Lifetime 2040 Fund All Classes"
     },
     {
+      "ticker": "MLFBX",
+      "nav_per_share": "22.690000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MLFBX.html",
+      "fund_identifier": "MLFBX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Lifetime\u00ae 2040 Fund Class B"
+    },
+    {
       "ticker": "MLFCX",
       "nav_per_share": "21.990000",
       "nav_as_of": "2026-09-10",
@@ -50055,6 +52355,36 @@
       "fund_name": "MFS Lifetime 2040 Fund Class C"
     },
     {
+      "ticker": "MLFEX",
+      "nav_per_share": "22.280000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MLFEX.html",
+      "fund_identifier": "MLFEX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Lifetime\u00ae 2040 Fund Class R1"
+    },
+    {
+      "ticker": "MLFGX",
+      "nav_per_share": "22.430000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MLFGX.html",
+      "fund_identifier": "MLFGX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Lifetime\u00ae 2040 Fund Class R2"
+    },
+    {
+      "ticker": "MLFHX",
+      "nav_per_share": "22.600000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MLFHX.html",
+      "fund_identifier": "MLFHX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Lifetime\u00ae 2040 Fund Class R3"
+    },
+    {
       "ticker": "MLFIX",
       "nav_per_share": "22.840000",
       "nav_as_of": "2026-09-10",
@@ -50063,6 +52393,16 @@
       "fund_identifier": "MLFIX",
       "fund_family": "MFS Investment Management",
       "fund_name": "MFS Lifetime 2040 Fund Class I"
+    },
+    {
+      "ticker": "MLFJX",
+      "nav_per_share": "23.010000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MLFJX.html",
+      "fund_identifier": "MLFJX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Lifetime\u00ae 2040 Fund Class R4"
     },
     {
       "ticker": "MLFKX",
@@ -50085,6 +52425,16 @@
       "fund_name": "MFS Lifetime Income Fund All Classes"
     },
     {
+      "ticker": "MLLBX",
+      "nav_per_share": "12.380000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MLLBX.html",
+      "fund_identifier": "MLLBX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Lifetime\u00ae Income Fund Class B"
+    },
+    {
       "ticker": "MLLCX",
       "nav_per_share": "12.370000",
       "nav_as_of": "2026-09-10",
@@ -50093,6 +52443,36 @@
       "fund_identifier": "MLLCX",
       "fund_family": "MFS Investment Management",
       "fund_name": "MFS Lifetime Income Fund Class C"
+    },
+    {
+      "ticker": "MLLEX",
+      "nav_per_share": "12.400000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MLLEX.html",
+      "fund_identifier": "MLLEX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Lifetime\u00ae Income Fund Class R1"
+    },
+    {
+      "ticker": "MLLGX",
+      "nav_per_share": "12.380000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MLLGX.html",
+      "fund_identifier": "MLLGX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Lifetime\u00ae Income Fund Class R2"
+    },
+    {
+      "ticker": "MLLHX",
+      "nav_per_share": "12.380000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MLLHX.html",
+      "fund_identifier": "MLLHX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Lifetime\u00ae Income Fund Class R3"
     },
     {
       "ticker": "MLLIX",
@@ -50105,6 +52485,16 @@
       "fund_name": "MFS Lifetime Income Fund Class I"
     },
     {
+      "ticker": "MLLJX",
+      "nav_per_share": "12.370000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MLLJX.html",
+      "fund_identifier": "MLLJX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Lifetime\u00ae Income Fund Class R4"
+    },
+    {
       "ticker": "MLLKX",
       "nav_per_share": "12.420000",
       "nav_as_of": "2026-09-10",
@@ -50113,6 +52503,16 @@
       "fund_identifier": "MLLKX",
       "fund_family": "MFS Investment Management",
       "fund_name": "MFS Lifetime Income Fund Class R"
+    },
+    {
+      "ticker": "MLMRX",
+      "nav_per_share": "5.810000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MLMRX.html",
+      "fund_identifier": "MLMRX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Limited Maturity Fund Class R2"
     },
     {
       "ticker": "MLTAX",
@@ -50125,6 +52525,16 @@
       "fund_name": "MFS Lifetime 2030 Fund All Classes"
     },
     {
+      "ticker": "MLTBX",
+      "nav_per_share": "16.460000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MLTBX.html",
+      "fund_identifier": "MLTBX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Lifetime\u00ae 2030 Fund Class B"
+    },
+    {
       "ticker": "MLTCX",
       "nav_per_share": "16.120001",
       "nav_as_of": "2026-09-10",
@@ -50135,6 +52545,36 @@
       "fund_name": "MFS Lifetime 2030 Fund Class C"
     },
     {
+      "ticker": "MLTEX",
+      "nav_per_share": "16.330000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MLTEX.html",
+      "fund_identifier": "MLTEX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Lifetime\u00ae 2030 Fund Class R1"
+    },
+    {
+      "ticker": "MLTGX",
+      "nav_per_share": "16.360000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MLTGX.html",
+      "fund_identifier": "MLTGX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Lifetime\u00ae 2030 Fund Class R2"
+    },
+    {
+      "ticker": "MLTHX",
+      "nav_per_share": "16.470000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MLTHX.html",
+      "fund_identifier": "MLTHX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Lifetime\u00ae 2030 Fund Class R3"
+    },
+    {
       "ticker": "MLTIX",
       "nav_per_share": "16.670000",
       "nav_as_of": "2026-09-10",
@@ -50143,6 +52583,16 @@
       "fund_identifier": "MLTIX",
       "fund_family": "MFS Investment Management",
       "fund_name": "MFS Lifetime 2030 Fund Class I"
+    },
+    {
+      "ticker": "MLTJX",
+      "nav_per_share": "16.760000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MLTJX.html",
+      "fund_identifier": "MLTJX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Lifetime\u00ae 2030 Fund Class R4"
     },
     {
       "ticker": "MLTKX",
@@ -50165,6 +52615,16 @@
       "fund_name": "MFS Low Volatility Equity Fund All Classes"
     },
     {
+      "ticker": "MLVBX",
+      "nav_per_share": "18.660000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MLVBX.html",
+      "fund_identifier": "MLVBX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Low Volatility Equity Fund Class B"
+    },
+    {
       "ticker": "MLVGX",
       "nav_per_share": "18.510000",
       "nav_as_of": "2026-09-10",
@@ -50183,6 +52643,46 @@
       "fund_identifier": "MLVHX",
       "fund_family": "MFS Investment Management",
       "fund_name": "MFS Low Volatility Equity Fund Class I"
+    },
+    {
+      "ticker": "MLVMX",
+      "nav_per_share": "18.650000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MLVMX.html",
+      "fund_identifier": "MLVMX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Low Volatility Equity Fund Class R1"
+    },
+    {
+      "ticker": "MLVOX",
+      "nav_per_share": "18.880000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MLVOX.html",
+      "fund_identifier": "MLVOX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Low Volatility Equity Fund Class R2"
+    },
+    {
+      "ticker": "MLVPX",
+      "nav_per_share": "18.830000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MLVPX.html",
+      "fund_identifier": "MLVPX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Low Volatility Equity Fund Class R3"
+    },
+    {
+      "ticker": "MLVRX",
+      "nav_per_share": "18.780000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MLVRX.html",
+      "fund_identifier": "MLVRX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Low Volatility Equity Fund Class R4"
     },
     {
       "ticker": "MLVTX",
@@ -50345,6 +52845,16 @@
       "fund_name": "MFS Georgia Municipal Bond Fund All Classes"
     },
     {
+      "ticker": "MMHBX",
+      "nav_per_share": "7.180000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MMHBX.html",
+      "fund_identifier": "MMHBX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Municipal High Income Fund Class B"
+    },
+    {
       "ticker": "MMHCX",
       "nav_per_share": "7.180000",
       "nav_as_of": "2026-09-10",
@@ -50375,6 +52885,16 @@
       "fund_name": "MFS Municipal High Income Fund All Classes"
     },
     {
+      "ticker": "MMIBX",
+      "nav_per_share": "7.870000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MMIBX.html",
+      "fund_identifier": "MMIBX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Municipal Income Fund Class B"
+    },
+    {
       "ticker": "MMICX",
       "nav_per_share": "7.890000",
       "nav_as_of": "2026-09-10",
@@ -50383,6 +52903,26 @@
       "fund_identifier": "MMICX",
       "fund_family": "MFS Investment Management",
       "fund_name": "MFS Municipal Income Fund Class C"
+    },
+    {
+      "ticker": "MMIDX",
+      "nav_per_share": "7.870000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MMIDX.html",
+      "fund_identifier": "MMIDX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Municipal Income Fund Class A1"
+    },
+    {
+      "ticker": "MMIGX",
+      "nav_per_share": "7.880000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MMIGX.html",
+      "fund_identifier": "MMIGX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Municipal Income Fund Class B1"
     },
     {
       "ticker": "MMIIX",
@@ -50485,6 +53025,16 @@
       "fund_name": "Western Asset Managed Municipals Fund Inc."
     },
     {
+      "ticker": "MMUBX",
+      "nav_per_share": "24.940000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MMUBX.html",
+      "fund_identifier": "MMUBX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Utilities Fund Class B"
+    },
+    {
       "ticker": "MMUCX",
       "nav_per_share": "24.840000",
       "nav_as_of": "2026-09-10",
@@ -50505,6 +53055,26 @@
       "fund_name": "MFS Utilities Fund All Classes"
     },
     {
+      "ticker": "MMUGX",
+      "nav_per_share": "24.680000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MMUGX.html",
+      "fund_identifier": "MMUGX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Utilities Fund Class R1"
+    },
+    {
+      "ticker": "MMUHX",
+      "nav_per_share": "24.980000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MMUHX.html",
+      "fund_identifier": "MMUHX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Utilities Fund Class R3"
+    },
+    {
       "ticker": "MMUIX",
       "nav_per_share": "25.170000",
       "nav_as_of": "2026-09-10",
@@ -50513,6 +53083,16 @@
       "fund_identifier": "MMUIX",
       "fund_family": "MFS Investment Management",
       "fund_name": "MFS Utilities Fund Class I"
+    },
+    {
+      "ticker": "MMUJX",
+      "nav_per_share": "25.050000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MMUJX.html",
+      "fund_identifier": "MMUJX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Utilities Fund Class R4"
     },
     {
       "ticker": "MMUKX",
@@ -50815,6 +53395,36 @@
       "fund_name": "MFS Managed Wealth Fund Class I"
     },
     {
+      "ticker": "MNWSX",
+      "nav_per_share": "13.380000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MNWSX.html",
+      "fund_identifier": "MNWSX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Managed Wealth Fund Class R2"
+    },
+    {
+      "ticker": "MNWTX",
+      "nav_per_share": "13.540000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MNWTX.html",
+      "fund_identifier": "MNWTX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Managed Wealth Fund Class R3"
+    },
+    {
+      "ticker": "MNWUX",
+      "nav_per_share": "13.600000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MNWUX.html",
+      "fund_identifier": "MNWUX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Managed Wealth Fund Class R4"
+    },
+    {
       "ticker": "MNWZX",
       "nav_per_share": "13.620000",
       "nav_as_of": "2026-09-10",
@@ -51065,6 +53675,16 @@
       "fund_name": "MFS International Growth Fund Class I"
     },
     {
+      "ticker": "MQLBX",
+      "nav_per_share": "5.800000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MQLBX.html",
+      "fund_identifier": "MQLBX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Limited Maturity Fund Class B"
+    },
+    {
       "ticker": "MQLCX",
       "nav_per_share": "5.810000",
       "nav_as_of": "2026-09-10",
@@ -51085,6 +53705,26 @@
       "fund_name": "MFS Limited Maturity Fund All Classes"
     },
     {
+      "ticker": "MQLGX",
+      "nav_per_share": "5.790000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MQLGX.html",
+      "fund_identifier": "MQLGX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Limited Maturity Fund Class R1"
+    },
+    {
+      "ticker": "MQLHX",
+      "nav_per_share": "5.810000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MQLHX.html",
+      "fund_identifier": "MQLHX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Limited Maturity Fund Class R3"
+    },
+    {
       "ticker": "MQLIX",
       "nav_per_share": "5.780000",
       "nav_as_of": "2026-09-10",
@@ -51093,6 +53733,16 @@
       "fund_identifier": "MQLIX",
       "fund_family": "MFS Investment Management",
       "fund_name": "MFS Limited Maturity Fund Class I"
+    },
+    {
+      "ticker": "MQLJX",
+      "nav_per_share": "5.830000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MQLJX.html",
+      "fund_identifier": "MQLJX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Limited Maturity Fund Class R4"
     },
     {
       "ticker": "MQLKX",
@@ -51125,6 +53775,16 @@
       "fund_name": "Meridian Growth Fund"
     },
     {
+      "ticker": "MRBBX",
+      "nav_per_share": "9.320000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MRBBX.html",
+      "fund_identifier": "MRBBX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Total Return Bond Fund Class B"
+    },
+    {
       "ticker": "MRBCX",
       "nav_per_share": "9.310000",
       "nav_as_of": "2026-09-10",
@@ -51145,6 +53805,26 @@
       "fund_name": "MFS Total Return Bond Fund All Classes"
     },
     {
+      "ticker": "MRBGX",
+      "nav_per_share": "9.310000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MRBGX.html",
+      "fund_identifier": "MRBGX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Total Return Bond Fund Class R1"
+    },
+    {
+      "ticker": "MRBHX",
+      "nav_per_share": "9.290000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MRBHX.html",
+      "fund_identifier": "MRBHX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Total Return Bond Fund Class R3"
+    },
+    {
       "ticker": "MRBIX",
       "nav_per_share": "9.300000",
       "nav_as_of": "2026-09-10",
@@ -51153,6 +53833,16 @@
       "fund_identifier": "MRBIX",
       "fund_family": "MFS Investment Management",
       "fund_name": "MFS Total Return Bond Fund Class I"
+    },
+    {
+      "ticker": "MRBJX",
+      "nav_per_share": "9.300000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MRBJX.html",
+      "fund_identifier": "MRBJX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Total Return Bond Fund Class R4"
     },
     {
       "ticker": "MRBKX",
@@ -51285,6 +53975,16 @@
       "fund_name": "MFS Core Equity Fund Class I"
     },
     {
+      "ticker": "MRIBX",
+      "nav_per_share": "28.360000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MRIBX.html",
+      "fund_identifier": "MRIBX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Research International Fund Class B"
+    },
+    {
       "ticker": "MRICX",
       "nav_per_share": "27.170000",
       "nav_as_of": "2026-09-10",
@@ -51365,6 +54065,16 @@
       "fund_name": "Meridian Growth Fund"
     },
     {
+      "ticker": "MRRRX",
+      "nav_per_share": "9.300000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MRRRX.html",
+      "fund_identifier": "MRRRX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Total Return Bond Fund Class R2"
+    },
+    {
       "ticker": "MRSAX",
       "nav_per_share": "29.650000",
       "nav_as_of": "2026-09-08",
@@ -51373,6 +54083,26 @@
       "fund_identifier": "mfs-research-international-fund-all-classes",
       "fund_family": "MFS Investment Management",
       "fund_name": "MFS Research International Fund All Classes"
+    },
+    {
+      "ticker": "MRSGX",
+      "nav_per_share": "26.420000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MRSGX.html",
+      "fund_identifier": "MRSGX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Research International Fund Class R1"
+    },
+    {
+      "ticker": "MRSHX",
+      "nav_per_share": "28.710000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MRSHX.html",
+      "fund_identifier": "MRSHX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Research International Fund Class R3"
     },
     {
       "ticker": "MRSIX",
@@ -51385,6 +54115,16 @@
       "fund_name": "MFS Research International Fund Class I"
     },
     {
+      "ticker": "MRSJX",
+      "nav_per_share": "29.140000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MRSJX.html",
+      "fund_identifier": "MRSJX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Research International Fund Class R4"
+    },
+    {
       "ticker": "MRSKX",
       "nav_per_share": "28.980000",
       "nav_as_of": "2026-09-10",
@@ -51393,6 +54133,16 @@
       "fund_identifier": "MRSKX",
       "fund_family": "MFS Investment Management",
       "fund_name": "MFS Research International Fund Class R"
+    },
+    {
+      "ticker": "MRSRX",
+      "nav_per_share": "27.910000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MRSRX.html",
+      "fund_identifier": "MRSRX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Research International Fund Class R2"
     },
     {
       "ticker": "MRVSX",
@@ -51433,6 +54183,36 @@
       "fund_identifier": "MSEIX",
       "fund_family": "AMG",
       "fund_name": "AMG Veritas Asia Pacific Fund Class I"
+    },
+    {
+      "ticker": "MSFFX",
+      "nav_per_share": "20.020000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MSFFX.html",
+      "fund_identifier": "MSFFX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Total Return Fund Class R1"
+    },
+    {
+      "ticker": "MSFHX",
+      "nav_per_share": "20.080000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MSFHX.html",
+      "fund_identifier": "MSFHX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Total Return Fund Class R3"
+    },
+    {
+      "ticker": "MSFJX",
+      "nav_per_share": "20.090000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MSFJX.html",
+      "fund_identifier": "MSFJX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Total Return Fund Class R4"
     },
     {
       "ticker": "MSFKX",
@@ -51613,6 +54393,16 @@
       "fund_identifier": "MSRRX",
       "fund_family": "MFS Investment Management",
       "fund_name": "MFS Research Fund Class R2 shares"
+    },
+    {
+      "ticker": "MSRXX",
+      "nav_per_share": "1.000000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MSRXX.html",
+      "fund_identifier": "MSRXX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "U.S. Government Cash Reserve Fund Class A"
     },
     {
       "ticker": "MSSCX",
@@ -51805,6 +54595,16 @@
       "fund_name": "WisdomTree Mortgage Plus Bond Fund"
     },
     {
+      "ticker": "MTLBX",
+      "nav_per_share": "7.880000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MTLBX.html",
+      "fund_identifier": "MTLBX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Municipal Limited Maturity Fund Class B"
+    },
+    {
       "ticker": "MTLCX",
       "nav_per_share": "7.890000",
       "nav_as_of": "2026-09-10",
@@ -51855,6 +54655,16 @@
       "fund_name": "Invesco International Growth Focus ETF"
     },
     {
+      "ticker": "MTRBX",
+      "nav_per_share": "20.170000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MTRBX.html",
+      "fund_identifier": "MTRBX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Total Return Fund Class B"
+    },
+    {
       "ticker": "MTRCX",
       "nav_per_share": "20.309999",
       "nav_as_of": "2026-09-10",
@@ -51873,6 +54683,16 @@
       "fund_identifier": "MTRIX",
       "fund_family": "MFS Investment Management",
       "fund_name": "MFS Total Return Fund Class I"
+    },
+    {
+      "ticker": "MTRRX",
+      "nav_per_share": "20.170000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MTRRX.html",
+      "fund_identifier": "MTRRX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Total Return Fund Class R2"
     },
     {
       "ticker": "MTSCX",
@@ -51985,6 +54805,16 @@
       "fund_name": "MFS Blended Research Core Equity Fund Class R6 shares"
     },
     {
+      "ticker": "MURRX",
+      "nav_per_share": "24.900000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MURRX.html",
+      "fund_identifier": "MURRX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Utilities Fund Class R2"
+    },
+    {
       "ticker": "MUSBX",
       "nav_per_share": "40.750000",
       "nav_as_of": "2026-09-10",
@@ -52095,6 +54925,36 @@
       "fund_name": "MFS Mid Cap Value Fund Class C"
     },
     {
+      "ticker": "MVCGX",
+      "nav_per_share": "30.140000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MVCGX.html",
+      "fund_identifier": "MVCGX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Mid Cap Value Fund Class R1"
+    },
+    {
+      "ticker": "MVCHX",
+      "nav_per_share": "33.740000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MVCHX.html",
+      "fund_identifier": "MVCHX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Mid Cap Value Fund Class R3"
+    },
+    {
+      "ticker": "MVCJX",
+      "nav_per_share": "34.250000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MVCJX.html",
+      "fund_identifier": "MVCJX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Mid Cap Value Fund Class R4"
+    },
+    {
       "ticker": "MVCKX",
       "nav_per_share": "35.369999",
       "nav_as_of": "2026-09-10",
@@ -52113,6 +54973,16 @@
       "fund_identifier": "mfs-low-volatility-global-equity-fund-all-classes",
       "fund_family": "MFS Investment Management",
       "fund_name": "MFS Low Volatility Global Equity Fund All Classes"
+    },
+    {
+      "ticker": "MVGBX",
+      "nav_per_share": "18.210000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MVGBX.html",
+      "fund_identifier": "MVGBX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Low Volatility Global Equity Fund Class B"
     },
     {
       "ticker": "MVGCX",
@@ -52135,6 +55005,46 @@
       "fund_name": "MFS Low Volatility Global Equity Fund Class I"
     },
     {
+      "ticker": "MVGJX",
+      "nav_per_share": "18.270000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MVGJX.html",
+      "fund_identifier": "MVGJX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Low Volatility Global Equity Fund Class R1"
+    },
+    {
+      "ticker": "MVGKX",
+      "nav_per_share": "18.420000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MVGKX.html",
+      "fund_identifier": "MVGKX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Low Volatility Global Equity Fund Class R2"
+    },
+    {
+      "ticker": "MVGLX",
+      "nav_per_share": "18.430000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MVGLX.html",
+      "fund_identifier": "MVGLX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Low Volatility Global Equity Fund Class R3"
+    },
+    {
+      "ticker": "MVGMX",
+      "nav_per_share": "18.410000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MVGMX.html",
+      "fund_identifier": "MVGMX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Low Volatility Global Equity Fund Class R4"
+    },
+    {
       "ticker": "MVGNX",
       "nav_per_share": "18.379999",
       "nav_as_of": "2026-09-10",
@@ -52143,6 +55053,16 @@
       "fund_identifier": "MVGNX",
       "fund_family": "MFS Investment Management",
       "fund_name": "MFS Low Volatility Global Equity Fund Class R"
+    },
+    {
+      "ticker": "MVRRX",
+      "nav_per_share": "53.010000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/MVRRX.html",
+      "fund_identifier": "MVRRX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Value Fund Class R2"
     },
     {
       "ticker": "MVSSX",
@@ -52925,6 +55845,16 @@
       "fund_name": "MFS New Discovery Value Fund All Classes"
     },
     {
+      "ticker": "NDVBX",
+      "nav_per_share": "16.400000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/NDVBX.html",
+      "fund_identifier": "NDVBX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "New Discovery Value Fund Class B"
+    },
+    {
       "ticker": "NDVCX",
       "nav_per_share": "16.200001",
       "nav_as_of": "2026-09-10",
@@ -52943,6 +55873,46 @@
       "fund_identifier": "NDVIX",
       "fund_family": "MFS Investment Management",
       "fund_name": "MFS New Discovery Value Fund Class I"
+    },
+    {
+      "ticker": "NDVRX",
+      "nav_per_share": "16.260000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/NDVRX.html",
+      "fund_identifier": "NDVRX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "New Discovery Value Fund Class R1"
+    },
+    {
+      "ticker": "NDVSX",
+      "nav_per_share": "17.660000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/NDVSX.html",
+      "fund_identifier": "NDVSX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "New Discovery Value Fund Class R2"
+    },
+    {
+      "ticker": "NDVTX",
+      "nav_per_share": "17.990000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/NDVTX.html",
+      "fund_identifier": "NDVTX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "New Discovery Value Fund Class R3"
+    },
+    {
+      "ticker": "NDVUX",
+      "nav_per_share": "18.230000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/NDVUX.html",
+      "fund_identifier": "NDVUX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "New Discovery Value Fund Class R4"
     },
     {
       "ticker": "NDVVX",
@@ -73283,6 +76253,46 @@
       "fund_identifier": "UIVIX",
       "fund_family": "MFS Investment Management",
       "fund_name": "MFS Intrinsic Equity Fund Class I"
+    },
+    {
+      "ticker": "UIVMX",
+      "nav_per_share": "12.980000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/UIVMX.html",
+      "fund_identifier": "UIVMX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Intrinsic Equity Fund Class R1"
+    },
+    {
+      "ticker": "UIVNX",
+      "nav_per_share": "13.250000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/UIVNX.html",
+      "fund_identifier": "UIVNX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Intrinsic Equity Fund Class R2"
+    },
+    {
+      "ticker": "UIVPX",
+      "nav_per_share": "13.280000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/UIVPX.html",
+      "fund_identifier": "UIVPX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Intrinsic Equity Fund Class R3"
+    },
+    {
+      "ticker": "UIVQX",
+      "nav_per_share": "13.310000",
+      "nav_as_of": "2026-09-10",
+      "source": "issuer",
+      "source_url": "https://www.mfs.com/en-us/individual-investor/product-strategies/mutual-funds/UIVQX.html",
+      "fund_identifier": "UIVQX",
+      "fund_family": "MFS Investment Management",
+      "fund_name": "Intrinsic Equity Fund Class R4"
     },
     {
       "ticker": "UIVRX",
