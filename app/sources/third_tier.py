@@ -229,7 +229,13 @@ class AmericanCenturySource(HtmlTableSource):
         "https://res.americancentury.com/2022-Estimated-Distributions_ACI-MFs-and-ETFs_final "
         "(title 2022 Estimated Distributions as of September 30, 2022; TWCGX income $0.0037 / LT $0.7247 / 2.00% of NAV). "
         "Daily bond income lines skipped. 2024 unversioned retail PDF is the 2025 book; "
-        "2021 sibling PDF was not fetchable. Historical-distribution CSV is not public."
+        "2021 sibling PDF was not fetchable. Historical-distribution CSV is not public. "
+        "Wave 17 leftover Avantis (same ACI family; not on the retail November book): "
+        "https://res.avantisinvestors.com/docs/estimated-distributions-november-avantis.pdf "
+        "(as of 10/31/2025; AVUVX OI $0.2523 / ST $0.0753 / LT $0.8562; AVUV income "
+        "$0.2735; ETF ST/LT dashes omitted). 2023 leftover "
+        "estimated-distributions-september-avantis.pdf is the 2023 book (created "
+        "2023-11-16). 2024 Avantis sibling URLs 404. Daily NII bond MF lines skipped."
     )
     live_limitations = "Family HTML grid is JavaScript-rendered; the retail PDF is the parseable book."
 
@@ -274,6 +280,22 @@ class AmericanCenturySource(HtmlTableSource):
                 fixture="2025_paid_distributions.html",
                 live=False,
                 large_aum_only=True,
+            ),
+            PageSpec(
+                name="remaining_avantis_2025_estimated_distributions",
+                url="https://res.avantisinvestors.com/docs/estimated-distributions-november-avantis.pdf",
+                fixture="remaining_avantis_2025_estimated_distributions.html",
+                live=False,
+                large_aum_only=False,
+                role="estimate",
+            ),
+            PageSpec(
+                name="remaining_avantis_2023_estimated_distributions",
+                url="https://res.avantisinvestors.com/docs/estimated-distributions-september-avantis.pdf",
+                fixture="remaining_avantis_2023_estimated_distributions.html",
+                live=False,
+                large_aum_only=False,
+                role="history",
             ),
         ]
 
