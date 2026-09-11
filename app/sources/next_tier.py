@@ -129,7 +129,13 @@ class BnyMellonSource(HtmlTableSource):
         "DMCVX / PEOPX product URLs 404. Research Growth page prints DREQX "
         "(DWOAX Class A not on that table). Family 2021 estimate PDF URLs were 0-byte; "
         "2023 Dreyfus estimate PDF is preliminary — not YE finals. "
-        "No public filled ICI file. 2024 family estimate PDF URL was empty."
+        "No public filled ICI file. 2024 family estimate PDF URL was empty. "
+        "Wave 16 leftover product-page Distributions History tables add "
+        "International Equity / International Stock Index / Opportunistic Small "
+        "Cap / Small Cap Value / Smallcap Stock Index share classes (NIEAX 2025 "
+        "ST $1.5720 / LT $1.0947). Existing DGAGX / DAGVX / DREVX / DREQX / "
+        "DNLDX / PGROX / DGLAX heroes are not re-emitted. Income Stock / "
+        "Institutional S&P 500 product URLs 404 this session."
     )
     live_limitations = "Estimates are PDF, not an HTML grid. Fixture transcribes the public PDF / product table."
 
@@ -186,6 +192,17 @@ class BnyMellonSource(HtmlTableSource):
                 fixture="2021_paid_year_end.html",
                 live=False,
                 large_aum_only=True,
+            ),
+            PageSpec(
+                name="remaining_share_class_paid_year_end",
+                url=(
+                    "https://www.bny.com/investments/us/en/intermediary/products/lt/"
+                    "fund/bny-mellon-international-equity-fund.html"
+                ),
+                fixture="remaining_share_class_paid_year_end.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
             ),
         ]
 

@@ -143,8 +143,9 @@ def test_full_book_vanguard_ici_and_next_wave() -> None:
     assert len(vg_tickers) >= 250
 
     bny_funds, bny_tickers = _funds_and_tickers(BnyMellonSource())
-    assert {"DGAGX", "DAGVX", "DREVX", "DREQX", "DNLDX", "PGROX", "DGLAX", "BKCG", "BKLC"} <= bny_tickers
-    assert len(bny_funds) >= 40
+    assert {"DGAGX", "DAGVX", "DREVX", "DREQX", "DNLDX", "PGROX", "DGLAX", "BKCG", "BKLC", "NIEAX"} <= bny_tickers
+    assert len(bny_funds) >= 50
+    assert len(bny_tickers) >= 50
 
     nt_funds, nt_tickers = _funds_and_tickers(NorthernTrustSource())
     assert {"NOSIX", "NOMIX", "NSGRX", "NMMEX"} <= nt_tickers
@@ -190,9 +191,9 @@ def test_full_book_harbor_voya_keep_heroes() -> None:
     assert len(nylife_tickers) >= 20
 
     touchstone_funds, touchstone_tickers = _funds_and_tickers(TouchstoneSource())
-    assert {"TVLAX", "TSEC", "SIO", "TUSI", "TGVFX", "TEGAX", "TSNAX", "SAGWX"} <= touchstone_tickers
-    assert len(touchstone_tickers) >= 14
-    assert len(touchstone_funds) >= 15
+    assert {"TVLAX", "TSEC", "SIO", "TUSI", "TGVFX", "TEGAX", "TSNAX", "SAGWX", "TQCAX"} <= touchstone_tickers
+    assert len(touchstone_tickers) >= 100
+    assert len(touchstone_funds) >= 100
 
     victory_funds, victory_tickers = _funds_and_tickers(VictorySource())
     assert {"MMEAX", "VETAX", "USSPX", "RSGRX"} <= victory_tickers

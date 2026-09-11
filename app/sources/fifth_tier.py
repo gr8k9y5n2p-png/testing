@@ -384,9 +384,12 @@ class TouchstoneSource(HtmlTableSource):
         "Record 12/10/2025; ex/pay 12/11/2025. Class A tickers from official "
         "westernsouthern.com/touchstone product pages (TVLAX / TMAPX / SEBLX / TFOAX / "
         "TACLX / TCVAX / TEQAX / TGVFX / TEGAX / TSNAX / SAGWX); ETF tickers "
-        "TSEC / SIO / TUSI from official Touchstone ETF pages. Dividend Equity / "
-        "International Value / Large Cap Focused / Large Company Growth remain "
-        "name-only. "
+        "TSEC / SIO / TUSI from official Touchstone ETF pages. Wave 16 leftover "
+        "share-class product-page distributionData JSON adds ticker-keyed "
+        "December 2021–2025 paid rows including leftover Dividend Equity TQCAX "
+        "(2025 ST $0.117360 / LT $0.850710), International Value SWRLX, and "
+        "Large Cap Focused SENCX. Existing Class A / ETF heroes are not "
+        "re-emitted. Large Company Growth product page 404 this session. "
         "2024 supplemental tax PDF is DRD / Treasury-source, not an ST/LT CG book."
     )
     live_limitations = "Year-end book is PDF. Fixture transcribes public Class A rows."
@@ -400,6 +403,14 @@ class TouchstoneSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
+            ),
+            PageSpec(
+                name="remaining_share_class_paid_year_end",
+                url="https://www.touchstoneinvestments.com/mutual-funds",
+                fixture="remaining_share_class_paid_year_end.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
             ),
         ]
 
