@@ -22,6 +22,7 @@ export {
   HIGHLIGHTS_MIN_YEAR_PEERS,
   OUTLIER_THRESHOLD_PP,
   illustrationPriorYearPaidEvents,
+  mergePaidHistorySearchFunds,
   paidHistoryViews,
   paidHistoryYearOf,
   priorPaidHistoryYear,

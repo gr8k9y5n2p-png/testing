@@ -10,6 +10,7 @@ import {
 import {
   buildSearchTableFunds,
   currentPaidHistoryYear,
+  mergePaidHistorySearchFunds,
   paidHistoryViews,
   paidHistoryYearOf,
   splitFundsByBucket,
@@ -533,6 +534,169 @@ describe("Search Paid history 2026 midyear paids", () => {
     );
     assert.ok(
       y2025.some((row) => Math.abs(row.estimatedDistributionAmount - 5.073) < 1e-6),
+    );
+  });
+});
+
+describe("Search pick does not leak into filtered Paid History", () => {
+  function firstTrustPaid(
+    ticker: string,
+    fundName: string,
+    amount: string,
+  ) {
+    return hydrate(
+      ticker,
+      fundName,
+      "First Trust",
+      false,
+      [
+        row({
+          id: `${ticker.toLowerCase()}-2025`,
+          ticker,
+          fund_name: fundName,
+          fund_family: "First Trust",
+          estimate_type: "ordinary_income",
+          amount,
+          amount_unit: "per_share",
+          ex_date: "2025-12-12",
+          payable_date: "2025-12-31",
+          as_of: "2025-12-12",
+          publication_stage: "final",
+        }),
+      ],
+    );
+  }
+
+  it("keeps selected FBGRX (Fidelity) out of Paid History when Family is First Trust", () => {
+    const fbgrx = hydrate(
+      "FBGRX",
+      "Blue Chip Growth",
+      "Fidelity",
+      true,
+      FBGRX_ROWS,
+    );
+    const rnem = firstTrustPaid(
+      "RNEM",
+      "Emerging Markets Equity Select ETF",
+      "0.3324",
+    );
+    const caaa = firstTrustPaid("CAAA", "First Trust AAA CMBS ETF", "0.1380");
+    const aflg = firstTrustPaid(
+      "AFLG",
+      "First Trust Active Factor Large Cap ETF",
+      "0.1799",
+    );
+
+    const leaked = paidHistoryViews([...[fbgrx], ...[rnem, caaa, aflg]], 2025);
+    assert.ok(
+      leaked.some((row) => row.ticker === "FBGRX"),
+      "unfiltered merge still includes the Search pick (precondition)",
+    );
+
+    const items = mergePaidHistorySearchFunds(
+      [rnem, caaa, aflg],
+      [fbgrx],
+      { family: "First Trust", year: 2025 },
+    );
+    const history = paidHistoryViews(items, 2025);
+    assert.equal(
+      history.some((row) => row.ticker === "FBGRX"),
+      false,
+      "selected FBGRX must not appear in First Trust Paid History",
+    );
+    assert.equal(
+      history.some((row) => Math.abs(row.estimatedDistributionAmount - 5.073) < 1e-6),
+      false,
+    );
+    assert.deepEqual(
+      [...new Set(history.map((row) => row.family))],
+      ["First Trust"],
+    );
+    assert.ok(history.some((row) => row.ticker === "RNEM"));
+    assert.ok(history.some((row) => row.ticker === "CAAA"));
+    assert.ok(history.some((row) => row.ticker === "AFLG"));
+  });
+
+  it("still prepends a Search pick that matches Family + year", () => {
+    const fbgrx = hydrate(
+      "FBGRX",
+      "Blue Chip Growth",
+      "Fidelity",
+      true,
+      FBGRX_ROWS,
+    );
+    const fxaix = hydrate(
+      "FXAIX",
+      "500 Index Fund",
+      "Fidelity",
+      false,
+      [
+        row({
+          id: "fxaix-2025",
+          ticker: "FXAIX",
+          fund_name: "500 Index Fund",
+          fund_family: "Fidelity",
+          estimate_type: "ordinary_income",
+          amount: "0.5000",
+          amount_unit: "per_share",
+          ex_date: "2025-12-12",
+          payable_date: "2025-12-31",
+          as_of: "2025-12-12",
+          publication_stage: "final",
+        }),
+      ],
+    );
+    const items = mergePaidHistorySearchFunds([fxaix], [fbgrx], {
+      family: "Fidelity",
+      year: 2025,
+    });
+    const history = paidHistoryViews(items, 2025);
+    assert.ok(
+      history.some(
+        (row) =>
+          row.ticker === "FBGRX" &&
+          Math.abs(row.estimatedDistributionAmount - 5.073) < 1e-6,
+      ),
+      "matching Fidelity Search pick may still hydrate Paid History",
+    );
+  });
+
+  it("drops a Search pick that matches Family but not the Paid History year", () => {
+    const fbgrx = hydrate(
+      "FBGRX",
+      "Blue Chip Growth",
+      "Fidelity",
+      true,
+      FBGRX_ROWS,
+    );
+    const items = mergePaidHistorySearchFunds([], [fbgrx], {
+      family: "Fidelity",
+      year: 2024,
+    });
+    assert.equal(items.length, 0);
+    assert.equal(
+      paidHistoryViews(items, 2024).some((row) => row.ticker === "FBGRX"),
+      false,
+    );
+  });
+
+  it("drops a Search pick that fails Category even when Family matches", () => {
+    const fbgrx = hydrate(
+      "FBGRX",
+      "Blue Chip Growth",
+      "Fidelity",
+      true,
+      FBGRX_ROWS,
+    );
+    fbgrx.category = "Large Growth";
+    const items = mergePaidHistorySearchFunds([], [fbgrx], {
+      family: "Fidelity",
+      category: "Large Blend",
+      year: 2025,
+    });
+    assert.equal(
+      paidHistoryViews(items, 2025).some((row) => row.ticker === "FBGRX"),
+      false,
     );
   });
 });

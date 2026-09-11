@@ -153,6 +153,11 @@ describe("Search Paid History year-book page", () => {
     assert.match(dists, /Never walks the book/);
     assert.match(dashboard, /paid_history/);
     assert.match(dashboard, /paidFunds/);
+    assert.match(dashboard, /mergePaidHistorySearchFunds/);
+    assert.doesNotMatch(
+      dashboard,
+      /\[\.\.\.focusedItems, \.\.\.paidPage\.items\]/,
+    );
     assert.match(dashboard, /paidFacets/);
     assert.match(dashboard, /setPaidOffset\(0\)/);
     assert.match(dashboard, /sort: sortKey/);
@@ -172,6 +177,8 @@ describe("Search Paid History year-book page", () => {
     assert.match(table, /Paid History filters/);
     assert.match(table, /column="estimatedDistributionAmount"/);
     assert.match(table, /currently displayed Paid History rows/);
+    assert.match(table, /showAnnounced=\{false\}/);
+    assert.match(table, /showAnnounced/);
   });
 
   it("maps Dist $/Share and Ex-div onto Data sort= / order=", () => {
