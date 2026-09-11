@@ -647,6 +647,13 @@ class TRowePriceSource(HtmlTableSource):
         "(no public HTML siblings): "
         "https://www.troweprice.com/content/dam/fai/Funds/Tax_Center/2021-Year-End-Tax-Distributions.pdf "
         "and .../2022-Year-End-Tax-Distributions.pdf. "
+        "Wave 13 adds the official ETF YE HTML books "
+        "https://www.troweprice.com/personal-investing/resources/planning/tax/"
+        "dividend-distributions/etfs/2025-year-end-distributions.html "
+        "(and 2024 / 2023 siblings): TCAF 2025 income $0.1916; THEQ income "
+        "$0.1437 / ST $0.0548 / LT $0.0237; TVAL $0.4061. All-dash rows "
+        "omitted. Variable QA* share classes are not on the public ticker "
+        "YE HTML — unmatched. "
         "Verified 2026-09-07; e.g. TRBCX LT $10.9575 (2025), $16.1515 (2024), $5.2095 (2023), "
         "$6.0394 final / $5.75 prelim (2022), $16.03 (2021). Em-dash / Paid monthly omitted."
     )
@@ -708,5 +715,25 @@ class TRowePriceSource(HtmlTableSource):
                 ),
                 fixture="2022_preliminary_estimated_distributions.html",
                 live=False,
+            ),
+            PageSpec(
+                name="etf_year_end_2025",
+                url=f"{base.replace('mutual-funds', 'etfs')}/2025-year-end-distributions.html",
+                fixture="2025_etf_year_end_distributions.html",
+                live=True,
+            ),
+            PageSpec(
+                name="etf_year_end_2024",
+                url=f"{base.replace('mutual-funds', 'etfs')}/2024-year-end-distributions.html",
+                fixture="2024_etf_year_end_distributions.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="etf_year_end_2023",
+                url=f"{base.replace('mutual-funds', 'etfs')}/2023-year-end-distributions.html",
+                fixture="2023_etf_year_end_distributions.html",
+                live=False,
+                role="history",
             ),
         ]

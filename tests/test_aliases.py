@@ -191,8 +191,10 @@ def test_name_keyed_family_maps_attach_retail_tickers() -> None:
         assert ticker_out == ticker
         assert ticker in {fund.ticker for fund in catalog}
 
-    # Wrong share class / institutional-only names stay unmapped.
-    assert class_a_for_name("MFS Growth Fund Class I", fund_family="MFS Investment Management") is None
+    # Class I maps to the official I ticker, not Class A MFEGX.
+    growth_i = class_a_for_name("MFS Growth Fund Class I", fund_family="MFS Investment Management")
+    assert growth_i is not None
+    assert growth_i.ticker == "MFEIX"
     assert class_a_for_name("John Hancock Marathon Asset-Based Lending Fund", fund_family="John Hancock / Manulife") is None
 
 
