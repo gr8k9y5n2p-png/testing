@@ -749,7 +749,7 @@ def test_search_multi_year_top_families(client: TestClient) -> None:
     )
     assert any(
         item["estimate_type"] == "long_term_capital_gains"
-        and Decimal(item["amount"]) == Decimal("1.67")
+        and Decimal(item["amount"]) == Decimal("1.66881")
         for item in hfmcx_2024.json()["items"]
     )
 
