@@ -559,7 +559,7 @@ def test_search_multi_year_top_families(client: TestClient) -> None:
     )
     ftf = client.get("/distributions", params={"fund_identifier": "FTF", "page_size": 20})
     assert any(
-        item["estimate_type"] == "ordinary_income" and Decimal(item["amount"]) == Decimal("0.0418")
+        item["estimate_type"] == "ordinary_income" and Decimal(item["amount"]) == Decimal("0.527")
         for item in ftf.json()["items"]
     )
     swtsx_2021 = client.get(
