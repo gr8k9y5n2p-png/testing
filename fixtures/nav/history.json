@@ -1,7 +1,7 @@
 {
   "field": "regular_close",
   "field_notes": "Daily liquid close / mutual-fund NAV on or before a distribution day (ex_date, else payable_date). Not today's NAV. Never invented.",
-  "count": 9696,
+  "count": 9727,
   "items": [
     {
       "ticker": "AAAFX",
@@ -4561,6 +4561,69 @@
       "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AMALX?interval=1d&period1=1765152000&period2=1765843200"
     },
     {
+      "ticker": "AMBFX",
+      "nav_per_share": "32.700001",
+      "nav_as_of": "2021-12-14",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AMBFX?interval=1d&period1=1638835200&period2=1765843200"
+    },
+    {
+      "ticker": "AMBFX",
+      "nav_per_share": "29.530001",
+      "nav_as_of": "2022-12-13",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AMBFX?interval=1d&period1=1638835200&period2=1765843200"
+    },
+    {
+      "ticker": "AMBFX",
+      "nav_per_share": "31.000000",
+      "nav_as_of": "2023-12-12",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AMBFX?interval=1d&period1=1638835200&period2=1765843200"
+    },
+    {
+      "ticker": "AMBFX",
+      "nav_per_share": "35.240002",
+      "nav_as_of": "2024-12-16",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AMBFX?interval=1d&period1=1638835200&period2=1765843200"
+    },
+    {
+      "ticker": "AMBFX",
+      "nav_per_share": "37.040001",
+      "nav_as_of": "2025-12-15",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AMBFX?interval=1d&period1=1638835200&period2=1765843200"
+    },
+    {
+      "ticker": "AMCFX",
+      "nav_per_share": "45.180000",
+      "nav_as_of": "2021-12-15",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AMCFX?interval=1d&period1=1638921600&period2=1765584000"
+    },
+    {
+      "ticker": "AMCFX",
+      "nav_per_share": "37.810001",
+      "nav_as_of": "2023-12-13",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AMCFX?interval=1d&period1=1638921600&period2=1765584000"
+    },
+    {
+      "ticker": "AMCFX",
+      "nav_per_share": "45.080002",
+      "nav_as_of": "2024-12-17",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AMCFX?interval=1d&period1=1638921600&period2=1765584000"
+    },
+    {
+      "ticker": "AMCFX",
+      "nav_per_share": "46.540001",
+      "nav_as_of": "2025-12-12",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AMCFX?interval=1d&period1=1638921600&period2=1765584000"
+    },
+    {
       "ticker": "AMCGX",
       "nav_per_share": "10.970000",
       "nav_as_of": "2025-12-17",
@@ -4699,6 +4762,34 @@
       "nav_as_of": "2025-12-15",
       "source": "yahoo_last_close",
       "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AMKIX?interval=1d&period1=1702252800&period2=1765843200"
+    },
+    {
+      "ticker": "AMPCX",
+      "nav_per_share": "37.439999",
+      "nav_as_of": "2021-12-15",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AMPCX?interval=1d&period1=1638921600&period2=1765584000"
+    },
+    {
+      "ticker": "AMPCX",
+      "nav_per_share": "30.330000",
+      "nav_as_of": "2023-12-13",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AMPCX?interval=1d&period1=1638921600&period2=1765584000"
+    },
+    {
+      "ticker": "AMPCX",
+      "nav_per_share": "35.299999",
+      "nav_as_of": "2024-12-17",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AMPCX?interval=1d&period1=1638921600&period2=1765584000"
+    },
+    {
+      "ticker": "AMPCX",
+      "nav_per_share": "35.160000",
+      "nav_as_of": "2025-12-12",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AMPCX?interval=1d&period1=1638921600&period2=1765584000"
     },
     {
       "ticker": "AMRMX",
@@ -21837,6 +21928,34 @@
       "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/FLYRX?interval=1d&period1=1734652800&period2=1735344000"
     },
     {
+      "ticker": "FMACX",
+      "nav_per_share": "44.939999",
+      "nav_as_of": "2021-12-15",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/FMACX?interval=1d&period1=1638921600&period2=1765584000"
+    },
+    {
+      "ticker": "FMACX",
+      "nav_per_share": "37.599998",
+      "nav_as_of": "2023-12-13",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/FMACX?interval=1d&period1=1638921600&period2=1765584000"
+    },
+    {
+      "ticker": "FMACX",
+      "nav_per_share": "44.830002",
+      "nav_as_of": "2024-12-17",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/FMACX?interval=1d&period1=1638921600&period2=1765584000"
+    },
+    {
+      "ticker": "FMACX",
+      "nav_per_share": "46.299999",
+      "nav_as_of": "2025-12-12",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/FMACX?interval=1d&period1=1638921600&period2=1765584000"
+    },
+    {
       "ticker": "FMAGX",
       "nav_per_share": "13.850000",
       "nav_as_of": "2024-05-10",
@@ -26406,6 +26525,41 @@
       "nav_as_of": "2025-12-12",
       "source": "yahoo_last_close",
       "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/GETGX?interval=1d&period1=1764892800&period2=1765584000"
+    },
+    {
+      "ticker": "GFAFX",
+      "nav_per_share": "71.120003",
+      "nav_as_of": "2021-12-17",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/GFAFX?interval=1d&period1=1639094400&period2=1766016000"
+    },
+    {
+      "ticker": "GFAFX",
+      "nav_per_share": "49.610001",
+      "nav_as_of": "2022-12-16",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/GFAFX?interval=1d&period1=1639094400&period2=1766016000"
+    },
+    {
+      "ticker": "GFAFX",
+      "nav_per_share": "61.700001",
+      "nav_as_of": "2023-12-15",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/GFAFX?interval=1d&period1=1639094400&period2=1766016000"
+    },
+    {
+      "ticker": "GFAFX",
+      "nav_per_share": "74.180000",
+      "nav_as_of": "2024-12-18",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/GFAFX?interval=1d&period1=1639094400&period2=1766016000"
+    },
+    {
+      "ticker": "GFAFX",
+      "nav_per_share": "77.480003",
+      "nav_as_of": "2025-12-17",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/GFAFX?interval=1d&period1=1639094400&period2=1766016000"
     },
     {
       "ticker": "GFIZX",
@@ -48619,6 +48773,34 @@
       "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/RAAX?interval=1d&period1=1734652800&period2=1735344000"
     },
     {
+      "ticker": "RAFGX",
+      "nav_per_share": "45.520000",
+      "nav_as_of": "2021-12-15",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/RAFGX?interval=1d&period1=1638921600&period2=1765584000"
+    },
+    {
+      "ticker": "RAFGX",
+      "nav_per_share": "38.139999",
+      "nav_as_of": "2023-12-13",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/RAFGX?interval=1d&period1=1638921600&period2=1765584000"
+    },
+    {
+      "ticker": "RAFGX",
+      "nav_per_share": "45.520000",
+      "nav_as_of": "2024-12-17",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/RAFGX?interval=1d&period1=1638921600&period2=1765584000"
+    },
+    {
+      "ticker": "RAFGX",
+      "nav_per_share": "47.080002",
+      "nav_as_of": "2025-12-12",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/RAFGX?interval=1d&period1=1638921600&period2=1765584000"
+    },
+    {
       "ticker": "RAIIX",
       "nav_per_share": "28.120001",
       "nav_as_of": "2025-12-16",
@@ -48834,6 +49016,41 @@
       "nav_as_of": "2025-09-25",
       "source": "yahoo_last_close",
       "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/RFEM?interval=1d&period1=1758153600&period2=1758844800"
+    },
+    {
+      "ticker": "RGAFX",
+      "nav_per_share": "71.650002",
+      "nav_as_of": "2021-12-17",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/RGAFX?interval=1d&period1=1639094400&period2=1766016000"
+    },
+    {
+      "ticker": "RGAFX",
+      "nav_per_share": "49.970001",
+      "nav_as_of": "2022-12-16",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/RGAFX?interval=1d&period1=1639094400&period2=1766016000"
+    },
+    {
+      "ticker": "RGAFX",
+      "nav_per_share": "62.180000",
+      "nav_as_of": "2023-12-15",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/RGAFX?interval=1d&period1=1639094400&period2=1766016000"
+    },
+    {
+      "ticker": "RGAFX",
+      "nav_per_share": "74.830002",
+      "nav_as_of": "2024-12-18",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/RGAFX?interval=1d&period1=1639094400&period2=1766016000"
+    },
+    {
+      "ticker": "RGAFX",
+      "nav_per_share": "78.239998",
+      "nav_as_of": "2025-12-17",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/RGAFX?interval=1d&period1=1639094400&period2=1766016000"
     },
     {
       "ticker": "RGGIX",
