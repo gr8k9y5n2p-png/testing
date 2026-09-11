@@ -73,20 +73,18 @@ class PrincipalSource(HtmlTableSource):
         "links Principal Funds estimated-capital-gains PDFs through a GetFile viewer "
         "(https://secure02.principal.com/publicvsupply/GetFile?EXT=.VOP&fm=MM3682&ty=VOP) "
         "that does not expose a scrapeable table. Public product pages publish HTML paid "
-        "distribution history, e.g. Equity Income "
-        "https://www.principalam.com/us/fund/pqiax "
-        "(2025-12-11 ST $0.1254 / LT $3.3687; 2024-12-12 ST $0.0425 / LT $3.6805; "
-        "2023-12-13 LT $0.2649), MidCap "
-        "https://www.principalam.com/us/fund/pemgx "
+        "distribution history at https://www.principalam.com/us/fund/<ticker>. "
+        "Wave 12 transcribes the December YE capital-gain book from those pages "
+        "(2025 79 tickers / 2024 79 / 2023 48; ~86 unique). Heroes unchanged: "
+        "Equity Income PQIAX (2025-12-11 ST $0.1254 / LT $3.3687; 2024-12-12 "
+        "ST $0.0425 / LT $3.6805; 2023-12-13 LT $0.2649), MidCap PEMGX "
         "(2025-12-11 LT $2.4892; 2024-12-12 LT $1.3963; 2023-12-13 LT $0.9475), "
-        "LargeCap S&amp;P 500 Index Inst PLFPX "
-        "(2025-12-18 ST $0.0190 / LT $0.6384; 2024-12-19 ST $0.0584 / LT $0.3748; "
-        "2023-12-20 LT $0.6387), and Blue Chip A PBLCX "
-        "(2025-12-11 LT $8.3248; 2024-12-12 ST $0.0055 / LT $2.0527; no 2023 row). "
-        "Fixture transcribes those public December YE rows. Wave 4: PQIAX / "
-        "PEMGX / PLFPX / PBLCX / PLFIX product pages still truncate before "
-        "2021–2022 (PQIAX last printed CG is 2023 LT $0.2649; PEMGX last is "
-        "2023 LT $0.9475) — gaps, not invented."
+        "LargeCap S&amp;P 500 Index Inst PLFPX (2025-12-18 ST $0.0190 / LT $0.6384), "
+        "Blue Chip A PBLCX (2025-12-11 LT $8.3248; 2024-12-12 ST $0.0055 / LT $2.0527; "
+        "no 2023 row), plus LargeCap Growth I PLGIX (2025-12-18 ST $0.3345 / LT $1.9823) "
+        "and LifeTime 2025 Inst LTSTX (2025-12-18 ST $0.0449 / LT $0.9348). "
+        "Annual/monthly income omitted. Missing ST omitted, not invented as $0. "
+        "Product pages still truncate before 2021–2022 — gaps, not invented."
     )
     live_limitations = (
         "Family estimate PDF is a GetFile/viewer shell. Product-page tables may put the date "
@@ -114,14 +112,12 @@ class PrincipalSource(HtmlTableSource):
                 url="https://www.principalam.com/us/fund/pqiax",
                 fixture="2024_paid_distributions.html",
                 live=False,
-                large_aum_only=True,
             ),
             PageSpec(
                 name="2023_paid_product_pages",
                 url="https://www.principalam.com/us/fund/pqiax",
                 fixture="2023_paid_distributions.html",
                 live=False,
-                large_aum_only=True,
             ),
         ]
 
@@ -187,10 +183,20 @@ class HartfordSource(HtmlTableSource):
         "fixed-income / multi-strategy HartfordFundsCapitalGainsDistributions-12.17.2025.pdf, "
         "and 2024 2024HartfordFundsCapitalGainsDistributions.pdf is the full equity "
         "paying-fund book (HFMCX LT $1.67 / 5.55% of Class I NAV; no-pay list omitted). "
-        "Amounts are fund-level; tickers are public Class A identifiers only where "
-        "previously identified."
+        "Amounts on those PDFs are fund-level; tickers there are public Class A "
+        "identifiers only where previously identified (HFMCX / HAIAX / IHGIX). "
+        "Wave 12 adds ticker-keyed share-class product pages "
+        "https://www.hartfordfunds.com/funds/{slug}.class{N}.html "
+        "(2025 YE CG; HDGIX LT $3.9283; HFMIX LT $5.4448; HGIIX LT $6.1237; "
+        "ITHIX ST $0.2297 / LT $2.7479; ~208 new tickers). Official printed "
+        "$0.0000 ST stored when paired with a printed LT. Already-tickered "
+        "Class A PDF rows are not restated."
     )
-    live_limitations = "Estimate and final books are PDF. Fixture transcribes the public 10/31 estimate plus finals."
+    live_limitations = (
+        "Estimate and final books are PDF. Share-class product pages are HTML; "
+        "fixture transcribes the public 10/31 estimate plus finals plus 2025 "
+        "product-page classes."
+    )
 
     def pages(self) -> list[PageSpec]:
         dam = (
@@ -221,6 +227,12 @@ class HartfordSource(HtmlTableSource):
                 name="2024_final_capital_gains",
                 url=dam + "Tax%20Center/capgainsdistributions/2024HartfordFundsCapitalGainsDistributions.pdf",
                 fixture="2024_final_capital_gains.html",
+                live=False,
+            ),
+            PageSpec(
+                name="2025_share_class_product_pages",
+                url="https://www.hartfordfunds.com/funds/divgr.classI.html",
+                fixture="2025_share_class_product_page_distributions.html",
                 live=False,
             ),
         ]
