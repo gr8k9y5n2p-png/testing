@@ -140,7 +140,8 @@ def test_full_book_american_funds_invesco_dimensional() -> None:
 def test_full_book_vanguard_ici_and_next_wave() -> None:
     vg_funds, vg_tickers = _funds_and_tickers(VanguardSource())
     assert {"VFIAX", "VTSAX", "VOO", "VFINX", "VNQ", "BNDX", "VGT", "VCIT", "VTEB", "VONG"} <= vg_tickers
-    assert len(vg_tickers) >= 250
+    assert {"VONE", "VTWO", "VTHR", "VCLT", "VEVFX"} <= vg_tickers
+    assert len(vg_tickers) >= 310
 
     bny_funds, bny_tickers = _funds_and_tickers(BnyMellonSource())
     assert {"DGAGX", "DAGVX", "DREVX", "DREQX", "DNLDX", "PGROX", "DGLAX", "BKCG", "BKLC", "NIEAX"} <= bny_tickers
@@ -165,7 +166,8 @@ def test_full_book_jpm_aci_sei_aqr_alger() -> None:
 
     aci_funds, aci_tickers = _funds_and_tickers(AmericanCenturySource())
     assert "TWCGX" in aci_tickers
-    assert len(aci_tickers) >= 300
+    assert {"AVUV", "AVUVX", "AVUS", "AVDE", "AVEEX"} <= aci_tickers
+    assert len(aci_tickers) >= 340
 
     sei_funds, _sei_tickers = _funds_and_tickers(SeiSource())
     assert any("Large Cap Growth" in name for name in sei_funds)

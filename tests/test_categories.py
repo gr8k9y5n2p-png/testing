@@ -50,6 +50,16 @@ def test_curated_flagships() -> None:
     )
     assert resolve_category(ticker="DOXGX", fund_name="Dodge & Cox Stock Fund - Class X") == "Large Value"
     assert resolve_category(ticker="DOXIX") == "Intermediate Core Bond"
+    assert resolve_category(ticker="VONE", fund_name="Vanguard Russell 1000 ETF") == "Large Blend"
+    assert resolve_category(ticker="VTWO", fund_name="Vanguard Russell 2000 ETF") == "Small Blend"
+    assert resolve_category(ticker="VEVFX", fund_name="Vanguard Explorer Value Fund") == "Small Value"
+    assert resolve_category(ticker="AVUV", fund_name="Avantis U.S. Small Cap Value ETF") == "Small Value"
+    assert resolve_category(ticker="AVUS", fund_name="Avantis U.S. Equity ETF") == "Large Blend"
+    assert resolve_category(ticker="AVDE", fund_name="Avantis International Equity ETF") == (
+        "Foreign Large Blend"
+    )
+    assert resolve_category(ticker="AVEM") == "Diversified Emerging Markets"
+    assert resolve_category(ticker="AVDV") == "Foreign Small/Mid Value"
 
 
 def test_name_rules_high_confidence() -> None:

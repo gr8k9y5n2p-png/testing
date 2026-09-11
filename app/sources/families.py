@@ -139,6 +139,10 @@ class VanguardSource(HtmlTableSource):
         "Wave mega-ETF densify appends official December YE ETF rows that were "
         "thin in the earlier Admiral-heavy extract: VNQ Dec 2025 income $0.800500; "
         "BNDX Dec 2025 monthly $0.104400 + YE $0.968600 (CUSIPs 922908553 / 92203J407). "
+        "Wave 17 leftover ICI December YE (same official PDFs; not in the earlier "
+        "extract): VONE 2025 income $0.873200; VTWO $0.402800; VTHR $0.893000; "
+        "VCLT Dec 1 $0.340200 + Dec 18 $0.349200; VEVFX OI $0.494900 / ST "
+        "$0.218968 / LT $3.582907. Existing ICI tickers are not re-emitted. "
         "Tax center hub: https://advisors.vanguard.com/tax-center."
     )
     live_limitations = (
@@ -204,6 +208,51 @@ class VanguardSource(HtmlTableSource):
                 live=False,
                 parser="ici",
                 large_aum_only=False,
+            ),
+            PageSpec(
+                name="remaining_ici_primary_2025",
+                url=f"{ici}/ICIprimary_012026.pdf",
+                fixture="remaining_ici_primary_2025.csv",
+                live=False,
+                parser="ici",
+                large_aum_only=False,
+                role="history",
+            ),
+            PageSpec(
+                name="remaining_ici_primary_2024",
+                url=f"{ici}/ICI_revised_2024_Primary_layout_spreadsheet.pdf",
+                fixture="remaining_ici_primary_2024.csv",
+                live=False,
+                parser="ici",
+                large_aum_only=False,
+                role="history",
+            ),
+            PageSpec(
+                name="remaining_ici_primary_2023",
+                url=f"{ici}/2023_ICI_Primary_Layout.pdf",
+                fixture="remaining_ici_primary_2023.csv",
+                live=False,
+                parser="ici",
+                large_aum_only=False,
+                role="history",
+            ),
+            PageSpec(
+                name="remaining_ici_primary_2022",
+                url=f"{ici}/2022_ICI_Primary_Layout.pdf",
+                fixture="remaining_ici_primary_2022.csv",
+                live=False,
+                parser="ici",
+                large_aum_only=False,
+                role="history",
+            ),
+            PageSpec(
+                name="remaining_ici_primary_2021",
+                url=f"{ici}/2021_ICI_Primary_Layout.pdf",
+                fixture="remaining_ici_primary_2021.csv",
+                live=False,
+                parser="ici",
+                large_aum_only=False,
+                role="history",
             ),
         ]
 

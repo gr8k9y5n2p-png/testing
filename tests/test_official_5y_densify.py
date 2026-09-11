@@ -158,10 +158,11 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
             )
     digest = lookback_digest_from_rows(rows)
     # Official paid/final only. Missing years stay unmatched — never invent $0.
-    # 2,440 on the Wave 16 leftover tip (#148); official midyear/income +
-    # Hartford Class A hist raise in-book 5y without inventing unpublished gaps.
-    assert digest.funds_with_5y == 2651
-    assert digest.funds_with_5y_mf == 2157
-    assert digest.funds_with_5y_etf == 494
+    # 2,651 after #147 official 5y densify; Wave 17 leftover Vanguard ICI
+    # 2021–2025 adds leftover tickers that appear in every year (+62).
+    # Avantis leftover estimates do not raise this pin.
+    assert digest.funds_with_5y == 2713
+    assert digest.funds_with_5y_mf == 2211
+    assert digest.funds_with_5y_etf == 502
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()

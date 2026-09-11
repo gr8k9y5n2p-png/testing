@@ -2,7 +2,7 @@
   "field": "regular_close",
   "field_notes": "Last liquid close / mutual-fund NAV (Yahoo daily close, not adjclose). Null when unknown \u2014 never invented.",
   "as_of": "2026-09-11",
-  "count": 9647,
+  "count": 9755,
   "items": [
     {
       "ticker": "AAAFX",
@@ -5025,6 +5025,16 @@
       "fund_name": "Alger Capital Appreciation Fund"
     },
     {
+      "ticker": "ALCEX",
+      "nav_per_share": "19.920000",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/ALCEX?interval=1d&range=10d",
+      "fund_identifier": "ALCEX",
+      "fund_family": "American Century",
+      "fund_name": "Avantis U.S. Large Cap Value Fund G-Shares"
+    },
+    {
       "ticker": "ALCFX",
       "nav_per_share": "104.129997",
       "nav_as_of": "2026-09-08",
@@ -9165,6 +9175,16 @@
       "fund_name": "AB Select US Equity"
     },
     {
+      "ticker": "AVANX",
+      "nav_per_share": "19.879999",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AVANX?interval=1d&range=10d",
+      "fund_identifier": "AVANX",
+      "fund_family": "American Century",
+      "fund_name": "Avantis International Small Cap Value Fund G-Shares"
+    },
+    {
       "ticker": "AVASX",
       "nav_per_share": "24.620001",
       "nav_as_of": "2026-09-08",
@@ -9195,6 +9215,126 @@
       "fund_name": "American Century Vp Balanced Fund Class-Ii"
     },
     {
+      "ticker": "AVCNX",
+      "nav_per_share": "21.290001",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AVCNX?interval=1d&range=10d",
+      "fund_identifier": "AVCNX",
+      "fund_family": "American Century",
+      "fund_name": "Avantis U.S. Small Cap Value Fund G-Shares"
+    },
+    {
+      "ticker": "AVDE",
+      "nav_per_share": "92.805000",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AVDE?interval=1d&range=10d",
+      "fund_identifier": "AVDE",
+      "fund_family": "American Century",
+      "fund_name": "Avantis International Equity ETF"
+    },
+    {
+      "ticker": "AVDEX",
+      "nav_per_share": "17.700001",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AVDEX?interval=1d&range=10d",
+      "fund_identifier": "AVDEX",
+      "fund_family": "American Century",
+      "fund_name": "Avantis International Equity Fund Institutional"
+    },
+    {
+      "ticker": "AVDNX",
+      "nav_per_share": "17.719999",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AVDNX?interval=1d&range=10d",
+      "fund_identifier": "AVDNX",
+      "fund_family": "American Century",
+      "fund_name": "Avantis International Equity Fund G-Shares"
+    },
+    {
+      "ticker": "AVDS",
+      "nav_per_share": "79.489998",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AVDS?interval=1d&range=10d",
+      "fund_identifier": "AVDS",
+      "fund_family": "American Century",
+      "fund_name": "Avantis International Small Cap Equity ETF"
+    },
+    {
+      "ticker": "AVDV",
+      "nav_per_share": "111.410004",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AVDV?interval=1d&range=10d",
+      "fund_identifier": "AVDV",
+      "fund_family": "American Century",
+      "fund_name": "Avantis International Small Cap Value ETF"
+    },
+    {
+      "ticker": "AVDVX",
+      "nav_per_share": "19.830000",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AVDVX?interval=1d&range=10d",
+      "fund_identifier": "AVDVX",
+      "fund_family": "American Century",
+      "fund_name": "Avantis International Small Cap Value Fund Institutional"
+    },
+    {
+      "ticker": "AVEE",
+      "nav_per_share": "69.230003",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AVEE?interval=1d&range=10d",
+      "fund_identifier": "AVEE",
+      "fund_family": "American Century",
+      "fund_name": "Avantis Emerging Markets Small Cap Equity ETF"
+    },
+    {
+      "ticker": "AVEEX",
+      "nav_per_share": "18.049999",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AVEEX?interval=1d&range=10d",
+      "fund_identifier": "AVEEX",
+      "fund_family": "American Century",
+      "fund_name": "Avantis Emerging Markets Equity Fund Institutional"
+    },
+    {
+      "ticker": "AVEM",
+      "nav_per_share": "95.245003",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AVEM?interval=1d&range=10d",
+      "fund_identifier": "AVEM",
+      "fund_family": "American Century",
+      "fund_name": "Avantis Emerging Markets Equity ETF"
+    },
+    {
+      "ticker": "AVENX",
+      "nav_per_share": "18.090000",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AVENX?interval=1d&range=10d",
+      "fund_identifier": "AVENX",
+      "fund_family": "American Century",
+      "fund_name": "Avantis Emerging Markets Equity Fund G-Shares"
+    },
+    {
+      "ticker": "AVES",
+      "nav_per_share": "66.239998",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AVES?interval=1d&range=10d",
+      "fund_identifier": "AVES",
+      "fund_family": "American Century",
+      "fund_name": "Avantis Emerging Markets Value ETF"
+    },
+    {
       "ticker": "AVFIX",
       "nav_per_share": "29.600000",
       "nav_as_of": "2026-09-08",
@@ -9203,6 +9343,76 @@
       "fund_identifier": "AVFIX",
       "fund_family": "American Beacon",
       "fund_name": "American Beacon Small Cap Value Fund"
+    },
+    {
+      "ticker": "AVGB",
+      "nav_per_share": "50.068901",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AVGB?interval=1d&range=10d",
+      "fund_identifier": "AVGB",
+      "fund_family": "American Century",
+      "fund_name": "Avantis Credit ETF"
+    },
+    {
+      "ticker": "AVGE",
+      "nav_per_share": "100.584999",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AVGE?interval=1d&range=10d",
+      "fund_identifier": "AVGE",
+      "fund_family": "American Century",
+      "fund_name": "Avantis All Equity Markets ETF"
+    },
+    {
+      "ticker": "AVGV",
+      "nav_per_share": "87.410004",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AVGV?interval=1d&range=10d",
+      "fund_identifier": "AVGV",
+      "fund_family": "American Century",
+      "fund_name": "Avantis All Equity Markets Value ETF"
+    },
+    {
+      "ticker": "AVIE",
+      "nav_per_share": "80.083397",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AVIE?interval=1d&range=10d",
+      "fund_identifier": "AVIE",
+      "fund_family": "American Century",
+      "fund_name": "Avantis Inflation Focused Equity ETF"
+    },
+    {
+      "ticker": "AVIG",
+      "nav_per_share": "40.014999",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AVIG?interval=1d&range=10d",
+      "fund_identifier": "AVIG",
+      "fund_family": "American Century",
+      "fund_name": "Avantis Core Fixed Income ETF"
+    },
+    {
+      "ticker": "AVIV",
+      "nav_per_share": "82.610001",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AVIV?interval=1d&range=10d",
+      "fund_identifier": "AVIV",
+      "fund_family": "American Century",
+      "fund_name": "Avantis International Large Cap Value ETF"
+    },
+    {
+      "ticker": "AVLC",
+      "nav_per_share": "91.040001",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AVLC?interval=1d&range=10d",
+      "fund_identifier": "AVLC",
+      "fund_family": "American Century",
+      "fund_name": "Avantis U.S. Large Cap Equity ETF"
     },
     {
       "ticker": "AVLIX",
@@ -9215,6 +9425,86 @@
       "fund_name": "American Century Value Fund I Shares"
     },
     {
+      "ticker": "AVLV",
+      "nav_per_share": "93.500000",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AVLV?interval=1d&range=10d",
+      "fund_identifier": "AVLV",
+      "fund_family": "American Century",
+      "fund_name": "Avantis U.S. Large Cap Value ETF"
+    },
+    {
+      "ticker": "AVLVX",
+      "nav_per_share": "19.900000",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AVLVX?interval=1d&range=10d",
+      "fund_identifier": "AVLVX",
+      "fund_family": "American Century",
+      "fund_name": "Avantis U.S. Large Cap Value Fund Institutional"
+    },
+    {
+      "ticker": "AVMA",
+      "nav_per_share": "73.154999",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AVMA?interval=1d&range=10d",
+      "fund_identifier": "AVMA",
+      "fund_family": "American Century",
+      "fund_name": "Avantis Moderate Allocation ETF"
+    },
+    {
+      "ticker": "AVMC",
+      "nav_per_share": "78.570000",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AVMC?interval=1d&range=10d",
+      "fund_identifier": "AVMC",
+      "fund_family": "American Century",
+      "fund_name": "Avantis U.S. Mid Cap Equity ETF"
+    },
+    {
+      "ticker": "AVMU",
+      "nav_per_share": "43.730000",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AVMU?interval=1d&range=10d",
+      "fund_identifier": "AVMU",
+      "fund_family": "American Century",
+      "fund_name": "Avantis Core Municipal Fixed Income ETF"
+    },
+    {
+      "ticker": "AVMV",
+      "nav_per_share": "80.062897",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AVMV?interval=1d&range=10d",
+      "fund_identifier": "AVMV",
+      "fund_family": "American Century",
+      "fund_name": "Avantis U.S. Mid Cap Value ETF"
+    },
+    {
+      "ticker": "AVNM",
+      "nav_per_share": "85.184998",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AVNM?interval=1d&range=10d",
+      "fund_identifier": "AVNM",
+      "fund_family": "American Century",
+      "fund_name": "Avantis All Intl Markets Equity ETF"
+    },
+    {
+      "ticker": "AVNV",
+      "nav_per_share": "87.010002",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AVNV?interval=1d&range=10d",
+      "fund_identifier": "AVNV",
+      "fund_family": "American Century",
+      "fund_name": "Avantis All Intl Markets Value ETF"
+    },
+    {
       "ticker": "AVPAX",
       "nav_per_share": "27.490000",
       "nav_as_of": "2026-09-08",
@@ -9223,6 +9513,86 @@
       "fund_identifier": "AVPAX",
       "fund_family": "American Beacon",
       "fund_name": "American Beacon Small Cap Value Fund"
+    },
+    {
+      "ticker": "AVRE",
+      "nav_per_share": "46.230000",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AVRE?interval=1d&range=10d",
+      "fund_identifier": "AVRE",
+      "fund_family": "American Century",
+      "fund_name": "Avantis Real Estate ETF"
+    },
+    {
+      "ticker": "AVSBX",
+      "nav_per_share": "14.200000",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AVSBX?interval=1d&range=10d",
+      "fund_identifier": "AVSBX",
+      "fund_family": "American Century",
+      "fund_name": "Avantis U.S. Small Cap Equity Fund G-Shares"
+    },
+    {
+      "ticker": "AVSC",
+      "nav_per_share": "71.499603",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AVSC?interval=1d&range=10d",
+      "fund_identifier": "AVSC",
+      "fund_family": "American Century",
+      "fund_name": "Avantis U.S. Small Cap Equity ETF"
+    },
+    {
+      "ticker": "AVSCX",
+      "nav_per_share": "14.170000",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AVSCX?interval=1d&range=10d",
+      "fund_identifier": "AVSCX",
+      "fund_family": "American Century",
+      "fund_name": "Avantis U.S. Small Cap Equity Fund Institutional"
+    },
+    {
+      "ticker": "AVSD",
+      "nav_per_share": "81.735001",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AVSD?interval=1d&range=10d",
+      "fund_identifier": "AVSD",
+      "fund_family": "American Century",
+      "fund_name": "Avantis Responsible Intl Equity ETF"
+    },
+    {
+      "ticker": "AVSE",
+      "nav_per_share": "80.145203",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AVSE?interval=1d&range=10d",
+      "fund_identifier": "AVSE",
+      "fund_family": "American Century",
+      "fund_name": "Avantis Responsible Emg Markets Eq ETF"
+    },
+    {
+      "ticker": "AVSF",
+      "nav_per_share": "45.865002",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AVSF?interval=1d&range=10d",
+      "fund_identifier": "AVSF",
+      "fund_family": "American Century",
+      "fund_name": "Avantis Short-Term Fixed Income ETF"
+    },
+    {
+      "ticker": "AVSU",
+      "nav_per_share": "88.709999",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AVSU?interval=1d&range=10d",
+      "fund_identifier": "AVSU",
+      "fund_family": "American Century",
+      "fund_name": "Avantis Responsible U.S. Equity ETF"
     },
     {
       "ticker": "AVUAX",
@@ -9255,6 +9625,26 @@
       "fund_name": "American Century Value Fund R5 Shares"
     },
     {
+      "ticker": "AVUNX",
+      "nav_per_share": "24.400000",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AVUNX?interval=1d&range=10d",
+      "fund_identifier": "AVUNX",
+      "fund_family": "American Century",
+      "fund_name": "Avantis U.S. Equity Fund G-Shares"
+    },
+    {
+      "ticker": "AVUQ",
+      "nav_per_share": "66.849998",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AVUQ?interval=1d&range=10d",
+      "fund_identifier": "AVUQ",
+      "fund_family": "American Century",
+      "fund_name": "Avantis U.S. Quality ETF"
+    },
+    {
       "ticker": "AVURX",
       "nav_per_share": "9.460000",
       "nav_as_of": "2026-09-08",
@@ -9265,6 +9655,46 @@
       "fund_name": "American Century Value Fund R Shares"
     },
     {
+      "ticker": "AVUS",
+      "nav_per_share": "129.730103",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AVUS?interval=1d&range=10d",
+      "fund_identifier": "AVUS",
+      "fund_family": "American Century",
+      "fund_name": "Avantis U.S. Equity ETF"
+    },
+    {
+      "ticker": "AVUSX",
+      "nav_per_share": "24.360001",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AVUSX?interval=1d&range=10d",
+      "fund_identifier": "AVUSX",
+      "fund_family": "American Century",
+      "fund_name": "Avantis U.S. Equity Fund Institutional"
+    },
+    {
+      "ticker": "AVUV",
+      "nav_per_share": "124.419998",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AVUV?interval=1d&range=10d",
+      "fund_identifier": "AVUV",
+      "fund_family": "American Century",
+      "fund_name": "Avantis U.S. Small Cap Value ETF"
+    },
+    {
+      "ticker": "AVUVX",
+      "nav_per_share": "21.250000",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AVUVX?interval=1d&range=10d",
+      "fund_identifier": "AVUVX",
+      "fund_family": "American Century",
+      "fund_name": "Avantis U.S. Small Cap Value Fund Institutional"
+    },
+    {
       "ticker": "AVUYX",
       "nav_per_share": "9.500000",
       "nav_as_of": "2026-09-08",
@@ -9273,6 +9703,16 @@
       "fund_identifier": "AVUYX",
       "fund_family": "American Century",
       "fund_name": "American Century Value Fund Y Shares"
+    },
+    {
+      "ticker": "AVXC",
+      "nav_per_share": "83.900002",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/AVXC?interval=1d&range=10d",
+      "fund_identifier": "AVXC",
+      "fund_family": "American Century",
+      "fund_name": "Avantis Emerging Markets Ex-China Equity ETF"
     },
     {
       "ticker": "AWAAX",
@@ -90005,6 +90445,16 @@
       "fund_name": "Vanguard Total Bond Market Index Fund Institutional Plus Shares"
     },
     {
+      "ticker": "VBPIX",
+      "nav_per_share": "24.309999",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VBPIX?interval=1d&range=10d",
+      "fund_identifier": "VBPIX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Baillie Gifford Global Positive Impact Stock Fund"
+    },
+    {
       "ticker": "VBR",
       "nav_per_share": "241.889999",
       "nav_as_of": "2026-09-09",
@@ -90063,6 +90513,16 @@
       "fund_identifier": "jpmorgan-california-municipal-money-market-fund",
       "fund_family": "J.P. Morgan Asset Management",
       "fund_name": "JPMorgan California Municipal Money Market Fund"
+    },
+    {
+      "ticker": "VCDAX",
+      "nav_per_share": "194.800003",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VCDAX?interval=1d&range=10d",
+      "fund_identifier": "VCDAX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Consumer Discretionary Index Fund Admiral Shares"
     },
     {
       "ticker": "VCEB",
@@ -90133,6 +90593,16 @@
       "fund_identifier": "VCLAX",
       "fund_family": "Vanguard",
       "fund_name": "Vanguard California Long-Term Tax-Exempt Fund Admiral Shares"
+    },
+    {
+      "ticker": "VCLT",
+      "nav_per_share": "70.680298",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VCLT?interval=1d&range=10d",
+      "fund_identifier": "VCLT",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Long-Term Corporate Bond ETF"
     },
     {
       "ticker": "VCMDX",
@@ -90215,6 +90685,16 @@
       "fund_name": "Vanguard Core Bond ETF"
     },
     {
+      "ticker": "VCSAX",
+      "nav_per_share": "110.459999",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VCSAX?interval=1d&range=10d",
+      "fund_identifier": "VCSAX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Consumer Staples Index Fund Admiral Shares"
+    },
+    {
       "ticker": "VCSH",
       "nav_per_share": "77.779999",
       "nav_as_of": "2026-09-10",
@@ -90295,6 +90775,16 @@
       "fund_name": "Vanguard Dividend Growth Fund"
     },
     {
+      "ticker": "VDIPX",
+      "nav_per_share": "36.240002",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VDIPX?interval=1d&range=10d",
+      "fund_identifier": "VDIPX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Developed Markets Index Fund Institutional Plus Shares"
+    },
+    {
       "ticker": "VDMAX",
       "nav_per_share": "11.530000",
       "nav_as_of": "2026-09-10",
@@ -90363,6 +90853,16 @@
       "fund_identifier": "VDSYX",
       "fund_family": "Victory Capital",
       "fund_name": "Victory Diversified Stock Fund"
+    },
+    {
+      "ticker": "VDVIX",
+      "nav_per_share": "17.930000",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VDVIX?interval=1d&range=10d",
+      "fund_identifier": "VDVIX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Developed Markets Index Fund Investor Shares"
     },
     {
       "ticker": "VEA",
@@ -90515,6 +91015,16 @@
       "fund_name": "Vanguard Emerging Markets Stock Index Fund Institutional Plus Shares"
     },
     {
+      "ticker": "VENAX",
+      "nav_per_share": "91.410004",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VENAX?interval=1d&range=10d",
+      "fund_identifier": "VENAX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Energy Index Fund Admiral Shares"
+    },
+    {
       "ticker": "VEOAX",
       "nav_per_share": "32.139999",
       "nav_as_of": "2026-09-08",
@@ -90615,6 +91125,16 @@
       "fund_name": "Victory Sycamore Established Value Fund"
     },
     {
+      "ticker": "VEVFX",
+      "nav_per_share": "49.130001",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VEVFX?interval=1d&range=10d",
+      "fund_identifier": "VEVFX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Explorer Value Fund"
+    },
+    {
       "ticker": "VEVIX",
       "nav_per_share": "51.070000",
       "nav_as_of": "2026-09-08",
@@ -90695,6 +91215,16 @@
       "fund_name": "Vanguard Explorer Fund Admiral Shares"
     },
     {
+      "ticker": "VFAIX",
+      "nav_per_share": "69.610001",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VFAIX?interval=1d&range=10d",
+      "fund_identifier": "VFAIX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Financials Index Fund Admiral Shares"
+    },
+    {
       "ticker": "VFFSX",
       "nav_per_share": "376.160004",
       "nav_as_of": "2026-09-08",
@@ -90703,6 +91233,16 @@
       "fund_identifier": "VFFSX",
       "fund_family": "Vanguard",
       "fund_name": "Vanguard 500 Index Fund Institutional Select Shares"
+    },
+    {
+      "ticker": "VFFVX",
+      "nav_per_share": "74.029999",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VFFVX?interval=1d&range=10d",
+      "fund_identifier": "VFFVX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Target Retirement 2055 Fund"
     },
     {
       "ticker": "VFGAX",
@@ -90783,6 +91323,16 @@
       "fund_identifier": "VFIDX",
       "fund_family": "Vanguard",
       "fund_name": "Vanguard Intermediate-Term Investment-Grade Fund Admiral Shares"
+    },
+    {
+      "ticker": "VFIFX",
+      "nav_per_share": "66.269997",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VFIFX?interval=1d&range=10d",
+      "fund_identifier": "VFIFX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Target Retirement 2050 Fund"
     },
     {
       "ticker": "VFIIX",
@@ -90903,6 +91453,16 @@
       "fund_identifier": "VFMV",
       "fund_family": "Vanguard",
       "fund_name": "Vanguard U.S. Minimum Volatility ETF"
+    },
+    {
+      "ticker": "VFORX",
+      "nav_per_share": "54.730000",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VFORX?interval=1d&range=10d",
+      "fund_identifier": "VFORX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Target Retirement 2040 Fund"
     },
     {
       "ticker": "VFQY",
@@ -91033,6 +91593,26 @@
       "fund_identifier": "VGAVX",
       "fund_family": "Vanguard",
       "fund_name": "Vanguard Emerging Markets Government Bond Index Fund Admiral Shares"
+    },
+    {
+      "ticker": "VGCAX",
+      "nav_per_share": "18.809999",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VGCAX?interval=1d&range=10d",
+      "fund_identifier": "VGCAX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Global Credit Bond Fund Admiral Shares"
+    },
+    {
+      "ticker": "VGCIX",
+      "nav_per_share": "9.400000",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VGCIX?interval=1d&range=10d",
+      "fund_identifier": "VGCIX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Global Credit Bond Fund Investor Shares"
     },
     {
       "ticker": "VGELX",
@@ -91335,6 +91915,16 @@
       "fund_name": "Vanguard Capital Opportunity Fund Admiral Shares"
     },
     {
+      "ticker": "VHCIX",
+      "nav_per_share": "155.660004",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VHCIX?interval=1d&range=10d",
+      "fund_identifier": "VHCIX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Health Care Index Fund Admiral Shares"
+    },
+    {
       "ticker": "VHCOX",
       "nav_per_share": "116.320000",
       "nav_as_of": "2026-09-08",
@@ -91395,6 +91985,16 @@
       "fund_name": "Vanguard International Dividend Appreciation Index Fund Admiral Shares"
     },
     {
+      "ticker": "VICBX",
+      "nav_per_share": "26.610001",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VICBX?interval=1d&range=10d",
+      "fund_identifier": "VICBX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Intermediate-Term Corporate Bond Index Fund Institutional Shares"
+    },
+    {
       "ticker": "VICIX",
       "nav_per_share": "18.629999",
       "nav_as_of": "2026-09-08",
@@ -91403,6 +92003,16 @@
       "fund_identifier": "VICIX",
       "fund_family": "Victory Capital",
       "fund_name": "Victory Investment Grade Convertible Fund"
+    },
+    {
+      "ticker": "VICSX",
+      "nav_per_share": "21.530001",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VICSX?interval=1d&range=10d",
+      "fund_identifier": "VICSX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Intermediate-Term Corporate Bond Index Fund Admiral Shares"
     },
     {
       "ticker": "VIDGX",
@@ -91505,6 +92115,16 @@
       "fund_name": "Vanguard International High Dividend Yield Index Fund Admiral Shares"
     },
     {
+      "ticker": "VIIGX",
+      "nav_per_share": "24.070000",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VIIGX?interval=1d&range=10d",
+      "fund_identifier": "VIIGX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Intermediate-Term Treasury Index Fund Institutional Shares"
+    },
+    {
       "ticker": "VIIIX",
       "nav_per_share": "615.349976",
       "nav_as_of": "2026-09-08",
@@ -91573,6 +92193,16 @@
       "fund_identifier": "VIMSX",
       "fund_family": "Vanguard",
       "fund_name": "Vanguard Mid-Cap Index Fund Investor Shares"
+    },
+    {
+      "ticker": "VINAX",
+      "nav_per_share": "168.119995",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VINAX?interval=1d&range=10d",
+      "fund_identifier": "VINAX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Industrials Index Fund Admiral Shares"
     },
     {
       "ticker": "VINEX",
@@ -91693,6 +92323,16 @@
       "fund_identifier": "VISVX",
       "fund_family": "Vanguard",
       "fund_name": "Vanguard Small-Cap Value Index Fund Investor Shares"
+    },
+    {
+      "ticker": "VITAX",
+      "nav_per_share": "489.989990",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VITAX?interval=1d&range=10d",
+      "fund_identifier": "VITAX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Information Technology Index Fund Admiral Shares"
     },
     {
       "ticker": "VITNX",
@@ -91925,6 +92565,16 @@
       "fund_name": "Vanguard Large-Cap Index Fund Admiral Shares"
     },
     {
+      "ticker": "VLCIX",
+      "nav_per_share": "23.559999",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VLCIX?interval=1d&range=10d",
+      "fund_identifier": "VLCIX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Long-Term Corporate Bond Index Fund Institutional Shares"
+    },
+    {
       "ticker": "VLDRX",
       "nav_per_share": "10.610000",
       "nav_as_of": "2026-09-10",
@@ -91953,6 +92603,26 @@
       "fund_identifier": "VLEOX",
       "fund_family": "Value Line",
       "fund_name": "Value Line Small Cap Opportunities Fund Investor"
+    },
+    {
+      "ticker": "VLGIX",
+      "nav_per_share": "22.139999",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VLGIX?interval=1d&range=10d",
+      "fund_identifier": "VLGIX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Long-Term Treasury Index Fund Institutional Shares"
+    },
+    {
+      "ticker": "VLGSX",
+      "nav_per_share": "17.450001",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VLGSX?interval=1d&range=10d",
+      "fund_identifier": "VLGSX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Long-Term Treasury Index Fund Admiral Shares"
     },
     {
       "ticker": "VLIFX",
@@ -92035,6 +92705,16 @@
       "fund_name": "Virtus Duff & Phelps Select MLP and Energy Fund Class I"
     },
     {
+      "ticker": "VLTCX",
+      "nav_per_share": "18.990000",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VLTCX?interval=1d&range=10d",
+      "fund_identifier": "VLTCX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Long-Term Corporate Bond Index Fund Admiral Shares"
+    },
+    {
       "ticker": "VLU",
       "nav_per_share": "246.212006",
       "nav_as_of": "2026-09-09",
@@ -92055,6 +92735,16 @@
       "fund_name": "iShares MSCI USA Value Factor ETF"
     },
     {
+      "ticker": "VLXVX",
+      "nav_per_share": "44.790001",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VLXVX?interval=1d&range=10d",
+      "fund_identifier": "VLXVX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Target Retirement 2065 Fund"
+    },
+    {
       "ticker": "VMACX",
       "nav_per_share": "52.759998",
       "nav_as_of": "2026-09-10",
@@ -92065,6 +92755,16 @@
       "fund_name": "Virtus KAR Mid-Cap Core Fund Class A"
     },
     {
+      "ticker": "VMBIX",
+      "nav_per_share": "24.570000",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VMBIX?interval=1d&range=10d",
+      "fund_identifier": "VMBIX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Mortgage-Backed Securities Index Fund Institutional Shares"
+    },
+    {
       "ticker": "VMBS",
       "nav_per_share": "45.380001",
       "nav_as_of": "2026-09-10",
@@ -92073,6 +92773,16 @@
       "fund_identifier": "VMBS",
       "fund_family": "Vanguard",
       "fund_name": "Vanguard Mortgage-Backed Securities ETF"
+    },
+    {
+      "ticker": "VMBSX",
+      "nav_per_share": "18.129999",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VMBSX?interval=1d&range=10d",
+      "fund_identifier": "VMBSX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Mortgage-Backed Securities Index Fund Admiral Shares"
     },
     {
       "ticker": "VMCCX",
@@ -92205,6 +92915,16 @@
       "fund_name": "Vanguard Mid-Cap Growth Fund"
     },
     {
+      "ticker": "VMIAX",
+      "nav_per_share": "115.970001",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VMIAX?interval=1d&range=10d",
+      "fund_identifier": "VMIAX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Materials Index Fund Admiral Shares"
+    },
+    {
       "ticker": "VMICX",
       "nav_per_share": "11.180000",
       "nav_as_of": "2026-09-10",
@@ -92243,6 +92963,26 @@
       "fund_identifier": "VMMSX",
       "fund_family": "Vanguard",
       "fund_name": "Vanguard Emerging Markets Select Stock Fund"
+    },
+    {
+      "ticker": "VMNFX",
+      "nav_per_share": "16.070000",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VMNFX?interval=1d&range=10d",
+      "fund_identifier": "VMNFX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Market Neutral Fund Investor Shares"
+    },
+    {
+      "ticker": "VMNIX",
+      "nav_per_share": "16.020000",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VMNIX?interval=1d&range=10d",
+      "fund_identifier": "VMNIX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Market Neutral Fund Institutional Shares"
     },
     {
       "ticker": "VMNVX",
@@ -92413,6 +93153,16 @@
       "fund_identifier": "VOHIX",
       "fund_family": "Vanguard",
       "fund_name": "Vanguard Ohio Long-Term Tax-Exempt Fund"
+    },
+    {
+      "ticker": "VONE",
+      "nav_per_share": "345.930115",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VONE?interval=1d&range=10d",
+      "fund_identifier": "VONE",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Russell 1000 ETF"
     },
     {
       "ticker": "VONG",
@@ -92625,6 +93375,16 @@
       "fund_name": "Virtus Duff & Phelps Global Real Estate Securities Fund Class R"
     },
     {
+      "ticker": "VRGWX",
+      "nav_per_share": "960.380005",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VRGWX?interval=1d&range=10d",
+      "fund_identifier": "VRGWX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Russell 1000 Growth Index Fund Institutional Shares"
+    },
+    {
       "ticker": "VRHYX",
       "nav_per_share": "3.750000",
       "nav_as_of": "2026-09-10",
@@ -92665,6 +93425,16 @@
       "fund_name": "Virtus KAR Mid-Cap Growth Fund Class R"
     },
     {
+      "ticker": "VRNIX",
+      "nav_per_share": "663.890015",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VRNIX?interval=1d&range=10d",
+      "fund_identifier": "VRNIX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Russell 1000 Index Fund Institutional Shares"
+    },
+    {
       "ticker": "VRREX",
       "nav_per_share": "20.370001",
       "nav_as_of": "2026-09-10",
@@ -92693,6 +93463,76 @@
       "fund_identifier": "VRSGX",
       "fund_family": "x",
       "fund_name": "Virtus KAR Small-Cap Growth Fund Class R"
+    },
+    {
+      "ticker": "VRTGX",
+      "nav_per_share": "508.709991",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VRTGX?interval=1d&range=10d",
+      "fund_identifier": "VRTGX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Russell 2000 Growth Index Fund Institutional Shares"
+    },
+    {
+      "ticker": "VRTIX",
+      "nav_per_share": "444.959991",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VRTIX?interval=1d&range=10d",
+      "fund_identifier": "VRTIX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Russell 2000 Index Fund Institutional Shares"
+    },
+    {
+      "ticker": "VRTTX",
+      "nav_per_share": "646.919983",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VRTTX?interval=1d&range=10d",
+      "fund_identifier": "VRTTX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Russell 3000 Index Fund Institutional Shares"
+    },
+    {
+      "ticker": "VRTVX",
+      "nav_per_share": "381.079987",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VRTVX?interval=1d&range=10d",
+      "fund_identifier": "VRTVX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Russell 2000 Value Index Fund Institutional Shares"
+    },
+    {
+      "ticker": "VRVIX",
+      "nav_per_share": "433.880005",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VRVIX?interval=1d&range=10d",
+      "fund_identifier": "VRVIX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Russell 1000 Value Index Fund Institutional Shares"
+    },
+    {
+      "ticker": "VSBIX",
+      "nav_per_share": "24.190001",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VSBIX?interval=1d&range=10d",
+      "fund_identifier": "VSBIX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Short-Term Treasury Index Fund Institutional Shares"
+    },
+    {
+      "ticker": "VSBSX",
+      "nav_per_share": "19.260000",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VSBSX?interval=1d&range=10d",
+      "fund_identifier": "VSBSX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Short-Term Treasury Index Fund Admiral Shares"
     },
     {
       "ticker": "VSCAX",
@@ -92753,6 +93593,16 @@
       "fund_identifier": "VSCRX",
       "fund_family": "x",
       "fund_name": "Virtus KAR Small-Cap Core Fund Class R"
+    },
+    {
+      "ticker": "VSCSX",
+      "nav_per_share": "21.190001",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VSCSX?interval=1d&range=10d",
+      "fund_identifier": "VSCSX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Short-Term Corporate Bond Index Fund Admiral Shares"
     },
     {
       "ticker": "VSCVX",
@@ -92943,6 +93793,16 @@
       "fund_identifier": "VSIAX",
       "fund_family": "Vanguard",
       "fund_name": "Vanguard Small-Cap Value Index Fund Admiral Shares"
+    },
+    {
+      "ticker": "VSIGX",
+      "nav_per_share": "19.400000",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VSIGX?interval=1d&range=10d",
+      "fund_identifier": "VSIGX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Intermediate-Term Treasury Index Fund Admiral Shares"
     },
     {
       "ticker": "VSIIX",
@@ -93175,6 +94035,16 @@
       "fund_name": "Vanguard FTSE All-World ex-US Small-Cap ETF"
     },
     {
+      "ticker": "VSTBX",
+      "nav_per_share": "25.940001",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VSTBX?interval=1d&range=10d",
+      "fund_identifier": "VSTBX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Short-Term Corporate Bond Index Fund Institutional Shares"
+    },
+    {
       "ticker": "VSTCX",
       "nav_per_share": "51.500000",
       "nav_as_of": "2026-09-08",
@@ -93225,6 +94095,16 @@
       "fund_name": "Victory Integrity Small-Cap Value Fund"
     },
     {
+      "ticker": "VSVNX",
+      "nav_per_share": "35.599998",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VSVNX?interval=1d&range=10d",
+      "fund_identifier": "VSVNX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Target Retirement 2070 Fund"
+    },
+    {
       "ticker": "VSVYX",
       "nav_per_share": "31.550000",
       "nav_as_of": "2024-03-29",
@@ -93243,6 +94123,16 @@
       "fund_identifier": "VT",
       "fund_family": "Vanguard",
       "fund_name": "Vanguard Total World Stock ETF"
+    },
+    {
+      "ticker": "VTABX",
+      "nav_per_share": "18.809999",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VTABX?interval=1d&range=10d",
+      "fund_identifier": "VTABX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Total International Bond Index Fund Admiral Shares"
     },
     {
       "ticker": "VTAIX",
@@ -93285,6 +94175,26 @@
       "fund_name": "Vanguard Total Bond Market Index Fund Institutional Select Shares"
     },
     {
+      "ticker": "VTC",
+      "nav_per_share": "74.082298",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VTC?interval=1d&range=10d",
+      "fund_identifier": "VTC",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Total Corporate Bond ETF"
+    },
+    {
+      "ticker": "VTCAX",
+      "nav_per_share": "96.190002",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VTCAX?interval=1d&range=10d",
+      "fund_identifier": "VTCAX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Communication Services Index Fund Admiral Shares"
+    },
+    {
       "ticker": "VTCIX",
       "nav_per_share": "196.119995",
       "nav_as_of": "2026-09-08",
@@ -93325,6 +94235,26 @@
       "fund_name": "Vanguard Total Treasury ETF"
     },
     {
+      "ticker": "VTHR",
+      "nav_per_share": "337.440002",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VTHR?interval=1d&range=10d",
+      "fund_identifier": "VTHR",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Russell 3000 ETF"
+    },
+    {
+      "ticker": "VTHRX",
+      "nav_per_share": "45.419998",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VTHRX?interval=1d&range=10d",
+      "fund_identifier": "VTHRX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Target Retirement 2030 Fund"
+    },
+    {
       "ticker": "VTI",
       "nav_per_share": "375.559998",
       "nav_as_of": "2026-09-09",
@@ -93343,6 +94273,56 @@
       "fund_identifier": "VTIAX",
       "fund_family": "Vanguard",
       "fund_name": "Vanguard Total International Stock Index Fund Admiral Shares"
+    },
+    {
+      "ticker": "VTIBX",
+      "nav_per_share": "9.410000",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VTIBX?interval=1d&range=10d",
+      "fund_identifier": "VTIBX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Total International Bond Index Fund Investor Shares"
+    },
+    {
+      "ticker": "VTIFX",
+      "nav_per_share": "28.219999",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VTIFX?interval=1d&range=10d",
+      "fund_identifier": "VTIFX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Total International Bond Index Fund Institutional Shares"
+    },
+    {
+      "ticker": "VTIIX",
+      "nav_per_share": "8.530000",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VTIIX?interval=1d&range=10d",
+      "fund_identifier": "VTIIX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Total International Bond II Index Fund Investor Shares"
+    },
+    {
+      "ticker": "VTILX",
+      "nav_per_share": "25.309999",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VTILX?interval=1d&range=10d",
+      "fund_identifier": "VTILX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Total International Bond II Index Fund Institutional Shares"
+    },
+    {
+      "ticker": "VTINX",
+      "nav_per_share": "14.220000",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VTINX?interval=1d&range=10d",
+      "fund_identifier": "VTINX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Target Retirement Income Fund"
     },
     {
       "ticker": "VTIP",
@@ -93373,6 +94353,16 @@
       "fund_identifier": "VTISX",
       "fund_family": "Vanguard",
       "fund_name": "Vanguard Total International Stock Index Fund Institutional Select Shares"
+    },
+    {
+      "ticker": "VTIVX",
+      "nav_per_share": "38.450001",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VTIVX?interval=1d&range=10d",
+      "fund_identifier": "VTIVX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Target Retirement 2045 Fund"
     },
     {
       "ticker": "VTMGX",
@@ -93495,6 +94485,36 @@
       "fund_name": "Vanguard Short-Term Inflation-Protected Securities Index Fund Institutional Sh"
     },
     {
+      "ticker": "VTTHX",
+      "nav_per_share": "29.700001",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VTTHX?interval=1d&range=10d",
+      "fund_identifier": "VTTHX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Target Retirement 2035 Fund"
+    },
+    {
+      "ticker": "VTTSX",
+      "nav_per_share": "68.239998",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VTTSX?interval=1d&range=10d",
+      "fund_identifier": "VTTSX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Target Retirement 2060 Fund"
+    },
+    {
+      "ticker": "VTTVX",
+      "nav_per_share": "21.150000",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VTTVX?interval=1d&range=10d",
+      "fund_identifier": "VTTVX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Target Retirement 2025 Fund"
+    },
+    {
       "ticker": "VTV",
       "nav_per_share": "223.919998",
       "nav_as_of": "2026-09-09",
@@ -93515,6 +94535,16 @@
       "fund_name": "Vanguard Total World Stock Index Fund Admiral Shares"
     },
     {
+      "ticker": "VTWG",
+      "nav_per_share": "269.266602",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VTWG?interval=1d&range=10d",
+      "fund_identifier": "VTWG",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Russell 2000 Growth ETF"
+    },
+    {
       "ticker": "VTWIX",
       "nav_per_share": "328.440002",
       "nav_as_of": "2026-09-08",
@@ -93523,6 +94553,36 @@
       "fund_identifier": "VTWIX",
       "fund_family": "Vanguard",
       "fund_name": "Vanguard Total World Stock Index Fund Institutional Shares"
+    },
+    {
+      "ticker": "VTWNX",
+      "nav_per_share": "28.580000",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VTWNX?interval=1d&range=10d",
+      "fund_identifier": "VTWNX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Target Retirement 2020 Fund"
+    },
+    {
+      "ticker": "VTWO",
+      "nav_per_share": "116.980003",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VTWO?interval=1d&range=10d",
+      "fund_identifier": "VTWO",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Russell 2000 ETF"
+    },
+    {
+      "ticker": "VTWV",
+      "nav_per_share": "194.070007",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VTWV?interval=1d&range=10d",
+      "fund_identifier": "VTWV",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Russell 2000 Value ETF"
     },
     {
       "ticker": "VUBFX",
@@ -93543,6 +94603,26 @@
       "fund_identifier": "VUG",
       "fund_family": "Vanguard",
       "fund_name": "Vanguard Growth ETF"
+    },
+    {
+      "ticker": "VUIAX",
+      "nav_per_share": "92.290001",
+      "nav_as_of": "2026-09-10",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VUIAX?interval=1d&range=10d",
+      "fund_identifier": "VUIAX",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Utilities Index Fund Admiral Shares"
+    },
+    {
+      "ticker": "VUSB",
+      "nav_per_share": "49.560001",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/VUSB?interval=1d&range=10d",
+      "fund_identifier": "VUSB",
+      "fund_family": "Vanguard",
+      "fund_name": "Vanguard Ultra-Short Bond ETF"
     },
     {
       "ticker": "VUSCX",
