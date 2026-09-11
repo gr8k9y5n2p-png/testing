@@ -185,8 +185,7 @@ def test_fixture_book_lookback_stays_official_only() -> None:
             )
     digest = lookback_digest_from_rows(rows)
     # Official paid/final only. Missing years stay unmatched — never invent $0.
-    # 2,713 after Wave 17 leftover Vanguard ICI; official 5y wave 2
-    # (iShares stamped PDFs + VTIPX 2025 ICI) raises the unioned book
-    # without inventing unpublished gaps.
-    assert digest.funds_with_5y == 2741
+    # 2,741 after official 5y wave 2; wave 3 First Trust / VanEck / WisdomTree
+    # official year fills raise the unioned book without inventing gaps.
+    assert digest.funds_with_5y == 2877
     assert digest.book_funds >= 7200
