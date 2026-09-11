@@ -26,7 +26,14 @@ class BlackRockSource(HtmlTableSource):
         "(December / early-January YE payable only; first printed $/share = ordinary "
         "income; ST/LT left blank unless a later wave parses those columns). "
         "IVV Dec 2025 $2.413592; IWM $0.842454; AGG $0.326375 + $0.334012; "
-        "ITOT $0.486672. Never invent missing years or $0."
+        "ITOT $0.486672. Official 5y wave-2 gap-fill re-reads the same stamped "
+        "PDFs for in-book tickers still missing a lookback year: December YE "
+        "rows the 2025 ICI CSV omitted (SOXX $0.436272; IDU $0.678689; IYJ "
+        "$0.269780; EXI $0.974748; JXI $0.919865; LQDB $0.345201; XJH "
+        "$0.209442) and issuer-printed non-December ordinary income when "
+        "December is an official dash (MBB 2021-10-01 $0.018858; TFLO "
+        "2021-02-01 $0.001023; EIRL 2022-06-09 $0.518078). Cash-liquidation "
+        "columns omitted. Never invent missing years or $0."
     )
     live_limitations = (
         "Live HTML on ishares.com/us/capital-gains-distributions is supported. "
@@ -87,6 +94,15 @@ class BlackRockSource(HtmlTableSource):
                 large_aum_only=False,
             ),
             PageSpec(
+                name="ici_history_gapfill",
+                url=f"{ishares_tax}/2025-ishares-distribution-summary-stamped.pdf",
+                fixture="ici_history_gapfill.csv",
+                live=False,
+                parser="ici",
+                large_aum_only=False,
+                role="history",
+            ),
+            PageSpec(
                 name="2025_open_end_distributions",
                 url=f"{tax}/2025-distributions",
                 fixture="2025_open_end_distributions.html",
@@ -143,6 +159,9 @@ class VanguardSource(HtmlTableSource):
         "extract): VONE 2025 income $0.873200; VTWO $0.402800; VTHR $0.893000; "
         "VCLT Dec 1 $0.340200 + Dec 18 $0.349200; VEVFX OI $0.494900 / ST "
         "$0.218968 / LT $3.582907. Existing ICI tickers are not re-emitted. "
+        "Official 5y wave-2 adds in-book VTIPX Dec 2025 income $0.350500 from the "
+        "same ICIprimary_012026.pdf (sibling VTAPX / VTSPX / VTIP were already "
+        "on the 2025 ICI CSV). VSEMX 2025 is not on that ICI file — unmatched. "
         "Tax center hub: https://advisors.vanguard.com/tax-center."
     )
     live_limitations = (
