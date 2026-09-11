@@ -38,6 +38,12 @@ describe("Search Upcoming / Announced module chrome", () => {
     assert.match(dashboard, /PAID_HISTORY_PAGE_SIZE/);
     assert.match(dashboard, /PAID_HISTORY_PAGE_SIZES/);
     assert.match(dashboard, /paidFunds/);
+    assert.match(dashboard, /mergePaidHistorySearchFunds/);
+    assert.doesNotMatch(
+      dashboard,
+      /\[\.\.\.focusedItems, \.\.\.paidPage\.items\]/,
+      "Search pick must not prepend into Paid History unfiltered",
+    );
     assert.match(dashboard, /paidFacets/);
     assert.match(dashboard, /onPaidFamily/);
     assert.match(dashboard, /onPaidCategory/);

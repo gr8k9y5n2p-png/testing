@@ -13,6 +13,7 @@ import {
 import {
   buildSearchTableFunds,
   currentPaidHistoryYear,
+  mergePaidHistorySearchFunds,
   splitFundsByBucket,
 } from "@/data";
 import { collectTaxYearsFromFunds, mergeTaxYears } from "@/data/tax-years";
@@ -293,8 +294,19 @@ export function Dashboard({
   );
 
   const paidFunds = useMemo(
-    () => [...focusedItems, ...paidPage.items],
-    [focusedItems, paidPage.items],
+    () =>
+      mergePaidHistorySearchFunds(paidPage.items, focusedItems, {
+        family: deferredFilters.family,
+        category: deferredFilters.category,
+        year: paidYear,
+      }),
+    [
+      deferredFilters.category,
+      deferredFilters.family,
+      focusedItems,
+      paidPage.items,
+      paidYear,
+    ],
   );
 
 

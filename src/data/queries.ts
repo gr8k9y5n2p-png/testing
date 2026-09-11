@@ -218,8 +218,10 @@ export function illustrationPriorYearPaidEvents(
 
 /**
  * Search table book: Upcoming is the full unpaid announced universe.
- * A selected ticker hydrates in place for detail / Paid History — it must
- * never replace or filter away the rest of the unpaid set.
+ * A selected ticker hydrates in place for Dollar Illustration / search
+ * detail — it must never replace or filter away the rest of the unpaid set.
+ * Paid History uses `mergePaidHistorySearchFunds` so a mismatched Search
+ * pick cannot leak past Family / Category / year.
  */
 export function buildSearchTableFunds(
   catalog: FundEstimateView[],
@@ -286,6 +288,32 @@ export function paidHistoryViews(
     if (byDate !== 0) return byDate;
     return a.ticker.localeCompare(b.ticker);
   });
+}
+
+/**
+ * Paid History table book: the server-paged year-window, plus a
+ * Search/illustrate pick only when that fund also matches Family /
+ * Category / year. A mismatched Search ticker must never prepend.
+ */
+export function mergePaidHistorySearchFunds(
+  pageItems: FundEstimateView[],
+  focusedItems: FundEstimateView[] = [],
+  filters: Pick<SearchFilters, "family" | "category" | "year"> = {},
+): FundEstimateView[] {
+  const family = filters.family?.trim();
+  const category = filters.category?.trim();
+  const matchingFocused = focusedItems.filter((fund) => {
+    if (family && fund.family !== family) return false;
+    if (category && fund.category !== category) return false;
+    if (
+      filters.year != null &&
+      paidHistoryViews([fund], filters.year).length === 0
+    ) {
+      return false;
+    }
+    return true;
+  });
+  return mergeFundLists(matchingFocused, pageItems);
 }
 
 export function fundFromPaidEvent(

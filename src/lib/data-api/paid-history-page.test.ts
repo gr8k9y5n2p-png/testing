@@ -153,6 +153,11 @@ describe("Search Paid History year-book page", () => {
     assert.match(dists, /Never walks the book/);
     assert.match(dashboard, /paid_history/);
     assert.match(dashboard, /paidFunds/);
+    assert.match(dashboard, /mergePaidHistorySearchFunds/);
+    assert.doesNotMatch(
+      dashboard,
+      /\[\.\.\.focusedItems, \.\.\.paidPage\.items\]/,
+    );
     assert.match(dashboard, /paidFacets/);
     assert.match(dashboard, /setPaidOffset\(0\)/);
     assert.match(dashboard, /sort: sortKey/);
