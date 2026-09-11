@@ -2028,6 +2028,13 @@ def test_fourth_tier_fixtures() -> None:
     )
     assert sgenx.amount_min == Decimal("4.12")
     assert sgenx.amount_max == Decimal("4.17")
+    sgenx_oi = next(
+        r
+        for r in first_eagle
+        if r.ticker == "SGENX" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert sgenx_oi.amount_min == Decimal("2.80")
+    assert sgenx_oi.amount_max == Decimal("2.85")
     assert len({(r.ticker or "").upper() or r.fund_name for r in first_eagle}) >= 10
     fevax = next(
         r

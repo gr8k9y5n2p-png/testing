@@ -1,4 +1,4 @@
-"""Overnight gap fill: NAV + hist years + category on funds already in the book."""
+"""Overnight gap fill: NAV + hist years + official income/CG on the existing book."""
 
 from __future__ import annotations
 
@@ -8,9 +8,11 @@ from decimal import Decimal
 from fastapi.testclient import TestClient
 
 from app.categories import resolve_category
+from app.models import AmountUnit, EstimateType, PublicationStage
 from app.services.lookback import LOOKBACK_YEARS, lookback_digest_from_rows
 from app.services.nav import fixture_quote
-from app.models import AmountUnit, PublicationStage
+from app.sources.dws import DwsSource
+from app.sources.fourth_tier import FirstEagleSource, JohnHancockSource
 
 MEGA_MISSING_NAV = (
     "QQQ",
@@ -86,3 +88,63 @@ def test_country_etf_name_rules_are_conservative() -> None:
         "Pacific/Asia ex-Japan Stk"
     )
     assert resolve_category(fund_name="Harbor Growth Fund") is None
+
+
+def test_in_book_paid_income_is_kept_for_existing_share_classes() -> None:
+    """Official 2025 paid income/CG for in-universe First Eagle classes (not only heroes)."""
+    records = FirstEagleSource().fetch(mode="fixture").records
+    fegrx_oi = next(
+        row
+        for row in records
+        if row.ticker == "FEGRX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.publication_stage == PublicationStage.final
+        and row.as_of and row.as_of.year == 2025
+    )
+    assert fegrx_oi.amount == Decimal("3.129")
+    fesgx_lt = next(
+        row
+        for row in records
+        if row.ticker == "FESGX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.publication_stage == PublicationStage.final
+        and row.as_of and row.as_of.year == 2025
+    )
+    assert fesgx_lt.amount == Decimal("4.654")
+
+
+def test_upcoming_dividend_estimates_are_ingested_when_published() -> None:
+    """Manager-published ordinary-income estimates stay on the book; never invent."""
+    first_eagle = FirstEagleSource().fetch(mode="fixture").records
+    sgenx_oi = next(
+        row
+        for row in first_eagle
+        if row.ticker == "SGENX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.publication_stage == PublicationStage.preliminary_estimate
+    )
+    assert sgenx_oi.amount_min == Decimal("2.80")
+    assert sgenx_oi.amount_max == Decimal("2.85")
+
+    john_hancock = JohnHancockSource().fetch(mode="fixture").records
+    jemqx = next(
+        row
+        for row in john_hancock
+        if row.ticker == "JEMQX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.publication_stage == PublicationStage.preliminary_estimate
+    )
+    assert jemqx.amount_min == Decimal("0.08")
+    assert jemqx.amount_max == Decimal("0.18")
+
+    dws = DwsSource().fetch(mode="fixture").records
+    invented_2026 = [
+        row
+        for row in dws
+        if row.estimate_type == EstimateType.ordinary_income
+        and (
+            (row.as_of and row.as_of.year == 2026)
+            or (row.ex_date and row.ex_date.year == 2026)
+        )
+    ]
+    assert invented_2026 == []

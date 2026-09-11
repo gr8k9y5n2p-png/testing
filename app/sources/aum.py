@@ -3,6 +3,12 @@
 Current-year / published-table fixtures ingest the full public book (every
 listed fund except synthetic ZZ* samples). This allowlist still applies when
 a PageSpec sets large_aum_only=True — typically sparse older archives.
+
+When the same family fetch already ingested a ticker on an unfiltered page
+(current estimate / full paid book), older official archives also keep that
+ticker so paid/final income and capital-gains gaps fill without adding
+net-new names. Flagship-only transcriptions stay filtered.
+
 Not a live AUM feed. Do not license CapGainsValet/YCharts.
 """
 
@@ -211,6 +217,21 @@ def is_large_aum_ticker(ticker: str | None) -> bool:
     return ticker.strip().upper() in LARGE_AUM_TICKERS
 
 
-def filter_large_aum(records: list[NormalizedRecord]) -> list[NormalizedRecord]:
-    """Keep rows whose ticker is on the ≥$1B / hero allowlist."""
-    return [row for row in records if is_large_aum_ticker(row.ticker)]
+def filter_large_aum(
+    records: list[NormalizedRecord],
+    universe_tickers: set[str] | frozenset[str] | None = None,
+) -> list[NormalizedRecord]:
+    """Keep ≥$1B allowlist tickers plus tickers already in this family's book.
+
+    ``universe_tickers`` is the current-book set from unfiltered pages in the
+    same fetch (estimates + full paid books). Official ordinary-income and
+    capital-gains rows for those names are kept. Names that appear only on a
+    sparse older archive stay dropped — no invented universe.
+    """
+    universe = {ticker.strip().upper() for ticker in (universe_tickers or set()) if ticker}
+    kept: list[NormalizedRecord] = []
+    for row in records:
+        ticker = (row.ticker or "").strip().upper()
+        if is_large_aum_ticker(ticker) or ticker in universe:
+            kept.append(row)
+    return kept
