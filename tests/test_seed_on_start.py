@@ -157,6 +157,40 @@ def test_changed_fingerprint_densifies_that_family(session) -> None:
     assert [source.slug for source in needed] == ["american_funds"]
 
 
+def test_boot_seed_fills_missing_nav_without_force_full(client: TestClient, monkeypatch) -> None:
+    """Warm disk + SEED_FORCE_FULL off still densifies fixture NAV for book tickers."""
+    from sqlalchemy import select
+
+    from app import db as app_db
+    from app.main import _seed_fixture_if_empty
+    from app.models import FundNav
+    from app.services import boot_seed
+    from app.services.boot_seed import fixture_fingerprint, upsert_family_fingerprint
+    from app.sources.american_funds import AmericanFundsSource
+
+    _reset_seed_state()
+    seeded = client.post("/ingest/distributions", json={"records": [_agthx_record()]})
+    assert seeded.status_code == 200, seeded.text
+
+    assert app_db.SessionLocal is not None
+    with app_db.SessionLocal() as session:
+        upsert_family_fingerprint(session, "american_funds", fixture_fingerprint("american_funds"))
+        session.commit()
+        assert session.scalar(select(FundNav).where(FundNav.ticker == "AGTHX")) is None
+
+    monkeypatch.setattr(boot_seed, "list_sources", lambda: [AmericanFundsSource()])
+    monkeypatch.setattr("app.services.quality.flag_category_outliers", lambda *_a, **_k: 0)
+    monkeypatch.setattr("app.services.ingest.fetch_and_ingest", lambda *_a, **_k: SimpleNamespace(created=0, updated=0))
+
+    _seed_fixture_if_empty()
+
+    with app_db.SessionLocal() as session:
+        row = session.scalar(select(FundNav).where(FundNav.ticker == "AGTHX"))
+        assert row is not None
+        assert row.nav_per_share > 0
+    _reset_seed_state()
+
+
 def test_boot_seed_ingests_only_missing_family(client: TestClient, monkeypatch) -> None:
     from app.services import boot_seed
     from app.sources.american_funds import AmericanFundsSource

@@ -124,9 +124,7 @@ class HtmlTableSource(FundSource):
         return out, notes
 
     def _parse_pages(self, pages: list[dict], extra_notes: list[str]) -> FetchResult:
-        records = []
-        urls: list[str] = []
-        notes = list(extra_notes)
+        parsed_pages: list[tuple[dict, list]] = []
         for page in pages:
             if page.get("parser") == "ici":
                 parsed = parse_ici_primary(
@@ -141,12 +139,30 @@ class HtmlTableSource(FundSource):
                     source_url=page["url"],
                     fund_family=self.display_name,
                 )
+            parsed_pages.append((page, parsed))
+
+        # Tickers already in this family's current book (unfiltered estimate /
+        # full paid pages). Older large_aum_only archives keep those names so
+        # official paid/final income + CG gaps fill. Estimate pages are never
+        # large_aum_only — upcoming dividend/OI rows stay intact.
+        universe = {
+            (row.ticker or "").strip().upper()
+            for page, parsed in parsed_pages
+            if not page.get("large_aum_only")
+            for row in parsed
+            if row.ticker
+        }
+
+        records = []
+        urls: list[str] = []
+        notes = list(extra_notes)
+        for page, parsed in parsed_pages:
             if page.get("large_aum_only"):
                 before = len(parsed)
-                parsed = filter_large_aum(parsed)
+                parsed = filter_large_aum(parsed, universe)
                 notes.append(
                     f"{page['name']}: {len(parsed)} records "
-                    f"(ICI/large-AUM filter kept {len(parsed)} of {before})"
+                    f"(in-book/large-AUM filter kept {len(parsed)} of {before})"
                 )
             else:
                 notes.append(f"{page['name']}: {len(parsed)} records")

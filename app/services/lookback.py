@@ -24,8 +24,17 @@ FINAL_STAGES = frozenset({PublicationStage.final.value, PublicationStage.paid.va
 PER_SHARE = AmountUnit.per_share.value
 
 
-def _year_for_row(as_of: date | None, ex_date: date | None) -> int | None:
-    stamp = as_of or ex_date
+def _year_for_row(
+    as_of: date | None,
+    ex_date: date | None,
+    payable_date: date | None = None,
+) -> int | None:
+    """Calendar year of a paid/final row.
+
+    Prefer ex_date (else payable) so a multi-year table that stamped one page-level
+    ``as_of`` still counts official prior years. Never invent a year.
+    """
+    stamp = ex_date or payable_date or as_of
     if stamp is None:
         return None
     if stamp.year in LOOKBACK_YEARS:
@@ -105,16 +114,34 @@ class LookbackDigest:
 
 
 def lookback_digest_from_rows(
-    rows: Iterable[tuple[str | None, str | None, str | None, date | None, date | None, str | None, str | None, Decimal | None]],
+    rows: Iterable[
+        tuple[
+            str | None,
+            str | None,
+            str | None,
+            date | None,
+            date | None,
+            str | None,
+            str | None,
+            Decimal | None,
+            date | None,
+        ]
+        | tuple[str | None, str | None, str | None, date | None, date | None, str | None, str | None, Decimal | None]
+    ],
 ) -> LookbackDigest:
-    """Build the digest from (ticker, fund_identifier, fund_name, as_of, ex_date, stage, unit, amount)."""
+    """Build the digest from (ticker, ident, name, as_of, ex_date, stage, unit, amount[, payable])."""
     years_by_fund: dict[str, set[int]] = defaultdict(set)
     sleeve_by_fund: dict[str, str] = {}
     fcntx_years: set[int] = set()
-    for ticker, ident, name, as_of, ex_date, stage, unit, amount in rows:
+    for row in rows:
+        if len(row) == 9:
+            ticker, ident, name, as_of, ex_date, stage, unit, amount, payable = row
+        else:
+            ticker, ident, name, as_of, ex_date, stage, unit, amount = row
+            payable = None
         if not _is_ye_final_amount(stage, unit, amount):
             continue
-        year = _year_for_row(as_of, ex_date)
+        year = _year_for_row(as_of, ex_date, payable)
         if year is None:
             continue
         key = _fund_key(ticker, ident, name)
@@ -157,7 +184,7 @@ def lookback_digest_from_rows(
     book = len(years_by_fund)
     pct = round(100.0 * five / book, 1) if book else 0.0
     notes = [
-        "Calendar year is as_of, else ex_date.",
+        "Calendar year is ex_date, else payable_date, else as_of.",
         "Only publication_stage final/paid with amount_unit=per_share are counted.",
         "Bare percent QDI columns are excluded.",
         "Missing years stay unmatched / Undisclosed — never invented as $0.",
@@ -202,6 +229,7 @@ def lookback_digest(session: Session) -> LookbackDigest:
             DistributionEstimate.publication_stage,
             DistributionEstimate.amount_unit,
             DistributionEstimate.amount,
+            DistributionEstimate.payable_date,
         )
     ).all()
     return lookback_digest_from_rows(rows)

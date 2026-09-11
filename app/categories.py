@@ -1048,7 +1048,9 @@ def _name_category(fund_name: str | None) -> str | None:
 
     china = _has_any(blob, "china", "csi 300", "ftse china")
     india = _has_any(blob, "india")
-    japan = _has_any(blob, "japan", "nikkei", "topix")
+    japan = _has_any(blob, "japan", "nikkei", "topix") and not _has_any(
+        blob, "ex japan", "ex-japan", "except japan", "asia ex"
+    )
     europe = _has_any(blob, "europe", "eurozone", "euro stoxx", "ftse 100", "stoxx europe")
     latam = _has_any(blob, "latin america", "latam", "brazil")
     pacific = _has_any(blob, "pacific", "asia ex", "asia-pacific", "asia pacific")
@@ -1171,7 +1173,83 @@ def _name_category(fund_name: str | None) -> str | None:
     if _has_any(blob, "russell 1000"):
         return "Large Growth" if style == "Growth" else "Large Value" if style == "Value" else "Large Blend"
 
+    # Single-country equity products that are not China / India / Japan / Europe / LatAm.
+    # Morningstar bins these as Miscellaneous Region — do not invent a dedicated country.
+    if not is_bond and _single_country_misc_region(blob):
+        return "Miscellaneous Region"
+
+    if not is_bond and _has_any(
+        blob,
+        "commodity strategy",
+        "commodities strategy",
+        "gsci commodity",
+        "bloomberg roll select commodity",
+        "bloomberg commodity",
+    ):
+        return "Commodities Broad Basket"
+    if not is_bond and _has_any(blob, "gold shares", "gold trust", "physical gold"):
+        return "Commodities Focused"
+
     return None
+
+
+_SINGLE_COUNTRY_MISC = (
+    "chile",
+    "denmark",
+    "finland",
+    "indonesia",
+    "ireland",
+    "israel",
+    "norway",
+    "new zealand",
+    "philippines",
+    "poland",
+    "peru",
+    "argentina",
+    "colombia",
+    "egypt",
+    "greece",
+    "kuwait",
+    "malaysia",
+    "mexico",
+    "qatar",
+    "saudi",
+    "south africa",
+    "south korea",
+    "korea",
+    "sweden",
+    "switzerland",
+    "taiwan",
+    "thailand",
+    "turkey",
+    "uae",
+    "united arab",
+    "vietnam",
+    "austria",
+    "belgium",
+    "canada",
+    "australia",
+    "singapore",
+    "hong kong",
+    "spain",
+    "italy",
+    "germany",
+    "france",
+    "netherlands",
+    "uk ",
+    "united kingdom",
+    "britain",
+)
+
+
+def _single_country_misc_region(blob: str) -> bool:
+    if not _has_any(blob, "msci", "ftse", "country"):
+        # Require an index/country cue so "Ireland Growth Fund" is not mis-binned.
+        if not any(f" {name} " in f" {blob} " or blob.endswith(name) for name in _SINGLE_COUNTRY_MISC):
+            return False
+        if not _has_any(blob, "etf"):
+            return False
+    return any(name in blob for name in _SINGLE_COUNTRY_MISC)
 
 
 def resolve_category(

@@ -56,6 +56,32 @@ def test_large_aum_allowlist_covers_heroes() -> None:
     assert "VFIAX" in LARGE_AUM_TICKERS
 
 
+def test_filter_large_aum_keeps_in_book_tickers() -> None:
+    """Older archives densify official hist for tickers already in the book."""
+    hero = NormalizedRecord(
+        fund_family="First Eagle",
+        fund_name="First Eagle Global Fund Class A",
+        ticker="SGENX",
+        cusip=None,
+        share_class="A",
+        estimate_type=EstimateType.ordinary_income,
+        amount=Decimal("2.883"),
+        amount_min=None,
+        amount_max=None,
+        amount_unit=AmountUnit.per_share,
+        record_date=None,
+        ex_date=date(2025, 12, 4),
+        payable_date=None,
+        as_of=date(2025, 12, 5),
+        publication_stage=PublicationStage.final,
+        source_url="fixture://fei",
+    )
+    in_book = replace(hero, ticker="FEGRX", fund_name="First Eagle Global Fund Class R6")
+    unknown = replace(hero, ticker="ZZTINY", fund_name="Tiny")
+    kept = filter_large_aum([hero, in_book, unknown], {"FEGRX"})
+    assert [row.ticker for row in kept] == ["SGENX", "FEGRX"]
+
+
 def test_filter_large_aum_drops_micro_classes() -> None:
     kept = NormalizedRecord(
         fund_family="Vanguard",
