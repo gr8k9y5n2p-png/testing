@@ -121,8 +121,8 @@ def test_hartford_share_class_product_page_pins() -> None:
     )
     tickers = {r.ticker for r in paid_2025 if r.ticker}
     assert {"HDGIX", "HFMIX", "HGIIX", "ITHIX"} <= tickers
-    assert len(tickers) >= 200
-    assert not {"IHGIX", "HAIAX", "HFMCX"} & tickers
+    assert len(tickers) >= 180
+    assert not {"IHGIX", "HAIAX", "HFMCX", "ITHAX"} & tickers
     assert not any((r.ticker or "").startswith("ZZ") for r in paid_2025)
 
     hdgix_lt = next(

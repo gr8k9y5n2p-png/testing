@@ -188,9 +188,9 @@ class HartfordSource(HtmlTableSource):
         "Wave 12 adds ticker-keyed share-class product pages "
         "https://www.hartfordfunds.com/funds/{slug}.class{N}.html "
         "(2025 YE CG; HDGIX LT $3.9283; HFMIX LT $5.4448; HGIIX LT $6.1237; "
-        "ITHIX ST $0.2297 / LT $2.7479; ~208 new tickers). Official printed "
-        "$0.0000 ST stored when paired with a printed LT. Already-tickered "
-        "Class A PDF rows are not restated."
+        "~186 new I/C/F/R/Y tickers). Official printed $0.0000 ST stored when "
+        "paired with a printed LT. Class A stays on the PDF / alias map "
+        "(IHGIX / HAIAX / HFMCX and name-keyed ITHAX / HQIAX) so keys are not forked."
     )
     live_limitations = (
         "Estimate and final books are PDF. Share-class product pages are HTML; "
