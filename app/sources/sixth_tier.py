@@ -220,6 +220,17 @@ class VaneckSource(HtmlTableSource):
         "(INIVX income $1.5675; MWMIX ST $1.9529 / LT $1.6944; GDX $0.6331; "
         "MOTG ST $1.8899 / LT $4.0549; printed None / all-None BUZZ/DAPP omitted; "
         "RAAX/LFEQ/CMCI finals-to-come omitted). "
+        "Official 5y wave-3 tax-center PDFs (not year-alias URLs, which still "
+        "serve HTML): 2022 ETF "
+        "https://www.vaneck.com/us/en/vaneck-etfs-2022-yearend-dividends-distributions.pdf "
+        "(GDX income $0.4762; SMH $2.4010; MOAT $0.8119; printed None / * monthly "
+        "/ ** quarterly annual-omitted rows dropped) and 2021 ETF "
+        "https://www.vaneck.com/us/en/vaneck-etfs-2021-yearend-distributions-fixed-income-and-equity.pdf "
+        "(GDX $0.5348; SMH $1.5733; MOAT $0.8227) plus 2022 MF "
+        "https://www.vaneck.com/us/en/vaneck-funds-2022-yearend-dividends-distributions.pdf "
+        "(MWMIX ST $0.7455 / LT $1.9311; INIVX 2022 all-None omitted) and 2021 MF "
+        "https://www.vaneck.com/us/en/vaneck-funds-2021-yearend-dividends-distributions.pdf "
+        "(INIVX income $0.6603; MWMIX ST $2.3655 / LT $1.7611). "
         "Hub: https://www.vaneck.com/us/en/resources/etf-distributions/"
     )
     live_limitations = (
@@ -294,6 +305,34 @@ class VaneckSource(HtmlTableSource):
                 live=False,
                 role="history",
             ),
+            PageSpec(
+                name="2022_etf_year_end_distributions",
+                url="https://www.vaneck.com/us/en/vaneck-etfs-2022-yearend-dividends-distributions.pdf",
+                fixture="2022_etf_year_end_distributions.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="2021_etf_year_end_distributions",
+                url="https://www.vaneck.com/us/en/vaneck-etfs-2021-yearend-distributions-fixed-income-and-equity.pdf",
+                fixture="2021_etf_year_end_distributions.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="2022_funds_year_end_distributions",
+                url="https://www.vaneck.com/us/en/vaneck-funds-2022-yearend-dividends-distributions.pdf",
+                fixture="2022_funds_year_end_distributions.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="2021_funds_year_end_distributions",
+                url="https://www.vaneck.com/us/en/vaneck-funds-2021-yearend-dividends-distributions.pdf",
+                fixture="2021_funds_year_end_distributions.html",
+                live=False,
+                role="history",
+            ),
         ]
 
 
@@ -319,7 +358,7 @@ class WisdomtreeSource(HtmlTableSource):
         "is the full family list; payers ingested "
         "(GTR ST $0.51992; INDH LT $0.12765; QSML ST $0.00236; USIN ST $0.02859; "
         "USSH ST $0.02407; WTBN ST $0.02168). Dashed no-CG rows omitted. "
-        "2023 ETF final sibling PDF was not a stable public file (do not invent). "
+        "2023 December income sibling PDF is still 404 (do not invent). "
         "Digital-fund 2024 CG book is a separate tokenized product line — omitted. "
         "Official December 2025 income declaration "
         "https://www.wisdomtree.com/investments/-/media/us-media-files/documents/"
@@ -329,7 +368,11 @@ class WisdomtreeSource(HtmlTableSource):
         "GTR $0.18160; WTPI $0.08373; published $0.00000 income stored for "
         "EPI / HEDJ / INDH / WCBR / WCLD / WQTM). Printed $0.00000 ST/LT "
         "columns omitted (the December 10 CG book remains the CG source). "
-        "Growth of $X added for XC."
+        "Official 5y wave-3 December income PDFs: 2024 "
+        "(DGRW $0.15525), 2022 (DGRW $0.23017), 2021 (DGRW $0.20349). "
+        "December 2023 income sibling still 404 — unmatched. Official 2023 "
+        "final CG PDF adds printed payers only (AGZD ST $0.50744; WTAI ST "
+        "$0.02126; dashed no-CG rows omitted). Growth of $X added for XC."
     )
     live_limitations = (
         "Family books are PDF. Weekly walk uses the 2025 estimate hub, "
@@ -376,6 +419,49 @@ class WisdomtreeSource(HtmlTableSource):
                 role="estimate",
                 empty_ok=True,
             ),
+            PageSpec(
+                name="2024_december_etf_distributions",
+                url=(
+                    "https://www.wisdomtree.com/investments/-/media/us-media-files/documents/"
+                    "resource-library/fund-reports-schedules/distribution-history/"
+                    "wisdomtree-etfs-declare-distributions-december-2024.pdf"
+                ),
+                fixture="2024_december_etf_distributions.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="2022_december_etf_distributions",
+                url=(
+                    "https://www.wisdomtree.com/-/media/us-media-files/documents/"
+                    "resource-library/fund-reports-schedules/distribution-history/"
+                    "wisdomtree-etfs-declare-distributions-december-2022.pdf"
+                ),
+                fixture="2022_december_etf_distributions.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="2021_december_etf_distributions",
+                url=(
+                    "https://www.wisdomtree.com/-/media/us-media-files/documents/"
+                    "resource-library/fund-reports-schedules/distribution-history/"
+                    "wisdomtree-etfs-declare-distributions-december-2021.pdf"
+                ),
+                fixture="2021_december_etf_distributions.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="2023_final_capital_gains",
+                url=(
+                    "https://www.wisdomtree.com/investments/-/media/us-media-files/documents/"
+                    "about/pdf/2023/wisdomtree-etfs-declare-final-capital-gains-distributions-2023.pdf"
+                ),
+                fixture="2023_final_capital_gains.html",
+                live=False,
+                role="history",
+            ),
         ]
 
 
@@ -412,7 +498,15 @@ class FirstTrustSource(HtmlTableSource):
         "(147 paired tickers; FVD $0.2752; FTHI $0.1720). "
         "Wrapped name rows the HTML table extractor could not pair are omitted, not invented. "
         "Interval / tender-offer First Trust Capital Management funds omitted. "
-        "Coming-soon Vest rows omitted."
+        "Coming-soon Vest rows omitted. "
+        "Official 5y wave-3 product-page Distribution History "
+        "https://www.ftportfolios.com/Retail/Etf/EtfDividHistory.aspx?Print=Y&Ticker=FVD&year=2023 "
+        "(and the same Print=Y year page for each in-book ticker) adds December "
+        "ordinary income 2021–2023 when the issuer printed a December row "
+        "(FVD 2021 $0.231700 / 2022 $0.274800 / 2023 $0.292800; FPE 2021 "
+        "$0.080200 / 2022 $0.092500 / 2023 $0.085700; CIBR 2021 $0.280700 / "
+        "2022 $0.095400 / 2023 $0.165800; FTHI 2021 $0.080000 / 2022 $0.137000 "
+        "/ 2023 $0.152000). Empty years (SKYY 2022–2023) omitted, not stored as $0."
     )
     live_limitations = (
         "Family 19(a) and declaration PDFs. Weekly walk uses the ContentGUID notice "
@@ -459,6 +553,36 @@ class FirstTrustSource(HtmlTableSource):
                     "ContentGUID=93a2ae96-a7c6-468c-b68b-8f516d1de5c4"
                 ),
                 fixture="2024_december_etf_distributions.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="2023_december_etf_distributions",
+                url=(
+                    "https://www.ftportfolios.com/Retail/Etf/EtfDividHistory.aspx?"
+                    "Print=Y&Ticker=FVD&year=2023"
+                ),
+                fixture="2023_december_etf_distributions.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="2022_december_etf_distributions",
+                url=(
+                    "https://www.ftportfolios.com/Retail/Etf/EtfDividHistory.aspx?"
+                    "Print=Y&Ticker=FVD&year=2022"
+                ),
+                fixture="2022_december_etf_distributions.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="2021_december_etf_distributions",
+                url=(
+                    "https://www.ftportfolios.com/Retail/Etf/EtfDividHistory.aspx?"
+                    "Print=Y&Ticker=FVD&year=2021"
+                ),
+                fixture="2021_december_etf_distributions.html",
                 live=False,
                 role="history",
             ),

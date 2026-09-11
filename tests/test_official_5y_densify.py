@@ -12,6 +12,7 @@ from app.sources.aum import filter_large_aum
 from app.sources.families import BlackRockSource, VanguardSource
 from app.sources.fifth_tier import VictorySource
 from app.sources.fourth_tier import HartfordSource
+from app.sources.sixth_tier import FirstTrustSource, VaneckSource, WisdomtreeSource
 from app.sources.parser import NormalizedRecord
 from app.sources.registry import list_sources
 
@@ -159,12 +160,12 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
             )
     digest = lookback_digest_from_rows(rows)
     # Official paid/final only. Missing years stay unmatched — never invent $0.
-    # 2,713 after Wave 17 leftover Vanguard ICI (+62 vs #147). Wave 2 official
-    # iShares stamped PDFs + VTIPX 2025 ICI raise in-book 5y without inventing
-    # unpublished gaps. Avantis leftover estimates do not raise this pin.
-    assert digest.funds_with_5y == 2741
-    assert digest.funds_with_5y_mf == 2212
-    assert digest.funds_with_5y_etf == 529
+    # 2,741 after official 5y wave 2. Wave 3 First Trust product-page 2021–2023
+    # + VanEck tax-center 2021–2022 PDFs + WisdomTree December income / 2023 CG
+    # payers raise in-book 5y without inventing unpublished gaps.
+    assert digest.funds_with_5y == 2877
+    assert digest.funds_with_5y_mf == 2221
+    assert digest.funds_with_5y_etf == 656
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
 
@@ -240,3 +241,141 @@ def test_vanguard_vtipx_2025_official_ici() -> None:
         and row.amount is not None
     }
     assert set(LOOKBACK_YEARS) <= vtipx_years
+
+
+def test_first_trust_official_product_page_history_fills_missing_years() -> None:
+    records = FirstTrustSource().fetch(mode="fixture").records
+    fvd_2021 = next(
+        row
+        for row in records
+        if row.ticker == "FVD"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount
+    )
+    assert fvd_2021.amount == Decimal("0.231700")
+    assert str(fvd_2021.ex_date) == "2021-12-23"
+    assert fvd_2021.publication_stage == PublicationStage.final
+
+    fpe_2022 = next(
+        row
+        for row in records
+        if row.ticker == "FPE"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2022
+        and row.amount
+    )
+    assert fpe_2022.amount == Decimal("0.092500")
+
+    cibr_2023 = next(
+        row
+        for row in records
+        if row.ticker == "CIBR"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2023
+        and row.amount
+    )
+    assert cibr_2023.amount == Decimal("0.165800")
+
+    fvd_years = {
+        row.ex_date.year
+        for row in records
+        if row.ticker == "FVD"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert set(LOOKBACK_YEARS) <= fvd_years
+
+
+def test_vaneck_official_2021_2022_tax_center_pdfs() -> None:
+    records = VaneckSource().fetch(mode="fixture").records
+    gdx_2022 = next(
+        row
+        for row in records
+        if row.ticker == "GDX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2022
+        and row.amount
+    )
+    assert gdx_2022.amount == Decimal("0.4762")
+    assert str(gdx_2022.ex_date) == "2022-12-19"
+
+    inivx_2021 = next(
+        row
+        for row in records
+        if row.ticker == "INIVX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount
+    )
+    assert inivx_2021.amount == Decimal("0.6603")
+
+    mwmix_2021 = next(
+        row
+        for row in records
+        if row.ticker == "MWMIX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount
+    )
+    assert mwmix_2021.amount == Decimal("1.7611")
+
+    inivx_2022 = [
+        row
+        for row in records
+        if row.ticker == "INIVX"
+        and row.ex_date
+        and row.ex_date.year == 2022
+        and row.amount
+    ]
+    assert inivx_2022 == []
+
+
+def test_wisdomtree_official_december_income_and_2023_cg() -> None:
+    records = WisdomtreeSource().fetch(mode="fixture").records
+    dgrw_2024 = next(
+        row
+        for row in records
+        if row.ticker == "DGRW"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2024
+        and row.amount
+    )
+    assert dgrw_2024.amount == Decimal("0.15525")
+    dgrw_2021 = next(
+        row
+        for row in records
+        if row.ticker == "DGRW"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount
+    )
+    assert dgrw_2021.amount == Decimal("0.20349")
+    agzd_2023 = next(
+        row
+        for row in records
+        if row.ticker == "AGZD"
+        and row.estimate_type == EstimateType.short_term_capital_gains
+        and row.ex_date
+        and row.ex_date.year == 2023
+        and row.amount
+    )
+    assert agzd_2023.amount == Decimal("0.50744")
+    dgrw_2023 = [
+        row
+        for row in records
+        if row.ticker == "DGRW"
+        and row.ex_date
+        and row.ex_date.year == 2023
+        and row.amount
+    ]
+    assert dgrw_2023 == []

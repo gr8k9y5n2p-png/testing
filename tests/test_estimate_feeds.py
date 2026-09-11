@@ -124,7 +124,7 @@ def test_coverage_exposes_estimate_feed_readiness(session) -> None:
     vaneck = by_slug["vaneck"]
     assert vaneck.estimate_feed_ready is True
     assert vaneck.estimate_feed_status == "prelim_updated"
-    assert vaneck.history_years == [2023, 2024, 2025]
+    assert vaneck.history_years == [2021, 2022, 2023, 2024, 2025]
     assert "MWMIX" in vaneck.performance_tickers
     assert "INIVX" in vaneck.performance_tickers
 
@@ -189,7 +189,7 @@ def test_coverage_exposes_estimate_feed_readiness(session) -> None:
 
     wisdomtree = by_slug["wisdomtree"]
     assert wisdomtree.estimate_feed_ready is True
-    assert wisdomtree.history_years == [2024, 2025]
+    assert wisdomtree.history_years == [2021, 2022, 2023, 2024, 2025]
     assert "XC" in wisdomtree.performance_tickers
 
     jensen = by_slug["jensen"]
