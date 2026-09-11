@@ -33,7 +33,7 @@ YAHOO_NO_PRINT = (
 
 def test_wave14_american_funds_share_classes_have_weekly_nav() -> None:
     catalog = load_fixture_catalog()
-    assert len(catalog) >= 8800
+    assert len(catalog) >= 9100
     for ticker in WAVE14_AF:
         quote = fixture_quote(ticker, catalog=catalog)
         assert quote is not None, f"{ticker} still missing weekly NAV"
@@ -184,6 +184,8 @@ def test_fixture_book_lookback_stays_official_only() -> None:
                 )
             )
     digest = lookback_digest_from_rows(rows)
-    # Existing pipeline after #144. Missing years stay unmatched — never invent $0.
-    assert digest.funds_with_5y == 2080
+    # Official paid/final only. Missing years stay unmatched — never invent $0.
+    # 2,080 on the #144 tip; Wave 15 leftover-class Excel/API years raise the
+    # merged book without inventing unpublished gaps.
+    assert digest.funds_with_5y == 2351
     assert digest.book_funds >= 7200
