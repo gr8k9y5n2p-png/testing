@@ -185,9 +185,8 @@ def test_fixture_book_lookback_stays_official_only() -> None:
             )
     digest = lookback_digest_from_rows(rows)
     # Official paid/final only. Missing years stay unmatched — never invent $0.
-    # 2,080 on the #144 tip; Wave 15 leftover-class Excel/API years raise the
-    # merged book without inventing unpublished gaps. Wave 16 leftover
-    # Allspring / Touchstone product-page years raise 5y again from official
-    # December prints only.
-    assert digest.funds_with_5y == 2440
+    # 2,440 on the Wave 16 leftover tip (#148); official 5y densify (AF
+    # midyear/income + Hartford Class A hist) raises the merged book without
+    # inventing unpublished gaps.
+    assert digest.funds_with_5y == 2562
     assert digest.book_funds >= 7200

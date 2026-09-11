@@ -347,3 +347,13 @@ def test_infer_stage_midyear_paid_vs_estimate() -> None:
         )
         == PublicationStage.preliminary_estimate
     )
+    assert (
+        infer_stage(
+            "Victory Portfolios 2025 Final Ordinary Income and Capital Gains",
+            source_url=(
+                "https://investor.vcm.com/assets/resources-mutualfunddoc/"
+                "Victory-Funds-2025-Final-Ordinary-Income-and-Capital-Gains-Distributions.pdf"
+            ),
+        )
+        == PublicationStage.final
+    )
