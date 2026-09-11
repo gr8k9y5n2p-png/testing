@@ -32,7 +32,10 @@ class AllspringSource(HtmlTableSource):
         "Wave 12 adds Class A / C / additional Institutional product pages "
         "(WFPAX 2025 LT $4.26857; SGRAX LT $8.85612; WOFNX ST $0.40163 / LT $4.06281) "
         "for 2021–2025 YE CG. Existing Institutional rows unchanged. Family "
-        "estimate PDFs stay gated."
+        "estimate PDFs stay gated. Wave 16 leftover share-class product pages "
+        "(sitemap a/c/i/r6/admin) add ticker-keyed December YE CG 2021–2025 "
+        "without re-emitting Wave 12 heroes (EAAFX 2025 ST $0.03633 / LT $0.4674; "
+        "SCSRX 2025 LT $0.73962). Published $0 omitted."
     )
     live_limitations = (
         "Family estimate PDF is gated/image-based. Product-page tables put the date "
@@ -78,6 +81,14 @@ class AllspringSource(HtmlTableSource):
                 url="https://www.allspringglobal.com/investments/equity/mutual-funds/special-mid-cap-value/",
                 fixture="2021_paid_distributions.html",
                 live=False,
+            ),
+            PageSpec(
+                name="remaining_share_class_paid_year_end",
+                url="https://www.allspringglobal.com/sitemap.xml",
+                fixture="remaining_share_class_paid_year_end.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
             ),
         ]
 
@@ -703,7 +714,13 @@ class VirtusSource(HtmlTableSource):
         "https://www.virtus.com/assets/files/8ua/2025-mfs_distributions_calyr_detail.pdf "
         "(STVTX Dec ST $0.664597 / LT $0.427834). 2024 Section 19(a) "
         "https://www.virtus.com/assets/files/8o4/section-19a-notice--retail-oef-template-12.18.2024.pdf "
-        "(STVTX income $0.141942 / total CG $1.907616 — notice is not ST/LT split)."
+        "(STVTX income $0.141942 / total CG $1.907616 — notice is not ST/LT split). "
+        "Wave 16 leftover December YE from the same 2025 calendar PDF adds the "
+        "remaining Quotron tickers (MERFX 2025 income $0.698093 / ST $0.552904 / "
+        "LT $0.028392; PGUAX ST $0.171708 / LT $0.874419). STVTX / STCIX / UNWGX "
+        "are not re-emitted. Published $0.000000 omitted. 2021–2024 sibling "
+        "calendar filenames returned the 2025 file (identical hash) — gaps stay "
+        "Undisclosed."
     )
     live_limitations = "Estimate book is PDF. Fixture transcribes the public June 2026 table."
 
@@ -733,6 +750,14 @@ class VirtusSource(HtmlTableSource):
                 fixture="2024_section_19a.html",
                 live=False,
                 large_aum_only=True,
+            ),
+            PageSpec(
+                name="remaining_share_class_paid_year_end",
+                url="https://www.virtus.com/assets/files/8ua/2025-mfs_distributions_calyr_detail.pdf",
+                fixture="remaining_share_class_paid_year_end.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
             ),
         ]
 

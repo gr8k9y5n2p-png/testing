@@ -62,6 +62,11 @@ class BrownAdvisorySource(HtmlTableSource):
         "Sustainable Growth Institutional BAFWX ST $0.07 / LT $10.90). "
         "Institutional / Investor / Advisor columns are ingested when printed. "
         "Tickers only for previously identified Institutional classes. "
+        "Wave 16 leftover Investor / Advisor / Institutional tickers come from "
+        "official brownadvisory.com/mf/funds product pages (BIAFX / BAFAX / "
+        "BIAWX / BAWAX / BAFLX) paired with the same printed amounts — existing "
+        "BAFFX / BAFGX / BAFWX / BVALX are not re-emitted. Mid-Cap Growth and "
+        "WMC Japan Equity product pages 404 this session. "
         "Record/declaration 12/12/2025; ex/reinvest and pay 12/15/2025. "
         "2024 schedule: https://www.brownadvisory.com/sites/default/files/2024_Capital_Gain_Distribution.pdf "
         "(Flexible Equity Institutional BAFFX ST $0.15 / LT $1.72)."
@@ -91,6 +96,14 @@ class BrownAdvisorySource(HtmlTableSource):
                 live=False,
                 role="history",
             ),
+            PageSpec(
+                name="remaining_share_class_estimates",
+                url="https://www.brownadvisory.com/mf",
+                fixture="remaining_share_class_estimates.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
+            ),
         ]
 
 
@@ -115,7 +128,12 @@ class WilliamBlairSource(HtmlTableSource):
         "https://media.im.williamblair.com/v1/media/edge/images/"
         "williamblaib9c8-wbim74f8-wbimprod42cd-8345/media/documents/resources/us/"
         "distributions/2024-yearend-distributions-and-dividends--class-i-n-and-r6.pdf "
-        "(Growth Class I BGFIX LT $3.03562 / 19% of NAV)."
+        "(Growth Class I BGFIX LT $3.03562 / 19% of NAV). "
+        "Wave 16 leftover Class I / N / R6 tickers are official "
+        "im.williamblair.com product-page title identifiers paired with the "
+        "same 2025 I/N/R6 paid PDF (WSMDX ST $0.24654 / LT $0.52390; WBSNX "
+        "ST $0.64563 / LT $1.88947; BGFRX ST $0.02557 / LT $2.91999). Existing "
+        "Class I flagships BGFIX / LCGFX / WGFIX / WBSIX are not re-emitted."
     )
     live_limitations = "Year-end book is PDF. Text extract is wrap-unsafe; fixture keeps Class I flagships."
 
@@ -145,6 +163,19 @@ class WilliamBlairSource(HtmlTableSource):
                 fixture="2024_annual_distributions.html",
                 live=False,
                 role="history",
+            ),
+            PageSpec(
+                name="remaining_share_class_annual_distributions",
+                url=(
+                    "https://media.im.williamblair.com/v1/media/edge/images/"
+                    "williamblaib9c8-wbim74f8-wbimprod42cd-8345/media/documents/"
+                    "resources/us/distributions/"
+                    "william-blair-funds---annual-distributions-2025---class-i-n-and-r6.pdf"
+                ),
+                fixture="remaining_share_class_annual_distributions.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
             ),
             PageSpec(
                 name="distributions_hub",
