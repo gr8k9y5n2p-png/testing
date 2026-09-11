@@ -190,7 +190,12 @@ class HartfordSource(HtmlTableSource):
         "(2025 YE CG; HDGIX LT $3.9283; HFMIX LT $5.4448; HGIIX LT $6.1237; "
         "~186 new I/C/F/R/Y tickers). Official printed $0.0000 ST stored when "
         "paired with a printed LT. Class A stays on the PDF / alias map "
-        "(IHGIX / HAIAX / HFMCX and name-keyed ITHAX / HQIAX) so keys are not forked."
+        "(IHGIX / HAIAX / HFMCX and name-keyed ITHAX / HQIAX) so keys are not forked. "
+        "Official 5y gap-fill adds the Tax Center Historical Capital Gains PDF "
+        "(2014–2024) for 2021–2024 fund-level Class A / name-keyed amounts "
+        "(IHGIX 2021 LT $1.50586 / 2022 LT $1.29738; HAIAX 2021 LT $1.08029 / "
+        "2022 LT $1.11577). Share-class I/C/F/R/Y amounts are not copied. "
+        "Official printed $0.00000 stored. Sibling 2021–2023 equity PDFs remain HTML."
     )
     live_limitations = (
         "Estimate and final books are PDF. Share-class product pages are HTML; "
@@ -234,6 +239,17 @@ class HartfordSource(HtmlTableSource):
                 url="https://www.hartfordfunds.com/funds/divgr.classI.html",
                 fixture="2025_share_class_product_page_distributions.html",
                 live=False,
+            ),
+            PageSpec(
+                name="2021_2024_historical_capital_gains",
+                url=(
+                    dam
+                    + "Tax%20Center/capgainsdistributions/HistoricalCapitalGainsReport.pdf"
+                ),
+                fixture="2021_2024_historical_capital_gains.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
             ),
         ]
 

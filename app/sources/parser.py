@@ -297,6 +297,11 @@ def infer_stage(*texts: str, source_url: str = "") -> PublicationStage | None:
         return PublicationStage.final
     if "distribution" in blob:
         return PublicationStage.final
+    # Official "Final Ordinary Income and Capital Gains" books (Victory 2025)
+    # omit both "year-end" and "distribution" in the page title; the URL may
+    # still say Distributions.pdf. Treat an unadorned Final as paid YE.
+    if "final" in combined and not is_estimate and not is_preliminary:
+        return PublicationStage.final
     return None
 
 

@@ -64,7 +64,11 @@ class AmericanFundsSource(FundSource):
         "Class A stays on the name-keyed YE / alias map so upsert keys are not forked. "
         "AMCFX 2025 LT $2.1509 / 2024 income $0.2434 / LT $2.5220; "
         "GFAFX 2025 income $0.1920 / LT $8.3640; AMBFX 2025 income $0.1310 / LT $2.1250. "
-        "Published $0.0000 omitted. Unpublished December years unmatched."
+        "Published $0.0000 omitted. Unpublished December years unmatched. "
+        "Official 5y gap-fill re-reads the same product-page JSON for in-book "
+        "tickers missing a lookback year: midyear paid CG (AMCFX 2022-06-15 LT "
+        "$2.2668) and non-December income (ABNDX 2022-06-30 income $0.023726 / "
+        "LT $0.0150) when that is the issuer-published amount. Never invented."
     )
 
     def __init__(self, fixtures_dir: Path | None = None) -> None:
@@ -201,6 +205,12 @@ class AmericanFundsSource(FundSource):
                 "name": "share_class_product_page_distributions",
                 "url": "https://www.capitalgroup.com/individual/investments/fund/AMCFX",
                 "fixture": "share_class_product_page_distributions.html",
+                "live": False,
+            },
+            {
+                "name": "share_class_history_gapfill",
+                "url": "https://www.capitalgroup.com/individual/investments/fund/AMCFX",
+                "fixture": "share_class_history_gapfill.html",
                 "live": False,
             },
         ]
