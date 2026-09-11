@@ -231,6 +231,13 @@ _NON_ALNUM_RE = re.compile(r"[^a-z0-9]+")
 _CURATED_TICKERS: dict[str, str] = {
     "AGTHX": "Large Growth",
     "AMCPX": "Large Growth",
+    "AMCFX": "Large Growth",
+    "AMPCX": "Large Growth",
+    "FMACX": "Large Growth",
+    "RAFGX": "Large Growth",
+    "GFAFX": "Large Growth",
+    "RGAFX": "Large Growth",
+    "AMBFX": "Moderate Allocation",
     "ABALX": "Moderate Allocation",
     "AIVSX": "Large Blend",
     "ANCFX": "Large Blend",
