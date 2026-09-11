@@ -506,7 +506,11 @@ class FirstTrustSource(HtmlTableSource):
         "(FVD 2021 $0.231700 / 2022 $0.274800 / 2023 $0.292800; FPE 2021 "
         "$0.080200 / 2022 $0.092500 / 2023 $0.085700; CIBR 2021 $0.280700 / "
         "2022 $0.095400 / 2023 $0.165800; FTHI 2021 $0.080000 / 2022 $0.137000 "
-        "/ 2023 $0.152000). Empty years (SKYY 2022–2023) omitted, not stored as $0."
+        "/ 2023 $0.152000). Empty years (SKYY 2022–2023) omitted, not stored as $0. "
+        "In-book hero gap-fill re-reads the same Print=Y pages for leftover "
+        "lookback years the family December 2024 declaration omitted "
+        "(FPEI 2024 $0.087000; RFDI $1.151300; FTA $0.453400; IGLD $2.404300; "
+        "BGLD $4.595500). Empty issuer years still omitted."
     )
     live_limitations = (
         "Family 19(a) and declaration PDFs. Weekly walk uses the ContentGUID notice "
@@ -553,6 +557,16 @@ class FirstTrustSource(HtmlTableSource):
                     "ContentGUID=93a2ae96-a7c6-468c-b68b-8f516d1de5c4"
                 ),
                 fixture="2024_december_etf_distributions.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="product_page_history_gapfill",
+                url=(
+                    "https://www.ftportfolios.com/Retail/Etf/EtfDividHistory.aspx?"
+                    "Print=Y&Ticker=FPEI&year=2024"
+                ),
+                fixture="product_page_history_gapfill.html",
                 live=False,
                 role="history",
             ),

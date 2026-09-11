@@ -160,12 +160,12 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
             )
     digest = lookback_digest_from_rows(rows)
     # Official paid/final only. Missing years stay unmatched — never invent $0.
-    # 2,741 after official 5y wave 2. Wave 3 First Trust product-page 2021–2023
-    # + VanEck tax-center 2021–2022 PDFs + WisdomTree December income / 2023 CG
-    # payers raise in-book 5y without inventing unpublished gaps.
-    assert digest.funds_with_5y == 2877
+    # 2,877 after official 5y wave 3. In-book hero gap-fill adds First Trust
+    # product-page leftover December 2024 rows (FPEI / RFDI / FTA / IGLD) —
+    # no new identities, unpublished years still unmatched.
+    assert digest.funds_with_5y == 2892
     assert digest.funds_with_5y_mf == 2221
-    assert digest.funds_with_5y_etf == 656
+    assert digest.funds_with_5y_etf == 671
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
 
@@ -289,6 +289,76 @@ def test_first_trust_official_product_page_history_fills_missing_years() -> None
         and row.amount is not None
     }
     assert set(LOOKBACK_YEARS) <= fvd_years
+
+
+def test_first_trust_in_book_hero_gapfill_adds_leftover_2024() -> None:
+    records = FirstTrustSource().fetch(mode="fixture").records
+    fpei_2024 = next(
+        row
+        for row in records
+        if row.ticker == "FPEI"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2024
+        and row.amount
+    )
+    assert fpei_2024.amount == Decimal("0.087000")
+    assert str(fpei_2024.ex_date) == "2024-12-13"
+    assert fpei_2024.publication_stage == PublicationStage.final
+
+    rfdi_2024 = next(
+        row
+        for row in records
+        if row.ticker == "RFDI"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2024
+        and row.amount
+    )
+    assert rfdi_2024.amount == Decimal("1.151300")
+
+    fta_2024 = next(
+        row
+        for row in records
+        if row.ticker == "FTA"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2024
+        and row.amount
+    )
+    assert fta_2024.amount == Decimal("0.453400")
+
+    igld_2024 = next(
+        row
+        for row in records
+        if row.ticker == "IGLD"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2024
+        and row.amount
+    )
+    assert igld_2024.amount == Decimal("2.404300")
+    assert str(igld_2024.ex_date) == "2024-12-02"
+
+    fpei_years = {
+        row.ex_date.year
+        for row in records
+        if row.ticker == "FPEI"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert set(LOOKBACK_YEARS) <= fpei_years
+    # BGLD 2021 is unpublished on the issuer Print=Y page — unmatched, not $0.
+    bgld_2021 = [
+        row
+        for row in records
+        if row.ticker == "BGLD"
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount
+    ]
+    assert bgld_2021 == []
 
 
 def test_vaneck_official_2021_2022_tax_center_pdfs() -> None:

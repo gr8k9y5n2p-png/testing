@@ -50,6 +50,38 @@ def test_yahoo_no_print_stays_null() -> None:
         assert fixture_quote(ticker, catalog=catalog) is None
 
 
+def test_listed_category_coverage_digest() -> None:
+    from collections import Counter
+
+    from app.services.nav import listed_ticker
+    from app.sources.registry import list_sources
+
+    seen: dict[str, tuple[str | None, str | None]] = {}
+    for source in list_sources():
+        if not source.implemented:
+            continue
+        try:
+            result = source.fetch(mode="fixture")
+        except Exception:
+            continue
+        for row in result.records:
+            ticker = (row.ticker or "").strip().upper()
+            if not ticker or listed_ticker(ticker, ticker) is None:
+                continue
+            seen.setdefault(ticker, (row.fund_name, row.fund_family))
+    categorized = 0
+    for ticker, (name, family) in seen.items():
+        if resolve_category(
+            ticker=ticker, fund_identifier=ticker, fund_name=name, fund_family=family
+        ):
+            categorized += 1
+    listed = len(seen)
+    # In-book hero gap-fill: high-confidence name rules only. Never invent.
+    assert listed == 9743
+    assert categorized >= 9400
+    assert categorized / listed >= 0.964
+
+
 def test_lifecycle_and_asia_ex_japan_stay_conservative() -> None:
     assert resolve_category(fund_name="Nuveen Lifecycle 2035 Fund") == "Target-Date 2035"
     assert resolve_category(fund_name="Nuveen Lifecycle Index 2010 Fund") == (
@@ -185,7 +217,7 @@ def test_fixture_book_lookback_stays_official_only() -> None:
             )
     digest = lookback_digest_from_rows(rows)
     # Official paid/final only. Missing years stay unmatched — never invent $0.
-    # 2,741 after official 5y wave 2; wave 3 First Trust / VanEck / WisdomTree
-    # official year fills raise the unioned book without inventing gaps.
-    assert digest.funds_with_5y == 2877
+    # 2,877 after official 5y wave 3; in-book hero gap-fill First Trust leftover
+    # December 2024 product-page rows raise ETF 5y without inventing gaps.
+    assert digest.funds_with_5y == 2892
     assert digest.book_funds >= 7200
