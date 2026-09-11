@@ -358,11 +358,15 @@ class MfsSource(HtmlTableSource):
         "$3.86919; MFEGX LT $4.65025 / $1.39190 / $7.90687 / $25.50349 / "
         "$25.35332; MRGAX LT $2.03573 / $1.30398 / $0.85848 / $3.34736 / "
         "$6.24390; MDIDX LT $0.20404 / $0.40020 / $0.34576 / $0.21839 / "
-        "$0.75145. 2026 midyear adds MFEGX LT $1.05252. OTCAX has no 2022–2023 "
-        "YE row; MNDAX has no 2023–2025 YE row; MRSAX 2021–2024 is December "
-        "income only (no published ST/LT); BRWAX 2023 is income only (gaps, "
-        "not invented). Same-Class-A aliases skipped (MFEBX=MEIAX, "
-        "MWOHX=MWOFX, MEGBX/MFELX=MFEGX). 2024 mfs_cg_fly_2024.pdf 404."
+        "$0.75145. Wave 13 adds official I / R6 / C Excel YE for the printed "
+        "share-class book (MGTIX 2025 income $0.30697 / LT $4.20618; MFEIX "
+        "LT $25.35332; MEIIX LT $3.86919; ~232 tickers / year). Class A rows "
+        "stay on the existing paid fixtures. 2026 midyear adds MFEGX LT "
+        "$1.05252. OTCAX has no 2022–2023 YE row; MNDAX has no 2023–2025 YE "
+        "row; MRSAX 2021–2024 is December income only (no published ST/LT); "
+        "BRWAX 2023 is income only (gaps, not invented). Same-Class-A aliases "
+        "skipped (MFEBX=MEIAX, MWOHX=MWOFX). Class B / I / C / R* names map "
+        "to their own official product-page tickers. 2024 mfs_cg_fly_2024.pdf 404."
     )
     live_limitations = "Estimates are PDF percent-of-NAV ranges. Fixture transcribes public rows."
 
@@ -439,6 +443,66 @@ class MfsSource(HtmlTableSource):
                 fixture="2021_paid_year_end.html",
                 live=False,
                 large_aum_only=True,
+            ),
+            PageSpec(
+                name="2025_share_class_paid_year_end",
+                url=(
+                    "https://www.mfs.com/MFSServices/products/v1/product/MIGHX/"
+                    "10YearsDistribution/download?shareCode=I&productLineCode=WEB_FAMILYFUNDS"
+                    "&roleCode=usinv&locationCode=us&locale=en_US"
+                ),
+                fixture="2025_share_class_paid_year_end.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
+            ),
+            PageSpec(
+                name="2024_share_class_paid_year_end",
+                url=(
+                    "https://www.mfs.com/MFSServices/products/v1/product/MIGHX/"
+                    "10YearsDistribution/download?shareCode=I&productLineCode=WEB_FAMILYFUNDS"
+                    "&roleCode=usinv&locationCode=us&locale=en_US"
+                ),
+                fixture="2024_share_class_paid_year_end.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
+            ),
+            PageSpec(
+                name="2023_share_class_paid_year_end",
+                url=(
+                    "https://www.mfs.com/MFSServices/products/v1/product/MIGHX/"
+                    "10YearsDistribution/download?shareCode=I&productLineCode=WEB_FAMILYFUNDS"
+                    "&roleCode=usinv&locationCode=us&locale=en_US"
+                ),
+                fixture="2023_share_class_paid_year_end.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
+            ),
+            PageSpec(
+                name="2022_share_class_paid_year_end",
+                url=(
+                    "https://www.mfs.com/MFSServices/products/v1/product/MIGHX/"
+                    "10YearsDistribution/download?shareCode=I&productLineCode=WEB_FAMILYFUNDS"
+                    "&roleCode=usinv&locationCode=us&locale=en_US"
+                ),
+                fixture="2022_share_class_paid_year_end.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
+            ),
+            PageSpec(
+                name="2021_share_class_paid_year_end",
+                url=(
+                    "https://www.mfs.com/MFSServices/products/v1/product/MIGHX/"
+                    "10YearsDistribution/download?shareCode=I&productLineCode=WEB_FAMILYFUNDS"
+                    "&roleCode=usinv&locationCode=us&locale=en_US"
+                ),
+                fixture="2021_share_class_paid_year_end.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
             ),
         ]
 
