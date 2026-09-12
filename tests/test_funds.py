@@ -322,6 +322,37 @@ def test_funds_from_fixture_are_stored_only(client: TestClient) -> None:
     assert rows.json()["total"] > body["total"]
 
 
+def test_william_blair_seed_fills_null_categories(client: TestClient) -> None:
+    """#155 heroes: NAV + 5y paid already in book; leftover share-class category only."""
+    fetched = client.post("/ingest/fetch", json={"fund_family": "william_blair", "mode": "fixture"})
+    assert fetched.status_code == 200, fetched.text
+
+    expected = {
+        "WBGSX": "Large Growth",
+        "BGFRX": "Large Growth",
+        "WGGNX": "World Large-Stock Growth",
+        "BGGIX": "World Large-Stock Growth",
+        "WILIX": "Foreign Large Growth",
+        "WILNX": "Foreign Large Growth",
+        "WILJX": "Foreign Large Growth",
+        "BGFIX": "Large Growth",
+        "WGFIX": "World Large-Stock Growth",
+    }
+    for ticker, category in expected.items():
+        funds = client.get("/funds", params={"q": ticker})
+        assert funds.status_code == 200, funds.text
+        items = funds.json()["items"]
+        assert items, ticker
+        match = next(item for item in items if item["ticker"] == ticker)
+        assert match["category"] == category, ticker
+        assert match["fund_family"] == "William Blair"
+
+    # Book size is identity-stable: leftover classes already existed.
+    listed = client.get("/funds", params={"q": "William Blair", "limit": 100})
+    assert listed.status_code == 200
+    assert listed.json()["total"] == 46
+
+
 def test_distributions_limit_offset_aliases(client: TestClient) -> None:
     _seed_unique_funds(client)
 
