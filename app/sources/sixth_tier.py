@@ -378,6 +378,12 @@ class WisdomtreeSource(HtmlTableSource):
         "(GTR ST $0.51992; INDH LT $0.12765; QSML ST $0.00236; USIN ST $0.02859; "
         "USSH ST $0.02407; WTBN ST $0.02168). Dashed no-CG rows omitted. "
         "2023 December income sibling PDF is still 404 (do not invent). "
+        "Official 5y leftover densify uses January–November 2023 monthly "
+        "income PDFs for in-book leftover 4y tickers still missing 2023 "
+        "(DGRW Nov $0.10000; DES Nov $0.06000; AGGY Nov $0.15000; GTR Sep "
+        "$0.30000; CXSE Sep $0.10500). Printed $0.00000 ST/LT omitted. "
+        "CEW / USDU / WCBR / WCLD / WDNA unpublished on those monthlies — skip. "
+        "Live product pages 403. "
         "Digital-fund 2024 CG book is a separate tokenized product line — omitted. "
         "Official December 2025 income declaration "
         "https://www.wisdomtree.com/investments/-/media/us-media-files/documents/"
@@ -478,6 +484,17 @@ class WisdomtreeSource(HtmlTableSource):
                     "about/pdf/2023/wisdomtree-etfs-declare-final-capital-gains-distributions-2023.pdf"
                 ),
                 fixture="2023_final_capital_gains.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="2023_monthly_etf_distributions_leftover",
+                url=(
+                    "https://www.wisdomtree.com/investments/-/media/us-media-files/documents/"
+                    "resource-library/fund-reports-schedules/distribution-history/"
+                    "wisdomtree-etfs-declare-distributions-november-2023.pdf"
+                ),
+                fixture="2023_monthly_etf_distributions_leftover.html",
                 live=False,
                 role="history",
             ),
