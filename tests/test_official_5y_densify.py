@@ -11,8 +11,8 @@ from app.sources.american_funds import AmericanFundsSource
 from app.sources.aum import filter_large_aum
 from app.sources.families import BlackRockSource, TRowePriceSource, VanguardSource
 from app.sources.fifth_tier import VictorySource
-from app.sources.fourth_tier import HartfordSource
-from app.sources.next_tier import SchwabSource
+from app.sources.fourth_tier import FirstEagleSource, HartfordSource, ThriventSource
+from app.sources.next_tier import NorthernTrustSource, SchwabSource
 from app.sources.sixth_tier import FirstTrustSource, VaneckSource, WisdomtreeSource
 from app.sources.parser import NormalizedRecord
 from app.sources.registry import list_sources
@@ -161,11 +161,12 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
             )
     digest = lookback_digest_from_rows(rows)
     # Official paid/final only. Missing years stay unmatched — never invent $0.
-    # 2,892 after in-book hero gap-fill. Official 5y wave 4 adds Schwab MF
-    # product-page 2021–2024 history plus First Trust leftover midyear and
-    # T. Rowe 2023 ETF bond-table rows — no new identities.
-    assert digest.funds_with_5y == 2932
-    assert digest.funds_with_5y_mf == 2248
+    # 2,932 after official 5y wave 4. Wave 5 adds First Eagle Class A
+    # product-page 2021–2023 leftover, Northern Trust 2023 ICI December
+    # income for CG-dash equity, and Thrivent 2021–2023 paid CG — no new
+    # identities.
+    assert digest.funds_with_5y == 2949
+    assert digest.funds_with_5y_mf == 2265
     assert digest.funds_with_5y_etf == 684
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
@@ -603,3 +604,164 @@ def test_t_rowe_2023_etf_bond_table_leftover() -> None:
         and row.amount
     ]
     assert prefx_2025 == []
+
+
+def test_first_eagle_class_a_product_page_history_fills_missing_years() -> None:
+    records = FirstEagleSource().fetch(mode="fixture").records
+    sgenx_2022 = next(
+        row
+        for row in records
+        if row.ticker == "SGENX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and row.ex_date.year == 2022
+        and row.amount
+    )
+    assert sgenx_2022.amount == Decimal("2.358")
+    assert str(sgenx_2022.ex_date) == "2022-12-01"
+    assert sgenx_2022.publication_stage == PublicationStage.final
+
+    sgovx_2022_oi = next(
+        row
+        for row in records
+        if row.ticker == "SGOVX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2022
+        and row.amount is not None
+    )
+    assert sgovx_2022_oi.amount == Decimal("0.018")
+
+    fefax_2023 = next(
+        row
+        for row in records
+        if row.ticker == "FEFAX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and row.ex_date.year == 2023
+        and row.amount
+    )
+    assert fefax_2023.amount == Decimal("1.661")
+
+    sgenx_years = {
+        row.ex_date.year
+        for row in records
+        if row.ticker == "SGENX"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert set(LOOKBACK_YEARS) <= sgenx_years
+    # Class A product-page leftover is not copied onto Class I / R6.
+    sgiix_2021 = [
+        row
+        for row in records
+        if row.ticker == "SGIIX"
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount
+    ]
+    assert sgiix_2021 == []
+    fegrx_2021 = [
+        row
+        for row in records
+        if row.ticker == "FEGRX"
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount
+    ]
+    assert fegrx_2021 == []
+
+
+def test_northern_trust_2023_ici_fills_cg_dash_equity() -> None:
+    records = NorthernTrustSource().fetch(mode="fixture").records
+    nsrix_2023 = next(
+        row
+        for row in records
+        if row.ticker == "NSRIX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2023
+        and row.amount
+    )
+    assert nsrix_2023.amount == Decimal("0.320700")
+    assert str(nsrix_2023.ex_date) == "2023-12-21"
+    assert nsrix_2023.publication_stage == PublicationStage.final
+
+    nueix_2023 = next(
+        row
+        for row in records
+        if row.ticker == "NUEIX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2023
+        and row.amount
+    )
+    assert nueix_2023.amount == Decimal("0.055796")
+
+    nsrix_years = {
+        row.ex_date.year
+        for row in records
+        if row.ticker == "NSRIX"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert set(LOOKBACK_YEARS) <= nsrix_years
+
+
+def test_thrivent_paid_2021_2023_fills_in_book_class_s() -> None:
+    records = ThriventSource().fetch(mode="fixture").records
+    taaix_2023 = next(
+        row
+        for row in records
+        if row.ticker == "TAAIX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and (row.ex_date or row.payable_date)
+        and (row.ex_date or row.payable_date).year == 2023
+        and row.amount
+    )
+    assert taaix_2023.amount == Decimal("0.41584")
+    assert taaix_2023.publication_stage == PublicationStage.final
+
+    iilgx_2022 = next(
+        row
+        for row in records
+        if row.ticker == "IILGX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and (row.ex_date or row.payable_date)
+        and (row.ex_date or row.payable_date).year == 2022
+        and row.amount
+    )
+    assert iilgx_2022.amount == Decimal("0.50226")
+
+    tmsix_2021 = next(
+        row
+        for row in records
+        if row.ticker == "TMSIX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and (row.ex_date or row.payable_date)
+        and (row.ex_date or row.payable_date).year == 2021
+        and row.amount == Decimal("3.30254")
+    )
+    assert tmsix_2021.publication_stage == PublicationStage.final
+
+    taaix_years = {
+        (row.ex_date or row.payable_date).year
+        for row in records
+        if row.ticker == "TAAIX"
+        and (row.ex_date or row.payable_date)
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert set(LOOKBACK_YEARS) <= taaix_years
+    # Official 2023 paid table did not list Mid Cap Value — unmatched, not $0.
+    tmcvx_2023 = [
+        row
+        for row in records
+        if row.ticker == "TMCVX"
+        and (row.ex_date or row.payable_date)
+        and (row.ex_date or row.payable_date).year == 2023
+        and row.amount
+    ]
+    assert tmcvx_2023 == []
