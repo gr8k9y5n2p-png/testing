@@ -217,6 +217,6 @@ def test_fixture_book_lookback_stays_official_only() -> None:
             )
     digest = lookback_digest_from_rows(rows)
     # Official paid/final only. Missing years stay unmatched — never invent $0.
-    # 2,949 after official 5y wave 5; max-reach raises the pin.
-    assert digest.funds_with_5y == 3073
+    # 3,073 after official 5y max-reach + #156; leftover-class densify raises the pin.
+    assert digest.funds_with_5y == 3108
     assert digest.book_funds >= 7200

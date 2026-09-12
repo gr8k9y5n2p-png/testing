@@ -14,6 +14,7 @@ from app.sources.eleventh_tier import AmgSource
 from app.sources.fifth_tier import RoyceSource, VictorySource
 from app.sources.fourth_tier import ArtisanSource, FirstEagleSource, HartfordSource, ThriventSource
 from app.sources.next_tier import NorthernTrustSource, SchwabSource
+from app.sources.third_tier import AllspringSource
 from app.sources.sixth_tier import FirstTrustSource, VaneckSource, WilliamBlairSource, WisdomtreeSource
 from app.sources.parser import NormalizedRecord
 from app.sources.registry import list_sources
@@ -162,11 +163,11 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
             )
     digest = lookback_digest_from_rows(rows)
     # Official paid/final only. Missing years stay unmatched — never invent $0.
-    # 2,949 after official 5y wave 5. Max-reach adds AMG product-page 2021–2024,
-    # William Blair 2021–2024 leftover share classes, Royce 2021–2024 leftover
-    # share classes, and Artisan official 2021–2023 ICI — no new identities.
-    assert digest.funds_with_5y == 3073
-    assert digest.funds_with_5y_mf == 2389
+    # 3,073 after official 5y max-reach + #156. Leftover-class densify adds
+    # First Eagle C/I/R6 product-page history and Allspring leftover income —
+    # no new identities.
+    assert digest.funds_with_5y == 3108
+    assert digest.funds_with_5y_mf == 2424
     assert digest.funds_with_5y_etf == 684
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
@@ -652,25 +653,28 @@ def test_first_eagle_class_a_product_page_history_fills_missing_years() -> None:
         and row.amount is not None
     }
     assert set(LOOKBACK_YEARS) <= sgenx_years
-    # Class A product-page leftover is not copied onto Class I / R6.
-    sgiix_2021 = [
+    # Leftover C / I / R6 history is class-level — not copied from Class A.
+    sgiix_2021 = next(
         row
         for row in records
         if row.ticker == "SGIIX"
+        and row.estimate_type == EstimateType.ordinary_income
         and row.ex_date
         and row.ex_date.year == 2021
         and row.amount
-    ]
-    assert sgiix_2021 == []
-    fegrx_2021 = [
+    )
+    assert sgiix_2021.amount == Decimal("1.409")
+    fegrx_2021 = next(
         row
         for row in records
         if row.ticker == "FEGRX"
+        and row.estimate_type == EstimateType.ordinary_income
         and row.ex_date
         and row.ex_date.year == 2021
         and row.amount
-    ]
-    assert fegrx_2021 == []
+    )
+    assert fegrx_2021.amount == Decimal("1.458")
+    assert sgiix_2021.amount != fegrx_2021.amount
 
 
 def test_northern_trust_2023_ici_fills_cg_dash_equity() -> None:
@@ -1012,3 +1016,104 @@ def test_artisan_official_ici_2021_2023() -> None:
         and row.amount
     ]
     assert artjx_2022 == []
+
+
+def test_first_eagle_leftover_share_class_history_is_class_level() -> None:
+    records = FirstEagleSource().fetch(mode="fixture").records
+    sgiix_2022_oi = next(
+        row
+        for row in records
+        if row.ticker == "SGIIX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2022
+        and row.amount is not None
+    )
+    assert sgiix_2022_oi.amount == Decimal("0.213")
+    assert str(sgiix_2022_oi.ex_date) == "2022-12-01"
+    assert sgiix_2022_oi.publication_stage == PublicationStage.final
+
+    fesgx_2021_oi = next(
+        row
+        for row in records
+        if row.ticker == "FESGX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount
+    )
+    assert fesgx_2021_oi.amount == Decimal("0.588")
+
+    sgoix_2025 = next(
+        row
+        for row in records
+        if row.ticker == "SGOIX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2025
+        and row.amount
+    )
+    assert sgoix_2025.amount == Decimal("1.717")
+
+    sgiix_years = {
+        row.ex_date.year
+        for row in records
+        if row.ticker == "SGIIX"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert set(LOOKBACK_YEARS) <= sgiix_years
+    # GRA / Smid issuer tables start 2022 — 2021 unmatched, not invented.
+    ferax_2021 = [
+        row
+        for row in records
+        if row.ticker == "FERAX"
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount
+    ]
+    assert ferax_2021 == []
+
+    allspring = AllspringSource().fetch(mode="fixture").records
+    scvnx_2023 = next(
+        row
+        for row in allspring
+        if row.ticker == "SCVNX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2023
+        and row.amount
+    )
+    assert scvnx_2023.amount == Decimal("0.38479")
+    assert str(scvnx_2023.ex_date) == "2023-12-22"
+    wgbix_2023 = next(
+        row
+        for row in allspring
+        if row.ticker == "WGBIX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2023
+        and row.amount
+    )
+    assert wgbix_2023.amount == Decimal("0.07698")
+    wscox_2021 = next(
+        row
+        for row in allspring
+        if row.ticker == "WSCOX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount
+    )
+    assert wscox_2021.amount == Decimal("0.08681")
+    # WDSAX 2021 is unpublished on the issuer page — unmatched, not $0.
+    wdsax_2021 = [
+        row
+        for row in allspring
+        if row.ticker == "WDSAX"
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount
+    ]
+    assert wdsax_2021 == []
