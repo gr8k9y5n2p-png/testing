@@ -84,7 +84,15 @@ class PrincipalSource(HtmlTableSource):
         "no 2023 row), plus LargeCap Growth I PLGIX (2025-12-18 ST $0.3345 / LT $1.9823) "
         "and LifeTime 2025 Inst LTSTX (2025-12-18 ST $0.0449 / LT $0.9348). "
         "Annual/monthly income omitted. Missing ST omitted, not invented as $0. "
-        "Product pages still truncate before 2021–2022 — gaps, not invented."
+        "Official 5y leftover densify: Wayback 20230101000000id_ product-page "
+        "tables restore 2021–2022 December YE for leftover 3y classes after live "
+        "pages truncate (PQIAX 2022-12-13 ST $0.0498 / LT $1.3028 and 2021-12-13 "
+        "ST $0.3043 / LT $1.3095; PEMGX 2022 LT $0.9922 / 2021 ST $0.1221 / LT "
+        "$3.2088; PLGIX 2022 LT $1.5188 / 2021 ST $0.2032 / LT $2.3156; PCBIX "
+        "same MidCap Inst amounts; LTSTX 2022-12-20 ST $0.0265 / LT $0.5279). "
+        "PINIX live 2023 December income $0.3959 fills the leftover 2y year "
+        "(no 2023 CG). PBLCX / PBCKX still have no 2023 YE row — unmatched. "
+        "Class-level — never copied across A/I/C/R/J."
     )
     live_limitations = (
         "Family estimate PDF is a GetFile/viewer shell. Product-page tables may put the date "
@@ -118,6 +126,16 @@ class PrincipalSource(HtmlTableSource):
                 url="https://www.principalam.com/us/fund/pqiax",
                 fixture="2023_paid_distributions.html",
                 live=False,
+            ),
+            PageSpec(
+                name="leftover_product_page_history_2021_2022",
+                url=(
+                    "https://web.archive.org/web/20230101000000id_/"
+                    "https://www.principalam.com/us/fund/pqiax"
+                ),
+                fixture="leftover_product_page_history_2021_2022.html",
+                live=False,
+                role="history",
             ),
         ]
 

@@ -12,7 +12,13 @@ from app.sources.aum import filter_large_aum
 from app.sources.families import BlackRockSource, TRowePriceSource, VanguardSource
 from app.sources.eleventh_tier import AmgSource
 from app.sources.fifth_tier import RoyceSource, VictorySource
-from app.sources.fourth_tier import ArtisanSource, FirstEagleSource, HartfordSource, ThriventSource
+from app.sources.fourth_tier import (
+    ArtisanSource,
+    FirstEagleSource,
+    HartfordSource,
+    PrincipalSource,
+    ThriventSource,
+)
 from app.sources.next_tier import NorthernTrustSource, SchwabSource
 from app.sources.third_tier import AllspringSource
 from app.sources.sixth_tier import FirstTrustSource, VaneckSource, WilliamBlairSource, WisdomtreeSource
@@ -163,12 +169,11 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
             )
     digest = lookback_digest_from_rows(rows)
     # Official paid/final only. Missing years stay unmatched — never invent $0.
-    # 3,073 after official 5y max-reach + #156. Leftover-class densify adds
-    # First Eagle C/I/R6 product-page history and Allspring leftover income —
-    # no new identities.
-    assert digest.funds_with_5y == 3108
-    assert digest.funds_with_5y_mf == 2424
-    assert digest.funds_with_5y_etf == 684
+    # 3,108 after leftover-class densify (#157). In-book leftover 5y sweep adds
+    # WisdomTree 2023 monthlies + Principal Wayback 2021–2022 — no new identities.
+    assert digest.funds_with_5y == 3204
+    assert digest.funds_with_5y_mf == 2473
+    assert digest.funds_with_5y_etf == 731
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
 
@@ -443,15 +448,17 @@ def test_wisdomtree_official_december_income_and_2023_cg() -> None:
         and row.amount
     )
     assert agzd_2023.amount == Decimal("0.50744")
-    dgrw_2023 = [
+    dgrw_2023 = next(
         row
         for row in records
         if row.ticker == "DGRW"
+        and row.estimate_type == EstimateType.ordinary_income
         and row.ex_date
         and row.ex_date.year == 2023
         and row.amount
-    ]
-    assert dgrw_2023 == []
+    )
+    assert dgrw_2023.amount == Decimal("0.10000")
+    assert str(dgrw_2023.ex_date) == "2023-11-24"
 
 
 def test_schwab_in_book_product_page_history_fills_missing_years() -> None:
@@ -1117,3 +1124,134 @@ def test_first_eagle_leftover_share_class_history_is_class_level() -> None:
         and row.amount
     ]
     assert wdsax_2021 == []
+
+
+def test_wisdomtree_leftover_2023_monthly_income_fills_4y() -> None:
+    records = WisdomtreeSource().fetch(mode="fixture").records
+    des_2023 = next(
+        row
+        for row in records
+        if row.ticker == "DES"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2023
+        and row.amount
+    )
+    assert des_2023.amount == Decimal("0.06000")
+    assert str(des_2023.ex_date) == "2023-11-24"
+    aggy_2023 = next(
+        row
+        for row in records
+        if row.ticker == "AGGY"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2023
+        and row.amount
+    )
+    assert aggy_2023.amount == Decimal("0.15000")
+    gtr_2023 = next(
+        row
+        for row in records
+        if row.ticker == "GTR"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2023
+        and row.amount
+    )
+    assert gtr_2023.amount == Decimal("0.30000")
+    assert str(gtr_2023.ex_date) == "2023-09-25"
+    # December 2023 sibling still 404; unpublished leftover names omitted.
+    cew_2023 = [
+        row
+        for row in records
+        if row.ticker == "CEW"
+        and row.ex_date
+        and row.ex_date.year == 2023
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.amount
+    ]
+    assert cew_2023 == []
+
+
+def test_principal_leftover_wayback_2021_2022_fills_3y() -> None:
+    records = PrincipalSource().fetch(mode="fixture").records
+    pqiax_2022 = next(
+        row
+        for row in records
+        if row.ticker == "PQIAX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and row.ex_date.year == 2022
+        and row.amount
+    )
+    assert pqiax_2022.amount == Decimal("1.3028")
+    assert str(pqiax_2022.ex_date) == "2022-12-13"
+    pqiax_2021_st = next(
+        row
+        for row in records
+        if row.ticker == "PQIAX"
+        and row.estimate_type == EstimateType.short_term_capital_gains
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount
+    )
+    assert pqiax_2021_st.amount == Decimal("0.3043")
+    pemgx_2022 = next(
+        row
+        for row in records
+        if row.ticker == "PEMGX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and row.ex_date.year == 2022
+        and row.amount
+    )
+    assert pemgx_2022.amount == Decimal("0.9922")
+    plgix_2022 = next(
+        row
+        for row in records
+        if row.ticker == "PLGIX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and row.ex_date.year == 2022
+        and row.amount
+    )
+    assert plgix_2022.amount == Decimal("1.5188")
+    pcbix_2021_st = next(
+        row
+        for row in records
+        if row.ticker == "PCBIX"
+        and row.estimate_type == EstimateType.short_term_capital_gains
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount
+    )
+    assert pcbix_2021_st.amount == Decimal("0.1221")
+    pinix_2023 = next(
+        row
+        for row in records
+        if row.ticker == "PINIX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2023
+        and row.amount
+    )
+    assert pinix_2023.amount == Decimal("0.3959")
+    pqiax_years = {
+        row.ex_date.year
+        for row in records
+        if row.ticker == "PQIAX"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert set(LOOKBACK_YEARS) <= pqiax_years
+    # Blue Chip leftover still has no issuer 2023 YE — unmatched, not $0.
+    pblcx_2023 = [
+        row
+        for row in records
+        if row.ticker == "PBLCX"
+        and row.ex_date
+        and row.ex_date.year == 2023
+        and row.amount
+    ]
+    assert pblcx_2023 == []
