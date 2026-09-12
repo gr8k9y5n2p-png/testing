@@ -35,7 +35,13 @@ class AllspringSource(HtmlTableSource):
         "estimate PDFs stay gated. Wave 16 leftover share-class product pages "
         "(sitemap a/c/i/r6/admin) add ticker-keyed December YE CG 2021–2025 "
         "without re-emitting Wave 12 heroes (EAAFX 2025 ST $0.03633 / LT $0.4674; "
-        "SCSRX 2025 LT $0.73962). Published $0 omitted."
+        "SCSRX 2025 LT $0.73962). Published $0 omitted. "
+        "Official 5y leftover income: product-page Distribution history "
+        "dividends that fill the missing lookback year on the CG-only leftover "
+        "book (SCVAX 2023-12-22 $0.27556; SCVNX $0.38479; SCVJX $0.38997; "
+        "WGAFX 2023-12-27 $0.07021; WGBIX $0.07698; WSCOX 2021-12-16 $0.08681). "
+        "Unpublished leftover years stay unmatched (WDSAX 2021; EAAFX 2023; "
+        "EKGAX 2023; WEACX 2023; WFDAX 2023)."
     )
     live_limitations = (
         "Family estimate PDF is gated/image-based. Product-page tables put the date "
@@ -86,6 +92,14 @@ class AllspringSource(HtmlTableSource):
                 name="remaining_share_class_paid_year_end",
                 url="https://www.allspringglobal.com/sitemap.xml",
                 fixture="remaining_share_class_paid_year_end.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
+            ),
+            PageSpec(
+                name="leftover_share_class_paid_income",
+                url="https://www.allspringglobal.com/investments/equity/mutual-funds/small-company-value/a/",
+                fixture="leftover_share_class_paid_income.html",
                 live=False,
                 role="history",
                 large_aum_only=False,

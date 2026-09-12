@@ -395,8 +395,15 @@ class FirstEagleSource(HtmlTableSource):
         "via Wayback id_ snapshots after live firsteagle.com pages 403 "
         "(SGENX 2022 LT $2.358 / 2021 LT $2.749; SGOVX 2022 income $0.018 / "
         "LT $0.794; FEFAX 2023 ST $0.008 / LT $1.661; SGGDX 2021 income "
-        "$0.221). Class C / I / R6 not copied from Class A. GRA page 404 — "
-        "FERAX unmatched. Official printed $0.000 stored."
+        "$0.221). Official 5y leftover-class densify: live product pages "
+        "returned 200 and publish class-level C / I / R6 history "
+        "(SGIIX 2022 income $0.213 / LT $2.358; FEGRX 2021 income $1.458 / "
+        "LT $2.749; FESGX 2021 income $0.588 / LT $2.749; SGOIX 2025 income "
+        "$1.717 / LT $0.923). Class A 5y heroes are not re-emitted. GRA / "
+        "Smid issuer tables start 2022 (no 2021). Official printed $0.000 "
+        "stored. High Yield Municipal leftover YE rows are the issuer-printed "
+        "zeros. Short Duration High Yield Municipal has no 2021–2023 on the "
+        "issuer table — unmatched."
     )
     live_limitations = "Family estimate book is PDF. Paid history is on public product pages."
 
@@ -457,6 +464,14 @@ class FirstEagleSource(HtmlTableSource):
                 fixture="product_page_history_gapfill.html",
                 live=False,
                 role="history",
+            ),
+            PageSpec(
+                name="product_page_history_leftover_classes",
+                url="https://www.firsteagle.com/funds/global-fund",
+                fixture="product_page_history_leftover_classes.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
             ),
         ]
 
