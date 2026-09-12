@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from app.categories import canonical_category, resolve_category
+from app.sources.fourth_tier import FirstEagleSource
 from app.sources.sixth_tier import WilliamBlairSource
+from app.sources.third_tier import AllspringSource
 
 
 def test_curated_flagships() -> None:
@@ -296,6 +298,122 @@ def test_william_blair_in_book_category_gapfill() -> None:
             remaining_null.append((ticker, row.fund_name))
     assert remaining_null == [], (
         "William Blair in-book tickers still missing sibling/Yahoo category: "
+        + ", ".join(f"{t} ({n})" for t, n in remaining_null)
+    )
+
+
+def test_first_eagle_allspring_in_book_category_gapfill() -> None:
+    """Leftover FE / Allspring share classes inherit sibling / Yahoo only."""
+    # Global Fund: Class A SGENX already Global Allocation; C/I/R from sibling.
+    # Yahoo fundProfile.categoryName is unpublished for this sleeve.
+    assert resolve_category(
+        ticker="SGENX", fund_name="First Eagle Global Fund Class A"
+    ) == "Global Allocation"
+    assert resolve_category(
+        ticker="SGIIX", fund_name="First Eagle Global Fund Class I"
+    ) == "Global Allocation"
+    assert resolve_category(
+        ticker="FEGRX", fund_name="First Eagle Global Fund Class R"
+    ) == "Global Allocation"
+    assert resolve_category(
+        ticker="FESGX", fund_name="First Eagle Global Fund Class C"
+    ) == "Global Allocation"
+    # Allspring Disciplined Small Cap: no sibling had a category; Yahoo.
+    assert resolve_category(
+        ticker="WSCOX",
+        fund_name="Allspring Disciplined Small Cap Fund Institutional",
+    ) == "Small Blend"
+    assert resolve_category(
+        ticker="WDSAX", fund_name="Allspring Disciplined Small Cap Fund Class A"
+    ) == "Small Blend"
+    assert resolve_category(
+        ticker="WSCJX", fund_name="Allspring Disciplined Small Cap Fund Class R"
+    ) == "Small Blend"
+    # Sibling already categorized.
+    assert resolve_category(
+        ticker="SCSRX", fund_name="Allspring Common Stock Fund Class R"
+    ) == "Mid-Cap Blend"
+    assert resolve_category(
+        ticker="WEGRX", fund_name="Allspring Emerging Growth Fund Class R"
+    ) == "Small Growth"
+    assert resolve_category(
+        ticker="SGRKX", fund_name="Allspring Growth Fund Administrator"
+    ) == "Large Growth"
+    assert resolve_category(
+        ticker="SGRHX", fund_name="Allspring Growth Fund Class R"
+    ) == "Large Growth"
+    # Opportunity Admin/R: live siblings disagreed; Yahoo fundProfile Large Growth.
+    assert resolve_category(
+        ticker="WOFDX", fund_name="Allspring Opportunity Fund Administrator"
+    ) == "Large Growth"
+    assert resolve_category(
+        ticker="WOFRX", fund_name="Allspring Opportunity Fund Class R"
+    ) == "Large Growth"
+    # Yahoo fundProfile that canonicalizes.
+    assert resolve_category(
+        ticker="WRPIX",
+        fund_name="Allspring Alternative Risk Premia Fund Institutional",
+    ) == "Multistrategy"
+    assert resolve_category(
+        ticker="EAAFX", fund_name="Allspring Asset Allocation Fund Class A"
+    ) == "Moderate Allocation"
+    assert resolve_category(
+        ticker="WSIAX", fund_name="Allspring Income Plus Fund Class A"
+    ) == "Multisector Bond"
+    assert resolve_category(
+        ticker="SFAAX", fund_name="Allspring Index Asset Allocation Fund Class A"
+    ) == "Moderate Allocation"
+    assert resolve_category(
+        ticker="WFILX", fund_name="Allspring Index Fund Class A"
+    ) == "Large Blend"
+    assert resolve_category(
+        ticker="WFSTX", fund_name="Allspring Innovation Fund Class A"
+    ) == "Technology"
+    # Name alone is still too size-less / unpublished-style to invent.
+    assert resolve_category(fund_name="First Eagle Global Fund Class I") is None
+    assert resolve_category(fund_name="Allspring Asset Allocation Fund Class A") is None
+    assert resolve_category(
+        fund_name="Allspring Disciplined Small Cap Fund Institutional"
+    ) is None
+    # Yahoo published names that do not canonicalize stay null.
+    assert resolve_category(
+        ticker="NMTFX", fund_name="Allspring Minnesota Tax-Free Fund Class A"
+    ) is None
+    assert resolve_category(
+        ticker="WWTFX", fund_name="Allspring Wisconsin Tax-Free Fund Class A"
+    ) is None
+
+    expected_remaining = {
+        "FEBAX",
+        "FEBCX",
+        "FEBIX",
+        "FEBRX",
+        "FERAX",
+        "FEREX",
+        "FERRX",
+        "NMTFX",
+        "WMTIX",
+        "WWTFX",
+        "WWTIX",
+    }
+    remaining_null: list[tuple[str, str | None]] = []
+    seen: set[str] = set()
+    for source in (FirstEagleSource(), AllspringSource()):
+        for row in source.fetch(mode="fixture").records:
+            ticker = (row.ticker or "").strip().upper()
+            if not ticker or ticker in seen:
+                continue
+            seen.add(ticker)
+            category = resolve_category(
+                ticker=ticker,
+                fund_identifier=ticker,
+                fund_name=row.fund_name,
+                fund_family=row.fund_family,
+            )
+            if not category:
+                remaining_null.append((ticker, row.fund_name))
+    assert {ticker for ticker, _ in remaining_null} == expected_remaining, (
+        "Unexpected First Eagle / Allspring leftover nulls: "
         + ", ".join(f"{t} ({n})" for t, n in remaining_null)
     )
 

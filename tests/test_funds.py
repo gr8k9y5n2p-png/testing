@@ -353,6 +353,59 @@ def test_william_blair_seed_fills_null_categories(client: TestClient) -> None:
     assert listed.json()["total"] == 46
 
 
+def test_first_eagle_allspring_seed_fills_null_categories(client: TestClient) -> None:
+    """#157 heroes: NAV + 5y paid already in book; leftover share-class category only."""
+    for family in ("first_eagle", "allspring"):
+        fetched = client.post("/ingest/fetch", json={"fund_family": family, "mode": "fixture"})
+        assert fetched.status_code == 200, fetched.text
+
+    expected = {
+        "SGIIX": ("Global Allocation", "First Eagle"),
+        "FEGRX": ("Global Allocation", "First Eagle"),
+        "FESGX": ("Global Allocation", "First Eagle"),
+        "SGENX": ("Global Allocation", "First Eagle"),
+        "WSCOX": ("Small Blend", "Allspring"),
+        "WDSAX": ("Small Blend", "Allspring"),
+        "WSCJX": ("Small Blend", "Allspring"),
+        "SCSRX": ("Mid-Cap Blend", "Allspring"),
+        "WEGRX": ("Small Growth", "Allspring"),
+        "SGRKX": ("Large Growth", "Allspring"),
+        "SGRHX": ("Large Growth", "Allspring"),
+        "WOFDX": ("Large Growth", "Allspring"),
+        "WOFRX": ("Large Growth", "Allspring"),
+        "WRPIX": ("Multistrategy", "Allspring"),
+        "EAAFX": ("Moderate Allocation", "Allspring"),
+        "WSIAX": ("Multisector Bond", "Allspring"),
+        "SFAAX": ("Moderate Allocation", "Allspring"),
+        "WFILX": ("Large Blend", "Allspring"),
+        "WFSTX": ("Technology", "Allspring"),
+    }
+    for ticker, (category, family) in expected.items():
+        funds = client.get("/funds", params={"q": ticker})
+        assert funds.status_code == 200, funds.text
+        items = funds.json()["items"]
+        assert items, ticker
+        match = next(item for item in items if item["ticker"] == ticker)
+        assert match["category"] == category, ticker
+        assert match["fund_family"] == family
+
+    still_null = ("NMTFX", "WMTIX", "WWTFX", "WWTIX", "FEBAX", "FERAX")
+    for ticker in still_null:
+        funds = client.get("/funds", params={"q": ticker})
+        assert funds.status_code == 200, funds.text
+        items = funds.json()["items"]
+        assert items, ticker
+        match = next(item for item in items if item["ticker"] == ticker)
+        assert match["category"] is None, ticker
+
+    listed_fe = client.get("/funds", params={"q": "First Eagle", "limit": 100})
+    listed_as = client.get("/funds", params={"q": "Allspring", "limit": 200})
+    assert listed_fe.status_code == 200
+    assert listed_as.status_code == 200
+    assert listed_fe.json()["total"] == 42
+    assert listed_as.json()["total"] == 124
+
+
 def test_distributions_limit_offset_aliases(client: TestClient) -> None:
     _seed_unique_funds(client)
 
