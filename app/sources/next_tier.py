@@ -386,6 +386,12 @@ class SchwabSource(HtmlTableSource):
         "2025 December is not on the FNDA product page, unmatched not invented; "
         "official $0.0000 ST/LT stored; 3-for-1 SCHD / FNDX split 10/10/2024 "
         "printed as published). Family MF PDF does not include these ETFs. "
+        "Official 5y wave 4 re-reads in-book MF product-page Distribution tables "
+        "(Wayback 2025-12-15 after live product pages 403) for 2021–2024 December "
+        "YE still missing from the 2025 family PDF book (SWANX 2021 LT $3.8250 / "
+        "2022 LT $2.5199; SNXFX 2021 income $1.2268 / LT $0.5765; SWLSX 2021 ST "
+        "$0.5607 / LT $1.6176; 27 in-book tickers). Official printed $0.0000 stored. "
+        "Target-date pages that stop at 2020 on the issuer table unmatched. "
         "No public filled ICI file. Skip SPA family grids."
     )
     live_limitations = (
@@ -444,6 +450,14 @@ class SchwabSource(HtmlTableSource):
                 url="https://www.schwabassetmanagement.com/products/schd",
                 fixture="etf_product_page_distributions.html",
                 live=False,
+                large_aum_only=False,
+            ),
+            PageSpec(
+                name="product_page_history_gapfill",
+                url="https://www.schwabassetmanagement.com/products/swanx",
+                fixture="product_page_history_gapfill.html",
+                live=False,
+                role="history",
                 large_aum_only=False,
             ),
         ]

@@ -510,7 +510,13 @@ class FirstTrustSource(HtmlTableSource):
         "In-book hero gap-fill re-reads the same Print=Y pages for leftover "
         "lookback years the family December 2024 declaration omitted "
         "(FPEI 2024 $0.087000; RFDI $1.151300; FTA $0.453400; IGLD $2.404300; "
-        "BGLD $4.595500). Empty issuer years still omitted."
+        "BGLD $4.595500). Empty issuer years still omitted. "
+        "Official 5y wave 4 stores the latest issuer-printed ordinary-income "
+        "row when December is empty on the missing lookback year "
+        "(FPX 2021-09-23 $0.080500; FEP 2022-09-23 $0.170700; FSZ 2023-06-27 "
+        "$1.281000; AGQI 2024-09-26 $0.071700; RNEM 2021-09-23 $0.843100). "
+        "Empty issuer years (ARVR/BGLD/CRPT/EIPX/FSGS/FTC/FTGS/FXH/MISL/RDVI) "
+        "still omitted."
     )
     live_limitations = (
         "Family 19(a) and declaration PDFs. Weekly walk uses the ContentGUID notice "
@@ -567,6 +573,16 @@ class FirstTrustSource(HtmlTableSource):
                     "Print=Y&Ticker=FPEI&year=2024"
                 ),
                 fixture="product_page_history_gapfill.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="product_page_history_midyear_gapfill",
+                url=(
+                    "https://www.ftportfolios.com/Retail/Etf/EtfDividHistory.aspx?"
+                    "Print=Y&Ticker=FPX&year=2021"
+                ),
+                fixture="product_page_history_midyear_gapfill.html",
                 live=False,
                 role="history",
             ),
