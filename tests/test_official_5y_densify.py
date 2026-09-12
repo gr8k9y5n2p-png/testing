@@ -10,10 +10,11 @@ from app.services.lookback import LOOKBACK_YEARS, lookback_digest_from_rows
 from app.sources.american_funds import AmericanFundsSource
 from app.sources.aum import filter_large_aum
 from app.sources.families import BlackRockSource, TRowePriceSource, VanguardSource
-from app.sources.fifth_tier import VictorySource
-from app.sources.fourth_tier import FirstEagleSource, HartfordSource, ThriventSource
+from app.sources.eleventh_tier import AmgSource
+from app.sources.fifth_tier import RoyceSource, VictorySource
+from app.sources.fourth_tier import ArtisanSource, FirstEagleSource, HartfordSource, ThriventSource
 from app.sources.next_tier import NorthernTrustSource, SchwabSource
-from app.sources.sixth_tier import FirstTrustSource, VaneckSource, WisdomtreeSource
+from app.sources.sixth_tier import FirstTrustSource, VaneckSource, WilliamBlairSource, WisdomtreeSource
 from app.sources.parser import NormalizedRecord
 from app.sources.registry import list_sources
 
@@ -161,12 +162,11 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
             )
     digest = lookback_digest_from_rows(rows)
     # Official paid/final only. Missing years stay unmatched — never invent $0.
-    # 2,932 after official 5y wave 4. Wave 5 adds First Eagle Class A
-    # product-page 2021–2023 leftover, Northern Trust 2023 ICI December
-    # income for CG-dash equity, and Thrivent 2021–2023 paid CG — no new
-    # identities.
-    assert digest.funds_with_5y == 2949
-    assert digest.funds_with_5y_mf == 2265
+    # 2,949 after official 5y wave 5. Max-reach adds AMG product-page 2021–2024,
+    # William Blair 2021–2024 leftover share classes, Royce 2021–2024 leftover
+    # share classes, and Artisan official 2021–2023 ICI — no new identities.
+    assert digest.funds_with_5y == 3073
+    assert digest.funds_with_5y_mf == 2389
     assert digest.funds_with_5y_etf == 684
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
@@ -765,3 +765,250 @@ def test_thrivent_paid_2021_2023_fills_in_book_class_s() -> None:
         and row.amount
     ]
     assert tmcvx_2023 == []
+
+
+def test_amg_product_page_history_fills_yackx() -> None:
+    records = AmgSource().fetch(mode="fixture").records
+    yackx_2022_oi = next(
+        row
+        for row in records
+        if row.ticker == "YACKX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2022
+        and row.amount
+    )
+    assert yackx_2022_oi.amount == Decimal("0.3301")
+    assert str(yackx_2022_oi.ex_date) == "2022-12-15"
+    assert yackx_2022_oi.publication_stage == PublicationStage.final
+
+    yackx_2022_lt = next(
+        row
+        for row in records
+        if row.ticker == "YACKX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and row.ex_date.year == 2022
+        and row.amount
+    )
+    assert yackx_2022_lt.amount == Decimal("1.2226")
+
+    aridx_2022_lt = next(
+        row
+        for row in records
+        if row.ticker == "ARIDX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and row.ex_date.year == 2022
+        and row.amount
+    )
+    assert aridx_2022_lt.amount > 0
+
+    yackx_years = {
+        row.ex_date.year
+        for row in records
+        if row.ticker == "YACKX"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert set(LOOKBACK_YEARS) <= yackx_years
+    # Family 2022 PDF 403 leftover: Systematica / GWSZX unpublished years stay unmatched.
+    gwszx_2022 = [
+        row
+        for row in records
+        if row.ticker == "GWSZX"
+        and row.ex_date
+        and row.ex_date.year == 2022
+        and row.amount
+    ]
+    assert gwszx_2022 == []
+
+
+def test_william_blair_official_2021_2024_is_class_level() -> None:
+    records = WilliamBlairSource().fetch(mode="fixture").records
+    bgfix_2021 = next(
+        row
+        for row in records
+        if row.ticker == "BGFIX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount
+    )
+    assert bgfix_2021.amount == Decimal("1.41651")
+    assert bgfix_2021.publication_stage == PublicationStage.final
+    bgfix_2022 = next(
+        row
+        for row in records
+        if row.ticker == "BGFIX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and row.ex_date.year == 2022
+        and row.amount
+    )
+    assert bgfix_2022.amount == Decimal("0.36515")
+    bgfix_2023 = next(
+        row
+        for row in records
+        if row.ticker == "BGFIX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and row.ex_date.year == 2023
+        and row.amount
+    )
+    assert bgfix_2023.amount == Decimal("1.23527")
+
+    # Class N / I / R6 income is class-level — never copy Class I onto R6.
+    wilnx_2021 = next(
+        row
+        for row in records
+        if row.ticker == "WILNX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount
+    )
+    wilix_2021 = next(
+        row
+        for row in records
+        if row.ticker == "WILIX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount
+    )
+    wiljx_2021 = next(
+        row
+        for row in records
+        if row.ticker == "WILJX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount
+    )
+    assert wilnx_2021.amount == Decimal("0.00104")
+    assert wilix_2021.amount == Decimal("0.04526")
+    assert wiljx_2021.amount == Decimal("0.05583")
+    assert wilnx_2021.amount != wilix_2021.amount != wiljx_2021.amount
+
+    bgfix_years = {
+        row.ex_date.year
+        for row in records
+        if row.ticker == "BGFIX"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert set(LOOKBACK_YEARS) <= bgfix_years
+
+
+def test_royce_official_2021_2023_is_class_level() -> None:
+    records = RoyceSource().fetch(mode="fixture").records
+    rytrx_2021_oi = next(
+        row
+        for row in records
+        if row.ticker == "RYTRX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount
+    )
+    assert rytrx_2021_oi.amount == Decimal("0.0299")
+    rytrx_2021_st = next(
+        row
+        for row in records
+        if row.ticker == "RYTRX"
+        and row.estimate_type == EstimateType.short_term_capital_gains
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount
+    )
+    assert rytrx_2021_st.amount == Decimal("0.5162")
+    rytrx_2021_lt = next(
+        row
+        for row in records
+        if row.ticker == "RYTRX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount
+    )
+    assert rytrx_2021_lt.amount == Decimal("2.2441")
+    assert rytrx_2021_lt.publication_stage == PublicationStage.final
+
+    ryotx_2021_lt = next(
+        row
+        for row in records
+        if row.ticker == "RYOTX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount
+    )
+    assert ryotx_2021_lt.amount == Decimal("2.7273")
+
+    rytrx_years = {
+        row.ex_date.year
+        for row in records
+        if row.ticker == "RYTRX"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert set(LOOKBACK_YEARS) <= rytrx_years
+
+
+def test_artisan_official_ici_2021_2023() -> None:
+    records = ArtisanSource().fetch(mode="fixture").records
+    artix_2021 = next(
+        row
+        for row in records
+        if row.ticker == "ARTIX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and (row.ex_date or row.as_of)
+        and (row.ex_date or row.as_of).year == 2021
+        and row.amount
+    )
+    assert artix_2021.amount == Decimal("5.498")
+    assert artix_2021.publication_stage == PublicationStage.final
+    artix_2022 = next(
+        row
+        for row in records
+        if row.ticker == "ARTIX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and (row.ex_date or row.as_of)
+        and (row.ex_date or row.as_of).year == 2022
+        and row.amount
+    )
+    assert artix_2022.amount == Decimal("0.306132")
+    artix_2023 = next(
+        row
+        for row in records
+        if row.ticker == "ARTIX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and (row.ex_date or row.as_of)
+        and (row.ex_date or row.as_of).year == 2023
+        and row.amount
+    )
+    assert artix_2023.amount == Decimal("0.20663")
+
+    artix_years = {
+        (row.ex_date or row.as_of).year
+        for row in records
+        if row.ticker == "ARTIX"
+        and (row.ex_date or row.as_of)
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert set(LOOKBACK_YEARS) <= artix_years
+    # All-zero official ICI rows stay unmatched — never stored as invented $0.
+    artjx_2022 = [
+        row
+        for row in records
+        if row.ticker == "ARTJX"
+        and (row.ex_date or row.as_of)
+        and (row.ex_date or row.as_of).year == 2022
+        and row.amount
+    ]
+    assert artjx_2022 == []

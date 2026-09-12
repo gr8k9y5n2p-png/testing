@@ -19,7 +19,13 @@ class AmgSource(HtmlTableSource):
         "River Road Dividend All Cap Value Class I ARIDX income $0.1044 / LT $1.1294). "
         "Record 12/15/2025; ex/reinvest/pay 12/16/2025. "
         "SMA shares omitted. Monthly income-only / no-CG rows omitted. "
-        "Harding Loevner and Tweedy stay on their own adapters."
+        "Harding Loevner and Tweedy stay on their own adapters. "
+        "Official 5y max-reach: in-book product-page "
+        "https://wealth.amg.com/wp-json/amgfundsdata/v1/fund-detail/{ticker}/performance "
+        "distribution_details Calendar Year rows 2021–2024 (YACKX 2022 income "
+        "$0.3301 / LT $1.2226). Family 2022 PDF URL 403 — product JSON is the "
+        "class-level book. Null / unpublished years omitted (GWSZX / Systematica). "
+        "2025 stays on the existing year-end PDF fixture."
     )
     live_limitations = (
         "Year-end book is PDF. Weekly walk uses the tax hub + PDF URL; "
@@ -43,7 +49,15 @@ class AmgSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
-            )
+            ),
+            PageSpec(
+                name="product_page_history_gapfill",
+                url="https://wealth.amg.com/wp-json/amgfundsdata/v1/fund-detail/YACKX/performance",
+                fixture="product_page_history_gapfill.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
+            ),
         ]
 
 

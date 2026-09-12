@@ -305,7 +305,13 @@ class RoyceSource(HtmlTableSource):
         "2024 paid YE PDF: "
         "https://www.royceinvest.com/news/2024/4Q24/PDF/royce-open-end-funds-distributions-2024.pdf "
         "(Small-Cap Total Return Investment RYTRX ST $0.0584 / LT $0.2980). "
-        "CEF 19(a) notices are a separate closed-end book."
+        "CEF 19(a) notices are a separate closed-end book. "
+        "Official 5y max-reach: 2021–2023 open-end PDFs plus leftover 2024 "
+        "share classes from the official 2024 PDF (RYTRX 2021 income $0.0299 / "
+        "ST $0.5162 / LT $2.2441; RYOTX 2021 ST $0.3705 / LT $2.7273). "
+        "Class-level — never copied across Consultant / Institutional / "
+        "Investment / Service / R. 2024 Investment flagships stay on "
+        "2024_year_end_distributions."
     )
     live_limitations = (
         "Live HTML is public but table layout/headers may not parse. "
@@ -328,6 +334,14 @@ class RoyceSource(HtmlTableSource):
                 fixture="2024_year_end_distributions.html",
                 live=False,
                 role="history",
+            ),
+            PageSpec(
+                name="2021_2024_year_end_distributions",
+                url="https://www.royceinvest.com/news/2021/4Q21/PDF/royce-open-end-funds-distributions-2021.pdf",
+                fixture="2021_2024_year_end_distributions.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
             ),
             PageSpec(
                 name="year_end_distributions_hub",

@@ -524,14 +524,18 @@ class ArtisanSource(HtmlTableSource):
         "any-month ST/LT rows; monthly non-December income omitted so illustration "
         "does not sum. 2024 sibling Year-End-Tax-Reporting-Information-2024.pdf "
         "is column-safe with LT at token 11 (one Box 1b column omitted vs 31-token; "
-        "ARTIX ST $0.456695 / LT $2.067175). 2021–2023 sibling PDFs are public but "
-        "transposed ICI (funds as columns; token order varies) — not column-safe. "
+        "ARTIX ST $0.456695 / LT $2.067175). Official 5y max-reach transcribes the "
+        "2021–2023 ICI Primary Layout PDFs (Investor / Advisor / Institutional "
+        "sections; token order varies by year) to named-column CSVs — ARTIX 2021 "
+        "LT $5.498 / 2022 LT $0.306132 / 2023 LT $0.20663. In-book tickers only. "
+        "December / November YE income plus any-month ST/LT; monthly non-December "
+        "income-only omitted so illustration does not sum. "
         "Year selector for older HTML YE tables is JavaScript — skip SPA. "
         "NRA / DRD PDFs are tax-character layouts, not ingested as CG."
     )
     live_limitations = (
         "Live YTD page is public HTML; year-end equity capital-gains sit behind a year selector. "
-        "2024–2025 ICI-style Year-End Tax Reporting PDFs are the full-book fixtures."
+        "2021–2025 ICI-style Year-End Tax Reporting PDFs are the full-book fixtures."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -564,6 +568,42 @@ class ArtisanSource(HtmlTableSource):
                 fixture="ici_primary_2024.csv",
                 live=False,
                 parser="ici",
+                large_aum_only=False,
+            ),
+            PageSpec(
+                name="ici_primary_2023",
+                url=(
+                    "https://www.artisanpartners.com/content/dam/documents/distributions/"
+                    "Year-End-Tax-Reporting-Information-2023.pdf"
+                ),
+                fixture="ici_primary_2023.csv",
+                live=False,
+                parser="ici",
+                role="history",
+                large_aum_only=False,
+            ),
+            PageSpec(
+                name="ici_primary_2022",
+                url=(
+                    "https://www.artisanpartners.com/content/dam/documents/distributions/"
+                    "Year-End-Tax-Reporting-Information-2022.pdf"
+                ),
+                fixture="ici_primary_2022.csv",
+                live=False,
+                parser="ici",
+                role="history",
+                large_aum_only=False,
+            ),
+            PageSpec(
+                name="ici_primary_2021",
+                url=(
+                    "https://www.artisanpartners.com/content/dam/documents/distributions/"
+                    "Year-End-Tax-Reporting-Information-2021.pdf"
+                ),
+                fixture="ici_primary_2021.csv",
+                live=False,
+                parser="ici",
+                role="history",
                 large_aum_only=False,
             ),
         ]

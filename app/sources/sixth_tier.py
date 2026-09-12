@@ -133,7 +133,13 @@ class WilliamBlairSource(HtmlTableSource):
         "im.williamblair.com product-page title identifiers paired with the "
         "same 2025 I/N/R6 paid PDF (WSMDX ST $0.24654 / LT $0.52390; WBSNX "
         "ST $0.64563 / LT $1.88947; BGFRX ST $0.02557 / LT $2.91999). Existing "
-        "Class I flagships BGFIX / LCGFX / WGFIX / WBSIX are not re-emitted."
+        "Class I flagships BGFIX / LCGFX / WGFIX / WBSIX are not re-emitted. "
+        "Official 5y max-reach: 2021–2023 Class I/N/R6 paid PDFs plus leftover "
+        "2024 share classes from the same official book (BGFIX 2021 LT $1.41651 / "
+        "2022 LT $0.36515 / 2023 LT $1.23527; WBGSX 2024 LT $3.03562). Class N/I "
+        "income is class-level; ST/LT on the N&I table are the official shared "
+        "columns. Class R6 amounts come from the Class R6 table — never copied "
+        "from Class I. 2024 Class I flagships stay on 2024_annual_distributions."
     )
     live_limitations = "Year-end book is PDF. Text extract is wrap-unsafe; fixture keeps Class I flagships."
 
@@ -163,6 +169,19 @@ class WilliamBlairSource(HtmlTableSource):
                 fixture="2024_annual_distributions.html",
                 live=False,
                 role="history",
+            ),
+            PageSpec(
+                name="2021_2024_annual_distributions",
+                url=(
+                    "https://media.im.williamblair.com/v1/media/edge/images/"
+                    "williamblaib9c8-wbim74f8-wbimprod42cd-8345/media/documents/"
+                    "resources/us/distributions/"
+                    "2021-yearend-distributions-and-dividends--class-i-n-and-r6.pdf"
+                ),
+                fixture="2021_2024_annual_distributions.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
             ),
             PageSpec(
                 name="remaining_share_class_annual_distributions",
