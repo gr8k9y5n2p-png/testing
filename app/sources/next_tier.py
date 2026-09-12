@@ -269,6 +269,10 @@ class NorthernTrustSource(HtmlTableSource):
         "(NOSIX LT $1.243605; NENGX LT $1.892337; NOMIX LT $1.629689). "
         "2021 .../capital-gains-2021.pdf (NOSIX ST $0.096491 / LT $0.985777; "
         "full equity CG book; FI daily/monthly omitted). "
+        "Official 5y wave 5 leftover: 2023 ICI December income only for "
+        "in-book equity whose 2023 CG PDF is em-dash (NSRIX $0.320700; "
+        "NSRKX $0.328734; NUEIX $0.055796; NMFIX $0.110864). CG-paying "
+        "2023 tickers omitted (would double-count). "
         "Hub: https://ntam.northerntrust.com/united-states/all-investor/account-resources/tax-center"
     )
     live_limitations = "Year-end figures are PDF. Fixture transcribes the public Northern Funds table."
@@ -301,6 +305,13 @@ class NorthernTrustSource(HtmlTableSource):
                 url=f"{tax}/northerntrust/investment-management/global/en/documents/account-resources/tax-center/capital-gains-2023.pdf",
                 fixture="2023_capital_gain_distributions.html",
                 live=False,
+            ),
+            PageSpec(
+                name="2023_ici_december_income",
+                url=f"{tax}/northerntrust/investment-management/global/en/documents/account-resources/tax-center/nf-ici-primary-2023.pdf",
+                fixture="2023_ici_december_income.html",
+                live=False,
+                role="history",
             ),
             PageSpec(
                 name="2022_capital_gain_distributions",

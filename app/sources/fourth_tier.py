@@ -138,7 +138,14 @@ class ThriventSource(HtmlTableSource):
         "https://web.archive.org/web/20250218073256/https://www.thriventfunds.com/"
         "support/tax-resource-center/capital-gains.html "
         "(TMSIX 2024 LT $1.33794; THLCX ST $0.27399 / LT $1.03670; "
-        "IILGX ST $0.67534 / LT $2.17064)."
+        "IILGX ST $0.67534 / LT $2.17064). "
+        "Official 5y wave 5 in-book leftover: Wayback paid (not estimate) "
+        "2023 / 2022 / 2021 capital-gains HTML for Class S names already on "
+        "the 2024/2025 book (TAAIX 2023 LT $0.41584 / 2022 LT $0.25595 / "
+        "2021 ST $0.44923 / LT $1.31661; IILGX 2023 LT $0.98044; TMSIX 2023 "
+        "LT $0.35311). Funds not listed that year stay unmatched — never "
+        "invented $0. Low Volatility / International Allocation / other "
+        "off-book names omitted. Class A (TAAAX, …) is not mapped."
     )
     live_limitations = (
         "Family page is public HTML with a 'Thrivent Mutual Fund' header (no ticker column). "
@@ -163,6 +170,36 @@ class ThriventSource(HtmlTableSource):
                 ),
                 fixture="2024_paid_capital_gains.html",
                 live=False,
+            ),
+            PageSpec(
+                name="2023_paid_capital_gains",
+                url=(
+                    "https://web.archive.org/web/20240221192409id_/"
+                    "https://www.thriventfunds.com/support/tax-resource-center/capital-gains.html"
+                ),
+                fixture="2023_paid_capital_gains.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="2022_paid_capital_gains",
+                url=(
+                    "https://web.archive.org/web/20230327045351id_/"
+                    "https://www.thriventfunds.com/support/tax-resource-center/capital-gains.html"
+                ),
+                fixture="2022_paid_capital_gains.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="2021_paid_capital_gains",
+                url=(
+                    "https://web.archive.org/web/20220521194610id_/"
+                    "https://www.thriventfunds.com/support/tax-resource-center/capital-gains.html"
+                ),
+                fixture="2021_paid_capital_gains.html",
+                live=False,
+                role="history",
             ),
         ]
 
@@ -353,7 +390,13 @@ class FirstEagleSource(HtmlTableSource):
         "2025-Capital-Gains-and-Income%20Distributions-First%20Eagle-ETFs.pdf "
         "(FEGE income $0.589 / ST $0.000 / LT $0.000; FEOE income $0.738 / ST $0.000 / LT $0.000). "
         "2021–2022 paid PDFs were not a stable public file. Growth of $X added "
-        "for FEFAX."
+        "for FEFAX. "
+        "Official 5y wave 5 in-book leftover: Class A product-page history "
+        "via Wayback id_ snapshots after live firsteagle.com pages 403 "
+        "(SGENX 2022 LT $2.358 / 2021 LT $2.749; SGOVX 2022 income $0.018 / "
+        "LT $0.794; FEFAX 2023 ST $0.008 / LT $1.661; SGGDX 2021 income "
+        "$0.221). Class C / I / R6 not copied from Class A. GRA page 404 — "
+        "FERAX unmatched. Official printed $0.000 stored."
     )
     live_limitations = "Family estimate book is PDF. Paid history is on public product pages."
 
@@ -404,6 +447,16 @@ class FirstEagleSource(HtmlTableSource):
                 fixture="2023_paid_year_end.html",
                 live=False,
                 large_aum_only=True,
+            ),
+            PageSpec(
+                name="product_page_history_gapfill",
+                url=(
+                    "https://web.archive.org/web/20231005012234id_/"
+                    "https://www.firsteagle.com/funds/global-fund"
+                ),
+                fixture="product_page_history_gapfill.html",
+                live=False,
+                role="history",
             ),
         ]
 

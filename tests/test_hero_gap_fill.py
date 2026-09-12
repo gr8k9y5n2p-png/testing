@@ -217,6 +217,6 @@ def test_fixture_book_lookback_stays_official_only() -> None:
             )
     digest = lookback_digest_from_rows(rows)
     # Official paid/final only. Missing years stay unmatched — never invent $0.
-    # 2,892 after in-book hero gap-fill; official 5y wave 4 raises the pin.
-    assert digest.funds_with_5y == 2932
+    # 2,932 after official 5y wave 4; wave 5 raises the pin.
+    assert digest.funds_with_5y == 2949
     assert digest.book_funds >= 7200
