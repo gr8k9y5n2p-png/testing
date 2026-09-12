@@ -444,6 +444,16 @@ _CURATED_TICKERS: dict[str, str] = {
     "RYTRX": "Small Blend",
     "BAFFX": "Large Blend",
     "BGFIX": "Large Growth",
+    # William Blair leftover share classes: sibling Class I / Yahoo fundProfile.
+    # Never invent — size-less "Growth Fund" / "Leaders" names stay null.
+    "WBGSX": "Large Growth",
+    "BGFRX": "Large Growth",
+    "WGFIX": "World Large-Stock Growth",
+    "WGGNX": "World Large-Stock Growth",
+    "BGGIX": "World Large-Stock Growth",
+    "WILIX": "Foreign Large Growth",
+    "WILNX": "Foreign Large Growth",
+    "WILJX": "Foreign Large Growth",
     "AQGIX": "World Large-Stock Blend",
     "CIVIX": "Foreign Large Value",
     "HLMNX": "Foreign Large Growth",

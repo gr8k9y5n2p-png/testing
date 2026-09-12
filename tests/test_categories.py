@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from app.categories import canonical_category, resolve_category
+from app.sources.sixth_tier import WilliamBlairSource
 
 
 def test_curated_flagships() -> None:
@@ -243,6 +244,60 @@ def test_in_book_hero_gapfill_high_confidence_name_rules() -> None:
     # Still never invent size-less / unpublished-style names.
     assert resolve_category(fund_name="Invesco Income Fund") is None
     assert resolve_category(fund_name="Allspring Asset Allocation Fund Class A") is None
+
+
+def test_william_blair_in_book_category_gapfill() -> None:
+    """Leftover WB share classes inherit sibling / Yahoo fundProfile only."""
+    # Growth Fund: Class I BGFIX already Large Growth; N/R from sibling + Yahoo.
+    assert resolve_category(ticker="BGFIX", fund_name="William Blair Growth Fund") == (
+        "Large Growth"
+    )
+    assert resolve_category(
+        ticker="WBGSX", fund_name="William Blair Growth Fund Class N"
+    ) == "Large Growth"
+    assert resolve_category(
+        ticker="BGFRX", fund_name="William Blair Growth Fund Class R"
+    ) == "Large Growth"
+    # Global Leaders: Class I WGFIX already World Large-Stock Growth.
+    assert resolve_category(
+        ticker="WGGNX", fund_name="William Blair Global Leaders Fund Class N"
+    ) == "World Large-Stock Growth"
+    assert resolve_category(
+        ticker="BGGIX", fund_name="William Blair Global Leaders Fund Class R"
+    ) == "World Large-Stock Growth"
+    # International Leaders: no sibling had a category; Yahoo fundProfile.
+    assert resolve_category(
+        ticker="WILIX", fund_name="William Blair International Leaders Fund Class I"
+    ) == "Foreign Large Growth"
+    assert resolve_category(
+        ticker="WILNX", fund_name="William Blair International Leaders Fund Class N"
+    ) == "Foreign Large Growth"
+    assert resolve_category(
+        ticker="WILJX", fund_name="William Blair International Leaders Fund Class R"
+    ) == "Foreign Large Growth"
+    # Name alone is still too size-less to invent without ticker/Yahoo/sibling.
+    assert resolve_category(fund_name="William Blair Growth Fund Class N") is None
+    assert resolve_category(fund_name="William Blair International Leaders Fund Class N") is None
+
+    remaining_null: list[tuple[str, str | None]] = []
+    seen: set[str] = set()
+    for row in WilliamBlairSource().fetch(mode="fixture").records:
+        ticker = (row.ticker or "").strip().upper()
+        if not ticker or ticker in seen:
+            continue
+        seen.add(ticker)
+        category = resolve_category(
+            ticker=ticker,
+            fund_identifier=ticker,
+            fund_name=row.fund_name,
+            fund_family=row.fund_family,
+        )
+        if not category:
+            remaining_null.append((ticker, row.fund_name))
+    assert remaining_null == [], (
+        "William Blair in-book tickers still missing sibling/Yahoo category: "
+        + ", ".join(f"{t} ({n})" for t, n in remaining_null)
+    )
 
 
 def test_canonical_category_aliases() -> None:
