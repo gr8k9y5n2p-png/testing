@@ -372,8 +372,11 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # paid YE +44 MF (KLCAX / PMIEX / QALGX families). SEI 2025 final PDF is
     # year-depth only. Macquarie 2021 and Russell Investments stay unmatched.
     # No new identities.
-    assert digest.funds_with_5y == 3430
-    assert digest.funds_with_5y_mf == 2689
+    # Impax / Pax hero-package gap fill: official 2021–2025 paid book for the
+    # 22 in-book tickered shells plus the four already-healthy identities
+    # unlocks +18 MF 5y. ETF 5y unchanged. No tickers beyond the 22 shells.
+    assert digest.funds_with_5y == 3448
+    assert digest.funds_with_5y_mf == 2707
     assert digest.funds_with_5y_etf == 741
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()

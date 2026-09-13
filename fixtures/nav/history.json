@@ -1,7 +1,7 @@
 {
   "field": "regular_close",
   "field_notes": "Daily liquid close / mutual-fund NAV on or before a distribution day (ex_date, else payable_date). Not today's NAV. Never invented.",
-  "count": 9727,
+  "count": 9758,
   "items": [
     {
       "ticker": "AAAFX",
@@ -9830,6 +9830,13 @@
       "nav_as_of": "2022-12-19",
       "source": "yahoo_last_close",
       "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/BLDAX?interval=1d&period1=1639526400&period2=1671494400"
+    },
+    {
+      "ticker": "BLDX",
+      "nav_per_share": "25.820000",
+      "nav_as_of": "2026-06-22",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/BLDX?interval=1d&period1=1782000000&period2=1782777600"
     },
     {
       "ticker": "BLPAX",
@@ -46134,11 +46141,60 @@
       "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PAWAX?interval=1d&period1=1638835200&period2=1671148800"
     },
     {
+      "ticker": "PAXDX",
+      "nav_per_share": "10.120000",
+      "nav_as_of": "2025-12-22",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PAXDX?interval=1d&period1=1765756800&period2=1767052800"
+    },
+    {
+      "ticker": "PAXGX",
+      "nav_per_share": "16.670000",
+      "nav_as_of": "2025-12-22",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PAXGX?interval=1d&period1=1765756800&period2=1767052800"
+    },
+    {
+      "ticker": "PAXGX",
+      "nav_per_share": "17.330000",
+      "nav_as_of": "2026-06-22",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PAXGX?interval=1d&period1=1782000000&period2=1782777600"
+    },
+    {
+      "ticker": "PAXIX",
+      "nav_per_share": "28.860000",
+      "nav_as_of": "2025-12-22",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PAXIX?interval=1d&period1=1765756800&period2=1767052800"
+    },
+    {
+      "ticker": "PAXIX",
+      "nav_per_share": "28.040000",
+      "nav_as_of": "2026-06-22",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PAXIX?interval=1d&period1=1782000000&period2=1782777600"
+    },
+    {
       "ticker": "PAXLX",
       "nav_per_share": "11.070000",
       "nav_as_of": "2025-12-22",
       "source": "yahoo_last_close",
       "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PAXLX?interval=1d&period1=1765756800&period2=1766448000"
+    },
+    {
+      "ticker": "PAXWX",
+      "nav_per_share": "28.130000",
+      "nav_as_of": "2025-12-22",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PAXWX?interval=1d&period1=1765756800&period2=1767052800"
+    },
+    {
+      "ticker": "PAXWX",
+      "nav_per_share": "27.240000",
+      "nav_as_of": "2026-06-22",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PAXWX?interval=1d&period1=1782000000&period2=1782777600"
     },
     {
       "ticker": "PAYR",
@@ -46454,6 +46510,20 @@
       "nav_as_of": "2025-11-25",
       "source": "yahoo_last_close",
       "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PGOFX?interval=1d&period1=1700438400&period2=1764115200"
+    },
+    {
+      "ticker": "PGRNX",
+      "nav_per_share": "20.720000",
+      "nav_as_of": "2025-12-22",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PGRNX?interval=1d&period1=1765756800&period2=1767052800"
+    },
+    {
+      "ticker": "PGRNX",
+      "nav_per_share": "24.650000",
+      "nav_as_of": "2026-06-22",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PGRNX?interval=1d&period1=1782000000&period2=1782777600"
     },
     {
       "ticker": "PGROX",
@@ -47849,6 +47919,20 @@
       "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PVFYX?interval=1d&period1=1763424000&period2=1764115200"
     },
     {
+      "ticker": "PWGIX",
+      "nav_per_share": "27.130000",
+      "nav_as_of": "2025-12-22",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PWGIX?interval=1d&period1=1765756800&period2=1767052800"
+    },
+    {
+      "ticker": "PWGIX",
+      "nav_per_share": "30.140000",
+      "nav_as_of": "2026-06-22",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PWGIX?interval=1d&period1=1782000000&period2=1782777600"
+    },
+    {
       "ticker": "PWTAX",
       "nav_per_share": "49.730000",
       "nav_as_of": "2025-12-17",
@@ -47863,6 +47947,69 @@
       "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PWTYX?interval=1d&period1=1765324800&period2=1766016000"
     },
     {
+      "ticker": "PXDIX",
+      "nav_per_share": "10.170000",
+      "nav_as_of": "2025-12-22",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PXDIX?interval=1d&period1=1765756800&period2=1767052800"
+    },
+    {
+      "ticker": "PXEAX",
+      "nav_per_share": "20.670000",
+      "nav_as_of": "2025-12-22",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PXEAX?interval=1d&period1=1765756800&period2=1767052800"
+    },
+    {
+      "ticker": "PXEAX",
+      "nav_per_share": "24.600000",
+      "nav_as_of": "2026-06-22",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PXEAX?interval=1d&period1=1782000000&period2=1782777600"
+    },
+    {
+      "ticker": "PXGAX",
+      "nav_per_share": "25.550000",
+      "nav_as_of": "2025-12-22",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PXGAX?interval=1d&period1=1765756800&period2=1767052800"
+    },
+    {
+      "ticker": "PXGAX",
+      "nav_per_share": "28.380000",
+      "nav_as_of": "2026-06-22",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PXGAX?interval=1d&period1=1782000000&period2=1782777600"
+    },
+    {
+      "ticker": "PXGOX",
+      "nav_per_share": "16.840000",
+      "nav_as_of": "2025-12-22",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PXGOX?interval=1d&period1=1765756800&period2=1767052800"
+    },
+    {
+      "ticker": "PXGOX",
+      "nav_per_share": "17.510000",
+      "nav_as_of": "2026-06-22",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PXGOX?interval=1d&period1=1782000000&period2=1782777600"
+    },
+    {
+      "ticker": "PXINX",
+      "nav_per_share": "12.470000",
+      "nav_as_of": "2025-12-22",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PXINX?interval=1d&period1=1765756800&period2=1767052800"
+    },
+    {
+      "ticker": "PXINX",
+      "nav_per_share": "13.640000",
+      "nav_as_of": "2026-06-22",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PXINX?interval=1d&period1=1782000000&period2=1782777600"
+    },
+    {
       "ticker": "PXLIX",
       "nav_per_share": "11.140000",
       "nav_as_of": "2025-12-22",
@@ -47870,11 +48017,81 @@
       "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PXLIX?interval=1d&period1=1765756800&period2=1766448000"
     },
     {
+      "ticker": "PXNIX",
+      "nav_per_share": "12.160000",
+      "nav_as_of": "2025-12-22",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PXNIX?interval=1d&period1=1765756800&period2=1767052800"
+    },
+    {
+      "ticker": "PXNIX",
+      "nav_per_share": "13.310000",
+      "nav_as_of": "2026-06-22",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PXNIX?interval=1d&period1=1782000000&period2=1782777600"
+    },
+    {
+      "ticker": "PXSAX",
+      "nav_per_share": "18.740000",
+      "nav_as_of": "2025-12-22",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PXSAX?interval=1d&period1=1765756800&period2=1767052800"
+    },
+    {
       "ticker": "PXSCX",
       "nav_per_share": "18.809999",
       "nav_as_of": "2025-12-22",
       "source": "yahoo_last_close",
       "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PXSCX?interval=1d&period1=1765756800&period2=1766448000"
+    },
+    {
+      "ticker": "PXSIX",
+      "nav_per_share": "19.280000",
+      "nav_as_of": "2025-12-22",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PXSIX?interval=1d&period1=1765756800&period2=1767052800"
+    },
+    {
+      "ticker": "PXWEX",
+      "nav_per_share": "34.680000",
+      "nav_as_of": "2025-12-22",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PXWEX?interval=1d&period1=1765756800&period2=1767052800"
+    },
+    {
+      "ticker": "PXWEX",
+      "nav_per_share": "37.430000",
+      "nav_as_of": "2026-06-22",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PXWEX?interval=1d&period1=1782000000&period2=1782777600"
+    },
+    {
+      "ticker": "PXWGX",
+      "nav_per_share": "25.690000",
+      "nav_as_of": "2025-12-22",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PXWGX?interval=1d&period1=1765756800&period2=1767052800"
+    },
+    {
+      "ticker": "PXWGX",
+      "nav_per_share": "28.530000",
+      "nav_as_of": "2026-06-22",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PXWGX?interval=1d&period1=1782000000&period2=1782777600"
+    },
+    {
+      "ticker": "PXWIX",
+      "nav_per_share": "35.030000",
+      "nav_as_of": "2025-12-22",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PXWIX?interval=1d&period1=1765756800&period2=1767052800"
+    },
+    {
+      "ticker": "PXWIX",
+      "nav_per_share": "37.820000",
+      "nav_as_of": "2026-06-22",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PXWIX?interval=1d&period1=1782000000&period2=1782777600"
     },
     {
       "ticker": "PYCGX",
