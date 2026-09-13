@@ -6,7 +6,7 @@ from datetime import date
 from decimal import Decimal
 
 from app.models import AmountUnit, EstimateType, PublicationStage
-from app.services.lookback import LOOKBACK_YEARS, lookback_digest_from_rows
+from app.services.lookback import LOOKBACK_YEARS, _year_for_row, lookback_digest_from_rows
 from app.sources.american_funds import AmericanFundsSource
 from app.sources.aum import filter_large_aum
 from app.sources.families import (
@@ -2472,13 +2472,13 @@ def test_t_rowe_tblyx_leftover_2021_2022_completes_5y() -> None:
     assert tblyx_2022_lt.amount == Decimal("0.0145")
 
     tblyx_years = {
-        row.ex_date.year
+        _year_for_row(row.as_of, row.ex_date, row.payable_date)
         for row in records
         if row.ticker == "TBLYX"
-        and row.ex_date
         and row.publication_stage == PublicationStage.final
         and row.amount is not None
     }
+    tblyx_years.discard(None)
     assert set(LOOKBACK_YEARS) <= tblyx_years
 
     # Class-level — Investor TBLYX is not copied from I-Class TBLHX amounts.
@@ -2505,13 +2505,13 @@ def test_t_rowe_tblyx_leftover_2021_2022_completes_5y() -> None:
     assert trlax_2023.amount == Decimal("0.1199")
     assert str(trlax_2023.ex_date) == "2023-12-28"
     trlax_years = {
-        row.ex_date.year
+        _year_for_row(row.as_of, row.ex_date, row.payable_date)
         for row in records
         if row.ticker == "TRLAX"
-        and row.ex_date
         and row.publication_stage == PublicationStage.final
         and row.amount is not None
     }
+    trlax_years.discard(None)
     assert {2022, 2023, 2024, 2025} <= trlax_years
     assert 2021 not in trlax_years
 
