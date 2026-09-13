@@ -656,15 +656,12 @@ def test_search_multi_year_top_families(client: TestClient) -> None:
     assert jdcax_lt[("2024", "final")] == Decimal("5.469390")
     assert jdcax_lt[("2025", "final")] == Decimal("6.966940")
 
-    twcgx = client.get("/distributions", params={"fund_identifier": "TWCGX", "page_size": 50})
+    twcgx = client.get("/distributions", params={"fund_identifier": "TWCGX", "page_size": 20})
     twcgx_types = {item["estimate_type"] for item in twcgx.json()["items"]}
     assert "long_term_capital_gains" in twcgx_types
     assert "total_capital_gains" in twcgx_types
-    # 2023 leftover paid is stamped from a later page as_of; prefer ex_date.
     assert {"2022", "2023", "2025"} <= {
-        (item.get("ex_date") or item.get("as_of") or "")[:4]
-        for item in twcgx.json()["items"]
-        if item.get("ex_date") or item.get("as_of")
+        item["as_of"][:4] for item in twcgx.json()["items"] if item.get("as_of")
     }
 
     dodgx = client.get("/distributions", params={"fund_identifier": "DODGX", "page_size": 50})
@@ -787,7 +784,7 @@ def test_search_multi_year_top_families(client: TestClient) -> None:
     assert tmsix.json()["total"] >= 1, tmsix.json()
     assert {"2024", "2025"} <= {item["as_of"][:4] for item in tmsix.json()["items"] if item.get("as_of")}
 
-    kauax = client.get("/distributions", params={"fund_identifier": "KAUAX", "page_size": 50})
+    kauax = client.get("/distributions", params={"fund_identifier": "KAUAX", "page_size": 20})
     assert any(
         item["estimate_type"] == "long_term_capital_gains"
         and Decimal(item["amount"]) == Decimal("0.638052")
