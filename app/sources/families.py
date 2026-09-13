@@ -590,7 +590,9 @@ class GoldmanSachsSource(HtmlTableSource):
         "ST/LT table on 2026-09-08 (literature library / no estimate grid). Weekly refresh "
         "walks the hub anyway. Estimates are typically Q4 PDFs. Fixture parser uses the GSAM "
         "table layout plus the public 2025 year-end distribution for Large Cap Growth Insights "
-        "(GLCGX). Prior-year advisor archives remain walled — deferred, not invented."
+        "(GLCGX). Parallel E leftover re-probe (2026-09-13): advisor tax center still "
+        "403; no official paid 2021–2024 ST/LT $/share book for GLCGX / GCGIX — "
+        "those years stay unmatched, not invented. Third-party history unused."
     )
     live_limitations = "Advisor tax center is login/403-walled (including historical packs). Use fixtures or POST /ingest/distributions."
 
@@ -620,7 +622,10 @@ class PimcoSource(HtmlTableSource):
         "supplement (not ST/LT $/share). The 2025 tax-information PDF remains 1099 "
         "character (muni taxable % / AMT), not a per-share CG book. Open-end Section 19 "
         "/ year-end estimate PDFs were not fetchable — ZZPIMI/ZZPIMB stay parser-layout "
-        "samples (not official). Partner ingest is the escape hatch for official notices."
+        "samples (not official). Parallel E leftover re-probe (2026-09-13): tax-center "
+        "PDFs remain 1099 character (muni % / AMT / US-gov %), not ST/LT $/share; "
+        "BOND ETF product page GET 403; no in-book leftover tickers. Partner ingest "
+        "is the escape hatch for official notices."
     )
     live_limitations = (
         "No public HTML estimate table or open-end ST/LT PDF on this pass; fixture "
