@@ -20,7 +20,13 @@ class SeiSource(HtmlTableSource):
         "All-dash / not-expected rows are omitted. "
         "2024 estimate PDF: "
         "https://www.seic.com/sites/default/files/2024-10/SEI-2024-Capital-Gains-Distribution-Estimates.pdf "
-        "(SIMT Large Cap Growth ST $1.541 / LT $7.596 / 15.46% of NAV)."
+        "(SIMT Large Cap Growth ST $1.541 / LT $7.596 / 15.46% of NAV). "
+        "Official 5y parallel N leftover: 2025 paid/final PDF "
+        "https://www.seic.com/sites/default/files/2025-12/"
+        "2025%20SEI%20Capital%20gains%20distribution_Final.pdf "
+        "(SIMT Large Cap Growth ST $1.370 / LT $8.053; QALT ST $0.248 / LT $0.372). "
+        "Existing estimate-book identities only. 2021–2024 sibling final PDFs 404; "
+        "Canadian tax-factor PDFs omitted (non-US)."
     )
     live_limitations = "Estimate book is PDF. Fixture transcribes the public paying-fund table."
 
@@ -43,6 +49,17 @@ class SeiSource(HtmlTableSource):
                 fixture="2024_estimated_capital_gains.html",
                 live=False,
                 role="history",
+            ),
+            PageSpec(
+                name="2025_paid_capital_gains",
+                url=(
+                    "https://www.seic.com/sites/default/files/2025-12/"
+                    "2025%20SEI%20Capital%20gains%20distribution_Final.pdf"
+                ),
+                fixture="2025_paid_capital_gains.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
             ),
         ]
 

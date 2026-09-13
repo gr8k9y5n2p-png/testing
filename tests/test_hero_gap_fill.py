@@ -229,5 +229,7 @@ def test_fixture_book_lookback_stays_official_only() -> None:
     # Parallel O leftover: VanEck tax-guide + later 2025 paid PDF +3 ETF 5y
     # (EINC / LFEQ / RAAX).
     # Parallel M leftover: GuideStone Investor product-page paid history +17 MF.
-    assert digest.funds_with_5y == 3386
+    # Parallel N leftover: Federated Hermes Final Capital Gains API leftover
+    # paid YE +44 MF. SEI 2025 final is year-depth only.
+    assert digest.funds_with_5y == 3430
     assert digest.book_funds >= 7200
