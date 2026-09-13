@@ -1995,6 +1995,7 @@ def test_nuveen_leftover_product_page_paid_history_fills_institutional_5y() -> N
         and row.estimate_type == EstimateType.long_term_capital_gains
         and row.ex_date
         and row.ex_date.year == 2025
+        and row.publication_stage == PublicationStage.final
         and row.amount
     )
     assert nsbrx_2025_lt.amount == Decimal("4.9421")
