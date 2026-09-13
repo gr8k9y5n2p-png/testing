@@ -226,5 +226,7 @@ def test_fixture_book_lookback_stays_official_only() -> None:
     # Parallel I leftover: Artisan leftover ICI + Calamos Class A paid/product
     # pages raise the pin +20 MF (Victory 2022 RS is year-depth).
     # Parallel J leftover: AllianceBernstein Class A product-page paid YE +15 MF.
-    assert digest.funds_with_5y == 3366
+    # Parallel O leftover: VanEck tax-guide + later 2025 paid PDF +3 ETF 5y
+    # (EINC / LFEQ / RAAX).
+    assert digest.funds_with_5y == 3369
     assert digest.book_funds >= 7200
