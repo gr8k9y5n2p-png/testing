@@ -752,6 +752,23 @@ def test_next_tier_fixtures() -> None:
     )
     cvlc = next(r for r in msim if r.ticker == "CVLC" and r.estimate_type == EstimateType.ordinary_income)
     assert cvlc.amount == Decimal("0.283927")
+    msim_leftover_2024 = parse_distribution_html(
+        (ROOT / "morgan_stanley" / "leftover_etf_year_end_2024.html").read_text(encoding="utf-8"),
+        source_url="fixture://msim-leftover-2024",
+        fund_family="Morgan Stanley Investment Management",
+    )
+    cdei_2024 = next(
+        r
+        for r in msim_leftover_2024
+        if r.ticker == "CDEI" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert cdei_2024.amount == Decimal("0.232960")
+    evim_2024 = next(
+        r
+        for r in msim_leftover_2024
+        if r.ticker == "EVIM" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert evim_2024.amount == Decimal("0.166867")
 
     schwab = parse_distribution_html(
         (ROOT / "schwab" / "2025_annual_distributions.html").read_text(encoding="utf-8"),

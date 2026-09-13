@@ -40,8 +40,16 @@ class AllspringSource(HtmlTableSource):
         "dividends that fill the missing lookback year on the CG-only leftover "
         "book (SCVAX 2023-12-22 $0.27556; SCVNX $0.38479; SCVJX $0.38997; "
         "WGAFX 2023-12-27 $0.07021; WGBIX $0.07698; WSCOX 2021-12-16 $0.08681). "
+        "Parallel K leftover income (same official class-level product pages; "
+        "December YE only; never copied across share classes): Core Bond MBFIX "
+        "2023-12-29 $0.039850909 / 2024-12-31 $0.040298714 / 2025-12-31 "
+        "$0.039760604; Short-Term Bond Plus SSTVX 2022-12-21 $0.02809; Core "
+        "Plus WIPIX 2025-12-22 $0.06534; High Yield Municipal WHYIX 2025-12-31 "
+        "$0.038519989; Income Plus WSIAX 2024-12-20 $0.06789; Spectrum Income "
+        "WCAFX 2023-12-27 $0.08252; Special International Small Cap WICIX "
+        "2022-12-28 $0.12539. ASPAX / WRPIX / WRPRX stay 4y (2021 unpublished). "
         "Unpublished leftover years stay unmatched (WDSAX 2021; EAAFX 2023; "
-        "EKGAX 2023; WEACX 2023; WFDAX 2023)."
+        "EKGAX 2023; WEACX 2023; WFDAX 2023; WFSTX / WFTIX 2023; WEMAX 2022–2023)."
     )
     live_limitations = (
         "Family estimate PDF is gated/image-based. Product-page tables put the date "
@@ -100,6 +108,14 @@ class AllspringSource(HtmlTableSource):
                 name="leftover_share_class_paid_income",
                 url="https://www.allspringglobal.com/investments/equity/mutual-funds/small-company-value/a/",
                 fixture="leftover_share_class_paid_income.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
+            ),
+            PageSpec(
+                name="leftover_share_class_paid_income_parallel_k",
+                url="https://www.allspringglobal.com/investments/fixed-income/mutual-funds/core-bond/i/",
+                fixture="leftover_share_class_paid_income_parallel_k.html",
                 live=False,
                 role="history",
                 large_aum_only=False,
@@ -869,7 +885,14 @@ class EatonVanceSource(HtmlTableSource):
         "still publishes distinct public CEF Section 19(b) estimated-source notices, "
         "e.g. https://www.eatonvance.com/content/dam/im/assets/publication/thought-leadership/"
         "press-release/combined19bpressreleasemarch2025.pdf "
-        "(EOI March 2025 $0.1338, 100% LT). No public filled ICI. 2024 sibling "
+        "(EOI March 2025 $0.1338, 100% LT). 19(b) notices are estimates — not "
+        "counted as paid/final YE. No public filled ICI Primary. Parallel K "
+        "in-book Eaton Vance leftovers are the MSIM ETF sleeve (EVIM / EVLN / "
+        "EVSB / EVSD / EVSM / EVTR / EVYM / EVMO / XAGG); 2024 YE leftover "
+        "fills live on the official MSIM 2024 ETF PDF (MorganStanleySource). "
+        "EVYM / EVMO / XAGG 2024 unpublished on that PDF. 2021–2023 ETF YE "
+        "PDFs unpublished. Open-end EV tax guides are characterization / DRD "
+        "/ exempt-interest — not a paid $/share YE book. 2024 sibling "
         "combined19bpressreleasemarch2024.pdf / combined_19b_press_release_022924.pdf "
         "returned 403. Open-end family estimate HTML was not found on 2026-09-07."
     )
