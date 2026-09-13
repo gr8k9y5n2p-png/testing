@@ -22,7 +22,7 @@ AB_FUND_ROWS: tuple[tuple[str, str | None, tuple[str, ...], str | None], ...] = 
         ("AB Core Opportunities Fund, Inc.", "AB Core Opportunities Fund"),
         None,
     ),
-    ("CHCLX", None, ("AB Discovery Growth Fund, Inc.",), None),
+    ("CHCLX", None, ("AB Discovery Growth Fund, Inc.", "AB Discovery Growth Fund"), None),
     (
         "AUIAX",
         None,
@@ -41,7 +41,7 @@ AB_FUND_ROWS: tuple[tuple[str, str | None, tuple[str, ...], str | None], ...] = 
         ("AB Relative Value Fund, Inc.", "AB Relative Value Fund"),
         None,
     ),
-    ("AUUAX", None, ("AB Select US Equity",), None),
+    ("AUUAX", None, ("AB Select US Equity", "AB Select US Equity Portfolio"), None),
     ("SCAVX", None, ("AB Small Cap Value Portfolio",), None),
     ("AWAAX", None, ("AB Wealth Appreciation Strategy",), None),
     ("GCEAX", None, ("AB Global Core Equity Portfolio",), None),

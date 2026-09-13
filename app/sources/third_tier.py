@@ -726,7 +726,14 @@ class AllianceBernsteinSource(HtmlTableSource):
         "2025; 2024 was overwritten (not invented). 2023 book GEN–5796–1023 is "
         "the full paying-fund table from the public Wayback snapshot "
         "20240422225619 of that path (AGRFX LT $6.95; APGAX LT $1.50; "
-        "ABASX Discovery Value ST $0.13 / LT $1.32)."
+        "ABASX Discovery Value ST $0.13 / LT $1.32). "
+        "Official 5y parallel J leftover: issuer product-page API "
+        "https://webapi.alliancebernstein.com/v1/funds/us/en-us/investments/{CUSIP}/distributions "
+        "restores Class A paid YE 2021–2025 for in-book leftovers (AGRFX 2025 LT "
+        "$16.5000 / ST $0.6757; APGAX 2021 LT $2.2996; ABASX 2021 income $0.2155). "
+        "Class-level — never copied onto Advisor / C / I / R / Z. CHCLX 2022–2024 "
+        "unpublished on that API (wall). Tax-center 1099 Tax Guides are "
+        "characterization, not paid $/share."
     )
     live_limitations = "Estimates are PDF. Fixture transcribes public Class A rows."
 
@@ -752,6 +759,16 @@ class AllianceBernsteinSource(HtmlTableSource):
                 ),
                 fixture="2023_estimated_capital_gains.html",
                 live=False,
+            ),
+            PageSpec(
+                name="leftover_class_a_paid_parallel_j",
+                url=(
+                    "https://www.alliancebernstein.com/us/en-us/investments/products/"
+                    "mutual-funds/equities/ab-growth-fund.a.01877F401.html"
+                ),
+                fixture="leftover_class_a_paid_parallel_j.html",
+                live=False,
+                role="history",
             ),
         ]
 
@@ -835,7 +852,12 @@ class VirtusSource(HtmlTableSource):
         "LT $0.028392; PGUAX ST $0.171708 / LT $0.874419). STVTX / STCIX / UNWGX "
         "are not re-emitted. Published $0.000000 omitted. 2021–2024 sibling "
         "calendar filenames returned the 2025 file (identical hash) — gaps stay "
-        "Undisclosed."
+        "Undisclosed. Parallel J leftover re-probe (2026-09-13): "
+        "2024/2023/2022/2021-mfs_distributions_calyr_detail.pdf still serve the "
+        "2025 book (md5 5b73972be59f5701812a8445fe223940). Product-page "
+        "Distribution History is JavaScript. Wayback CDX of virtus.com/assets/files "
+        "did not recover a distinct prior-year calendar PDF. Leftover 2021–2024 "
+        "years stay unmatched."
     )
     live_limitations = "Estimate book is PDF. Fixture transcribes the public June 2026 table."
 

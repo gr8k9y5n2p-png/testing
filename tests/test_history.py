@@ -674,8 +674,10 @@ def test_search_multi_year_top_families(client: TestClient) -> None:
         item["as_of"][:4] for item in mighx.json()["items"] if item.get("as_of")
     }
 
-    agrfx = client.get("/distributions", params={"fund_identifier": "AGRFX", "page_size": 20})
-    assert {"2023", "2025"} <= {item["as_of"][:4] for item in agrfx.json()["items"] if item.get("as_of")}
+    agrfx = client.get("/distributions", params={"fund_identifier": "AGRFX", "page_size": 50})
+    assert {"2021", "2022", "2023", "2024", "2025"} <= {
+        item["as_of"][:4] for item in agrfx.json()["items"] if item.get("as_of")
+    }
 
     stvtx = client.get("/distributions", params={"fund_identifier": "STVTX", "page_size": 20})
     assert {"2024", "2025", "2026"} <= {
