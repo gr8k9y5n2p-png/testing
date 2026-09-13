@@ -92,6 +92,14 @@ class PrincipalSource(HtmlTableSource):
         "same MidCap Inst amounts; LTSTX 2022-12-20 ST $0.0265 / LT $0.5279). "
         "PINIX live 2023 December income $0.3959 fills the leftover 2y year "
         "(no 2023 CG). PBLCX / PBCKX still have no 2023 YE row — unmatched. "
+        "Official 5y leftover 2y/1y densify uses live product pages plus Wayback "
+        "2022 / 20240101 (not 20230101000000id_): PALTX 2023 income $0.2506 / "
+        "2021 ST $0.0442 / LT $0.5565; PLSIX 2023 income $0.2822; PMSAX 2023 "
+        "income $0.3149; PTPPX 2023 income $0.3745; PGBHX 2023 income $0.0121 "
+        "(not copied onto PGBGX / PGBEX). Real Estate leftover 2021–2023 "
+        "(PRRAX 2023 income $0.1457). GEM leftover 2021–2023 income (no 2024 YE). "
+        "SmallCap Growth leftovers + PGBGX / PGBEX / PGRTX / PBLAX / PBCJX still "
+        "have no 2023 YE — unmatched. PINJX product page 404. "
         "Class-level — never copied across A/I/C/R/J."
     )
     live_limitations = (
@@ -134,6 +142,13 @@ class PrincipalSource(HtmlTableSource):
                     "https://www.principalam.com/us/fund/pqiax"
                 ),
                 fixture="leftover_product_page_history_2021_2022.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="leftover_product_page_history_2y_2021_2023",
+                url="https://web.archive.org/web/2022/https://www.principalam.com/us/fund/paltx",
+                fixture="leftover_product_page_history_2y_2021_2023.html",
                 live=False,
                 role="history",
             ),

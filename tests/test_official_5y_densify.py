@@ -20,7 +20,7 @@ from app.sources.fourth_tier import (
     ThriventSource,
 )
 from app.sources.next_tier import NorthernTrustSource, SchwabSource
-from app.sources.third_tier import AllspringSource
+from app.sources.third_tier import AllspringSource, JanusHendersonSource
 from app.sources.sixth_tier import (
     FirstTrustSource,
     HardingLoevnerSource,
@@ -175,11 +175,12 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
             )
     digest = lookback_digest_from_rows(rows)
     # Official paid/final only. Missing years stay unmatched — never invent $0.
-    # 3,204 after WisdomTree + Principal leftover (#159). Parallel A leftover
-    # adds Oakmark Wayback 2021–2023 + Harding Loevner AMG JSON — no new identities.
-    assert digest.funds_with_5y == 3218
-    assert digest.funds_with_5y_mf == 2487
-    assert digest.funds_with_5y_etf == 731
+    # 3,218 after #161 Oakmark Wayback + Harding Loevner. Leftover densify after
+    # #159/#161: +34 (iShares rename 2025 / LifePath 2022 / Principal leftover 2y /
+    # Janus HEM* July 2025 / VanEck CMC 2025 / FNDA 2025). No new identities.
+    assert digest.funds_with_5y == 3252
+    assert digest.funds_with_5y_mf == 2516
+    assert digest.funds_with_5y_etf == 736
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
 
@@ -1410,3 +1411,327 @@ def test_harding_loevner_leftover_amg_json_fills_5y() -> None:
         and row.amount
     ]
     assert hlmgx_2022 == []
+
+
+def test_ishares_leftover_rename_2025_fills_4y() -> None:
+    records = BlackRockSource().fetch(mode="fixture").records
+    hyxu_2025 = next(
+        row
+        for row in records
+        if row.ticker == "HYXU"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2025
+        and row.amount
+    )
+    assert hyxu_2025.amount == Decimal("1.895899")
+    assert str(hyxu_2025.ex_date) == "2025-12-19"
+    fill_2025 = next(
+        row
+        for row in records
+        if row.ticker == "FILL"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2025
+        and row.amount
+    )
+    assert fill_2025.amount == Decimal("0.288052")
+    # Stamped-PDF dashes are not stored as $0.
+    shv_2021 = [
+        row
+        for row in records
+        if row.ticker == "SHV"
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.amount == Decimal("0")
+    ]
+    assert shv_2021 == []
+    hyxu_years = {
+        row.ex_date.year
+        for row in records
+        if row.ticker == "HYXU"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert set(LOOKBACK_YEARS) <= hyxu_years
+
+
+def test_blackrock_lifepath_leftover_2022_investor_a() -> None:
+    records = BlackRockSource().fetch(mode="fixture").records
+    lprax_2022 = next(
+        row
+        for row in records
+        if row.ticker == "LPRAX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2022
+        and row.amount is not None
+    )
+    assert lprax_2022.amount == Decimal("0.000000")
+    assert str(lprax_2022.ex_date) == "2022-07-14"
+    lpjax_2022 = next(
+        row
+        for row in records
+        if row.ticker == "LPJAX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2022
+        and row.amount
+    )
+    assert lpjax_2022.amount == Decimal("0.018889")
+    lphax_2022 = next(
+        row
+        for row in records
+        if row.ticker == "LPHAX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2022
+        and row.amount
+    )
+    assert lphax_2022.amount == Decimal("0.052130")
+    lprax_years = {
+        row.ex_date.year
+        for row in records
+        if row.ticker == "LPRAX"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert set(LOOKBACK_YEARS) <= lprax_years
+
+
+def test_principal_leftover_2y_wayback_fills_5y() -> None:
+    records = PrincipalSource().fetch(mode="fixture").records
+    paltx_2023 = next(
+        row
+        for row in records
+        if row.ticker == "PALTX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2023
+        and row.amount
+    )
+    assert paltx_2023.amount == Decimal("0.2506")
+    assert str(paltx_2023.ex_date) == "2023-12-29"
+    paltx_2021_lt = next(
+        row
+        for row in records
+        if row.ticker == "PALTX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount
+    )
+    assert paltx_2021_lt.amount == Decimal("0.5565")
+    pgbhx_2023 = next(
+        row
+        for row in records
+        if row.ticker == "PGBHX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2023
+        and row.amount
+    )
+    assert pgbhx_2023.amount == Decimal("0.0121")
+    # Do not copy R-6 2023 income onto leftover R-5 / R-3.
+    pgbgx_2023 = [
+        row
+        for row in records
+        if row.ticker == "PGBGX"
+        and row.ex_date
+        and row.ex_date.year == 2023
+        and row.amount
+    ]
+    assert pgbgx_2023 == []
+    paltx_years = {
+        row.ex_date.year
+        for row in records
+        if row.ticker == "PALTX"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert set(LOOKBACK_YEARS) <= paltx_years
+
+
+def test_schwab_fnda_2025_wayback_fills_5y() -> None:
+    records = SchwabSource().fetch(mode="fixture").records
+    fnda_2025 = next(
+        row
+        for row in records
+        if row.ticker == "FNDA"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2025
+        and row.amount
+    )
+    assert fnda_2025.amount == Decimal("0.1521")
+    assert str(fnda_2025.ex_date) == "2025-12-10"
+    fnda_years = {
+        row.ex_date.year
+        for row in records
+        if row.ticker == "FNDA"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert set(LOOKBACK_YEARS) <= fnda_years
+
+
+def test_janus_leftover_emerging_markets_2025_july_ici() -> None:
+    records = JanusHendersonSource().fetch(mode="fixture").records
+    hemax_2025 = next(
+        row
+        for row in records
+        if row.ticker == "HEMAX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2025
+        and row.amount
+    )
+    assert hemax_2025.amount == Decimal("0.00131188")
+    assert str(hemax_2025.ex_date) == "2025-07-28"
+    hemix_2025 = next(
+        row
+        for row in records
+        if row.ticker == "HEMIX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2025
+        and row.amount
+    )
+    assert hemix_2025.amount == Decimal("0.04811006")
+    hemsx_2025 = [
+        row
+        for row in records
+        if row.ticker == "HEMSX"
+        and row.ex_date
+        and row.ex_date.year == 2025
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.amount
+    ]
+    assert hemsx_2025 == []
+    hemax_years = {
+        row.ex_date.year
+        for row in records
+        if row.ticker == "HEMAX"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert set(LOOKBACK_YEARS) <= hemax_years
+
+
+def test_vaneck_leftover_cm_commodity_2025() -> None:
+    records = VaneckSource().fetch(mode="fixture").records
+    cmcax_2025 = {
+        (str(row.amount), str(row.ex_date))
+        for row in records
+        if row.ticker == "CMCAX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2025
+        and row.amount
+    }
+    assert ("1.0825", "2025-12-29") in cmcax_2025
+    assert ("5.2074", "2025-12-23") in cmcax_2025
+    cmcax_years = {
+        row.ex_date.year
+        for row in records
+        if row.ticker == "CMCAX"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert set(LOOKBACK_YEARS) <= cmcax_years
+    ghacx_2025 = [
+        row
+        for row in records
+        if row.ticker == "GHACX"
+        and row.ex_date
+        and row.ex_date.year == 2025
+        and row.amount
+    ]
+    assert ghacx_2025 == []
+
+
+def test_wisdomtree_leftover_3y_2023_monthly_income() -> None:
+    records = WisdomtreeSource().fetch(mode="fixture").records
+    aivi_2023 = next(
+        row
+        for row in records
+        if row.ticker == "AIVI"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2023
+        and row.amount
+    )
+    assert aivi_2023.amount == Decimal("0.35000")
+    assert str(aivi_2023.ex_date) == "2023-09-25"
+    wtv_2023 = next(
+        row
+        for row in records
+        if row.ticker == "WTV"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2023
+        and row.amount
+    )
+    assert wtv_2023.amount == Decimal("0.26000")
+    qgrw_2023 = [
+        row
+        for row in records
+        if row.ticker == "QGRW"
+        and row.ex_date
+        and row.ex_date.year == 2023
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.amount
+    ]
+    assert qgrw_2023 == []
+
+
+def test_victory_leftover_2024_share_classes() -> None:
+    records = VictorySource().fetch(mode="fixture").records
+    vevix_2024 = next(
+        row
+        for row in records
+        if row.ticker == "VEVIX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and row.ex_date.year == 2024
+        and row.amount
+    )
+    assert vevix_2024.amount == Decimal("4.150428")
+    assert str(vevix_2024.ex_date) == "2024-12-13"
+    vevix_oi = next(
+        row
+        for row in records
+        if row.ticker == "VEVIX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2024
+        and row.amount is not None
+    )
+    assert vevix_oi.amount == Decimal("0.187299")
+    vsoix_2024 = next(
+        row
+        for row in records
+        if row.ticker == "VSOIX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2024
+        and row.amount
+    )
+    assert vsoix_2024.amount == Decimal("0.408506")
+    mmecx_oi = next(
+        row
+        for row in records
+        if row.ticker == "MMECX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2024
+        and row.amount is not None
+    )
+    assert mmecx_oi.amount == Decimal("0.000000")

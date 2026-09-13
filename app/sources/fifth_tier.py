@@ -468,6 +468,11 @@ class VictorySource(HtmlTableSource):
         "2024 final Class A book: "
         "https://investor.vcm.com/assets/resources-mutualfunddoc/Victory-Funds-2024-Final-Ordinary-Income-and-Capital-Gains.pdf "
         "(Integrity Discovery MMEAX ST $0.801347 / LT $3.015874 / 8.95% of NAV). "
+        "Official 5y leftover densify adds leftover 2024 Class I/C/Y from that "
+        "same I/II PDF (VEVIX OI $0.187299 / ST $0.542703 / LT $4.150428; "
+        "VSOIX OI $0.408506 / ST $0.125199 / LT $3.571324; printed $0.000000 "
+        "OI stored). Class-level — never copy A onto I/C/Y. 2021 I/II sibling "
+        "still 404. "
         "Wave 7 lookback: official 2022 hyphenated + 2023 space-encoded I/II finals "
         "(MMEAX 2022 LT $2.389672 / 2023 LT $0.390522; VETAX 2022 LT $2.782434 / "
         "2023 LT $2.095967), 2023–2024 RS MF books (RSGRX 2023 LT $0.036599 / "
@@ -523,6 +528,13 @@ class VictorySource(HtmlTableSource):
                 name="2024_final_ordinary_income_and_capital_gains",
                 url="https://investor.vcm.com/assets/resources-mutualfunddoc/Victory-Funds-2024-Final-Ordinary-Income-and-Capital-Gains.pdf",
                 fixture="2024_final_ordinary_income_and_capital_gains.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="leftover_2024_share_classes",
+                url="https://investor.vcm.com/assets/resources-mutualfunddoc/Victory-Funds-2024-Final-Ordinary-Income-and-Capital-Gains.pdf",
+                fixture="leftover_2024_share_classes.html",
                 live=False,
                 role="history",
             ),

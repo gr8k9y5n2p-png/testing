@@ -217,6 +217,6 @@ def test_fixture_book_lookback_stays_official_only() -> None:
             )
     digest = lookback_digest_from_rows(rows)
     # Official paid/final only. Missing years stay unmatched — never invent $0.
-    # 3,204 after WisdomTree + Principal leftover (#159). Parallel A leftover raises the pin.
-    assert digest.funds_with_5y == 3218
+    # 3,218 after #161; leftover densify after #159/#161 raises the pin (+34).
+    assert digest.funds_with_5y == 3252
     assert digest.book_funds >= 7200

@@ -239,6 +239,11 @@ class VaneckSource(HtmlTableSource):
         "(INIVX income $1.5675; MWMIX ST $1.9529 / LT $1.6944; GDX $0.6331; "
         "MOTG ST $1.8899 / LT $4.0549; printed None / all-None BUZZ/DAPP omitted; "
         "RAAX/LFEQ/CMCI finals-to-come omitted). "
+        "Official 5y leftover densify reads the later "
+        "https://www.vaneck.com/us/en/vaneck-funds-2025-yearend-dividends-distributions.pdf "
+        "for leftover CM Commodity Index classes (CMCAX 12/29 OI $1.0825 and "
+        "12/23 OI $5.2074; COMIX $1.0825 / $5.4279; CMCYX $1.0825 / $5.3910). "
+        "MOTE / GHACX 2025 still absent — unmatched. "
         "Official 5y wave-3 tax-center PDFs (not year-alias URLs, which still "
         "serve HTML): 2022 ETF "
         "https://www.vaneck.com/us/en/vaneck-etfs-2022-yearend-dividends-distributions.pdf "
@@ -318,6 +323,13 @@ class VaneckSource(HtmlTableSource):
                 role="history",
             ),
             PageSpec(
+                name="leftover_2025_cm_commodity",
+                url="https://www.vaneck.com/us/en/vaneck-funds-2025-yearend-dividends-distributions.pdf",
+                fixture="leftover_2025_cm_commodity.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
                 name="2025_etf_year_end_distributions",
                 url="https://www.vaneck.com/us/en/vaneck-funds-yearend-distributions-2025.pdf",
                 fixture="2025_etf_year_end_distributions.html",
@@ -381,8 +393,12 @@ class WisdomtreeSource(HtmlTableSource):
         "Official 5y leftover densify uses January–November 2023 monthly "
         "income PDFs for in-book leftover 4y tickers still missing 2023 "
         "(DGRW Nov $0.10000; DES Nov $0.06000; AGGY Nov $0.15000; GTR Sep "
-        "$0.30000; CXSE Sep $0.10500). Printed $0.00000 ST/LT omitted. "
-        "CEW / USDU / WCBR / WCLD / WDNA unpublished on those monthlies — skip. "
+        "$0.30000; CXSE Sep $0.10500). Leftover 3y names still missing 2023: "
+        "AIVI Sep $0.35000; AIVL Sep $0.72000; GCC Oct $0.39883; GDE Oct "
+        "$0.52223; GDMN Oct $1.68178; WTMF Oct $1.32291; WTRE Sep $0.11000; "
+        "WTV Sep $0.26000; XC Sep $0.25000 (still miss 2021). Printed $0.00000 "
+        "ST/LT omitted. CEW / USDU / WCBR / WCLD / WDNA / QGRW unpublished on "
+        "those monthlies — skip. "
         "Live product pages 403. "
         "Digital-fund 2024 CG book is a separate tokenized product line — omitted. "
         "Official December 2025 income declaration "

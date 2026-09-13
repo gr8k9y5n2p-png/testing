@@ -33,7 +33,16 @@ class BlackRockSource(HtmlTableSource):
         "$0.209442) and issuer-printed non-December ordinary income when "
         "December is an official dash (MBB 2021-10-01 $0.018858; TFLO "
         "2021-02-01 $0.001023; EIRL 2022-06-09 $0.518078). Cash-liquidation "
-        "columns omitted. Never invent missing years or $0."
+        "columns omitted. Never invent missing years or $0. "
+        "Official 5y leftover densify maps 2025 stamped-PDF income onto in-book "
+        "pre-rename tickers (same product IDs): HYXU/EUHY $1.895899; HYMU/SHYM "
+        "$0.098944; FILL/POWR $0.288052 (income column, not POWR total $1.354307); "
+        "FIBR/SYSB $0.347286. Product-page $0.000000 rows whose stamped PDFs are "
+        "official dashes (SHV 2021 / IGOV 2023 / ISHG 2022 / INDA 2022 / LEMB 2024) "
+        "stay unmatched. Leftover LifePath Dynamic Investor A 2022 midyear "
+        "(no December table) from the live 2022-distributions page: LPRAX / LPRDX / "
+        "LPREX printed $0.000000; LPJAX $0.018889; LPHAX $0.052130; LPRFX $0.033425; "
+        "LPVAX $0.070209; LPDAX $0.041208; LPWAX $0.021987 (ex 2022-07-14)."
     )
     live_limitations = (
         "Live HTML on ishares.com/us/capital-gains-distributions is supported. "
@@ -125,6 +134,13 @@ class BlackRockSource(HtmlTableSource):
                 url=f"{tax}/2022-distributions",
                 fixture="2022_open_end_distributions.html",
                 live=False,
+            ),
+            PageSpec(
+                name="leftover_lifepath_dynamic_2022",
+                url=f"{tax}/2022-distributions",
+                fixture="leftover_lifepath_dynamic_2022.html",
+                live=False,
+                role="history",
             ),
             PageSpec(
                 name="2021_open_end_distributions",
