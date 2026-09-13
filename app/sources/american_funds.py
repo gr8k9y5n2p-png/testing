@@ -68,7 +68,12 @@ class AmericanFundsSource(FundSource):
         "Official 5y gap-fill re-reads the same product-page JSON for in-book "
         "tickers missing a lookback year: midyear paid CG (AMCFX 2022-06-15 LT "
         "$2.2668) and non-December income (ABNDX 2022-06-30 income $0.023726 / "
-        "LT $0.0150) when that is the issuer-published amount. Never invented."
+        "LT $0.0150) when that is the issuer-published amount. Parallel D leftover "
+        "re-probe (2026-09-13) adds FAHHX 2022-07-29 income $0.0440349 (latest "
+        "printed 2022 monthly; 529-F-2 class-level, not copied from AHITX). "
+        "ANEFX / SMCWX / SMALLCAP / New Economy 2022 JSON still has no row; "
+        "money-market AAFXX book still has no 2021; BFICX / CNLCX no 2023; "
+        "CGVBX no 2021/2025; SCWCX no 2022/2024. Never invented."
     )
 
     def __init__(self, fixtures_dir: Path | None = None) -> None:
