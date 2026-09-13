@@ -264,7 +264,7 @@ def test_coverage_exposes_estimate_feed_readiness(session) -> None:
 
     oakmark = by_slug["oakmark"]
     assert oakmark.estimate_feed_ready is True
-    assert oakmark.history_years == [2024, 2025]
+    assert oakmark.history_years == [2021, 2022, 2023, 2024, 2025]
 
     tweedy = by_slug["tweedy"]
     assert tweedy.estimate_feed_ready is True

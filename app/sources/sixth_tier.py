@@ -904,11 +904,18 @@ class HardingLoevnerSource(HtmlTableSource):
         "Emerging Markets Advisor HLEMX ST $0.589704 / LT $20.71838 / 46.85% of NAV). "
         "Record 12/12/2025; ex 12/15/2025; pay 12/16/2025. "
         "Frontier Emerging Markets printed no CG (income stored). "
-        "2024 sibling URLs 404; no official 2024 ST/LT book stored."
+        "Official 5y parallel A leftover: AMG product-page "
+        "https://wealth.amg.com/wp-json/amgfundsdata/v1/fund-detail/{ticker}/performance "
+        "Calendar Year Distributions 2021–2024 (HLMNX 2022 income $0.478847; "
+        "HLMIX 2021 income $0.424819 / LT $0.321926; HLMSX 2021 LT $0.605796; "
+        "HLMEX 2024 LT $2.094041). Class-level — never copied. Global Equity "
+        "HLMGX / HLMVX have no 2022 row (unpublished). AMG JSON 404 leftover "
+        "Z / HLEMX / HLIDX 2023 rows from Wayback HLF-2023-Distributions.pdf. "
+        "2025 stays on the existing PDF fixture. Em-dash ST/LT omitted."
     )
     live_limitations = (
         "Year-end book is PDF. Weekly walk uses the official media.hardingloevner.com PDF; "
-        "empty/PDF-bytes pages are no-op success. 2024 official URL missing."
+        "empty/PDF-bytes pages are no-op success. Leftover 2021–2024 is AMG JSON / Wayback PDF."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -927,6 +934,14 @@ class HardingLoevnerSource(HtmlTableSource):
                 fixture="2025_year_end_distributions.html",
                 live=False,
                 role="history",
+            ),
+            PageSpec(
+                name="leftover_product_page_history_2021_2024",
+                url="https://wealth.amg.com/wp-json/amgfundsdata/v1/fund-detail/HLMNX/performance",
+                fixture="leftover_product_page_history_2021_2024.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
             ),
         ]
 

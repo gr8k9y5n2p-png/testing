@@ -11,7 +11,7 @@ from app.sources.american_funds import AmericanFundsSource
 from app.sources.aum import filter_large_aum
 from app.sources.families import BlackRockSource, TRowePriceSource, VanguardSource
 from app.sources.eleventh_tier import AmgSource
-from app.sources.fifth_tier import RoyceSource, VictorySource
+from app.sources.fifth_tier import OakmarkSource, RoyceSource, VictorySource
 from app.sources.fourth_tier import (
     ArtisanSource,
     FirstEagleSource,
@@ -21,7 +21,13 @@ from app.sources.fourth_tier import (
 )
 from app.sources.next_tier import NorthernTrustSource, SchwabSource
 from app.sources.third_tier import AllspringSource
-from app.sources.sixth_tier import FirstTrustSource, VaneckSource, WilliamBlairSource, WisdomtreeSource
+from app.sources.sixth_tier import (
+    FirstTrustSource,
+    HardingLoevnerSource,
+    VaneckSource,
+    WilliamBlairSource,
+    WisdomtreeSource,
+)
 from app.sources.parser import NormalizedRecord
 from app.sources.registry import list_sources
 
@@ -169,10 +175,10 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
             )
     digest = lookback_digest_from_rows(rows)
     # Official paid/final only. Missing years stay unmatched — never invent $0.
-    # 3,108 after leftover-class densify (#157). In-book leftover 5y sweep adds
-    # WisdomTree 2023 monthlies + Principal Wayback 2021–2022 — no new identities.
-    assert digest.funds_with_5y == 3204
-    assert digest.funds_with_5y_mf == 2473
+    # 3,204 after WisdomTree + Principal leftover (#159). Parallel A leftover
+    # adds Oakmark Wayback 2021–2023 + Harding Loevner AMG JSON — no new identities.
+    assert digest.funds_with_5y == 3218
+    assert digest.funds_with_5y_mf == 2487
     assert digest.funds_with_5y_etf == 731
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
@@ -1255,3 +1261,152 @@ def test_principal_leftover_wayback_2021_2022_fills_3y() -> None:
         and row.amount
     ]
     assert pblcx_2023 == []
+
+
+def test_oakmark_leftover_wayback_2021_2023_fills_investor_5y() -> None:
+    records = OakmarkSource().fetch(mode="fixture").records
+    oakmx_2021_lt = next(
+        row
+        for row in records
+        if row.ticker == "OAKMX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount
+    )
+    assert oakmx_2021_lt.amount == Decimal("0.7462")
+    assert str(oakmx_2021_lt.ex_date) == "2021-12-16"
+    oakex_2022_lt = next(
+        row
+        for row in records
+        if row.ticker == "OAKEX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and row.ex_date.year == 2022
+        and row.amount
+    )
+    assert oakex_2022_lt.amount == Decimal("0.0917")
+    oakgx_2023_lt = next(
+        row
+        for row in records
+        if row.ticker == "OAKGX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and row.ex_date.year == 2023
+        and row.amount
+    )
+    assert oakgx_2023_lt.amount == Decimal("0.8688")
+    oaklx_2024 = next(
+        row
+        for row in records
+        if row.ticker == "OAKLX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2024
+        and row.amount
+    )
+    assert oaklx_2024.amount == Decimal("0.2462")
+    # Class-level — Advisor income is not copied from Investor.
+    oaymx_2021 = next(
+        row
+        for row in records
+        if row.ticker == "OAYMX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount
+    )
+    assert oaymx_2021.amount == Decimal("0.8359")
+    oakmx_years = {
+        row.ex_date.year
+        for row in records
+        if row.ticker == "OAKMX"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert set(LOOKBACK_YEARS) <= oakmx_years
+    # Bond Investor has no 2021 or 2023 issuer YE — unmatched, not $0.
+    oakcx_2023 = [
+        row
+        for row in records
+        if row.ticker == "OAKCX"
+        and row.ex_date
+        and row.ex_date.year == 2023
+        and row.amount is not None
+    ]
+    assert oakcx_2023 == []
+
+
+def test_harding_loevner_leftover_amg_json_fills_5y() -> None:
+    records = HardingLoevnerSource().fetch(mode="fixture").records
+    hlmnx_2022 = next(
+        row
+        for row in records
+        if row.ticker == "HLMNX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2022
+        and row.amount
+    )
+    assert hlmnx_2022.amount == Decimal("0.478847")
+    assert str(hlmnx_2022.ex_date) == "2022-12-13"
+    hlmnx_2021_lt = next(
+        row
+        for row in records
+        if row.ticker == "HLMNX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount
+    )
+    assert hlmnx_2021_lt.amount == Decimal("0.321926")
+    hlmnx_2024_st = next(
+        row
+        for row in records
+        if row.ticker == "HLMIX"
+        and row.estimate_type == EstimateType.short_term_capital_gains
+        and row.ex_date
+        and row.ex_date.year == 2024
+        and row.amount
+    )
+    assert hlmnx_2024_st.amount == Decimal("0.207823")
+    hlmex_2024_lt = next(
+        row
+        for row in records
+        if row.ticker == "HLMEX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and row.ex_date.year == 2024
+        and row.amount
+    )
+    assert hlmex_2024_lt.amount == Decimal("2.094041")
+    hlmsx_2021_lt = next(
+        row
+        for row in records
+        if row.ticker == "HLMSX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount
+    )
+    assert hlmsx_2021_lt.amount == Decimal("0.605796")
+    hlmnx_years = {
+        row.ex_date.year
+        for row in records
+        if row.ticker == "HLMNX"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert set(LOOKBACK_YEARS) <= hlmnx_years
+    # Global Equity leftover still has no issuer 2022 YE — unmatched, not $0.
+    hlmgx_2022 = [
+        row
+        for row in records
+        if row.ticker == "HLMGX"
+        and row.ex_date
+        and row.ex_date.year == 2022
+        and row.amount
+    ]
+    assert hlmgx_2022 == []
