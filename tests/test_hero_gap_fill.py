@@ -240,5 +240,6 @@ def test_fixture_book_lookback_stays_official_only() -> None:
     # (WHOSX / WMCVX). Gabelli leftover 2025 is year-depth only.
     # Parallel S leftover: Davis / PRIMECAP / Ariel / Baird / Hotchkis & Wiley /
     # Champlain leftover paid YE +12 MF.
-    assert digest.funds_with_5y == 3482
+    # Parallel Q leftover: GMO US Trust Class III + Voya VYCAX +4 MF.
+    assert digest.funds_with_5y == 3486
     assert digest.book_funds >= 7200
