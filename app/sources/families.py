@@ -675,7 +675,14 @@ class InvescoSource(HtmlTableSource):
         "publish fiscal-year ordinary-income per share for years ended September 30: "
         "2025 $2.84 / 2024 $3.04 / 2023 $2.17 / 2022 $1.97 / 2021 $1.77. "
         "Those are full-year paid totals, not a single December payable. "
-        "Individual quarterly YE $/share US notices were not column-safe this wave."
+        "Individual quarterly YE $/share US notices were not column-safe this wave. "
+        "Parallel F leftover re-probe (2026-09-13): oe-2021/2022-primary-broker-file.xlsx "
+        "and 2021/2022-Primary-Broker-File-without-Real-Estate siblings still GET 406; "
+        "open-end tax-guide HTML also 406 this fetch. Existing 2023–2025 ICI CSVs have "
+        "no leftover-missing-year rows (VAFAX etc. absent from 2023). In-book leftovers "
+        "are almost all 3y (2023–2025) and cannot reach 5y without both 2021 and 2022. "
+        "Fiscal Aug-31 N-CSR highlights are not calendar-safe next to ICI December YE. "
+        "No new ETF identities (RSP / SPHD / QQQM stay out of book)."
     )
     live_limitations = (
         "Estimates are PDF/PR/contentdetail, not an HTML grid. ICI Primary XLSX "
@@ -780,7 +787,22 @@ class TRowePriceSource(HtmlTableSource):
         "HTML siblings still 404; live 2024/2025 ETF HTML prints TGRW / TCHP "
         "as all em-dash (not stored); TFLR/THYF have no 2021 row on the "
         "official 2021 YE PDF (inception 2022). Advisor/R 2024 HTML still "
-        "Investor/I only."
+        "Investor/I only. "
+        "Parallel F leftover (2026-09-13): 2021 YE PDF Retirement Blend 2035 "
+        "Investor TBLYX (ticker printed TBLY X) income $0.071 / ST $0.072 ex "
+        "2021-12-21; 2022 YE PDF TBLYX income $0.1296 / ST $0.0369 / LT $0.0145 "
+        "ex 2022-12-21 — class-level, not copied from I-Class TBLHX. "
+        "2023 iinvestor all-class PDF TRLAX LT $0.1199 ex 2023-12-28 (Paid monthly "
+        "income omitted; 2021 still unpublished on the 2021 YE PDF). "
+        "iinvestor 2022–2024 all-class PDFs GET 200; 2025 sibling 404; fai "
+        "2024-Year-End-Tax-Distributions.pdf still 404. Retirement I leftovers "
+        "(TRPTX / TRPNX …) still unpublished on the 2024 all-class PDF and live "
+        "2024/2025 HTML. Retirement Fund I Class (TRAJX …) 2021–2022 absent from "
+        "YE PDFs. Advisor/R 2023–2025 not on the all-class investor PDFs. "
+        "PRGSX / TRGLX / TGBLX 2022 official all-dash; PRSCX / PRNHX / TSNIX / "
+        "PRJIX 2023 official all-dash; PREFX / TEEFX 2025 official all-dash; "
+        "PGLOX 2025 absent; TGPEX 2022/2024 official all-dash; RPSIX / TSPNX "
+        "2023/2025 Paid monthly + dash ST/LT."
     )
     live_limitations = (
         "Live year-end HTML is supported for 2023–2025. "
@@ -858,6 +880,13 @@ class TRowePriceSource(HtmlTableSource):
                 name="etf_year_end_2023",
                 url=f"{base.replace('mutual-funds', 'etfs')}/2023-year-end-distributions.html",
                 fixture="2023_etf_year_end_distributions.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="leftover_retirement_blend_2021_2022",
+                url=f"{tax_pdf}/2021-Year-End-Tax-Distributions.pdf",
+                fixture="leftover_retirement_blend_2021_2022.html",
                 live=False,
                 role="history",
             ),

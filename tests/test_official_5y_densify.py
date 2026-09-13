@@ -9,7 +9,12 @@ from app.models import AmountUnit, EstimateType, PublicationStage
 from app.services.lookback import LOOKBACK_YEARS, lookback_digest_from_rows
 from app.sources.american_funds import AmericanFundsSource
 from app.sources.aum import filter_large_aum
-from app.sources.families import BlackRockSource, TRowePriceSource, VanguardSource
+from app.sources.families import (
+    BlackRockSource,
+    InvescoSource,
+    TRowePriceSource,
+    VanguardSource,
+)
 from app.sources.eleventh_tier import AmgSource
 from app.sources.fifth_tier import OakmarkSource, RoyceSource, TouchstoneSource, VictorySource
 from app.sources.fourth_tier import (
@@ -316,10 +321,11 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # Parallel C leftover: Northern Trust 2022 ICI CG-dash equity (NMIEX +1 MF).
     # Parallel H leftover: Janus Henderson quarterly / midyear ICI +33 MF
     # (JABAX / HFQAX / JERAX families). Lord Abbett LAGWX is 2y. Putnam /
-    # remaining MFS leftover years stay unmatched. No new identities.
-    # ETF 5y unchanged.
-    assert digest.funds_with_5y == 3295
-    assert digest.funds_with_5y_mf == 2559
+    # remaining MFS leftover years stay unmatched.
+    # Parallel F leftover: T. Rowe TBLYX 2021+2022 YE PDF (+1 MF 5y). TRLAX 2023
+    # LT is year-depth only (still missing 2021). No new identities. ETF 5y unchanged.
+    assert digest.funds_with_5y == 3296
+    assert digest.funds_with_5y_mf == 2560
     assert digest.funds_with_5y_etf == 736
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
@@ -2404,4 +2410,177 @@ def test_parallel_h_leftover_walls_stay_unmatched() -> None:
         and row.amount is not None
     ]
     assert pim_2024 == []
+
+
+def test_t_rowe_tblyx_leftover_2021_2022_completes_5y() -> None:
+    records = TRowePriceSource().fetch(mode="fixture").records
+    tblyx_2021 = next(
+        row
+        for row in records
+        if row.ticker == "TBLYX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount
+    )
+    assert tblyx_2021.amount == Decimal("0.071")
+    assert str(tblyx_2021.ex_date) == "2021-12-21"
+    assert str(tblyx_2021.payable_date) == "2021-12-22"
+    assert tblyx_2021.publication_stage == PublicationStage.final
+
+    tblyx_2021_st = next(
+        row
+        for row in records
+        if row.ticker == "TBLYX"
+        and row.estimate_type == EstimateType.short_term_capital_gains
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount
+    )
+    assert tblyx_2021_st.amount == Decimal("0.072")
+
+    tblyx_2022 = next(
+        row
+        for row in records
+        if row.ticker == "TBLYX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2022
+        and row.amount
+    )
+    assert tblyx_2022.amount == Decimal("0.1296")
+    assert str(tblyx_2022.ex_date) == "2022-12-21"
+    tblyx_2022_st = next(
+        row
+        for row in records
+        if row.ticker == "TBLYX"
+        and row.estimate_type == EstimateType.short_term_capital_gains
+        and row.ex_date
+        and row.ex_date.year == 2022
+        and row.amount
+    )
+    assert tblyx_2022_st.amount == Decimal("0.0369")
+    tblyx_2022_lt = next(
+        row
+        for row in records
+        if row.ticker == "TBLYX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and row.ex_date.year == 2022
+        and row.amount
+    )
+    assert tblyx_2022_lt.amount == Decimal("0.0145")
+
+    tblyx_years = {
+        row.ex_date.year
+        for row in records
+        if row.ticker == "TBLYX"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert set(LOOKBACK_YEARS) <= tblyx_years
+
+    # Class-level — Investor TBLYX is not copied from I-Class TBLHX amounts.
+    tblhx_2021 = next(
+        row
+        for row in records
+        if row.ticker == "TBLHX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount
+    )
+    assert tblhx_2021.amount == Decimal("0.080")
+
+    trlax_2023 = next(
+        row
+        for row in records
+        if row.ticker == "TRLAX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and row.ex_date.year == 2023
+        and row.amount
+    )
+    assert trlax_2023.amount == Decimal("0.1199")
+    assert str(trlax_2023.ex_date) == "2023-12-28"
+    trlax_years = {
+        row.ex_date.year
+        for row in records
+        if row.ticker == "TRLAX"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert {2022, 2023, 2024, 2025} <= trlax_years
+    assert 2021 not in trlax_years
+
+
+def test_parallel_f_leftover_walls_stay_unmatched() -> None:
+    af = AmericanFundsSource().fetch(mode="fixture").records
+    for ticker, year in (
+        ("ANEFX", 2022),
+        ("CNWCX", 2022),
+        ("SMCWX", 2022),
+        ("AAFXX", 2021),
+        ("BFICX", 2023),
+    ):
+        rows = [
+            row
+            for row in af
+            if row.ticker == ticker
+            and row.ex_date
+            and row.ex_date.year == year
+            and row.amount is not None
+        ]
+        assert rows == [], f"{ticker} {year} should stay unmatched"
+
+    invesco = InvescoSource().fetch(mode="fixture").records
+    vafax_early = [
+        row
+        for row in invesco
+        if row.ticker == "VAFAX"
+        and row.ex_date
+        and row.ex_date.year in {2021, 2022}
+        and row.amount is not None
+    ]
+    assert vafax_early == []
+
+    trowe = TRowePriceSource().fetch(mode="fixture").records
+    prgsx_2022 = [
+        row
+        for row in trowe
+        if row.ticker == "PRGSX"
+        and row.ex_date
+        and row.ex_date.year == 2022
+        and row.amount is not None
+    ]
+    assert prgsx_2022 == []
+    prefx_2025 = [
+        row
+        for row in trowe
+        if row.ticker == "PREFX"
+        and row.ex_date
+        and row.ex_date.year == 2025
+        and row.amount is not None
+    ]
+    assert prefx_2025 == []
+    prscx_2023 = [
+        row
+        for row in trowe
+        if row.ticker == "PRSCX"
+        and row.ex_date
+        and row.ex_date.year == 2023
+        and row.amount is not None
+    ]
+    assert prscx_2023 == []
+    trptx_2024 = [
+        row
+        for row in trowe
+        if row.ticker == "TRPTX"
+        and row.ex_date
+        and row.ex_date.year == 2024
+        and row.amount is not None
+    ]
+    assert trptx_2024 == []
 
