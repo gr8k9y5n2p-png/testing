@@ -787,7 +787,7 @@ def test_search_multi_year_top_families(client: TestClient) -> None:
     assert tmsix.json()["total"] >= 1, tmsix.json()
     assert {"2024", "2025"} <= {item["as_of"][:4] for item in tmsix.json()["items"] if item.get("as_of")}
 
-    kauax = client.get("/distributions", params={"fund_identifier": "KAUAX", "page_size": 20})
+    kauax = client.get("/distributions", params={"fund_identifier": "KAUAX", "page_size": 50})
     assert any(
         item["estimate_type"] == "long_term_capital_gains"
         and Decimal(item["amount"]) == Decimal("0.638052")
