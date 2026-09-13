@@ -866,7 +866,11 @@ class AlgerSource(HtmlTableSource):
         "Official Distrib_ETFS.pdf is the 2025 ETF book (ATFV ST $0.07080; FRTY "
         "income $0.04095; AWEG LT $0.45647) plus Wayback 2021 (FRTY ST $1.0687) "
         "and 2023 (ATFV income $0.0015). Distrib_FUNDS_2024.pdf 404; no official "
-        "2023/2024 MF ST/LT book stored."
+        "2023/2024 MF ST/LT book stored. Official 5y parallel I leftover: "
+        "Distrib_FUNDS_2021 / 2023 / 2024 siblings still 404; Wayback "
+        "20221103225410 of Distrib_FUNDS.pdf is 2022 estimates (as of Oct 17) "
+        "— not ingested as paid. 2024 ETF Wayback is estimates. CHUSX "
+        "2021/2023/2024 stay unmatched."
     )
     live_limitations = (
         "Year-end book is PDF. Weekly walk uses the DividendsDistributions hub + 2025 "

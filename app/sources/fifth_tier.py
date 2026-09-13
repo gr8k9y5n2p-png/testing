@@ -482,7 +482,12 @@ class VictorySource(HtmlTableSource):
         "same I/II PDF (VEVIX OI $0.187299 / ST $0.542703 / LT $4.150428; "
         "VSOIX OI $0.408506 / ST $0.125199 / LT $3.571324; printed $0.000000 "
         "OI stored). Class-level — never copy A onto I/C/Y. 2021 I/II sibling "
-        "still 404. "
+        "still 404. Official 5y parallel I leftover: 2022 RS official PDF "
+        "Victory-RS-and-VVI-Funds-2022-Final-Ordinary-Income-and-Capital-Gains.pdf "
+        "(RSGRX LT $0.397318; GPAFX OI $0.430758 / ST $0.442528 / LT $3.884774; "
+        "printed $0.000000 OI stored). In-book leftover RS classes already on "
+        "the 2023–2025 RS fixtures. RPPRX unpublished on the 2022 book. "
+        "2021 RS / I/II still 404 — year-depth, not 5y. "
         "Wave 7 lookback: official 2022 hyphenated + 2023 space-encoded I/II finals "
         "(MMEAX 2022 LT $2.389672 / 2023 LT $0.390522; VETAX 2022 LT $2.782434 / "
         "2023 LT $2.095967), 2023–2024 RS MF books (RSGRX 2023 LT $0.036599 / "
@@ -587,6 +592,13 @@ class VictorySource(HtmlTableSource):
                 name="2022_final_ordinary_income_and_capital_gains",
                 url="https://investor.vcm.com/assets/resources-mutualfunddoc/Victory-Funds-2022-Final-Ordinary-Income-and-Capital-Gains.pdf",
                 fixture="2022_final_ordinary_income_and_capital_gains.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="leftover_2022_rs_share_classes",
+                url="https://investor.vcm.com/assets/resources-mutualfunddoc/Victory-RS-and-VVI-Funds-2022-Final-Ordinary-Income-and-Capital-Gains.pdf",
+                fixture="leftover_2022_rs_share_classes.html",
                 live=False,
                 role="history",
             ),
