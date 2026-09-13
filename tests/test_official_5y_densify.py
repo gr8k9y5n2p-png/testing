@@ -3244,11 +3244,11 @@ def test_parallel_j_ab_leftover_class_a_paid_fills_5y() -> None:
         and row.estimate_type == EstimateType.long_term_capital_gains
         and row.ex_date
         and str(row.ex_date) == "2025-12-09"
+        and row.publication_stage == PublicationStage.final
         and row.amount
     )
     assert agrfx_2025_lt.amount == Decimal("16.5000")
     assert str(agrfx_2025_lt.payable_date) == "2025-12-11"
-    assert agrfx_2025_lt.publication_stage == PublicationStage.final
     agrfx_2025_st = next(
         row
         for row in records
@@ -3256,6 +3256,7 @@ def test_parallel_j_ab_leftover_class_a_paid_fills_5y() -> None:
         and row.estimate_type == EstimateType.short_term_capital_gains
         and row.ex_date
         and str(row.ex_date) == "2025-12-09"
+        and row.publication_stage == PublicationStage.final
         and row.amount
     )
     assert agrfx_2025_st.amount == Decimal("0.6757")
@@ -3267,6 +3268,7 @@ def test_parallel_j_ab_leftover_class_a_paid_fills_5y() -> None:
         and row.estimate_type == EstimateType.long_term_capital_gains
         and row.ex_date
         and str(row.ex_date) == "2021-12-07"
+        and row.publication_stage == PublicationStage.final
         and row.amount
     )
     assert apgax_2021_lt.amount == Decimal("2.2996")
@@ -3278,6 +3280,7 @@ def test_parallel_j_ab_leftover_class_a_paid_fills_5y() -> None:
         and row.estimate_type == EstimateType.ordinary_income
         and row.ex_date
         and str(row.ex_date) == "2021-12-09"
+        and row.publication_stage == PublicationStage.final
         and row.amount
     )
     assert abasx_2021_oi.amount == Decimal("0.2155")
@@ -3288,6 +3291,7 @@ def test_parallel_j_ab_leftover_class_a_paid_fills_5y() -> None:
         and row.estimate_type == EstimateType.short_term_capital_gains
         and row.ex_date
         and str(row.ex_date) == "2021-12-09"
+        and row.publication_stage == PublicationStage.final
         and row.amount
     )
     assert abasx_2021_st.amount == Decimal("1.6382")
