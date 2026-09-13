@@ -76,6 +76,133 @@ def test_american_funds_midyear_2022_fills_near4_heroes() -> None:
     assert set(LOOKBACK_YEARS) <= amcfx_years
 
 
+def test_american_funds_fahhx_2022_leftover_completes_5y() -> None:
+    records = AmericanFundsSource().fetch(mode="fixture").records
+    fahhx_2022 = next(
+        row
+        for row in records
+        if row.ticker == "FAHHX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2022
+        and row.amount
+    )
+    assert fahhx_2022.amount == Decimal("0.0440349")
+    assert str(fahhx_2022.ex_date) == "2022-07-29"
+    fahhx_years = {
+        row.ex_date.year
+        for row in records
+        if row.ticker == "FAHHX"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert set(LOOKBACK_YEARS) <= fahhx_years
+    anefx_2022 = [
+        row
+        for row in records
+        if row.ticker == "ANEFX"
+        and row.ex_date
+        and row.ex_date.year == 2022
+        and row.amount
+    ]
+    assert anefx_2022 == []
+
+
+def test_vanguard_leftover_ici_parallel_d_fills() -> None:
+    records = VanguardSource().fetch(mode="fixture").records
+    vsemx_2025 = {
+        (str(row.amount), str(row.ex_date))
+        for row in records
+        if row.ticker == "VSEMX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2025
+        and row.amount
+    }
+    assert ("0.764300", "2025-03-25") in vsemx_2025
+    assert ("0.668200", "2025-06-26") in vsemx_2025
+    vtspx_2021 = next(
+        row
+        for row in records
+        if row.ticker == "VTSPX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount
+    )
+    assert vtspx_2021.amount == Decimal("0.481000")
+    vtspx_2023 = next(
+        row
+        for row in records
+        if row.ticker == "VTSPX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2023
+        and row.amount
+    )
+    assert vtspx_2023.amount == Decimal("0.320200")
+    vctxx_2024 = next(
+        row
+        for row in records
+        if row.ticker == "VCTXX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2024
+        and row.amount
+    )
+    assert vctxx_2024.amount == Decimal("0.001951")
+    vmrxx_2025 = next(
+        row
+        for row in records
+        if row.ticker == "VMRXX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2025
+        and row.amount
+    )
+    assert vmrxx_2025.amount == Decimal("0.003214")
+    vmsxx_2025 = next(
+        row
+        for row in records
+        if row.ticker == "VMSXX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2025
+        and row.amount
+    )
+    assert vmsxx_2025.amount == Decimal("0.002213")
+    vedix_2024 = next(
+        row
+        for row in records
+        if row.ticker == "VEDIX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2024
+        and row.amount
+    )
+    assert vedix_2024.amount == Decimal("0.586100")
+    vedix_2025 = [
+        row
+        for row in records
+        if row.ticker == "VEDIX"
+        and row.ex_date
+        and row.ex_date.year == 2025
+        and row.amount
+    ]
+    assert vedix_2025 == []
+    for ticker in ("VSEMX", "VTSPX", "VCTXX", "VMRXX", "VMSXX"):
+        years = {
+            row.ex_date.year
+            for row in records
+            if row.ticker == ticker
+            and row.ex_date
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        }
+        assert set(LOOKBACK_YEARS) <= years, ticker
+
+
 def test_hartford_class_a_historical_pdf_is_name_keyed() -> None:
     records = HartfordSource().fetch(mode="fixture").records
     ihgix_2021 = next(
@@ -175,12 +302,11 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
             )
     digest = lookback_digest_from_rows(rows)
     # Official paid/final only. Missing years stay unmatched — never invent $0.
-    # 3,218 after #161 Oakmark Wayback + Harding Loevner. Leftover densify after
-    # #159/#161: +34 (iShares rename 2025 / LifePath 2022 / Principal leftover 2y /
-    # Janus HEM* July 2025 / VanEck CMC 2025 / FNDA 2025). No new identities.
-    # Parallel B leftover First Trust Print=Y fills do not complete a 5y year set.
-    assert digest.funds_with_5y == 3252
-    assert digest.funds_with_5y_mf == 2516
+    # 3,252 after #160/#161/#162. Parallel D leftover fills: +6 MF (FAHHX 2022 /
+    # VSEMX 2025 / VTSPX 2021+2023 / VCTXX / VMRXX / VMSXX 2024–2025).
+    # No new identities. ETF 5y unchanged.
+    assert digest.funds_with_5y == 3258
+    assert digest.funds_with_5y_mf == 2522
     assert digest.funds_with_5y_etf == 736
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()

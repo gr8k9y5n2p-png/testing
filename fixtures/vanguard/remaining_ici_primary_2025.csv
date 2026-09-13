@@ -66,3 +66,8 @@ as_of,fund_name,cusip,ticker,record_date,ex_dividend_date,payable_date,income_di
 2025-12-31,Vanguard Communication Services Index Fund Admiral Shares,92204A777,VTCAX,12/16/2025,12/17/2025,12/18/2025,0.317600,,
 2025-12-31,Vanguard Utilities Index Fund Admiral Shares,92204A769,VUIAX,12/16/2025,12/17/2025,12/18/2025,0.684000,,
 2025-12-31,Vanguard Baillie Gifford Global Positive Impact Stock Fund,92205M408,VBPIX,12/22/2025,12/23/2025,12/24/2025,0.017200,,
+2025-12-31,Vanguard Extended Market Index Fund Institutional Select Shares,922908322,VSEMX,3/24/2025,3/25/2025,3/26/2025,0.764300,,
+2025-12-31,Vanguard Extended Market Index Fund Institutional Select Shares,922908322,VSEMX,6/25/2025,6/26/2025,6/27/2025,0.668200,,
+2025-12-31,Vanguard California Municipal Money Market Fund,922021209,VCTXX,12/1/2025,12/1/2025,12/1/2025,0.001825,,
+2025-12-31,Vanguard Cash Reserves Federal Money Market Fund Admiral Shares,922906508,VMRXX,12/1/2025,12/1/2025,12/1/2025,0.003214,,
+2025-12-31,Vanguard Municipal Money Market Fund,922907506,VMSXX,12/1/2025,12/1/2025,12/1/2025,0.002213,,

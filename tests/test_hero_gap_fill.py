@@ -217,7 +217,6 @@ def test_fixture_book_lookback_stays_official_only() -> None:
             )
     digest = lookback_digest_from_rows(rows)
     # Official paid/final only. Missing years stay unmatched — never invent $0.
-    # 3,218 after #161; leftover densify after #159/#161 raises the pin (+34).
-    # Parallel B First Trust leftover Print=Y fills do not complete a 5y year set.
-    assert digest.funds_with_5y == 3252
+    # 3,252 after #160/#161/#162. Parallel D leftover fills raise the pin +6 MF.
+    assert digest.funds_with_5y == 3258
     assert digest.book_funds >= 7200
