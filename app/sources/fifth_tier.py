@@ -271,7 +271,13 @@ class GabelliSource(HtmlTableSource):
         "https://gabelli.com/wp-content/uploads/2025/09/GabelliTetonKeeleyETF-2024-Year-End-Dividend-Summary-1.pdf "
         "(Growth AAA GABGX LT $6.96640; Asset AAA GABAX LT $6.83330). "
         "Live 2025 memo GET 403 this session — deferred after noting; "
-        "existing Class AAA fixture left as-is (no invented amounts)."
+        "existing Class AAA fixture left as-is (no invented amounts). "
+        "Parallel-P leftover paid year-end: GICPX 2025 from the 12/29/2025 memo "
+        "(OI $0.5837 / ST $0.2438 / LT $7.2182); GABSX + GABEX 2025 from "
+        "https://gabelli.com/wp-content/uploads/2026/02/Supplementary-Tax-Information-for-2025.pdf "
+        "(GABSX OI $0.12560 / ST $0.02020 / LT $1.65380; GABEX OI $0.30000 / ST $0.60540 / LT $0.82000). "
+        "2021–2023 Supplementary-Tax / Year-End-Dividend-Summary sibling URLs returned 403 "
+        "(Wayback CDX empty) — unpaid years stay unmatched. Class A/C/I not in NAV book."
     )
     live_limitations = (
         "Year-end book is PDF. Live GET is sometimes 403; fixture transcribes "
@@ -294,6 +300,14 @@ class GabelliSource(HtmlTableSource):
                 fixture="2024_year_end_distributions.html",
                 live=False,
                 role="history",
+            ),
+            PageSpec(
+                name="leftover_paid_year_end_parallel_p",
+                url="https://gabelli.com/wp-content/uploads/2025/12/Distribution-memo-12.29.2025.pdf",
+                fixture="leftover_paid_year_end_parallel_p.html",
+                live=True,
+                role="history",
+                large_aum_only=False,
             ),
             PageSpec(
                 name="open_end_distributions_hub",

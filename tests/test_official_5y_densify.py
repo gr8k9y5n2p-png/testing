@@ -20,7 +20,13 @@ from app.sources.families import (
 )
 from app.sources.dws import DwsSource
 from app.sources.eleventh_tier import AmgSource, GuidestoneSource
-from app.sources.fifth_tier import OakmarkSource, RoyceSource, TouchstoneSource, VictorySource
+from app.sources.fifth_tier import (
+    GabelliSource,
+    OakmarkSource,
+    RoyceSource,
+    TouchstoneSource,
+    VictorySource,
+)
 from app.sources.fourth_tier import (
     ArtisanSource,
     CalamosSource,
@@ -30,6 +36,7 @@ from app.sources.fourth_tier import (
     MacquarieSource,
     PrincipalSource,
     ThriventSource,
+    WasatchSource,
 )
 from app.sources.next_tier import (
     AmundiSource,
@@ -56,8 +63,10 @@ from app.sources.third_tier import (
 from app.sources.sixth_tier import (
     AlgerSource,
     BrownAdvisorySource,
+    CausewaySource,
     FirstTrustSource,
     HardingLoevnerSource,
+    MatthewsAsiaSource,
     SeiSource,
     VaneckSource,
     WilliamBlairSource,
@@ -381,8 +390,11 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # product-page paid YE +10 MF / +9 ETF, plus Royce RDVIX November 2025
     # +1 MF. DWS leftover 2024 ICI is year-depth only (2y, not 5y). Brown
     # leftover years stay estimate-only / unpublished.
-    assert digest.funds_with_5y == 3468
-    assert digest.funds_with_5y_mf == 2718
+    # Parallel P leftover: Wasatch official product-page paid YE +2 MF
+    # (WHOSX / WMCVX). Gabelli leftover 2025 is year-depth only (2y).
+    # Matthews Investor leftovers already 5y. Causeway CCENX/CCEVX stay 2y.
+    assert digest.funds_with_5y == 3470
+    assert digest.funds_with_5y_mf == 2720
     assert digest.funds_with_5y_etf == 750
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
@@ -4522,3 +4534,225 @@ def test_parallel_l_heroes_are_searchable(client: TestClient) -> None:
         if row.get("ticker") == "BAFFX" and row.get("amount") is not None
     ]
     assert baffx_paid == []
+
+
+def _paid_lookback_years(records: list[NormalizedRecord], ticker: str) -> set[int]:
+    years = {
+        _year_for_row(row.as_of, row.ex_date, row.payable_date)
+        for row in records
+        if row.ticker == ticker
+        and row.publication_stage in {PublicationStage.final, PublicationStage.paid}
+        and row.amount is not None
+    }
+    years.discard(None)
+    return years  # type: ignore[return-value]
+
+
+def test_parallel_p_wasatch_leftover_fills_5y() -> None:
+    records = WasatchSource().fetch(mode="fixture").records
+    whosx_2025 = next(
+        row
+        for row in records
+        if row.ticker == "WHOSX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.payable_date
+        and str(row.payable_date) == "2025-12-18"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert whosx_2025.amount == Decimal("0.113996")
+    wmcvx_2025 = next(
+        row
+        for row in records
+        if row.ticker == "WMCVX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.payable_date
+        and str(row.payable_date) == "2025-12-18"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert wmcvx_2025.amount == Decimal("0.554075")
+    wgrox_2021 = next(
+        row
+        for row in records
+        if row.ticker == "WGROX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.payable_date
+        and str(row.payable_date) == "2021-12-16"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert wgrox_2021.amount == Decimal("14.455281")
+
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(records, "WHOSX")
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(records, "WMCVX")
+    assert _paid_lookback_years(records, "WGROX") == {2021, 2022, 2024, 2025}
+    assert _paid_lookback_years(records, "WAIGX") == {2021, 2024, 2025}
+    assert _paid_lookback_years(records, "WAAEX") == {2021, 2025}
+    assert _paid_lookback_years(records, "WAIVX") == {2024, 2025}
+    assert _paid_lookback_years(records, "FMIEX") == {2023, 2025}
+
+
+def test_parallel_p_gabelli_leftover_2025_is_year_depth() -> None:
+    records = GabelliSource().fetch(mode="fixture").records
+    gicpx_2025 = next(
+        row
+        for row in records
+        if row.ticker == "GICPX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-29"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert gicpx_2025.amount == Decimal("7.2182")
+    gabsx_2025 = next(
+        row
+        for row in records
+        if row.ticker == "GABSX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.as_of
+        and row.as_of.year == 2025
+        and row.amount
+    )
+    assert gabsx_2025.amount == Decimal("1.65380")
+    gabex_2025 = next(
+        row
+        for row in records
+        if row.ticker == "GABEX"
+        and row.estimate_type == EstimateType.short_term_capital_gains
+        and row.as_of
+        and row.as_of.year == 2025
+        and row.amount
+    )
+    assert gabex_2025.amount == Decimal("0.60540")
+
+    for ticker in ("GICPX", "GABSX", "GABEX", "GABGX", "GABAX", "GABBX"):
+        years = _paid_lookback_years(records, ticker)
+        assert {2024, 2025} <= years, ticker
+        assert 2021 not in years, ticker
+        assert 2022 not in years, ticker
+        assert 2023 not in years, ticker
+
+
+def test_parallel_p_leftover_walls_stay_unmatched() -> None:
+    wasatch = WasatchSource().fetch(mode="fixture").records
+    for ticker in ("WAEMX", "WAGOX", "WAINX", "WAIOX", "WAMVX", "WAUSX"):
+        assert _paid_lookback_years(wasatch, ticker) == set(), ticker
+    wgrox_2023 = [
+        row
+        for row in wasatch
+        if row.ticker == "WGROX"
+        and row.publication_stage in {PublicationStage.final, PublicationStage.paid}
+        and row.amount is not None
+        and _year_for_row(row.as_of, row.ex_date, row.payable_date) == 2023
+    ]
+    assert wgrox_2023 == []
+    for ticker in ("WIGRX", "WIAEX", "WICVX", "WIINX", "WILCX"):
+        paid = [
+            row
+            for row in wasatch
+            if row.ticker == ticker
+            and row.publication_stage in {PublicationStage.final, PublicationStage.paid}
+            and row.amount is not None
+        ]
+        assert paid == [], ticker
+
+    gabelli = GabelliSource().fetch(mode="fixture").records
+    for ticker in ("GABAXA", "GCASX", "GCIGX"):
+        assert [row for row in gabelli if row.ticker == ticker] == []
+
+    causeway = CausewaySource().fetch(mode="fixture").records
+    for ticker in ("CCENX", "CCEVX"):
+        years = _paid_lookback_years(causeway, ticker)
+        assert years == {2021, 2022}, ticker
+        assert 2023 not in years
+        assert 2024 not in years
+        assert 2025 not in years
+
+    matthews = MatthewsAsiaSource().fetch(mode="fixture").records
+    for ticker in (
+        "MAPIX",
+        "MAPTX",
+        "MASGX",
+        "MCHFX",
+        "MCSMX",
+        "MEGMX",
+        "MINDX",
+        "MSMLX",
+    ):
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(matthews, ticker), ticker
+
+
+def test_parallel_p_heroes_are_searchable(client: TestClient) -> None:
+    for slug in ("wasatch", "gabelli", "causeway", "matthews_asia"):
+        fetched = client.post(
+            "/ingest/fetch", json={"fund_family": slug, "mode": "fixture"}
+        )
+        assert fetched.status_code == 200, fetched.text
+        assert fetched.json()["created"] > 0
+
+    for ticker in (
+        "WHOSX",
+        "WMCVX",
+        "WGROX",
+        "WAAEX",
+        "WAIGX",
+        "GICPX",
+        "GABSX",
+        "GABEX",
+        "CCENX",
+        "MAPTX",
+    ):
+        body = client.get("/funds", params={"q": ticker}).json()
+        tickers = [item["ticker"] for item in body["items"]]
+        assert ticker in tickers, f"{ticker} missing from GET /funds?q={ticker}: {tickers[:8]}"
+
+    whosx = client.get(
+        "/distributions",
+        params={"ticker": "WHOSX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    whosx_2025 = [
+        Decimal(row["amount"])
+        for row in whosx["items"]
+        if row.get("ticker") == "WHOSX"
+        and row.get("estimate_type") == "ordinary_income"
+        and (
+            str(row.get("payable_date") or "").startswith("2025-12-18")
+            or str(row.get("ex_date") or "").startswith("2025-12-18")
+        )
+    ]
+    assert Decimal("0.113996") in whosx_2025
+    whosx_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in whosx["items"]
+        if row.get("ticker") == "WHOSX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= whosx_years
+
+    gicpx = client.get(
+        "/distributions",
+        params={"ticker": "GICPX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    gicpx_2025 = [
+        Decimal(row["amount"])
+        for row in gicpx["items"]
+        if row.get("ticker") == "GICPX"
+        and row.get("estimate_type") == "long_term_capital_gains"
+        and str(row.get("ex_date") or "").startswith("2025-12-29")
+    ]
+    assert Decimal("7.2182") in gicpx_2025
+
+    ccenx = client.get(
+        "/distributions",
+        params={"ticker": "CCENX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    ccenx_late = [
+        row
+        for row in ccenx["items"]
+        if row.get("ticker") == "CCENX"
+        and row.get("amount") is not None
+        and str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        in {"2023", "2024", "2025"}
+    ]
+    assert ccenx_late == []

@@ -861,7 +861,8 @@ class CausewaySource(HtmlTableSource):
         "(CIVIX 2021 income $0.3170 / published $0.0000 ST/LT stored; "
         "2022 income $0.2834; 2023 ST $0.1678 / LT $0.1748). "
         "Concentrated Equity CCENX / CCEVX is on 2021–2022 only — later years "
-        "unmatched, not invented."
+        "unmatched, not invented. Parallel-P leftover: official 2023–2025 Final "
+        "PDFs omit Concentrated Equity; product page 404; no additive paid rows."
     )
     live_limitations = (
         "Year-end book is PDF. Weekly walk uses the resources hub + 2025 final PDF; "
@@ -1082,7 +1083,10 @@ class MatthewsAsiaSource(HtmlTableSource):
         "MCHFX 2022 LT $1.09205 / 2025 income $0.23320). "
         "December YE only so quarterly MAPIX income is not summed. "
         "MPACX has no 2025 YE row; MJFOX has no 2023 YE row; MATFX stops at 2023 — "
-        "gaps, not invented."
+        "gaps, not invented. Parallel-P leftover: in-book Investor names "
+        "(MAPIX / MAPTX / MASGX / MCHFX / MCSMX / MEGMX / MINDX / MSMLX) are already 5y; "
+        "MPACX / MJFOX / MATFX and Institutional siblings are not in the NAV book "
+        "(product freeze) — no additive paid rows."
     )
     live_limitations = (
         "Live product HTML is public but nested class/accordion tables may not parse. "

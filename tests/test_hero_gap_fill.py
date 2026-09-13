@@ -236,5 +236,7 @@ def test_fixture_book_lookback_stays_official_only() -> None:
     # unlocks +18 MF 5y (PAXLX / PXLIX / PGINX + 15 leftover shells).
     # Parallel L leftover: BNY Mellon leftover paid YE +10 MF / +9 ETF and
     # Royce RDVIX November 2025 +1 MF.
-    assert digest.funds_with_5y == 3468
+    # Parallel P leftover: Wasatch official product-page paid YE +2 MF
+    # (WHOSX / WMCVX). Gabelli leftover 2025 is year-depth only.
+    assert digest.funds_with_5y == 3470
     assert digest.book_funds >= 7200
