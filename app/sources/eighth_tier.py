@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from app.sources.html_source import HtmlTableSource, PageSpec
+from app.sources.impax import ImpaxSource
 
 
 class PrimecapSource(HtmlTableSource):
@@ -304,32 +305,3 @@ class FmiSource(HtmlTableSource):
         ]
 
 
-class ImpaxSource(HtmlTableSource):
-    slug = "impax"
-    display_name = "Impax / Pax"
-    aum_rank = 80
-    priority = 80
-    notes = (
-        "Hub: https://impaxam.com/customer-service/distributions/ "
-        "Public December 2025 paid table (crawled from that URL): "
-        "Large Cap Investor PAXLX / Institutional PXLIX LT $3.19835; "
-        "Small Cap Investor PXSCX ST $0.18529 / LT $0.99442; "
-        "Global Sustainable Infrastructure Investor PGINX ST $0.00116 / LT $4.82181. "
-        "Record 12/19/2025; ex/reinvest 12/22/2025; pay 12/23/2025."
-    )
-    live_limitations = (
-        "Live hub is geo/investor-type gated. Weekly walk still hits the hub; "
-        "empty/403/SPA pages are no-op success. Fixture transcribes the public December 2025 table."
-    )
-
-    def pages(self) -> list[PageSpec]:
-        return [
-            PageSpec(
-                name="2025_year_end_distributions",
-                url="https://impaxam.com/customer-service/distributions/",
-                fixture="2025_year_end_distributions.html",
-                live=True,
-                role="estimate",
-                empty_ok=True,
-            )
-        ]

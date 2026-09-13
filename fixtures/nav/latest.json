@@ -2,7 +2,7 @@
   "field": "regular_close",
   "field_notes": "Last liquid close / mutual-fund NAV (Yahoo daily close, not adjclose). Null when unknown \u2014 never invented.",
   "as_of": "2026-09-11",
-  "count": 9755,
+  "count": 9775,
   "items": [
     {
       "ticker": "AAAFX",
@@ -11323,6 +11323,16 @@
       "fund_identifier": "blackrock-low-duration-bond-portfolio",
       "fund_family": "BlackRock / iShares",
       "fund_name": "BlackRock Low Duration Bond Portfolio"
+    },
+    {
+      "ticker": "BLDX",
+      "nav_per_share": "25.400000",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/BLDX?interval=1d&range=10d",
+      "fund_identifier": "BLDX",
+      "fund_family": "Impax / Pax",
+      "fund_name": "Impax Global Sustainable Infrastructure ETF"
     },
     {
       "ticker": "BLPAX",
@@ -66155,6 +66165,46 @@
       "fund_name": "All-Cap Opportunities\u2013Advisor Class"
     },
     {
+      "ticker": "PAXBX",
+      "nav_per_share": "8.540000",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PAXBX?interval=1d&range=10d",
+      "fund_identifier": "PAXBX",
+      "fund_family": "Impax / Pax",
+      "fund_name": "Impax Core Bond Fund - Investor Class"
+    },
+    {
+      "ticker": "PAXDX",
+      "nav_per_share": "10.690000",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PAXDX?interval=1d&range=10d",
+      "fund_identifier": "PAXDX",
+      "fund_family": "Impax / Pax",
+      "fund_name": "Impax Global Sustainable Infrastructure Fund - Investor Class"
+    },
+    {
+      "ticker": "PAXGX",
+      "nav_per_share": "17.480000",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PAXGX?interval=1d&range=10d",
+      "fund_identifier": "PAXGX",
+      "fund_family": "Impax / Pax",
+      "fund_name": "Impax Global Opportunities Fund - Investor Class"
+    },
+    {
+      "ticker": "PAXIX",
+      "nav_per_share": "27.630000",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PAXIX?interval=1d&range=10d",
+      "fund_identifier": "PAXIX",
+      "fund_family": "Impax / Pax",
+      "fund_name": "Impax Sustainable Allocation Fund - Institutional Class"
+    },
+    {
       "ticker": "PAXLX",
       "nav_per_share": "11.490000",
       "nav_as_of": "2026-09-08",
@@ -66163,6 +66213,16 @@
       "fund_identifier": "PAXLX",
       "fund_family": "Impax / Pax",
       "fund_name": "Impax Large Cap Fund Investor"
+    },
+    {
+      "ticker": "PAXWX",
+      "nav_per_share": "26.840000",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PAXWX?interval=1d&range=10d",
+      "fund_identifier": "PAXWX",
+      "fund_family": "Impax / Pax",
+      "fund_name": "Impax Sustainable Allocation Fund - Investor Class"
     },
     {
       "ticker": "PAYR",
@@ -66813,6 +66873,16 @@
       "fund_identifier": "PGOFX",
       "fund_family": "Amundi US / Pioneer",
       "fund_name": "Victory Pioneer Select Mid Cap Growth Fund"
+    },
+    {
+      "ticker": "PGRNX",
+      "nav_per_share": "23.980000",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PGRNX?interval=1d&range=10d",
+      "fund_identifier": "PGRNX",
+      "fund_family": "Impax / Pax",
+      "fund_name": "Impax Global Environmental Markets Fund - Investor Class"
     },
     {
       "ticker": "PGROX",
@@ -69225,6 +69295,16 @@
       "fund_name": "Victory Pioneer Core Equity Fund"
     },
     {
+      "ticker": "PWGIX",
+      "nav_per_share": "30.620000",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PWGIX?interval=1d&range=10d",
+      "fund_identifier": "PWGIX",
+      "fund_family": "Impax / Pax",
+      "fund_name": "Impax US Sustainable Economy Fund - Institutional Class"
+    },
+    {
       "ticker": "PWTAX",
       "nav_per_share": "54.980000",
       "nav_as_of": "2026-09-08",
@@ -69243,6 +69323,16 @@
       "fund_identifier": "PWTYX",
       "fund_family": "UBS Asset Management",
       "fund_name": "UBS U.S. Allocation Fund Class P"
+    },
+    {
+      "ticker": "PXBIX",
+      "nav_per_share": "8.530000",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PXBIX?interval=1d&range=10d",
+      "fund_identifier": "PXBIX",
+      "fund_family": "Impax / Pax",
+      "fund_name": "Impax Core Bond Fund - Institutional Class"
     },
     {
       "ticker": "PXCCX",
@@ -69275,6 +69365,36 @@
       "fund_name": "Virtus Seix Tax-Exempt Bond Fund Class C"
     },
     {
+      "ticker": "PXDIX",
+      "nav_per_share": "10.750000",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PXDIX?interval=1d&range=10d",
+      "fund_identifier": "PXDIX",
+      "fund_family": "Impax / Pax",
+      "fund_name": "Impax Global Sustainable Infrastructure Fund - Institutional Class"
+    },
+    {
+      "ticker": "PXEAX",
+      "nav_per_share": "23.920000",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PXEAX?interval=1d&range=10d",
+      "fund_identifier": "PXEAX",
+      "fund_family": "Impax / Pax",
+      "fund_name": "Impax Global Environmental Markets Fund - Class A"
+    },
+    {
+      "ticker": "PXGAX",
+      "nav_per_share": "28.820000",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PXGAX?interval=1d&range=10d",
+      "fund_identifier": "PXGAX",
+      "fund_family": "Impax / Pax",
+      "fund_name": "Impax US Sustainable Economy Fund - Class A"
+    },
+    {
       "ticker": "PXGGX",
       "nav_per_share": "17.650000",
       "nav_as_of": "2026-09-10",
@@ -69285,6 +69405,16 @@
       "fund_name": "Invesco Select Risk: High Growth Investor Fund Class R"
     },
     {
+      "ticker": "PXGOX",
+      "nav_per_share": "17.660000",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PXGOX?interval=1d&range=10d",
+      "fund_identifier": "PXGOX",
+      "fund_family": "Impax / Pax",
+      "fund_name": "Impax Global Opportunities Fund - Institutional Class"
+    },
+    {
       "ticker": "PXIIX",
       "nav_per_share": "23.740000",
       "nav_as_of": "2026-09-10",
@@ -69293,6 +69423,16 @@
       "fund_identifier": "PXIIX",
       "fund_family": "x",
       "fund_name": "Virtus KAR Equity Income Fund Class I"
+    },
+    {
+      "ticker": "PXINX",
+      "nav_per_share": "14.020000",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PXINX?interval=1d&range=10d",
+      "fund_identifier": "PXINX",
+      "fund_family": "Impax / Pax",
+      "fund_name": "Impax International Sustainable Economy Fund - Investor Class"
     },
     {
       "ticker": "PXLIX",
@@ -69335,6 +69475,16 @@
       "fund_name": "Invesco Select Risk: Moderate Investor Fund Class S"
     },
     {
+      "ticker": "PXNIX",
+      "nav_per_share": "13.680000",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PXNIX?interval=1d&range=10d",
+      "fund_identifier": "PXNIX",
+      "fund_family": "Impax / Pax",
+      "fund_name": "Impax International Sustainable Economy Fund - Institutional Class"
+    },
+    {
       "ticker": "PXQIX",
       "nav_per_share": "17.660000",
       "nav_as_of": "2026-09-10",
@@ -69355,6 +69505,16 @@
       "fund_name": "Virtus KAR Small-Cap Value Fund Class I"
     },
     {
+      "ticker": "PXSAX",
+      "nav_per_share": "21.580000",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PXSAX?interval=1d&range=10d",
+      "fund_identifier": "PXSAX",
+      "fund_family": "Impax / Pax",
+      "fund_name": "Impax Small Cap Fund - Class A"
+    },
+    {
       "ticker": "PXSCX",
       "nav_per_share": "21.959999",
       "nav_as_of": "2026-09-08",
@@ -69373,6 +69533,46 @@
       "fund_identifier": "PXSGX",
       "fund_family": "x",
       "fund_name": "Virtus KAR Small-Cap Growth Fund Class I"
+    },
+    {
+      "ticker": "PXSIX",
+      "nav_per_share": "22.250000",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PXSIX?interval=1d&range=10d",
+      "fund_identifier": "PXSIX",
+      "fund_family": "Impax / Pax",
+      "fund_name": "Impax Small Cap Fund - Institutional Class"
+    },
+    {
+      "ticker": "PXWEX",
+      "nav_per_share": "39.090000",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PXWEX?interval=1d&range=10d",
+      "fund_identifier": "PXWEX",
+      "fund_family": "Impax / Pax",
+      "fund_name": "Impax Ellevate Global Women's Leadership Fund - Investor Class"
+    },
+    {
+      "ticker": "PXWGX",
+      "nav_per_share": "28.970000",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PXWGX?interval=1d&range=10d",
+      "fund_identifier": "PXWGX",
+      "fund_family": "Impax / Pax",
+      "fund_name": "Impax US Sustainable Economy Fund - Investor Class"
+    },
+    {
+      "ticker": "PXWIX",
+      "nav_per_share": "39.510000",
+      "nav_as_of": "2026-09-11",
+      "source": "yahoo_last_close",
+      "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/PXWIX?interval=1d&range=10d",
+      "fund_identifier": "PXWIX",
+      "fund_family": "Impax / Pax",
+      "fund_name": "Impax Ellevate Global Women's Leadership Fund - Institutional Class"
     },
     {
       "ticker": "PYCGX",

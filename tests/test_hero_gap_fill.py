@@ -77,7 +77,7 @@ def test_listed_category_coverage_digest() -> None:
             categorized += 1
     listed = len(seen)
     # In-book hero gap-fill: high-confidence name rules only. Never invent.
-    assert listed == 9743
+    assert listed == 9765
     assert categorized >= 9400
     assert categorized / listed >= 0.964
 
@@ -231,5 +231,8 @@ def test_fixture_book_lookback_stays_official_only() -> None:
     # Parallel M leftover: GuideStone Investor product-page paid history +17 MF.
     # Parallel N leftover: Federated Hermes Final Capital Gains API leftover
     # paid YE +44 MF. SEI 2025 final is year-depth only.
-    assert digest.funds_with_5y == 3430
+    # Impax / Pax hero-package gap fill: official 2021–2025 paid book for
+    # the 22 in-book tickered shells plus the four already-healthy identities
+    # unlocks +18 MF 5y (PAXLX / PXLIX / PGINX + 15 leftover shells).
+    assert digest.funds_with_5y == 3448
     assert digest.book_funds >= 7200
