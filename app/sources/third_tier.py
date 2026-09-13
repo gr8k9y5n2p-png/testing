@@ -129,6 +129,15 @@ class JanusHendersonSource(HtmlTableSource):
         "2025 ICI row the December-only CSV omitted (HEMAX $0.00131188; HEMDX "
         "$0.11851697; HEMIX $0.04811006; HEMRX $0.06465014; HEMTX $0.00260587; "
         "ex 7/28/2025). HEMSX 2025 July ICI is all-dash — unmatched. "
+        "Parallel H leftover quarterly / midyear ICI (same official Primary PDFs, "
+        "December-only CSVs omitted; Daily income lines still skipped; col 14/15/22 "
+        "dashes not invented from total): JABAX 2025 Q1 income $0.20720000 "
+        "(ex 3/31/2025); HFQAX 2025 Q1 $0.09480000; JERAX 2025 Q1 $0.00450000; "
+        "JAGAX Adaptive Global June 2024 income $0.20926226 / ST $0.32559479 / "
+        "LT $0.19461 (ex 6/10/2024) — 4y, 2025 unpublished. HFAAX 2024 col 14 "
+        "dash — unmatched (2025 income $0.00657517 is official col 14). "
+        "HFECX 2021 / JEASX 2024 / JEGRX 2023 / JIGCX 2021 / JSVSX 2022 / "
+        "JVSCX 2022 remain official ICI dashes. "
         "2025 final YE estimates (through 11/03/2025) remain as the estimate book "
         "(JDCAX LT $6.92). 2024 Preliminary Distribution Estimates 2024.pdf "
         "(JDCAX LT $5.42). 2023 Final Distribution Estimates 2023.pdf "
@@ -159,6 +168,15 @@ class JanusHendersonSource(HtmlTableSource):
                 name="ici_leftover_2025_emerging_markets",
                 url=f"{cdn}/Janus%20Henderson%202025%20ICI%20Primary%20Layout.pdf",
                 fixture="ici_leftover_2025_emerging_markets.csv",
+                live=False,
+                parser="ici",
+                large_aum_only=False,
+                role="history",
+            ),
+            PageSpec(
+                name="ici_leftover_quarterly_midyear",
+                url=f"{cdn}/Janus%20Henderson%202025%20ICI%20Primary%20Layout.pdf",
+                fixture="ici_leftover_quarterly_midyear.csv",
                 live=False,
                 parser="ici",
                 large_aum_only=False,
@@ -457,7 +475,10 @@ class MfsSource(HtmlTableSource):
         "shareCode=R3|R4|I on those leftover tickers aliases sibling-class "
         "bytes (BRSTX 2023 dividend $0.09799 is not BRSPX; BRWUX / MNWUX / "
         "DVRIX leftover years already on the book). Class-level — never "
-        "copy sibling Excel onto a leftover ticker. Unpublished leftover "
+        "copy sibling Excel onto a leftover ticker. Parallel H leftover "
+        "Excel re-probe (official shareCode only): MEMBX B has no 2022 row; "
+        "MRSGX R1 / BRSPX R1 have no 2023 row; UIVIX I / MCBCX C have no "
+        "2021 row; MNWTX R3 still unpublished for 2021. Unpublished leftover "
         "years stay unmatched."
     )
     live_limitations = "Estimates are PDF percent-of-NAV ranges. Fixture transcribes public rows."
@@ -625,7 +646,14 @@ class LordAbbettSource(HtmlTableSource):
         "(Bond Debenture, Developing Growth, Total Return 'not expected to pay "
         "2025 capital gain distributions'). Fixture stores those as $0.00 estimates. "
         "2024 Funds-with-Losses sibling 404. No public paying-fund ST/LT $/share "
-        "grid — skipped, not invented."
+        "grid — skipped, not invented. Parallel H leftover product-page paid "
+        "history (Developing Growth Class A LAGWX): 2021 LT $3.3406 "
+        "(record 11/22/2021, payable 11/23/2021) and 2024 dividend $0.00570 "
+        "(ex/pay 11/26/2024) from "
+        "https://www.lordabbett.com/en-us/financial-advisor/investments-and-performance/"
+        "mutual-funds/us-equity/developing-growth-fund.class-a.html — 2y, not 5y. "
+        "LBNDX / LTRAX dividend and CG tables are JavaScript — no scrapeable "
+        "paid grid. Lord ICI / 2024 Funds-with-Losses URLs still 404."
     )
     live_limitations = (
         "HTML hub has no table. The public PDF lists funds expected to pay $0, "
@@ -652,7 +680,18 @@ class LordAbbettSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
-            )
+            ),
+            PageSpec(
+                name="leftover_product_page_history",
+                url=(
+                    "https://www.lordabbett.com/en-us/financial-advisor/"
+                    "investments-and-performance/mutual-funds/us-equity/"
+                    "developing-growth-fund.class-a.html"
+                ),
+                fixture="leftover_product_page_history.html",
+                live=False,
+                role="history",
+            ),
         ]
 
 

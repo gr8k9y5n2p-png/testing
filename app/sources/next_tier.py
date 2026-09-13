@@ -76,7 +76,10 @@ class FranklinTempletonSource(HtmlTableSource):
         "and dated siblings 204 empty; Wayback CDX only has 2026 snapshots of the "
         "current 2025 DIST-SUMM; 2021–2023 Section 19 siblings 204; 2024 Section 19 "
         "is a fiscal-YTD notice, not YE character — not stored as final. CEF product "
-        "pages are JS. Leftover CEF years stay unmatched."
+        "pages are JS. Leftover CEF years stay unmatched. Parallel H Putnam leftover "
+        "re-probe (in-book PIM / PMM / PMO / PPT): DIST-SUMM-2024 / 2023 / 2022 / "
+        "2021 and pim/pmm/pmo/ppt-section-19-notice-12-31-2024 still 204 empty. "
+        "Do not store 19(a) fiscal-YTD estimates as YE finals."
     )
     live_limitations = (
         "Open-end December estimate tool is JavaScript-rendered. "
