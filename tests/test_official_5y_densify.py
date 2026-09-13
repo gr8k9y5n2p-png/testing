@@ -18,6 +18,7 @@ from app.sources.families import (
     TRowePriceSource,
     VanguardSource,
 )
+from app.sources.dws import DwsSource
 from app.sources.eleventh_tier import AmgSource, GuidestoneSource
 from app.sources.fifth_tier import OakmarkSource, RoyceSource, TouchstoneSource, VictorySource
 from app.sources.fourth_tier import (
@@ -26,6 +27,7 @@ from app.sources.fourth_tier import (
     FirstEagleSource,
     HartfordSource,
     JohnHancockSource,
+    MacquarieSource,
     PrincipalSource,
     ThriventSource,
 )
@@ -44,6 +46,7 @@ from app.sources.third_tier import (
     AllspringSource,
     AmericanCenturySource,
     DodgeCoxSource,
+    FederatedHermesSource,
     JanusHendersonSource,
     LordAbbettSource,
     MfsSource,
@@ -53,6 +56,7 @@ from app.sources.sixth_tier import (
     AlgerSource,
     FirstTrustSource,
     HardingLoevnerSource,
+    SeiSource,
     VaneckSource,
     WilliamBlairSource,
     WisdomtreeSource,
@@ -364,8 +368,12 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # GDMZX / GEQZX / GFIZX / GGIZX / GCOZX / GGBZX / GMTZX / GMWZX / GMHZX /
     # GMFZX). GMZXX / GVIZX / GEIZX / GIIZX stay 4y (2021 unpublished).
     # TWCGX 2023–2024 paid is year-depth only. No new identities.
-    assert digest.funds_with_5y == 3386
-    assert digest.funds_with_5y_mf == 2645
+    # Parallel N leftover: Federated Hermes Final Capital Gains API leftover
+    # paid YE +44 MF (KLCAX / PMIEX / QALGX families). SEI 2025 final PDF is
+    # year-depth only. Macquarie 2021 and Russell Investments stay unmatched.
+    # No new identities.
+    assert digest.funds_with_5y == 3430
+    assert digest.funds_with_5y_mf == 2689
     assert digest.funds_with_5y_etf == 741
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
@@ -3925,3 +3933,305 @@ def test_parallel_m_leftover_walls_stay_unmatched() -> None:
         and row.amount is not None
     ]
     assert tmaix_2022 == []
+
+
+def test_parallel_n_federated_leftover_paid_fills_5y() -> None:
+    records = FederatedHermesSource().fetch(mode="fixture").records
+    klcax_2025_lt = next(
+        row
+        for row in records
+        if row.ticker == "KLCAX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-08"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert klcax_2025_lt.amount == Decimal("4.99671721")
+    assert str(klcax_2025_lt.payable_date) == "2025-12-09"
+
+    klcax_2021_lt = next(
+        row
+        for row in records
+        if row.ticker == "KLCAX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2021-12-06"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert klcax_2021_lt.amount == Decimal("5.11567676")
+
+    pmiex_2025_lt = next(
+        row
+        for row in records
+        if row.ticker == "PMIEX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-22"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert pmiex_2025_lt.amount == Decimal("16.47306553")
+
+    qalgx_2025_lt = next(
+        row
+        for row in records
+        if row.ticker == "QALGX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-11"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert qalgx_2025_lt.amount == Decimal("1.32117791")
+
+    kauax_2025_lt = next(
+        row
+        for row in records
+        if row.ticker == "KAUAX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-08"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert kauax_2025_lt.amount == Decimal("0.60489673")
+
+    kauax_2021_lt = next(
+        row
+        for row in records
+        if row.ticker == "KAUAX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2021-12-06"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert kauax_2021_lt.amount == Decimal("0.65472526")
+
+    for ticker in (
+        "KLCAX",
+        "PMIEX",
+        "QALGX",
+        "FDERX",
+        "FGFAX",
+        "FGFCX",
+        "FGFLX",
+        "FGSAX",
+        "FGSCX",
+        "FGSIX",
+        "FHUMX",
+        "FISPX",
+        "FMCRX",
+        "FMDCX",
+        "FMSTX",
+        "FMXKX",
+        "FMXSX",
+        "FSTKX",
+        "FSTRX",
+        "ISCAX",
+        "ISCCX",
+        "ISCIX",
+        "KLCCX",
+        "KLCIX",
+        "LEICX",
+        "LEIFX",
+        "LEISX",
+        "LFEIX",
+        "MXCCX",
+        "PIGDX",
+        "PIUIX",
+        "PIUXC",
+        "QAACX",
+        "QASCX",
+        "QASGX",
+        "QCACX",
+        "QCLGX",
+        "QCLVX",
+        "QCSCX",
+        "QCSGX",
+        "QIACX",
+        "QILGX",
+        "QISCX",
+        "QISGX",
+    ):
+        years = {
+            row.ex_date.year
+            for row in records
+            if row.ticker == ticker
+            and row.ex_date
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        }
+        assert set(LOOKBACK_YEARS) <= years, ticker
+
+    kauax_years = {
+        row.ex_date.year
+        for row in records
+        if row.ticker == "KAUAX"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert {2021, 2023, 2024, 2025} <= kauax_years
+    assert 2022 not in kauax_years
+
+    # Class-level — leftover Class R6 is not copied from Class A QALGX.
+    qrlgx_2025 = [
+        row
+        for row in records
+        if row.ticker == "QRLGX"
+        and row.ex_date
+        and row.ex_date.year == 2025
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert qrlgx_2025 == []
+
+
+def test_parallel_n_sei_leftover_2025_paid_fills() -> None:
+    records = SeiSource().fetch(mode="fixture").records
+    qalt_st = next(
+        row
+        for row in records
+        if row.ticker == "QALT"
+        and row.estimate_type == EstimateType.short_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-17"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    qalt_lt = next(
+        row
+        for row in records
+        if row.ticker == "QALT"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-17"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert qalt_st.amount == Decimal("0.248")
+    assert qalt_lt.amount == Decimal("0.372")
+
+    simt_st = next(
+        row
+        for row in records
+        if row.fund_name == "SIMT Large Cap Growth"
+        and row.estimate_type == EstimateType.short_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-17"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    simt_lt = next(
+        row
+        for row in records
+        if row.fund_name == "SIMT Large Cap Growth"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-17"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert simt_st.amount == Decimal("1.370")
+    assert simt_lt.amount == Decimal("8.053")
+
+    qalt_years = {
+        row.ex_date.year
+        for row in records
+        if row.ticker == "QALT"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert qalt_years == {2025}
+
+
+def test_parallel_n_leftover_walls_stay_unmatched() -> None:
+    federated = FederatedHermesSource().fetch(mode="fixture").records
+    macquarie = MacquarieSource().fetch(mode="fixture").records
+    sei = SeiSource().fetch(mode="fixture").records
+    dws = DwsSource().fetch(mode="fixture").records
+    alger = AlgerSource().fetch(mode="fixture").records
+    ishares = BlackRockSource().fetch(mode="fixture").records
+
+    kauax_2022 = [
+        row
+        for row in federated
+        if row.ticker == "KAUAX"
+        and row.ex_date
+        and row.ex_date.year == 2022
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert kauax_2022 == []
+
+    vsfax_paid = [
+        row
+        for row in federated
+        if row.ticker == "VSFAX"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert vsfax_paid == []
+    vsfrx_paid = [
+        row
+        for row in federated
+        if row.ticker == "VSFRX"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert vsfrx_paid == []
+
+    wstax_2021 = [
+        row
+        for row in macquarie
+        if row.ticker == "WSTAX"
+        and _year_for_row(row.as_of, row.ex_date, row.payable_date) == 2021
+        and row.amount is not None
+    ]
+    assert wstax_2021 == []
+
+    qalt_early = [
+        row
+        for row in sei
+        if row.ticker == "QALT"
+        and row.ex_date
+        and row.ex_date.year in {2021, 2022, 2023, 2024}
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert qalt_early == []
+
+    # Russell / FTSE leftovers belong to other slices — do not invent fills.
+    deef_early = [
+        row
+        for row in dws
+        if row.ticker == "DEEF"
+        and row.ex_date
+        and row.ex_date.year in {2021, 2022, 2023, 2024}
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert deef_early == []
+    invn_early = [
+        row
+        for row in alger
+        if row.ticker == "INVN"
+        and row.ex_date
+        and row.ex_date.year in {2021, 2022, 2023, 2024}
+        and row.amount is not None
+    ]
+    assert invn_early == []
+    iwmw_early = [
+        row
+        for row in ishares
+        if row.ticker == "IWMW"
+        and row.ex_date
+        and row.ex_date.year in {2021, 2022, 2023}
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert iwmw_early == []

@@ -356,7 +356,11 @@ class MacquarieSource(HtmlTableSource):
         "https://mim.fgsfulfillment.com/download.aspx?sku=CGE-RET-ACT-2022 "
         "(WSTAX LT $12.373; December YE Class A; November munis omitted). "
         "CGE-RET-ACT-2021 404 — overlapping Class A can reach 4y (2022–2025), "
-        "not 5y. Literature hub: https://www.macquarie.com/mam/literature."
+        "not 5y. Official 5y parallel N leftover re-probe (2026-09-13): "
+        "CGE-RET-ACT-2021 / CGE-RET-2021 / CGE-RET-ACT-21 still 404. Nomura "
+        "product-page Distribution history is Institutional Class JavaScript "
+        "(WSTAX Class A not printed — never copy ISTIX $30.863 onto WSTAX). "
+        "Literature hub: https://www.macquarie.com/mam/literature."
     )
     live_limitations = "US estimate/paid books are fulfillment PDFs, not an HTML grid."
 

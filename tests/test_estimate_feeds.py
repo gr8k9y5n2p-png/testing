@@ -119,7 +119,7 @@ def test_coverage_exposes_estimate_feed_readiness(session) -> None:
 
     federated = by_slug["federated_hermes"]
     assert federated.estimate_feed_status == "prelim_updated"
-    assert federated.history_years == [2025]
+    assert federated.history_years == [2021, 2022, 2023, 2024, 2025]
 
     vaneck = by_slug["vaneck"]
     assert vaneck.estimate_feed_ready is True

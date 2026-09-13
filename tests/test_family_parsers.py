@@ -1467,6 +1467,25 @@ def test_third_tier_fixtures() -> None:
     assert kauax.publication_stage == PublicationStage.preliminary_estimate
     assert len({r.ticker for r in federated_prelim if r.ticker}) >= 80
 
+    federated_leftover = parse_distribution_html(
+        (ROOT / "federated_hermes" / "leftover_paid_year_end_parallel_n.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="https://www.federatedhermes.com/external/open/corpwebsite/v1/api/FinalCapitalGains",
+        fund_family="Federated Hermes",
+    )
+    klcax_paid = next(
+        r
+        for r in federated_leftover
+        if r.ticker == "KLCAX"
+        and r.estimate_type == EstimateType.long_term_capital_gains
+        and r.ex_date
+        and str(r.ex_date) == "2025-12-08"
+    )
+    assert klcax_paid.amount == Decimal("4.99671721")
+    assert klcax_paid.publication_stage == PublicationStage.final
+    assert "QRLGX" not in {r.ticker for r in federated_leftover}
+
     virtus = parse_distribution_html(
         (ROOT / "virtus" / "2026_june_capital_gain_estimates.html").read_text(encoding="utf-8"),
         source_url="fixture://virtus",
@@ -2732,6 +2751,29 @@ def test_sixth_tier_fixtures() -> None:
     )
     assert slcg_24.amount == Decimal("7.596")
     assert str(slcg_24.as_of)[:4] == "2024"
+
+    sei_paid = parse_distribution_html(
+        (ROOT / "sei" / "2025_paid_capital_gains.html").read_text(encoding="utf-8"),
+        source_url=(
+            "https://www.seic.com/sites/default/files/2025-12/"
+            "2025%20SEI%20Capital%20gains%20distribution_Final.pdf"
+        ),
+        fund_family="SEI",
+    )
+    qalt_paid = next(
+        r
+        for r in sei_paid
+        if r.ticker == "QALT" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert qalt_paid.amount == Decimal("0.372")
+    assert qalt_paid.publication_stage == PublicationStage.final
+    slcg_paid = next(
+        r
+        for r in sei_paid
+        if r.fund_name == "SIMT Large Cap Growth"
+        and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert slcg_paid.amount == Decimal("8.053")
 
     brown = parse_distribution_html(
         (ROOT / "brown_advisory" / "2025_estimated_capital_gains.html").read_text(

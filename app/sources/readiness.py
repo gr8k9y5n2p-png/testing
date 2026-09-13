@@ -156,7 +156,7 @@ HISTORY_YEARS: dict[str, tuple[int, ...]] = {
     "mfs": (2021, 2022, 2023, 2024, 2025, 2026),
     "lord_abbett": (2025,),
     "ab": (2021, 2022, 2023, 2024, 2025),
-    "federated_hermes": (2025,),
+    "federated_hermes": (2021, 2022, 2023, 2024, 2025),
     "virtus": (2024, 2025, 2026),
     "eaton_vance": (2025,),
     "john_hancock": (2022, 2023, 2024, 2025),

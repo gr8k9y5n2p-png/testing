@@ -812,7 +812,17 @@ class FederatedHermesSource(HtmlTableSource):
         "Enhanced Income ETF (PAYR) "
         "https://www.federatedhermes.com/siteassets/documents/regulatory/19a-notices/g85307-06.pdf "
         "(12/31/2025 income $0.184310 / ST $0.010122 / LT $0.015178). Kaufmann "
-        "product pages do not expose a scrapeable ST/LT history grid."
+        "product pages do not expose a scrapeable ST/LT history grid. "
+        "Official 5y parallel N leftover: issuer Final Capital Gains API "
+        "https://www.federatedhermes.com/external/open/corpwebsite/v1/api/FinalCapitalGains "
+        "?year=2021..2025 (verified 2026-09-13) for in-book leftover tickers — "
+        "class-level, never copied onto a sibling share class. Heroes: KLCAX "
+        "2025-12-08 LT $4.99671721 / 2021-12-06 LT $5.11567676; PMIEX 2025-12-22 "
+        "LT $16.47306553; QALGX 2025-12-11 LT $1.32117791; KAUAX 2025-12-08 LT "
+        "$0.60489673 (4y — 2022 unpublished on that API). Official printed $0 "
+        "stored. Duplicate Class R identities (two R tickers, same fund) skipped. "
+        "Clover Small Value / MDT Small Cap Value / R6 / munis unpublished on "
+        "the in-book map stay unmatched."
     )
     live_limitations = (
         "Family tax-center tables are JavaScript. Weekly walk uses preliminary.do; "
@@ -845,7 +855,15 @@ class FederatedHermesSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
-            )
+            ),
+            PageSpec(
+                name="leftover_paid_year_end_parallel_n",
+                url="https://www.federatedhermes.com/external/open/corpwebsite/v1/api/FinalCapitalGains",
+                fixture="leftover_paid_year_end_parallel_n.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
+            ),
         ]
 
 
