@@ -5,6 +5,8 @@ from __future__ import annotations
 from datetime import date
 from decimal import Decimal
 
+from fastapi.testclient import TestClient
+
 from app.models import AmountUnit, EstimateType, PublicationStage
 from app.services.lookback import LOOKBACK_YEARS, _year_for_row, lookback_digest_from_rows
 from app.sources.american_funds import AmericanFundsSource
@@ -3648,3 +3650,74 @@ def test_parallel_o_leftover_walls() -> None:
     assert "globalx" not in slugs
     families = {source.display_name.lower() for source in list_sources()}
     assert not any("global x" in name for name in families)
+
+
+def test_parallel_o_heroes_are_searchable(client: TestClient) -> None:
+    for slug in ("vaneck", "wisdomtree", "first_trust"):
+        fetched = client.post(
+            "/ingest/fetch", json={"fund_family": slug, "mode": "fixture"}
+        )
+        assert fetched.status_code == 200, fetched.text
+        assert fetched.json()["created"] > 0
+
+    for ticker in ("EINC", "LFEQ", "RAAX", "UNIY", "EGPT", "FBT", "AIVI", "GHACX"):
+        body = client.get("/funds", params={"q": ticker}).json()
+        tickers = [item["ticker"] for item in body["items"]]
+        assert ticker in tickers, f"{ticker} missing from GET /funds?q={ticker}: {tickers[:8]}"
+
+    einc = client.get(
+        "/distributions",
+        params={"ticker": "EINC", "publication_stage": "final", "page_size": 200},
+    ).json()
+    einc_2021 = [
+        Decimal(row["amount"])
+        for row in einc["items"]
+        if row.get("ticker") == "EINC"
+        and row.get("estimate_type") == "ordinary_income"
+        and str(row.get("ex_date") or "").startswith("2021-11-19")
+    ]
+    assert Decimal("0.390850") in einc_2021
+    einc_years = {
+        str(row.get("ex_date") or "")[:4]
+        for row in einc["items"]
+        if row.get("ticker") == "EINC" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= einc_years
+
+    uniy = client.get(
+        "/distributions",
+        params={"ticker": "UNIY", "publication_stage": "final", "page_size": 200},
+    ).json()
+    uniy_2023 = [
+        Decimal(row["amount"])
+        for row in uniy["items"]
+        if row.get("ticker") == "UNIY"
+        and row.get("estimate_type") == "ordinary_income"
+        and str(row.get("ex_date") or "").startswith("2023-11-24")
+    ]
+    assert Decimal("0.17700") in uniy_2023
+
+    fbt = client.get(
+        "/distributions",
+        params={"ticker": "FBT", "publication_stage": "final", "page_size": 200},
+    ).json()
+    fbt_2021 = [
+        row
+        for row in fbt["items"]
+        if row.get("ticker") == "FBT"
+        and str(row.get("ex_date") or "").startswith("2021")
+        and row.get("amount") is not None
+    ]
+    assert fbt_2021 == []
+    ghacx = client.get(
+        "/distributions",
+        params={"ticker": "GHACX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    ghacx_2025 = [
+        row
+        for row in ghacx["items"]
+        if row.get("ticker") == "GHACX"
+        and str(row.get("ex_date") or "").startswith("2025")
+        and row.get("amount") is not None
+    ]
+    assert ghacx_2025 == []
