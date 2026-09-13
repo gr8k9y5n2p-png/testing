@@ -178,6 +178,7 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # 3,218 after #161 Oakmark Wayback + Harding Loevner. Leftover densify after
     # #159/#161: +34 (iShares rename 2025 / LifePath 2022 / Principal leftover 2y /
     # Janus HEM* July 2025 / VanEck CMC 2025 / FNDA 2025). No new identities.
+    # Parallel B leftover First Trust Print=Y fills do not complete a 5y year set.
     assert digest.funds_with_5y == 3252
     assert digest.funds_with_5y_mf == 2516
     assert digest.funds_with_5y_etf == 736
@@ -572,6 +573,89 @@ def test_first_trust_leftover_midyear_fills_empty_december_years() -> None:
         and row.amount
     ]
     assert bgld_2021 == []
+
+
+def test_first_trust_parallel_b_leftover_print_y_years() -> None:
+    records = FirstTrustSource().fetch(mode="fixture").records
+    fny_2025 = next(
+        row
+        for row in records
+        if row.ticker == "FNY"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2025
+        and row.amount
+    )
+    assert fny_2025.amount == Decimal("0.029700")
+    assert str(fny_2025.ex_date) == "2025-06-26"
+    assert fny_2025.publication_stage == PublicationStage.final
+
+    bnge_2022 = next(
+        row
+        for row in records
+        if row.ticker == "BNGE"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2022
+        and row.amount
+    )
+    assert bnge_2022.amount == Decimal("0.099800")
+    assert str(bnge_2022.ex_date) == "2022-06-24"
+
+    emdm_2024 = next(
+        row
+        for row in records
+        if row.ticker == "EMDM"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2024
+        and row.amount
+    )
+    assert emdm_2024.amount == Decimal("0.847300")
+
+    sdvd_2024 = next(
+        row
+        for row in records
+        if row.ticker == "SDVD"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2024
+        and row.amount
+    )
+    assert sdvd_2024.amount == Decimal("0.161200")
+
+    fdni_2023 = next(
+        row
+        for row in records
+        if row.ticker == "FDNI"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2023
+        and row.amount
+    )
+    assert fdni_2023.amount == Decimal("0.089700")
+    assert str(fdni_2023.ex_date) == "2023-03-24"
+
+    fny_years = {
+        row.ex_date.year
+        for row in records
+        if row.ticker == "FNY"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert {2022, 2023, 2024, 2025} <= fny_years
+    assert 2021 not in fny_years
+    # 4y leftovers still unpublished on Print=Y — unmatched, not $0.
+    ftc_2021 = [
+        row
+        for row in records
+        if row.ticker == "FTC"
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount
+    ]
+    assert ftc_2021 == []
 
 
 def test_t_rowe_2023_etf_bond_table_leftover() -> None:
