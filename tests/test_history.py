@@ -816,7 +816,7 @@ def test_search_multi_year_top_families(client: TestClient) -> None:
         for item in jensx.json()["items"]
     )
 
-    dhlax = client.get("/distributions", params={"ticker": "DHLAX", "page_size": 20})
+    dhlax = client.get("/distributions", params={"ticker": "DHLAX", "page_size": 50})
     assert {"2024", "2025"} <= {item["as_of"][:4] for item in dhlax.json()["items"] if item.get("as_of")}
     assert any(
         item["estimate_type"] == "long_term_capital_gains"

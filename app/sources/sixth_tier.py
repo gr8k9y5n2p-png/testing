@@ -797,7 +797,15 @@ class AqrSource(HtmlTableSource):
         "is transcribed as Class I only "
         "(AQGIX ST $0.6140 / LT $0.5462 / 11.68% of NAV; "
         "AUEIX ST $0.1898 / LT $4.3691 / 18.93% of NAV). "
-        "Printed dashes omitted. N/R6 2024 clones not added as ticker vanity."
+        "Printed dashes omitted. N/R6 2024 clones not added as ticker vanity. "
+        "Official 5y parallel R leftover: 2023 final memos (ex 12/18/2023 and "
+        "Diversifying Strategies ex 12/27/2023), leftover 2024 N/R6 from the "
+        "same 2024 final PDF, and 2025 final "
+        "https://funds.aqr.com/-/media/Funds/Tax-Documents/2025/"
+        "2025-AQR-Funds-Announces-Final-Distributions.pdf?sc_lang=en "
+        "(AQGIX ST $0.9401 / LT $0.5044). 2021 / 2022 December finals 404. "
+        "QDSIX 2025 unpublished on the 2025 final memo. Class-level — N/R6 "
+        "are not copied from Class I."
     )
     live_limitations = (
         "Estimate book is PDF. Weekly walk uses the news hub + 2025 estimate PDF; "
@@ -833,6 +841,16 @@ class AqrSource(HtmlTableSource):
                     "2024-AQR-Funds-Final-Distribution-Memo-Ex-Date-121724.pdf?sc_lang=en"
                 ),
                 fixture="2024_final_distributions.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="leftover_paid_parallel_r",
+                url=(
+                    f"{tax}/2025/"
+                    "2025-AQR-Funds-Announces-Final-Distributions.pdf?sc_lang=en"
+                ),
+                fixture="leftover_paid_parallel_r.html",
                 live=False,
                 role="history",
             ),

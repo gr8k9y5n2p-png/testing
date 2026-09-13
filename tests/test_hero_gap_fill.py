@@ -241,5 +241,8 @@ def test_fixture_book_lookback_stays_official_only() -> None:
     # Parallel S leftover: Davis / PRIMECAP / Ariel / Baird / Hotchkis & Wiley /
     # Champlain leftover paid YE +12 MF.
     # Parallel Q leftover: GMO US Trust Class III + Voya VYCAX +4 MF.
-    assert digest.funds_with_5y == 3486
+    # Parallel R leftover: Diamond Hill Investor paid HTML +7 MF and
+    # Bridgeway leftover paid +4 MF. AQR is year-depth only (3y).
+    # Jensen 2021–2023 and TCW 2021–2024 stay unmatched.
+    assert digest.funds_with_5y == 3497
     assert digest.book_funds >= 7200

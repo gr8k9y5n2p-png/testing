@@ -199,7 +199,7 @@ def test_coverage_exposes_estimate_feed_readiness(session) -> None:
 
     diamond = by_slug["diamond_hill"]
     assert diamond.estimate_feed_ready is True
-    assert diamond.history_years == [2024, 2025]
+    assert diamond.history_years == [2021, 2022, 2023, 2024, 2025]
     assert "DHLAX" in diamond.performance_tickers
 
     guidestone = by_slug["guidestone"]
@@ -299,7 +299,7 @@ def test_coverage_exposes_estimate_feed_readiness(session) -> None:
     aqr = by_slug["aqr"]
     assert aqr.estimate_feed_ready is True
     assert aqr.estimate_feed_status == "prelim_updated"
-    assert aqr.history_years == [2024, 2025]
+    assert aqr.history_years == [2023, 2024, 2025]
     assert "AQGIX" in aqr.performance_tickers
 
     causeway = by_slug["causeway"]
@@ -314,7 +314,7 @@ def test_coverage_exposes_estimate_feed_readiness(session) -> None:
 
     bridgeway = by_slug["bridgeway"]
     assert bridgeway.estimate_feed_ready is True
-    assert bridgeway.history_years == [2024, 2025]
+    assert bridgeway.history_years == [2021, 2022, 2023, 2024, 2025]
 
 
 def test_ranks_63_to_80_have_live_estimate_feed() -> None:
