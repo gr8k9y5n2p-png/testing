@@ -19,7 +19,10 @@ class TcwSource(HtmlTableSource):
         "12/30/2025, ex/pay 12/31/2025. The PDF is fund-level; tickers are "
         "public Class I identifiers. "
         "The unversioned TCW-FUND-Distributions-final.pdf filename now serves 2025; "
-        "no dated official 2024 sibling stored."
+        "no dated official 2024 sibling stored. "
+        "Official 5y parallel R leftover re-probe (2026-09-13): dated 2021–2024 "
+        "final siblings unpublished; product-page capital-gains history is "
+        "Incapsula-walled. Leftover years stay unmatched."
     )
     live_limitations = (
         "Year-end book is PDF. Weekly walk uses the unversioned final PDF; "
@@ -69,7 +72,13 @@ class BridgewaySource(HtmlTableSource):
         "https://bridgewayfunds.com/wp-content/uploads/sites/2/2024/11/"
         "2024-Distribution-Estimates-for-Website.pdf "
         "(BRAGX LT $2.54426; BRUSX ST $1.13357; BRSVX LT $2.17584; BOSVX LT $1.41164). "
-        "BRGOX 2024 NII expected with no amount — omitted."
+        "BRGOX 2024 NII expected with no amount — omitted. "
+        "Official 5y parallel R leftover: issuer product-page Historical "
+        "Distribution tables plus paid 2022 / 2024 PDFs fill leftover years "
+        "(BRAGX / BRUSX / BRSVX / BOSVX 2021–2025; BRGOX 2024–2025; "
+        "BRSIX 2022+2024). Published $0.0000 stored. BRSIX 2021/2023/2025 "
+        "and BRGOX 2021–2023 (inception 10/15/2024) stay unmatched. "
+        "BRBPX / BOTSX are not in-book leftovers."
     )
     live_limitations = (
         "Estimate book is PDF. Weekly walk uses the distributions hub + 2025 estimate PDF; "
@@ -107,6 +116,13 @@ class BridgewaySource(HtmlTableSource):
                 live=False,
                 role="history",
             ),
+            PageSpec(
+                name="leftover_paid_parallel_r",
+                url="https://bridgewayfunds.com/mutual-funds/distributions/",
+                fixture="leftover_paid_parallel_r.html",
+                live=False,
+                role="history",
+            ),
         ]
 
 
@@ -124,7 +140,11 @@ class JensenSource(HtmlTableSource):
         "https://www.jenseninvestment.com/wp-content/uploads/2024/11/"
         "2024.11.13-jensen-funds-quality-growth-quality-mid-cap-capital-gains-dividend-distributions.pdf "
         "(JENSX / JENIX LT $6.77; printed no-ST omitted; Mid Cap LT $1.10 "
-        "share-class tickers were not printed — omitted)."
+        "share-class tickers were not printed — omitted). "
+        "Official 5y parallel R leftover re-probe (2026-09-13): 2021–2023 "
+        "insights / dated YE PDFs 404; live quality-growth page 403. "
+        "Fiscal annual-report totals are not calendar YE with printed dates — "
+        "leftover years stay unmatched."
     )
     live_limitations = (
         "Live page is public HTML with prose lists, not a parseable table. "
@@ -175,7 +195,12 @@ class DiamondHillSource(HtmlTableSource):
         "https://www.diamond-hill.com/sitefiles/live/documents/distributions/"
         "dhf-capital-gain-estimates-as-of-10-31-24.pdf "
         "(DHSCX LT $2.511; DHPAX LT $1.311; DHLAX ST $0.035 / LT $2.900; "
-        "printed dash ST omitted; loss-carryforward funds omitted)."
+        "printed dash ST omitted; loss-carryforward funds omitted). "
+        "Official 5y parallel R leftover: issuer paid-history HTML "
+        "https://www.diamond-hill.com/investment-strategies/distributions/mutual-funds/ "
+        "fills leftover Investor years 2021–2025 (DHSCX / DHMAX / DHPAX / "
+        "DHLAX / DHTAX / DIAMX / DHIAX). Class I / Y / C are not in-book "
+        "leftovers — omitted, not copied."
     )
     live_limitations = (
         "Estimate book is PDF. Weekly walk uses the 2025 estimate PDF; "
@@ -207,6 +232,13 @@ class DiamondHillSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
+            ),
+            PageSpec(
+                name="leftover_paid_parallel_r",
+                url="https://www.diamond-hill.com/investment-strategies/distributions/mutual-funds/",
+                fixture="leftover_paid_parallel_r.html",
+                live=False,
+                role="history",
             ),
         ]
 

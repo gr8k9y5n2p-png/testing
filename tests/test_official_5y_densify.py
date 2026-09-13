@@ -67,6 +67,7 @@ from app.sources.third_tier import (
 )
 from app.sources.sixth_tier import (
     AlgerSource,
+    AqrSource,
     BrownAdvisorySource,
     CausewaySource,
     FirstTrustSource,
@@ -77,9 +78,17 @@ from app.sources.sixth_tier import (
     WilliamBlairSource,
     WisdomtreeSource,
 )
+from app.sources.seventh_tier import (
+    BridgewaySource,
+    ChamplainSource,
+    DavisSource,
+    DiamondHillSource,
+    HotchkisWileySource,
+    JensenSource,
+    TcwSource,
+)
 from app.sources.parser import NormalizedRecord
 from app.sources.registry import list_sources
-from app.sources.seventh_tier import ChamplainSource, DavisSource, HotchkisWileySource
 
 
 def test_american_funds_midyear_2022_fills_near4_heroes() -> None:
@@ -409,8 +418,13 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # Corporate Leaders 100 Class A product-page paid YE +4 MF (GQETX /
     # GMUEX / GTMIX / VYCAX). Nationwide leftover 2021–2023 is 4y (2024
     # estimate wall). NYLI Class I stays estimate-only.
-    assert digest.funds_with_5y == 3486
-    assert digest.funds_with_5y_mf == 2736
+    # Parallel R leftover: Diamond Hill Investor paid HTML +7 MF (DHSCX /
+    # DHMAX / DHPAX / DHLAX / DHTAX / DIAMX / DHIAX) and Bridgeway product-
+    # page / paid PDF leftover +4 MF (BRUSX / BOSVX / BRAGX / BRSVX). AQR
+    # 2023+2025 finals and leftover 2024 N/R6 are year-depth only (3y).
+    # Jensen 2021–2023 and TCW 2021–2024 stay unmatched. No new identities.
+    assert digest.funds_with_5y == 3497
+    assert digest.funds_with_5y_mf == 2747
     assert digest.funds_with_5y_etf == 750
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
@@ -5568,3 +5582,358 @@ def test_parallel_q_heroes_are_searchable(client: TestClient) -> None:
         if row.get("ticker") == "MLAIX" and row.get("amount") is not None
     ]
     assert mlaix_paid == []
+
+def test_parallel_r_aqr_leftover_fills() -> None:
+    records = AqrSource().fetch(mode="fixture").records
+    aqgix_2025_lt = next(
+        row
+        for row in records
+        if row.ticker == "AQGIX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-17"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert aqgix_2025_lt.amount == Decimal("0.5044")
+    aqgix_2025_st = next(
+        row
+        for row in records
+        if row.ticker == "AQGIX"
+        and row.estimate_type == EstimateType.short_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-17"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert aqgix_2025_st.amount == Decimal("0.9401")
+    aqgix_2023_lt = next(
+        row
+        for row in records
+        if row.ticker == "AQGIX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2023-12-18"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert aqgix_2023_lt.amount == Decimal("0.0271")
+    aqgnx_2024_lt = next(
+        row
+        for row in records
+        if row.ticker == "AQGNX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2024-12-17"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert aqgnx_2024_lt.amount == Decimal("0.5462")
+    qdsix_2023_oi = next(
+        row
+        for row in records
+        if row.ticker == "QDSIX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2023-12-27"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert qdsix_2023_oi.amount == Decimal("1.2535")
+
+    aqgix_years = {
+        row.ex_date.year
+        for row in records
+        if row.ticker == "AQGIX"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert {2023, 2024, 2025} <= aqgix_years
+    assert 2021 not in aqgix_years
+    assert 2022 not in aqgix_years
+    qdsix_years = {
+        row.ex_date.year
+        for row in records
+        if row.ticker == "QDSIX"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert qdsix_years == {2023}
+
+
+def test_parallel_r_diamond_hill_leftover_paid_fills_5y() -> None:
+    records = DiamondHillSource().fetch(mode="fixture").records
+    dhlax_2025_lt = next(
+        row
+        for row in records
+        if row.ticker == "DHLAX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-11"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert dhlax_2025_lt.amount == Decimal("1.8730")
+    dhscx_2025_lt = next(
+        row
+        for row in records
+        if row.ticker == "DHSCX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-11"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert dhscx_2025_lt.amount == Decimal("1.4076")
+    for ticker in (
+        "DHSCX",
+        "DHMAX",
+        "DHPAX",
+        "DHLAX",
+        "DHTAX",
+        "DIAMX",
+        "DHIAX",
+    ):
+        years = {
+            row.ex_date.year
+            for row in records
+            if row.ticker == ticker
+            and row.ex_date
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        }
+        assert set(LOOKBACK_YEARS) <= years, ticker
+
+
+def test_parallel_r_bridgeway_leftover_fills() -> None:
+    records = BridgewaySource().fetch(mode="fixture").records
+    brusx_2025_lt = next(
+        row
+        for row in records
+        if row.ticker == "BRUSX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-16"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert brusx_2025_lt.amount == Decimal("3.2559")
+    bosvx_2025_lt = next(
+        row
+        for row in records
+        if row.ticker == "BOSVX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-16"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert bosvx_2025_lt.amount == Decimal("1.5153")
+    for ticker in ("BRUSX", "BOSVX", "BRAGX", "BRSVX"):
+        years = {
+            row.ex_date.year
+            for row in records
+            if row.ticker == ticker
+            and row.ex_date
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        }
+        assert set(LOOKBACK_YEARS) <= years, ticker
+    brgox_years = {
+        row.ex_date.year
+        for row in records
+        if row.ticker == "BRGOX"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert brgox_years == {2024, 2025}
+    brsix_years = {
+        row.ex_date.year
+        for row in records
+        if row.ticker == "BRSIX"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert brsix_years == {2022, 2024}
+
+
+def test_parallel_r_leftover_walls_stay_unmatched() -> None:
+    aqr = AqrSource().fetch(mode="fixture").records
+    for year in (2021, 2022):
+        early = [
+            row
+            for row in aqr
+            if row.ex_date
+            and row.ex_date.year == year
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        ]
+        assert early == [], year
+    qdsix_2025 = [
+        row
+        for row in aqr
+        if row.ticker == "QDSIX"
+        and row.ex_date
+        and row.ex_date.year == 2025
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert qdsix_2025 == []
+    qhfix = [row for row in aqr if row.ticker == "QHFIX"]
+    assert qhfix == []
+
+    jensen = JensenSource().fetch(mode="fixture").records
+    jensen_early = [
+        row
+        for row in jensen
+        if row.ex_date
+        and row.ex_date.year in {2021, 2022, 2023}
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert jensen_early == []
+
+    tcw = TcwSource().fetch(mode="fixture").records
+    tcw_early = [
+        row
+        for row in tcw
+        if row.ex_date
+        and row.ex_date.year in {2021, 2022, 2023, 2024}
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert tcw_early == []
+
+    diamond = DiamondHillSource().fetch(mode="fixture").records
+    dhsix = [row for row in diamond if row.ticker == "DHSIX"]
+    assert dhsix == []
+
+    bridgeway = BridgewaySource().fetch(mode="fixture").records
+    brbpx = [row for row in bridgeway if row.ticker == "BRBPX"]
+    assert brbpx == []
+
+
+def test_parallel_r_heroes_are_searchable(client: TestClient) -> None:
+    for slug in ("aqr", "diamond_hill", "bridgeway", "jensen", "tcw"):
+        fetched = client.post(
+            "/ingest/fetch", json={"fund_family": slug, "mode": "fixture"}
+        )
+        assert fetched.status_code == 200, fetched.text
+        assert fetched.json()["created"] > 0
+
+    for ticker in (
+        "AQGIX",
+        "DHLAX",
+        "JENSX",
+        "BRUSX",
+        "TGDIX",
+        "QDSIX",
+    ):
+        body = client.get("/funds", params={"q": ticker}).json()
+        tickers = [item["ticker"] for item in body["items"]]
+        assert ticker in tickers, f"{ticker} missing from GET /funds?q={ticker}: {tickers[:8]}"
+
+    aqgix = client.get(
+        "/distributions",
+        params={"ticker": "AQGIX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    aqgix_2025 = [
+        Decimal(row["amount"])
+        for row in aqgix["items"]
+        if row.get("ticker") == "AQGIX"
+        and row.get("estimate_type") == "long_term_capital_gains"
+        and str(row.get("ex_date") or "").startswith("2025-12-17")
+    ]
+    assert Decimal("0.5044") in aqgix_2025
+    aqgix_years = {
+        str(row.get("ex_date") or "")[:4]
+        for row in aqgix["items"]
+        if row.get("ticker") == "AQGIX" and row.get("amount") is not None
+    }
+    assert {"2023", "2024", "2025"} <= aqgix_years
+    assert "2021" not in aqgix_years
+    assert "2022" not in aqgix_years
+
+    dhlax = client.get(
+        "/distributions",
+        params={"ticker": "DHLAX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    dhlax_2025 = [
+        Decimal(row["amount"])
+        for row in dhlax["items"]
+        if row.get("ticker") == "DHLAX"
+        and row.get("estimate_type") == "long_term_capital_gains"
+        and str(row.get("ex_date") or "").startswith("2025-12-11")
+    ]
+    assert Decimal("1.8730") in dhlax_2025
+    dhlax_years = {
+        str(row.get("ex_date") or "")[:4]
+        for row in dhlax["items"]
+        if row.get("ticker") == "DHLAX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= dhlax_years
+
+    brusx = client.get(
+        "/distributions",
+        params={"ticker": "BRUSX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    brusx_2025 = [
+        Decimal(row["amount"])
+        for row in brusx["items"]
+        if row.get("ticker") == "BRUSX"
+        and row.get("estimate_type") == "long_term_capital_gains"
+        and str(row.get("ex_date") or "").startswith("2025-12-16")
+    ]
+    assert Decimal("3.2559") in brusx_2025
+
+    jensx = client.get(
+        "/distributions",
+        params={"ticker": "JENSX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    jensx_years = {
+        str(row.get("ex_date") or "")[:4]
+        for row in jensx["items"]
+        if row.get("ticker") == "JENSX" and row.get("amount") is not None
+    }
+    assert {"2024", "2025"} <= jensx_years
+    assert "2021" not in jensx_years
+    assert "2022" not in jensx_years
+    assert "2023" not in jensx_years
+
+    tgdix = client.get(
+        "/distributions",
+        params={"ticker": "TGDIX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    tgdix_years = {
+        str(row.get("ex_date") or "")[:4]
+        for row in tgdix["items"]
+        if row.get("ticker") == "TGDIX" and row.get("amount") is not None
+    }
+    assert tgdix_years == {"2025"}
+
+    qdsix = client.get(
+        "/distributions",
+        params={"ticker": "QDSIX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    qdsix_paid = [
+        row
+        for row in qdsix["items"]
+        if row.get("ticker") == "QDSIX" and row.get("amount") is not None
+    ]
+    assert qdsix_paid
+    assert all(str(row.get("ex_date") or "").startswith("2023") for row in qdsix_paid)
+
+    dhsix = client.get(
+        "/distributions",
+        params={"ticker": "DHSIX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    dhsix_paid = [
+        row
+        for row in dhsix["items"]
+        if row.get("ticker") == "DHSIX" and row.get("amount") is not None
+    ]
+    assert dhsix_paid == []
