@@ -225,5 +225,6 @@ def test_fixture_book_lookback_stays_official_only() -> None:
     # Parallel K leftover: Allspring leftover December income +31 MF 5y.
     # Parallel I leftover: Artisan leftover ICI + Calamos Class A paid/product
     # pages raise the pin +20 MF (Victory 2022 RS is year-depth).
-    assert digest.funds_with_5y == 3351
+    # Parallel J leftover: AllianceBernstein Class A product-page paid YE +15 MF.
+    assert digest.funds_with_5y == 3366
     assert digest.book_funds >= 7200

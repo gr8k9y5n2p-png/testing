@@ -703,7 +703,15 @@ class AmundiSource(HtmlTableSource):
         "YE history: official 2024 Final Capital Gain Distributions (PIODX LT $4.1900) and "
         "2024 special year-end income estimates; official 2023 finals + 10/31/2023 estimates. "
         "Printed N/A / dashes omitted; published $0 stored. No public filled ICI file. "
-        "Live fetch prefers issuer URLs with fixture fallback — never invent amounts."
+        "Live fetch prefers issuer URLs with fixture fallback — never invent amounts. "
+        "Parallel J leftover re-probe (2026-09-13): Pioneer tax-center year picker "
+        "is 2023–2025 only. 2021 / 2022 Final-Capital-Gain-Distributions.pdf "
+        "siblings 404; Wayback CDX of pioneerinvestments.com/content/dam/pioneer "
+        "tax-center paths is empty. Leftover Class A 3y names (PIODX / PIGFX / "
+        "PEQIX / PIOTX / CVFCX / GLOSX / PIIFX / PCGRX) stay missing 2021–2022. "
+        "2023–2024 books print Class A tickers and state same-rate across classes "
+        "— leftover C / Y / K / R / R6 years are not copied. N-CSR fiscal "
+        "highlights are not used as calendar YE."
     )
     live_limitations = (
         "Pioneer/Victory tax hubs are HTML shells; estimate/final books are PDF. "

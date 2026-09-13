@@ -27,6 +27,7 @@ from app.sources.fourth_tier import (
     ThriventSource,
 )
 from app.sources.next_tier import (
+    AmundiSource,
     DimensionalSource,
     FranklinTempletonSource,
     MorganStanleySource,
@@ -36,11 +37,13 @@ from app.sources.next_tier import (
 )
 from app.sources.ninth_tier import AmericanBeaconSource
 from app.sources.third_tier import (
+    AllianceBernsteinSource,
     AllspringSource,
     DodgeCoxSource,
     JanusHendersonSource,
     LordAbbettSource,
     MfsSource,
+    VirtusSource,
 )
 from app.sources.sixth_tier import (
     AlgerSource,
@@ -342,9 +345,13 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # MSIM/EV ETF 2024 leftover is year-depth only. No new identities.
     # Parallel I leftover: Artisan leftover ICI + Calamos Class A paid/product
     # pages raise the pin +20 MF (Victory 2022 RS is year-depth; Dodge Class X
-    # 2021 and Alger 2021/2023/2024 stay unmatched). No new identities.
-    assert digest.funds_with_5y == 3351
-    assert digest.funds_with_5y_mf == 2613
+    # 2021 and Alger 2021/2023/2024 stay unmatched).
+    # Parallel J leftover: AllianceBernstein Class A product-page paid YE
+    # +15 MF (AGRFX / APGAX / ABASX / ABVAX / ADGAX / ALTFX / ASLAX / AUIAX /
+    # AUUAX / AWAAX / CABDX / CABNX / GCEAX / SCAVX / WPASX). CHCLX stays 2y.
+    # No new identities.
+    assert digest.funds_with_5y == 3366
+    assert digest.funds_with_5y_mf == 2628
     assert digest.funds_with_5y_etf == 738
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
@@ -3227,3 +3234,157 @@ def test_parallel_i_leftover_walls_stay_unmatched() -> None:
     ]
     assert cmrax_2022 == []
 
+
+def test_parallel_j_ab_leftover_class_a_paid_fills_5y() -> None:
+    records = AllianceBernsteinSource().fetch(mode="fixture").records
+    agrfx_2025_lt = next(
+        row
+        for row in records
+        if row.ticker == "AGRFX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-09"
+        and row.amount
+    )
+    assert agrfx_2025_lt.amount == Decimal("16.5000")
+    assert str(agrfx_2025_lt.payable_date) == "2025-12-11"
+    assert agrfx_2025_lt.publication_stage == PublicationStage.final
+    agrfx_2025_st = next(
+        row
+        for row in records
+        if row.ticker == "AGRFX"
+        and row.estimate_type == EstimateType.short_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-09"
+        and row.amount
+    )
+    assert agrfx_2025_st.amount == Decimal("0.6757")
+
+    apgax_2021_lt = next(
+        row
+        for row in records
+        if row.ticker == "APGAX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2021-12-07"
+        and row.amount
+    )
+    assert apgax_2021_lt.amount == Decimal("2.2996")
+
+    abasx_2021_oi = next(
+        row
+        for row in records
+        if row.ticker == "ABASX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2021-12-09"
+        and row.amount
+    )
+    assert abasx_2021_oi.amount == Decimal("0.2155")
+    abasx_2021_st = next(
+        row
+        for row in records
+        if row.ticker == "ABASX"
+        and row.estimate_type == EstimateType.short_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2021-12-09"
+        and row.amount
+    )
+    assert abasx_2021_st.amount == Decimal("1.6382")
+
+    for ticker in (
+        "AGRFX",
+        "APGAX",
+        "ABASX",
+        "ABVAX",
+        "ADGAX",
+        "ALTFX",
+        "ASLAX",
+        "AUIAX",
+        "AUUAX",
+        "AWAAX",
+        "CABDX",
+        "CABNX",
+        "GCEAX",
+        "SCAVX",
+        "WPASX",
+    ):
+        years = {
+            row.ex_date.year
+            for row in records
+            if row.ticker == ticker
+            and row.ex_date
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        }
+        assert set(LOOKBACK_YEARS) <= years, ticker
+
+    chclx_years = {
+        row.ex_date.year
+        for row in records
+        if row.ticker == "CHCLX"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert {2021, 2025} <= chclx_years
+    assert 2022 not in chclx_years
+    assert 2023 not in chclx_years
+    assert 2024 not in chclx_years
+
+    # Class-level — Advisor siblings are not copied from leftover Class A.
+    agryx_2025 = [
+        row
+        for row in records
+        if row.ticker == "AGRYX"
+        and row.ex_date
+        and row.ex_date.year == 2025
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert agryx_2025 == []
+
+
+def test_parallel_j_leftover_walls_stay_unmatched() -> None:
+    virtus = VirtusSource().fetch(mode="fixture").records
+    merfx_early = [
+        row
+        for row in virtus
+        if row.ticker == "MERFX"
+        and row.ex_date
+        and row.ex_date.year in {2021, 2022, 2023, 2024}
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert merfx_early == []
+    stvtx_early = [
+        row
+        for row in virtus
+        if row.ticker == "STVTX"
+        and row.ex_date
+        and row.ex_date.year in {2021, 2022, 2023}
+        and row.amount is not None
+    ]
+    assert stvtx_early == []
+
+    pioneer = AmundiSource().fetch(mode="fixture").records
+    piodx_early = [
+        row
+        for row in pioneer
+        if row.ticker == "PIODX"
+        and row.ex_date
+        and row.ex_date.year in {2021, 2022}
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert piodx_early == []
+    pcodx_2023 = [
+        row
+        for row in pioneer
+        if row.ticker == "PCODX"
+        and row.ex_date
+        and row.ex_date.year == 2023
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert pcodx_2023 == []
