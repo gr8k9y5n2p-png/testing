@@ -2932,6 +2932,55 @@ def test_sixth_tier_fixtures() -> None:
     )
     assert motg_2025_lt.amount == Decimal("4.0549")
 
+    vaneck_parallel_o_tax = parse_distribution_html(
+        (ROOT / "vaneck" / "leftover_parallel_o_tax_guide_paid.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://vaneck-parallel-o-tax",
+        fund_family="VanEck",
+    )
+    einc_2021 = next(
+        r
+        for r in vaneck_parallel_o_tax
+        if r.ticker == "EINC"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.ex_date
+        and r.ex_date.year == 2021
+    )
+    assert einc_2021.amount == Decimal("0.390850")
+    lfeq_2023 = next(
+        r
+        for r in vaneck_parallel_o_tax
+        if r.ticker == "LFEQ" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert lfeq_2023.amount == Decimal("0.625000")
+    raax_2023 = next(
+        r
+        for r in vaneck_parallel_o_tax
+        if r.ticker == "RAAX" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert raax_2023.amount == Decimal("0.935700")
+
+    vaneck_parallel_o_2025 = parse_distribution_html(
+        (ROOT / "vaneck" / "leftover_parallel_o_2025_later_paid.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://vaneck-parallel-o-2025",
+        fund_family="VanEck",
+    )
+    einc_2025_lt = next(
+        r
+        for r in vaneck_parallel_o_2025
+        if r.ticker == "EINC" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert einc_2025_lt.amount == Decimal("0.9843")
+    cloi_2025_oi = next(
+        r
+        for r in vaneck_parallel_o_2025
+        if r.ticker == "CLOI" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert cloi_2025_oi.amount == Decimal("0.2332")
+
     first_eagle_etf = parse_distribution_html(
         (ROOT / "first_eagle" / "2025_etf_paid_year_end.html").read_text(
             encoding="utf-8"
@@ -3015,6 +3064,21 @@ def test_sixth_tier_fixtures() -> None:
         in {EstimateType.short_term_capital_gains, EstimateType.long_term_capital_gains}
         for r in wisdomtree_dec
     )
+
+    wisdomtree_parallel_o = parse_distribution_html(
+        (ROOT / "wisdomtree" / "leftover_parallel_o_2023_monthly.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://wisdomtree-parallel-o-2023",
+        fund_family="WisdomTree",
+    )
+    uniy_2023 = next(
+        r
+        for r in wisdomtree_parallel_o
+        if r.ticker == "UNIY" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert uniy_2023.amount == Decimal("0.17700")
+    assert str(uniy_2023.ex_date) == "2023-11-24"
 
     first_trust = parse_distribution_html(
         (ROOT / "first_trust" / "2025_section_19a_notice.html").read_text(encoding="utf-8"),

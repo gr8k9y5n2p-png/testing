@@ -258,7 +258,18 @@ class VaneckSource(HtmlTableSource):
         "Parallel 5y sweep B re-read leftover years on the same official PDFs: "
         "AFK/VNM 2024, REMX 2023, INIVX/INIIX/INIYX 2022, GLIN/GMET 2021, "
         "RSX/RSXJ 2022, and MOTE 2025 stay issuer-printed None / absent — "
-        "unmatched, not $0. Hub: https://www.vaneck.com/us/en/resources/etf-distributions/"
+        "unmatched, not $0. Parallel O leftover densify reads official ETF "
+        "year-end tax guides plus the later 2025 paid PDF for leftover years "
+        "those YE PDFs omitted (EINC 2021-11-19 OI $0.390850 / 2022-11-07 "
+        "$0.125200 / 2023-11-07 $0.378400 / 2024-11-06 $0.664900 and 2025-12-29 "
+        "LT $0.9843; LFEQ 2023-12-29 $0.625000 / 2025-12-29 $0.4900; RAAX "
+        "2023-12-29 $0.935700 / 2025-12-29 $0.8163; EGPT 2024-03-27 $0.031200; "
+        "YUMY 2024-03-21 $0.050000; CLOI 2025-12-29 OI $0.2332 / ST $0.0070 / "
+        "LT $0.0279; CLOB 2025-12-29 OI $0.2630 / ST $0.0641; CMCI 2025-12-30 "
+        "$2.3700). Tax-guide monthly CLOI/CLOB annual totals without a printed "
+        "calendar day omitted. AFK/VNM 2024, REMX 2023, GLIN/GMET 2021, "
+        "MOTE/GHACX 2025 stay unpublished. Hub: "
+        "https://www.vaneck.com/us/en/resources/etf-distributions/"
     )
     live_limitations = (
         "Family estimate books are PDF. Weekly walk uses the MF estimate PDF, "
@@ -333,6 +344,20 @@ class VaneckSource(HtmlTableSource):
                 role="history",
             ),
             PageSpec(
+                name="leftover_parallel_o_tax_guide_paid",
+                url="https://www.vaneck.com/us/en/resources/tax-center/2024-vaneck-etfs-year-end-tax-guide.pdf",
+                fixture="leftover_parallel_o_tax_guide_paid.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="leftover_parallel_o_2025_later_paid",
+                url="https://www.vaneck.com/us/en/vaneck-funds-2025-yearend-dividends-distributions.pdf",
+                fixture="leftover_parallel_o_2025_later_paid.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
                 name="2025_etf_year_end_distributions",
                 url="https://www.vaneck.com/us/en/vaneck-funds-yearend-distributions-2025.pdf",
                 fixture="2025_etf_year_end_distributions.html",
@@ -401,7 +426,14 @@ class WisdomtreeSource(HtmlTableSource):
         "$0.52223; GDMN Oct $1.68178; WTMF Oct $1.32291; WTRE Sep $0.11000; "
         "WTV Sep $0.26000; XC Sep $0.25000 (still miss 2021). Printed $0.00000 "
         "ST/LT omitted. CEW / USDU / WCBR / WCLD / WDNA / QGRW unpublished on "
-        "those monthlies — skip. "
+        "those monthlies — skip. Parallel O leftover densify adds UNIY Nov "
+        "2023 OI $0.17700 (ex 11/24/2023) from the same official November "
+        "2023 monthly PDF — leftover 2y → 3y (2021–2022 unpublished; UNIY "
+        "first appears on the February 2023 monthly). Leftover 4y names "
+        "still missing 2021 stay unmatched: official December 2021 income "
+        "PDF omits AIVI / AIVL / GCC / GDE / GDMN / WTAI / WTMF / WTRE / "
+        "WTV / XC under current tickers; January–November 2021 monthly PDFs "
+        "404. "
         "Live product pages 403. "
         "Digital-fund 2024 CG book is a separate tokenized product line — omitted. "
         "Official December 2025 income declaration "
@@ -517,6 +549,17 @@ class WisdomtreeSource(HtmlTableSource):
                 live=False,
                 role="history",
             ),
+            PageSpec(
+                name="leftover_parallel_o_2023_monthly",
+                url=(
+                    "https://www.wisdomtree.com/investments/-/media/us-media-files/documents/"
+                    "resource-library/fund-reports-schedules/distribution-history/"
+                    "wisdomtree-etfs-declare-distributions-november-2023.pdf"
+                ),
+                fixture="leftover_parallel_o_2023_monthly.html",
+                live=False,
+                role="history",
+            ),
         ]
 
 
@@ -576,7 +619,15 @@ class FirstTrustSource(HtmlTableSource):
         "2022-06-24 $0.099800; EMDM 2024-12-13 $0.847300; SDVD 2024-12-13 "
         "$0.161200; FDNI 2023-03-24 $0.089700. Those fills do not complete "
         "5y. 4y leftovers (ARVR/BGLD/CRPT/EIPX/FSGS/FTC/FTGS/FXH/MISL/RDVI) "
-        "and FNY 2021 / BNGE 2021+2024 / FBT empty years still unpublished."
+        "and FNY 2021 / BNGE 2021+2024 / FBT empty years still unpublished. "
+        "Parallel O re-read leftover Print=Y years still missing after B: "
+        "ARVR/BGLD/EIPX/FNY/FTC/FTGS/FXH/MISL/RDVI 2021, CRPT 2023, FSGS 2025, "
+        "BNGE 2021+2024, FBT 2021–2023+2025, remaining 3y/2y/1y leftovers "
+        "(DOGG/EMDM/FCFY/FDNI/FIIG/FTCB/FTHF/FTIF/LALT/MGOV/SDVD/TDVI "
+        "2021–2022; CAAA/EMOT/FDND/FTCE/SCIO 2021–2023; FAI/RND 2021–2023+2025) "
+        "print “No distributions were paid during the selected year.” "
+        "RFEU/EFIX/FBZ Print=Y is terminated; MARB/ECLN fund-not-found. "
+        "Those leftover years stay unmatched — no new identities."
     )
     live_limitations = (
         "Family 19(a) and declaration PDFs. Weekly walk uses the ContentGUID notice "

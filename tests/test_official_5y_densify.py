@@ -5,6 +5,8 @@ from __future__ import annotations
 from datetime import date
 from decimal import Decimal
 
+from fastapi.testclient import TestClient
+
 from app.models import AmountUnit, EstimateType, PublicationStage
 from app.services.lookback import LOOKBACK_YEARS, _year_for_row, lookback_digest_from_rows
 from app.sources.american_funds import AmericanFundsSource
@@ -350,9 +352,14 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # +15 MF (AGRFX / APGAX / ABASX / ABVAX / ADGAX / ALTFX / ASLAX / AUIAX /
     # AUUAX / AWAAX / CABDX / CABNX / GCEAX / SCAVX / WPASX). CHCLX stays 2y.
     # No new identities.
-    assert digest.funds_with_5y == 3366
+    # Parallel O leftover: VanEck tax-guide + later 2025 paid PDF fill 3
+    # leftover ETFs to 5y (EINC 2021–2025 / LFEQ 2023+2025 / RAAX 2023+2025).
+    # Year-depth only: EGPT 2024, YUMY 2024, CLOI/CLOB/CMCI 2025, WisdomTree
+    # UNIY 2023. First Trust leftover Print=Y years stay empty-year walls;
+    # Global X is not in the 10056-ticker book.
+    assert digest.funds_with_5y == 3369
     assert digest.funds_with_5y_mf == 2628
-    assert digest.funds_with_5y_etf == 738
+    assert digest.funds_with_5y_etf == 741
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
 
@@ -3392,3 +3399,325 @@ def test_parallel_j_leftover_walls_stay_unmatched() -> None:
         and row.amount is not None
     ]
     assert pcodx_2023 == []
+
+
+def test_parallel_o_vaneck_leftover_fills() -> None:
+    records = VaneckSource().fetch(mode="fixture").records
+    einc_paid = {
+        (row.estimate_type, str(row.amount), str(row.ex_date))
+        for row in records
+        if row.ticker == "EINC"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    }
+    assert (
+        EstimateType.ordinary_income,
+        "0.390850",
+        "2021-11-19",
+    ) in einc_paid
+    assert (
+        EstimateType.ordinary_income,
+        "0.125200",
+        "2022-11-07",
+    ) in einc_paid
+    assert (
+        EstimateType.ordinary_income,
+        "0.378400",
+        "2023-11-07",
+    ) in einc_paid
+    assert (
+        EstimateType.ordinary_income,
+        "0.664900",
+        "2024-11-06",
+    ) in einc_paid
+    assert (
+        EstimateType.long_term_capital_gains,
+        "0.9843",
+        "2025-12-29",
+    ) in einc_paid
+
+    lfeq_2023 = next(
+        row
+        for row in records
+        if row.ticker == "LFEQ"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2023-12-29"
+        and row.amount
+    )
+    assert lfeq_2023.amount == Decimal("0.625000")
+    lfeq_2025 = next(
+        row
+        for row in records
+        if row.ticker == "LFEQ"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-29"
+        and row.amount
+    )
+    assert lfeq_2025.amount == Decimal("0.4900")
+
+    raax_2023 = next(
+        row
+        for row in records
+        if row.ticker == "RAAX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2023-12-29"
+        and row.amount
+    )
+    assert raax_2023.amount == Decimal("0.935700")
+    raax_2025 = next(
+        row
+        for row in records
+        if row.ticker == "RAAX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-29"
+        and row.amount
+    )
+    assert raax_2025.amount == Decimal("0.8163")
+
+    for ticker in ("EINC", "LFEQ", "RAAX"):
+        years = {
+            row.ex_date.year
+            for row in records
+            if row.ticker == ticker
+            and row.ex_date
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        }
+        assert set(LOOKBACK_YEARS) <= years, ticker
+
+    egpt_2024 = next(
+        row
+        for row in records
+        if row.ticker == "EGPT"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2024-03-27"
+        and row.amount
+    )
+    assert egpt_2024.amount == Decimal("0.031200")
+    yumy_2024 = next(
+        row
+        for row in records
+        if row.ticker == "YUMY"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2024-03-21"
+        and row.amount
+    )
+    assert yumy_2024.amount == Decimal("0.050000")
+
+    cloi_2025 = {
+        (row.estimate_type, str(row.amount))
+        for row in records
+        if row.ticker == "CLOI"
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-29"
+        and row.amount
+    }
+    assert (EstimateType.ordinary_income, "0.2332") in cloi_2025
+    assert (EstimateType.short_term_capital_gains, "0.0070") in cloi_2025
+    assert (EstimateType.long_term_capital_gains, "0.0279") in cloi_2025
+    clob_2025 = {
+        (row.estimate_type, str(row.amount))
+        for row in records
+        if row.ticker == "CLOB"
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-29"
+        and row.amount
+    }
+    assert (EstimateType.ordinary_income, "0.2630") in clob_2025
+    assert (EstimateType.short_term_capital_gains, "0.0641") in clob_2025
+    cmci_2025 = next(
+        row
+        for row in records
+        if row.ticker == "CMCI"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-30"
+        and row.amount
+    )
+    assert cmci_2025.amount == Decimal("2.3700")
+
+
+def test_parallel_o_wisdomtree_uniy_2023() -> None:
+    records = WisdomtreeSource().fetch(mode="fixture").records
+    uniy_2023 = next(
+        row
+        for row in records
+        if row.ticker == "UNIY"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2023-11-24"
+        and row.amount
+    )
+    assert uniy_2023.amount == Decimal("0.17700")
+    assert str(uniy_2023.record_date) == "2023-11-27"
+    assert str(uniy_2023.payable_date) == "2023-11-29"
+    uniy_years = {
+        row.ex_date.year
+        for row in records
+        if row.ticker == "UNIY"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert {2023, 2024, 2025} <= uniy_years
+    assert 2021 not in uniy_years
+    assert 2022 not in uniy_years
+
+
+def test_parallel_o_leftover_walls() -> None:
+    first_trust = FirstTrustSource().fetch(mode="fixture").records
+    for ticker, year in (
+        ("FTC", 2021),
+        ("ARVR", 2021),
+        ("BGLD", 2021),
+        ("EIPX", 2021),
+        ("FNY", 2021),
+        ("CRPT", 2023),
+        ("FSGS", 2025),
+        ("FBT", 2021),
+        ("FBT", 2025),
+    ):
+        rows = [
+            row
+            for row in first_trust
+            if row.ticker == ticker
+            and row.ex_date
+            and row.ex_date.year == year
+            and row.amount is not None
+        ]
+        assert rows == [], f"{ticker} {year}"
+
+    wisdomtree = WisdomtreeSource().fetch(mode="fixture").records
+    aivi_2021 = [
+        row
+        for row in wisdomtree
+        if row.ticker == "AIVI"
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount is not None
+    ]
+    assert aivi_2021 == []
+    cew_2023 = [
+        row
+        for row in wisdomtree
+        if row.ticker == "CEW"
+        and row.ex_date
+        and row.ex_date.year == 2023
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.amount
+    ]
+    assert cew_2023 == []
+
+    vaneck = VaneckSource().fetch(mode="fixture").records
+    afk_2024 = [
+        row
+        for row in vaneck
+        if row.ticker == "AFK"
+        and row.ex_date
+        and row.ex_date.year == 2024
+        and row.amount is not None
+    ]
+    assert afk_2024 == []
+    remx_2023 = [
+        row
+        for row in vaneck
+        if row.ticker == "REMX"
+        and row.ex_date
+        and row.ex_date.year == 2023
+        and row.amount is not None
+    ]
+    assert remx_2023 == []
+    for ticker in ("GHACX", "MOTE"):
+        rows = [
+            row
+            for row in vaneck
+            if row.ticker == ticker
+            and row.ex_date
+            and row.ex_date.year == 2025
+            and row.amount is not None
+        ]
+        assert rows == [], ticker
+
+    slugs = {source.slug for source in list_sources()}
+    assert "global_x" not in slugs
+    assert "globalx" not in slugs
+    families = {source.display_name.lower() for source in list_sources()}
+    assert not any("global x" in name for name in families)
+
+
+def test_parallel_o_heroes_are_searchable(client: TestClient) -> None:
+    for slug in ("vaneck", "wisdomtree", "first_trust"):
+        fetched = client.post(
+            "/ingest/fetch", json={"fund_family": slug, "mode": "fixture"}
+        )
+        assert fetched.status_code == 200, fetched.text
+        assert fetched.json()["created"] > 0
+
+    for ticker in ("EINC", "LFEQ", "RAAX", "UNIY", "EGPT", "FBT", "AIVI", "GHACX"):
+        body = client.get("/funds", params={"q": ticker}).json()
+        tickers = [item["ticker"] for item in body["items"]]
+        assert ticker in tickers, f"{ticker} missing from GET /funds?q={ticker}: {tickers[:8]}"
+
+    einc = client.get(
+        "/distributions",
+        params={"ticker": "EINC", "publication_stage": "final", "page_size": 200},
+    ).json()
+    einc_2021 = [
+        Decimal(row["amount"])
+        for row in einc["items"]
+        if row.get("ticker") == "EINC"
+        and row.get("estimate_type") == "ordinary_income"
+        and str(row.get("ex_date") or "").startswith("2021-11-19")
+    ]
+    assert Decimal("0.390850") in einc_2021
+    einc_years = {
+        str(row.get("ex_date") or "")[:4]
+        for row in einc["items"]
+        if row.get("ticker") == "EINC" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= einc_years
+
+    uniy = client.get(
+        "/distributions",
+        params={"ticker": "UNIY", "publication_stage": "final", "page_size": 200},
+    ).json()
+    uniy_2023 = [
+        Decimal(row["amount"])
+        for row in uniy["items"]
+        if row.get("ticker") == "UNIY"
+        and row.get("estimate_type") == "ordinary_income"
+        and str(row.get("ex_date") or "").startswith("2023-11-24")
+    ]
+    assert Decimal("0.17700") in uniy_2023
+
+    fbt = client.get(
+        "/distributions",
+        params={"ticker": "FBT", "publication_stage": "final", "page_size": 200},
+    ).json()
+    fbt_2021 = [
+        row
+        for row in fbt["items"]
+        if row.get("ticker") == "FBT"
+        and str(row.get("ex_date") or "").startswith("2021")
+        and row.get("amount") is not None
+    ]
+    assert fbt_2021 == []
+    ghacx = client.get(
+        "/distributions",
+        params={"ticker": "GHACX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    ghacx_2025 = [
+        row
+        for row in ghacx["items"]
+        if row.get("ticker") == "GHACX"
+        and str(row.get("ex_date") or "").startswith("2025")
+        and row.get("amount") is not None
+    ]
+    assert ghacx_2025 == []
