@@ -385,7 +385,9 @@ class DodgeCoxSource(HtmlTableSource):
         "Existing Class I flagships DODGX / DODIX / DODFX / DODBX stay on the "
         "tax-letter fixtures. Worldwide / non-US / DOAA* omitted. Heroes: "
         "DOXGX 2025 income $0.0446 / LT $1.1999; 2024 LT $12.0360; 2023 LT "
-        "$3.9800; 2022 LT $7.2500."
+        "$3.9800; 2022 LT $7.2500. Official 5y parallel I leftover: Class X "
+        "2021 remains an inception wall (May 2022) — never copy Class I 2021 "
+        "onto DOXGX / DOXBX / DOXIX / DOXFX / DOXWX / DOXLX."
     )
     live_limitations = "Estimates and the tax letter are PDF. Fixtures transcribe those public tables."
 

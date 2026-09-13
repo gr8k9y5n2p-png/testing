@@ -223,5 +223,7 @@ def test_fixture_book_lookback_stays_official_only() -> None:
     # Parallel F leftover: T. Rowe TBLYX 2021+2022 YE PDF (+1 MF 5y).
     # Parallel G leftover: BIRAX + MDLOX (+2 MF) and IBHF + NZAC (+2 ETF).
     # Parallel K leftover: Allspring leftover December income +31 MF 5y.
-    assert digest.funds_with_5y == 3331
+    # Parallel I leftover: Artisan leftover ICI + Calamos Class A paid/product
+    # pages raise the pin +20 MF (Victory 2022 RS is year-depth).
+    assert digest.funds_with_5y == 3351
     assert digest.book_funds >= 7200

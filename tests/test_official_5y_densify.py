@@ -20,6 +20,7 @@ from app.sources.eleventh_tier import AmgSource
 from app.sources.fifth_tier import OakmarkSource, RoyceSource, TouchstoneSource, VictorySource
 from app.sources.fourth_tier import (
     ArtisanSource,
+    CalamosSource,
     FirstEagleSource,
     HartfordSource,
     PrincipalSource,
@@ -34,8 +35,15 @@ from app.sources.next_tier import (
     SchwabSource,
 )
 from app.sources.ninth_tier import AmericanBeaconSource
-from app.sources.third_tier import AllspringSource, JanusHendersonSource, LordAbbettSource, MfsSource
+from app.sources.third_tier import (
+    AllspringSource,
+    DodgeCoxSource,
+    JanusHendersonSource,
+    LordAbbettSource,
+    MfsSource,
+)
 from app.sources.sixth_tier import (
+    AlgerSource,
     FirstTrustSource,
     HardingLoevnerSource,
     VaneckSource,
@@ -332,8 +340,11 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # (Core Bond / Short-Term Bond Plus / Core Plus / HY Muni / Income Plus /
     # MN+WI tax-free / Spectrum Income + Conservative / WICIX+WICRX).
     # MSIM/EV ETF 2024 leftover is year-depth only. No new identities.
-    assert digest.funds_with_5y == 3331
-    assert digest.funds_with_5y_mf == 2593
+    # Parallel I leftover: Artisan leftover ICI + Calamos Class A paid/product
+    # pages raise the pin +20 MF (Victory 2022 RS is year-depth; Dodge Class X
+    # 2021 and Alger 2021/2023/2024 stay unmatched). No new identities.
+    assert digest.funds_with_5y == 3351
+    assert digest.funds_with_5y_mf == 2613
     assert digest.funds_with_5y_etf == 738
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
@@ -2985,4 +2996,234 @@ def test_parallel_k_leftover_walls_stay_unmatched() -> None:
             and row.amount is not None
         ]
         assert early == [], f"{ticker} 2021–2024 should stay unmatched"
+
+
+def test_parallel_i_artisan_leftover_fills() -> None:
+    records = ArtisanSource().fetch(mode="fixture").records
+    apdix_2025_lt = next(
+        row
+        for row in records
+        if row.ticker == "APDIX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and row.ex_date.year == 2025
+        and row.amount
+    )
+    assert apdix_2025_lt.amount == Decimal("5.017255")
+    assert str(apdix_2025_lt.ex_date) == "2025-12-10"
+    assert apdix_2025_lt.publication_stage == PublicationStage.final
+    aphix_2025_oi = next(
+        row
+        for row in records
+        if row.ticker == "APHIX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2025
+        and row.amount
+    )
+    assert aphix_2025_oi.amount == Decimal("0.673190")
+    arthx_2022 = next(
+        row
+        for row in records
+        if row.ticker == "ARTHX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2022
+        and row.amount
+    )
+    assert arthx_2022.amount == Decimal("0.143480")
+    artzx_2021 = next(
+        row
+        for row in records
+        if row.ticker == "ARTZX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount
+    )
+    assert artzx_2021.amount == Decimal("0.200000")
+    artjx_2022_zero = next(
+        row
+        for row in records
+        if row.ticker == "ARTJX"
+        and row.ex_date
+        and row.ex_date.year == 2022
+        and row.amount is not None
+    )
+    assert artjx_2022_zero.amount == Decimal("0")
+    for ticker in ("APDIX", "APHIX", "ARTHX", "ARTJX", "ARTZX", "APDHX", "APDJX"):
+        years = {
+            (row.ex_date or row.as_of).year
+            for row in records
+            if row.ticker == ticker
+            and (row.ex_date or row.as_of)
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        }
+        assert set(LOOKBACK_YEARS) <= years, ticker
+
+
+def test_parallel_i_calamos_leftover_fills() -> None:
+    records = CalamosSource().fetch(mode="fixture").records
+    cvgrx_2025 = next(
+        row
+        for row in records
+        if row.ticker == "CVGRX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and row.ex_date.year == 2025
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert cvgrx_2025.amount == Decimal("4.17")
+    assert str(cvgrx_2025.ex_date) == "2025-12-15"
+    cplsx_2021 = next(
+        row
+        for row in records
+        if row.ticker == "CPLSX"
+        and row.as_of
+        and row.as_of.year == 2021
+        and row.amount is not None
+    )
+    assert cplsx_2021.amount == Decimal("0.0000")
+    ccvix_2023 = next(
+        row
+        for row in records
+        if row.ticker == "CCVIX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and row.ex_date.year == 2023
+        and row.amount
+    )
+    assert ccvix_2023.amount == Decimal("0.22")
+    ccef_2024 = next(
+        row
+        for row in records
+        if row.ticker == "CCEF"
+        and row.estimate_type == EstimateType.short_term_capital_gains
+        and row.ex_date
+        and row.ex_date.year == 2024
+        and row.amount
+    )
+    assert ccef_2024.amount == Decimal("0.09")
+    for ticker in ("CVGRX", "CPLSX", "CCVIX", "CVTRX", "CAGCX"):
+        years = {
+            _year_for_row(row.as_of, row.ex_date, row.payable_date)
+            for row in records
+            if row.ticker == ticker
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        }
+        years.discard(None)
+        assert set(LOOKBACK_YEARS) <= years, ticker
+
+
+def test_parallel_i_victory_leftover_2022_rs() -> None:
+    records = VictorySource().fetch(mode="fixture").records
+    rsgrx_2022 = next(
+        row
+        for row in records
+        if row.ticker == "RSGRX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and row.ex_date.year == 2022
+        and row.amount
+    )
+    assert rsgrx_2022.amount == Decimal("0.397318")
+    assert str(rsgrx_2022.ex_date) == "2022-12-14"
+    gpafx_2022_oi = next(
+        row
+        for row in records
+        if row.ticker == "GPAFX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2022
+        and row.amount
+    )
+    assert gpafx_2022_oi.amount == Decimal("0.430758")
+    rsgrx_years = {
+        row.ex_date.year
+        for row in records
+        if row.ticker == "RSGRX"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert {2022, 2023, 2024, 2025} <= rsgrx_years
+    assert 2021 not in rsgrx_years
+
+
+def test_parallel_i_leftover_walls_stay_unmatched() -> None:
+    dodge = DodgeCoxSource().fetch(mode="fixture").records
+    doxg_2021 = [
+        row
+        for row in dodge
+        if row.ticker == "DOXGX"
+        and _year_for_row(row.as_of, row.ex_date, row.payable_date) == 2021
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert doxg_2021 == []
+
+    artisan = ArtisanSource().fetch(mode="fixture").records
+    apdrx_2022 = [
+        row
+        for row in artisan
+        if row.ticker == "APDRX"
+        and (row.ex_date or row.as_of)
+        and (row.ex_date or row.as_of).year == 2022
+        and row.amount is not None
+    ]
+    assert apdrx_2022 == []
+
+    victory = VictorySource().fetch(mode="fixture").records
+    rsgrx_2021 = [
+        row
+        for row in victory
+        if row.ticker == "RSGRX"
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount is not None
+    ]
+    assert rsgrx_2021 == []
+
+    alger = AlgerSource().fetch(mode="fixture").records
+    for year in (2021, 2023, 2024):
+        chusx = [
+            row
+            for row in alger
+            if row.ticker == "CHUSX"
+            and row.ex_date
+            and row.ex_date.year == year
+            and row.amount is not None
+        ]
+        assert chusx == [], year
+
+    calamos = CalamosSource().fetch(mode="fixture").records
+    canq_early = [
+        row
+        for row in calamos
+        if row.ticker == "CANQ"
+        and row.ex_date
+        and row.ex_date.year in {2021, 2022, 2023, 2024}
+        and row.amount is not None
+    ]
+    assert canq_early == []
+    caisx_2021 = [
+        row
+        for row in calamos
+        if row.ticker == "CAISX"
+        and _year_for_row(row.as_of, row.ex_date, row.payable_date) == 2021
+        and row.amount is not None
+    ]
+    assert caisx_2021 == []
+    cmrax_2022 = [
+        row
+        for row in calamos
+        if row.ticker == "CMRAX"
+        and row.ex_date
+        and row.ex_date.year == 2022
+        and row.amount is not None
+    ]
+    assert cmrax_2022 == []
 

@@ -578,12 +578,22 @@ class ArtisanSource(HtmlTableSource):
         "LT $5.498 / 2022 LT $0.306132 / 2023 LT $0.20663. In-book tickers only. "
         "December / November YE income plus any-month ST/LT; monthly non-December "
         "income-only omitted so illustration does not sum. "
+        "Official 5y parallel I leftover: same ICI Primary PDFs, leftover "
+        "November YE income / Advisor+Inst 2024–2025 rows the December extract "
+        "omitted, plus official printed $0 HTML (ICI parser skips $0). Heroes: "
+        "APDIX 2025 OI $0.643107 / ST $1.111827 / LT $5.017255; APHIX 2025 OI "
+        "$0.673190 / ST $1.111827 / LT $5.017255; ARTHX 2022 OI $0.143480; "
+        "ARTJX 2022+2023 printed $0.000000000; ARTZX 2021 OI $0.200000 / 2022 "
+        "OI $0.114735. APDRX / ARTRX / APHRX 2022 absent from the ICI PDF. "
+        "2021 International Explorer / Value Income / debt inception walls. "
+        "2023 Mid / Small / Discovery / Focus unpublished on the ICI PDF. "
         "Year selector for older HTML YE tables is JavaScript — skip SPA. "
         "NRA / DRD PDFs are tax-character layouts, not ingested as CG."
     )
     live_limitations = (
         "Live YTD page is public HTML; year-end equity capital-gains sit behind a year selector. "
-        "2021–2025 ICI-style Year-End Tax Reporting PDFs are the full-book fixtures."
+        "2021–2025 ICI-style Year-End Tax Reporting PDFs are the full-book fixtures. "
+        "Leftover years are the same official ICI PDFs plus printed-$0 HTML."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -654,6 +664,29 @@ class ArtisanSource(HtmlTableSource):
                 role="history",
                 large_aum_only=False,
             ),
+            PageSpec(
+                name="ici_leftover_parallel_i",
+                url=(
+                    "https://www.artisanpartners.com/content/dam/documents/distributions/"
+                    "Year-End-Tax-Reporting-Information-2025.pdf"
+                ),
+                fixture="ici_leftover_parallel_i.csv",
+                live=False,
+                parser="ici",
+                role="history",
+                large_aum_only=False,
+            ),
+            PageSpec(
+                name="ici_leftover_printed_zero",
+                url=(
+                    "https://www.artisanpartners.com/content/dam/documents/distributions/"
+                    "Year-End-Tax-Reporting-Information-2022.pdf"
+                ),
+                fixture="ici_leftover_printed_zero.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
+            ),
         ]
 
 
@@ -673,9 +706,21 @@ class CalamosSource(HtmlTableSource):
         "2023 sibling filename 404. Wave 15 official 2025 ETF paid PDF "
         "2025-calamos-exchange-traded-funds-capital-gains.pdf (CANQ ST $0.08; "
         "CCEF LT $0.19; ex/record 12/23/2025). Published dashes / 0.00% of NAV "
-        "omitted. Structured Protection and SROI all-dash PDFs noted, not invented."
+        "omitted. Structured Protection and SROI all-dash PDFs noted, not invented. "
+        "Official 5y parallel I leftover: paid (not estimate) Class A capital-gains "
+        "PDFs 2025 live / 2024 live / 2023–2022 Wayback plus Class A product-page "
+        "Total Capital Gains for 2021 (2021 paid PDF 404). Heroes: CVGRX 2025 LT "
+        "$4.17 / 2021 $4.9490; CPLSX 2025 ST $0.62 / LT $0.03 / 2021 printed "
+        "$0.0000; CCVIX 2025 ST $0.65 / LT $1.60 / 2021 $3.1893. Official printed "
+        "$0.00 on 2022–2023 stored. 2024/2025 PDF dashes omitted. CAGCX 2024 "
+        "product-page printed $0.0000. CAISX 2021 / 2024 and CMRAX 2021 / 2022 "
+        "unpublished. ETF leftover: CCEF 2024 ST $0.09; CANQ 2024 dashes omitted."
     )
-    live_limitations = "Estimate book is PDF. Fixture transcribes public Class A rows."
+    live_limitations = (
+        "Estimate book is PDF. Paid leftover books are official capital-gains PDFs "
+        "plus Class A product-page Total Capital Gains. Fixture transcribes public "
+        "Class A / in-book ETF rows."
+    )
 
     def pages(self) -> list[PageSpec]:
         return [
@@ -698,6 +743,62 @@ class CalamosSource(HtmlTableSource):
                 name="2025_etf_paid_capital_gains",
                 url="https://www.calamos.com/globalassets/media/documents/tax-center/2025-calamos-exchange-traded-funds-capital-gains.pdf",
                 fixture="2025_etf_paid_capital_gains.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
+            ),
+            PageSpec(
+                name="leftover_2025_paid_capital_gains",
+                url="https://www.calamos.com/globalassets/media/documents/tax-center/2025-calamos-capital-gains.pdf",
+                fixture="leftover_2025_paid_capital_gains.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
+            ),
+            PageSpec(
+                name="leftover_2024_paid_capital_gains",
+                url="https://www.calamos.com/globalassets/media/documents/tax-center/2024-calamos-capital-gains.pdf",
+                fixture="leftover_2024_paid_capital_gains.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
+            ),
+            PageSpec(
+                name="leftover_2023_paid_capital_gains",
+                url=(
+                    "https://web.archive.org/web/20240416083227id_/"
+                    "https://www.calamos.com/globalassets/media/documents/tax-center/"
+                    "2023-calamos-capital-gains.pdf"
+                ),
+                fixture="leftover_2023_paid_capital_gains.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
+            ),
+            PageSpec(
+                name="leftover_2022_paid_capital_gains",
+                url=(
+                    "https://web.archive.org/web/20230206122312id_/"
+                    "https://www.calamos.com/globalassets/media/documents/tax-center/"
+                    "2022-calamos-capital-gains.pdf"
+                ),
+                fixture="leftover_2022_paid_capital_gains.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
+            ),
+            PageSpec(
+                name="leftover_2021_product_page_capital_gains",
+                url="https://www.calamos.com/funds/us/en/cvgrx",
+                fixture="leftover_2021_product_page_capital_gains.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
+            ),
+            PageSpec(
+                name="leftover_2024_etf_paid_capital_gains",
+                url="https://www.calamos.com/globalassets/media/documents/tax-center/2024-calamos-exchange-traded-funds-capital-gains.pdf",
+                fixture="leftover_2024_etf_paid_capital_gains.html",
                 live=False,
                 role="history",
                 large_aum_only=False,
