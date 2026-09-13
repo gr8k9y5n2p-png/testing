@@ -150,7 +150,13 @@ class OakmarkSource(HtmlTableSource):
         "Record 12/10/2025; ex 12/11/2025; pay 12/12/2025. "
         "Published $0.0000 stored. "
         "2024 paid YE HTML (live sibling 404; Wayback): Investor OAKEX ST $0.0276 / LT $0.7241; "
-        "OAKMX / OAKIX published $0.0000 CG stored. "
+        "OAKMX / OAKIX published $0.0000 CG stored. Parallel A leftover attach maps the "
+        "same Investor table onto official tickers OAKLX / OAKGX / OAKWX. "
+        "Official 5y parallel A leftover: Wayback 2021 / 2022 / 2023 year-end HTML "
+        "(live siblings 404) is the full Investor / Advisor / Institutional / R6 book "
+        "(OAKMX 2021 income $0.6236 / ST $0.3759 / LT $0.7462; OAKEX 2022 LT $0.0917; "
+        "OAKGX 2023 LT $0.8688). Class-level — never copied. Bond omitted on 2021 "
+        "Investor and all 2023 classes (unpublished). Official printed $0.0000 stored. "
         "Tax estimates hub is % of NAV only (no ST/LT $/share). "
         "Tax guide: https://oakmark.com/wp-content/uploads/sites/3/documents/HarrisOakmark-Tax-Information-Guide.pdf"
     )
@@ -175,6 +181,17 @@ class OakmarkSource(HtmlTableSource):
                 fixture="2024_year_end_distributions.html",
                 live=False,
                 role="history",
+            ),
+            PageSpec(
+                name="leftover_year_end_2021_2023",
+                url=(
+                    "https://web.archive.org/web/20240625024724id_/"
+                    "https://oakmark.com/news-insights/2023-oakmark-year-end-fund-distributions/"
+                ),
+                fixture="leftover_year_end_2021_2023.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
             ),
             PageSpec(
                 name="capital_gain_tax_estimates_hub",

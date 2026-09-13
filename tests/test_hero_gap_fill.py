@@ -217,6 +217,6 @@ def test_fixture_book_lookback_stays_official_only() -> None:
             )
     digest = lookback_digest_from_rows(rows)
     # Official paid/final only. Missing years stay unmatched — never invent $0.
-    # 3,108 after leftover-class densify (#157). In-book leftover 5y sweep raises the pin.
-    assert digest.funds_with_5y == 3204
+    # 3,204 after WisdomTree + Principal leftover (#159). Parallel A leftover raises the pin.
+    assert digest.funds_with_5y == 3218
     assert digest.book_funds >= 7200
