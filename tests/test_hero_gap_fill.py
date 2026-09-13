@@ -238,5 +238,7 @@ def test_fixture_book_lookback_stays_official_only() -> None:
     # Royce RDVIX November 2025 +1 MF.
     # Parallel P leftover: Wasatch official product-page paid YE +2 MF
     # (WHOSX / WMCVX). Gabelli leftover 2025 is year-depth only.
-    assert digest.funds_with_5y == 3470
+    # Parallel S leftover: Davis / PRIMECAP / Ariel / Baird / Hotchkis & Wiley /
+    # Champlain leftover paid YE +12 MF.
+    assert digest.funds_with_5y == 3482
     assert digest.book_funds >= 7200

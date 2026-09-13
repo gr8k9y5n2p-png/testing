@@ -4787,6 +4787,8 @@ def test_parallel_s_ariel_leftover_paid_fills_5y() -> None:
         and row.estimate_type == EstimateType.long_term_capital_gains
         and row.payable_date
         and str(row.payable_date) == "2024-12-18"
+        and row.ex_date
+        and str(row.ex_date) == "2024-12-18"
         and row.publication_stage == PublicationStage.final
         and row.amount is not None
     )
