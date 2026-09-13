@@ -221,5 +221,6 @@ def test_fixture_book_lookback_stays_official_only() -> None:
     # Parallel C leftover: Northern Trust 2022 ICI CG-dash equity (NMIEX +1 MF).
     # Parallel H leftover: Janus Henderson quarterly / midyear ICI +33 MF.
     # Parallel F leftover: T. Rowe TBLYX 2021+2022 YE PDF (+1 MF 5y).
-    assert digest.funds_with_5y == 3296
+    # Parallel G leftover: BIRAX + MDLOX (+2 MF) and IBHF + NZAC (+2 ETF).
+    assert digest.funds_with_5y == 3300
     assert digest.book_funds >= 7200

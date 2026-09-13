@@ -445,7 +445,12 @@ class SchwabSource(HtmlTableSource):
         "2022 LT $2.5199; SNXFX 2021 income $1.2268 / LT $0.5765; SWLSX 2021 ST "
         "$0.5607 / LT $1.6176; 27 in-book tickers). Official printed $0.0000 stored. "
         "Target-date pages that stop at 2020 on the issuer table unmatched. "
-        "No public filled ICI file. Skip SPA family grids."
+        "No public filled ICI file. Skip SPA family grids. "
+        "Parallel 5y sweep G leftover (in-book only): remaining 1y leftovers are "
+        "money-market daily NII (omitted from the family PDF), target-date pages "
+        "that still stop at 2020, and MarketTrack / Monthly Income product pages "
+        "that live-403 with Wayback CDX landing on 2021/2023 captures that do not "
+        "print 2021–2024 December YE — unmatched, not invented $0."
     )
     live_limitations = (
         "Family annual grid is JavaScript-rendered. Product pages mix performance "

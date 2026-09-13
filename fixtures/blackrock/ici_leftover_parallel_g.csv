@@ -1,0 +1,13 @@
+as_of,fund_name,cusip,ticker,record_date,ex_dividend_date,payable_date,income_dividends,short_term_capital_gain,total_capital_gain_distribution
+2021-12-31,iShares iBonds 2026 Term High Yield and Income ETF,,IBHF,12/17/2021,12/16/2021,12/22/2021,0.090837,,
+2022-12-31,iShares iBonds 2026 Term High Yield and Income ETF,,IBHF,12/16/2022,12/15/2022,12/21/2022,0.132611,,
+2023-12-31,iShares iBonds 2026 Term High Yield and Income ETF,,IBHF,12/15/2023,12/14/2023,12/20/2023,0.143575,,
+2024-12-31,iShares iBonds 2026 Term High Yield and Income ETF,,IBHF,12/18/2024,12/18/2024,12/23/2024,0.129749,,
+2023-12-31,iShares iBonds Oct 2030 Term TIPS ETF,,IBIG,12/15/2023,12/14/2023,12/20/2023,0.201003,,
+2024-12-31,iShares iBonds Oct 2030 Term TIPS ETF,,IBIG,12/18/2024,12/18/2024,12/23/2024,0.176246,,
+2024-12-31,iShares Virtual Work and Life Multisector ETF,,IWFH,06/11/2024,06/11/2024,06/17/2024,0.007857,,
+2024-12-31,BlackRock Future Climate and Sustainable Economy ETF,,BECO,06/11/2024,06/11/2024,06/17/2024,0.182621,,
+2022-12-31,iShares MSCI Colombia ETF,,ICOL,06/10/2022,06/09/2022,06/15/2022,0.415012,,
+2024-12-31,iShares iBonds 1-5 Year Corporate Ladder ETF,,LDRC,12/20/2024,12/20/2024,12/26/2024,0.096346,,
+2024-12-31,iShares iBonds 1-5 Year TIPS Ladder ETF,,LDRI,12/20/2024,12/20/2024,12/26/2024,0.204879,,
+2024-12-31,iShares iBonds 1-5 Year Treasury Ladder ETF,,LDRT,12/20/2024,12/20/2024,12/26/2024,0.088965,,

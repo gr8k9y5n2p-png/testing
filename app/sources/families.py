@@ -45,7 +45,18 @@ class BlackRockSource(HtmlTableSource):
         "LPVAX $0.070209; LPDAX $0.041208; LPWAX $0.021987 (ex 2022-07-14). "
         "Parallel 5y sweep B leftover years still unpublished after that densify: "
         "CCRV/FM 2025 cash-liquidation omitted; HEWG/ISZE/USBF/WPS 2025 and 2021 "
-        "inception leftovers absent; product-page /ticker slugs 404."
+        "inception leftovers absent; product-page /ticker slugs 404. "
+        "Parallel 5y sweep G leftover (same official stamped PDFs + live open-end "
+        "tax pages; in-book only): IBHF Dec YE 2021 $0.090837 / 2022 $0.132611 / "
+        "2023 $0.143575 / 2024 $0.129749 completes 5y; BIRAX 2021-12-07 OI "
+        "$0.242429 / ST $0.197472 / LT $0.076154; MDLOX 2021-07-15 OI $0.958356 / "
+        "ST $0.904410 / LT $0.223544 and 2022-07-14 OI $0.483998 / ST $0.483998 / "
+        "LT $0.499590. Year-depth: IBIG 2023–2024; IWFH / BECO 2024 June income "
+        "(Aug cash-liquidation omitted); ICOL 2022 June $0.415012; LDRC / LDRI / "
+        "LDRT Dec 2024; BAMBX 2022; LILAX / LELAX 2024. Official dashes still "
+        "unmatched (SHV 2021 / IGOV 2023 / ISHG 2022 / INDA 2022 / LEMB 2024). "
+        "BACAX / CMLAX / MDGCX / MDDCX 2025, BHYAX 2023, BCBAX / BAICX 2024, "
+        "BAMBX 2021, LILAX / LELAX 2025 unpublished on those live year pages."
     )
     live_limitations = (
         "Live HTML on ishares.com/us/capital-gains-distributions is supported. "
@@ -142,6 +153,22 @@ class BlackRockSource(HtmlTableSource):
                 name="leftover_lifepath_dynamic_2022",
                 url=f"{tax}/2022-distributions",
                 fixture="leftover_lifepath_dynamic_2022.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="ici_leftover_parallel_g",
+                url=f"{ishares_tax}/2025-ishares-distribution-summary-stamped.pdf",
+                fixture="ici_leftover_parallel_g.csv",
+                live=False,
+                parser="ici",
+                large_aum_only=False,
+                role="history",
+            ),
+            PageSpec(
+                name="leftover_open_end_parallel_g",
+                url=f"{tax}/2021-distributions",
+                fixture="leftover_open_end_parallel_g.html",
                 live=False,
                 role="history",
             ),
@@ -448,7 +475,11 @@ class StateStreetSource(HtmlTableSource):
         "GLD is absent from the XLSX (grantor trust). Official FAQ "
         "https://www.ssga.com/library-content/products/fund-docs/etfs/us/tax-documents/gld-faq.pdf "
         "states the trust makes no distributions — 2025 published $0.000000 stored, "
-        "not invented."
+        "not invented. Parallel 5y sweep G leftover (same official XLSX; in-book "
+        "only): NZAC 2022-12-01 income $0.214724 and 2023-12-01 $0.229707 plus the "
+        "June semi-annual companions (empty ST/LT cells omitted, not invented $0). "
+        "HYBL 2021 / SPDG 2021–2022 unpublished (inception). Later 1y / 2y launches "
+        "stay unmatched."
     )
     live_limitations = (
         "SSGA estimate tables are client-rendered Angular. Historical XLSX is public but "
@@ -507,6 +538,13 @@ class StateStreetSource(HtmlTableSource):
                 url=xlsx,
                 fixture="2021_historical_distributions.html",
                 live=False,
+            ),
+            PageSpec(
+                name="leftover_nzac_2022_2023",
+                url=xlsx,
+                fixture="leftover_nzac_2022_2023.html",
+                live=False,
+                role="history",
             ),
         ]
 
