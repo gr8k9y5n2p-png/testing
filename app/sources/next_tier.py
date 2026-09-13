@@ -152,6 +152,7 @@ class BnyMellonSource(HtmlTableSource):
         "$0.3923. Class-level leftover tickers only. DMCVX / MIBLX / MIMSX / "
         "MISCX product URLs 404. DTGRX / DCPAX / DBMAX 2022–2023 unpublished. "
         "BKCI / BKGI 2021 unpublished; BKDV 2021–2023 unpublished."
+    )
     live_limitations = "Estimates are PDF, not an HTML grid. Fixture transcribes the public PDF / product table."
 
     def pages(self) -> list[PageSpec]:

@@ -93,6 +93,7 @@ class BrownAdvisorySource(HtmlTableSource):
         "brownadvisory.com/sites/default/files/*Capital*Gain* empty this "
         "session. Product pages have no harvestable paid Distribution History. "
         "Leftover years stay unmatched — never invent $0."
+    )
     live_limitations = (
         "Estimate book is PDF with Institutional / Investor / Advisor columns. "
         "Fixture transcribes public Institutional-class rows."

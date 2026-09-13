@@ -337,6 +337,7 @@ class RoyceSource(HtmlTableSource):
         "Smaller-Companies Growth 2023 is omitted from the official 2023 YE PDF "
         "and printed as a dash on TAX-INFO-2023 (RVPHX / RVPIX / RYVPX) — "
         "unmatched, not invented $0."
+    )
     live_limitations = (
         "Live HTML is public but table layout/headers may not parse. "
         "Fixture transcribes the official full printed ticker book."
