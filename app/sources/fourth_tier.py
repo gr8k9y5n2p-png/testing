@@ -18,7 +18,11 @@ class JohnHancockSource(HtmlTableSource):
         "ETFs only — closed-end rows skipped; all-dash omitted). Plus 2024 / 2023 / 2022 "
         "sibling filenames (TAGRX LT $7.80–$8.80 / $3.60–$4.10 / $3.00–$3.60). USGLX listed "
         "em-dashes in 2022–2023 (no CG — omitted, not stored as $0). "
-        "HTML press-release shells are viewers; the PDFs are the books."
+        "HTML press-release shells are viewers; the PDFs are the books. "
+        "Official 5y parallel M leftover: no public filled ICI; jhinvestments.com "
+        "product pages 404; tax-center is a login shell. Shareholder-report PDFs "
+        "are fund-level tax-character totals, not per-share Class A YE. "
+        "Estimate press-release PDFs stay estimates — never promoted to final."
     )
     live_limitations = (
         "Family book is a PDF (press-release HTML is a viewer/shell). Fixture transcribes public A-share ranges."
@@ -178,7 +182,12 @@ class ThriventSource(HtmlTableSource):
         "2021 ST $0.44923 / LT $1.31661; IILGX 2023 LT $0.98044; TMSIX 2023 "
         "LT $0.35311). Funds not listed that year stay unmatched — never "
         "invented $0. Low Volatility / International Allocation / other "
-        "off-book names omitted. Class A (TAAAX, …) is not mapped."
+        "off-book names omitted. Class A (TAAAX, …) is not mapped. "
+        "Official 5y parallel M leftover: TMAIX 2022 / TMCVX 2023 / TSCSX 2023 / "
+        "TCAIX 2022–2023 / TSCGX 2022–2024 / IBBFX / TWAIX remain unpublished on "
+        "the official CG book (if a fund is not listed, no CG). Product pages "
+        "publish trailing-12-month CG already ingested as 2025 — not a multi-year "
+        "per-share YE API. Never invent $0 for unlisted leftover years."
     )
     live_limitations = (
         "Family page is public HTML with a 'Thrivent Mutual Fund' header (no ticker column). "

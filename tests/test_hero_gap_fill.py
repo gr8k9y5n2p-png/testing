@@ -228,5 +228,6 @@ def test_fixture_book_lookback_stays_official_only() -> None:
     # Parallel J leftover: AllianceBernstein Class A product-page paid YE +15 MF.
     # Parallel O leftover: VanEck tax-guide + later 2025 paid PDF +3 ETF 5y
     # (EINC / LFEQ / RAAX).
-    assert digest.funds_with_5y == 3369
+    # Parallel M leftover: GuideStone Investor product-page paid history +17 MF.
+    assert digest.funds_with_5y == 3386
     assert digest.book_funds >= 7200

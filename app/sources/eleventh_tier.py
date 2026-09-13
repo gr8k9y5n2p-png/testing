@@ -78,11 +78,21 @@ class GuidestoneSource(HtmlTableSource):
         "GMZXX / GVIZX / GEIZX / GIIZX / GFSZX / GFIZX / GGIZX / GCOZX / GGBZX / "
         "GMTZX / GMWZX / GMHZX / GMFZX / GMGZX). Amounts unchanged. "
         "All-dash Low-Duration / Medium-Duration / "
-        "Global Bond / Global Real Estate / Impact Bond omitted."
+        "Global Bond / Global Real Estate / Impact Bond omitted. "
+        "Official 5y parallel M leftover: in-book Investor paid history from the "
+        "product-page Sitecore API "
+        "https://www.guidestonefunds.com/api/sitecore/HistoricalPricesDistributions/Get "
+        "(verified 2026-09-13). Class-level Investor only — never copied onto "
+        "Institutional (GGEYX / GVEYX / GSCYX / …). Heroes: GGEZX 2021-12-10 LT "
+        "$5.2420 / 2025-12-05 LT $3.0748; GVEZX 2021-12-10 LT $1.5788 / ST $0.4999; "
+        "GSCZX 2021-12-10 LT $1.5220 / ST $1.6391. Seventeen Investor leftovers "
+        "reach official 2021–2025. GMZXX / GVIZX / GEIZX / GIIZX have no 2021 row "
+        "on that API (4y) — never invented as $0. 2025 estimate ST/LT stays estimate."
     )
     live_limitations = (
         "Public HTML has fund-name ST/LT columns and no ticker column. "
-        "Fixture attaches public Investor tickers from official product pages / SAI."
+        "Fixture attaches public Investor tickers from official product pages / SAI. "
+        "Paid multi-year history is the product-page Sitecore API, not the tax HTML."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -94,7 +104,18 @@ class GuidestoneSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
-            )
+            ),
+            PageSpec(
+                name="leftover_product_page_paid_history",
+                url=(
+                    "https://www.guidestonefunds.com/api/sitecore/"
+                    "HistoricalPricesDistributions/Get?ticker=GGEZX"
+                    "&from=01/01/2021&to=12/31/2025"
+                ),
+                fixture="leftover_product_page_paid_history.html",
+                live=False,
+                role="history",
+            ),
         ]
 
 
