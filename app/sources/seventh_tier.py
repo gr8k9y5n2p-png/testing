@@ -225,7 +225,11 @@ class ChamplainSource(HtmlTableSource):
         "Record 12/15/2025; ex 12/16/2025; pay 12/17/2025. "
         "October estimate reprint: "
         "https://cipvt.com/wp-content/uploads/2025/10/"
-        "Champlain-Estimated-Yr-End-Distributions-2025-vr2-93025.pdf"
+        "Champlain-Estimated-Yr-End-Distributions-2025-vr2-93025.pdf "
+        "Leftover paid year-end 2021–2024 for in-book Institutional CIPIX / CIPNX / CIPTX. "
+        "Advisor CIPMX / CIPSX and Emerging Markets CIPDX / CIPQX not attached. "
+        "Official printed $0.0000 stored (2023 ST; CIPTX 2023 ST/LT). "
+        "CIPTX 2021–2022 unpublished on issuer year-end books."
     )
     live_limitations = "Year-end book is PDF. Fixture transcribes public Institutional tickers."
 
@@ -241,7 +245,18 @@ class ChamplainSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
-            )
+            ),
+            PageSpec(
+                name="leftover_paid_year_end_parallel_s",
+                url=(
+                    "https://cipvt.com/wp-content/uploads/2024/12/"
+                    "Champlain-Yr-End-Distributions-2024.pdf"
+                ),
+                fixture="leftover_paid_year_end_parallel_s.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
+            ),
         ]
 
 
@@ -294,7 +309,10 @@ class HotchkisWileySource(HtmlTableSource):
         "(e.g. Large Cap Fundamental Value I HWLIX LT $2.83442; "
         "Value Opportunities I HWAIX ST $0.65132 / LT $0.40605; "
         "International Value I HWNIX ST $0.15175 / LT $1.77125). "
-        "Record 12/3/2025; ex/pay 12/4/2025."
+        "Record 12/3/2025; ex/pay 12/4/2025. "
+        "Leftover paid year-end 2021–2024 for in-book Class I HWLIX / HWAIX / HWNIX. "
+        "Class A / C / Z not attached. Printed dashes omitted. "
+        "2025 page left as-is (additive leftover only)."
     )
     live_limitations = "Year-end book is PDF. Fixture transcribes public Class I rows."
 
@@ -310,7 +328,18 @@ class HotchkisWileySource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
-            )
+            ),
+            PageSpec(
+                name="leftover_paid_year_end_parallel_s",
+                url=(
+                    "https://www.hwcm.com/wp-content/uploads/2024/11/"
+                    "HW-Funds-Dec-2024-Div-Cap-Gain-distributions-FINAL.pdf"
+                ),
+                fixture="leftover_paid_year_end_parallel_s.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
+            ),
         ]
 
 
@@ -396,7 +425,10 @@ class DavisSource(HtmlTableSource):
         "https://davisfunds.com/funds/distributions "
         "(NYVTX Class A midyear LT $2.10 on 6/25/2025; year-end LT $0.89 on "
         "12/12/2025; 2026 semi-annual ST $0.12 / LT $1.60 on 6/24/2026). "
-        "Fixture transcribes those Class A rows; other share classes stay on the live page."
+        "Fixture transcribes those Class A rows; other share classes stay on the live page. "
+        "Leftover paid year-end 2022–2024 for in-book Class A NYVTX / DGFAX / RPEAX. "
+        "Class C / Y not attached. 2021 Wayback unpublished (CDX earliest 2023-09-26). "
+        "DGFAX 2022 all-dash OI/ST/LT unmatched."
     )
     live_limitations = (
         "Live HTML is public but multi-fund / multi-class tables may not parse. "
@@ -412,5 +444,16 @@ class DavisSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
-            )
+            ),
+            PageSpec(
+                name="leftover_paid_year_end_parallel_s",
+                url=(
+                    "https://web.archive.org/web/20250121014455/"
+                    "https://davisfunds.com/funds/distributions"
+                ),
+                fixture="leftover_paid_year_end_parallel_s.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
+            ),
         ]

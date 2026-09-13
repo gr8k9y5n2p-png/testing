@@ -19,6 +19,7 @@ from app.sources.families import (
     VanguardSource,
 )
 from app.sources.dws import DwsSource
+from app.sources.eighth_tier import ArielSource, BairdSource, PrimecapSource
 from app.sources.eleventh_tier import AmgSource, GuidestoneSource
 from app.sources.fifth_tier import (
     GabelliSource,
@@ -74,6 +75,7 @@ from app.sources.sixth_tier import (
 )
 from app.sources.parser import NormalizedRecord
 from app.sources.registry import list_sources
+from app.sources.seventh_tier import ChamplainSource, DavisSource, HotchkisWileySource
 
 
 def test_american_funds_midyear_2022_fills_near4_heroes() -> None:
@@ -393,8 +395,14 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # Parallel P leftover: Wasatch official product-page paid YE +2 MF
     # (WHOSX / WMCVX). Gabelli leftover 2025 is year-depth only (2y).
     # Matthews Investor leftovers already 5y. Causeway CCENX/CCEVX stay 2y.
-    assert digest.funds_with_5y == 3470
-    assert digest.funds_with_5y_mf == 2720
+    # Parallel S leftover: Davis / PRIMECAP / Ariel / Baird / Hotchkis & Wiley /
+    # Champlain leftover paid YE +12 MF (ARGFX / ARAIX / POSKX / POGRX / POAGX /
+    # HWLIX / HWAIX / HWNIX / BMDIX / BMDSX / CIPIX / CIPNX). Davis leftovers
+    # stay 3–4y (2021 Wayback unpublished; DGFAX 2022 dashed). Baird BSV / CCG /
+    # CCW printed None years unmatched. CIPTX 2021–2022 unpublished. ETF 5y
+    # unchanged. No new identities.
+    assert digest.funds_with_5y == 3482
+    assert digest.funds_with_5y_mf == 2732
     assert digest.funds_with_5y_etf == 750
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
@@ -4756,3 +4764,444 @@ def test_parallel_p_heroes_are_searchable(client: TestClient) -> None:
         in {"2023", "2024", "2025"}
     ]
     assert ccenx_late == []
+
+
+def _paid_years(records, ticker: str) -> set[int]:
+    years = {
+        _year_for_row(row.as_of, row.ex_date, row.payable_date)
+        for row in records
+        if row.ticker == ticker
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    years.discard(None)
+    return years
+
+
+def test_parallel_s_ariel_leftover_paid_fills_5y() -> None:
+    records = ArielSource().fetch(mode="fixture").records
+    argfx_2024_lt = next(
+        row
+        for row in records
+        if row.ticker == "ARGFX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.payable_date
+        and str(row.payable_date) == "2024-12-18"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert argfx_2024_lt.amount == Decimal("3.868892")
+    argfx_2024_oi = next(
+        row
+        for row in records
+        if row.ticker == "ARGFX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.payable_date
+        and str(row.payable_date) == "2024-12-18"
+        and row.amount is not None
+    )
+    assert argfx_2024_oi.amount == Decimal("0.087307")
+    argfx_2024_st = next(
+        row
+        for row in records
+        if row.ticker == "ARGFX"
+        and row.estimate_type == EstimateType.short_term_capital_gains
+        and row.payable_date
+        and str(row.payable_date) == "2024-12-18"
+        and row.amount is not None
+    )
+    assert argfx_2024_st.amount == Decimal("0.014358")
+    for ticker in ("ARGFX", "ARAIX"):
+        assert set(LOOKBACK_YEARS) <= _paid_years(records, ticker), ticker
+    # Class-level — other Ariel sleeves stay off the leftover page.
+    assert [row for row in records if row.ticker == "AGLOX"] == []
+
+
+def test_parallel_s_primecap_leftover_paid_fills_5y() -> None:
+    records = PrimecapSource().fetch(mode="fixture").records
+    poskx_2025_lt = next(
+        row
+        for row in records
+        if row.ticker == "POSKX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-15"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert poskx_2025_lt.amount == Decimal("8.59624")
+    poskx_2025_oi = next(
+        row
+        for row in records
+        if row.ticker == "POSKX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-15"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert poskx_2025_oi.amount == Decimal("0.37869")
+    poskx_2025_st = next(
+        row
+        for row in records
+        if row.ticker == "POSKX"
+        and row.estimate_type == EstimateType.short_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-15"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert poskx_2025_st.amount == Decimal("0.12608")
+    for ticker in ("POSKX", "POGRX", "POAGX"):
+        assert set(LOOKBACK_YEARS) <= _paid_years(records, ticker), ticker
+
+
+def test_parallel_s_hotchkis_leftover_paid_fills_5y() -> None:
+    records = HotchkisWileySource().fetch(mode="fixture").records
+    hwlix_2024_lt = next(
+        row
+        for row in records
+        if row.ticker == "HWLIX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2024-12-05"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert hwlix_2024_lt.amount == Decimal("3.90044000")
+    hwlix_2024_oi = next(
+        row
+        for row in records
+        if row.ticker == "HWLIX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2024-12-05"
+        and row.amount is not None
+    )
+    assert hwlix_2024_oi.amount == Decimal("0.70494537")
+    hwlix_2024_st = next(
+        row
+        for row in records
+        if row.ticker == "HWLIX"
+        and row.estimate_type == EstimateType.short_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2024-12-05"
+        and row.amount is not None
+    )
+    assert hwlix_2024_st.amount == Decimal("0.05551000")
+    for ticker in ("HWLIX", "HWAIX", "HWNIX"):
+        assert set(LOOKBACK_YEARS) <= _paid_years(records, ticker), ticker
+    # Class-level — leftover Class I is not copied onto Class A.
+    hwlaX = [
+        row
+        for row in records
+        if row.ticker == "HWLAX"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert hwlaX == []
+
+
+def test_parallel_s_baird_leftover_paid_fills_and_walls() -> None:
+    records = BairdSource().fetch(mode="fixture").records
+    bmdix_2021_lt = next(
+        row
+        for row in records
+        if row.ticker == "BMDIX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2021-12-16"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert bmdix_2021_lt.amount == Decimal("4.39824")
+    bmdix_2021_st = next(
+        row
+        for row in records
+        if row.ticker == "BMDIX"
+        and row.estimate_type == EstimateType.short_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2021-12-16"
+        and row.amount is not None
+    )
+    assert bmdix_2021_st.amount == Decimal("0.42000")
+    for ticker in ("BMDIX", "BMDSX"):
+        assert set(LOOKBACK_YEARS) <= _paid_years(records, ticker), ticker
+
+    bsvix_years = _paid_years(records, "BSVIX")
+    bsvsx_years = _paid_years(records, "BSVSX")
+    assert {2021, 2022, 2024, 2025} <= bsvix_years
+    assert {2021, 2022, 2024, 2025} <= bsvsx_years
+    assert 2023 not in bsvix_years
+    assert 2023 not in bsvsx_years
+
+    ccgix_years = _paid_years(records, "CCGIX")
+    ccgsx_years = _paid_years(records, "CCGSX")
+    assert {2022, 2024, 2025} <= ccgix_years
+    assert {2022, 2024, 2025} <= ccgsx_years
+    assert 2021 not in ccgix_years
+    assert 2023 not in ccgix_years
+
+    ccwix_years = _paid_years(records, "CCWIX")
+    ccwsx_years = _paid_years(records, "CCWSX")
+    assert {2022, 2025} <= ccwix_years
+    assert {2022, 2025} <= ccwsx_years
+    assert 2021 not in ccwix_years
+    assert 2023 not in ccwix_years
+    assert 2024 not in ccwix_years
+    ccwix_2024 = [
+        row
+        for row in records
+        if row.ticker == "CCWIX"
+        and _year_for_row(row.as_of, row.ex_date, row.payable_date) == 2024
+        and row.amount is not None
+    ]
+    assert ccwix_2024 == []
+    # Bond / SMID sleeves stay off the leftover page.
+    assert [row for row in records if row.ticker in {"BCOIX", "BSGIX"}] == []
+
+
+def test_parallel_s_champlain_leftover_paid_fills_and_walls() -> None:
+    records = ChamplainSource().fetch(mode="fixture").records
+    cipix_2021_lt = next(
+        row
+        for row in records
+        if row.ticker == "CIPIX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2021-12-14"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert cipix_2021_lt.amount == Decimal("1.6369")
+    cipix_2021_st = next(
+        row
+        for row in records
+        if row.ticker == "CIPIX"
+        and row.estimate_type == EstimateType.short_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2021-12-14"
+        and row.amount is not None
+    )
+    assert cipix_2021_st.amount == Decimal("1.2176")
+    for ticker in ("CIPIX", "CIPNX"):
+        assert set(LOOKBACK_YEARS) <= _paid_years(records, ticker), ticker
+
+    ciptx_years = _paid_years(records, "CIPTX")
+    assert {2023, 2024, 2025} <= ciptx_years
+    assert 2021 not in ciptx_years
+    assert 2022 not in ciptx_years
+    for year in (2021, 2022):
+        empty = [
+            row
+            for row in records
+            if row.ticker == "CIPTX"
+            and _year_for_row(row.as_of, row.ex_date, row.payable_date) == year
+            and row.amount is not None
+        ]
+        assert empty == [], year
+    # Advisor / Emerging Markets not attached.
+    assert [row for row in records if row.ticker in {"CIPMX", "CIPSX", "CIPDX"}] == []
+
+
+def test_parallel_s_davis_leftover_paid_is_year_depth() -> None:
+    records = DavisSource().fetch(mode="fixture").records
+    nyvtx_2024_lt = next(
+        row
+        for row in records
+        if row.ticker == "NYVTX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2024-12-13"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert nyvtx_2024_lt.amount == Decimal("3.00")
+    nyvtx_2024_oi = next(
+        row
+        for row in records
+        if row.ticker == "NYVTX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2024-12-13"
+        and row.amount is not None
+    )
+    assert nyvtx_2024_oi.amount == Decimal("0.294")
+    nyvtx_2024_st = next(
+        row
+        for row in records
+        if row.ticker == "NYVTX"
+        and row.estimate_type == EstimateType.short_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2024-12-13"
+        and row.amount is not None
+    )
+    assert nyvtx_2024_st.amount == Decimal("0.0243")
+
+    nyvtx_years = _paid_years(records, "NYVTX")
+    rpeax_years = _paid_years(records, "RPEAX")
+    dgfax_years = _paid_years(records, "DGFAX")
+    assert {2022, 2023, 2024, 2025} <= nyvtx_years
+    assert {2022, 2023, 2024, 2025} <= rpeax_years
+    assert {2023, 2024, 2025} <= dgfax_years
+    assert 2021 not in nyvtx_years
+    assert 2021 not in rpeax_years
+    assert 2021 not in dgfax_years
+    assert 2022 not in dgfax_years
+    dgfax_2022 = [
+        row
+        for row in records
+        if row.ticker == "DGFAX"
+        and _year_for_row(row.as_of, row.ex_date, row.payable_date) == 2022
+        and row.amount is not None
+    ]
+    assert dgfax_2022 == []
+    # Class-level — leftover Class A is not copied onto Class C / Y.
+    assert [row for row in records if row.ticker in {"NYVCX", "NYVYX"}] == []
+
+
+def test_parallel_s_heroes_are_searchable(client: TestClient) -> None:
+    for slug in ("ariel", "primecap", "hotchkis", "baird", "champlain", "davis"):
+        fetched = client.post(
+            "/ingest/fetch", json={"fund_family": slug, "mode": "fixture"}
+        )
+        assert fetched.status_code == 200, fetched.text
+        assert fetched.json()["created"] > 0
+
+    for ticker in (
+        "ARGFX",
+        "POSKX",
+        "HWLIX",
+        "BMDIX",
+        "CIPIX",
+        "NYVTX",
+        "DGFAX",
+        "CIPTX",
+        "CCWIX",
+    ):
+        body = client.get("/funds", params={"q": ticker}).json()
+        tickers = [item["ticker"] for item in body["items"]]
+        assert ticker in tickers, f"{ticker} missing from GET /funds?q={ticker}: {tickers[:8]}"
+
+    argfx = client.get(
+        "/distributions",
+        params={"ticker": "ARGFX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    argfx_2024 = [
+        Decimal(row["amount"])
+        for row in argfx["items"]
+        if row.get("ticker") == "ARGFX"
+        and row.get("estimate_type") == "long_term_capital_gains"
+        and str(row.get("payable_date") or "").startswith("2024-12-18")
+    ]
+    assert Decimal("3.868892") in argfx_2024
+    argfx_years = {
+        str(row.get("payable_date") or row.get("ex_date") or "")[:4]
+        for row in argfx["items"]
+        if row.get("ticker") == "ARGFX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= argfx_years
+
+    poskx = client.get(
+        "/distributions",
+        params={"ticker": "POSKX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    poskx_2025 = [
+        Decimal(row["amount"])
+        for row in poskx["items"]
+        if row.get("ticker") == "POSKX"
+        and row.get("estimate_type") == "long_term_capital_gains"
+        and str(row.get("ex_date") or "").startswith("2025-12-15")
+    ]
+    assert Decimal("8.59624") in poskx_2025
+
+    hwlix = client.get(
+        "/distributions",
+        params={"ticker": "HWLIX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    hwlix_2024 = [
+        Decimal(row["amount"])
+        for row in hwlix["items"]
+        if row.get("ticker") == "HWLIX"
+        and row.get("estimate_type") == "long_term_capital_gains"
+        and str(row.get("ex_date") or "").startswith("2024-12-05")
+    ]
+    assert Decimal("3.90044000") in hwlix_2024
+
+    bmdix = client.get(
+        "/distributions",
+        params={"ticker": "BMDIX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    bmdix_2021 = [
+        Decimal(row["amount"])
+        for row in bmdix["items"]
+        if row.get("ticker") == "BMDIX"
+        and row.get("estimate_type") == "long_term_capital_gains"
+        and str(row.get("ex_date") or "").startswith("2021-12-16")
+    ]
+    assert Decimal("4.39824") in bmdix_2021
+
+    cipix = client.get(
+        "/distributions",
+        params={"ticker": "CIPIX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    cipix_2021 = [
+        Decimal(row["amount"])
+        for row in cipix["items"]
+        if row.get("ticker") == "CIPIX"
+        and row.get("estimate_type") == "long_term_capital_gains"
+        and str(row.get("ex_date") or "").startswith("2021-12-14")
+    ]
+    assert Decimal("1.6369") in cipix_2021
+
+    nyvtx = client.get(
+        "/distributions",
+        params={"ticker": "NYVTX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    nyvtx_2024 = [
+        Decimal(row["amount"])
+        for row in nyvtx["items"]
+        if row.get("ticker") == "NYVTX"
+        and row.get("estimate_type") == "long_term_capital_gains"
+        and str(row.get("ex_date") or "").startswith("2024-12-13")
+    ]
+    assert Decimal("3.00") in nyvtx_2024
+
+    dgfax = client.get(
+        "/distributions",
+        params={"ticker": "DGFAX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    dgfax_2022 = [
+        row
+        for row in dgfax["items"]
+        if row.get("ticker") == "DGFAX"
+        and str(row.get("ex_date") or row.get("payable_date") or "").startswith("2022")
+        and row.get("amount") is not None
+    ]
+    assert dgfax_2022 == []
+
+    ciptx = client.get(
+        "/distributions",
+        params={"ticker": "CIPTX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    ciptx_early = [
+        row
+        for row in ciptx["items"]
+        if row.get("ticker") == "CIPTX"
+        and str(row.get("ex_date") or "").startswith(("2021", "2022"))
+        and row.get("amount") is not None
+    ]
+    assert ciptx_early == []
+
+    ccwix = client.get(
+        "/distributions",
+        params={"ticker": "CCWIX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    ccwix_2024 = [
+        row
+        for row in ccwix["items"]
+        if row.get("ticker") == "CCWIX"
+        and str(row.get("ex_date") or "").startswith("2024")
+        and row.get("amount") is not None
+    ]
+    assert ccwix_2024 == []
