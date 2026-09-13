@@ -12,6 +12,7 @@ from app.sources.aum import filter_large_aum
 from app.sources.families import (
     BlackRockSource,
     InvescoSource,
+    StateStreetSource,
     TRowePriceSource,
     VanguardSource,
 )
@@ -323,10 +324,13 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # (JABAX / HFQAX / JERAX families). Lord Abbett LAGWX is 2y. Putnam /
     # remaining MFS leftover years stay unmatched.
     # Parallel F leftover: T. Rowe TBLYX 2021+2022 YE PDF (+1 MF 5y). TRLAX 2023
-    # LT is year-depth only (still missing 2021). No new identities. ETF 5y unchanged.
-    assert digest.funds_with_5y == 3296
-    assert digest.funds_with_5y_mf == 2560
-    assert digest.funds_with_5y_etf == 736
+    # LT is year-depth only (still missing 2021). ETF 5y unchanged on #167.
+    # Parallel G leftover: BlackRock/iShares + SPDR fills raise the pin +2 MF
+    # (BIRAX 2021 / MDLOX 2021+2022) and +2 ETF (IBHF 2021–2024 / NZAC 2022–2023).
+    # No new identities.
+    assert digest.funds_with_5y == 3300
+    assert digest.funds_with_5y_mf == 2562
+    assert digest.funds_with_5y_etf == 738
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
 
@@ -2126,6 +2130,156 @@ def test_northern_trust_2022_ici_fills_cg_dash_leftover() -> None:
         and row.amount is not None
     ]
     assert ngrex_2022 == []
+
+
+def test_parallel_g_ishares_spdr_blackrock_leftover_fills() -> None:
+    records = BlackRockSource().fetch(mode="fixture").records
+    ibhf_2021 = next(
+        row
+        for row in records
+        if row.ticker == "IBHF"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount
+    )
+    assert ibhf_2021.amount == Decimal("0.090837")
+    assert str(ibhf_2021.ex_date) == "2021-12-16"
+    assert ibhf_2021.publication_stage == PublicationStage.final
+    ibhf_years = {
+        row.ex_date.year
+        for row in records
+        if row.ticker == "IBHF"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert set(LOOKBACK_YEARS) <= ibhf_years
+
+    birax_2021 = next(
+        row
+        for row in records
+        if row.ticker == "BIRAX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount
+    )
+    assert birax_2021.amount == Decimal("0.242429")
+    assert str(birax_2021.ex_date) == "2021-12-07"
+    mdlox_2022 = next(
+        row
+        for row in records
+        if row.ticker == "MDLOX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and row.ex_date.year == 2022
+        and row.amount
+    )
+    assert mdlox_2022.amount == Decimal("0.499590")
+    assert str(mdlox_2022.ex_date) == "2022-07-14"
+    for ticker in ("BIRAX", "MDLOX"):
+        years = {
+            row.ex_date.year
+            for row in records
+            if row.ticker == ticker
+            and row.ex_date
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        }
+        assert set(LOOKBACK_YEARS) <= years, ticker
+
+    iwfh_2024 = next(
+        row
+        for row in records
+        if row.ticker == "IWFH"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2024
+        and row.amount
+    )
+    assert iwfh_2024.amount == Decimal("0.007857")
+    # Cash-liquidation-only 2025 rows stay unmatched — not stored as income.
+    ccrv_2025 = [
+        row
+        for row in records
+        if row.ticker == "CCRV"
+        and row.ex_date
+        and row.ex_date.year == 2025
+        and row.amount == Decimal("20.002294")
+    ]
+    assert ccrv_2025 == []
+    hewg_2025 = [
+        row
+        for row in records
+        if row.ticker == "HEWG"
+        and row.ex_date
+        and row.ex_date.year == 2025
+        and row.amount is not None
+    ]
+    assert hewg_2025 == []
+    bacax_2025 = [
+        row
+        for row in records
+        if row.ticker == "BACAX"
+        and row.ex_date
+        and row.ex_date.year == 2025
+        and row.amount is not None
+    ]
+    assert bacax_2025 == []
+
+    ssga = StateStreetSource().fetch(mode="fixture").records
+    nzac_2022 = next(
+        row
+        for row in ssga
+        if row.ticker == "NZAC"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2022
+        and str(row.ex_date) == "2022-12-01"
+        and row.amount
+    )
+    assert nzac_2022.amount == Decimal("0.214724")
+    nzac_2023 = next(
+        row
+        for row in ssga
+        if row.ticker == "NZAC"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2023-12-01"
+        and row.amount
+    )
+    assert nzac_2023.amount == Decimal("0.229707")
+    nzac_years = {
+        row.ex_date.year
+        for row in ssga
+        if row.ticker == "NZAC"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert set(LOOKBACK_YEARS) <= nzac_years
+    hybl_2021 = [
+        row
+        for row in ssga
+        if row.ticker == "HYBL"
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount is not None
+    ]
+    assert hybl_2021 == []
+
+    schwab = SchwabSource().fetch(mode="fixture").records
+    swbgx_early = [
+        row
+        for row in schwab
+        if row.ticker == "SWBGX"
+        and row.ex_date
+        and row.ex_date.year in {2021, 2022, 2023, 2024}
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert swbgx_early == []
 
 
 def test_parallel_c_leftover_walls_stay_unmatched() -> None:
