@@ -58,7 +58,20 @@ class NationwideSource(HtmlTableSource):
         "Hub PDF link is unversioned — prior-year ST/LT not transcribed. "
         "Weekly walk also hits the year-end information hub. "
         "Live MFN-0435AO GET 403 this session — deferred after noting; "
-        "existing Class A fixture left as-is (no invented amounts)."
+        "existing Class A fixture left as-is (no invented amounts). "
+        "Official 5y parallel Q leftover: Wayback snapshots of the same "
+        "unversioned MFN-0435AO.pdf that still print a paid title add "
+        "2021–2023 Class A year-end for in-book leftovers NWHOX / NWHJX / "
+        "NTDAX (2021 20211231221229; 2022 20230101121424; 2023 "
+        "20240109022338). Official printed $0.000 stored (NWHJX every year; "
+        "NWHOX ST). 2021 record dates unpublished on that flyer stay "
+        "unmatched. 2022a / 2023a snapshots are Estimates — not stored as "
+        "paid. 2024 Wayback 20250107004527 still says estimated — leftover "
+        "2024 stays unmatched (4y, not 5y). Fund-profile API "
+        "api.nationwide.com/funds-and-assets-management/fund-profile/v1/funds/ "
+        "returned 401 this session. Class-level Class A only — never copy "
+        "C / M / R / R6 / Institutional Service. Additive upserts; no schema "
+        "change."
     )
     live_limitations = (
         "Family book is PDF. Automated GET is sometimes Akamai-denied without a "
@@ -84,6 +97,17 @@ class NationwideSource(HtmlTableSource):
                 role="estimate",
                 empty_ok=True,
             ),
+            PageSpec(
+                name="leftover_paid_year_end_parallel_q",
+                url=(
+                    "https://web.archive.org/web/20240109022338/"
+                    "https://nationwidefinancial.com/media/pdf/MFN-0435AO.pdf"
+                ),
+                fixture="leftover_paid_year_end_parallel_q.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
+            ),
         ]
 
 
@@ -103,7 +127,20 @@ class VoyaSource(HtmlTableSource):
         "the PDF is fund-level. AllianzGI US retail books transferred to Voya in 2022 — "
         "use this adapter, not a distinct allianzgi source. "
         "2024 estimate PDF: https://individuals.voya.com/document/tax-center/2024-estimated-capital-gains.pdf "
-        "(Large-Cap Growth NLCAX ST $0.000 / LT $1.905 / 3.39% of NAV)."
+        "(Large-Cap Growth NLCAX ST $0.000 / LT $1.905 / 3.39% of NAV). "
+        "Official 5y parallel Q leftover: Class A product-page Distributions "
+        "(live + Wayback id_ after each year-end pay) for in-book leftovers "
+        "only. Heroes: VYCAX (voya-corporate-leaders-r-100-fund) 2021–2025 "
+        "paid (2025-12-12 OI $0.316700 / ST $0.633200 / LT $1.190900 — paid, "
+        "not the October estimate). NLCAX covers 2021/2022/2024/2025 "
+        "(2025-12-12 ST $0.426100 / LT $7.427400); 2023 stays unmatched "
+        "because Wayback 20240526 prints 'No distributions paid in the last "
+        "12 months'. NMCAX covers 2021/2023/2024/2025; 2022 stays unmatched "
+        "for the same official empty-table language. VYMQX is 2024–2025 only. "
+        "IEDAX / NAWGX / VWYFX harvest 2025 paid year-end only — older "
+        "Wayback snapshots were empty this session. Never store October "
+        "estimate amounts as paid. Class-level Class A only — never copy "
+        "C / I / R / R6 / W. Additive upserts; no schema change."
     )
     live_limitations = "Estimate book is PDF. Fixture transcribes public open-end rows."
 
@@ -131,6 +168,17 @@ class VoyaSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
+            ),
+            PageSpec(
+                name="leftover_product_page_paid_parallel_q",
+                url=(
+                    "https://individuals.voya.com/fund/"
+                    "voya-corporate-leaders-r-100-fund"
+                ),
+                fixture="leftover_product_page_paid_parallel_q.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
             ),
         ]
 
@@ -415,7 +463,16 @@ class NylifeSource(HtmlTableSource):
         "MainStay funds were rebranded NYLI; this adapter covers both names. "
         "2025 flyer is the full paying-fund estimate book (Class I tickers from "
         "official NYLI prices/equities pages). No harvestable 2024 ST/LT family "
-        "book found (do not invent ranges)."
+        "book found (do not invent ranges). Official 5y parallel Q leftover "
+        "Class I paid history (APSGX, CSHZX, EPLCX, EPSYX, FCGIX, FCIUX, "
+        "FCUIX, KLGIX, MBAIX, MCKIX, MCNVX, MCYIX, MDAIX, MECFX, MGDIX, "
+        "MGXIX, MLAIX, MMRIX, MNELX, MOEIX, MSOIX, MSPIX, MUBFX, MWFIX) is "
+        "a hard wall this session: the only harvestable 2025 flyer is still "
+        "the estimate-range PDF, ICI Primary / product-page paid ST/LT "
+        "tables were not found, and tax-center notices are ROC / 1099 "
+        "character rather than $/share capital gains. Estimate ranges are "
+        "never stored as paid. Class-level only — never copy Investor / A / "
+        "C / R6."
     )
     live_limitations = "Estimate book is PDF with per-share ranges. Fixture transcribes public Class I identifiers."
 

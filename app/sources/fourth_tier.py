@@ -542,7 +542,22 @@ class GmoSource(HtmlTableSource):
         "https://www.gmo.com/globalassets/documents---manually-loaded/documents/"
         "distribution-estimates-and-dates/GMO-Trust-Summary-Distribution_Prior-Year/ "
         "is December income plus any-month ST (BCHI Sep/Dec ST; INVG Dec ST). "
-        "Box 2a LT $0 omitted, not stored as $0."
+        "Box 2a LT $0 omitted, not stored as $0. Official 5y parallel Q "
+        "leftover: US Trust NAVs-and-Distributions workbooks from the GMO "
+        "document library add paid Class III history for in-book leftovers "
+        "GQETX (Quality), GMUEX (U.S. Equity), and GTMIX (International "
+        "Opportunistic Value). Heroes: GQETX 2025-12-12 OI $0.2832 / ST "
+        "$0.1466 / LT $2.6256; GMUEX 2025-12-05 OI $0.1346 / LT $0.9849 "
+        "(ST N/A omitted); GTMIX 2025-12-12 OI $0.5335 / ST $0.8593 / LT "
+        "$1.5312. Each workbook prints one date stored as record / ex / "
+        "payable. Printed N/A omitted, not invented as $0. 2026 July paid "
+        "rows skipped so they do not collide with the live July 2026 "
+        "estimate book. GMO Australia skipped. Other Trust share classes "
+        "and Small Cap Quality are not in-book leftovers and are not "
+        "attached. ETF leftover years stay on the existing prior-year tax "
+        "fixture (URL contains distribution-estimates — "
+        "preliminary_estimate). Class-level Class III only — never copy "
+        "I / IV / R6 / VI. Additive upserts; no schema change."
     )
     live_limitations = "Estimate book is PDF. Fixture transcribes public Trust-class and ETF YE rows."
 
@@ -565,6 +580,18 @@ class GmoSource(HtmlTableSource):
                 url=f"{docs}/GMO-Trust-Summary-Distribution_Prior-Year/",
                 fixture="2025_etf_year_end_tax.html",
                 live=False,
+            ),
+            PageSpec(
+                name="leftover_trust_paid_navs_parallel_q",
+                url=(
+                    "https://www.gmo.com/globalassets/"
+                    "documents-from-parcels-json/"
+                    "quality-fund_mutual-fund_navs-and-distributions/"
+                ),
+                fixture="leftover_trust_paid_navs_parallel_q.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
             ),
         ]
 

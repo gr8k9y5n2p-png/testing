@@ -23,15 +23,19 @@ from app.sources.eighth_tier import ArielSource, BairdSource, PrimecapSource
 from app.sources.eleventh_tier import AmgSource, GuidestoneSource
 from app.sources.fifth_tier import (
     GabelliSource,
+    NationwideSource,
+    NylifeSource,
     OakmarkSource,
     RoyceSource,
     TouchstoneSource,
     VictorySource,
+    VoyaSource,
 )
 from app.sources.fourth_tier import (
     ArtisanSource,
     CalamosSource,
     FirstEagleSource,
+    GmoSource,
     HartfordSource,
     JohnHancockSource,
     MacquarieSource,
@@ -401,8 +405,12 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # stay 3–4y (2021 Wayback unpublished; DGFAX 2022 dashed). Baird BSV / CCG /
     # CCW printed None years unmatched. CIPTX 2021–2022 unpublished. ETF 5y
     # unchanged. No new identities.
-    assert digest.funds_with_5y == 3482
-    assert digest.funds_with_5y_mf == 2732
+    # Parallel Q leftover: GMO US Trust Class III NAVs workbooks + Voya
+    # Corporate Leaders 100 Class A product-page paid YE +4 MF (GQETX /
+    # GMUEX / GTMIX / VYCAX). Nationwide leftover 2021–2023 is 4y (2024
+    # estimate wall). NYLI Class I stays estimate-only.
+    assert digest.funds_with_5y == 3486
+    assert digest.funds_with_5y_mf == 2736
     assert digest.funds_with_5y_etf == 750
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
@@ -5207,3 +5215,356 @@ def test_parallel_s_heroes_are_searchable(client: TestClient) -> None:
         and row.get("amount") is not None
     ]
     assert ccwix_2024 == []
+
+def test_parallel_q_gmo_trust_leftover_paid_fills_5y() -> None:
+    records = GmoSource().fetch(mode="fixture").records
+    gqetx_2025_lt = next(
+        row
+        for row in records
+        if row.ticker == "GQETX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-12"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert gqetx_2025_lt.amount == Decimal("2.6256")
+    gqetx_2025_st = next(
+        row
+        for row in records
+        if row.ticker == "GQETX"
+        and row.estimate_type == EstimateType.short_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-12"
+        and row.amount
+    )
+    assert gqetx_2025_st.amount == Decimal("0.1466")
+    gqetx_2025_oi = next(
+        row
+        for row in records
+        if row.ticker == "GQETX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-12"
+        and row.amount
+    )
+    assert gqetx_2025_oi.amount == Decimal("0.2832")
+
+    gmuex_2025_lt = next(
+        row
+        for row in records
+        if row.ticker == "GMUEX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-05"
+        and row.amount
+    )
+    assert gmuex_2025_lt.amount == Decimal("0.9849")
+    gmuex_2025_st = [
+        row
+        for row in records
+        if row.ticker == "GMUEX"
+        and row.estimate_type == EstimateType.short_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-05"
+        and row.amount is not None
+    ]
+    assert gmuex_2025_st == []
+
+    gtmix_2025_lt = next(
+        row
+        for row in records
+        if row.ticker == "GTMIX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-12"
+        and row.amount
+    )
+    assert gtmix_2025_lt.amount == Decimal("1.5312")
+
+    for ticker in ("GQETX", "GMUEX", "GTMIX"):
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(records, ticker), ticker
+
+    july_2026_paid = [
+        row
+        for row in records
+        if row.ticker in {"GQETX", "GMUEX", "GTMIX"}
+        and row.ex_date
+        and row.ex_date.year == 2026
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert july_2026_paid == []
+
+
+def test_parallel_q_voya_vycax_leftover_paid_fills_5y() -> None:
+    records = VoyaSource().fetch(mode="fixture").records
+    vycax_2025_lt = next(
+        row
+        for row in records
+        if row.ticker == "VYCAX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-12"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert vycax_2025_lt.amount == Decimal("1.190900")
+    vycax_2025_st = next(
+        row
+        for row in records
+        if row.ticker == "VYCAX"
+        and row.estimate_type == EstimateType.short_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-12"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert vycax_2025_st.amount == Decimal("0.633200")
+    vycax_2021_lt = next(
+        row
+        for row in records
+        if row.ticker == "VYCAX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2021-12-16"
+        and row.amount
+    )
+    assert vycax_2021_lt.amount == Decimal("0.658500")
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(records, "VYCAX")
+
+    nlcax_2025_lt = next(
+        row
+        for row in records
+        if row.ticker == "NLCAX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-12"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert nlcax_2025_lt.amount == Decimal("7.427400")
+    nlcax_estimate = next(
+        row
+        for row in records
+        if row.ticker == "NLCAX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.publication_stage == PublicationStage.preliminary_estimate
+        and row.amount == Decimal("7.259")
+    )
+    assert nlcax_estimate.amount == Decimal("7.259")
+    nlcax_years = _paid_lookback_years(records, "NLCAX")
+    assert {2021, 2022, 2024, 2025} <= nlcax_years
+    assert 2023 not in nlcax_years
+
+    nmcax_years = _paid_lookback_years(records, "NMCAX")
+    assert {2021, 2023, 2024, 2025} <= nmcax_years
+    assert 2022 not in nmcax_years
+
+
+def test_parallel_q_nationwide_leftover_is_4y() -> None:
+    records = NationwideSource().fetch(mode="fixture").records
+    nwhox_2021_lt = next(
+        row
+        for row in records
+        if row.ticker == "NWHOX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2021-12-21"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert nwhox_2021_lt.amount == Decimal("5.429")
+    assert nwhox_2021_lt.record_date is None
+    nwhjx_2022_lt = next(
+        row
+        for row in records
+        if row.ticker == "NWHJX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2022-12-21"
+        and row.amount is not None
+    )
+    assert nwhjx_2022_lt.amount == Decimal("0.000")
+    ntdax_2023_lt = next(
+        row
+        for row in records
+        if row.ticker == "NTDAX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2023-12-22"
+        and row.amount
+    )
+    assert ntdax_2023_lt.amount == Decimal("0.254")
+
+    for ticker in ("NWHOX", "NWHJX", "NTDAX"):
+        years = _paid_lookback_years(records, ticker)
+        assert {2021, 2022, 2023, 2025} <= years, ticker
+        assert 2024 not in years, ticker
+
+
+def test_parallel_q_leftover_walls_stay_unmatched() -> None:
+    voya = VoyaSource().fetch(mode="fixture").records
+    nlcax_2023 = [
+        row
+        for row in voya
+        if row.ticker == "NLCAX"
+        and row.ex_date
+        and row.ex_date.year == 2023
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert nlcax_2023 == []
+    nmcax_2022 = [
+        row
+        for row in voya
+        if row.ticker == "NMCAX"
+        and row.ex_date
+        and row.ex_date.year == 2022
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert nmcax_2022 == []
+    vymqx_early = [
+        row
+        for row in voya
+        if row.ticker == "VYMQX"
+        and row.ex_date
+        and row.ex_date.year in {2021, 2022, 2023}
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert vymqx_early == []
+    for ticker in ("IEDAX", "NAWGX", "VWYFX"):
+        early = [
+            row
+            for row in voya
+            if row.ticker == ticker
+            and row.ex_date
+            and row.ex_date.year in {2021, 2022, 2023, 2024}
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        ]
+        assert early == [], ticker
+
+    nylife = NylifeSource().fetch(mode="fixture").records
+    mlaix_paid = [
+        row
+        for row in nylife
+        if row.ticker == "MLAIX"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert mlaix_paid == []
+    leftover_class_i = {
+        "APSGX",
+        "CSHZX",
+        "EPLCX",
+        "EPSYX",
+        "FCGIX",
+        "FCIUX",
+        "FCUIX",
+        "KLGIX",
+        "MBAIX",
+        "MCKIX",
+        "MCNVX",
+        "MCYIX",
+        "MDAIX",
+        "MECFX",
+        "MGDIX",
+        "MGXIX",
+        "MLAIX",
+        "MMRIX",
+        "MNELX",
+        "MOEIX",
+        "MSOIX",
+        "MSPIX",
+        "MUBFX",
+        "MWFIX",
+    }
+    nylife_paid_leftovers = [
+        row
+        for row in nylife
+        if row.ticker in leftover_class_i
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert nylife_paid_leftovers == []
+
+    gmo = GmoSource().fetch(mode="fixture").records
+    australia = [
+        row
+        for row in gmo
+        if row.ticker
+        and "australia" in (row.fund_name or "").lower()
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert australia == []
+
+
+def test_parallel_q_heroes_are_searchable(client: TestClient) -> None:
+    for slug in ("gmo", "voya", "nationwide", "nylife"):
+        fetched = client.post(
+            "/ingest/fetch", json={"fund_family": slug, "mode": "fixture"}
+        )
+        assert fetched.status_code == 200, fetched.text
+        if slug != "nylife":
+            assert fetched.json()["created"] > 0
+
+    for ticker in (
+        "GQETX",
+        "GMUEX",
+        "GTMIX",
+        "VYCAX",
+        "NLCAX",
+        "NWHOX",
+        "NTDAX",
+        "MLAIX",
+    ):
+        body = client.get("/funds", params={"q": ticker}).json()
+        tickers = [item["ticker"] for item in body["items"]]
+        assert ticker in tickers, f"{ticker} missing from GET /funds?q={ticker}: {tickers[:8]}"
+
+    gqetx = client.get(
+        "/distributions",
+        params={"ticker": "GQETX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    gqetx_2025 = [
+        Decimal(row["amount"])
+        for row in gqetx["items"]
+        if row.get("ticker") == "GQETX"
+        and row.get("estimate_type") == "long_term_capital_gains"
+        and str(row.get("ex_date") or "").startswith("2025-12-12")
+    ]
+    assert Decimal("2.6256") in gqetx_2025
+    gqetx_years = {
+        str(row.get("ex_date") or "")[:4]
+        for row in gqetx["items"]
+        if row.get("ticker") == "GQETX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= gqetx_years
+
+    vycax = client.get(
+        "/distributions",
+        params={"ticker": "VYCAX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    vycax_2025 = [
+        Decimal(row["amount"])
+        for row in vycax["items"]
+        if row.get("ticker") == "VYCAX"
+        and row.get("estimate_type") == "long_term_capital_gains"
+        and str(row.get("ex_date") or "").startswith("2025-12-12")
+    ]
+    assert Decimal("1.190900") in vycax_2025
+
+    mlaix = client.get(
+        "/distributions",
+        params={"ticker": "MLAIX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    mlaix_paid = [
+        row
+        for row in mlaix["items"]
+        if row.get("ticker") == "MLAIX" and row.get("amount") is not None
+    ]
+    assert mlaix_paid == []

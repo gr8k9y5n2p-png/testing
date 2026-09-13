@@ -259,7 +259,7 @@ def test_coverage_exposes_estimate_feed_readiness(session) -> None:
 
     voya = by_slug["voya"]
     assert voya.estimate_feed_ready is True
-    assert voya.history_years == [2024, 2025]
+    assert voya.history_years == [2021, 2022, 2023, 2024, 2025]
     assert "NLCAX" in voya.performance_tickers
 
     oakmark = by_slug["oakmark"]
