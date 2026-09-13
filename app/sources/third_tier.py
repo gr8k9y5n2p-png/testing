@@ -296,7 +296,13 @@ class AmericanCenturySource(HtmlTableSource):
         "(as of 10/31/2025; AVUVX OI $0.2523 / ST $0.0753 / LT $0.8562; AVUV income "
         "$0.2735; ETF ST/LT dashes omitted). 2023 leftover "
         "estimated-distributions-september-avantis.pdf is the 2023 book (created "
-        "2023-11-16). 2024 Avantis sibling URLs 404. Daily NII bond MF lines skipped."
+        "2023-11-16). 2024 Avantis sibling URLs 404. Daily NII bond MF lines skipped. "
+        "Official 5y parallel M leftover: Wayback product-page Total Paid for "
+        "in-book TWCGX Investor 2023-12-19 $2.335 and 2024-12-17 $3.4579 "
+        "(snapshots 20240420040820 / 20250328055254). No ST/LT split — stored as "
+        "total capital gains. 2021 paid is unpublished on live and Wayback "
+        "product pages / sibling PDFs. 20230911181326 Wayback HTML is a JS shell "
+        "without a printed 2022 total — unmatched, not invented. Still 3y, not 5y."
     )
     live_limitations = "Family HTML grid is JavaScript-rendered; the retail PDF is the parseable book."
 
@@ -356,6 +362,16 @@ class AmericanCenturySource(HtmlTableSource):
                 fixture="remaining_avantis_2023_estimated_distributions.html",
                 live=False,
                 large_aum_only=False,
+                role="history",
+            ),
+            PageSpec(
+                name="leftover_twcgx_paid_2023_2024",
+                url=(
+                    "https://web.archive.org/web/20240420040820id_/"
+                    "https://www.americancentury.com/invest/funds/growth/twcgx/"
+                ),
+                fixture="leftover_twcgx_paid_2023_2024.html",
+                live=False,
                 role="history",
             ),
         ]

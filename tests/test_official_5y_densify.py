@@ -18,13 +18,14 @@ from app.sources.families import (
     TRowePriceSource,
     VanguardSource,
 )
-from app.sources.eleventh_tier import AmgSource
+from app.sources.eleventh_tier import AmgSource, GuidestoneSource
 from app.sources.fifth_tier import OakmarkSource, RoyceSource, TouchstoneSource, VictorySource
 from app.sources.fourth_tier import (
     ArtisanSource,
     CalamosSource,
     FirstEagleSource,
     HartfordSource,
+    JohnHancockSource,
     PrincipalSource,
     ThriventSource,
 )
@@ -41,6 +42,7 @@ from app.sources.ninth_tier import AmericanBeaconSource
 from app.sources.third_tier import (
     AllianceBernsteinSource,
     AllspringSource,
+    AmericanCenturySource,
     DodgeCoxSource,
     JanusHendersonSource,
     LordAbbettSource,
@@ -357,8 +359,13 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # Year-depth only: EGPT 2024, YUMY 2024, CLOI/CLOB/CMCI 2025, WisdomTree
     # UNIY 2023. First Trust leftover Print=Y years stay empty-year walls;
     # Global X is not in the 10056-ticker book.
-    assert digest.funds_with_5y == 3369
-    assert digest.funds_with_5y_mf == 2628
+    # Parallel M leftover: GuideStone Investor product-page Sitecore paid
+    # history +17 MF (GGEZX / GVEZX / GSCZX / GIEZX / GEMZX / GFSZX / GMGZX /
+    # GDMZX / GEQZX / GFIZX / GGIZX / GCOZX / GGBZX / GMTZX / GMWZX / GMHZX /
+    # GMFZX). GMZXX / GVIZX / GEIZX / GIIZX stay 4y (2021 unpublished).
+    # TWCGX 2023–2024 paid is year-depth only. No new identities.
+    assert digest.funds_with_5y == 3386
+    assert digest.funds_with_5y_mf == 2645
     assert digest.funds_with_5y_etf == 741
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
@@ -3721,3 +3728,200 @@ def test_parallel_o_heroes_are_searchable(client: TestClient) -> None:
         and row.get("amount") is not None
     ]
     assert ghacx_2025 == []
+
+def test_parallel_m_guidestone_leftover_product_page_paid_fills_5y() -> None:
+    records = GuidestoneSource().fetch(mode="fixture").records
+    ggezx_2021_lt = next(
+        row
+        for row in records
+        if row.ticker == "GGEZX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2021-12-10"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert ggezx_2021_lt.amount == Decimal("5.2420")
+    assert str(ggezx_2021_lt.payable_date) == "2021-12-10"
+    ggezx_2025_lt = next(
+        row
+        for row in records
+        if row.ticker == "GGEZX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-05"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert ggezx_2025_lt.amount == Decimal("3.0748")
+
+    gvezx_2021_lt = next(
+        row
+        for row in records
+        if row.ticker == "GVEZX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2021-12-10"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert gvezx_2021_lt.amount == Decimal("1.5788")
+    gvezx_2021_st = next(
+        row
+        for row in records
+        if row.ticker == "GVEZX"
+        and row.estimate_type == EstimateType.short_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2021-12-10"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert gvezx_2021_st.amount == Decimal("0.4999")
+
+    gsczx_2021_lt = next(
+        row
+        for row in records
+        if row.ticker == "GSCZX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2021-12-10"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert gsczx_2021_lt.amount == Decimal("1.5220")
+    gsczx_2021_st = next(
+        row
+        for row in records
+        if row.ticker == "GSCZX"
+        and row.estimate_type == EstimateType.short_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2021-12-10"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert gsczx_2021_st.amount == Decimal("1.6391")
+    gsczx_2025_lt = next(
+        row
+        for row in records
+        if row.ticker == "GSCZX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-05"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert gsczx_2025_lt.amount == Decimal("1.4388")
+
+    for ticker in (
+        "GGEZX",
+        "GVEZX",
+        "GSCZX",
+        "GIEZX",
+        "GEMZX",
+        "GFSZX",
+        "GMGZX",
+        "GDMZX",
+        "GEQZX",
+        "GFIZX",
+        "GGIZX",
+        "GCOZX",
+        "GGBZX",
+        "GMTZX",
+        "GMWZX",
+        "GMHZX",
+        "GMFZX",
+    ):
+        years = {
+            _year_for_row(row.as_of, row.ex_date, row.payable_date)
+            for row in records
+            if row.ticker == ticker
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        }
+        years.discard(None)
+        assert set(LOOKBACK_YEARS) <= years, ticker
+
+    # Class-level — Institutional siblings are not copied from leftover Investor.
+    for institutional in ("GGEYX", "GVEYX", "GSCYX"):
+        copied = [row for row in records if row.ticker == institutional]
+        assert copied == [], institutional
+
+
+def test_parallel_m_aci_twcgx_leftover_paid_year_depth() -> None:
+    records = AmericanCenturySource().fetch(mode="fixture").records
+    twcgx_2023 = next(
+        row
+        for row in records
+        if row.ticker == "TWCGX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2023-12-19"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert twcgx_2023.amount == Decimal("2.335")
+    twcgx_2024 = next(
+        row
+        for row in records
+        if row.ticker == "TWCGX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2024-12-17"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert twcgx_2024.amount == Decimal("3.4579")
+    twcgx_years = {
+        row.ex_date.year
+        for row in records
+        if row.ticker == "TWCGX"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert {2023, 2024, 2025} <= twcgx_years
+    assert 2021 not in twcgx_years
+    assert 2022 not in twcgx_years
+
+
+def test_parallel_m_leftover_walls_stay_unmatched() -> None:
+    guidestone = GuidestoneSource().fetch(mode="fixture").records
+    for ticker in ("GMZXX", "GVIZX", "GEIZX", "GIIZX"):
+        paid_2021 = [
+            row
+            for row in guidestone
+            if row.ticker == ticker
+            and _year_for_row(row.as_of, row.ex_date, row.payable_date) == 2021
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        ]
+        assert paid_2021 == [], ticker
+
+    jh = JohnHancockSource().fetch(mode="fixture").records
+    for ticker in ("JVLAX", "TAGRX"):
+        finals = [
+            row
+            for row in jh
+            if row.ticker == ticker
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        ]
+        assert finals == [], ticker
+
+    thrivent = ThriventSource().fetch(mode="fixture").records
+    tmcvx_2023 = [
+        row
+        for row in thrivent
+        if row.ticker == "TMCVX"
+        and _year_for_row(row.as_of, row.ex_date, row.payable_date) == 2023
+        and row.amount is not None
+    ]
+    assert tmcvx_2023 == []
+    tmaix_2022 = [
+        row
+        for row in thrivent
+        if row.ticker == "TMAIX"
+        and _year_for_row(row.as_of, row.ex_date, row.payable_date) == 2022
+        and row.amount is not None
+    ]
+    assert tmaix_2022 == []
