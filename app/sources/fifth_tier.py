@@ -328,8 +328,15 @@ class RoyceSource(HtmlTableSource):
         "ST $0.5162 / LT $2.2441; RYOTX 2021 ST $0.3705 / LT $2.7273). "
         "Class-level — never copied across Consultant / Institutional / "
         "Investment / Service / R. 2024 Investment flagships stay on "
-        "2024_year_end_distributions."
-    )
+        "2024_year_end_distributions. "
+        "Parallel L leftover: official November 2025 open-end PDF "
+        "https://www.royceinvest.com/news/2025/4Q25/PDF/royce-November-2025-oe-distributions.pdf "
+        "fills leftover SMid-Cap Total Return Investment RDVIX 2025 "
+        "(income $0.0522 / ST $0.2953 / LT $3.4237 ex 2025-11-21) — missing "
+        "from the December YE book. Class-level — Service RYDVX not attached. "
+        "Smaller-Companies Growth 2023 is omitted from the official 2023 YE PDF "
+        "and printed as a dash on TAX-INFO-2023 (RVPHX / RVPIX / RYVPX) — "
+        "unmatched, not invented $0."
     live_limitations = (
         "Live HTML is public but table layout/headers may not parse. "
         "Fixture transcribes the official full printed ticker book."
@@ -367,6 +374,14 @@ class RoyceSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
+            ),
+            PageSpec(
+                name="leftover_november_2025_rdvix",
+                url="https://www.royceinvest.com/news/2025/4Q25/PDF/royce-November-2025-oe-distributions.pdf",
+                fixture="leftover_november_2025_rdvix.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
             ),
         ]
 

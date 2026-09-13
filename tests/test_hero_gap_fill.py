@@ -234,5 +234,7 @@ def test_fixture_book_lookback_stays_official_only() -> None:
     # Impax / Pax hero-package gap fill: official 2021–2025 paid book for
     # the 22 in-book tickered shells plus the four already-healthy identities
     # unlocks +18 MF 5y (PAXLX / PXLIX / PGINX + 15 leftover shells).
-    assert digest.funds_with_5y == 3448
+    # Parallel L leftover: BNY Mellon leftover paid YE +10 MF / +9 ETF and
+    # Royce RDVIX November 2025 +1 MF.
+    assert digest.funds_with_5y == 3468
     assert digest.book_funds >= 7200

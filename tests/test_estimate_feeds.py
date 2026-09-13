@@ -230,7 +230,7 @@ def test_coverage_exposes_estimate_feed_readiness(session) -> None:
     dws = by_slug["dws"]
     assert dws.estimate_feed_ready is True
     assert dws.estimate_feed_status == "prelim_updated"
-    assert dws.history_years == [2025, 2026]
+    assert dws.history_years == [2024, 2025, 2026]
     assert "DBEF" in dws.performance_tickers
     assert any("dws.com/en-us/resources/tax-center" in url for url in dws.estimate_feed_urls)
     assert any("9a1f54ed-fcf9-4b50-9d74-ae2343ee5bef" in url for url in dws.estimate_feed_urls)

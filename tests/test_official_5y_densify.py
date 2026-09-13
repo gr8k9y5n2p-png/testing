@@ -33,6 +33,7 @@ from app.sources.fourth_tier import (
 )
 from app.sources.next_tier import (
     AmundiSource,
+    BnyMellonSource,
     DimensionalSource,
     FranklinTempletonSource,
     MorganStanleySource,
@@ -54,6 +55,7 @@ from app.sources.third_tier import (
 )
 from app.sources.sixth_tier import (
     AlgerSource,
+    BrownAdvisorySource,
     FirstTrustSource,
     HardingLoevnerSource,
     SeiSource,
@@ -375,9 +377,13 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # Impax / Pax hero-package gap fill: official 2021–2025 paid book for the
     # 22 in-book tickered shells plus the four already-healthy identities
     # unlocks +18 MF 5y. ETF 5y unchanged. No tickers beyond the 22 shells.
-    assert digest.funds_with_5y == 3448
-    assert digest.funds_with_5y_mf == 2707
-    assert digest.funds_with_5y_etf == 741
+    # Parallel L leftover: BNY Mellon leftover Class A / Investor / ETF
+    # product-page paid YE +10 MF / +9 ETF, plus Royce RDVIX November 2025
+    # +1 MF. DWS leftover 2024 ICI is year-depth only (2y, not 5y). Brown
+    # leftover years stay estimate-only / unpublished.
+    assert digest.funds_with_5y == 3468
+    assert digest.funds_with_5y_mf == 2718
+    assert digest.funds_with_5y_etf == 750
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
 
@@ -4209,12 +4215,14 @@ def test_parallel_n_leftover_walls_stay_unmatched() -> None:
     assert qalt_early == []
 
     # Russell / FTSE leftovers belong to other slices — do not invent fills.
+    # Parallel L fills leftover DWS 2024 ICI (DEEF / DEUS / QARP); 2021–2023
+    # ICI siblings stay unmatched.
     deef_early = [
         row
         for row in dws
         if row.ticker == "DEEF"
         and row.ex_date
-        and row.ex_date.year in {2021, 2022, 2023, 2024}
+        and row.ex_date.year in {2021, 2022, 2023}
         and row.publication_stage == PublicationStage.final
         and row.amount is not None
     ]
@@ -4238,3 +4246,279 @@ def test_parallel_n_leftover_walls_stay_unmatched() -> None:
         and row.amount is not None
     ]
     assert iwmw_early == []
+
+
+def test_parallel_l_bny_leftover_paid_fills_5y() -> None:
+    records = BnyMellonSource().fetch(mode="fixture").records
+    deqax_2025_lt = next(
+        row
+        for row in records
+        if row.ticker == "DEQAX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-16"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert deqax_2025_lt.amount == Decimal("1.3603")
+    deqax_2025_oi = next(
+        row
+        for row in records
+        if row.ticker == "DEQAX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-16"
+        and row.amount
+    )
+    assert deqax_2025_oi.amount == Decimal("0.0313")
+    dwoax_2025_lt = next(
+        row
+        for row in records
+        if row.ticker == "DWOAX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-08"
+        and row.amount
+    )
+    assert dwoax_2025_lt.amount == Decimal("2.0710")
+    bklc_2025 = next(
+        row
+        for row in records
+        if row.ticker == "BKLC"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-29"
+        and row.amount
+    )
+    assert bklc_2025.amount == Decimal("0.3923")
+
+    for ticker in (
+        "DEQAX",
+        "DQIAX",
+        "DTCAX",
+        "PESPX",
+        "DBOAX",
+        "DISAX",
+        "DIEAX",
+        "DLQAX",
+        "PEOPX",
+        "DWOAX",
+        "BKLC",
+        "BKCG",
+        "BKAG",
+        "BKEM",
+        "BKHY",
+        "BKIE",
+        "BKMC",
+        "BKSE",
+        "BKUI",
+    ):
+        years = {
+            row.ex_date.year
+            for row in records
+            if row.ticker == ticker
+            and row.ex_date
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        }
+        assert set(LOOKBACK_YEARS) <= years, ticker
+
+
+def test_parallel_l_dws_leftover_2024_ici_is_year_depth() -> None:
+    records = DwsSource().fetch(mode="fixture").records
+    ashr_2024 = next(
+        row
+        for row in records
+        if row.ticker == "ASHR"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2024-12-20"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert ashr_2024.amount == Decimal("0.299450000")
+    dbef_2024 = next(
+        row
+        for row in records
+        if row.ticker == "DBEF"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2024-12-20"
+        and row.amount
+    )
+    assert dbef_2024.amount == Decimal("0.297060000")
+    ashr_years = {
+        row.ex_date.year
+        for row in records
+        if row.ticker == "ASHR"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert {2024, 2025} <= ashr_years
+    assert 2021 not in ashr_years
+    assert 2022 not in ashr_years
+    assert 2023 not in ashr_years
+
+
+def test_parallel_l_royce_rdvix_november_2025_completes_5y() -> None:
+    records = RoyceSource().fetch(mode="fixture").records
+    rdvix_2025_lt = next(
+        row
+        for row in records
+        if row.ticker == "RDVIX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2025-11-21"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert rdvix_2025_lt.amount == Decimal("3.4237")
+    rdvix_years = {
+        row.ex_date.year
+        for row in records
+        if row.ticker == "RDVIX"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert set(LOOKBACK_YEARS) <= rdvix_years
+    rydvx_2025 = [
+        row
+        for row in records
+        if row.ticker == "RYDVX"
+        and row.ex_date
+        and row.ex_date.year == 2025
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert rydvx_2025 == []
+
+
+def test_parallel_l_leftover_walls_stay_unmatched() -> None:
+    bny = BnyMellonSource().fetch(mode="fixture").records
+    for ticker in ("DMCVX", "MIBLX", "MIMSX", "MISCX"):
+        paid = [
+            row
+            for row in bny
+            if row.ticker == ticker
+            and row.ex_date
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        ]
+        assert paid == [], ticker
+    dtgrx_mid = [
+        row
+        for row in bny
+        if row.ticker == "DTGRX"
+        and row.ex_date
+        and row.ex_date.year in {2022, 2023}
+        and row.amount is not None
+    ]
+    assert dtgrx_mid == []
+    bkci_2021 = [
+        row
+        for row in bny
+        if row.ticker == "BKCI"
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount is not None
+    ]
+    assert bkci_2021 == []
+    bkdv_early = [
+        row
+        for row in bny
+        if row.ticker == "BKDV"
+        and row.ex_date
+        and row.ex_date.year in {2021, 2022, 2023}
+        and row.amount is not None
+    ]
+    assert bkdv_early == []
+
+    brown = BrownAdvisorySource().fetch(mode="fixture").records
+    baffx_paid = [
+        row
+        for row in brown
+        if row.ticker == "BAFFX"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert baffx_paid == []
+
+    royce = RoyceSource().fetch(mode="fixture").records
+    for ticker in ("RVPHX", "RVPIX", "RYVPX"):
+        y2023 = [
+            row
+            for row in royce
+            if row.ticker == ticker
+            and row.ex_date
+            and row.ex_date.year == 2023
+            and row.amount is not None
+        ]
+        assert y2023 == [], ticker
+
+
+def test_parallel_l_heroes_are_searchable(client: TestClient) -> None:
+    for slug in ("bny_mellon", "dws", "royce", "brown_advisory"):
+        fetched = client.post(
+            "/ingest/fetch", json={"fund_family": slug, "mode": "fixture"}
+        )
+        assert fetched.status_code == 200, fetched.text
+        assert fetched.json()["created"] > 0
+
+    for ticker in (
+        "DEQAX",
+        "DWOAX",
+        "BKLC",
+        "RDVIX",
+        "ASHR",
+        "DTGRX",
+        "BAFFX",
+        "RVPHX",
+    ):
+        body = client.get("/funds", params={"q": ticker}).json()
+        tickers = [item["ticker"] for item in body["items"]]
+        assert ticker in tickers, f"{ticker} missing from GET /funds?q={ticker}: {tickers[:8]}"
+
+    deqax = client.get(
+        "/distributions",
+        params={"ticker": "DEQAX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    deqax_2025 = [
+        Decimal(row["amount"])
+        for row in deqax["items"]
+        if row.get("ticker") == "DEQAX"
+        and row.get("estimate_type") == "long_term_capital_gains"
+        and str(row.get("ex_date") or "").startswith("2025-12-16")
+    ]
+    assert Decimal("1.3603") in deqax_2025
+    deqax_years = {
+        str(row.get("ex_date") or "")[:4]
+        for row in deqax["items"]
+        if row.get("ticker") == "DEQAX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= deqax_years
+
+    rdvix = client.get(
+        "/distributions",
+        params={"ticker": "RDVIX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    rdvix_2025 = [
+        Decimal(row["amount"])
+        for row in rdvix["items"]
+        if row.get("ticker") == "RDVIX"
+        and row.get("estimate_type") == "long_term_capital_gains"
+        and str(row.get("ex_date") or "").startswith("2025-11-21")
+    ]
+    assert Decimal("3.4237") in rdvix_2025
+
+    baffx = client.get(
+        "/distributions",
+        params={"ticker": "BAFFX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    baffx_paid = [
+        row
+        for row in baffx["items"]
+        if row.get("ticker") == "BAFFX" and row.get("amount") is not None
+    ]
+    assert baffx_paid == []

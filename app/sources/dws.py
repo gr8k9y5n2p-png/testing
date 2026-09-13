@@ -39,7 +39,12 @@ class DwsSource(HtmlTableSource):
         "2026-dws-mutual-funds-estimated-mid-year-capital-gains.pdf "
         "(SXPAX LT $0.6101; TOLLX ST $0.0176 / LT $0.2419; BTIEX LT $6.1523; "
         "COMAX LT $0.4142). "
-        "2024 ICI / CG siblings 404 — not invented. "
+        "2024 ICI / CG siblings 404 on the live tax-center path this session; "
+        "Parallel L leftover ICI Primary (report date 01/21/2025) is the official "
+        "filled 2024 Xtrackers book transcribed from issuer PDF bytes "
+        "(ASHR 12/20/2024 income $0.29945; DBEF 12/20/2024 $0.29706; "
+        "HYLB 12/23/2024 $0.21907). 2021–2023 ICI siblings still 404 / "
+        "Wayback CDX empty — leftover ETFs stay 2y, not 5y. "
         "2026 Xtrackers dividend schedule has dates only. "
         "etf.dws.com and dws.com mutual-fund product lists are JavaScript SPAs. "
         "ICI secondary is 1099 characterization, not amounts. "
@@ -129,6 +134,15 @@ class DwsSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
+                parser="ici",
+            ),
+            PageSpec(
+                name="ici_leftover_2024",
+                url=f"{forms}/2024-xtrackers-etfs-primary-layout.pdf",
+                fixture="ici_leftover_2024.csv",
+                live=False,
+                role="history",
+                large_aum_only=False,
                 parser="ici",
             ),
             PageSpec(
