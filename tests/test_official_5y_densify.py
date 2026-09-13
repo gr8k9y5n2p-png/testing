@@ -4568,6 +4568,7 @@ def test_parallel_p_wasatch_leftover_fills_5y() -> None:
         and row.estimate_type == EstimateType.long_term_capital_gains
         and row.payable_date
         and str(row.payable_date) == "2025-12-18"
+        and row.publication_stage == PublicationStage.final
         and row.amount
     )
     assert wmcvx_2025.amount == Decimal("0.554075")
@@ -4578,6 +4579,7 @@ def test_parallel_p_wasatch_leftover_fills_5y() -> None:
         and row.estimate_type == EstimateType.long_term_capital_gains
         and row.payable_date
         and str(row.payable_date) == "2021-12-16"
+        and row.publication_stage == PublicationStage.final
         and row.amount
     )
     assert wgrox_2021.amount == Decimal("14.455281")
