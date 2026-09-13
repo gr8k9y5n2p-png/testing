@@ -143,7 +143,15 @@ class BnyMellonSource(HtmlTableSource):
         "Cap / Small Cap Value / Smallcap Stock Index share classes (NIEAX 2025 "
         "ST $1.5720 / LT $1.0947). Existing DGAGX / DAGVX / DREVX / DREQX / "
         "DNLDX / PGROX / DGLAX heroes are not re-emitted. Income Stock / "
-        "Institutional S&P 500 product URLs 404 this session."
+        "Institutional S&P 500 product URLs 404 this session. "
+        "Parallel L leftover: leftover Class A / Investor / ETF Distributions "
+        "History tables (December YE only; OI is published NQ+Q; ST is published "
+        "NQ+Q ST; published $0 omitted). Heroes: DEQAX 2025-12-16 OI $0.0313 / "
+        "ST $0.0392 / LT $1.3603; DQIAX 2025-12-10 LT $0.6838; DWOAX 2025-12-08 "
+        "LT $2.0710 (Class A page — not copied from DREQX); BKLC 2025-12-29 OI "
+        "$0.3923. Class-level leftover tickers only. DMCVX / MIBLX / MIMSX / "
+        "MISCX product URLs 404. DTGRX / DCPAX / DBMAX 2022–2023 unpublished. "
+        "BKCI / BKGI 2021 unpublished; BKDV 2021–2023 unpublished."
     )
     live_limitations = "Estimates are PDF, not an HTML grid. Fixture transcribes the public PDF / product table."
 
@@ -208,6 +216,17 @@ class BnyMellonSource(HtmlTableSource):
                     "fund/bny-mellon-international-equity-fund.html"
                 ),
                 fixture="remaining_share_class_paid_year_end.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
+            ),
+            PageSpec(
+                name="leftover_paid_year_end_parallel_l",
+                url=(
+                    "https://www.bny.com/investments/us/en/individual/products/lt/"
+                    "fund/bny-mellon-global-equity-income-fund.html"
+                ),
+                fixture="leftover_paid_year_end_parallel_l.html",
                 live=False,
                 role="history",
                 large_aum_only=False,

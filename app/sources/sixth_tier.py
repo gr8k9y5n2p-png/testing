@@ -86,7 +86,13 @@ class BrownAdvisorySource(HtmlTableSource):
         "WMC Japan Equity product pages 404 this session. "
         "Record/declaration 12/12/2025; ex/reinvest and pay 12/15/2025. "
         "2024 schedule: https://www.brownadvisory.com/sites/default/files/2024_Capital_Gain_Distribution.pdf "
-        "(Flexible Equity Institutional BAFFX ST $0.15 / LT $1.72)."
+        "(Flexible Equity Institutional BAFFX ST $0.15 / LT $1.72). "
+        "Parallel L leftover: 2024/2025 family books stay estimate-stage "
+        "(titles print Estimated / Update — not paid YE finals). 2021–2023 "
+        "Capital_Gain_Distribution sibling PDFs 404; Wayback CDX of "
+        "brownadvisory.com/sites/default/files/*Capital*Gain* empty this "
+        "session. Product pages have no harvestable paid Distribution History. "
+        "Leftover years stay unmatched — never invent $0."
     )
     live_limitations = (
         "Estimate book is PDF with Institutional / Investor / Advisor columns. "
