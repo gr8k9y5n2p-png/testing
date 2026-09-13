@@ -73,7 +73,13 @@ class AmericanFundsSource(FundSource):
         "printed 2022 monthly; 529-F-2 class-level, not copied from AHITX). "
         "ANEFX / SMCWX / SMALLCAP / New Economy 2022 JSON still has no row; "
         "money-market AAFXX book still has no 2021; BFICX / CNLCX no 2023; "
-        "CGVBX no 2021/2025; SCWCX no 2022/2024. Never invented."
+        "CGVBX no 2021/2025; SCWCX no 2022/2024. Never invented. "
+        "Parallel F leftover re-probe (2026-09-13): live product-page JSON still "
+        "has no CNWCX 2022; ANEFX / SMCWX 2022 empty; AAFXX no 2021; BFICX no 2023; "
+        "SCWCX no 2022/2024; CGVBX no 2021/2025. 2070 Target Date / U.S. Small and "
+        "Mid Cap Equity leftovers are 2024 inception (2y); Core Plus Bond / KKR / "
+        "EMRGX leftovers are 2025 inception (1y). Class-level — never copied from "
+        "a sibling that already has the year."
     )
 
     def __init__(self, fixtures_dir: Path | None = None) -> None:

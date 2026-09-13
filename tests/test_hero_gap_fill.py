@@ -220,5 +220,6 @@ def test_fixture_book_lookback_stays_official_only() -> None:
     # 3,258 after #164 Parallel D. Parallel E leftover Nuveen fills raise the pin +3 MF.
     # Parallel C leftover: Northern Trust 2022 ICI CG-dash equity (NMIEX +1 MF).
     # Parallel H leftover: Janus Henderson quarterly / midyear ICI +33 MF.
-    assert digest.funds_with_5y == 3295
+    # Parallel F leftover: T. Rowe TBLYX 2021+2022 YE PDF (+1 MF 5y).
+    assert digest.funds_with_5y == 3296
     assert digest.book_funds >= 7200
