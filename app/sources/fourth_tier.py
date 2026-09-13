@@ -834,9 +834,20 @@ class WasatchSource(HtmlTableSource):
         "https://wasatchglobal.com/wasatch-core-growth-fund-investor/ "
         "(WGROX 2025 LT $6.345749; 2024 LT $8.282696; 2022 LT $0.457965). "
         "Product page has no 2023 YE row — gap, not invented. "
+        "Parallel-P leftover paid year-end from official product-page Distributions History "
+        "(https://wasatchglobal.com/wasatch-*-fund-investor/ + Hoisington US Treasury): "
+        "WHOSX 2021–2025 OI $0.067651 / $0.078728 / $0.092987 / $0.100350 / $0.113996; "
+        "WMCVX 2021–2025 (2025 OI $0.000350 + LT $0.554075); "
+        "WGROX 2021 ST/LT $1.378726 / $14.455281 (2023 unpublished — official 2023 tax letter: remaining funds no distribution); "
+        "WAAEX 2021+2025; WAIGX 2021+2024+2025; WAIVX 2024–2025 (inception 11/29/24); "
+        "FMIEX 2023+2025. Institutional siblings are not in the NAV book (product freeze). "
+        "WAEMX/WAGOX/WAINX/WAIOX/WAMVX/WAUSX unpaid years stay unmatched. "
         "Registered as the Putnam replacement: Putnam.com now redirects to Franklin Templeton."
     )
-    live_limitations = "Estimate book is PDF. Paid history is on the public product page."
+    live_limitations = (
+        "Estimate book is PDF. Paid history is on the public product page. "
+        "Live GET is sometimes Cloudflare 202; fixture is the book."
+    )
 
     def pages(self) -> list[PageSpec]:
         return [
@@ -868,5 +879,13 @@ class WasatchSource(HtmlTableSource):
                 fixture="2022_paid_year_end.html",
                 live=False,
                 large_aum_only=True,
+            ),
+            PageSpec(
+                name="leftover_paid_year_end_parallel_p",
+                url="https://wasatchglobal.com/wasatch-small-cap-growth-fund-investor/",
+                fixture="leftover_paid_year_end_parallel_p.html",
+                live=True,
+                role="history",
+                large_aum_only=False,
             ),
         ]

@@ -2370,6 +2370,34 @@ def test_fourth_tier_fixtures() -> None:
     )
     assert wgrox_2024.amount == Decimal("8.282696")
 
+    wasatch_leftover = parse_distribution_html(
+        (ROOT / "wasatch" / "leftover_paid_year_end_parallel_p.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="https://wasatchglobal.com/wasatch-small-cap-growth-fund-investor/",
+        fund_family="Wasatch",
+    )
+    whosx_2025 = next(
+        r
+        for r in wasatch_leftover
+        if r.ticker == "WHOSX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.payable_date
+        and str(r.payable_date) == "2025-12-18"
+    )
+    assert whosx_2025.amount == Decimal("0.113996")
+    assert whosx_2025.publication_stage == PublicationStage.final
+    wmcvx_2025 = next(
+        r
+        for r in wasatch_leftover
+        if r.ticker == "WMCVX"
+        and r.estimate_type == EstimateType.long_term_capital_gains
+        and r.payable_date
+        and str(r.payable_date) == "2025-12-18"
+    )
+    assert wmcvx_2025.amount == Decimal("0.554075")
+    assert "WIGRX" not in {r.ticker for r in wasatch_leftover}
+
 
 def test_fifth_tier_fixtures() -> None:
     harbor = parse_distribution_html(
@@ -2515,6 +2543,38 @@ def test_fifth_tier_fixtures() -> None:
     )
     assert gabgx_24.amount == Decimal("6.96640")
     assert str(gabgx_24.as_of)[:4] == "2024"
+
+    gabelli_leftover = parse_distribution_html(
+        (ROOT / "gabelli" / "leftover_paid_year_end_parallel_p.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="https://gabelli.com/wp-content/uploads/2025/12/Distribution-memo-12.29.2025.pdf",
+        fund_family="Gabelli",
+    )
+    gicpx_2025 = next(
+        r
+        for r in gabelli_leftover
+        if r.ticker == "GICPX"
+        and r.estimate_type == EstimateType.long_term_capital_gains
+        and r.ex_date
+        and str(r.ex_date) == "2025-12-29"
+    )
+    assert gicpx_2025.amount == Decimal("7.2182")
+    assert gicpx_2025.publication_stage == PublicationStage.final
+    gabsx_2025 = next(
+        r
+        for r in gabelli_leftover
+        if r.ticker == "GABSX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert gabsx_2025.amount == Decimal("1.65380")
+    assert str(gabsx_2025.as_of)[:4] == "2025"
+    gabex_2025 = next(
+        r
+        for r in gabelli_leftover
+        if r.ticker == "GABEX" and r.estimate_type == EstimateType.short_term_capital_gains
+    )
+    assert gabex_2025.amount == Decimal("0.60540")
+    assert "GABGX" not in {r.ticker for r in gabelli_leftover}
 
     royce = parse_distribution_html(
         (ROOT / "royce" / "2025_year_end_distributions.html").read_text(encoding="utf-8"),
