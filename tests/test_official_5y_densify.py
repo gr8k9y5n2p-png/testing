@@ -19,7 +19,7 @@ from app.sources.fourth_tier import (
     PrincipalSource,
     ThriventSource,
 )
-from app.sources.next_tier import NorthernTrustSource, SchwabSource
+from app.sources.next_tier import NorthernTrustSource, NuveenSource, SchwabSource
 from app.sources.third_tier import AllspringSource, JanusHendersonSource
 from app.sources.sixth_tier import (
     FirstTrustSource,
@@ -304,9 +304,11 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # Official paid/final only. Missing years stay unmatched — never invent $0.
     # 3,252 after #160/#161/#162. Parallel D leftover fills: +6 MF (FAHHX 2022 /
     # VSEMX 2025 / VTSPX 2021+2023 / VCTXX / VMRXX / VMSXX 2024–2025).
+    # Parallel E leftover Nuveen Institutional / Class I paid history: +3 MF 5y
+    # (TEIHX / TICHX / TSOHX). NSBRX is 4y (2021 unpublished).
     # No new identities. ETF 5y unchanged.
-    assert digest.funds_with_5y == 3258
-    assert digest.funds_with_5y_mf == 2522
+    assert digest.funds_with_5y == 3261
+    assert digest.funds_with_5y_mf == 2525
     assert digest.funds_with_5y_etf == 736
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
@@ -1945,3 +1947,115 @@ def test_victory_leftover_2024_share_classes() -> None:
         and row.amount is not None
     )
     assert mmecx_oi.amount == Decimal("0.000000")
+
+
+def test_nuveen_leftover_product_page_paid_history_fills_institutional_5y() -> None:
+    records = NuveenSource().fetch(mode="fixture").records
+    teihx_2021_lt = next(
+        row
+        for row in records
+        if row.ticker == "TEIHX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount
+    )
+    assert teihx_2021_lt.amount == Decimal("0.1899")
+    assert str(teihx_2021_lt.ex_date) == "2021-12-10"
+    assert teihx_2021_lt.publication_stage == PublicationStage.final
+
+    tichx_2021_st = next(
+        row
+        for row in records
+        if row.ticker == "TICHX"
+        and row.estimate_type == EstimateType.short_term_capital_gains
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount
+    )
+    assert tichx_2021_st.amount == Decimal("0.5315")
+
+    tsohx_2025_oi = next(
+        row
+        for row in records
+        if row.ticker == "TSOHX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2025
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert tsohx_2025_oi.amount == Decimal("0.6886")
+    assert str(tsohx_2025_oi.ex_date) == "2025-12-12"
+
+    nsbrx_2025_lt = next(
+        row
+        for row in records
+        if row.ticker == "NSBRX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and row.ex_date.year == 2025
+        and row.amount
+    )
+    assert nsbrx_2025_lt.amount == Decimal("4.9421")
+    assert str(nsbrx_2025_lt.ex_date) == "2025-12-15"
+
+    teihx_years = {
+        row.ex_date.year
+        for row in records
+        if row.ticker == "TEIHX"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert set(LOOKBACK_YEARS) <= teihx_years
+    tichx_years = {
+        row.ex_date.year
+        for row in records
+        if row.ticker == "TICHX"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert set(LOOKBACK_YEARS) <= tichx_years
+    tsohx_years = {
+        row.ex_date.year
+        for row in records
+        if row.ticker == "TSOHX"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert set(LOOKBACK_YEARS) <= tsohx_years
+    nsbrx_years = {
+        row.ex_date.year
+        for row in records
+        if row.ticker == "NSBRX"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert {2022, 2023, 2024, 2025} <= nsbrx_years
+    assert 2021 not in nsbrx_years
+
+    # Class-level — Institutional / Class I amounts are not copied onto Retail / A.
+    tinrx_2021 = [
+        row
+        for row in records
+        if row.ticker == "TINRX"
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert tinrx_2021 == []
+    nsbax_2024 = [
+        row
+        for row in records
+        if row.ticker == "NSBAX"
+        and row.ex_date
+        and row.ex_date.year == 2024
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert nsbax_2024 == []

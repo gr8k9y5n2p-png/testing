@@ -71,7 +71,12 @@ class FranklinTempletonSource(HtmlTableSource):
         "WDI income $1.931). Royce-branded CEFs stay on the Royce adapter. "
         "ICI reports hub is a JS SPA; no public filled Primary Layout download. "
         "≥$1B open-end (FKINX / PEYAX) amounts were not on a scrapeable family PDF — skipped. "
-        "Wave 3: open-end estimate hub remains a JS SPA — no YE 2021–2023 MF book ingested."
+        "Wave 3: open-end estimate hub remains a JS SPA — no YE 2021–2023 MF book ingested. "
+        "Parallel E leftover re-probe (2026-09-13): DIST-SUMM-2024 / 2023 / 2022 / 2021 "
+        "and dated siblings 204 empty; Wayback CDX only has 2026 snapshots of the "
+        "current 2025 DIST-SUMM; 2021–2023 Section 19 siblings 204; 2024 Section 19 "
+        "is a fiscal-YTD notice, not YE character — not stored as final. CEF product "
+        "pages are JS. Leftover CEF years stay unmatched."
     )
     live_limitations = (
         "Open-end December estimate tool is JavaScript-rendered. "
@@ -224,9 +229,20 @@ class NuveenSource(HtmlTableSource):
         "Manager-printed $- is stored as published $0.00. Managed Accounts / SMA "
         "portfolios omitted. Live viewer URL is a JavaScript shell — fixture fallback. "
         "No public filled ICI file. 2024–2025 posted tax-character letters "
-        "(QDI / DRD / US-gov / exempt %) are not ST/LT $/share — skipped, not invented."
+        "(QDI / DRD / US-gov / exempt %) are not ST/LT $/share — skipped, not invented. "
+        "Official 5y parallel E leftover: product-page Distribution history for the "
+        "printed Institutional / Class I class only (TEIHX 2021 income $0.3911 / "
+        "ST $0.1098 / LT $0.1899; TICHX 2021 income $0.3056 / ST $0.5315 / LT $1.8242; "
+        "TSOHX 2021 income $0.3063 / ST $0.0355 / LT $0.0666; NSBRX 2025-12-15 ST "
+        "$0.0360 / LT $4.9421). Never copied onto TINRX / NSBAX / TIEIX. Issuer "
+        "dashes omitted. NSBRX 2021 unpublished on the printed table. Most other "
+        "product pages are JS-empty / No Records — leftover years stay unmatched."
     )
-    live_limitations = "Estimate book is a PDF viewer, not scrapeable HTML. Fixture transcribes the public PDF."
+    live_limitations = (
+        "Estimate book is a PDF viewer, not scrapeable HTML. Fixture transcribes "
+        "the public PDF. Product-page leftover history is static HTML fallback; "
+        "live tables are JavaScript."
+    )
 
     def pages(self) -> list[PageSpec]:
         return [
@@ -237,7 +253,15 @@ class NuveenSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
-            )
+            ),
+            PageSpec(
+                name="leftover_product_page_paid_history",
+                url="https://www.nuveen.com/en-us/mutual-funds/nuveen-equity-index-fund",
+                fixture="leftover_product_page_paid_history.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
+            ),
         ]
 
 
