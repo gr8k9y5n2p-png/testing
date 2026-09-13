@@ -218,5 +218,6 @@ def test_fixture_book_lookback_stays_official_only() -> None:
     digest = lookback_digest_from_rows(rows)
     # Official paid/final only. Missing years stay unmatched — never invent $0.
     # 3,258 after #164 Parallel D. Parallel E leftover Nuveen fills raise the pin +3 MF.
-    assert digest.funds_with_5y == 3261
+    # Parallel C leftover: Northern Trust 2022 ICI CG-dash equity (NMIEX +1 MF).
+    assert digest.funds_with_5y == 3262
     assert digest.book_funds >= 7200

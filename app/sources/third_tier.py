@@ -449,7 +449,16 @@ class MfsSource(HtmlTableSource):
         "$0.49478 / ST $0.04829 / LT $0.75145; MEIGX 2025 income $0.08916 / "
         "LT $3.86919; MIGFX 2025 income $0.19720 / LT $4.20618; MFEBX (Value B) "
         "2025 LT $3.86919. Per-class ordinary income is taken from that class "
-        "Excel (not copied from Class A). Published $0.00000 omitted."
+        "Excel (not copied from Class A). Published $0.00000 omitted. "
+        "Parallel 5y sweep C leftover Excel (official shareCode only): "
+        "BRSPX R1 / BRWRX R1 have no 2023 row; MNWTX R3 / MNWSX R2 have no "
+        "2021 row; DVRFX R1 has no 2021–2022 row; BRSBX B / BRSHX C / "
+        "MRSGX R1 / MEMBX B leftover years unpublished. "
+        "shareCode=R3|R4|I on those leftover tickers aliases sibling-class "
+        "bytes (BRSTX 2023 dividend $0.09799 is not BRSPX; BRWUX / MNWUX / "
+        "DVRIX leftover years already on the book). Class-level — never "
+        "copy sibling Excel onto a leftover ticker. Unpublished leftover "
+        "years stay unmatched."
     )
     live_limitations = "Estimates are PDF percent-of-NAV ranges. Fixture transcribes public rows."
 

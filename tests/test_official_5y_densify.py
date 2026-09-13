@@ -11,7 +11,7 @@ from app.sources.american_funds import AmericanFundsSource
 from app.sources.aum import filter_large_aum
 from app.sources.families import BlackRockSource, TRowePriceSource, VanguardSource
 from app.sources.eleventh_tier import AmgSource
-from app.sources.fifth_tier import OakmarkSource, RoyceSource, VictorySource
+from app.sources.fifth_tier import OakmarkSource, RoyceSource, TouchstoneSource, VictorySource
 from app.sources.fourth_tier import (
     ArtisanSource,
     FirstEagleSource,
@@ -19,8 +19,9 @@ from app.sources.fourth_tier import (
     PrincipalSource,
     ThriventSource,
 )
-from app.sources.next_tier import NorthernTrustSource, NuveenSource, SchwabSource
-from app.sources.third_tier import AllspringSource, JanusHendersonSource
+from app.sources.next_tier import DimensionalSource, NorthernTrustSource, NuveenSource, SchwabSource
+from app.sources.ninth_tier import AmericanBeaconSource
+from app.sources.third_tier import AllspringSource, JanusHendersonSource, MfsSource
 from app.sources.sixth_tier import (
     FirstTrustSource,
     HardingLoevnerSource,
@@ -306,9 +307,10 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # VSEMX 2025 / VTSPX 2021+2023 / VCTXX / VMRXX / VMSXX 2024–2025).
     # Parallel E leftover Nuveen Institutional / Class I paid history: +3 MF 5y
     # (TEIHX / TICHX / TSOHX). NSBRX is 4y (2021 unpublished).
+    # Parallel C leftover: Northern Trust 2022 ICI CG-dash equity (NMIEX +1 MF).
     # No new identities. ETF 5y unchanged.
-    assert digest.funds_with_5y == 3261
-    assert digest.funds_with_5y_mf == 2525
+    assert digest.funds_with_5y == 3262
+    assert digest.funds_with_5y_mf == 2526
     assert digest.funds_with_5y_etf == 736
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
@@ -2060,3 +2062,147 @@ def test_nuveen_leftover_product_page_paid_history_fills_institutional_5y() -> N
         and row.amount is not None
     ]
     assert nsbax_2024 == []
+
+
+def test_northern_trust_2022_ici_fills_cg_dash_leftover() -> None:
+    records = NorthernTrustSource().fetch(mode="fixture").records
+    nmiex_2022 = next(
+        row
+        for row in records
+        if row.ticker == "NMIEX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2022
+        and row.amount
+    )
+    assert nmiex_2022.amount == Decimal("0.157603")
+    assert str(nmiex_2022.ex_date) == "2022-12-15"
+    assert str(nmiex_2022.payable_date) == "2022-12-15"
+    assert nmiex_2022.publication_stage == PublicationStage.final
+
+    nmmex_2022 = next(
+        row
+        for row in records
+        if row.ticker == "NMMEX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2022
+        and row.amount
+    )
+    assert nmmex_2022.amount == Decimal("0.113257")
+
+    nmiex_years = {
+        row.ex_date.year
+        for row in records
+        if row.ticker == "NMIEX"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert set(LOOKBACK_YEARS) <= nmiex_years
+
+    # December 2022 ICI dash / CG-in-total rows stay unmatched.
+    ngrex_2022 = [
+        row
+        for row in records
+        if row.ticker == "NGREX"
+        and row.ex_date
+        and row.ex_date.year == 2022
+        and row.amount is not None
+    ]
+    assert ngrex_2022 == []
+
+
+def test_parallel_c_leftover_walls_stay_unmatched() -> None:
+    dfa = DimensionalSource().fetch(mode="fixture").records
+    disvx_early = [
+        row
+        for row in dfa
+        if row.ticker == "DISVX"
+        and row.ex_date
+        and row.ex_date.year in {2021, 2022}
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert disvx_early == []
+
+    touchstone = TouchstoneSource().fetch(mode="fixture").records
+    tegix_2023 = [
+        row
+        for row in touchstone
+        if row.ticker == "TEGIX"
+        and row.ex_date
+        and row.ex_date.year == 2023
+        and row.amount is not None
+    ]
+    assert tegix_2023 == []
+
+    beacon = AmericanBeaconSource().fetch(mode="fixture").records
+    sfmix_2023 = [
+        row
+        for row in beacon
+        if row.ticker == "SFMIX"
+        and row.ex_date
+        and row.ex_date.year == 2023
+        and row.amount is not None
+    ]
+    assert sfmix_2023 == []
+    ssijx_2024 = [
+        row
+        for row in beacon
+        if row.ticker == "SSIJX"
+        and row.ex_date
+        and row.ex_date.year == 2024
+        and row.amount is not None
+    ]
+    assert ssijx_2024 == []
+    spfyx_2025 = [
+        row
+        for row in beacon
+        if row.ticker == "SPFYX"
+        and row.ex_date
+        and row.ex_date.year == 2025
+        and row.amount is not None
+    ]
+    assert spfyx_2025 == []
+
+    mfs = MfsSource().fetch(mode="fixture").records
+    # Official-class Excel has no leftover year. Do not copy sibling-class
+    # shareCode=R3|R4|I amounts onto BRSPX / BRWRX / MNWTX / DVRFX.
+    brspx_2023 = [
+        row
+        for row in mfs
+        if row.ticker == "BRSPX"
+        and row.ex_date
+        and row.ex_date.year == 2023
+        and row.amount is not None
+    ]
+    assert brspx_2023 == []
+    brwrx_2023 = [
+        row
+        for row in mfs
+        if row.ticker == "BRWRX"
+        and row.ex_date
+        and row.ex_date.year == 2023
+        and row.amount is not None
+    ]
+    assert brwrx_2023 == []
+    mnwtx_2021 = [
+        row
+        for row in mfs
+        if row.ticker == "MNWTX"
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount is not None
+    ]
+    assert mnwtx_2021 == []
+    dvrfx_early = [
+        row
+        for row in mfs
+        if row.ticker == "DVRFX"
+        and row.ex_date
+        and row.ex_date.year in {2021, 2022}
+        and row.amount is not None
+    ]
+    assert dvrfx_early == []
+

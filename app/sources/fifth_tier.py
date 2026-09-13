@@ -421,7 +421,17 @@ class TouchstoneSource(HtmlTableSource):
         "(2025 ST $0.117360 / LT $0.850710), International Value SWRLX, and "
         "Large Cap Focused SENCX. Existing Class A / ETF heroes are not "
         "re-emitted. Large Company Growth product page 404 this session. "
-        "2024 supplemental tax PDF is DRD / Treasury-source, not an ST/LT CG book."
+        "2024 supplemental tax PDF is DRD / Treasury-source, not an ST/LT CG book. "
+        "Parallel 5y sweep C leftover years: product-page distributionData "
+        "JSON already transcribed December 2021–2025 in "
+        "remaining_share_class_paid_year_end.html. Mid Cap Growth "
+        "(TEGIX / TEGYX / TOECX / TFGRX) has 2021/2022/2024/2025 and no "
+        "2023; Emerging Markets Growth (TSEGX / TSEMX) has 2021/2024/2025 "
+        "and no 2022–2023; International Growth Equity Class C (TPYCX) has "
+        "no 2022; R6 (TPYRX) has no 2021–2022. 2023 supplemental tax PDF "
+        "tsf-2188-2312-2023-supplemental-tax-information.pdf is DRD / "
+        "Treasury narrative, not a CG $/share book. Leftover years are "
+        "absent from the issuer JSON, not missed transcription."
     )
     live_limitations = "Year-end book is PDF. Fixture transcribes public Class A rows."
 
