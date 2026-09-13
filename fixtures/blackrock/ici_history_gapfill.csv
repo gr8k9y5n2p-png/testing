@@ -59,3 +59,7 @@ as_of,fund_name,cusip,ticker,record_date,ex_dividend_date,payable_date,income_di
 2025-12-31,iShares ESG Screened S&P Mid-Cap ETF,,XJH,12/16/2025,12/16/2025,12/19/2025,0.209442,,
 2023-12-31,iShares ESG Screened S&P Small-Cap ETF,,XJR,09/27/2023,09/26/2023,10/02/2023,0.140018,,
 2025-12-31,iShares ESG Screened S&P Small-Cap ETF,,XJR,12/16/2025,12/16/2025,12/19/2025,0.180097,,
+2025-12-31,iShares International High Yield Bond ETF (now EUHY),,HYXU,12/19/2025,12/19/2025,12/24/2025,1.895899,,
+2025-12-31,iShares High Yield Muni Income Active ETF (now SHYM),,HYMU,12/19/2025,12/19/2025,12/24/2025,0.098944,,
+2025-12-31,iShares MSCI Global Energy Producers ETF (now POWR),,FILL,12/16/2025,12/16/2025,12/19/2025,0.288052,,
+2025-12-31,iShares U.S. Fixed Income Balanced Risk Systematic ETF (now SYSB),,FIBR,12/19/2025,12/19/2025,12/24/2025,0.347286,,

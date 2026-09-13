@@ -125,6 +125,10 @@ class JanusHendersonSource(HtmlTableSource):
         "Janus Henderson 2023 ICI Primary Layout.pdf (JDCAX LT $3.88875), "
         "Janus-Henderson-2024-ICI-Primary-Layout.pdf (JDCAX ST $0.19019347 / LT $5.46939), "
         "Janus Henderson 2025 ICI Primary Layout.pdf (JDCAX LT $6.96694). "
+        "Official 5y leftover densify adds the starred Emerging Markets midyear "
+        "2025 ICI row the December-only CSV omitted (HEMAX $0.00131188; HEMDX "
+        "$0.11851697; HEMIX $0.04811006; HEMRX $0.06465014; HEMTX $0.00260587; "
+        "ex 7/28/2025). HEMSX 2025 July ICI is all-dash — unmatched. "
         "2025 final YE estimates (through 11/03/2025) remain as the estimate book "
         "(JDCAX LT $6.92). 2024 Preliminary Distribution Estimates 2024.pdf "
         "(JDCAX LT $5.42). 2023 Final Distribution Estimates 2023.pdf "
@@ -150,6 +154,15 @@ class JanusHendersonSource(HtmlTableSource):
                 live=False,
                 parser="ici",
                 large_aum_only=False,
+            ),
+            PageSpec(
+                name="ici_leftover_2025_emerging_markets",
+                url=f"{cdn}/Janus%20Henderson%202025%20ICI%20Primary%20Layout.pdf",
+                fixture="ici_leftover_2025_emerging_markets.csv",
+                live=False,
+                parser="ici",
+                large_aum_only=False,
+                role="history",
             ),
             PageSpec(
                 name="ici_primary_2024",
