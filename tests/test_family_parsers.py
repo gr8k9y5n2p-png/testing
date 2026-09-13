@@ -4749,3 +4749,114 @@ def test_catalyst_annual_distribution_fixtures() -> None:
     assert not any(
         r.ticker == "MBXAX" and r.estimate_type == EstimateType.ordinary_income for r in catalyst
     )
+
+
+def test_parallel_s_leftover_paid_fixtures() -> None:
+    ariel = parse_distribution_html(
+        (ROOT / "ariel" / "leftover_paid_history_parallel_s.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://ariel-leftover-s",
+        fund_family="Ariel",
+    )
+    argfx_2024_lt = next(
+        r
+        for r in ariel
+        if r.ticker == "ARGFX"
+        and r.estimate_type == EstimateType.long_term_capital_gains
+        and str(r.payable_date) == "2024-12-18"
+    )
+    assert argfx_2024_lt.amount == Decimal("3.868892")
+    assert argfx_2024_lt.publication_stage == PublicationStage.final
+    assert {r.ticker for r in ariel} == {"ARGFX", "ARAIX"}
+
+    primecap = parse_distribution_html(
+        (ROOT / "primecap" / "leftover_paid_finals_parallel_s.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://primecap-leftover-s",
+        fund_family="PRIMECAP Odyssey",
+    )
+    poskx_2025_lt = next(
+        r
+        for r in primecap
+        if r.ticker == "POSKX"
+        and r.estimate_type == EstimateType.long_term_capital_gains
+        and str(r.ex_date) == "2025-12-15"
+    )
+    assert poskx_2025_lt.amount == Decimal("8.59624")
+    assert poskx_2025_lt.publication_stage == PublicationStage.final
+
+    hotchkis = parse_distribution_html(
+        (ROOT / "hotchkis" / "leftover_paid_year_end_parallel_s.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://hotchkis-leftover-s",
+        fund_family="Hotchkis & Wiley",
+    )
+    hwlix_2024_lt = next(
+        r
+        for r in hotchkis
+        if r.ticker == "HWLIX"
+        and r.estimate_type == EstimateType.long_term_capital_gains
+        and str(r.ex_date) == "2024-12-05"
+    )
+    assert hwlix_2024_lt.amount == Decimal("3.90044000")
+    assert {r.ticker for r in hotchkis} == {"HWLIX", "HWAIX", "HWNIX"}
+
+    baird = parse_distribution_html(
+        (ROOT / "baird" / "leftover_paid_capital_gains_parallel_s.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://baird-leftover-s",
+        fund_family="Baird",
+    )
+    bmdix_2021_lt = next(
+        r
+        for r in baird
+        if r.ticker == "BMDIX"
+        and r.estimate_type == EstimateType.long_term_capital_gains
+        and str(r.ex_date) == "2021-12-16"
+    )
+    assert bmdix_2021_lt.amount == Decimal("4.39824")
+    assert not any(r.ticker in {"BCOIX", "BSGIX"} for r in baird)
+
+    champlain = parse_distribution_html(
+        (ROOT / "champlain" / "leftover_paid_year_end_parallel_s.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://champlain-leftover-s",
+        fund_family="Champlain",
+    )
+    cipix_2021_lt = next(
+        r
+        for r in champlain
+        if r.ticker == "CIPIX"
+        and r.estimate_type == EstimateType.long_term_capital_gains
+        and str(r.ex_date) == "2021-12-14"
+    )
+    assert cipix_2021_lt.amount == Decimal("1.6369")
+    assert not any(r.ticker in {"CIPMX", "CIPSX"} for r in champlain)
+    assert not any(
+        r.ticker == "CIPTX" and r.ex_date and r.ex_date.year in {2021, 2022} for r in champlain
+    )
+
+    davis = parse_distribution_html(
+        (ROOT / "davis" / "leftover_paid_year_end_parallel_s.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://davis-leftover-s",
+        fund_family="Davis Funds",
+    )
+    nyvtx_2024_lt = next(
+        r
+        for r in davis
+        if r.ticker == "NYVTX"
+        and r.estimate_type == EstimateType.long_term_capital_gains
+        and str(r.ex_date) == "2024-12-13"
+    )
+    assert nyvtx_2024_lt.amount == Decimal("3.00")
+    assert {r.ticker for r in davis} == {"NYVTX", "DGFAX", "RPEAX"}
+    assert not any(
+        r.ticker == "DGFAX" and r.ex_date and r.ex_date.year == 2022 for r in davis
+    )

@@ -18,7 +18,12 @@ class PrimecapSource(HtmlTableSource):
         "(Stock POSKX ST $0.15 / LT $8.25; Growth POGRX ST $0.25 / LT $9.00; "
         "Aggressive Growth POAGX ST $0.30 / LT $6.50). "
         "Record 12/12/2025; ex 12/15/2025. The PDF is fund-level; tickers are "
-        "public Investor-class identifiers."
+        "public Investor-class identifiers. "
+        "Leftover paid finals 2021–2025 (POSKX / POGRX / POAGX): live 2025 "
+        "https://www.primecap.com/wp-content/uploads/2025/12/"
+        "2025-Final-Distribution-Amounts-PCF000288.pdf "
+        "plus Wayback 2021–2024 PCF000166 / 195 / 227 / 256. "
+        "POAGX 2021–2022 OI/ST dashes omitted; 2024 ST official $0.00000 stored."
     )
     live_limitations = (
         "Estimate book is PDF. Fixture transcribes public Investor-class identifiers."
@@ -36,7 +41,18 @@ class PrimecapSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
-            )
+            ),
+            PageSpec(
+                name="leftover_paid_finals_parallel_s",
+                url=(
+                    "https://www.primecap.com/wp-content/uploads/2025/12/"
+                    "2025-Final-Distribution-Amounts-PCF000288.pdf"
+                ),
+                fixture="leftover_paid_finals_parallel_s.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
+            ),
         ]
 
 
@@ -51,7 +67,10 @@ class ArielSource(HtmlTableSource):
         "Distributions_ArielFund_as-of-12.17.2025-Final.pdf "
         "(Ariel Fund Investor ARGFX income $0.110534 / ST $0.444905 / LT $8.152412; "
         "Institutional ARAIX income $0.096387 / same ST/LT). "
-        "Fixture transcribes the 2025 year-end rows only."
+        "Fixture transcribes the 2025 year-end rows only. "
+        "Leftover paid history 2021–2024 for in-book ARGFX / ARAIX only "
+        "(Reinvest Date as payable; official printed $0.000000 stored). "
+        "Other Ariel sleeves stay off the leftover page."
     )
     live_limitations = "Paid book is a multi-decade PDF. Fixture transcribes 2025 year-end rows."
 
@@ -67,7 +86,18 @@ class ArielSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
-            )
+            ),
+            PageSpec(
+                name="leftover_paid_history_parallel_s",
+                url=(
+                    "https://www.arielinvestments.com/wp-content/uploads/2025/12/"
+                    "Distributions_ArielFund_as-of-12.17.2025-Final.pdf"
+                ),
+                fixture="leftover_paid_history_parallel_s.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
+            ),
         ]
 
 
@@ -85,7 +115,10 @@ class BairdSource(HtmlTableSource):
         "Chautauqua Global Growth Inst CCGIX ST $0.11209 / LT $0.69980). "
         "Record 12/12/2025; ex 12/15/2025; pay 12/16/2025. "
         "Bond book is all printed None — omitted. Small/Mid Cap Growth printed None — omitted. "
-        "Institutional + Investor equity rows with amounts."
+        "Institutional + Investor equity rows with amounts. "
+        "Leftover paid capital-gains PDFs 2021–2024 for in-book equity leftovers only "
+        "(BSVIX / BSVSX / BMDIX / BMDSX / CCGIX / CCGSX / CCWIX / CCWSX). "
+        "Printed None omitted (not invented $0). Dividend-schedule PDFs are calendars only — unused."
     )
     live_limitations = (
         "Year-end book is PDF. Fixture transcribes public Institutional + Investor equity rows."
@@ -103,7 +136,18 @@ class BairdSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
-            )
+            ),
+            PageSpec(
+                name="leftover_paid_capital_gains_parallel_s",
+                url=(
+                    "https://www.bairdassetmanagement.com/siteassets/pdfs/"
+                    "distributions/2024-final-capital-gains.pdf"
+                ),
+                fixture="leftover_paid_capital_gains_parallel_s.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
+            ),
         ]
 
 
