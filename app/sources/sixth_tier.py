@@ -255,7 +255,10 @@ class VaneckSource(HtmlTableSource):
         "(MWMIX ST $0.7455 / LT $1.9311; INIVX 2022 all-None omitted) and 2021 MF "
         "https://www.vaneck.com/us/en/vaneck-funds-2021-yearend-dividends-distributions.pdf "
         "(INIVX income $0.6603; MWMIX ST $2.3655 / LT $1.7611). "
-        "Hub: https://www.vaneck.com/us/en/resources/etf-distributions/"
+        "Parallel 5y sweep B re-read leftover years on the same official PDFs: "
+        "AFK/VNM 2024, REMX 2023, INIVX/INIIX/INIYX 2022, GLIN/GMET 2021, "
+        "RSX/RSXJ 2022, and MOTE 2025 stay issuer-printed None / absent — "
+        "unmatched, not $0. Hub: https://www.vaneck.com/us/en/resources/etf-distributions/"
     )
     live_limitations = (
         "Family estimate books are PDF. Weekly walk uses the MF estimate PDF, "
@@ -568,7 +571,12 @@ class FirstTrustSource(HtmlTableSource):
         "(FPX 2021-09-23 $0.080500; FEP 2022-09-23 $0.170700; FSZ 2023-06-27 "
         "$1.281000; AGQI 2024-09-26 $0.071700; RNEM 2021-09-23 $0.843100). "
         "Empty issuer years (ARVR/BGLD/CRPT/EIPX/FSGS/FTC/FTGS/FXH/MISL/RDVI) "
-        "still omitted."
+        "still omitted. Parallel 5y sweep B re-reads leftover Print=Y years "
+        "still missing from fixtures: FNY 2025-06-26 $0.029700; BNGE "
+        "2022-06-24 $0.099800; EMDM 2024-12-13 $0.847300; SDVD 2024-12-13 "
+        "$0.161200; FDNI 2023-03-24 $0.089700. Those fills do not complete "
+        "5y. 4y leftovers (ARVR/BGLD/CRPT/EIPX/FSGS/FTC/FTGS/FXH/MISL/RDVI) "
+        "and FNY 2021 / BNGE 2021+2024 / FBT empty years still unpublished."
     )
     live_limitations = (
         "Family 19(a) and declaration PDFs. Weekly walk uses the ContentGUID notice "
@@ -635,6 +643,16 @@ class FirstTrustSource(HtmlTableSource):
                     "Print=Y&Ticker=FPX&year=2021"
                 ),
                 fixture="product_page_history_midyear_gapfill.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="product_page_history_leftover_parallel_b",
+                url=(
+                    "https://www.ftportfolios.com/Retail/Etf/EtfDividHistory.aspx?"
+                    "Print=Y&Ticker=FNY&year=2025"
+                ),
+                fixture="product_page_history_leftover_parallel_b.html",
                 live=False,
                 role="history",
             ),
