@@ -297,6 +297,14 @@ class NorthernTrustSource(HtmlTableSource):
         "in-book equity whose 2023 CG PDF is em-dash (NSRIX $0.320700; "
         "NSRKX $0.328734; NUEIX $0.055796; NMFIX $0.110864). CG-paying "
         "2023 tickers omitted (would double-count). "
+        "Parallel 5y sweep C leftover: 2022 ICI December income only for "
+        "in-book equity whose 2022 CG PDF is em-dash "
+        "(.../nf-ici-primary-2022.pdf; NMIEX $0.157603 completes 2021–2025; "
+        "NMMEX $0.113257; NOEMX $0.246770; NOIGX $0.256449; NOINX $0.327542; "
+        "NMMGX $0.009599). NGREX December 2022 ICI is an official dash "
+        "(unmatched). NUESX December 2022 income-dividends column is a dash "
+        "while the total includes CG (omitted). CG-paying 2022 tickers "
+        "omitted (would double-count). "
         "Hub: https://ntam.northerntrust.com/united-states/all-investor/account-resources/tax-center"
     )
     live_limitations = "Year-end figures are PDF. Fixture transcribes the public Northern Funds table."
@@ -342,6 +350,13 @@ class NorthernTrustSource(HtmlTableSource):
                 url=f"{tax}/northerntrust/investment-management/global/en/documents/account-resources/tax-center/capital-gains-2022.pdf",
                 fixture="2022_capital_gain_distributions.html",
                 live=False,
+            ),
+            PageSpec(
+                name="2022_ici_december_income",
+                url=f"{tax}/northerntrust/investment-management/global/en/documents/account-resources/tax-center/nf-ici-primary-2022.pdf",
+                fixture="2022_ici_december_income.html",
+                live=False,
+                role="history",
             ),
             PageSpec(
                 name="2021_capital_gain_distributions",
@@ -521,7 +536,19 @@ class DimensionalSource(HtmlTableSource):
         "QDI % / DRD / 163(j) pages skipped. Tickers mapped from the 2024 December book. "
         "2021–2022 tax-sheet siblings were not on the live tax center; "
         ".../332797/.../2021|2022|2023-distributions.pdf alias the 2024 December file. "
-        "No public filled ICI file. Tax center: https://www.dimensional.com/us-en/tax"
+        "Parallel 5y sweep C re-probe (year-alias trap): "
+        "chmedia/{id}/source/download/{any-year-filename}.pdf ignores the "
+        "filename year and serves that media ID's bytes. Live tax center "
+        "https://www.dimensional.com/us-en/tax lists 2023/2024/2025 sheets "
+        "only (0 mentions of 2021 or 2022); media 480410 is the 2023 tax "
+        "sheet, 218591 the 2024 tax sheet, 332797 the 2024 December book, "
+        "480267 the 2025 tax sheet — same MD5 across aliased filenames. "
+        "Wayback CDX has no distinct 2021-tax-sheet / 2022-tax-sheet "
+        "capture. Product pages are SPA shells with no distribution-history "
+        "table. No public filled ICI file. Leftover MF 3y (DISVX / DFELX / "
+        "DFQTX and 43 peers) stay unmatched for 2021–2022 — never invent $0 "
+        "and never transcribe aliased 480410/218591/332797 bytes as 2021/2022. "
+        "Tax center: https://www.dimensional.com/us-en/tax"
     )
     live_limitations = "Year-end book is PDF. Fixture transcribes public paid/estimate rows."
 
