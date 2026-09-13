@@ -28,6 +28,7 @@ from app.sources.fourth_tier import (
 from app.sources.next_tier import (
     DimensionalSource,
     FranklinTempletonSource,
+    MorganStanleySource,
     NorthernTrustSource,
     NuveenSource,
     SchwabSource,
@@ -327,9 +328,12 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # LT is year-depth only (still missing 2021). ETF 5y unchanged on #167.
     # Parallel G leftover: BlackRock/iShares + SPDR fills raise the pin +2 MF
     # (BIRAX 2021 / MDLOX 2021+2022) and +2 ETF (IBHF 2021–2024 / NZAC 2022–2023).
-    # No new identities.
-    assert digest.funds_with_5y == 3300
-    assert digest.funds_with_5y_mf == 2562
+    # Parallel K leftover: Allspring class-level December income +31 MF 5y
+    # (Core Bond / Short-Term Bond Plus / Core Plus / HY Muni / Income Plus /
+    # MN+WI tax-free / Spectrum Income + Conservative / WICIX+WICRX).
+    # MSIM/EV ETF 2024 leftover is year-depth only. No new identities.
+    assert digest.funds_with_5y == 3331
+    assert digest.funds_with_5y_mf == 2593
     assert digest.funds_with_5y_etf == 738
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
@@ -2737,4 +2741,248 @@ def test_parallel_f_leftover_walls_stay_unmatched() -> None:
         and row.amount is not None
     ]
     assert trptx_2024 == []
+
+
+def test_parallel_k_allspring_leftover_income_completes_5y() -> None:
+    records = AllspringSource().fetch(mode="fixture").records
+    mbfix_2023 = next(
+        row
+        for row in records
+        if row.ticker == "MBFIX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2023
+        and row.amount
+    )
+    assert mbfix_2023.amount == Decimal("0.039850909")
+    assert str(mbfix_2023.ex_date) == "2023-12-29"
+    assert mbfix_2023.publication_stage == PublicationStage.final
+    # Class-level — Institutional is not copied onto Class A / Class C.
+    mbfax_2023 = next(
+        row
+        for row in records
+        if row.ticker == "MBFAX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2023
+        and row.amount
+    )
+    assert mbfax_2023.amount == Decimal("0.037858153")
+    mbfcx_2023 = next(
+        row
+        for row in records
+        if row.ticker == "MBFCX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2023
+        and row.amount
+    )
+    assert mbfcx_2023.amount == Decimal("0.030347834")
+
+    sstvx_2022 = next(
+        row
+        for row in records
+        if row.ticker == "SSTVX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2022-12-21"
+        and row.amount
+    )
+    assert sstvx_2022.amount == Decimal("0.02809")
+    whyix_2025 = next(
+        row
+        for row in records
+        if row.ticker == "WHYIX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2025
+        and row.amount
+    )
+    assert whyix_2025.amount == Decimal("0.038519989")
+    wsiax_2024 = next(
+        row
+        for row in records
+        if row.ticker == "WSIAX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2024-12-20"
+        and row.amount
+    )
+    assert wsiax_2024.amount == Decimal("0.06789")
+    wicix_2022 = next(
+        row
+        for row in records
+        if row.ticker == "WICIX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2022-12-28"
+        and row.amount
+    )
+    assert wicix_2022.amount == Decimal("0.12539")
+    wcafx_2023 = next(
+        row
+        for row in records
+        if row.ticker == "WCAFX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2023-12-27"
+        and row.amount
+    )
+    assert wcafx_2023.amount == Decimal("0.08252")
+
+    for ticker in (
+        "MBFIX",
+        "MBFAX",
+        "SSTVX",
+        "SSHIX",
+        "STYAX",
+        "WIPIX",
+        "WHYIX",
+        "WHYMX",
+        "WSIAX",
+        "NMTFX",
+        "WWTFX",
+        "WCAFX",
+        "WMBGX",
+        "WICIX",
+        "WICRX",
+    ):
+        years = {
+            _year_for_row(row.as_of, row.ex_date, row.payable_date)
+            for row in records
+            if row.ticker == ticker
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        }
+        years.discard(None)
+        assert set(LOOKBACK_YEARS) <= years, ticker
+
+    # Year-depth only — 2021 unpublished on the issuer page.
+    aspax_years = {
+        _year_for_row(row.as_of, row.ex_date, row.payable_date)
+        for row in records
+        if row.ticker == "ASPAX"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    aspax_years.discard(None)
+    assert {2022, 2023, 2024, 2025} <= aspax_years
+    assert 2021 not in aspax_years
+    wrpix_years = {
+        _year_for_row(row.as_of, row.ex_date, row.payable_date)
+        for row in records
+        if row.ticker == "WRPIX"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    wrpix_years.discard(None)
+    assert {2022, 2023, 2024, 2025} <= wrpix_years
+    assert 2021 not in wrpix_years
+
+
+def test_parallel_k_msim_eaton_vance_leftover_2024_etf() -> None:
+    records = MorganStanleySource().fetch(mode="fixture").records
+    cdei_2024 = next(
+        row
+        for row in records
+        if row.ticker == "CDEI"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2024-12-23"
+        and row.amount
+    )
+    assert cdei_2024.amount == Decimal("0.232960")
+    assert str(cdei_2024.payable_date) == "2024-12-27"
+    assert cdei_2024.publication_stage == PublicationStage.final
+    cvie_2024 = next(
+        row
+        for row in records
+        if row.ticker == "CVIE"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2024
+        and row.amount
+    )
+    assert cvie_2024.amount == Decimal("0.522115")
+    evim_2024 = next(
+        row
+        for row in records
+        if row.ticker == "EVIM"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2024
+        and row.amount
+    )
+    assert evim_2024.amount == Decimal("0.166867")
+    evln_2024 = next(
+        row
+        for row in records
+        if row.ticker == "EVLN"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2024
+        and row.amount
+    )
+    assert evln_2024.amount == Decimal("0.325864")
+    # Existing CVLC 2024 row is kept (not overwritten / not sibling-copied).
+    cvlc_2024 = next(
+        row
+        for row in records
+        if row.ticker == "CVLC"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2024
+        and row.amount
+    )
+    assert cvlc_2024.amount == Decimal("0.222291")
+    for ticker in ("CDEI", "CVIE", "CVSB", "EVIM", "EVLN", "EVSB", "PAPI", "PHEQ"):
+        years = {
+            _year_for_row(row.as_of, row.ex_date, row.payable_date)
+            for row in records
+            if row.ticker == ticker
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        }
+        years.discard(None)
+        assert {2024, 2025} <= years, ticker
+        assert 2021 not in years
+        assert 2022 not in years
+        assert 2023 not in years
+
+
+def test_parallel_k_leftover_walls_stay_unmatched() -> None:
+    allspring = AllspringSource().fetch(mode="fixture").records
+    for ticker, year in (
+        ("EAAFX", 2023),
+        ("WDSAX", 2021),
+        ("WFSTX", 2023),
+        ("WFDAX", 2023),
+        ("WEMAX", 2022),
+        ("EKGAX", 2023),
+        ("SENAX", 2022),
+        ("WRPIX", 2021),
+        ("ASPAX", 2021),
+    ):
+        rows = [
+            row
+            for row in allspring
+            if row.ticker == ticker
+            and row.ex_date
+            and row.ex_date.year == year
+            and row.amount is not None
+        ]
+        assert rows == [], f"{ticker} {year} should stay unmatched"
+
+    msim = MorganStanleySource().fetch(mode="fixture").records
+    for ticker in ("EVYM", "EVMO", "XAGG"):
+        early = [
+            row
+            for row in msim
+            if row.ticker == ticker
+            and row.ex_date
+            and row.ex_date.year in {2021, 2022, 2023, 2024}
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        ]
+        assert early == [], f"{ticker} 2021–2024 should stay unmatched"
 

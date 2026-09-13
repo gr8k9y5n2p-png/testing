@@ -380,8 +380,17 @@ class MorganStanleySource(HtmlTableSource):
         "2025_etf_year_end_distributions.pdf (full listed ETF ordinary-income "
         "table; CVLC income $0.283927; CG columns em-dash / 0.00% omitted) and "
         "2024_etf_year_end_distributions.pdf (CVLC income $0.222291, 0% CG; "
-        "ex/record 12/23/2024, payable 12/27/2024). Live GET is often Akamai 403. "
-        "No public filled ICI file. Open-end 2025 PDF was Akamai-blocked."
+        "ex/record 12/23/2024, payable 12/27/2024). Parallel K leftover reads "
+        "the same official 2024 ETF PDF for in-book tickers the CVLC-only "
+        "fixture omitted (CDEI $0.232960; CVIE $0.522115; CVSB $0.206617; "
+        "EVIM $0.166867; EVLN $0.325864; EVSB $0.153137; EVSD $0.207173; "
+        "EVSM $0.138264; EVTR $0.205337; PAPI $0.164041; PEPS $0.041695; "
+        "PHEQ $0.199903). CG columns em-dash / 0.00% omitted. EVYM / EVMO / "
+        "XAGG unpublished on the 2024 PDF (2025 launches). 2021–2023 ETF YE "
+        "sibling PDFs unpublished (Wayback CDX empty; Calvert pages 403). "
+        "Live GET is often Akamai 403. No public filled ICI file. Open-end "
+        "2025 PDF was Akamai-blocked. Open-end MSIM tickers are not in-book "
+        "leftovers — not added."
     )
     live_limitations = (
         "Year-end PDFs are often Akamai-walled to automated clients. "
@@ -413,6 +422,14 @@ class MorganStanleySource(HtmlTableSource):
                 fixture="2024_etf_year_end.html",
                 live=False,
                 large_aum_only=True,
+            ),
+            PageSpec(
+                name="leftover_etf_year_end_2024",
+                url=f"{tax}/2024_etf_year_end_distributions.pdf",
+                fixture="leftover_etf_year_end_2024.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
             ),
         ]
 
