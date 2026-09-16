@@ -718,8 +718,14 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # Invesco 2021–2022 ICI still 404; Franklin DIST-SUMM 2021–2024 still 204;
     # PIMCO has no in-book leftover tickers. ETF 5y unchanged from the AB tip.
     # No new identities.
-    assert digest.funds_with_5y == 3648
-    assert digest.funds_with_5y_mf == 2896
+    # Parallel AC leftover: Principal leftover YEAR finals +12 MF (PFIJX /
+    # GEM PEPSX-PIEIX-PIEJX-PIIMX 2024 income; Real Estate PFRSX family
+    # 2025 quarterly income). AF YEAR-final JSON, JH ICI 403, Nationwide
+    # 2024 estimate PDFs, and Thrivent unpublished CG years stay walls.
+    # #188 midyear all-events not redone. ETF 5y unchanged vs Y tip.
+    # No new identities.
+    assert digest.funds_with_5y == 3660
+    assert digest.funds_with_5y_mf == 2908
     assert digest.funds_with_5y_etf == 752
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
@@ -7826,3 +7832,159 @@ def test_parallel_y_heroes_are_searchable(client: TestClient) -> None:
     ]
     assert cmlax_2025 == []
 
+
+def test_parallel_ac_principal_leftover_paid_fills_5y() -> None:
+    records = PrincipalSource().fetch(mode="fixture").records
+    pfijx_2024 = next(
+        row
+        for row in records
+        if row.ticker == "PFIJX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2024-12-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert pfijx_2024.amount == Decimal("0.1338")
+    pieix_2024 = next(
+        row
+        for row in records
+        if row.ticker == "PIEIX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2024-12-27"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert pieix_2024.amount == Decimal("0.0733")
+    pfrsx_2025 = next(
+        row
+        for row in records
+        if row.ticker == "PFRSX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-29"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert pfrsx_2025.amount == Decimal("0.1804")
+    for ticker in (
+        "PFIJX",
+        "PEPSX",
+        "PIEIX",
+        "PIEJX",
+        "PIIMX",
+        "PFRSX",
+        "PIREX",
+        "PRCEX",
+        "PREJX",
+        "PREPX",
+        "PRERX",
+        "PRRAX",
+    ):
+        years = _paid_lookback_years(records, ticker)
+        assert set(LOOKBACK_YEARS) <= years, ticker
+
+
+def test_parallel_ac_leftover_walls_stay_unmatched() -> None:
+    principal = PrincipalSource().fetch(mode="fixture").records
+    for ticker in (
+        "PBLCX",
+        "PBCKX",
+        "PBCJX",
+        "PBLAX",
+        "PGBEX",
+        "PGBGX",
+        "PCSMX",
+        "PGRTX",
+        "PPNMX",
+        "PPNPX",
+        "PSIJX",
+    ):
+        years = _paid_lookback_years(principal, ticker)
+        assert 2023 not in years, ticker
+    for ticker in ("PEAPX", "PRIAX"):
+        years = _paid_lookback_years(principal, ticker)
+        assert 2024 not in years, ticker
+        pepsx_2024 = [
+            row
+            for row in principal
+            if row.ticker == "PEPSX"
+            and row.ex_date
+            and str(row.ex_date) == "2024-12-27"
+            and row.estimate_type == EstimateType.ordinary_income
+            and row.amount == Decimal("0.0363")
+        ]
+        assert pepsx_2024, "GEM R-5 2024 must stay class-level"
+
+    jh = JohnHancockSource().fetch(mode="fixture").records
+    for ticker in ("JVLAX", "TAGRX"):
+        finals = [
+            row
+            for row in jh
+            if row.ticker == ticker
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        ]
+        assert finals == [], ticker
+
+    nationwide = NationwideSource().fetch(mode="fixture").records
+    for ticker in ("NWHOX", "NWHJX", "NTDAX"):
+        years = _paid_lookback_years(nationwide, ticker)
+        assert {2021, 2022, 2023, 2025} <= years, ticker
+        assert 2024 not in years, ticker
+
+    thrivent = ThriventSource().fetch(mode="fixture").records
+    tmaix_2022 = [
+        row
+        for row in thrivent
+        if row.ticker == "TMAIX"
+        and _year_for_row(row.as_of, row.ex_date, row.payable_date) == 2022
+        and row.amount is not None
+    ]
+    assert tmaix_2022 == []
+    tmcvx_2023 = [
+        row
+        for row in thrivent
+        if row.ticker == "TMCVX"
+        and _year_for_row(row.as_of, row.ex_date, row.payable_date) == 2023
+        and row.amount is not None
+    ]
+    assert tmcvx_2023 == []
+
+    af = AmericanFundsSource().fetch(mode="fixture").records
+    anefx_2022 = [
+        row
+        for row in af
+        if row.ticker == "ANEFX"
+        and _year_for_row(row.as_of, row.ex_date, row.payable_date) == 2022
+        and row.publication_stage in {PublicationStage.final, PublicationStage.paid}
+        and row.amount is not None
+    ]
+    assert anefx_2022 == []
+
+
+def test_parallel_ac_heroes_are_searchable(client: TestClient) -> None:
+    fetched = client.post(
+        "/ingest/fetch", json={"fund_family": "principal", "mode": "fixture"}
+    )
+    assert fetched.status_code == 200, fetched.text
+    assert fetched.json()["created"] > 0
+
+    for ticker in ("PFIJX", "PIEIX", "PFRSX", "PEAPX", "PBLCX"):
+        body = client.get("/funds", params={"q": ticker}).json()
+        tickers = [item["ticker"] for item in body["items"]]
+        assert ticker in tickers, f"{ticker} missing from GET /funds?q={ticker}: {tickers[:8]}"
+
+    pfrsx = client.get(
+        "/distributions",
+        params={"ticker": "PFRSX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    pfrsx_2025 = [
+        Decimal(row["amount"])
+        for row in pfrsx["items"]
+        if row.get("ticker") == "PFRSX"
+        and row.get("estimate_type") == "ordinary_income"
+        and str(row.get("ex_date") or "").startswith("2025-12-29")
+    ]
+    assert Decimal("0.1804") in pfrsx_2025

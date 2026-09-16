@@ -22,7 +22,12 @@ class JohnHancockSource(HtmlTableSource):
         "Official 5y parallel M leftover: no public filled ICI; jhinvestments.com "
         "product pages 404; tax-center is a login shell. Shareholder-report PDFs "
         "are fund-level tax-character totals, not per-share Class A YE. "
-        "Estimate press-release PDFs stay estimates — never promoted to final."
+        "Estimate press-release PDFs stay estimates — never promoted to final. "
+        "Official 5y parallel AC leftover (2026-09-16): tax-center HTML listed "
+        "ICI Primary Open-End xlsx for 2024/2025; live GET returned 403 (hub "
+        "later 403). Wayback CDX offline this session. Product pages still 404. "
+        "JVLAX / TAGRX leftovers stay 0y paid — never invent finals from "
+        "estimate ranges."
     )
     live_limitations = (
         "Family book is a PDF (press-release HTML is a viewer/shell). Fixture transcribes public A-share ranges."
@@ -102,9 +107,17 @@ class PrincipalSource(HtmlTableSource):
         "income $0.3149; PTPPX 2023 income $0.3745; PGBHX 2023 income $0.0121 "
         "(not copied onto PGBGX / PGBEX). Real Estate leftover 2021–2023 "
         "(PRRAX 2023 income $0.1457). GEM leftover 2021–2023 income (no 2024 YE). "
-        "SmallCap Growth leftovers + PGBGX / PGBEX / PGRTX / PBLAX / PBCJX still "
+        "        SmallCap Growth leftovers + PGBGX / PGBEX / PGRTX / PBLAX / PBCJX still "
         "have no 2023 YE — unmatched. PINJX product page 404. "
-        "Class-level — never copied across A/I/C/R/J."
+        "Official 5y parallel AC leftover (2026-09-16): live product pages now "
+        "print the missing YEAR finals that unlock leftover 4y classes — Real "
+        "Estate 2025 quarterly income (PFRSX 2025-12-29 $0.1804; PIREX $0.1772; "
+        "PRCEX $0.0690; PREJX $0.1605; PREPX $0.1625; PRERX $0.1404; PRRAX "
+        "$0.1511), GEM 2024 December income (PEPSX $0.0363; PIEIX $0.0733; "
+        "PIEJX $0.0178; PIIMX $0.0871), and SAM Flexible Income J 2024-12-31 "
+        "income $0.1338. PEAPX / PRIAX still have no 2024 YE. Blue Chip / "
+        "SmallCap Growth still have no 2023 YE. Class-level — never copied "
+        "across A/I/C/R/J."
     )
     live_limitations = (
         "Family estimate PDF is a GetFile/viewer shell. Product-page tables may put the date "
@@ -156,6 +169,14 @@ class PrincipalSource(HtmlTableSource):
                 live=False,
                 role="history",
             ),
+            PageSpec(
+                name="leftover_product_page_history_parallel_ac",
+                url="https://www.principalam.com/us/fund/pfrsx",
+                fixture="leftover_product_page_history_parallel_ac.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
+            ),
         ]
 
 
@@ -187,7 +208,11 @@ class ThriventSource(HtmlTableSource):
         "TCAIX 2022–2023 / TSCGX 2022–2024 / IBBFX / TWAIX remain unpublished on "
         "the official CG book (if a fund is not listed, no CG). Product pages "
         "publish trailing-12-month CG already ingested as 2025 — not a multi-year "
-        "per-share YE API. Never invent $0 for unlisted leftover years."
+        "per-share YE API. Never invent $0 for unlisted leftover years. "
+        "Official 5y parallel AC leftover (2026-09-16): Class S product pages "
+        "and GetDistributionSummary remain current-year only. Same leftover "
+        "years still unpublished. Moderate-allocation short URLs 404; correct "
+        "paths stay current-year dividends + 2025 CG."
     )
     live_limitations = (
         "Family page is public HTML with a 'Thrivent Mutual Fund' header (no ticker column). "
