@@ -285,6 +285,232 @@ def test_vanguard_leftover_ici_parallel_d_fills() -> None:
         assert set(LOOKBACK_YEARS) <= years, ticker
 
 
+def test_vanguard_leftover_ici_parallel_aa_fills() -> None:
+    records = VanguardSource().fetch(mode="fixture").records
+    bnd_2022 = next(
+        row
+        for row in records
+        if row.ticker == "BND"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2022-12-29"
+        and row.amount
+    )
+    assert bnd_2022.amount == Decimal("0.172311")
+    assert bnd_2022.publication_stage == PublicationStage.final
+    bnd_2025 = next(
+        row
+        for row in records
+        if row.ticker == "BND"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-22"
+        and row.amount
+    )
+    assert bnd_2025.amount == Decimal("0.246638")
+    vbiix_2022 = next(
+        row
+        for row in records
+        if row.ticker == "VBIIX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2022-12-01"
+        and row.amount
+    )
+    assert vbiix_2022.amount == Decimal("0.021170")
+    vwalx_2022 = next(
+        row
+        for row in records
+        if row.ticker == "VWALX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2022-12-01"
+        and row.amount
+    )
+    assert vwalx_2022.amount == Decimal("0.030387")
+    biv_2025 = next(
+        row
+        for row in records
+        if row.ticker == "BIV"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2025-08-05"
+        and row.amount
+    )
+    assert biv_2025.amount == Decimal("0.265057")
+    vbtix_2023 = next(
+        row
+        for row in records
+        if row.ticker == "VBTIX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2023-04-03"
+        and row.amount
+    )
+    assert vbtix_2023.amount == Decimal("0.024227")
+    vfirx_2023 = next(
+        row
+        for row in records
+        if row.ticker == "VFIRX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2023-09-01"
+        and row.amount
+    )
+    assert vfirx_2023.amount == Decimal("0.035085")
+    vtbsx_2022 = next(
+        row
+        for row in records
+        if row.ticker == "VTBSX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2022-05-02"
+        and row.amount
+    )
+    assert vtbsx_2022.amount == Decimal("0.018866")
+    vclax_2023 = next(
+        row
+        for row in records
+        if row.ticker == "VCLAX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2023-03-01"
+        and row.amount
+    )
+    assert vclax_2023.amount == Decimal("0.029218")
+    for ticker in (
+        "BIV",
+        "BND",
+        "VBIIX",
+        "VBIMX",
+        "VBMFX",
+        "VBMPX",
+        "VBTIX",
+        "VCITX",
+        "VCLAX",
+        "VFIRX",
+        "VFISX",
+        "VTBSX",
+        "VUSXX",
+        "VWALX",
+    ):
+        years = {
+            row.ex_date.year
+            for row in records
+            if row.ticker == ticker
+            and row.ex_date
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        }
+        assert set(LOOKBACK_YEARS) <= years, ticker
+
+
+def test_parallel_aa_leftover_walls_stay_unmatched() -> None:
+    records = VanguardSource().fetch(mode="fixture").records
+    vflq_liq = [
+        row
+        for row in records
+        if row.ticker == "VFLQ"
+        and row.amount == Decimal("99.896787")
+    ]
+    assert vflq_liq == []
+    vbtlx_2023 = [
+        row
+        for row in records
+        if row.ticker == "VBTLX"
+        and row.ex_date
+        and row.ex_date.year == 2023
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert vbtlx_2023 == []
+    bsv_missing = [
+        row
+        for row in records
+        if row.ticker == "BSV"
+        and row.ex_date
+        and row.ex_date.year in {2022, 2025}
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert bsv_missing == []
+    vwehx_2025 = [
+        row
+        for row in records
+        if row.ticker == "VWEHX"
+        and row.ex_date
+        and row.ex_date.year == 2025
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert vwehx_2025 == []
+    vedix_2025 = [
+        row
+        for row in records
+        if row.ticker == "VEDIX"
+        and row.ex_date
+        and row.ex_date.year == 2025
+        and row.amount is not None
+    ]
+    assert vedix_2025 == []
+
+    dfa = DimensionalSource().fetch(mode="fixture").records
+    for ticker in ("DISVX", "DFELX", "DFQTX"):
+        early = [
+            row
+            for row in dfa
+            if row.ticker == ticker
+            and row.ex_date
+            and row.ex_date.year in {2021, 2022}
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        ]
+        assert early == [], ticker
+
+    schwab = SchwabSource().fetch(mode="fixture").records
+    swbgx_early = [
+        row
+        for row in schwab
+        if row.ticker == "SWBGX"
+        and row.ex_date
+        and row.ex_date.year in {2021, 2022, 2023, 2024}
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert swbgx_early == []
+
+    nuveen = NuveenSource().fetch(mode="fixture").records
+    tinrx_paid_early = [
+        row
+        for row in nuveen
+        if row.ticker == "TINRX"
+        and row.ex_date
+        and row.ex_date.year in {2021, 2022, 2023, 2024}
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert tinrx_paid_early == []
+
+    ssga = StateStreetSource().fetch(mode="fixture").records
+    splg_paid = [
+        row
+        for row in ssga
+        if row.ticker == "SPLG"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert splg_paid == []
+    hybl_2021 = [
+        row
+        for row in ssga
+        if row.ticker == "HYBL"
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount is not None
+    ]
+    assert hybl_2021 == []
+
+
 def test_hartford_class_a_historical_pdf_is_name_keyed() -> None:
     records = HartfordSource().fetch(mode="fixture").records
     ihgix_2021 = next(
@@ -473,9 +699,13 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # Buffalo 2024–2025 is year-depth only (2y; 2021–2023 unpublished).
     # Third Avenue 2022–2024 is year-depth only (4y; 2021 unpublished).
     # ETF 5y unchanged. No new identities.
-    assert digest.funds_with_5y == 3556
-    assert digest.funds_with_5y_mf == 2806
-    assert digest.funds_with_5y_etf == 750
+    # Parallel AA leftover: Vanguard leftover ICI bond / tax-exempt / MM
+    # years +14 (12 MF / 2 ETF): BIV / BND / VBIIX / VBIMX / VBMFX / VBMPX /
+    # VBTIX / VCITX / VCLAX / VFIRX / VFISX / VTBSX / VUSXX / VWALX.
+    # Schwab / SSGA / DFA / Nuveen leftover re-probes stay walls.
+    assert digest.funds_with_5y == 3570
+    assert digest.funds_with_5y_mf == 2818
+    assert digest.funds_with_5y_etf == 752
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
 
@@ -7107,3 +7337,48 @@ def test_parallel_u_heroes_are_searchable(client: TestClient) -> None:
         if row.get("ticker") == "OSTIX" and row.get("amount") is not None
     ]
     assert ostix_paid == []
+
+
+def test_parallel_aa_heroes_are_searchable(client: TestClient) -> None:
+    fetched = client.post(
+        "/ingest/fetch", json={"fund_family": "vanguard", "mode": "fixture"}
+    )
+    assert fetched.status_code == 200, fetched.text
+    assert fetched.json()["created"] > 0
+
+    for ticker in ("BND", "BIV", "VBIIX", "VWALX", "VBTIX", "VUSXX"):
+        body = client.get("/funds", params={"q": ticker}).json()
+        tickers = [item["ticker"] for item in body["items"]]
+        assert ticker in tickers, f"{ticker} missing from GET /funds?q={ticker}: {tickers[:8]}"
+
+    bnd = client.get(
+        "/distributions",
+        params={"ticker": "BND", "publication_stage": "final", "page_size": 200},
+    ).json()
+    bnd_2022 = [
+        Decimal(row["amount"])
+        for row in bnd["items"]
+        if row.get("ticker") == "BND"
+        and row.get("estimate_type") == "ordinary_income"
+        and str(row.get("ex_date") or "").startswith("2022-12-29")
+    ]
+    assert Decimal("0.172311") in bnd_2022
+    bnd_years = {
+        str(row.get("ex_date") or row.get("payable_date") or "")[:4]
+        for row in bnd["items"]
+        if row.get("ticker") == "BND" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= bnd_years
+
+    vbiix = client.get(
+        "/distributions",
+        params={"ticker": "VBIIX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    vbiix_2022 = [
+        Decimal(row["amount"])
+        for row in vbiix["items"]
+        if row.get("ticker") == "VBIIX"
+        and row.get("estimate_type") == "ordinary_income"
+        and str(row.get("ex_date") or "").startswith("2022-12-01")
+    ]
+    assert Decimal("0.021170") in vbiix_2022

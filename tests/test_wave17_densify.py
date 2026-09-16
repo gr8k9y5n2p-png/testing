@@ -187,6 +187,56 @@ def test_vanguard_remaining_ici_2025_pins() -> None:
     assert vevfx_lt.amount == Decimal("3.582907")
 
 
+def test_vanguard_leftover_ici_parallel_aa_pins() -> None:
+    rows = parse_ici_primary(
+        (ROOT / "vanguard" / "leftover_ici_primary_2022.csv").read_text(encoding="utf-8"),
+        source_url="https://advisors.vanguard.com/content/dam/fas/pdfs/2022_ICI_Primary_Layout.pdf",
+        fund_family="Vanguard",
+    )
+    tickers = {row.ticker for row in rows if row.ticker}
+    assert {"BND", "VBIIX", "VWALX", "VTBSX"} <= tickers
+    assert "VFLQ" not in tickers
+    bnd_2022 = next(
+        row
+        for row in rows
+        if row.ticker == "BND"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2022-12-29"
+    )
+    assert bnd_2022.amount == Decimal("0.172311")
+    vwalx_2022 = next(
+        row
+        for row in rows
+        if row.ticker == "VWALX" and row.estimate_type == EstimateType.ordinary_income
+    )
+    assert vwalx_2022.amount == Decimal("0.030387")
+
+    rows_2025 = parse_ici_primary(
+        (ROOT / "vanguard" / "leftover_ici_primary_2025.csv").read_text(encoding="utf-8"),
+        source_url="https://advisors.vanguard.com/content/dam/fas/pdfs/ICIprimary_012026.pdf",
+        fund_family="Vanguard",
+    )
+    bnd_2025 = next(
+        row
+        for row in rows_2025
+        if row.ticker == "BND"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-22"
+    )
+    assert bnd_2025.amount == Decimal("0.246638")
+    biv_2025 = next(
+        row
+        for row in rows_2025
+        if row.ticker == "BIV"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2025-08-05"
+    )
+    assert biv_2025.amount == Decimal("0.265057")
+
+
 def test_wave17_heroes_are_searchable(client: TestClient) -> None:
     for source in (VanguardSource(), AmericanCenturySource()):
         fetched = client.post(
