@@ -111,11 +111,16 @@ class BaillieGiffordSource(HtmlTableSource):
         "Class K tickers from official Baillie Gifford Funds prospectus "
         "(BSGPX / BGCSX / BGAKX / BINSX / BGESX). Amounts unchanged. "
         "All-dash China / Emerging Markets / Concentrated "
-        "Growth / Long Term Global Growth / U.S. Equity Growth omitted."
+        "Growth / Long Term Global Growth / U.S. Equity Growth omitted. "
+        "Leftover paid 2025 Final product-page tables for in-book leftovers "
+        "BGAKX Class K and BINSX / BGESX / BSGPX Institutional only "
+        "(official printed $0.00000 ST stored). Class-level — never copy K onto "
+        "Institutional. BGCSX has no Final table. 2021–2024 unpublished on "
+        "live most-recent tables; Wayback CDX offline."
     )
     live_limitations = (
         "Estimate book is PDF. Fixture transcribes public Institutional / Class K "
-        "identifiers from the official prospectus."
+        "identifiers from the official prospectus. Paid leftover is year-depth only."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -130,7 +135,18 @@ class BaillieGiffordSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
-            )
+            ),
+            PageSpec(
+                name="leftover_paid_history_parallel_v",
+                url=(
+                    "https://www.bailliegifford.com/en/usa/institutional-investor/"
+                    "funds/baillie-gifford-global-alpha-equities-fund/"
+                ),
+                fixture="leftover_paid_history_parallel_v.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
+            ),
         ]
 
 
@@ -149,7 +165,11 @@ class BrandesSource(HtmlTableSource):
         "Small Cap Value BSCMX ST $0.32 / LT $0.49). "
         "Record 12/09/2025; ex/pay 12/10/2025. The PDF is fund-level; Class I tickers "
         "from official brandes.com fund pages (BISMX / BGVIX / BIIEX / BEMIX / BSCMX). "
-        "Amounts unchanged. Tax-loss Core Plus / SMART omitted."
+        "Amounts unchanged. Tax-loss Core Plus / SMART omitted. "
+        "Leftover paid Class I product-page Distributions 2021–2025 "
+        "(December YE income + December CG; paid ≠ estimate — BGVIX 2025 LT "
+        "$3.624675 vs estimate $3.88). Official printed $0.000000 stored "
+        "(BEMIX 2022 December income). A / C / R6 not in-book."
     )
     live_limitations = (
         "Estimate book is PDF. Fixture transcribes public Class I identifiers "
@@ -170,7 +190,15 @@ class BrandesSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
-            )
+            ),
+            PageSpec(
+                name="leftover_paid_history_parallel_v",
+                url="https://www.brandes.com/funds/fund/brandes-global-equity-fund/bgvix",
+                fixture="leftover_paid_history_parallel_v.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
+            ),
         ]
 
 

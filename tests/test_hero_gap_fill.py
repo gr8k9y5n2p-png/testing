@@ -244,5 +244,7 @@ def test_fixture_book_lookback_stays_official_only() -> None:
     # Parallel R leftover: Diamond Hill Investor paid HTML +7 MF and
     # Bridgeway leftover paid +4 MF. AQR is year-depth only (3y).
     # Jensen 2021–2023 and TCW 2021–2024 stay unmatched.
-    assert digest.funds_with_5y == 3497
+    # Parallel V leftover: Heartland +6 MF, FMI +2 MF, Brandes Class I +5 MF.
+    # Baillie 2025 Final is year-depth only. GQG leftovers stay estimate-only.
+    assert digest.funds_with_5y == 3510
     assert digest.book_funds >= 7200
