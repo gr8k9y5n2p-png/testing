@@ -703,13 +703,15 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # years +14 (12 MF / 2 ETF): BIV / BND / VBIIX / VBIMX / VBMFX / VBMPX /
     # VBTIX / VCITX / VCLAX / VFIRX / VFISX / VTBSX / VUSXX / VWALX.
     # Schwab / SSGA / DFA / Nuveen leftover re-probes stay walls.
-    # Parallel AB leftover: Oakmark 2024 class-level Wayback YE + Janus Daily
-    # leftover ICI month-end income. Dodge Class X 2021 / Artisan 2023 Mid
-    # Small Focus Discovery / 2022 GOPPS / Lord Abbett Daily AJAX stay walls
-    # (year-depth only for LBNDX 2022 / LTRAX 2021). ETF 5y unchanged.
-    # No new identities. Pin recomputed after rebase onto tip 3570.
-    assert digest.funds_with_5y == 3570
-    assert digest.funds_with_5y_mf == 2818
+    # Parallel AB leftover (rebased onto tip 3570 / MF 2818 / ETF 752):
+    # Oakmark 2024 class-level Wayback YE +22 MF (OAYMX / OANMX / OAZMX
+    # families + OAKBX E&I) and Janus Daily leftover ICI month-end income
+    # +40 MF (JAFIX / JAHYX / JMUIX / JUCAX families). Year-depth only:
+    # LBNDX 2022 / LTRAX 2021. Dodge Class X 2021 / Artisan 2023 Mid Small
+    # Focus Discovery / 2022 GOPPS / Lord Daily AJAX stay walls. ETF 5y
+    # unchanged from AA. No new identities. Honest pin = tip 3570 + AB +62.
+    assert digest.funds_with_5y == 3632
+    assert digest.funds_with_5y_mf == 2880
     assert digest.funds_with_5y_etf == 752
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
