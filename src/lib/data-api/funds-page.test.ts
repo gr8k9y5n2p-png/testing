@@ -94,8 +94,7 @@ describe("Search / Sample Estimates fund page", () => {
       join(here, "../../data/distribution-bucket.ts"),
       "utf8",
     );
-    assert.match(results, /upcomingIllustrationTotals/);
-    assert.match(results, /splitIllustrationComponents/);
+    assert.match(results, /dollarIllustrationUpcoming/);
     assert.match(results, /catalogUpcoming/);
     assert.match(results, /pctOfNavForFund|historicalPctOfNav/);
     assert.doesNotMatch(results, /result\.totals/);
