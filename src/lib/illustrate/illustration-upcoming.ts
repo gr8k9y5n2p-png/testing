@@ -149,6 +149,17 @@ function isPaidHistorySnapshot(
   return fund.bucket === "paid";
 }
 
+function illustrationFundGate(
+  fund?: IllustrationUpcomingFund | null,
+): IllustrationFundGate {
+  if (!fund) return fund;
+  return {
+    hasEstimate: fund.hasEstimate,
+    publicationStage: fund.publicationStage ?? null,
+    bucket: fund.bucket ?? "paid",
+  };
+}
+
 /**
  * Upcoming table rows: illustrate components plus manager-published
  * estimate_type lines that the illustrate payload omitted (STCG $0).
@@ -157,21 +168,12 @@ function isPaidHistorySnapshot(
  */
 export function upcomingEstimateTypeRows(
   upcoming: IllustrationComponent[],
-  fund?: Pick<
-    FundEstimate,
-    | "estimateTypeLines"
-    | "asOfDate"
-    | "recordDate"
-    | "exDate"
-    | "payableDate"
-    | "publicationStage"
-  > &
-    Partial<Pick<FundEstimate, "bucket">> | null,
+  fund?: IllustrationUpcomingFund | null,
 ): IllustrationComponent[] {
   const typed = upcoming.filter(
     (row) =>
       !isRollupTotal(row.estimate_type) &&
-      illustrationComponentBucket(row, fund) === "upcoming",
+      illustrationComponentBucket(row, illustrationFundGate(fund)) === "upcoming",
   );
   const perShare = typed.filter((row) => row.amount_unit === "per_share");
   const source = perShare.length ? perShare : typed;
@@ -203,7 +205,10 @@ export function dollarIllustrationUpcoming(
   totals: IllustrationTotals | null;
   catalogUpcoming: boolean;
 } {
-  const { upcoming } = splitIllustrationComponents(components, fund);
+  const { upcoming } = splitIllustrationComponents(
+    components,
+    illustrationFundGate(fund),
+  );
   const catalogUpcoming =
     fund != null &&
     isUpcomingFund({
@@ -240,10 +245,7 @@ export function dollarIllustrationUpcoming(
 
 function publishedLineAsComponent(
   line: EstimateTypeLine,
-  fund?: Pick<
-    FundEstimate,
-    "asOfDate" | "recordDate" | "exDate" | "payableDate" | "publicationStage"
-  > | null,
+  fund?: IllustrationUpcomingFund | null,
   template?: IllustrationComponent,
 ): IllustrationComponent {
   const zero = line.amount === 0;
