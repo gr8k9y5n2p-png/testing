@@ -6,7 +6,9 @@ import { fileURLToPath } from "node:url";
 import { shouldClearFundPickerSelection } from "../fund-picker-clear.ts";
 import {
   emptyTickerSelection,
+  isTickerLockKey,
   shouldClearTickerSelection,
+  shouldKeepLockedTickerOnFocus,
   shouldRehydrateTickerFromSelection,
   tickerFieldDisplay,
   tickerFieldSubtitle,
@@ -101,6 +103,33 @@ describe("ticker field X-wipe", () => {
     assert.equal(shouldRehydrateTickerFromSelection({ cleared: true }), false);
     assert.equal(shouldRehydrateTickerFromSelection({ cleared: false }), true);
   });
+
+  it("locks on Tab or Enter and keeps a locked ticker on click/focus", () => {
+    assert.equal(isTickerLockKey("Tab"), true);
+    assert.equal(isTickerLockKey("Enter"), true);
+    assert.equal(isTickerLockKey("Escape"), false);
+    assert.equal(
+      shouldKeepLockedTickerOnFocus({ hasSelection: true, cleared: false }),
+      true,
+    );
+    assert.equal(
+      shouldKeepLockedTickerOnFocus({ hasSelection: true, cleared: true }),
+      false,
+    );
+    assert.equal(
+      shouldKeepLockedTickerOnFocus({ hasSelection: false, cleared: false }),
+      false,
+    );
+    const field = read("TickerField.tsx");
+    assert.match(field, /isTickerLockKey\(event\.key\)/);
+    assert.match(field, /shouldKeepLockedTickerOnFocus/);
+    assert.match(field, /setQuery\(ticker\)/);
+    assert.doesNotMatch(
+      field,
+      /if \(hasSelection \|\| cleared\) \{\s*setQuery\(""\)/,
+    );
+    assert.match(field, /hasSelection && \(!typed \|\| typed === ticker\)/);
+  });
 });
 
 describe("Portfolio / Compare ticker clear wiring", () => {
@@ -111,7 +140,8 @@ describe("Portfolio / Compare ticker clear wiring", () => {
     assert.match(field, /shouldClearFundPickerSelection/);
     assert.match(field, /emptyTickerSelection\(\)/);
     assert.match(field, /setCleared\(true\)/);
-    assert.match(field, /if \(hasSelection \|\| cleared\)/);
+    assert.match(field, /shouldKeepLockedTickerOnFocus/);
+    assert.match(field, /isTickerLockKey/);
     assert.match(field, /event\.key === "Escape"/);
     assert.match(field, /setOpen\(false\);\s*return;/);
     assert.doesNotMatch(field, /key === "Escape"[\s\S]{0,80}setQuery\(ticker\)/);

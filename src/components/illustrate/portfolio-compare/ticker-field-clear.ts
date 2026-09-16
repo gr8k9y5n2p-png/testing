@@ -36,3 +36,19 @@ export function shouldRehydrateTickerFromSelection(input: {
 }): boolean {
   return !input.cleared;
 }
+
+/** Tab or Enter locks the typed ticker — do not wait for a dropdown click. */
+export function isTickerLockKey(key: string): boolean {
+  return key === "Enter" || key === "Tab";
+}
+
+/**
+ * Clicking a locked ticker input must keep the value.
+ * Only an explicit text edit or the X wipe may change it.
+ */
+export function shouldKeepLockedTickerOnFocus(input: {
+  hasSelection: boolean;
+  cleared: boolean;
+}): boolean {
+  return input.hasSelection && !input.cleared;
+}

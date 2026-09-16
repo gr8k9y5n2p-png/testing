@@ -14,6 +14,7 @@ import {
 } from "./portfolio-compare-copy.ts";
 import {
   announcedDateOf,
+  isFutureAnnouncedDate,
   PAID_HISTORY_CAP,
   paidHistoryDateOf,
   paidHistoryRowsForSide,
@@ -240,6 +241,14 @@ describe("announcedDateOf", () => {
     );
     assert.equal(announcedDateOf({ as_of: null, announced_date: null }), null);
   });
+
+  it("treats only a day strictly after today as a future Announced date", () => {
+    assert.equal(isFutureAnnouncedDate("2026-09-19", TODAY), true);
+    assert.equal(isFutureAnnouncedDate("2026-09-08", TODAY), false);
+    assert.equal(isFutureAnnouncedDate("2026-07-31", TODAY), false);
+    assert.equal(isFutureAnnouncedDate(null, TODAY), false);
+    assert.equal(isFutureAnnouncedDate("", TODAY), false);
+  });
 });
 
 describe("PortfolioCompare distribution tables", () => {
@@ -251,7 +260,8 @@ describe("PortfolioCompare distribution tables", () => {
           publication_stage: "preliminary_estimate",
           distribution_dollars: 4800,
           estimated_tax: 1680,
-          as_of: "2026-08-15",
+          as_of: "2026-09-19",
+          announced_date: "2026-09-19",
           record_date: "2026-12-12",
           ex_date: "2026-12-15",
           payable_date: "2026-12-17",
@@ -275,7 +285,7 @@ describe("PortfolioCompare distribution tables", () => {
 
     assert.deepEqual(
       upcoming.map((item) => item.announcedDate),
-      ["2026-08-15"],
+      ["2026-09-19"],
     );
     assert.deepEqual(
       paid.map((item) => item.announcedDate),
@@ -448,11 +458,7 @@ describe("PortfolioCompare distribution tables", () => {
       }),
     ]);
     const upcoming = upcomingRowsForSide(book, "current", TODAY);
-    assert.equal(upcoming.length, 1);
-    assert.equal(upcoming[0]?.announcedDate, null);
-    assert.equal(upcoming[0]?.recordDate, null);
-    assert.equal(upcoming[0]?.exDate, null);
-    assert.equal(upcoming[0]?.payableDate, null);
+    assert.equal(upcoming.length, 0, "blank Announced date is not Upcoming");
   });
 
   it("keeps paid upcoming payloads out of tax-impact dollars", () => {
@@ -519,10 +525,7 @@ describe("PortfolioCompare distribution tables", () => {
       assert.equal(upcomingFromHolding(omitted, TODAY), null);
       assert.equal(totalUpcomingTax(allocation([omitted])), 0);
       const rows = upcomingHoldingsForSide(allocation([omitted]), "current", TODAY);
-      assert.equal(rows.length, 1);
-      assert.equal(rows[0]?.available, false);
-      assert.equal(rows[0]?.distributionDollars, null);
-      assert.equal(rows[0]?.estimatedTax, null);
+      assert.equal(rows.length, 0);
       assert.equal(upcomingRowsForSide(allocation([omitted]), "current", TODAY).length, 0);
     }
   });
@@ -791,7 +794,7 @@ describe("PortfolioCompare distribution tables", () => {
     assert.equal(paid[11]?.recordDate, "2020-01-04");
   });
 
-  it("lists every Current/Proposed fund when upcoming is empty, as undisclosed not $0", () => {
+  it("lists only holdings with unpaid future Announced dates, not Awaiting placeholders", () => {
     const book = allocation([
       holding({ ticker: "AGTHX", upcoming: null }),
       holding({ ticker: "DODIX", holding_index: 1, upcoming: null }),
@@ -804,6 +807,7 @@ describe("PortfolioCompare distribution tables", () => {
           distribution_dollars: 3200,
           estimated_tax: 1120,
           percent_of_nav: 1.28,
+          announced_date: "2026-09-19",
           record_date: "2026-09-19",
           ex_date: "2026-09-20",
         },
@@ -813,29 +817,49 @@ describe("PortfolioCompare distribution tables", () => {
     const rows = upcomingHoldingsForSide(book, "current", TODAY);
     assert.deepEqual(
       rows.map((row) => row.ticker),
-      ["AGTHX", "DODIX", "AMCAP", "DODGX"],
+      ["AMCAP"],
     );
-    assert.equal(rows[0]?.available, false);
-    assert.equal(rows[0]?.distributionDollars, null);
-    assert.equal(rows[0]?.estimatedTax, null);
-    assert.equal(rows[1]?.available, false);
-    assert.equal(rows[2]?.available, true);
-    assert.equal(rows[2]?.distributionDollars, 3200);
-    assert.equal(rows[2]?.estimatedTax, 1120);
-    assert.equal(rows[2]?.holdingDollars, 250_000);
-    assert.ok(rows[2]?.pctOfNav != null);
-    assert.equal(Number(rows[2]?.pctOfNav?.toFixed(2)), 1.28);
-    assert.equal(rows[2]?.recordDate, "2026-09-19");
-    assert.equal(rows[2]?.exDate, "2026-09-20");
-    assert.equal(rows[3]?.available, false);
-    assert.equal(rows[3]?.covered, false);
-    assert.equal(rows[0]?.inUniverse, true);
-    assert.equal(
-      upcomingHoldingsForSide(book, "current", TODAY, new Set(["AGTHX", "DODIX", "AMCAP"]))[3]
-        ?.inUniverse,
-      false,
-    );
+    assert.equal(rows[0]?.available, true);
+    assert.equal(rows[0]?.distributionDollars, 3200);
+    assert.equal(rows[0]?.estimatedTax, 1120);
+    assert.equal(rows[0]?.holdingDollars, 250_000);
+    assert.ok(rows[0]?.pctOfNav != null);
+    assert.equal(Number(rows[0]?.pctOfNav?.toFixed(2)), 1.28);
+    assert.equal(rows[0]?.announcedDate, "2026-09-19");
+    assert.equal(rows[0]?.recordDate, "2026-09-19");
+    assert.equal(rows[0]?.exDate, "2026-09-20");
     assert.equal(upcomingRowsForSide(book, "current", TODAY).length, 1);
+  });
+
+  it("omits FBGRX past announced and MFEGX blank announced from Portfolio Upcoming", () => {
+    const book = allocation([
+      holding({
+        ticker: "FBGRX",
+        upcoming: {
+          publication_stage: "preliminary_estimate",
+          distribution_dollars: 800,
+          estimated_tax: 280,
+          announced_date: "2026-07-31",
+          as_of: "2026-07-31",
+          record_date: "2026-12-16",
+          ex_date: "2026-12-17",
+        },
+      }),
+      holding({
+        ticker: "MFEGX",
+        holding_index: 1,
+        upcoming: {
+          publication_stage: "preliminary_estimate",
+          distribution_dollars: 400,
+          estimated_tax: 140,
+          announced_date: null,
+          as_of: null,
+        },
+      }),
+    ]);
+    const rows = upcomingHoldingsForSide(book, "current", "2026-09-16");
+    assert.equal(rows.length, 0);
+    assert.equal(upcomingRowsForSide(book, "current", "2026-09-16").length, 0);
   });
 
   it("keeps one Upcoming row per holding when a fund has two unpaid events", () => {
@@ -847,6 +871,7 @@ describe("PortfolioCompare distribution tables", () => {
             publication_stage: "preliminary_estimate",
             distribution_dollars: 4800,
             estimated_tax: 1680,
+            announced_date: "2026-09-19",
             record_date: "2026-12-16",
             ex_date: "2026-12-17",
           },
@@ -854,6 +879,7 @@ describe("PortfolioCompare distribution tables", () => {
             publication_stage: "updated_estimate",
             distribution_dollars: 500,
             estimated_tax: 175,
+            announced_date: "2026-09-19",
             record_date: "2026-11-16",
             ex_date: "2026-11-17",
           },
@@ -938,7 +964,7 @@ describe("PortfolioCompare distribution tables", () => {
       amount_unit: "per_share",
       distribution_dollars: 0,
       estimated_tax: 0,
-      announced_date: "2026-08-12",
+      announced_date: "2026-09-19",
       record_date: "2026-09-01",
       payable_date: "2026-12-18",
     };
@@ -960,7 +986,7 @@ describe("PortfolioCompare distribution tables", () => {
       }),
     ]);
     const past = upcomingHoldingsForSide(afterEx, "current", TODAY);
-    assert.equal(past[0]?.available, false);
+    assert.equal(past.length, 0);
     assert.equal(upcomingRowsForSide(afterEx, "current", TODAY).length, 0);
     assert.equal(paidHistoryRowsForSide(afterEx, "current", TODAY).length, 0);
   });
@@ -975,7 +1001,7 @@ describe("PortfolioCompare distribution tables", () => {
           amount_unit: "per_share",
           distribution_dollars: 0,
           estimated_tax: 0,
-          announced_date: "2026-09-01",
+          announced_date: "2026-09-19",
           record_date: "2026-12-16",
           ex_date: "2026-12-17",
         },
@@ -986,7 +1012,7 @@ describe("PortfolioCompare distribution tables", () => {
     assert.equal(rows[0]?.distributionDollars, 0);
     assert.equal(rows[0]?.distributionPerShare, 0);
     assert.equal(rows[0]?.estimatedTax, 0);
-    assert.equal(rows[0]?.announcedDate, "2026-09-01");
+    assert.equal(rows[0]?.announcedDate, "2026-09-19");
     assert.equal(
       upcomingDistributionAmount({
         available: true,
@@ -1012,7 +1038,7 @@ describe("PortfolioCompare distribution tables", () => {
         ticker: "AMCPX",
         upcoming: {
           publication_stage: "preliminary_estimate",
-          announced_date: "2026-09-01",
+          announced_date: "2026-09-19",
           record_date: "2026-12-16",
           ex_date: "2026-12-17",
           distribution_dollars: null,
@@ -1024,7 +1050,7 @@ describe("PortfolioCompare distribution tables", () => {
     assert.equal(rows[0]?.available, true);
     assert.equal(rows[0]?.distributionDollars, null);
     assert.equal(rows[0]?.pctOfNav, null);
-    assert.equal(rows[0]?.announcedDate, "2026-09-01");
+    assert.equal(rows[0]?.announcedDate, "2026-09-19");
     assert.equal(rows[0]?.recordDate, "2026-12-16");
     assert.equal(rows[0]?.exDate, "2026-12-17");
     assert.doesNotMatch(
@@ -1049,6 +1075,7 @@ describe("PortfolioCompare distribution tables", () => {
           percent_of_nav: 12,
           nav_on_distribution_day: 37.09,
           distribution_dollars: null,
+          announced_date: "2026-09-19",
           record_date: "2026-12-12",
           ex_date: "2026-12-15",
         },

@@ -72,6 +72,8 @@ describe("Compare / Portfolio live /api/funds autocomplete", () => {
     assert.match(field, /toTickerFieldOption/);
     assert.match(field, /REMOTE_SEARCH_DEBOUNCE_MS/);
     assert.match(field, /searchPickerEmptyState/);
+    assert.match(field, /isTickerLockKey/);
+    assert.match(field, /shouldKeepLockedTickerOnFocus/);
     assert.doesNotMatch(field, /event\.target\.value\.toUpperCase\(\)/);
     assert.doesNotMatch(field, /NEXT_PUBLIC_DATA_API_URL/);
     assert.doesNotMatch(field, /aftertax-data-api/);

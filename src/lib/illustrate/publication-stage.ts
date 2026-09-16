@@ -81,6 +81,29 @@ export function announcedDateOf(
   return isoDate(row.announced_date) ?? isoDate(row.as_of);
 }
 
+/**
+ * Compare / Portfolio Upcoming lock: Announced date must be strictly after
+ * today. Blank or past announced dates never qualify — do not invent a day.
+ */
+export function isFutureAnnouncedDate(
+  date: string | null | undefined,
+  today = utcToday(),
+): boolean {
+  const day = isoDate(date);
+  return day != null && day > today;
+}
+
+/** Unpaid upcoming row that still has a future Announced date. */
+export function isQualifyingUpcomingEvent(
+  row: PortfolioDistributionRow,
+  today = utcToday(),
+): boolean {
+  return (
+    publicationBucket(row, today) === "upcoming" &&
+    isFutureAnnouncedDate(announcedDateOf(row), today)
+  );
+}
+
 /** Event date for future-ish checks. as_of is announcement, not an event date. */
 export function eventDateOf(
   row: Pick<PortfolioDistributionRow, "payable_date" | "ex_date" | "record_date">,
@@ -229,7 +252,7 @@ function coalesceUpcomingRows(
   rows: PortfolioDistributionRow[],
   today = utcToday(),
 ): PortfolioUpcoming | null {
-  const upcoming = rows.filter((row) => publicationBucket(row, today) === "upcoming");
+  const upcoming = rows.filter((row) => isQualifyingUpcomingEvent(row, today));
   if (!upcoming.length) return null;
   if (upcoming.length === 1) return upcoming[0];
   const dist = upcoming.reduce((sum, row) => sum + (num(row.distribution_dollars) ?? 0), 0);
@@ -276,7 +299,7 @@ function upcomingEventsFromHolding(
   return asDistributionRows(holding.upcoming)
     .map((row) => withStage(row, holding.publication_stage_used ?? null))
     .filter(hasDistributionSignal)
-    .filter((event) => publicationBucket(event, today) === "upcoming");
+    .filter((event) => isQualifyingUpcomingEvent(event, today));
 }
 
 /** Data `paid_history[]` cap. Newest-first after that is dropped. */
@@ -440,45 +463,6 @@ function toTableRow(
   };
 }
 
-function emptyUpcomingRow(
-  holding: PortfolioHoldingOut,
-  side: "current" | "proposed",
-  index: number,
-  universeTickers?: ReadonlySet<string>,
-): UpcomingRow {
-  const ticker = holdingTicker(holding);
-  return {
-    key: `${side}-${holding.holding_index}-${ticker}-${index}-upcoming-empty`,
-    ticker,
-    fundName: holding.fund_name || ticker,
-    side,
-    sideLabel: side === "current" ? "Current" : "Proposed",
-    distributionDollars: null,
-    distributionDollarsMin: null,
-    distributionDollarsMax: null,
-    holdingDollars: num(holding.holding_dollars),
-    pctOfNav: null,
-    navPerShare: num(holding.nav_per_share),
-    navAsOf: isoDate(holding.nav_as_of),
-    navOnDistributionDay: null,
-    distributionPerShare: null,
-    ordinaryPerShare: null,
-    capitalGainsPerShare: null,
-    estimatedTax: null,
-    asOf: null,
-    announcedDate: null,
-    recordDate: null,
-    exDate: null,
-    payableDate: null,
-    stage: null,
-    bucket: "upcoming",
-    heat: 0,
-    available: false,
-    covered: holding.covered !== false && !holding.gap_reason,
-    inUniverse: holdingInUniverse(holding, universeTickers),
-  };
-}
-
 function rowsForSide(
   allocation: PortfolioAllocationOut,
   side: "current" | "proposed",
@@ -557,9 +541,11 @@ export function upcomingRowsForSide(
 }
 
 /**
- * One row per Current/Proposed holding for the Upcoming module.
- * Extra unpaid events on the same fund collapse to the first row.
- * Empty/null upcoming is Awaiting Estimate in-universe — never $0.
+ * One row per Current/Proposed holding that has a qualifying unpaid
+ * announced estimate with a future Announced date. Extra unpaid events on
+ * the same fund collapse to the first row. Holdings with past or blank
+ * announced dates are omitted — never an Awaiting Estimate placeholder,
+ * never invented, never pulled from Paid History.
  */
 export function upcomingHoldingsForSide(
   allocation: PortfolioAllocationOut,
@@ -582,7 +568,7 @@ export function upcomingHoldingsForSide(
       return row ? [row] : [];
     });
     if (eventRows.length) return [eventRows[0]];
-    return [emptyUpcomingRow(holding, side, index, universeTickers)];
+    return [];
   });
   return withHeat(rows);
 }

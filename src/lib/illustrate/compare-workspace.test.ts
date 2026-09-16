@@ -26,6 +26,7 @@ import {
 import { UI_DEFAULT_TAX_RATES } from "./types.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
+const TODAY = "2026-09-16";
 
 function view(
   ticker: string,
@@ -44,8 +45,8 @@ function view(
     estimatedOrdinaryIncome: 0.5,
     estimatedCapitalGains: 2.1,
     estimatedDistributionPctNav: 6.4,
-    publishedAt: "2026-09-05",
-    asOfDate: "2026-08-29",
+    publishedAt: "2026-10-15",
+    asOfDate: "2026-10-15",
     recordDate: "2026-12-16",
     exDate: "2026-12-17",
     payableDate: "2026-12-18",
@@ -190,13 +191,16 @@ describe("compare workspace slots (filled)", () => {
     assert.equal(growth.length, 1);
     assert.equal(growth[0]?.ticker, "AMCPX");
 
-    const upcoming = upcomingRowsFromCompareTickers([
-      {
-        ticker: "AMCPX",
-        fund: view("AMCPX"),
-        upcoming: { dollars: 185, announced: true, asOf: "2026-08-29" },
-      },
-    ]);
+    const upcoming = upcomingRowsFromCompareTickers(
+      [
+        {
+          ticker: "AMCPX",
+          fund: view("AMCPX"),
+          upcoming: { dollars: 185, announced: true, asOf: "2026-10-15" },
+        },
+      ],
+      TODAY,
+    );
     assert.equal(upcoming.length, 1);
     assert.equal(upcoming[0]?.ticker, "AMCPX");
     assert.equal(upcoming[0]?.available, true);
@@ -219,6 +223,7 @@ describe("compare upcoming rows", () => {
       }),
       upcoming: { dollars: null, announced: false, asOf: null },
       index: 0,
+      today: TODAY,
     });
     assert.equal(row.available, false);
     assert.equal(row.announcedDate, null);
@@ -239,6 +244,7 @@ describe("compare upcoming rows", () => {
       fund: paid,
       upcoming: { dollars: null, announced: false, asOf: null },
       index: 0,
+      today: TODAY,
     });
     assert.equal(row.available, false);
     assert.equal(row.recordDate, null);
@@ -255,10 +261,11 @@ describe("compare upcoming rows", () => {
       upcoming: {
         dollars: 185,
         announced: true,
-        asOf: "2026-08-29",
+        asOf: "2026-10-15",
         publicationStage: "preliminary_estimate",
       },
       index: 0,
+      today: TODAY,
     });
     assert.equal(row.available, true);
     assert.equal(row.estimatedTax, 185);
@@ -304,6 +311,7 @@ describe("compare upcoming rows", () => {
         }),
         upcoming: { dollars: null, announced: false, asOf: null },
         index: 0,
+        today: TODAY,
       });
       assert.equal(row.available, false, ticker);
       assert.equal(row.inUniverse, true, ticker);
@@ -321,6 +329,7 @@ describe("compare upcoming rows", () => {
       fund: null,
       upcoming: { dollars: null, announced: false, asOf: null },
       index: 0,
+      today: TODAY,
     });
     assert.equal(row.available, false);
     assert.equal(row.inUniverse, false);
@@ -328,14 +337,89 @@ describe("compare upcoming rows", () => {
     assert.equal(row.estimatedTax, null);
   });
 
-  it("builds Upcoming rows from filled slots before tax loads", () => {
-    const rows = upcomingRowsFromCompareTickers([
-      { ticker: "ZZZZY", fund: null, upcoming: null },
-    ]);
-    assert.equal(rows.length, 1);
-    assert.equal(rows[0]?.ticker, "ZZZZY");
-    assert.equal(rows[0]?.inUniverse, false);
-    assert.equal(rows[0]?.available, false);
+  it("omits Compare tickers with no qualifying unpaid future announced", () => {
+    const rows = upcomingRowsFromCompareTickers(
+      [{ ticker: "ZZZZY", fund: null, upcoming: null }],
+      TODAY,
+    );
+    assert.equal(rows.length, 0);
+  });
+
+  it("omits FBGRX when Announced date is already past", () => {
+    const row = upcomingRowForCompareTicker({
+      ticker: "FBGRX",
+      fund: view("FBGRX", {
+        publishedAt: "2026-07-31",
+        asOfDate: "2026-07-31",
+        recordDate: "2026-12-16",
+        exDate: "2026-12-17",
+        payableDate: "2026-12-18",
+        publicationStage: "preliminary_estimate",
+        bucket: "upcoming",
+      }),
+      upcoming: {
+        dollars: null,
+        announced: false,
+        asOf: "2026-07-31",
+        publicationStage: "preliminary_estimate",
+      },
+      index: 0,
+      today: TODAY,
+    });
+    assert.equal(row.available, false);
+    assert.equal(row.announcedDate, null);
+    const listed = upcomingRowsFromCompareTickers(
+      [
+        {
+          ticker: "FBGRX",
+          fund: view("FBGRX", {
+            publishedAt: "2026-07-31",
+            asOfDate: "2026-07-31",
+            publicationStage: "preliminary_estimate",
+            bucket: "upcoming",
+          }),
+          upcoming: { dollars: null, announced: false, asOf: "2026-07-31" },
+        },
+      ],
+      TODAY,
+    );
+    assert.equal(listed.length, 0);
+  });
+
+  it("omits MFEGX when Announced date is blank", () => {
+    const row = upcomingRowForCompareTicker({
+      ticker: "MFEGX",
+      fund: view("MFEGX", {
+        publishedAt: "",
+        asOfDate: "",
+        recordDate: null,
+        exDate: null,
+        payableDate: null,
+        publicationStage: "preliminary_estimate",
+        bucket: "upcoming",
+      }),
+      upcoming: { dollars: null, announced: false, asOf: null },
+      index: 0,
+      today: TODAY,
+    });
+    assert.equal(row.available, false);
+    assert.equal(row.announcedDate, null);
+    const listed = upcomingRowsFromCompareTickers(
+      [
+        {
+          ticker: "MFEGX",
+          fund: view("MFEGX", {
+            publishedAt: "",
+            asOfDate: "",
+            publicationStage: "preliminary_estimate",
+            bucket: "upcoming",
+          }),
+          upcoming: { dollars: null, announced: false, asOf: null },
+        },
+      ],
+      TODAY,
+    );
+    assert.equal(listed.length, 0);
   });
 
   it("moves catalog Upcoming to Paid History when ex-date has passed, including $0", () => {
@@ -355,10 +439,11 @@ describe("compare upcoming rows", () => {
       upcoming: {
         dollars: 0,
         announced: true,
-        asOf: "2026-08-12",
+        asOf: "2026-10-15",
         publicationStage: "preliminary_estimate",
       },
       index: 0,
+      today: TODAY,
     });
     assert.equal(afterEx.available, false);
     assert.equal(afterEx.distributionPerShare, null);
@@ -373,17 +458,18 @@ describe("compare upcoming rows", () => {
         estimatedDistributionPctNav: 0,
         hasEstimate: false,
         bucket: "paid",
-        recordDate: "2026-09-01",
-        exDate: "2026-09-15",
+        recordDate: "2026-12-16",
+        exDate: "2026-12-17",
         payableDate: "2026-12-18",
       }),
       upcoming: { dollars: null, announced: false, asOf: null },
       holdingDollars: 10_000,
       index: 0,
+      today: TODAY,
     });
     assert.equal(beforeEx.available, true);
     assert.equal(beforeEx.distributionPerShare, 0);
-    assert.equal(beforeEx.exDate, "2026-09-15");
+    assert.equal(beforeEx.exDate, "2026-12-17");
   });
 
   it("keeps unpaid manager-announced $0 after hydrate treats zeros as not Upcoming", () => {
@@ -400,6 +486,7 @@ describe("compare upcoming rows", () => {
       upcoming: { dollars: null, announced: false, asOf: null },
       holdingDollars: 10_000,
       index: 0,
+      today: TODAY,
     });
     assert.equal(row.available, true);
     assert.equal(row.distributionPerShare, 0);
@@ -425,10 +512,11 @@ describe("compare upcoming rows", () => {
       upcoming: {
         dollars: 185,
         announced: true,
-        asOf: "2026-08-29",
+        asOf: "2026-10-15",
         publicationStage: "preliminary_estimate",
       },
       index: 0,
+      today: TODAY,
     });
     assert.equal(row.available, true);
     assert.equal(row.bucket, "upcoming");
@@ -451,11 +539,12 @@ describe("compare upcoming rows", () => {
       upcoming: {
         dollars: 185,
         announced: true,
-        asOf: "2026-08-29",
+        asOf: "2026-10-15",
         publicationStage: "preliminary_estimate",
       },
       holdingDollars: 10_000,
       index: 0,
+      today: TODAY,
     });
     assert.equal(row.holdingDollars, 10_000);
     assert.equal(row.distributionPerShare, 2.6);
@@ -491,6 +580,8 @@ describe("Compare workspace Upcoming + NAV soft path", () => {
     assert.doesNotMatch(workspace, /CompareAnnualTable/);
     assert.doesNotMatch(workspace, /Calendar-year history is unavailable/);
     assert.doesNotMatch(workspace, /Calendar-year tax & distributions/);
+    assert.match(table, /visibleRows/);
+    assert.match(table, /row\.available/);
     assert.match(table, /DIST_AMOUNT_COLUMN/);
     assert.match(table, /PCT_OF_NAV_COLUMN/);
     assert.match(table, /DOLLAR_IMPACT_COLUMN/);

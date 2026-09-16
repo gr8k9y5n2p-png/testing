@@ -240,7 +240,7 @@ export function FundPicker({
             }
           }}
           placeholder="Ticker, name, CUSIP, or family"
-          className={`h-12 w-full rounded-md border ${tickerSlotBorderClass({ committed: hasSelection, midEdit: open })} bg-surface px-3 pr-11 text-base text-ink placeholder:text-faint [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden`}
+          className={`h-12 w-full rounded-md border ${tickerSlotBorderClass({ committed: Boolean(selected), midEdit: open, notInUniverse: Boolean(pendingTicker) && !selected })} bg-surface px-3 pr-11 text-base text-ink placeholder:text-faint [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden`}
           autoComplete="off"
           autoFocus={autoFocus}
         />

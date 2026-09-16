@@ -33,6 +33,33 @@ describe("tickerSlotBorderClass", () => {
       "border-above",
     );
   });
+
+  it("uses tax-more red when the locked ticker is not in the universe", () => {
+    assert.equal(
+      tickerSlotBorderClass({
+        committed: false,
+        midEdit: false,
+        notInUniverse: true,
+      }),
+      "border-tax-more",
+    );
+    assert.equal(
+      tickerSlotBorderClass({
+        committed: true,
+        midEdit: false,
+        notInUniverse: true,
+      }),
+      "border-tax-more",
+    );
+    assert.equal(
+      tickerSlotBorderClass({
+        committed: true,
+        midEdit: true,
+        notInUniverse: true,
+      }),
+      "border-line",
+    );
+  });
 });
 
 describe("ticker slot locked-border wiring", () => {
@@ -46,14 +73,17 @@ describe("ticker slot locked-border wiring", () => {
 
     assert.match(helper, /border-above/);
     assert.match(helper, /border-line/);
+    assert.match(helper, /border-tax-more/);
     assert.doesNotMatch(helper, /#[0-9a-fA-F]{3,8}/);
 
     assert.match(picker, /tickerSlotBorderClass/);
-    assert.match(picker, /committed: hasSelection/);
+    assert.match(picker, /committed: Boolean\(selected\)/);
+    assert.match(picker, /notInUniverse: Boolean\(pendingTicker\)/);
     assert.match(picker, /midEdit: open/);
 
     assert.match(field, /tickerSlotBorderClass/);
-    assert.match(field, /committed: hasSelection/);
+    assert.match(field, /committed: lockedInUniverse/);
+    assert.match(field, /notInUniverse: lockedMiss/);
     assert.match(field, /midEdit: open/);
 
     assert.match(workspace, /TickerField/);
