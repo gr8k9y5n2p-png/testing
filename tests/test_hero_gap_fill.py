@@ -259,5 +259,10 @@ def test_fixture_book_lookback_stays_official_only() -> None:
     # +10 MF 5y. Buffalo 2024–2025 and Third Avenue 2022–2024 are year-depth.
     # Parallel AA leftover: Vanguard leftover ICI bond / tax-exempt / MM
     # years +14 (12 MF / 2 ETF). Schwab / SSGA / DFA / Nuveen stay walls.
-    assert digest.funds_with_5y == 3570
+    # Parallel AB leftover: Oakmark 2024 + Janus Daily leftover ICI +62 MF.
+    # Parallel Y leftover: BlackRock Investor A leftover paid years +16 MF.
+    # Parallel AC leftover: Principal leftover YEAR finals +12 MF (PFIJX /
+    # GEM 2024; Real Estate 2025). AF / JH / Nationwide / Thrivent leftover
+    # years stay walls. #188 midyear all-events not redone.
+    assert digest.funds_with_5y == 3660
     assert digest.book_funds >= 7200

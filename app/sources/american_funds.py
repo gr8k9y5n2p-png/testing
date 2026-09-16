@@ -87,7 +87,12 @@ class AmericanFundsSource(FundSource):
         "AMCPX / AMCFX 2021-06-16 LT $1.5290 / 2024-06-12 LT $0.8110 / "
         "2025-06-11 LT $1.8675; ABALX 2025-06-09 LT $0.1950 plus quarterly "
         "income. Class-level — never copied. AGTHX / ANWPX 2021–2025 JSON "
-        "has no midyear CG — unmatched, not invented."
+        "has no midyear CG — unmatched, not invented. "
+        "Official 5y parallel AC leftover (2026-09-16): YEAR-final re-probe of "
+        "live historicalDistributions JSON for leftover 4y classes — still no "
+        "ANEFX/SMCWX/CNWCX 2022; AAFXX/USGXX 2021; BFICX 2023; CGVBX 2021/2025; "
+        "SCWCX 2022/2024. Midyear all-events work belongs to #188 — not redone "
+        "here."
     )
 
     def __init__(self, fixtures_dir: Path | None = None) -> None:
