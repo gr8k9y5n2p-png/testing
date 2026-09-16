@@ -28,28 +28,28 @@ describe("tickerSlotBorderClass", () => {
   });
 
   it("uses LIVE / above green once a ticker is locked in", () => {
-    assert.equal(
-      tickerSlotBorderClass({ committed: true, midEdit: false }),
-      "border-above",
-    );
+    const locked = tickerSlotBorderClass({ committed: true, midEdit: false });
+    assert.match(locked, /border-above/);
+    assert.match(locked, /border-2/);
+    assert.match(locked, /ticker-lock-in-universe/);
   });
 
   it("uses tax-more red when the locked ticker is not in the universe", () => {
-    assert.equal(
-      tickerSlotBorderClass({
-        committed: false,
-        midEdit: false,
-        notInUniverse: true,
-      }),
-      "border-tax-more",
-    );
+    const missing = tickerSlotBorderClass({
+      committed: false,
+      midEdit: false,
+      notInUniverse: true,
+    });
+    assert.match(missing, /border-tax-more/);
+    assert.match(missing, /border-2/);
+    assert.match(missing, /ticker-lock-missing/);
     assert.equal(
       tickerSlotBorderClass({
         committed: true,
         midEdit: false,
         notInUniverse: true,
       }),
-      "border-tax-more",
+      missing,
     );
     assert.equal(
       tickerSlotBorderClass({
@@ -74,7 +74,16 @@ describe("ticker slot locked-border wiring", () => {
     assert.match(helper, /border-above/);
     assert.match(helper, /border-line/);
     assert.match(helper, /border-tax-more/);
+    assert.match(helper, /ticker-lock-in-universe/);
+    assert.match(helper, /ticker-lock-missing/);
     assert.doesNotMatch(helper, /#[0-9a-fA-F]{3,8}/);
+
+    const css = read("../../app/globals.css");
+    assert.match(css, /@layer base/);
+    assert.match(css, /\.ticker-lock-in-universe/);
+    assert.match(css, /\.ticker-lock-missing/);
+    assert.match(css, /border-color: var\(--above\)/);
+    assert.match(css, /border-color: var\(--tax-more\)/);
 
     assert.match(picker, /tickerSlotBorderClass/);
     assert.match(picker, /committed: Boolean\(selected\)/);
@@ -85,6 +94,8 @@ describe("ticker slot locked-border wiring", () => {
     assert.match(field, /committed: lockedInUniverse/);
     assert.match(field, /notInUniverse: lockedMiss/);
     assert.match(field, /midEdit: open/);
+    assert.match(field, /data-ticker-lock/);
+    assert.match(field, /in-universe/);
 
     assert.match(workspace, /TickerField/);
     assert.match(column, /TickerField/);

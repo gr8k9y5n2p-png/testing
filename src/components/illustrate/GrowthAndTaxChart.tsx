@@ -8,8 +8,10 @@ import {
   growthTaxBarWidth,
   growthTaxBarX,
   growthTaxChartPad,
+  shouldDrawZeroBaselineLabel,
   startAmountLabel,
   startAmountLabelX,
+  startAmountLabelY,
   underBarTickerFontSize,
   underBarTickerLabel,
 } from "@/lib/charts/growth-tax-layout";
@@ -125,6 +127,13 @@ export function GrowthAndTaxChart({
     const span = taxScale.max || 1;
     return zeroY + ZERO_GAP + (Math.abs(value) / span) * taxInner;
   };
+  const startPlotY = growthY(startDollars);
+  const startLabelBaseline = startAmountLabelY(startPlotY, zeroY);
+  const showZeroBaseline = shouldDrawZeroBaselineLabel(
+    startLabel,
+    startLabelBaseline,
+    zeroY,
+  );
 
   const lastYear = years[years.length - 1];
   const fundSeries = growthSeries.filter((row) => !row.dashed);
@@ -267,8 +276,9 @@ export function GrowthAndTaxChart({
           <text
             data-start-label
             data-start-x={startLabelX.toFixed(1)}
+            data-start-y={startLabelBaseline.toFixed(1)}
             x={startLabelX}
-            y={growthY(startDollars) + 3}
+            y={startLabelBaseline + 3}
             textAnchor="end"
             className="fill-faint"
             fontSize={9}
@@ -315,16 +325,20 @@ export function GrowthAndTaxChart({
             className="stroke-ink"
             strokeWidth={1.15}
           />
-          <text
-            x={pad.left - AXIS_LABEL_GAP_PX}
-            y={zeroY + 3}
-            textAnchor="end"
-            className="fill-faint"
-            fontSize={9}
-            fontFamily="ui-monospace, monospace"
-          >
-            $0
-          </text>
+          {showZeroBaseline ? (
+            <text
+              data-zero-label
+              data-zero-y={zeroY.toFixed(1)}
+              x={pad.left - AXIS_LABEL_GAP_PX}
+              y={zeroY + 3}
+              textAnchor="end"
+              className="fill-faint"
+              fontSize={9}
+              fontFamily="ui-monospace, monospace"
+            >
+              $0
+            </text>
+          ) : null}
 
           <g clipPath={`url(#gt-plot-${hatchId})`}>
           {fundSeries.map((row) => {

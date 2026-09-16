@@ -69,6 +69,50 @@ export function startAmountLabelX(padLeft: number): number {
 }
 
 /**
+ * Vertical gap so `$10k` (growth floor) never stacks on `$0` (tax baseline).
+ * 9px ui-monospace + air.
+ */
+export const START_ZERO_LABEL_GAP_PX = 12;
+
+export function startAmountCollidesWithZeroAxis(
+  startPlotY: number,
+  zeroAxisY: number,
+  minGap = START_ZERO_LABEL_GAP_PX,
+): boolean {
+  return Math.abs(startPlotY - zeroAxisY) < minGap;
+}
+
+/**
+ * Lift the start-$ label above the shared zero axis when they collide.
+ * X stays off-plot (Eric #98); only Y moves.
+ */
+export function startAmountLabelY(
+  startPlotY: number,
+  zeroAxisY: number,
+  minGap = START_ZERO_LABEL_GAP_PX,
+): number {
+  if (startAmountCollidesWithZeroAxis(startPlotY, zeroAxisY, minGap)) {
+    return zeroAxisY - minGap;
+  }
+  return startPlotY;
+}
+
+/**
+ * Omit `$0` when the start-$ label is `$0` or still sits on that tick.
+ * After a lift, keep the tax baseline `$0` so both stay readable.
+ */
+export function shouldDrawZeroBaselineLabel(
+  startLabel: string,
+  startLabelY: number,
+  zeroAxisY: number,
+  minGap = START_ZERO_LABEL_GAP_PX,
+): boolean {
+  const text = startLabel.trim();
+  if (text === "$0" || text === "0") return false;
+  return Math.abs(startLabelY - zeroAxisY) >= minGap - 1e-6;
+}
+
+/**
  * Left gutter grows with the formatted start amount and table stub
  * so "$10k", "$1.0M", and any other principal stay off the plot.
  */

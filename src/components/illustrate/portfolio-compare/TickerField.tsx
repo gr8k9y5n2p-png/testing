@@ -212,6 +212,9 @@ export function TickerField({
           aria-autocomplete="list"
           aria-expanded={open}
           aria-controls={`${inputId}-list`}
+          data-ticker-lock={
+            lockedMiss ? "missing" : lockedInUniverse ? "in-universe" : "idle"
+          }
           className={`h-10 w-full rounded-md border ${tickerSlotBorderClass({ committed: lockedInUniverse, midEdit: open, notInUniverse: lockedMiss })} bg-paper px-2.5 pr-9 font-mono text-sm font-medium text-ink placeholder:normal-case placeholder:tracking-normal placeholder:text-faint ${open ? "normal-case tracking-normal" : "uppercase tracking-wide"}`}
           onChange={(event) => {
             const next = event.target.value;

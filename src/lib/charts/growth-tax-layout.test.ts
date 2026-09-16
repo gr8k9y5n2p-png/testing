@@ -12,13 +12,17 @@ import {
   growthTaxChartPad,
   growthTaxTableLayout,
   labelSitsOffPlot,
+  shouldDrawZeroBaselineLabel,
+  startAmountCollidesWithZeroAxis,
   startAmountLabel,
   startAmountLabelX,
+  startAmountLabelY,
+  START_ZERO_LABEL_GAP_PX,
   underBarTickerFontSize,
   underBarTickerLabel,
 } from "./growth-tax-layout.ts";
 import { SHARED_CHART_WIDTH, yearLayout } from "./shared-axis.ts";
-import { formatCompactUsd } from "./money-axis.ts";
+import { formatCompactUsd, niceMoneyScale } from "./money-axis.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -56,6 +60,52 @@ describe("growthTaxChartPad / start amount off the plot", () => {
         `${label} must sit left of pad.left=${pad.left}`,
       );
     }
+  });
+});
+
+describe("start-$ and $0 tax baseline never overlap", () => {
+  it("lifts $10k off the shared zero axis and keeps $0", () => {
+    const zeroY = 200;
+    const startPlotY = 200;
+    assert.equal(startAmountLabel(10_000), "$10k");
+    assert.ok(startAmountCollidesWithZeroAxis(startPlotY, zeroY));
+    const startY = startAmountLabelY(startPlotY, zeroY);
+    assert.equal(startY, zeroY - START_ZERO_LABEL_GAP_PX);
+    assert.ok(Math.abs(startY - zeroY) >= START_ZERO_LABEL_GAP_PX);
+    assert.equal(shouldDrawZeroBaselineLabel("$10k", startY, zeroY), true);
+    assert.notEqual(startAmountLabel(10_000), "$0");
+  });
+
+  it("omits duplicate $0 when the start amount is $0", () => {
+    const zeroY = 180;
+    const startY = startAmountLabelY(zeroY, zeroY);
+    assert.equal(startAmountLabel(0), formatCompactUsd(0));
+    assert.equal(shouldDrawZeroBaselineLabel(startAmountLabel(0), startY, zeroY), false);
+  });
+
+  it("leaves a mid-plot start-$ on its own tick", () => {
+    const zeroY = 220;
+    const startPlotY = 80;
+    assert.equal(startAmountCollidesWithZeroAxis(startPlotY, zeroY), false);
+    assert.equal(startAmountLabelY(startPlotY, zeroY), startPlotY);
+    assert.equal(shouldDrawZeroBaselineLabel("$10k", startPlotY, zeroY), true);
+  });
+
+  it("separates the $10k floor from $0 on the shared Growth + Tax axis", () => {
+    const pad = growthTaxChartPad(10_000);
+    const growthInner = 220 - pad.top - 10;
+    const zeroY = pad.top + growthInner;
+    const scale = niceMoneyScale(10_000, 15_438, 10_000);
+    const startPlotY =
+      pad.top +
+      growthInner -
+      ((10_000 - scale.min) / (scale.max - scale.min || 1)) * growthInner;
+    assert.ok(startAmountCollidesWithZeroAxis(startPlotY, zeroY));
+    const startY = startAmountLabelY(startPlotY, zeroY);
+    assert.ok(startY < zeroY);
+    assert.ok(Math.abs(startY - zeroY) >= START_ZERO_LABEL_GAP_PX);
+    assert.equal(shouldDrawZeroBaselineLabel("$10k", startY, zeroY), true);
+    assert.ok(labelSitsOffPlot("$10k", pad.left));
   });
 });
 
@@ -122,6 +172,10 @@ describe("Growth & Tax layout chrome", () => {
     assert.match(chart, /data-start-label/);
     assert.match(chart, /startAmountLabel/);
     assert.match(chart, /startAmountLabelX/);
+    assert.match(chart, /startAmountLabelY/);
+    assert.match(chart, /shouldDrawZeroBaselineLabel/);
+    assert.match(chart, /data-zero-label/);
+    assert.match(chart, /data-start-y/);
     assert.match(moduleSource, /growthTaxChartPad/);
     assert.match(moduleSource, /GrowthAndTaxTable/);
     assert.match(moduleSource, /axis=\{axis\}/);

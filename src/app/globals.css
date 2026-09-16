@@ -62,8 +62,21 @@
   --font-mono: var(--font-plex-mono);
 }
 
-* {
-  border-color: var(--line);
+@layer base {
+  * {
+    border-color: var(--line);
+  }
+}
+
+/* Locked ticker chips — unlayered so they beat the base border reset. */
+.ticker-lock-in-universe {
+  border-color: var(--above);
+  border-width: 2px;
+}
+
+.ticker-lock-missing {
+  border-color: var(--tax-more);
+  border-width: 2px;
 }
 
 html {
