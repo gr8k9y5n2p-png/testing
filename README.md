@@ -662,6 +662,14 @@ Pass `benchmark` to override, or send `asset_class` / `benchmark_hint` (`equity`
 
 Fixtures live in `fixtures/performance/*.json` (recorded Yahoo monthly chart). `mode=live` hits `query1.finance.yahoo.com` and falls back to fixtures when the public chart is unavailable. Returns are **not invented**.
 
+**Eric lock (storage, efficiency):** three separate NAV surfaces — never collapse them.
+
+| Surface | Store | Used for |
+| --- | --- | --- |
+| Growth of $X | **Month-end** Yahoo adj-close only (`frequency=monthly`, same DHLAX / AGTHX format) | Annual / monthly total-return charts. Enough for annual returns now; monthly can be derived later. **Do not store full daily NAV history** on this path. |
+| Dist-day NAV | **Sparse** last regular close on or before ex/payable (≤7 days) in `fixtures/nav/history.json` | Historical **% of NAV**. Null if Yahoo/issuer has no print. |
+| Latest weekly NAV | One print per listed ticker in `fixtures/nav/latest.json` / `fund_navs` | Live $/share tax math and live % of NAV. **Never** substitute this for a past distribution day. |
+
 ```bash
 # Locked hero: Growth of $10,000 — AGTHX vs S&P 500 (SPY proxy)
 curl -s 'http://127.0.0.1:8000/performance?ticker=AGTHX&mode=fixture' \
@@ -786,7 +794,7 @@ Heroes: PAXGX 2025-12-22 LT **$1.11926**; PAXWX / PAXIX 2025 ST **$0.37824** / L
 
 **Skipped (hard walls, not invented):** **GQG** 2024/2025 PDFs are still Estimated Capital Gain Distributions; the PDF says finals publish on the declaration date; no paid/final book harvested; Wayback CDX empty/offline. Do not upgrade those estimates to paid. **Baillie** 2021–2024 unpublished on live “most recent” tables; Wayback CDX offline this session. **BGCSX** has no Final table. Class K amounts never copied onto Institutional (or the reverse). **Brandes** A / C / R6 not in-book. Quarterly non-December income stays off the leftover page. **FMI** FMIHX / FMIJX / FMIYX / FMIQX are not in the FMI family book. Missing years stay unmatched / Undisclosed. `SEED_FORCE_FULL` **off**. No schema / upsert-key / Manual Deploy. Smoke after seed: `GET /funds?q=HRTVX` / `HRMDX` / `FMIUX` / `BGVIX` / `BGAKX` / `GQEIX`.
 
-**Performance + hist-NAV densify (Compare / % of NAV, after `#184` V tip, in-book only):** Compare Growth was empty because `GET /performance?ticker=` returned **404 No performance fixture** for leftover 5y funds (DHLAX already had a Yahoo monthly series; WHOSX / WMCVX / GQETX / VYCAX / BRUSX / ARGFX / POSKX did not). Historical **% of NAV** must use NAV on the distribution day (ex/payable), never today’s weekly `fund_navs`. This slice adds official Yahoo Finance monthly adj-close fixtures (`fixtures/performance/*.json`, same format as DHLAX / AGTHX / SPY) and additive Yahoo last-regular-close prints on/before those leftover dist days (`fixtures/nav/history.json`). **No new tickers** (`funds_total≈10080` / `latest_as_of` freeze≈10056). Digest pins stay untouched — disjoint from parallel T–W leftover 5y sweeps (V leftover `#184` pin **3,510** kept as-is). `SEED_FORCE_FULL` **off**. No schema / upsert-key / Manual Deploy. Returns and NAVs are **never invented**.
+**Performance + hist-NAV densify (Compare / % of NAV, after `#184` V tip, in-book only):** Compare Growth was empty because `GET /performance?ticker=` returned **404 No performance fixture** for leftover 5y funds (DHLAX already had a Yahoo monthly series; WHOSX / WMCVX / GQETX / VYCAX / BRUSX / ARGFX / POSKX did not). Historical **% of NAV** must use NAV on the distribution day (ex/payable), never today’s weekly `fund_navs`. Eric lock: **month-end** Yahoo adj-close only (DHLAX / AGTHX format — not daily bars); **sparse** last-regular-close on/before leftover dist days (`fixtures/nav/history.json`); latest weekly NAV catalog unchanged. **No new tickers** (`funds_total≈10080` / `latest_as_of` freeze≈10056). Digest pins stay untouched — disjoint from parallel T–W leftover 5y sweeps (V leftover `#184` pin **3,510** kept as-is). `SEED_FORCE_FULL` **off**. No schema / upsert-key / Manual Deploy. Returns and NAVs are **never invented**.
 
 | Ticker | Family | `/performance` | Dist-day NAV | Benchmark |
 |---|---|---|---|---|

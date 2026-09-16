@@ -88,6 +88,21 @@ def test_compare_heroes_gain_performance_fixtures() -> None:
         assert FUND_META[ticker]["asset_class"] == asset_class
 
 
+def test_performance_fixtures_are_month_end_not_daily() -> None:
+    """Eric lock: Growth of $X stores month-end NAVs only — never daily history."""
+    import json
+    from datetime import date
+
+    for ticker, _asset_class, _bench in COMPARE_HEROES:
+        payload = json.loads((PERF_DIR / f"{ticker}.json").read_text(encoding="utf-8"))
+        assert payload["frequency"] == "monthly", ticker
+        dates = [date.fromisoformat(row["date"]) for row in payload["points"]]
+        assert len(dates) >= 12, ticker
+        assert len(dates) <= 130, ticker  # ~10y monthly, not daily
+        gaps = [(b - a).days for a, b in zip(dates, dates[1:])]
+        assert gaps and min(gaps) >= 27, (ticker, min(gaps))
+
+
 def test_max_reach_leftover_5y_performance_fixtures() -> None:
     missing = [ticker for ticker in MAX_REACH if not (PERF_DIR / f"{ticker}.json").exists()]
     assert missing == []
