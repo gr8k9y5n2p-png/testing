@@ -458,8 +458,12 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # 4y (2021 unpublished). Harding Loevner leftover 2021/2022 PDFs are
     # year-depth (HLEMX 4y; 2024 leftover Z / HLEMX / HLIDX unpublished).
     # Alger 2021/2023/2024 MF and Driehaus 2021–2024 stay unmatched.
-    assert digest.funds_with_5y == 3545
-    assert digest.funds_with_5y_mf == 2795
+    # All-events leftover (non-MFS, rebased onto #186+#181 tip): official
+    # midyear / quarterly typed rows for American Funds, Vanguard, T. Rowe,
+    # and iShares. Adopts merged #186 MFS mid-year fills. +1 MF 5y from a
+    # published midyear event on the Parallel T tip (3545 / MF 2795 / ETF 750).
+    assert digest.funds_with_5y == 3546
+    assert digest.funds_with_5y_mf == 2796
     assert digest.funds_with_5y_etf == 750
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()

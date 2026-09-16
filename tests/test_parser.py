@@ -5,6 +5,7 @@ from pathlib import Path
 
 from app.models import AmountUnit, EstimateType, PublicationStage
 from app.sources.parser import (
+    classify_header,
     infer_stage,
     is_ingestible_distribution_amount,
     parse_amount,
@@ -357,3 +358,21 @@ def test_infer_stage_midyear_paid_vs_estimate() -> None:
         )
         == PublicationStage.final
     )
+
+
+def test_classify_header_maps_roc_and_does_not_drop_type_columns() -> None:
+    roc = classify_header("Return of Capital", "Year-end distributions")
+    assert roc is not None
+    assert roc.estimate_type == EstimateType.return_of_capital
+    nontax = classify_header("Nontaxable Distributions", "ICI Primary")
+    assert nontax is not None
+    assert nontax.estimate_type == EstimateType.return_of_capital
+    income = classify_header("Income Dividends", "Quarterly distributions")
+    assert income is not None
+    assert income.estimate_type == EstimateType.ordinary_income
+    st = classify_header("Short-Term Gains", "Midyear capital gains")
+    assert st is not None
+    assert st.estimate_type == EstimateType.short_term_capital_gains
+    lt = classify_header("Long-Term Gains", "Midyear capital gains")
+    assert lt is not None
+    assert lt.estimate_type == EstimateType.long_term_capital_gains

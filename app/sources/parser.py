@@ -345,10 +345,24 @@ def extract_page_published_dates(html_or_text: str) -> dict[str, date | None]:
     text = clean_text(html_or_text)
     return {
         "record_date": _extract_labeled_prose_date(
-            text, ("record date", "date of record")
+            text,
+            (
+                "declaration and record date",
+                "declaration/record date",
+                "record date",
+                "date of record",
+            ),
         ),
         "ex_date": _extract_labeled_prose_date(
-            text, ("ex-date", "ex date", "ex-dividend date", "ex dividend date")
+            text,
+            (
+                "ex-dividend and reinvestment date",
+                "ex dividend and reinvestment date",
+                "ex-date",
+                "ex date",
+                "ex-dividend date",
+                "ex dividend date",
+            ),
         ),
         "payable_date": _extract_labeled_prose_date(
             text, ("payable date", "pay date", "payment date")
@@ -464,7 +478,14 @@ def classify_header(text: str, table_title: str) -> ColSpec | None:
         return ColSpec("amount", EstimateType.qualified_dividend, AmountUnit.per_share)
     if "special dividend" in h:
         return ColSpec("amount", EstimateType.special_dividend, AmountUnit.per_share)
-    if "return of capital" in h or h in {"roc"}:
+    if (
+        "return of capital" in h
+        or h in {"roc"}
+        or "nontaxable" in h
+        or "non taxable" in h
+        or "nondividend" in h
+        or "non dividend" in h
+    ):
         unit = AmountUnit.percent_of_nav if "%" in h or "nav" in h else AmountUnit.per_share
         return ColSpec("amount", EstimateType.return_of_capital, unit)
     if "nii" in h or ("income" in h and ("dividend" in h or "ordinary" in h)):
@@ -607,6 +628,26 @@ def parse_distribution_html(
         else:
             table_title = page_title
         table_stage = infer_stage(table_title, page_title, page_heading, source_url=source_url) or page_stage
+        # Prefer dates printed immediately above this table so a multi-quarter
+        # page does not collapse every event onto the first page-level stamp.
+        preceding = []
+        sibling = table.previous_sibling
+        hops = 0
+        while sibling is not None and hops < 12:
+            if isinstance(sibling, Tag):
+                preceding.append(sibling.get_text(" ", strip=True))
+                if sibling.name == "table":
+                    break
+            sibling = sibling.previous_sibling
+            hops += 1
+        parent = table.parent
+        if parent is not None and parent.name != "body":
+            preceding.append(parent.get_text(" ", strip=True)[:800])
+        table_dates = extract_page_published_dates(" ".join(preceding))
+        section_dates = {
+            key: table_dates.get(key) or page_dates.get(key)
+            for key in ("record_date", "ex_date", "payable_date")
+        }
 
         pending_split_header = False
         for row in table.find_all("tr"):
@@ -666,13 +707,13 @@ def parse_distribution_html(
             if is_excluded_product(fund_name, ticker):
                 continue
 
-            rec_date = _parse_mdy(values.get("record_date", ""), default_year) or page_dates.get(
+            rec_date = _parse_mdy(values.get("record_date", ""), default_year) or section_dates.get(
                 "record_date"
             )
-            ex_date = _parse_mdy(values.get("ex_date", ""), default_year) or page_dates.get(
+            ex_date = _parse_mdy(values.get("ex_date", ""), default_year) or section_dates.get(
                 "ex_date"
             )
-            payable = _parse_mdy(values.get("payable_date", ""), default_year) or page_dates.get(
+            payable = _parse_mdy(values.get("payable_date", ""), default_year) or section_dates.get(
                 "payable_date"
             )
             row_as_of = _parse_mdy(values.get("as_of", ""), default_year) or page_as_of

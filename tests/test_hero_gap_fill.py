@@ -251,5 +251,9 @@ def test_fixture_book_lookback_stays_official_only() -> None:
     # for Lazard / Homestead / Madison / BP / LSV leftover years.
     # Parallel T leftover: Marsico Investor leftover paid YE +5 MF.
     # Harding leftover 2021/2022 PDFs are year-depth. Alger / Driehaus walls.
-    assert digest.funds_with_5y == 3545
+    # All-events leftover (non-MFS, rebased onto #186+#181 tip): official
+    # midyear / quarterly typed rows for American Funds, Vanguard, T. Rowe,
+    # and iShares. MFS #186 mid-year fills stay. +1 MF 5y from a published
+    # midyear fill on the Parallel T tip (3545).
+    assert digest.funds_with_5y == 3546
     assert digest.book_funds >= 7200

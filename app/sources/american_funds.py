@@ -79,7 +79,15 @@ class AmericanFundsSource(FundSource):
         "SCWCX no 2022/2024; CGVBX no 2021/2025. 2070 Target Date / U.S. Small and "
         "Mid Cap Equity leftovers are 2024 inception (2y); Core Plus Bond / KKR / "
         "EMRGX leftovers are 2025 inception (1y). Class-level — never copied from "
-        "a sibling that already has the year."
+        "a sibling that already has the year. "
+        "All-events leftover (2026-09-16, in-book only; disjoint from MFS): "
+        "re-read live product-page historicalDistributions JSON for tickers "
+        "already in the book and store published midyear CG plus non-December "
+        "income / special / ST that the December-only extracts omitted. "
+        "AMCPX / AMCFX 2021-06-16 LT $1.5290 / 2024-06-12 LT $0.8110 / "
+        "2025-06-11 LT $1.8675; ABALX 2025-06-09 LT $0.1950 plus quarterly "
+        "income. Class-level — never copied. AGTHX / ANWPX 2021–2025 JSON "
+        "has no midyear CG — unmatched, not invented."
     )
 
     def __init__(self, fixtures_dir: Path | None = None) -> None:
@@ -222,6 +230,12 @@ class AmericanFundsSource(FundSource):
                 "name": "share_class_history_gapfill",
                 "url": "https://www.capitalgroup.com/individual/investments/fund/AMCFX",
                 "fixture": "share_class_history_gapfill.html",
+                "live": False,
+            },
+            {
+                "name": "leftover_all_events_midyear",
+                "url": "https://www.capitalgroup.com/individual/investments/fund/AMCFX",
+                "fixture": "leftover_all_events_midyear.html",
                 "live": False,
             },
         ]
