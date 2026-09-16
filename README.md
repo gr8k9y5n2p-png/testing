@@ -227,7 +227,7 @@ Every row is scoped to `accountId`. User A cannot read user B.
 
 **Persistence:** JSON file via `SavedAssetStore` — local `.data/saved-assets.json`, Vercel `/tmp/aftertax-saved-assets.json` (ephemeral filesystem). Override with `SAVED_ASSETS_PATH`. No new cloud vendor. Swap the store for Neon/Postgres later without changing the HTTP contract.
 
-**Modules:** import `listSavedAssets` / `saveSavedAsset` / `parsePortfolioBooksPayload` from `@/components/illustrate` (or `@/lib/saved-assets/client`). `PortfolioCompare` exposes `booksApiRef` + `headerActions`. Website `/portfolio` already mounts Save/Open.
+**Modules:** Compare (`/compare`) and Portfolios (`/portfolio`) have **Open** + **Save** against the same session/API Lists uses. Import `listSavedAssets` / `saveSavedAsset` / `parsePortfolioBooksPayload` / `portfolioBooksAreSavable` from `@/components/illustrate`. `PortfolioCompare` exposes `booksApiRef` + `headerActions`; `PortfolioSaveOpenActions` is the shared toolbar. Do not invent holdings. Soft-wall / Checkout stay off.
 
 ## Code structure
 

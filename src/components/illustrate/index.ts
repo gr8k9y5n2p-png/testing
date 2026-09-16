@@ -91,6 +91,21 @@ export {
   parsePortfolioBooksPayload,
   toPortfolioAssetPayload,
 } from "@/lib/saved-assets/payloads";
+export {
+  compareWorkspaceIsSavable,
+  compareWorkspaceToPortfolioBooks,
+  emptyPortfolioBooks,
+  portfolioBooksAreSavable,
+  portfolioBooksToCompareWorkspace,
+  portfolioSavePayloadFromBooks,
+  savedPortfolioSubtitle,
+} from "@/lib/illustrate/portfolio-save-open";
+export type {
+  CompareFundHint,
+  ComparePortfolioBooks,
+  CompareWorkspaceSnapshot,
+} from "@/lib/illustrate/portfolio-save-open";
+export { PortfolioSaveOpenActions } from "@/components/illustrate/PortfolioSaveOpenActions";
 export type {
   PortfolioAssetPayload,
   PortfolioBooksSnapshot,

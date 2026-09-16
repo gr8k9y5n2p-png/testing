@@ -8,6 +8,7 @@ import {
   emptyTickerSelection,
   isTickerLockKey,
   shouldClearTickerSelection,
+  shouldHydrateTickerFromParent,
   shouldKeepLockedTickerOnFocus,
   shouldRehydrateTickerFromSelection,
   tickerFieldDisplay,
@@ -146,6 +147,26 @@ describe("Portfolio / Compare ticker clear wiring", () => {
     assert.match(field, /setOpen\(false\);\s*return;/);
     assert.doesNotMatch(field, /key === "Escape"[\s\S]{0,80}setQuery\(ticker\)/);
     assert.match(field, /notifyPortfolioTickerMiss/);
+    assert.match(field, /shouldHydrateTickerFromParent/);
+  });
+
+  it("hydrates a parent Open ticker after an X wipe", () => {
+    assert.equal(
+      shouldHydrateTickerFromParent({ ticker: "FBGRX", previousTicker: "" }),
+      true,
+    );
+    assert.equal(
+      shouldHydrateTickerFromParent({ ticker: "FBGRX", previousTicker: "AGTHX" }),
+      true,
+    );
+    assert.equal(
+      shouldHydrateTickerFromParent({ ticker: "", previousTicker: "FBGRX" }),
+      false,
+    );
+    assert.equal(
+      shouldHydrateTickerFromParent({ ticker: "FBGRX", previousTicker: "fbgrx" }),
+      false,
+    );
   });
 
   it("Portfolio holdings and Compare slots pass allowEmpty so blur cannot restore a ticker", () => {

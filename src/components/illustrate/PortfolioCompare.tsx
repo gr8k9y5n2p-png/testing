@@ -42,8 +42,8 @@ import type { PortfolioBooksSnapshot } from "@/lib/saved-assets/payloads";
 /**
  * Modules Save/Open hook.
  * Persist `getBooks()` as `/api/saved-assets` `{ type: "portfolio", payload }`
- * (opaque JSON). Website `/portfolio` already wires Save/Open via this ref.
- * Do not invent holdings when opening.
+ * (opaque JSON). Compare + Portfolios mount Save/Open via this ref and
+ * `PortfolioSaveOpenActions`. Do not invent holdings when opening.
  */
 export type PortfolioCompareHandle = {
   getBooks: () => PortfolioBooksSnapshot;

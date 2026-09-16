@@ -28,6 +28,10 @@ describe("Sample Estimates empty copy", () => {
     assert.match(source, /LISTS_DIST_COLUMN = "Estimated \$ Distribution\/share"/);
     assert.match(source, /LISTS_SAVE = "Save"/);
     assert.match(source, /LISTS_OPEN = "Open"/);
+    assert.match(source, /PORTFOLIO_SAVE = "Save"/);
+    assert.match(source, /PORTFOLIO_OPEN = "Open"/);
+    assert.match(source, /PORTFOLIO_SAVE_EMPTY = "Add holdings before saving."/);
+    assert.match(source, /PORTFOLIO_OPEN_EMPTY = "No saved portfolios yet."/);
     assert.match(source, /never invented from paid history/);
     assert.doesNotMatch(source, /in this sample/);
   });

@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-import { PortfolioCompare } from "@/components/illustrate/PortfolioCompare";
+import { PortfolioCompareDemoMount } from "@/components/illustrate/PortfolioCompareDemoMount";
 import { getDistributionRepository } from "@/data";
 import { COPY } from "@/lib/copy";
-import { WEBSITE_PORTFOLIO_HOLDINGS } from "@/lib/illustrate/portfolio-compare-mount";
 
 export const metadata: Metadata = {
   title: "Aftertax — Portfolios",
@@ -44,11 +43,7 @@ export default async function PortfolioCompareDemoPage() {
       </p>
 
       <div className="mt-8">
-        <PortfolioCompare
-          funds={funds}
-          current={WEBSITE_PORTFOLIO_HOLDINGS}
-          proposed={WEBSITE_PORTFOLIO_HOLDINGS}
-        />
+        <PortfolioCompareDemoMount funds={funds} />
       </div>
 
       <pre

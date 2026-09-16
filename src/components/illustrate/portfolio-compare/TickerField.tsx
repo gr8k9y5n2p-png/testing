@@ -21,6 +21,7 @@ import type { PortfolioFundOption } from "@/lib/illustrate/portfolio-compare-typ
 import {
   emptyTickerSelection,
   isTickerLockKey,
+  shouldHydrateTickerFromParent,
   shouldKeepLockedTickerOnFocus,
   tickerFieldDisplay,
   tickerFieldSubtitle,
@@ -74,7 +75,18 @@ export function TickerField({
   const [remoteUnavailable, setRemoteUnavailable] = useState(false);
   const [notInUniverse, setNotInUniverse] = useState(false);
   const pickedRef = useRef(false);
+  const parentTickerRef = useRef(ticker);
   const hasSelection = Boolean((ticker || fundName) && !cleared);
+
+  useEffect(() => {
+    const previous = parentTickerRef.current;
+    parentTickerRef.current = ticker;
+    if (!shouldHydrateTickerFromParent({ ticker, previousTicker: previous })) {
+      return;
+    }
+    setQuery(ticker);
+    setCleared(false);
+  }, [ticker]);
   const display = tickerFieldDisplay({ open, query, ticker, cleared });
   const subtitle = hideSubtitle
     ? ""

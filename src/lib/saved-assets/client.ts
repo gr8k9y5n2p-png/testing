@@ -1,9 +1,9 @@
 /**
  * Browser / Modules helper for `/api/saved-assets`.
  *
- * Lists already uses this. Portfolio / Modules: save `getBooks()` as
- * `{ type: "portfolio", name, payload }` and `parsePortfolioBooksPayload`
- * on open. Do not invent holdings.
+ * Lists already uses this. Compare / Portfolios save `getBooks()` or
+ * Compare slots as `{ type: "portfolio", name, payload }` and
+ * `parsePortfolioBooksPayload` on open. Do not invent holdings.
  */
 
 import { SAVED_ASSETS_API_PATH } from "./contract.ts";
