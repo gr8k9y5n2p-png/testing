@@ -489,7 +489,21 @@ class MfsSource(HtmlTableSource):
         "share-class book (MGTIX 2025 income $0.30697 / LT $4.20618; MFEIX "
         "LT $25.35332; MEIIX LT $3.86919; ~232 tickers / year). Class A rows "
         "stay on the existing paid fixtures. 2026 midyear adds MFEGX LT "
-        "$1.05252. OTCAX has no 2022–2023 YE row; MNDAX has no 2023–2025 YE "
+        "$1.05252 (issuer product-page / 10-year Excel; not a mis-tagged 2025 "
+        "row). Official 10-year Excel midyear fill (in-book shareCode only) "
+        "adds the missing 2025 July LTCG the YE-only fixtures dropped — "
+        "MFEGX / MFEIX / MFECX / MFEKX / MEGBX / MFELX / MEGRX / MFEHX / "
+        "MFEJX LT $4.12961 ex 2025-07-31 / pay 2025-08-01 beside YE "
+        "$25.35332 (year total $29.48293). Companion midyear OI / ST are "
+        "class-level (MFEIX 2024-07-31 income $0.17485; MITTX 2025-07-31 "
+        "income $0.11847 / ST $0.04218 / LT $0.69672; MITDX R4 income "
+        "$0.14062 on the same date — never copied from Class A). Live "
+        "10-year Excel is flattened to Type of Earnings rows so weekly "
+        "scrapes keep mid-year and YE events; the HTML parser no longer "
+        "treats Type of Earnings + Rate Per Share as a T. Rowe split "
+        "header. Family-level mid-year paid PDF unpublished (tax center "
+        "has the estimate fly + 2026 schedule only). LTTAX Excel HTTP 400. "
+        "OTCAX has no 2022–2023 YE row; MNDAX has no 2023–2025 YE "
         "row; MRSAX 2021–2024 is December income only (no published ST/LT); "
         "BRWAX 2023 is income only (gaps, not invented). Same-Class-A aliases "
         "skipped (MFEBX=MEIAX, MWOHX=MWOFX). Class B / I / C / R* names map "
@@ -515,7 +529,12 @@ class MfsSource(HtmlTableSource):
         "2021 row; MNWTX R3 still unpublished for 2021. Unpublished leftover "
         "years stay unmatched."
     )
-    live_limitations = "Estimates are PDF percent-of-NAV ranges. Fixture transcribes public rows."
+    live_limitations = (
+        "Estimates are PDF percent-of-NAV ranges. Paid history is the official "
+        "per-product 10-year Excel (not a family mid-year PDF). Live Excel "
+        "bytes are flattened to every Type of Earnings row; product-page HTML "
+        "truncates to the latest events. LTTAX Excel HTTP 400."
+    )
 
     def pages(self) -> list[PageSpec]:
         return [
@@ -546,6 +565,30 @@ class MfsSource(HtmlTableSource):
                 fixture="2026_midyear_paid.html",
                 live=False,
                 large_aum_only=True,
+            ),
+            PageSpec(
+                name="paid_midyear",
+                url=(
+                    "https://www.mfs.com/MFSServices/products/v1/product/MFEGX/"
+                    "10YearsDistribution/download?shareCode=A&productLineCode=WEB_FAMILYFUNDS"
+                    "&roleCode=usinv&locationCode=us&locale=en_US"
+                ),
+                fixture="paid_midyear.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
+            ),
+            PageSpec(
+                name="live_ten_year_excel_mfegx",
+                url=(
+                    "https://www.mfs.com/MFSServices/products/v1/product/MFEGX/"
+                    "10YearsDistribution/download?shareCode=A&productLineCode=WEB_FAMILYFUNDS"
+                    "&roleCode=usinv&locationCode=us&locale=en_US"
+                ),
+                fixture="2026_midyear_paid.html",
+                live=True,
+                role="history",
+                large_aum_only=False,
             ),
             PageSpec(
                 name="2024_paid_year_end",
