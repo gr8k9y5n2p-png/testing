@@ -74,7 +74,45 @@ export type {
   CompareSideIn,
 } from "@/lib/illustrate/compare-types";
 export { PortfolioCompare } from "@/components/illustrate/PortfolioCompare";
-export type { PortfolioCompareProps } from "@/components/illustrate/PortfolioCompare";
+export type {
+  PortfolioCompareHandle,
+  PortfolioCompareProps,
+} from "@/components/illustrate/PortfolioCompare";
+export {
+  SAVED_ASSETS_API_PATH,
+  deleteSavedAsset,
+  getSavedAsset,
+  listSavedAssets,
+  saveSavedAsset,
+  updateSavedAsset,
+} from "@/lib/saved-assets/client";
+export {
+  parseListPayload,
+  parsePortfolioBooksPayload,
+  toPortfolioAssetPayload,
+} from "@/lib/saved-assets/payloads";
+export type {
+  PortfolioAssetPayload,
+  PortfolioBooksSnapshot,
+  PortfolioHoldingSnapshot,
+} from "@/lib/saved-assets/payloads";
+export {
+  PORTFOLIO_PAYLOAD_VERSION,
+  SAVED_ASSETS_CONTRACT,
+  SAVED_ASSETS_ENDPOINTS,
+} from "@/lib/saved-assets/contract";
+export type {
+  SavedAssetCollectionResponse,
+  SavedAssetItemResponse,
+  SavedAssetPatchBody,
+  SavedAssetRecord,
+  SavedAssetWriteBody,
+} from "@/lib/saved-assets/contract";
+export type {
+  ListAssetPayload,
+  SavedAsset,
+  SavedAssetType,
+} from "@/lib/saved-assets/types";
 export { HomepagePortfolioCompare } from "@/components/illustrate/HomepagePortfolioCompare";
 export { TickerHistoryLink } from "@/components/illustrate/TickerHistoryLink";
 export { CompareTickerLink } from "@/components/illustrate/CompareTickerLink";

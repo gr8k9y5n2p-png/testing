@@ -39,6 +39,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# local saved-asset JSON store (friends-beta persistence)
+.data/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

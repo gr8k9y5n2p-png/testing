@@ -26,6 +26,8 @@ describe("Sample Estimates empty copy", () => {
     assert.match(source, /AWAITING_ESTIMATE = "Awaiting Estimate"/);
     assert.match(source, /LISTS_HEADING = "Lists"/);
     assert.match(source, /LISTS_DIST_COLUMN = "Estimated \$ Distribution\/share"/);
+    assert.match(source, /LISTS_SAVE = "Save"/);
+    assert.match(source, /LISTS_OPEN = "Open"/);
     assert.match(source, /never invented from paid history/);
     assert.doesNotMatch(source, /in this sample/);
   });

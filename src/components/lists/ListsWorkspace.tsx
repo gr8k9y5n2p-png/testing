@@ -3,6 +3,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { FundEstimateView } from "@/data/types";
 import { tickerSlotBorderClass } from "@/components/illustrate/ticker-slot-border";
+import { NoticeToast, useNoticeToast } from "@/components/NoticeToast";
+import { SavedAssetActions } from "@/components/saved-assets/SavedAssetActions";
+import { parseListPayload } from "@/lib/saved-assets/payloads";
 import {
   LISTS_ADD,
   LISTS_ANNOUNCED_COLUMN,
@@ -124,8 +127,12 @@ export function ListsWorkspace({
     return map;
   });
   const rowsByTickerRef = useRef(rowsByTicker);
-  rowsByTickerRef.current = rowsByTicker;
   const inflight = useRef<Set<string>>(new Set());
+  const { notice, onNotice, dismissNotice } = useNoticeToast();
+
+  useEffect(() => {
+    rowsByTickerRef.current = rowsByTicker;
+  }, [rowsByTicker]);
 
   const rows = useMemo(
     () =>
@@ -183,7 +190,22 @@ export function ListsWorkspace({
       >
         {LISTS_HEADING}
       </h1>
-      <p className="mt-2 max-w-2xl text-sm text-muted">{LISTS_DETAIL}</p>
+      <div className="mt-4">
+        <SavedAssetActions
+          type="list"
+          canSave={tickers.length > 0}
+          getPayload={() => ({ tickers })}
+          onOpen={(asset) => {
+            const parsed = parseListPayload(asset.payload);
+            if (!parsed) return;
+            setTickers(parsed.tickers);
+            setRowsByTicker({});
+          }}
+          onNotice={onNotice}
+        />
+      </div>
+      <p className="mt-3 max-w-2xl text-sm text-muted">{LISTS_DETAIL}</p>
+      <NoticeToast message={notice} onDismiss={dismissNotice} />
 
       <form
         className="mt-6 flex flex-col gap-2 sm:flex-row sm:items-center"

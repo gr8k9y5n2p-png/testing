@@ -76,6 +76,38 @@ export const LISTS_PCT_COLUMN = "Distribution % of NAV";
 export const LISTS_ANNOUNCED_COLUMN = "Announced Date";
 export const LISTS_RECORD_COLUMN = "Record Date";
 export const LISTS_EX_COLUMN = "Ex-Date";
+export const LISTS_SAVE = "Save";
+export const LISTS_OPEN = "Open";
+export const LISTS_SAVE_TITLE = "Save list";
+export const LISTS_OPEN_TITLE = "Open list";
+export const LISTS_NAME_PLACEHOLDER = "Weekly wholesaler book";
+export const LISTS_SAVE_EMPTY = "Add tickers before saving.";
+export const LISTS_OPEN_EMPTY = "No saved lists yet.";
+export const LISTS_SAVED = "List saved.";
+export const LISTS_OPENED = "List opened.";
+export const PORTFOLIO_SAVE = "Save";
+export const PORTFOLIO_OPEN = "Open";
+export const PORTFOLIO_SAVE_TITLE = "Save portfolio";
+export const PORTFOLIO_OPEN_TITLE = "Open portfolio";
+export const PORTFOLIO_NAME_PLACEHOLDER = "Current vs proposed book";
+export const PORTFOLIO_SAVE_EMPTY = "Add holdings before saving.";
+export const PORTFOLIO_OPEN_EMPTY = "No saved portfolios yet.";
+export const PORTFOLIO_SAVED = "Portfolio saved.";
+export const PORTFOLIO_OPENED = "Portfolio opened.";
+export const SAVED_ASSET_NAME_LABEL = "Name";
+export const SAVED_ASSET_CANCEL = "Cancel";
+export const SAVED_ASSET_CONFIRM_SAVE = "Save";
+export const SAVED_ASSET_CONFIRM_OPEN = "Open";
+export const SAVED_ASSET_ERROR = "Couldn’t complete that. Try again.";
+export const SAVED_ASSET_SIGN_IN = "Sign in from Account to save lists and portfolios.";
+export const ACCOUNT_EMAIL_LABEL = "Email";
+export const ACCOUNT_PASSWORD_LABEL = "Password";
+export const ACCOUNT_SIGN_IN = "Sign in";
+export const ACCOUNT_SIGN_UP = "Create account";
+export const ACCOUNT_SIGN_OUT = "Sign out";
+export const ACCOUNT_PASSWORD_HINT = "At least 8 characters.";
+export const ACCOUNT_STRIPE_RESERVE =
+  "Stripe Checkout later links a Customer to this same email. Billing stays off.";
 
 export { TICKER_REQUEST } from "@/lib/data-api/request-ticker";
 
