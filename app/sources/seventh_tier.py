@@ -440,7 +440,10 @@ class OsterweisSource(HtmlTableSource):
         "(e.g. Osterweis Fund OSTFX LT $1.10; Opportunity OSTGX LT $0.39; "
         "Growth & Income OSTVX LT $0.23). "
         "Equity record 12/12/2025; ex/pay 12/15/2025. "
-        "Paid history: https://www.osterweis.com/files/OSTFX_Historical_Distributions.pdf"
+        "Paid history: https://www.osterweis.com/files/OSTFX_Historical_Distributions.pdf "
+        "Official 5y parallel U leftover: issuer historical-distribution PDFs "
+        "fill leftover paid YE 2021–2025 (OSTFX / OSTGX / OSTVX). Official "
+        "printed $0.00000 stored. OSTIX / OSTAX not in-book leftovers."
     )
     live_limitations = (
         "Estimate book is PDF. Weekly walk uses the tax-center hub + estimate PDF; "
@@ -464,6 +467,13 @@ class OsterweisSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
+            ),
+            PageSpec(
+                name="leftover_paid_history_parallel_u",
+                url="https://www.osterweis.com/files/OSTFX_Historical_Distributions.pdf",
+                fixture="leftover_paid_history_parallel_u.html",
+                live=False,
+                role="history",
             ),
         ]
 

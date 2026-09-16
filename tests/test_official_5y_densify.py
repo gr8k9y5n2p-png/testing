@@ -22,10 +22,13 @@ from app.sources.dws import DwsSource
 from app.sources.eighth_tier import (
     ArielSource,
     BairdSource,
+    BuffaloSource,
     FmiSource,
     GqgSource,
     HeartlandSource,
+    LongleafSource,
     PrimecapSource,
+    ThirdAvenueSource,
 )
 from app.sources.eleventh_tier import AmgSource, GuidestoneSource
 from app.sources.fifth_tier import (
@@ -35,6 +38,7 @@ from app.sources.fifth_tier import (
     OakmarkSource,
     RoyceSource,
     TouchstoneSource,
+    TweedySource,
     VictorySource,
     VoyaSource,
 )
@@ -94,6 +98,7 @@ from app.sources.seventh_tier import (
     HotchkisWileySource,
     JensenSource,
     MarsicoSource,
+    OsterweisSource,
     TcwSource,
 )
 from app.sources.tenth_tier import (
@@ -462,8 +467,14 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # midyear / quarterly typed rows for American Funds, Vanguard, T. Rowe,
     # and iShares. Adopts merged #186 MFS mid-year fills. +1 MF 5y from a
     # published midyear event on the Parallel T tip (3545 / MF 2795 / ETF 750).
-    assert digest.funds_with_5y == 3546
-    assert digest.funds_with_5y_mf == 2796
+    # Parallel U leftover: Tweedy product-page paid YE +4 MF (TBGVX / TWEBX /
+    # TBCUX / TBHDX), Osterweis historical PDFs +3 MF (OSTFX / OSTGX / OSTVX),
+    # and Longleaf product-page paid 2021–2024 +3 MF (LLPFX / LLSCX / LLGLX).
+    # Buffalo 2024–2025 is year-depth only (2y; 2021–2023 unpublished).
+    # Third Avenue 2022–2024 is year-depth only (4y; 2021 unpublished).
+    # ETF 5y unchanged. No new identities.
+    assert digest.funds_with_5y == 3556
+    assert digest.funds_with_5y_mf == 2806
     assert digest.funds_with_5y_etf == 750
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
@@ -6755,3 +6766,344 @@ def test_parallel_t_heroes_are_searchable(client: TestClient) -> None:
     ]
     assert chusx_early == []
 
+
+def test_parallel_u_tweedy_leftover_paid_fills_5y() -> None:
+    records = TweedySource().fetch(mode="fixture").records
+    tbgvx_2025_lt = next(
+        row
+        for row in records
+        if row.ticker == "TBGVX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-11"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert tbgvx_2025_lt.amount == Decimal("2.793")
+    twebx_2025_lt = next(
+        row
+        for row in records
+        if row.ticker == "TWEBX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-11"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert twebx_2025_lt.amount == Decimal("0.464")
+    for ticker in ("TBGVX", "TWEBX", "TBCUX", "TBHDX"):
+        years = {
+            row.ex_date.year
+            for row in records
+            if row.ticker == ticker
+            and row.ex_date
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        }
+        assert set(LOOKBACK_YEARS) <= years, ticker
+
+
+def test_parallel_u_osterweis_leftover_paid_fills_5y() -> None:
+    records = OsterweisSource().fetch(mode="fixture").records
+    ostfx_2025_lt = next(
+        row
+        for row in records
+        if row.ticker == "OSTFX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-15"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert ostfx_2025_lt.amount == Decimal("1.17276")
+    ostgx_2023_lt = next(
+        row
+        for row in records
+        if row.ticker == "OSTGX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2023-12-15"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert ostgx_2023_lt.amount == Decimal("0.00000")
+    for ticker in ("OSTFX", "OSTGX", "OSTVX"):
+        years = {
+            row.ex_date.year
+            for row in records
+            if row.ticker == ticker
+            and row.ex_date
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        }
+        assert set(LOOKBACK_YEARS) <= years, ticker
+
+
+def test_parallel_u_longleaf_leftover_paid_fills_5y() -> None:
+    records = LongleafSource().fetch(mode="fixture").records
+    llpfx_2024_oi = next(
+        row
+        for row in records
+        if row.ticker == "LLPFX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2024-12-20"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert llpfx_2024_oi.amount == Decimal("0.2469")
+    llpfx_2021_st = next(
+        row
+        for row in records
+        if row.ticker == "LLPFX"
+        and row.estimate_type == EstimateType.short_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2021-12-01"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert llpfx_2021_st.amount == Decimal("1.3521")
+    for ticker in ("LLPFX", "LLSCX", "LLGLX"):
+        years = {
+            row.ex_date.year
+            for row in records
+            if row.ticker == ticker
+            and row.ex_date
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        }
+        assert set(LOOKBACK_YEARS) <= years, ticker
+
+
+def test_parallel_u_buffalo_leftover_is_year_depth() -> None:
+    records = BuffaloSource().fetch(mode="fixture").records
+    bufex_2025_lt = next(
+        row
+        for row in records
+        if row.ticker == "BUFEX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-04"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert bufex_2025_lt.amount == Decimal("3.35562")
+    bufgx_2024_lt = next(
+        row
+        for row in records
+        if row.ticker == "BUFGX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2024-12-04"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert bufgx_2024_lt.amount == Decimal("2.98029")
+    for ticker in ("BUFEX", "BUFBX", "BUFGX", "BUFDX", "BUFIX", "BUFTX", "BUFMX"):
+        years = {
+            row.ex_date.year
+            for row in records
+            if row.ticker == ticker
+            and row.ex_date
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        }
+        assert years == {2024, 2025}, ticker
+    bufox_years = {
+        row.ex_date.year
+        for row in records
+        if row.ticker == "BUFOX"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert bufox_years == {2025}
+
+
+def test_parallel_u_third_avenue_leftover_is_4y() -> None:
+    records = ThirdAvenueSource().fetch(mode="fixture").records
+    tavfx_2024_lt = next(
+        row
+        for row in records
+        if row.ticker == "TAVFX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2024-12-11"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert tavfx_2024_lt.amount == Decimal("4.08400")
+    tascs_2022_st = next(
+        row
+        for row in records
+        if row.ticker == "TASCX"
+        and row.estimate_type == EstimateType.short_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2022-12-14"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert tascs_2022_st.amount == Decimal("0.02361")
+    for ticker in ("TAVFX", "TASCX", "TAREX"):
+        years = {
+            row.ex_date.year
+            for row in records
+            if row.ticker == ticker
+            and row.ex_date
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        }
+        assert years == {2022, 2023, 2024, 2025}, ticker
+        assert 2021 not in years
+
+
+def test_parallel_u_leftover_walls_stay_unmatched() -> None:
+    tweedy = TweedySource().fetch(mode="fixture").records
+    assert [row for row in tweedy if row.ticker == "TBWIX"] == []
+
+    osterweis = OsterweisSource().fetch(mode="fixture").records
+    assert [row for row in osterweis if row.ticker == "OSTIX"] == []
+    assert [row for row in osterweis if row.ticker == "OSTAX"] == []
+
+    longleaf = LongleafSource().fetch(mode="fixture").records
+    assert [row for row in longleaf if row.ticker == "LLINX"] == []
+    llscx_nov_2022 = [
+        row
+        for row in longleaf
+        if row.ticker == "LLSCX"
+        and row.ex_date
+        and str(row.ex_date) == "2022-12-01"
+        and row.amount is not None
+    ]
+    assert llscx_nov_2022 == []
+
+    buffalo = BuffaloSource().fetch(mode="fixture").records
+    assert [row for row in buffalo if row.ticker == "BUIEX"] == []
+    assert [row for row in buffalo if row.ticker == "BUFHX"] == []
+    buffalo_early = [
+        row
+        for row in buffalo
+        if row.ex_date
+        and row.ex_date.year in {2021, 2022, 2023}
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert buffalo_early == []
+
+    third = ThirdAvenueSource().fetch(mode="fixture").records
+    assert [row for row in third if row.ticker == "TVFVX"] == []
+    assert [row for row in third if row.ticker == "TAVZX"] == []
+    third_2021 = [
+        row
+        for row in third
+        if row.ex_date
+        and row.ex_date.year == 2021
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert third_2021 == []
+
+
+def test_parallel_u_heroes_are_searchable(client: TestClient) -> None:
+    for slug in ("tweedy", "osterweis", "longleaf", "buffalo", "third_avenue"):
+        fetched = client.post(
+            "/ingest/fetch", json={"fund_family": slug, "mode": "fixture"}
+        )
+        assert fetched.status_code == 200, fetched.text
+        assert fetched.json()["created"] > 0
+
+    for ticker in (
+        "TBGVX",
+        "TWEBX",
+        "OSTFX",
+        "LLPFX",
+        "BUFEX",
+        "TAVFX",
+        "BUFOX",
+        "OSTIX",
+    ):
+        body = client.get("/funds", params={"q": ticker}).json()
+        tickers = [item["ticker"] for item in body["items"]]
+        if ticker == "OSTIX":
+            assert ticker not in tickers
+            continue
+        assert ticker in tickers, f"{ticker} missing from GET /funds?q={ticker}: {tickers[:8]}"
+
+    tbgvx = client.get(
+        "/distributions",
+        params={"ticker": "TBGVX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    tbgvx_2025 = [
+        Decimal(row["amount"])
+        for row in tbgvx["items"]
+        if row.get("ticker") == "TBGVX"
+        and row.get("estimate_type") == "long_term_capital_gains"
+        and str(row.get("ex_date") or "").startswith("2025-12-11")
+    ]
+    assert Decimal("2.793") in tbgvx_2025
+    tbgvx_years = {
+        str(row.get("ex_date") or "")[:4]
+        for row in tbgvx["items"]
+        if row.get("ticker") == "TBGVX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= tbgvx_years
+
+    ostfx = client.get(
+        "/distributions",
+        params={"ticker": "OSTFX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    ostfx_2025 = [
+        Decimal(row["amount"])
+        for row in ostfx["items"]
+        if row.get("ticker") == "OSTFX"
+        and row.get("estimate_type") == "long_term_capital_gains"
+        and str(row.get("ex_date") or "").startswith("2025-12-15")
+    ]
+    assert Decimal("1.17276") in ostfx_2025
+
+    llpfx = client.get(
+        "/distributions",
+        params={"ticker": "LLPFX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    llpfx_2024 = [
+        Decimal(row["amount"])
+        for row in llpfx["items"]
+        if row.get("ticker") == "LLPFX"
+        and row.get("estimate_type") == "ordinary_income"
+        and str(row.get("ex_date") or "").startswith("2024-12-20")
+    ]
+    assert Decimal("0.2469") in llpfx_2024
+
+    bufex = client.get(
+        "/distributions",
+        params={"ticker": "BUFEX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    bufex_years = {
+        str(row.get("ex_date") or "")[:4]
+        for row in bufex["items"]
+        if row.get("ticker") == "BUFEX" and row.get("amount") is not None
+    }
+    assert bufex_years == {"2024", "2025"}
+
+    tavfx = client.get(
+        "/distributions",
+        params={"ticker": "TAVFX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    tavfx_years = {
+        str(row.get("ex_date") or "")[:4]
+        for row in tavfx["items"]
+        if row.get("ticker") == "TAVFX" and row.get("amount") is not None
+    }
+    assert tavfx_years == {"2022", "2023", "2024", "2025"}
+    assert "2021" not in tavfx_years
+
+    ostix = client.get(
+        "/distributions",
+        params={"ticker": "OSTIX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    ostix_paid = [
+        row
+        for row in ostix["items"]
+        if row.get("ticker") == "OSTIX" and row.get("amount") is not None
+    ]
+    assert ostix_paid == []
