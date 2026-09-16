@@ -14,6 +14,7 @@ from app.sources.aum import filter_large_aum
 from app.sources.families import (
     BlackRockSource,
     InvescoSource,
+    PimcoSource,
     StateStreetSource,
     TRowePriceSource,
     VanguardSource,
@@ -710,8 +711,15 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # LBNDX 2022 / LTRAX 2021. Dodge Class X 2021 / Artisan 2023 Mid Small
     # Focus Discovery / 2022 GOPPS / Lord Daily AJAX stay walls. ETF 5y
     # unchanged from AA. No new identities. Honest pin = tip 3570 + AB +62.
-    assert digest.funds_with_5y == 3632
-    assert digest.funds_with_5y_mf == 2880
+    # Parallel Y leftover: BlackRock / iShares MF Investor A leftover years
+    # from live 2021–2024 open-end tax HTML + official stamped 2025 book
+    # +16 MF (BABDX / BACAX / BALPX / BARDX / BAREX / BDSAX / BICSX /
+    # BROAX / MALRX / MALVX / MCFOX / MDDCX / MDGCX / MDLVX / MDSPX / SHSAX).
+    # Invesco 2021–2022 ICI still 404; Franklin DIST-SUMM 2021–2024 still 204;
+    # PIMCO has no in-book leftover tickers. ETF 5y unchanged from the AB tip.
+    # No new identities.
+    assert digest.funds_with_5y == 3648
+    assert digest.funds_with_5y_mf == 2896
     assert digest.funds_with_5y_etf == 752
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
@@ -2684,15 +2692,8 @@ def test_parallel_g_ishares_spdr_blackrock_leftover_fills() -> None:
         and row.amount is not None
     ]
     assert hewg_2025 == []
-    bacax_2025 = [
-        row
-        for row in records
-        if row.ticker == "BACAX"
-        and row.ex_date
-        and row.ex_date.year == 2025
-        and row.amount is not None
-    ]
-    assert bacax_2025 == []
+    # Parallel G left BACAX 2025 unpublished on the live year page; WAVE Y
+    # fills it from the official stamped 2025 book (see test_parallel_y).
 
     ssga = StateStreetSource().fetch(mode="fixture").records
     nzac_2022 = next(
@@ -7617,3 +7618,211 @@ def test_parallel_aa_heroes_are_searchable(client: TestClient) -> None:
         and str(row.get("ex_date") or "").startswith("2022-12-01")
     ]
     assert Decimal("0.021170") in vbiix_2022
+
+def test_parallel_y_blackrock_leftover_fills_5y() -> None:
+    records = BlackRockSource().fetch(mode="fixture").records
+    bacax_jul = next(
+        row
+        for row in records
+        if row.ticker == "BACAX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2025-07-17"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert bacax_jul.amount == Decimal("0.141259")
+    bacax_dec = next(
+        row
+        for row in records
+        if row.ticker == "BACAX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-11"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert bacax_dec.amount == Decimal("0.203450")
+    mddcx_2025 = next(
+        row
+        for row in records
+        if row.ticker == "MDDCX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-09"
+        and row.amount
+    )
+    assert mddcx_2025.amount == Decimal("1.114790")
+    mdgcx_2025 = [
+        row
+        for row in records
+        if row.ticker == "MDGCX"
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-09"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    ]
+    mdgcx_by_type = {row.estimate_type: row.amount for row in mdgcx_2025}
+    assert mdgcx_by_type[EstimateType.ordinary_income] == Decimal("0.362241")
+    assert mdgcx_by_type[EstimateType.short_term_capital_gains] == Decimal("1.055639")
+    assert mdgcx_by_type[EstimateType.long_term_capital_gains] == Decimal("1.047497")
+    bardx_2024 = [
+        row
+        for row in records
+        if row.ticker == "BARDX"
+        and row.ex_date
+        and str(row.ex_date) == "2024-10-10"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    ]
+    bardx_by_type = {row.estimate_type: row.amount for row in bardx_2024}
+    assert bardx_by_type[EstimateType.ordinary_income] == Decimal("0.115751")
+    assert bardx_by_type[EstimateType.short_term_capital_gains] == Decimal("0.193089")
+    assert bardx_by_type[EstimateType.long_term_capital_gains] == Decimal("1.386730")
+    for ticker in (
+        "BABDX",
+        "BACAX",
+        "BALPX",
+        "BARDX",
+        "BAREX",
+        "BDSAX",
+        "BICSX",
+        "BROAX",
+        "MALRX",
+        "MALVX",
+        "MCFOX",
+        "MDDCX",
+        "MDGCX",
+        "MDLVX",
+        "MDSPX",
+        "SHSAX",
+    ):
+        years = {
+            row.ex_date.year
+            for row in records
+            if row.ticker == ticker
+            and row.ex_date
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        }
+        assert set(LOOKBACK_YEARS) <= years, ticker
+
+
+def test_parallel_y_leftover_walls_stay_unmatched() -> None:
+    records = BlackRockSource().fetch(mode="fixture").records
+    for ticker in ("CMLAX", "LILAX", "LELAX"):
+        rows_2025 = [
+            row
+            for row in records
+            if row.ticker == ticker
+            and row.ex_date
+            and row.ex_date.year == 2025
+            and row.amount is not None
+        ]
+        assert rows_2025 == [], ticker
+    for ticker, year in (
+        ("BAICX", 2024),
+        ("BAMBX", 2021),
+        ("BHYAX", 2023),
+        ("BCBAX", 2024),
+    ):
+        rows = [
+            row
+            for row in records
+            if row.ticker == ticker
+            and row.ex_date
+            and row.ex_date.year == year
+            and row.amount is not None
+        ]
+        assert rows == [], f"{ticker} {year} should stay unmatched"
+
+    invesco = InvescoSource().fetch(mode="fixture").records
+    vafax_early = [
+        row
+        for row in invesco
+        if row.ticker == "VAFAX"
+        and row.ex_date
+        and row.ex_date.year in {2021, 2022}
+        and row.amount is not None
+    ]
+    assert vafax_early == []
+
+    franklin = FranklinTempletonSource().fetch(mode="fixture").records
+    for ticker in ("FT", "PIM", "PMM"):
+        years = {
+            row.ex_date.year
+            for row in franklin
+            if row.ticker == ticker
+            and row.ex_date
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        }
+        assert 2025 in years or years == set(), ticker
+        assert {2021, 2022, 2023, 2024}.isdisjoint(years), ticker
+
+    pimco = PimcoSource().fetch(mode="fixture").records
+    pimco_in_book = [
+        row
+        for row in pimco
+        if row.ticker and not str(row.ticker).startswith("ZZ")
+    ]
+    assert pimco_in_book == []
+
+
+def test_parallel_y_heroes_are_searchable(client: TestClient) -> None:
+    fetched = client.post(
+        "/ingest/fetch", json={"fund_family": "blackrock", "mode": "fixture"}
+    )
+    assert fetched.status_code == 200, fetched.text
+    assert fetched.json()["created"] > 0
+
+    for ticker in ("BACAX", "MDDCX", "MDGCX", "BARDX", "MCFOX"):
+        body = client.get("/funds", params={"q": ticker}).json()
+        tickers = [item["ticker"] for item in body["items"]]
+        assert ticker in tickers, f"{ticker} missing from GET /funds?q={ticker}: {tickers[:8]}"
+
+    bacax = client.get(
+        "/distributions",
+        params={"ticker": "BACAX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    bacax_2025 = [
+        Decimal(row["amount"])
+        for row in bacax["items"]
+        if row.get("ticker") == "BACAX"
+        and row.get("estimate_type") == "ordinary_income"
+        and str(row.get("ex_date") or "").startswith("2025-12-11")
+    ]
+    assert Decimal("0.203450") in bacax_2025
+    bacax_years = {
+        str(row.get("ex_date") or row.get("payable_date") or "")[:4]
+        for row in bacax["items"]
+        if row.get("ticker") == "BACAX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= bacax_years
+
+    mdgcx = client.get(
+        "/distributions",
+        params={"ticker": "MDGCX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    mdgcx_2025 = [
+        Decimal(row["amount"])
+        for row in mdgcx["items"]
+        if row.get("ticker") == "MDGCX"
+        and row.get("estimate_type") == "long_term_capital_gains"
+        and str(row.get("ex_date") or "").startswith("2025-12-09")
+    ]
+    assert Decimal("1.047497") in mdgcx_2025
+
+    cmlax = client.get(
+        "/distributions",
+        params={"ticker": "CMLAX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    cmlax_2025 = [
+        row
+        for row in cmlax["items"]
+        if row.get("ticker") == "CMLAX"
+        and str(row.get("ex_date") or "")[:4] == "2025"
+        and row.get("amount") is not None
+    ]
+    assert cmlax_2025 == []
+

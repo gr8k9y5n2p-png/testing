@@ -79,7 +79,12 @@ class FranklinTempletonSource(HtmlTableSource):
         "pages are JS. Leftover CEF years stay unmatched. Parallel H Putnam leftover "
         "re-probe (in-book PIM / PMM / PMO / PPT): DIST-SUMM-2024 / 2023 / 2022 / "
         "2021 and pim/pmm/pmo/ppt-section-19-notice-12-31-2024 still 204 empty. "
-        "Do not store 19(a) fiscal-YTD estimates as YE finals."
+        "Do not store 19(a) fiscal-YTD estimates as YE finals. "
+        "Parallel Y leftover re-probe (2026-09-16): DIST-SUMM-2024 / 2023 / 2022 / "
+        "2021 still 204 empty; ICI reports hub remains a JS SPA; open-end estimate "
+        "grid remains JS. In-book leftovers are the 2025 CEF DIST-SUMM tickers "
+        "(FT / FTF / PIM / PMM / PMO / PPT and siblings) still 1y — prior-year "
+        "official calendar-year DIST-SUMM unpublished. Unmatched / not invented."
     )
     live_limitations = (
         "Open-end December estimate tool is JavaScript-rendered. "
