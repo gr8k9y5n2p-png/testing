@@ -4,8 +4,13 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { IllustrationComponent } from "./types.ts";
+import { emptyIllustrateResponse, UI_DEFAULT_TAX_RATES } from "./types.ts";
 import { illustrationRequestNav, perShareNavError } from "./compare-request.ts";
+import { fundFromPaidEvent } from "../../data/queries.ts";
+import { mergeFundLists } from "../../data/hydrate-funds.ts";
+import type { FundEstimateView } from "../../data/types.ts";
 import {
+  dollarIllustrationUpcoming,
   illustrationComponentBucket,
   splitIllustrationComponents,
   upcomingEstimateTypeRows,
@@ -158,11 +163,8 @@ describe("Dollar Illustration Upcoming gate", () => {
 
   it("IllustrationResults reads the unpaid-only helper instead of result.totals", () => {
     const source = readFileSync(join(here, "../../components/illustrate/IllustrationResults.tsx"), "utf8");
-    assert.match(source, /splitIllustrationComponents/);
-    assert.match(source, /upcomingIllustrationTotals/);
-    assert.match(source, /upcomingEstimateTypeRows/);
+    assert.match(source, /dollarIllustrationUpcoming/);
     assert.match(source, /catalogUpcoming/);
-    assert.match(source, /isUpcomingFund/);
     assert.doesNotMatch(source, /result\.totals/);
   });
 
@@ -199,8 +201,8 @@ describe("Dollar Illustration Upcoming gate", () => {
       publication_stage: null,
       as_of: "2026-07-31",
       record_date: null,
-      ex_date: "2026-09-11",
-      payable_date: "2026-09-14",
+      ex_date: "2026-12-15",
+      payable_date: "2026-12-17",
       amount: 21.021,
       amount_unit: "per_share",
       distribution_dollars: 67_318.9,
@@ -230,8 +232,8 @@ describe("Dollar Illustration Upcoming gate", () => {
       publication_stage: null,
       as_of: "2026-07-31",
       record_date: null,
-      ex_date: "2026-09-11",
-      payable_date: "2026-09-14",
+      ex_date: "2026-12-15",
+      payable_date: "2026-12-17",
       amount: 21.021,
       amount_unit: "per_share",
       distribution_dollars: 67_318.9,
@@ -253,8 +255,8 @@ describe("Dollar Illustration Upcoming gate", () => {
       estimate_type: "long_term_capital_gains",
       publication_stage: "preliminary_estimate",
       as_of: "2026-07-31",
-      ex_date: "2026-09-11",
-      payable_date: "2026-09-14",
+      ex_date: "2026-12-15",
+      payable_date: "2026-12-17",
       amount: 21.021,
       amount_unit: "per_share",
       distribution_dollars: "67318.90" as unknown as number,
@@ -265,8 +267,8 @@ describe("Dollar Illustration Upcoming gate", () => {
       estimate_type: "total",
       publication_stage: "preliminary_estimate",
       as_of: "2026-07-31",
-      ex_date: "2026-09-11",
-      payable_date: "2026-09-14",
+      ex_date: "2026-12-15",
+      payable_date: "2026-12-17",
       amount: 21.021,
       amount_unit: "per_share",
       distribution_dollars: "67318.90" as unknown as number,
@@ -277,8 +279,8 @@ describe("Dollar Illustration Upcoming gate", () => {
       estimate_type: "total_capital_gains",
       publication_stage: "preliminary_estimate",
       as_of: "2026-07-31",
-      ex_date: "2026-09-11",
-      payable_date: "2026-09-14",
+      ex_date: "2026-12-15",
+      payable_date: "2026-12-17",
       amount: 7.08,
       amount_unit: "percent_of_nav",
       distribution_dollars: "70800.00" as unknown as number,
@@ -295,8 +297,8 @@ describe("Dollar Illustration Upcoming gate", () => {
       estimate_type: "long_term_capital_gains",
       publication_stage: "preliminary_estimate",
       as_of: "2026-07-31",
-      ex_date: "2026-09-11",
-      payable_date: "2026-09-14",
+      ex_date: "2026-12-15",
+      payable_date: "2026-12-17",
       amount: 21.021,
       amount_unit: "per_share",
       distribution_dollars: 67_319,
@@ -305,8 +307,8 @@ describe("Dollar Illustration Upcoming gate", () => {
     const rows = upcomingEstimateTypeRows([ltcg], {
       publicationStage: "preliminary_estimate",
       asOfDate: "2026-07-31",
-      exDate: "2026-09-11",
-      payableDate: "2026-09-14",
+      exDate: "2026-12-15",
+      payableDate: "2026-12-17",
       estimateTypeLines: [
         {
           estimateType: "long_term_capital_gains",
@@ -330,11 +332,160 @@ describe("Dollar Illustration Upcoming gate", () => {
       false,
       "unpublished types stay off the table — never invent $0",
     );
+    const unpaidView = dollarIllustrationUpcoming([ltcg], {
+      bucket: "upcoming",
+      hasEstimate: true,
+      publicationStage: "preliminary_estimate",
+      asOfDate: "2026-07-31",
+      exDate: "2026-12-15",
+      payableDate: "2026-12-17",
+      estimatedDistributionAmount: 21.021,
+      estimateTypeLines: [
+        {
+          estimateType: "long_term_capital_gains",
+          amount: 21.021,
+          amountUnit: "per_share",
+        },
+        {
+          estimateType: "short_term_capital_gains",
+          amount: 0,
+          amountUnit: "per_share",
+        },
+      ],
+    });
+    assert.equal(unpaidView.catalogUpcoming, true);
+    assert.equal(unpaidView.rows.length, 2);
+    assert.equal(
+      unpaidView.rows.some((row) => row.estimate_type === "short_term_capital_gains"),
+      true,
+    );
     const panel = readFileSync(
       join(here, "../../components/illustrate/IllustratePanel.tsx"),
       "utf8",
     );
     assert.doesNotMatch(panel, /PortfolioCoverageCard/);
     assert.doesNotMatch(panel, /postIllustratePortfolio/);
+  });
+
+  it("Paid History click with no unpaid upcoming stays Undisclosed and drops Paid / paid dates", () => {
+    const identity: FundEstimateView = {
+      id: "fund:AMCPX",
+      fundName: "AMCAP Fund",
+      ticker: "AMCPX",
+      cusip: "000000000",
+      family: "American Funds",
+      category: "Large Growth",
+      shareClass: "A",
+      nav: 42.1,
+      estimatedDistributionAmount: 0,
+      estimatedOrdinaryIncome: 0,
+      estimatedCapitalGains: 0,
+      estimatedDistributionPctNav: 0,
+      publishedAt: "",
+      asOfDate: "",
+      recordDate: null,
+      exDate: null,
+      payableDate: null,
+      publicationStage: null,
+      bucket: "paid",
+      hasEstimate: false,
+      paidHistory: [],
+      distributionYear: 2026,
+      categoryAveragePctNav: 0,
+      vsCategoryPctNav: 0,
+    };
+    const paidRow = fundFromPaidEvent(identity, {
+      asOfDate: "2026-07-08",
+      recordDate: "2026-06-16",
+      exDate: "2026-06-16",
+      payableDate: "2026-06-17",
+      publicationStage: "paid",
+      estimatedDistributionAmount: 3.5365,
+      estimatedOrdinaryIncome: 0,
+      estimatedCapitalGains: 3.5365,
+      estimatedDistributionPctNav: 8.4,
+      distributionYear: 2026,
+      estimateTypeLines: [
+        {
+          estimateType: "long_term_capital_gains",
+          amount: 3.5365,
+          amountUnit: "per_share",
+        },
+      ],
+    });
+    paidRow.estimateTypeLines = [
+      {
+        estimateType: "long_term_capital_gains",
+        amount: 3.5365,
+        amountUnit: "per_share",
+      },
+    ];
+
+    const focused = mergeFundLists([paidRow], [identity])[0];
+    assert.ok(focused);
+    assert.equal(focused.exDate, "2026-06-16");
+    assert.equal(focused.payableDate, "2026-06-17");
+    assert.equal(focused.publicationStage, "paid");
+
+    const emptyLive = emptyIllustrateResponse(UI_DEFAULT_TAX_RATES);
+    const fromEmpty = dollarIllustrationUpcoming(emptyLive.components, focused);
+    assert.equal(fromEmpty.catalogUpcoming, false);
+    assert.equal(fromEmpty.totals, null);
+    assert.equal(fromEmpty.rows.length, 0);
+    assert.equal(
+      fromEmpty.rows.some(
+        (row) =>
+          row.publication_stage === "paid" ||
+          row.as_of === "2026-07-08" ||
+          row.ex_date === "2026-06-16" ||
+          row.payable_date === "2026-06-17",
+      ),
+      false,
+      "Paid History click must not render Paid / Jun-Jul paid dates in Upcoming",
+    );
+
+    const leakedPaid: IllustrationComponent[] = [
+      component({
+        distribution_id: "amcpx-ltcg",
+        estimate_type: "long_term_capital_gains",
+        publication_stage: "paid",
+        as_of: "2026-07-08",
+        record_date: "2026-06-16",
+        ex_date: "2026-06-16",
+        payable_date: "2026-06-17",
+        amount: 3.5365,
+        amount_unit: "per_share",
+        distribution_dollars: 84_000,
+        estimated_tax_dollars: 21_000,
+      }),
+    ];
+    const fromPaid = dollarIllustrationUpcoming(leakedPaid, focused);
+    assert.equal(fromPaid.catalogUpcoming, false);
+    assert.equal(fromPaid.totals, null);
+    assert.equal(fromPaid.rows.length, 0);
+    assert.equal(
+      fromPaid.rows.some((row) => row.publication_stage === "paid"),
+      false,
+    );
+    assert.equal(
+      upcomingEstimateTypeRows([], focused).length,
+      0,
+      "paid estimateTypeLines must not invent Upcoming rows",
+    );
+
+    const results = readFileSync(
+      join(here, "../../components/illustrate/IllustrationResults.tsx"),
+      "utf8",
+    );
+    const app = readFileSync(join(here, "../../components/AftertaxApp.tsx"), "utf8");
+    assert.match(results, /UPCOMING_UNAVAILABLE_HEADLINE/);
+    assert.match(results, /dollarIllustrationUpcoming/);
+    assert.doesNotMatch(
+      results,
+      /upcomingEstimateTypeRows\(\s*upcomingAll,\s*fund/,
+    );
+    assert.match(app, /function selectFund/);
+    assert.match(app, /mergeFundLists\(\[fund\], catalog \? \[catalog\] : \[\]\)/);
+    assert.match(app, /<IllustratePanel selected=\{selected\} \/>/);
   });
 });

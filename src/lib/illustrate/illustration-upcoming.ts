@@ -1,8 +1,10 @@
 import {
   distributionBucket,
+  isUpcomingFund,
   normalizePublicationStage,
   type DistributionBucket,
 } from "../../data/distribution-bucket.ts";
+import { hideUpcomingAmounts } from "../../data/hydrate-funds.ts";
 import type { EstimateTypeLine, FundEstimate } from "../../data/types.ts";
 import type { IllustrationComponent, IllustrationTotals } from "./types.ts";
 
@@ -113,26 +115,70 @@ export function upcomingIllustrationTotals(
   };
 }
 
+export type IllustrationUpcomingFund = IllustrationFundGate &
+  Partial<
+    Pick<
+      FundEstimate,
+      | "estimateTypeLines"
+      | "asOfDate"
+      | "recordDate"
+      | "exDate"
+      | "payableDate"
+      | "publicationStage"
+      | "hasEstimate"
+      | "bucket"
+      | "estimatedDistributionAmount"
+      | "estimatedDistributionPctNav"
+      | "estimatedOrdinaryIncome"
+      | "estimatedCapitalGains"
+    >
+  >;
+
+/**
+ * Paid History / final snapshots must never supply Upcoming extras or dates.
+ * Only an unpaid announced snapshot may fill omitted estimate_type lines.
+ */
+function isPaidHistorySnapshot(
+  fund?: Pick<FundEstimate, "publicationStage"> & {
+    bucket?: FundEstimate["bucket"] | null;
+  } | null,
+): boolean {
+  if (!fund) return false;
+  const stage = normalizePublicationStage(fund.publicationStage);
+  if (stage === "final" || stage === "paid") return true;
+  return fund.bucket === "paid";
+}
+
+function illustrationFundGate(
+  fund?: IllustrationUpcomingFund | null,
+): IllustrationFundGate {
+  if (!fund) return fund;
+  return {
+    hasEstimate: fund.hasEstimate,
+    publicationStage: fund.publicationStage ?? null,
+    bucket: fund.bucket ?? "paid",
+  };
+}
+
 /**
  * Upcoming table rows: illustrate components plus manager-published
  * estimate_type lines that the illustrate payload omitted (STCG $0).
- * Never invent a type the API did not publish.
+ * Never invent a type the API did not publish. Empty upcoming stays empty —
+ * Paid History / final lines and dates do not become Upcoming rows.
  */
 export function upcomingEstimateTypeRows(
   upcoming: IllustrationComponent[],
-  fund?: Pick<
-    FundEstimate,
-    | "estimateTypeLines"
-    | "asOfDate"
-    | "recordDate"
-    | "exDate"
-    | "payableDate"
-    | "publicationStage"
-  > | null,
+  fund?: IllustrationUpcomingFund | null,
 ): IllustrationComponent[] {
-  const typed = upcoming.filter((row) => !isRollupTotal(row.estimate_type));
+  const typed = upcoming.filter(
+    (row) =>
+      !isRollupTotal(row.estimate_type) &&
+      illustrationComponentBucket(row, illustrationFundGate(fund)) === "upcoming",
+  );
   const perShare = typed.filter((row) => row.amount_unit === "per_share");
   const source = perShare.length ? perShare : typed;
+  if (!source.length) return [];
+  if (isPaidHistorySnapshot(fund)) return source;
   const seen = new Set(source.map((row) => row.estimate_type));
   const extras: IllustrationComponent[] = [];
   const template = source[0];
@@ -145,12 +191,61 @@ export function upcomingEstimateTypeRows(
   return [...source, ...extras];
 }
 
+/**
+ * Dollar Illustration Upcoming view. Paid History ticker clicks may still
+ * fill Search + the illustration workspace; they must not hydrate Upcoming
+ * from paid / final rows. No unpaid announced estimate → empty rows so the
+ * UI shows Undisclosed, without Announced / Ex / Payable dates from history.
+ */
+export function dollarIllustrationUpcoming(
+  components: IllustrationComponent[],
+  fund?: IllustrationUpcomingFund | null,
+): {
+  rows: IllustrationComponent[];
+  totals: IllustrationTotals | null;
+  catalogUpcoming: boolean;
+} {
+  const { upcoming } = splitIllustrationComponents(
+    components,
+    illustrationFundGate(fund),
+  );
+  const catalogUpcoming =
+    fund != null &&
+    isUpcomingFund({
+      bucket: fund.bucket ?? "paid",
+      hasEstimate: fund.hasEstimate,
+      asOfDate: fund.asOfDate,
+      recordDate: fund.recordDate,
+      exDate: fund.exDate,
+      payableDate: fund.payableDate,
+      publicationStage: fund.publicationStage,
+      estimatedDistributionAmount: fund.estimatedDistributionAmount,
+      estimatedDistributionPctNav: fund.estimatedDistributionPctNav,
+      estimatedOrdinaryIncome: fund.estimatedOrdinaryIncome,
+      estimatedCapitalGains: fund.estimatedCapitalGains,
+    }) &&
+    !hideUpcomingAmounts({
+      bucket: fund.bucket ?? "paid",
+      hasEstimate: fund.hasEstimate,
+      estimatedDistributionAmount: fund.estimatedDistributionAmount,
+      estimatedDistributionPctNav: fund.estimatedDistributionPctNav,
+      estimatedOrdinaryIncome: fund.estimatedOrdinaryIncome,
+      estimatedCapitalGains: fund.estimatedCapitalGains,
+    });
+  const rows = upcomingEstimateTypeRows(
+    upcoming,
+    catalogUpcoming ? fund : null,
+  );
+  return {
+    rows,
+    totals: upcomingIllustrationTotals(rows),
+    catalogUpcoming,
+  };
+}
+
 function publishedLineAsComponent(
   line: EstimateTypeLine,
-  fund?: Pick<
-    FundEstimate,
-    "asOfDate" | "recordDate" | "exDate" | "payableDate" | "publicationStage"
-  > | null,
+  fund?: IllustrationUpcomingFund | null,
   template?: IllustrationComponent,
 ): IllustrationComponent {
   const zero = line.amount === 0;
