@@ -17,7 +17,7 @@ describe("saved-assets Modules contract", () => {
     assert.deepEqual(SAVED_ASSETS_CONTRACT.types, ["list", "portfolio"]);
     assert.equal(PORTFOLIO_PAYLOAD_VERSION, 1);
     assert.equal(SAVED_ASSETS_ENDPOINTS.collection, "/api/saved-assets");
-    assert.match(SAVED_ASSETS_CONTRACT.auth, /Account session/);
+    assert.match(SAVED_ASSETS_CONTRACT.auth, /Email\/password Account session/);
     assert.equal(SAVED_ASSETS_CONTRACT.accountCookie, "aftertax_account");
   });
 
@@ -30,6 +30,7 @@ describe("saved-assets Modules contract", () => {
       assert.match(source, /books/);
       assert.match(source, /aftertax_account/);
       assert.match(source, /\/api\/saved-assets/);
+      assert.match(source, /stripeCustomerId/);
     }
   });
 });

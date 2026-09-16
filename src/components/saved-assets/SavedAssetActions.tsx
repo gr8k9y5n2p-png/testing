@@ -25,6 +25,7 @@ import {
   SAVED_ASSET_CONFIRM_SAVE,
   SAVED_ASSET_ERROR,
   SAVED_ASSET_NAME_LABEL,
+  SAVED_ASSET_SIGN_IN,
 } from "@/lib/copy";
 import {
   listSavedAssets,
@@ -81,6 +82,13 @@ export function SavedAssetActions({
   function payloadSavable(): boolean {
     return typeof canSave === "function" ? canSave() : canSave;
   }
+
+  function errorMessage(caught: unknown): string {
+    if (caught instanceof SavedAssetsClientError) {
+      return caught.status === 401 ? SAVED_ASSET_SIGN_IN : caught.detail;
+    }
+    return SAVED_ASSET_ERROR;
+  }
   const copy = COPY[type];
   const saveTitleId = useId();
   const openTitleId = useId();
@@ -104,11 +112,7 @@ export function SavedAssetActions({
       setSelectedId(next[0]?.id ?? null);
     } catch (caught) {
       setItems([]);
-      setError(
-        caught instanceof SavedAssetsClientError
-          ? caught.detail
-          : SAVED_ASSET_ERROR,
-      );
+      setError(errorMessage(caught));
     } finally {
       setBusy(false);
     }
@@ -141,11 +145,7 @@ export function SavedAssetActions({
       setDialog(null);
       onNotice?.(copy.saved);
     } catch (caught) {
-      setError(
-        caught instanceof SavedAssetsClientError
-          ? caught.detail
-          : SAVED_ASSET_ERROR,
-      );
+      setError(errorMessage(caught));
     } finally {
       setBusy(false);
     }

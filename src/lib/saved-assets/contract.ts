@@ -3,9 +3,10 @@
  *
  * Import this module (or `@/components/illustrate`) — do not fork fetch.
  *
- * Auth: stub Account session cookie `aftertax_account` (`acct_stub_<uuid>`).
- * Issued on the first `/api/saved-assets` request. Stripe Checkout later
- * maps `customer` / `client_reference_id` onto the same `accountId`.
+ * Auth required: email/password Account session cookie `aftertax_account`
+ * (`acct_<uuid>.<hmac>`), issued on sign-up / sign-in. Saved-assets
+ * requests without a session are 401. Stripe Checkout later sets
+ * `stripeCustomerId` (`cus_…`) on the same account email.
  *
  * Every row is scoped to that account id. Cross-account get/update/delete
  * is 404 (no existence leak). Soft-wall / Checkout stay off.
@@ -90,5 +91,5 @@ export const SAVED_ASSETS_CONTRACT = {
   portfolioPayloadVersion: PORTFOLIO_PAYLOAD_VERSION,
   accountCookie: "aftertax_account",
   auth:
-    "Account session cookie aftertax_account (acct_stub_<uuid>). Stripe customer id later.",
+    "Email/password Account session required. Cookie aftertax_account. stripeCustomerId reserved for Checkout link by email.",
 } as const;

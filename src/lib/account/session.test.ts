@@ -6,13 +6,14 @@ import {
   isAccountId,
   newAccountId,
   readAccountIdFromRequest,
-  readCookie,
   resolveAccountSession,
   serializeAccountCookie,
+  signAccountId,
+  verifyAccountCookie,
 } from "./session.ts";
 
-describe("account session stub", () => {
-  it("mints acct_stub_ UUIDs and accepts Stripe customer ids later", () => {
+describe("account session", () => {
+  it("mints acct_ UUIDs and accepts Stripe customer ids later", () => {
     const id = newAccountId();
     assert.equal(id.startsWith(ACCOUNT_ID_PREFIX), true);
     assert.equal(isAccountId(id), true);
@@ -21,26 +22,28 @@ describe("account session stub", () => {
     assert.equal(isAccountId("not-an-id"), false);
   });
 
-  it("reads the account cookie from a request", () => {
+  it("signs and verifies the account cookie", () => {
     const id = newAccountId();
-    const request = new Request("http://localhost/api/saved-assets", {
-      headers: { cookie: `${ACCOUNT_COOKIE}=${id}; other=1` },
-    });
-    assert.equal(readAccountIdFromRequest(request), id);
-    assert.equal(readCookie("a=1; b=two", "b"), "two");
+    const signed = signAccountId(id);
+    assert.equal(verifyAccountCookie(signed), id);
+    assert.equal(verifyAccountCookie(id), null);
+    assert.equal(verifyAccountCookie(`${id}.deadbeef`), null);
   });
 
-  it("issues a new account id when the cookie is missing", () => {
-    const request = new Request("http://localhost/api/saved-assets");
-    const first = resolveAccountSession(request);
-    assert.equal(first.issued, true);
-    assert.equal(isAccountId(first.accountId), true);
-
-    const withCookie = new Request("http://localhost/api/saved-assets", {
-      headers: { cookie: serializeAccountCookie(first.accountId, false) },
+  it("reads the signed account cookie from a request", () => {
+    const id = newAccountId();
+    const request = new Request("http://localhost/api/saved-assets", {
+      headers: { cookie: serializeAccountCookie(id, false) },
     });
-    const again = resolveAccountSession(withCookie);
-    assert.equal(again.issued, false);
-    assert.equal(again.accountId, first.accountId);
+    assert.equal(readAccountIdFromRequest(request), id);
+    const session = resolveAccountSession(request);
+    assert.equal(session?.accountId, id);
+    assert.equal(session?.issued, false);
+  });
+
+  it("does not mint an anonymous session", () => {
+    const request = new Request("http://localhost/api/saved-assets");
+    assert.equal(resolveAccountSession(request), null);
+    assert.match(serializeAccountCookie(newAccountId(), false), new RegExp(ACCOUNT_COOKIE));
   });
 });

@@ -3,10 +3,13 @@
 Modules and Website share one account-scoped store. Import from
 `@/lib/saved-assets/contract` or `@/components/illustrate`. Do not fork fetch.
 
-Auth is the Account session cookie `aftertax_account` (`acct_stub_<uuid>`),
-issued on the first `/api/saved-assets` request. Stripe Checkout later maps
-`customer` / `client_reference_id` onto the same `accountId`. Soft-wall and
-Checkout stay off.
+Auth is required. Email/password sign-up and sign-in (Account menu / `/account`)
+set a signed httpOnly `aftertax_account` cookie. Saved-assets calls without a
+session return **401**. Friends-beta shared password stays a separate site gate.
+
+Stripe Checkout later (held off) creates/links a Stripe Customer on the **same
+account email** and stores `stripeCustomerId` (`cus_…`) on the account record.
+Do not enable Checkout or the soft-wall here.
 
 ## Endpoints
 
@@ -26,7 +29,7 @@ Cross-account get / update / delete is **404**. `accountId` is never taken from 
 ```ts
 type SavedAssetRecord = {
   id: string;           // sav_<uuid>
-  accountId: string;    // acct_stub_<uuid> today; cus_… later
+  accountId: string;    // acct_<uuid> from email/password Account
   type: "list" | "portfolio";
   name: string;
   payload: unknown;
@@ -60,6 +63,17 @@ Stable envelope. Modules owns `books` (Current / Proposed holdings). Extra keys 
 
 Helpers: `toPortfolioAssetPayload(getBooks())` and `parsePortfolioBooksPayload(item.payload)`
 (also accepts a flat books object). Never invent holdings.
+
+## Account
+
+| Method | Path | Body |
+| --- | --- | --- |
+| POST | `/api/account/signup` | `{ email, password }` |
+| POST | `/api/account/signin` | `{ email, password }` |
+| POST | `/api/account/signout` | — |
+| GET | `/api/account/me` | — |
+
+Public account: `{ id, email, stripeCustomerId }` (`stripeCustomerId` is `null` until Checkout).
 
 ## Persistence
 

@@ -38,6 +38,9 @@ async function parseError(response: Response): Promise<SavedAssetsClientError> {
     if (typeof body.detail === "string" && body.detail.trim()) {
       detail = body.detail;
     }
+    if (response.status === 401 && !body.detail) {
+      detail = "Sign in from Account to save lists and portfolios.";
+    }
   } catch {
     /* keep default */
   }

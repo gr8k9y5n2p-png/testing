@@ -221,9 +221,9 @@ Shared backbone: `GET|POST /api/saved-assets` and `GET|PATCH|DELETE /api/saved-a
 
 Every row is scoped to `accountId`. User A cannot read user B.
 
-**Account session (stub):** httpOnly cookie `aftertax_account` (`acct_stub_<uuid>`), issued on the first saved-assets request. Friends-beta password is not an account id. Auth is still unimplemented.
+**Account:** email/password sign-up and sign-in on Account / `/account`. Signed httpOnly `aftertax_account` cookie. Friends-beta shared password stays separate. Saved-assets without a session is **401**.
 
-**Stripe Checkout later (Eric / website billing — not in this PR):** set Checkout `client_reference_id` to the cookie account id; on success / webhook, persist Stripe `customer` (`cus_…`) as the canonical account id (or link it) and switch the cookie. Existing saved assets stay keyed by `accountId`. Do not gate Save/Open on Checkout while the soft-wall is off.
+**Stripe Checkout later (Eric holding Stripe):** create/link a Customer on the **same account email** and set `stripeCustomerId`. Soft-wall / Checkout stay off.
 
 **Persistence:** JSON file via `SavedAssetStore` — local `.data/saved-assets.json`, Vercel `/tmp/aftertax-saved-assets.json` (ephemeral filesystem). Override with `SAVED_ASSETS_PATH`. No new cloud vendor. Swap the store for Neon/Postgres later without changing the HTTP contract.
 
@@ -241,4 +241,4 @@ src/
   lib/illustrate/      Typed client, locked contract, mock engine (server)
 ```
 
-Auth is a stub account cookie (`aftertax_account`). Billing is stubbed only. Do not implement Checkout here.
+Auth is email/password Account (`aftertax_account`). Billing is stubbed only. Do not implement Checkout here.

@@ -1,11 +1,12 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { ACCOUNT_COOKIE, newAccountId } from "../account/session.ts";
+import { ACCOUNT_COOKIE, newAccountId, serializeAccountCookie } from "../account/session.ts";
 import { handleSavedAssetItem, handleSavedAssetsCollection } from "./http.ts";
 import { MemorySavedAssetStore } from "./store.ts";
 
 function cookieHeader(accountId: string): string {
-  return `${ACCOUNT_COOKIE}=${accountId}`;
+  const setCookie = serializeAccountCookie(accountId, false);
+  return setCookie.split(";", 1)[0] ?? `${ACCOUNT_COOKIE}=`;
 }
 
 function request(
@@ -120,16 +121,15 @@ describe("saved-assets HTTP account scoping", () => {
     assert.equal(stillThere.status, 200);
   });
 
-  it("issues an account cookie when the request has none", async () => {
+  it("returns 401 when the request has no account session", async () => {
     const store = new MemorySavedAssetStore();
     const response = await handleSavedAssetsCollection(
       request("http://localhost/api/saved-assets?type=list"),
       store,
     );
-    assert.equal(response.status, 200);
-    const setCookie = response.headers.get("set-cookie") ?? "";
-    assert.match(setCookie, new RegExp(`${ACCOUNT_COOKIE}=acct_stub_`));
-    assert.match(setCookie, /HttpOnly/i);
+    assert.equal(response.status, 401);
+    const body = await json(response);
+    assert.match(String(body.detail), /Sign in/);
   });
 
   it("stores a portfolio payload as opaque JSON", async () => {

@@ -1,9 +1,4 @@
-import {
-  isHttpsRequest,
-  resolveAccountSession,
-  serializeAccountCookie,
-  type ResolvedAccount,
-} from "../account/session.ts";
+import { resolveAccountSession } from "../account/session.ts";
 import {
   getSavedAssetForAccount,
   listSavedAssetsForAccount,
@@ -16,31 +11,20 @@ import {
 import type { SavedAssetStore } from "./store.ts";
 import { isSavedAssetType, type SavedAssetType } from "./types.ts";
 
-function json(
-  body: unknown,
-  status: number,
-  session: ResolvedAccount,
-  request: Request,
-): Response {
-  const headers = new Headers({ "content-type": "application/json" });
-  if (session.issued) {
-    headers.append(
-      "set-cookie",
-      serializeAccountCookie(session.accountId, isHttpsRequest(request)),
-    );
-  }
-  return new Response(JSON.stringify(body), { status, headers });
+const SIGN_IN_DETAIL = "Sign in to save lists and portfolios.";
+
+function json(body: unknown, status: number): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { "content-type": "application/json" },
+  });
 }
 
-function fail(
-  error: unknown,
-  session: ResolvedAccount,
-  request: Request,
-): Response {
+function fail(error: unknown): Response {
   if (error instanceof SavedAssetRequestError) {
-    return json({ detail: error.detail }, error.status, session, request);
+    return json({ detail: error.detail }, error.status);
   }
-  return json({ detail: "Couldn’t save that." }, 500, session, request);
+  return json({ detail: "Couldn’t save that." }, 500);
 }
 
 async function readJson(request: Request): Promise<unknown> {
@@ -61,34 +45,38 @@ function queryType(request: Request): SavedAssetType | undefined {
   return raw;
 }
 
+function requireSession(request: Request): string {
+  const session = resolveAccountSession(request);
+  if (!session) {
+    throw new SavedAssetRequestError(401, SIGN_IN_DETAIL);
+  }
+  return session.accountId;
+}
+
 /** GET/POST /api/saved-assets */
 export async function handleSavedAssetsCollection(
   request: Request,
   store: SavedAssetStore,
 ): Promise<Response> {
-  const session = resolveAccountSession(request);
   try {
+    const accountId = requireSession(request);
     if (request.method === "GET") {
       const type = queryType(request);
-      const items = await listSavedAssetsForAccount(
-        store,
-        session.accountId,
-        type,
-      );
-      return json({ items, count: items.length }, 200, session, request);
+      const items = await listSavedAssetsForAccount(store, accountId, type);
+      return json({ items, count: items.length }, 200);
     }
     if (request.method === "POST") {
       const input = parseWriteBody(await readJson(request));
       const { asset, created } = await saveSavedAssetForAccount(
         store,
-        session.accountId,
+        accountId,
         input,
       );
-      return json({ item: asset }, created ? 201 : 200, session, request);
+      return json({ item: asset }, created ? 201 : 200);
     }
-    return json({ detail: "Method not allowed." }, 405, session, request);
+    return json({ detail: "Method not allowed." }, 405);
   } catch (error) {
-    return fail(error, session, request);
+    return fail(error);
   }
 }
 
@@ -98,30 +86,30 @@ export async function handleSavedAssetItem(
   id: string,
   store: SavedAssetStore,
 ): Promise<Response> {
-  const session = resolveAccountSession(request);
   try {
+    const accountId = requireSession(request);
     if (!id.trim()) {
       throw new SavedAssetRequestError(404, "Saved asset not found.");
     }
     if (request.method === "GET") {
-      const item = await getSavedAssetForAccount(store, session.accountId, id);
-      return json({ item }, 200, session, request);
+      const item = await getSavedAssetForAccount(store, accountId, id);
+      return json({ item }, 200);
     }
     if (request.method === "PATCH") {
       const item = await updateSavedAssetForAccount(
         store,
-        session.accountId,
+        accountId,
         id,
         await readJson(request),
       );
-      return json({ item }, 200, session, request);
+      return json({ item }, 200);
     }
     if (request.method === "DELETE") {
-      await deleteSavedAssetForAccount(store, session.accountId, id);
-      return json({ ok: true }, 200, session, request);
+      await deleteSavedAssetForAccount(store, accountId, id);
+      return json({ ok: true }, 200);
     }
-    return json({ detail: "Method not allowed." }, 405, session, request);
+    return json({ detail: "Method not allowed." }, 405);
   } catch (error) {
-    return fail(error, session, request);
+    return fail(error);
   }
 }
