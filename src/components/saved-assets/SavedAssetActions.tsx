@@ -27,6 +27,7 @@ import {
   SAVED_ASSET_NAME_LABEL,
   SAVED_ASSET_SIGN_IN,
 } from "@/lib/copy";
+import { savedPortfolioSubtitle } from "@/lib/illustrate/portfolio-save-open";
 import {
   listSavedAssets,
   saveSavedAsset,
@@ -293,13 +294,7 @@ function subtitleFor(item: SavedAsset): string {
     const count = Array.isArray(tickers) ? tickers.length : 0;
     return count === 1 ? "1 ticker" : `${count} tickers`;
   }
-  const payload = item.payload as {
-    current?: unknown;
-    proposed?: unknown;
-  } | null;
-  const current = Array.isArray(payload?.current) ? payload.current.length : 0;
-  const proposed = Array.isArray(payload?.proposed) ? payload.proposed.length : 0;
-  return `Current ${current} · Proposed ${proposed}`;
+  return savedPortfolioSubtitle(item.payload);
 }
 
 function DialogShell({

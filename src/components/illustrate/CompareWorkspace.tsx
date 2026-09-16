@@ -10,6 +10,7 @@ import { NeedFundPricePrompt } from "@/components/illustrate/NeedFundPricePrompt
 import { TaxRateFields } from "@/components/illustrate/TaxRateFields";
 import { UpcomingTable } from "@/components/illustrate/portfolio-compare/UpcomingTable";
 import { NoticeToast, useNoticeToast } from "@/components/NoticeToast";
+import { SavedAssetActions } from "@/components/saved-assets/SavedAssetActions";
 import { postIllustrateCompare } from "@/lib/illustrate/compare-client";
 import {
   trailingCalendarPeriods,
@@ -30,6 +31,12 @@ import {
   setCompareSlot,
   upcomingRowsFromCompareTickers,
 } from "@/lib/illustrate/compare-workspace";
+import {
+  compareWorkspaceIsSavable,
+  compareWorkspaceToPortfolioBooks,
+  portfolioBooksToCompareWorkspace,
+} from "@/lib/illustrate/portfolio-save-open";
+import { toPortfolioAssetPayload } from "@/lib/saved-assets/payloads";
 import { resolveFundView } from "@/lib/illustrate/fund-history";
 import { isMissingNavError } from "@/lib/illustrate/illustrate-error";
 import { toUpcomingSummary } from "@/lib/illustrate/tax-drag-chart";
@@ -235,35 +242,62 @@ export function CompareWorkspace({
             from paid history.
           </p>
         </div>
-        <label className="block shrink-0">
-          <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.14em] text-faint">
-            Dollars invested
-          </span>
-          <div className="relative w-[12.5rem]">
-            <span
-              aria-hidden
-              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-faint"
-            >
-              $
+        <div className="flex shrink-0 flex-col items-stretch gap-3 sm:items-end">
+          <SavedAssetActions
+            type="portfolio"
+            canSave={() => compareWorkspaceIsSavable(slots)}
+            getPayload={() =>
+              toPortfolioAssetPayload(
+                compareWorkspaceToPortfolioBooks(
+                  { tickers: slots, holdingDollars },
+                  catalog,
+                ),
+              )
+            }
+            onOpen={(asset) => {
+              const next = portfolioBooksToCompareWorkspace(
+                asset.payload,
+                holdingDollars,
+              );
+              if (next.tickers.length === 0) return;
+              setSlots(padCompareSlots(next.tickers));
+              if (next.holdingDollars > 0) {
+                setHoldingDollars(next.holdingDollars);
+                setHoldingDraft(formatHoldingInput(next.holdingDollars));
+              }
+            }}
+            onNotice={onNotice}
+          />
+          <label className="block">
+            <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.14em] text-faint">
+              Dollars invested
             </span>
-            <input
-              inputMode="decimal"
-              value={holdingDraft}
-              onChange={(event) => setHoldingDraft(event.target.value)}
-              onBlur={(event) => commitHolding(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  event.currentTarget.blur();
-                }
-              }}
-              className="h-11 w-full rounded-md border border-line bg-surface pl-7 pr-3 font-mono text-base text-ink shadow-[0_1px_2px_rgba(26,29,26,0.04)]"
-              aria-label="Dollars invested"
-            />
-          </div>
-          <span className="mt-1 block max-w-[12.5rem] text-[10px] leading-snug text-muted">
-            Shared starting holding · default $10,000
-          </span>
-        </label>
+            <div className="relative w-[12.5rem]">
+              <span
+                aria-hidden
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-faint"
+              >
+                $
+              </span>
+              <input
+                inputMode="decimal"
+                value={holdingDraft}
+                onChange={(event) => setHoldingDraft(event.target.value)}
+                onBlur={(event) => commitHolding(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.currentTarget.blur();
+                  }
+                }}
+                className="h-11 w-full rounded-md border border-line bg-surface pl-7 pr-3 font-mono text-base text-ink shadow-[0_1px_2px_rgba(26,29,26,0.04)]"
+                aria-label="Dollars invested"
+              />
+            </div>
+            <span className="mt-1 block max-w-[12.5rem] text-[10px] leading-snug text-muted">
+              Shared starting holding · default $10,000
+            </span>
+          </label>
+        </div>
       </header>
 
       <div className="grid w-full grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">

@@ -25,9 +25,15 @@ describe("Website PortfolioCompare mounts", () => {
     assert.match(compare, />\s*Portfolios\s*</);
     assert.doesNotMatch(compare, /Portfolio comparison/);
     assert.match(homepage, /aria-label="Portfolios"/);
-    assert.match(homepage, /SavedAssetActions/);
-    assert.match(homepage, /type="portfolio"/);
+    assert.match(homepage, /PortfolioSaveOpenActions/);
     assert.match(homepage, /booksApiRef/);
+    const actions = readFileSync(
+      join(here, "../../components/illustrate/PortfolioSaveOpenActions.tsx"),
+      "utf8",
+    );
+    assert.match(actions, /type="portfolio"/);
+    assert.match(actions, /portfolioBooksAreSavable/);
+    assert.match(actions, /parsePortfolioBooksPayload/);
     assert.match(page, /Aftertax — Portfolios/);
   });
 
@@ -37,13 +43,21 @@ describe("Website PortfolioCompare mounts", () => {
       "utf8",
     );
     const demo = readFileSync(join(here, "../../app/portfolio-compare/page.tsx"), "utf8");
-    for (const source of [homepage, demo]) {
-      assert.match(source, /current=\{WEBSITE_PORTFOLIO_HOLDINGS\}/);
-      assert.match(source, /proposed=\{WEBSITE_PORTFOLIO_HOLDINGS\}/);
+    const demoMount = readFileSync(
+      join(here, "../../components/illustrate/PortfolioCompareDemoMount.tsx"),
+      "utf8",
+    );
+    for (const source of [homepage, demo, demoMount]) {
       assert.doesNotMatch(source, /smokeCurrentHoldings/);
       assert.doesNotMatch(source, /smokeProposedHoldings/);
       assert.doesNotMatch(source, /SMOKE_CURRENT_TICKERS/);
       assert.doesNotMatch(source, /AGTHX/);
     }
+    for (const source of [homepage, demoMount]) {
+      assert.match(source, /current=\{WEBSITE_PORTFOLIO_HOLDINGS\}/);
+      assert.match(source, /proposed=\{WEBSITE_PORTFOLIO_HOLDINGS\}/);
+    }
+    assert.match(demo, /PortfolioCompareDemoMount/);
+    assert.match(demoMount, /PortfolioSaveOpenActions/);
   });
 });

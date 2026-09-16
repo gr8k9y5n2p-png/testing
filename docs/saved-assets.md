@@ -64,6 +64,16 @@ Stable envelope. Modules owns `books` (Current / Proposed holdings). Extra keys 
 Helpers: `toPortfolioAssetPayload(getBooks())` and `parsePortfolioBooksPayload(item.payload)`
 (also accepts a flat books object). Never invent holdings.
 
+Modules UI helpers (`@/lib/illustrate/portfolio-save-open` or `@/components/illustrate`):
+
+- `portfolioBooksAreSavable` / `portfolioSavePayloadFromBooks` — Portfolios Save
+- `compareWorkspaceToPortfolioBooks` / `portfolioBooksToCompareWorkspace` — Compare Save/Open
+- `savedPortfolioSubtitle` — Open dialog row (“Current N · Proposed M”)
+
+Compare snapshots filled slots only. Extra books keys `compareSlots` and
+`compareHoldingDollars` restore Compare dollars; a Portfolio $1M book does not
+overwrite Compare’s holding. Soft-wall / Checkout stay off.
+
 ## Account
 
 | Method | Path | Body |

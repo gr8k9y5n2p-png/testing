@@ -3,7 +3,8 @@
 import { useMemo, useRef } from "react";
 import type { FundEstimateView } from "@/data/types";
 import { PortfolioCompare, type PortfolioCompareHandle } from "@/components/illustrate/PortfolioCompare";
-import { SavedAssetActions } from "@/components/saved-assets/SavedAssetActions";
+import { PortfolioSaveOpenActions } from "@/components/illustrate/PortfolioSaveOpenActions";
+import { NoticeToast, useNoticeToast } from "@/components/NoticeToast";
 import {
   exportToPdf,
   toPortfolioCompareExportModel,
@@ -11,10 +12,6 @@ import {
 import { WEBSITE_PORTFOLIO_HOLDINGS } from "@/lib/illustrate/portfolio-compare-mount";
 import { PORTFOLIO_COMPARE_BOOK_DOLLARS } from "@/lib/illustrate/portfolio-compare-types";
 import { UI_DEFAULT_TAX_RATES } from "@/lib/illustrate/types";
-import {
-  parsePortfolioBooksPayload,
-  toPortfolioAssetPayload,
-} from "@/lib/saved-assets/payloads";
 
 const HOMEPAGE_TAX_RATES = UI_DEFAULT_TAX_RATES;
 
@@ -24,6 +21,7 @@ export function HomepagePortfolioCompare({
   funds: FundEstimateView[];
 }) {
   const booksApiRef = useRef<PortfolioCompareHandle | null>(null);
+  const { notice, onNotice, dismissNotice } = useNoticeToast();
   const catalog = useMemo(
     () =>
       funds.map((fund) => ({
@@ -46,31 +44,9 @@ export function HomepagePortfolioCompare({
         headingAs="h1"
         booksApiRef={booksApiRef}
         headerActions={
-          <SavedAssetActions
-            type="portfolio"
-            canSave={() => {
-              const books = booksApiRef.current?.getBooks();
-              return Boolean(
-                books?.current.some((row) => row.ticker.trim()) ||
-                  books?.proposed.some((row) => row.ticker.trim()),
-              );
-            }}
-            getPayload={() =>
-              toPortfolioAssetPayload(
-                booksApiRef.current?.getBooks() ?? {
-                  bookDollars: PORTFOLIO_COMPARE_BOOK_DOLLARS,
-                  current: [],
-                  proposed: [],
-                  currentUnit: "pct",
-                  proposedUnit: "pct",
-                },
-              )
-            }
-            onOpen={(asset) => {
-              const books = parsePortfolioBooksPayload(asset.payload);
-              if (!books) return;
-              booksApiRef.current?.setBooks(books);
-            }}
+          <PortfolioSaveOpenActions
+            booksApiRef={booksApiRef}
+            onNotice={onNotice}
           />
         }
         onExport={(result, bookDollars) => {
@@ -84,6 +60,7 @@ export function HomepagePortfolioCompare({
           );
         }}
       />
+      <NoticeToast message={notice} onDismiss={dismissNotice} />
     </section>
   );
 }
