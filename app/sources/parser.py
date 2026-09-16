@@ -432,7 +432,9 @@ def classify_header(text: str, table_title: str) -> ColSpec | None:
         return ColSpec("ticker")
     if h in {"cusip"}:
         return ColSpec("cusip")
-    if h in {"distribution type", "type", "dist type"}:
+    if h in {"distribution type", "type", "dist type", "type of earnings"} or (
+        "type of earnings" in h
+    ):
         return ColSpec("dist_type")
     if h.startswith("as of"):
         return ColSpec("as_of")
@@ -534,6 +536,7 @@ _HEADER_HINTS = (
     "symbol",
     "as of",
     "distribution type",
+    "type of earnings",
 )
 
 
@@ -552,6 +555,11 @@ def _is_header_row(texts: list[str]) -> bool:
 def _is_split_header_start(texts: list[str]) -> bool:
     """T. Rowe style: category | Ticker Symbol | Per Share Amounts (amounts on the next row)."""
     joined = " ".join(_normalize_header(t) for t in texts)
+    # Official MFS 10-year Excel uses Type of Earnings + Rate Per Share on the
+    # same row as Ticker. That is not a split header — treating it as one
+    # dropped mid-year LTCG / income / ROC events.
+    if "type of earnings" in joined or "distribution type" in joined:
+        return False
     return "ticker" in joined and "per share" in joined and "income" not in joined and "short term" not in joined
 
 

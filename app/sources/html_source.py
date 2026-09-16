@@ -9,6 +9,7 @@ from app.config import settings
 from app.sources.aum import filter_large_aum
 from app.sources.base import FetchResult, FundSource
 from app.sources.ici import ici_as_of_from_name, parse_ici_primary
+from app.sources.mfs_excel import excel_bytes_to_html, is_mfs_ten_year_excel_url
 from app.sources.parser import parse_distribution_html
 
 
@@ -134,6 +135,9 @@ class HtmlTableSource(FundSource):
                     default_as_of=ici_as_of_from_name(page["name"]),
                 )
             else:
+                # MFS 10-year Excel (live bytes already flattened to HTML, or a
+                # fixture transcribed from that book) keeps every Type of
+                # Earnings row — mid-year and year-end. No December-only cut.
                 parsed = parse_distribution_html(
                     page["html"],
                     source_url=page["url"],
@@ -179,7 +183,13 @@ class HtmlTableSource(FundSource):
             response = client.get(url, headers=headers)
             response.raise_for_status()
             ctype = (response.headers.get("content-type") or "").lower()
+            payload = response.content
+            if is_mfs_ten_year_excel_url(url) and payload.startswith(b"PK"):
+                # Official per-product workbook. Flatten every Type of Earnings
+                # row (mid-year + YE). Do not return empty bytes — that dropped
+                # July LTCG events on weekly live walks.
+                return excel_bytes_to_html(payload, source_url=url)
             if any(token in ctype for token in ("pdf", "spreadsheet", "excel", "ms-excel", "octet-stream")):
-                # Weekly walk hit the real file; HTML parser cannot transcribe bytes.
+                # Weekly walk hit a binary file the HTML parser cannot read.
                 return ""
             return response.text
