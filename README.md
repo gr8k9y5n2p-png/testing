@@ -206,6 +206,27 @@ In-app shared password so Production can stay off Vercel Pro Deployment Protecti
 
 Revert this default (or delete the bypass) before the freemium sprint / public launch. Do not treat this as the long-term billing path. Stripe Checkout is still stubbed.
 
+## Saved lists and portfolios (account-scoped)
+
+Lists (`/lists`) has **Save** and **Open** at the top. Save names the current ticker list for the signed-in account; Open loads a previously saved list. Existing paste / filter / sort behavior is unchanged.
+
+Shared backbone: `GET|POST /api/saved-assets` and `GET|PATCH|DELETE /api/saved-assets/:id`. Types:
+
+| `type` | Payload | Who owns it |
+| --- | --- | --- |
+| `list` | `{ tickers: string[] }` | Website Lists |
+| `portfolio` | opaque JSON (Current/Proposed books + holdings) | Modules |
+
+Every row is scoped to `accountId`. User A cannot read user B.
+
+**Account session (stub):** httpOnly cookie `aftertax_account` (`acct_stub_<uuid>`), issued on the first saved-assets request. Friends-beta password is not an account id. Auth is still unimplemented.
+
+**Stripe Checkout later (Eric / website billing — not in this PR):** set Checkout `client_reference_id` to the cookie account id; on success / webhook, persist Stripe `customer` (`cus_…`) as the canonical account id (or link it) and switch the cookie. Existing saved assets stay keyed by `accountId`. Do not gate Save/Open on Checkout while the soft-wall is off.
+
+**Persistence:** JSON file via `SavedAssetStore` — local `.data/saved-assets.json`, Vercel `/tmp/aftertax-saved-assets.json` (ephemeral filesystem). Override with `SAVED_ASSETS_PATH`. No new cloud vendor. Swap the store for Neon/Postgres later without changing the HTTP contract.
+
+**Modules:** import `listSavedAssets` / `saveSavedAsset` / `parsePortfolioBooksPayload` from `@/components/illustrate` (or `@/lib/saved-assets/client`). `PortfolioCompare` exposes `booksApiRef` + `headerActions`. Website `/portfolio` already mounts Save/Open.
+
 ## Code structure
 
 ```
@@ -213,7 +234,9 @@ src/
   app/                 App Router + mock API routes
   components/          Search, highlights, illustrate, landing, paywall
   data/                Data API repository + query helpers (seed.ts is test/mock only)
+  lib/account/         Stub account session cookie (Stripe identity later)
+  lib/saved-assets/    Account-scoped list + portfolio store + HTTP contract
   lib/illustrate/      Typed client, locked contract, mock engine (server)
 ```
 
-Auth is not implemented. Billing is stubbed only.
+Auth is a stub account cookie (`aftertax_account`). Billing is stubbed only. Do not implement Checkout here.

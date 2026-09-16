@@ -25,6 +25,9 @@ describe("Website PortfolioCompare mounts", () => {
     assert.match(compare, />\s*Portfolios\s*</);
     assert.doesNotMatch(compare, /Portfolio comparison/);
     assert.match(homepage, /aria-label="Portfolios"/);
+    assert.match(homepage, /SavedAssetActions/);
+    assert.match(homepage, /type="portfolio"/);
+    assert.match(homepage, /booksApiRef/);
     assert.match(page, /Aftertax — Portfolios/);
   });
 

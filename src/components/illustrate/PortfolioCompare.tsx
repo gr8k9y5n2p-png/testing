@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type MutableRefObject, type ReactNode } from "react";
 import { CompactDisclaimer } from "@/components/CompactDisclaimer";
 import { NoticeToast, useNoticeToast } from "@/components/NoticeToast";
 import { AllocationColumn } from "@/components/illustrate/portfolio-compare/AllocationColumn";
@@ -37,6 +37,18 @@ import {
 import { calendarYearTaxTable, defaultPortfolioComparePeriods } from "@/lib/illustrate/portfolio-year-tax";
 import type { TaxRates } from "@/lib/illustrate/types";
 import { UI_DEFAULT_TAX_RATES } from "@/lib/illustrate/types";
+import type { PortfolioBooksSnapshot } from "@/lib/saved-assets/payloads";
+
+/**
+ * Modules Save/Open hook.
+ * Persist `getBooks()` as `/api/saved-assets` `{ type: "portfolio", payload }`
+ * (opaque JSON). Website `/portfolio` already wires Save/Open via this ref.
+ * Do not invent holdings when opening.
+ */
+export type PortfolioCompareHandle = {
+  getBooks: () => PortfolioBooksSnapshot;
+  setBooks: (snapshot: PortfolioBooksSnapshot) => void;
+};
 
 export type PortfolioCompareProps = {
   /** Defaults to $1,000,000. */
@@ -53,6 +65,14 @@ export type PortfolioCompareProps = {
   /** Website wires Export + freemium. Omit to hide the button. */
   onExport?: (result: PortfolioCompareResponse, bookDollars: number) => void;
   exportLabel?: string;
+  /**
+   * Modules / Website Save/Open toolbar. Rendered in the header beside Export.
+   * Use `savedAssetsClient` + `type: "portfolio"` — payload stays opaque JSON.
+   */
+  headerActions?: ReactNode;
+  /** Imperative books snapshot for Save/Open without forking this module. */
+  booksApiRef?: MutableRefObject<PortfolioCompareHandle | null>;
+  onBooksChange?: (snapshot: PortfolioBooksSnapshot) => void;
 };
 
 function toApiHoldings(holdings: PortfolioHoldingDraft[]) {
@@ -96,6 +116,9 @@ export function PortfolioCompare({
   headingAs: Heading = "h1",
   onExport,
   exportLabel = "Export",
+  headerActions,
+  booksApiRef,
+  onBooksChange,
 }: PortfolioCompareProps) {
   const funds = useMemo(() => catalogFunds(fundsProp ?? []), [fundsProp]);
   const universeTickers = useMemo(
@@ -118,6 +141,56 @@ export function PortfolioCompare({
   const [navNeeded, setNavNeeded] = useState(false);
   const [loading, setLoading] = useState(true);
   const { notice, onNotice, dismissNotice } = useNoticeToast();
+
+  useEffect(() => {
+    if (!booksApiRef) return;
+    booksApiRef.current = {
+      getBooks: () => ({
+        bookDollars,
+        current,
+        proposed,
+        currentUnit,
+        proposedUnit,
+      }),
+      setBooks: (snapshot) => {
+        if (snapshot.bookDollars > 0) {
+          setBookDollars(snapshot.bookDollars);
+          setBookInput(formatBookInput(snapshot.bookDollars));
+        }
+        setCurrent(snapshot.current);
+        setProposed(snapshot.proposed);
+        setCurrentUnit(snapshot.currentUnit);
+        setProposedUnit(snapshot.proposedUnit);
+      },
+    };
+    return () => {
+      booksApiRef.current = null;
+    };
+  }, [
+    booksApiRef,
+    bookDollars,
+    current,
+    proposed,
+    currentUnit,
+    proposedUnit,
+  ]);
+
+  useEffect(() => {
+    onBooksChange?.({
+      bookDollars,
+      current,
+      proposed,
+      currentUnit,
+      proposedUnit,
+    });
+  }, [
+    onBooksChange,
+    bookDollars,
+    current,
+    proposed,
+    currentUnit,
+    proposedUnit,
+  ]);
 
   function commitBook(raw: string) {
     const parsed = Number(raw.replace(/,/g, ""));
@@ -253,6 +326,7 @@ export function PortfolioCompare({
           </Heading>
         </div>
         <div className="flex flex-wrap items-end gap-3">
+          {headerActions}
           {onExport ? (
             <button
               type="button"

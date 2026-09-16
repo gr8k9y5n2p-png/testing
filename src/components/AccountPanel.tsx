@@ -10,6 +10,10 @@ export function AccountPanel({ compact = false }: { compact?: boolean }) {
           Account
         </p>
         <p className="mt-1 text-sm text-muted">Private beta</p>
+        <p className="mt-2 text-xs leading-relaxed text-faint">
+          Saved lists and portfolios stay on this account session until Stripe
+          Checkout identity is wired. Billing stays off.
+        </p>
       </div>
 
       <div>
