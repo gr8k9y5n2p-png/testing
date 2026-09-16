@@ -11,8 +11,9 @@ Fidelity midyear FIIS_SP52_DPL6 and Conestoga 2026 estimate HTML are not filled 
 
 Vanguard publishes filled Primary Layout PDFs on the advisor tax center
 (`/content/dam/fas/pdfs/ICI*_Primary*` and `ICIprimary_*.pdf`). Live PDFs are
-not HTML-parsed; fixtures are December year-end rows transcribed from those
-files so quarterly lines are not stored on one as_of (illustration sums).
+not HTML-parsed. December YE rows and leftover quarterly / midyear rows are
+transcribed as separate events with their own ex_date / as_of — never collapsed
+onto one year-end stamp (illustration sums).
 """
 
 from __future__ import annotations
@@ -64,6 +65,14 @@ _HEADER_ALIASES: dict[str, str] = {
         "long_term_capital_gain": "lt",
         "long-term capital gain": "lt",
         "long term capital gain": "lt",
+        "nontaxable_distributions": "roc",
+        "nontaxable distributions": "roc",
+        "non taxable distributions": "roc",
+        "non-taxable distributions": "roc",
+        "nontaxable distribution": "roc",
+        "return_of_capital": "roc",
+        "return of capital": "roc",
+        "roc": "roc",
     }.items()
 }
 
@@ -102,10 +111,14 @@ def parse_ici_primary(
         except ValueError:
             as_of = _parse_mdy(as_of_raw, None)
         as_of = as_of or default_as_of
+        # Year-end ICI files often stamp as_of = Dec 31. Do not collapse a
+        # midyear / quarterly event onto that YE stamp (illustration sums).
+        as_of = _as_of_for_event(as_of, ex_date)
         amounts = (
             (row.get("income"), EstimateType.ordinary_income),
             (row.get("st"), EstimateType.short_term_capital_gains),
             (row.get("lt"), EstimateType.long_term_capital_gains),
+            (row.get("roc"), EstimateType.return_of_capital),
         )
         for raw_amount, estimate_type in amounts:
             parsed = parse_amount(raw_amount or "", AmountUnit.per_share)
@@ -141,8 +154,22 @@ def parse_ici_primary(
     return records
 
 
+def _as_of_for_event(as_of: date | None, ex_date: date | None) -> date | None:
+    """Keep YE as_of on December events; never stamp Dec 31 onto a non-December ex."""
+    if as_of and ex_date and as_of.month == 12 and as_of.day == 31 and ex_date.month != 12:
+        return ex_date
+    return as_of
+
+
 def ici_as_of_from_name(name: str) -> date | None:
-    """Year-end as_of from an ICI page/fixture name like ici_primary_2024."""
+    """Year-end as_of from an ICI page/fixture name like ici_primary_2024.
+
+    Quarterly / midyear leftover packs keep row-level as_of (no Dec 31 default)
+    so multi-event years are not collapsed onto one YE stamp.
+    """
+    blob = (name or "").lower()
+    if any(token in blob for token in ("quarterly", "midyear", "mid-year", "interim")):
+        return None
     digits = "".join(ch for ch in name if ch.isdigit())
     if len(digits) >= 4:
         try:

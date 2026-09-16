@@ -56,7 +56,13 @@ class BlackRockSource(HtmlTableSource):
         "LDRT Dec 2024; BAMBX 2022; LILAX / LELAX 2024. Official dashes still "
         "unmatched (SHV 2021 / IGOV 2023 / ISHG 2022 / INDA 2022 / LEMB 2024). "
         "BACAX / CMLAX / MDGCX / MDDCX 2025, BHYAX 2023, BCBAX / BAICX 2024, "
-        "BAMBX 2021, LILAX / LELAX 2025 unpublished on those live year pages."
+        "BAMBX 2021, LILAX / LELAX 2025 unpublished on those live year pages. "
+        "All-events leftover (2026-09-16, in-book only): official stamped "
+        "distribution-summary PDFs 2022–2025 re-read for non-December ordinary "
+        "income / LT / ROC the December-only ICI CSVs omitted. Qualified % "
+        "columns are 1099 character — not stored as extra OI. IVV 2025-06-16 "
+        "income $1.866967 / 2024-06-11 $1.611133; IYR 2025-06-16 $0.494542. "
+        "2021 stamped PDF 404 — unmatched."
     )
     live_limitations = (
         "Live HTML on ishares.com/us/capital-gains-distributions is supported. "
@@ -178,6 +184,15 @@ class BlackRockSource(HtmlTableSource):
                 fixture="2021_open_end_distributions.html",
                 live=False,
             ),
+            PageSpec(
+                name="ici_leftover_all_events_quarterly",
+                url=f"{ishares_tax}/2025-ishares-distribution-summary-stamped.pdf",
+                fixture="ici_leftover_all_events_quarterly.csv",
+                live=False,
+                parser="ici",
+                large_aum_only=False,
+                role="history",
+            ),
         ]
 
 
@@ -217,7 +232,13 @@ class VanguardSource(HtmlTableSource):
         "$0.586100 (no December; 2025 official dashes — unmatched). Quarterly "
         "lines still omitted except those leftover-year fills. VBPIX / VSVNX "
         "2021 absent (inception). VAIGX / VEOAX / VEOIX 2021–22 official dashes. "
-        "VIDGX 2022 absent. Tax center hub: https://advisors.vanguard.com/tax-center."
+        "VIDGX 2022 absent. Tax center hub: https://advisors.vanguard.com/tax-center. "
+        "All-events leftover (2026-09-16, in-book only): official ICI Primary "
+        "PDFs re-read for March / June / September income and any non-December "
+        "ST/LT the December-only CSVs omitted. Daily / money-market lines still "
+        "skipped. VBINX 2025-03-27 OI $0.276100 / ST $0.006602 / LT $0.638521; "
+        "VIGAX 2025-06-30 income $0.254400. Row as_of is the event ex-date — "
+        "never collapsed onto Dec 31."
     )
     live_limitations = (
         "Advisor year-end page is JavaScript-rendered; ICI archives are PDFs "
@@ -323,6 +344,15 @@ class VanguardSource(HtmlTableSource):
                 name="remaining_ici_primary_2021",
                 url=f"{ici}/2021_ICI_Primary_Layout.pdf",
                 fixture="remaining_ici_primary_2021.csv",
+                live=False,
+                parser="ici",
+                large_aum_only=False,
+                role="history",
+            ),
+            PageSpec(
+                name="ici_leftover_quarterly_midyear",
+                url=f"{ici}/ICIprimary_012026.pdf",
+                fixture="ici_leftover_quarterly_midyear.csv",
                 live=False,
                 parser="ici",
                 large_aum_only=False,
@@ -840,7 +870,11 @@ class TRowePriceSource(HtmlTableSource):
         "PRGSX / TRGLX / TGBLX 2022 official all-dash; PRSCX / PRNHX / TSNIX / "
         "PRJIX 2023 official all-dash; PREFX / TEEFX 2025 official all-dash; "
         "PGLOX 2025 absent; TGPEX 2022/2024 official all-dash; RPSIX / TSPNX "
-        "2023/2025 Paid monthly + dash ST/LT."
+        "2023/2025 Paid monthly + dash ST/LT. "
+        "All-events leftover (2026-09-16, in-book only): official quarterly "
+        "income HTML 2023–2025 plus Wayback captures of the 2021 (Q1+Q2) and "
+        "2022 pages. PRFDX 2025-06-26 income $0.1922 / RPBAX $0.1849. TRBCX / "
+        "PRGFX are YE-only on those quarterly books — unmatched, not invented."
     )
     live_limitations = (
         "Live year-end HTML is supported for 2023–2025. "
@@ -925,6 +959,13 @@ class TRowePriceSource(HtmlTableSource):
                 name="leftover_retirement_blend_2021_2022",
                 url=f"{tax_pdf}/2021-Year-End-Tax-Distributions.pdf",
                 fixture="leftover_retirement_blend_2021_2022.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="leftover_quarterly_2021_2025",
+                url=f"{base}/2025-quarterly-distributions.html",
+                fixture="leftover_quarterly_2021_2025.html",
                 live=False,
                 role="history",
             ),

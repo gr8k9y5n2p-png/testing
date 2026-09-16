@@ -314,3 +314,60 @@ def test_ishares_ici_primary_december_mega_etfs() -> None:
     assert str(agg_ye.payable_date) == "2025-12-24"
     assert len({r.ticker for r in y2025}) >= 350
     assert all(r.amount != Decimal("0") for r in y2025)
+
+
+def test_ici_does_not_collapse_non_december_onto_year_end_as_of() -> None:
+    text = (
+        "as_of,fund_name,cusip,ticker,record_date,ex_dividend_date,payable_date,"
+        "income_dividends,short_term_capital_gain,total_capital_gain_distribution,return_of_capital\n"
+        "2025-12-31,Vanguard Balanced Index Fund Investor Shares,921931101,VBINX,"
+        "3/26/2025,3/27/2025,3/28/2025,0.276100,0.006602,0.638521,\n"
+        "2025-12-31,Example ROC Fund,123456789,ROCXX,"
+        "6/16/2025,6/16/2025,6/20/2025,,,,0.041800\n"
+    )
+    records = parse_ici_primary(
+        text,
+        source_url="https://advisors.vanguard.com/content/dam/fas/pdfs/ICIprimary_012026.pdf",
+        fund_family="Vanguard",
+        default_as_of=date(2025, 12, 31),
+    )
+    vbinx_lt = next(
+        r
+        for r in records
+        if r.ticker == "VBINX" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert vbinx_lt.amount == Decimal("0.638521")
+    assert str(vbinx_lt.ex_date) == "2025-03-27"
+    assert str(vbinx_lt.as_of) == "2025-03-27"
+    roc = next(
+        r
+        for r in records
+        if r.ticker == "ROCXX" and r.estimate_type == EstimateType.return_of_capital
+    )
+    assert roc.amount == Decimal("0.041800")
+    assert str(roc.ex_date) == "2025-06-16"
+
+
+def test_vanguard_leftover_quarterly_midyear_is_not_year_end_only() -> None:
+    records = parse_ici_primary(
+        (VG / "ici_leftover_quarterly_midyear.csv").read_text(encoding="utf-8"),
+        source_url="https://advisors.vanguard.com/content/dam/fas/pdfs/ICIprimary_012026.pdf",
+        fund_family="Vanguard",
+    )
+    vbinx = next(
+        r
+        for r in records
+        if r.ticker == "VBINX"
+        and r.estimate_type == EstimateType.long_term_capital_gains
+        and str(r.ex_date) == "2025-03-27"
+    )
+    assert vbinx.amount == Decimal("0.638521")
+    assert str(vbinx.as_of) == "2025-03-27"
+    vigax = next(
+        r
+        for r in records
+        if r.ticker == "VIGAX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and str(r.ex_date) == "2025-06-30"
+    )
+    assert vigax.amount == Decimal("0.254400")
