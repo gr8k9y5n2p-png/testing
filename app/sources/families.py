@@ -62,7 +62,19 @@ class BlackRockSource(HtmlTableSource):
         "income / LT / ROC the December-only ICI CSVs omitted. Qualified % "
         "columns are 1099 character — not stored as extra OI. IVV 2025-06-16 "
         "income $1.866967 / 2024-06-11 $1.611133; IYR 2025-06-16 $0.494542. "
-        "2021 stamped PDF 404 — unmatched."
+        "2021 stamped PDF 404 — unmatched. "
+        "Parallel 5y sweep Y leftover (in-book Investor A only; not iShares ETF "
+        "income already dense / not #188 quarterly ICI): live 2021–2024 open-end "
+        "tax HTML plus the official stamped 2025 book "
+        "https://www.blackrock.com/us/individual/literature/market-commentary/2025distributionsstamped.pdf "
+        "fill leftover years. Completes 5y: BABDX / BACAX / BALPX / BARDX / BAREX / "
+        "BDSAX / BICSX / BROAX / MALRX / MALVX / MCFOX / MDDCX / MDGCX / MDLVX / "
+        "MDSPX / SHSAX. Heroes: BACAX 2025-07-17 OI $0.141259 / 2025-12-11 OI "
+        "$0.203450; MDDCX 2025-12-09 OI $1.114790; MDGCX 2025-12-09 OI $0.362241 / "
+        "ST $1.055639 / LT $1.047497; BARDX 2024-10-10 OI $0.115751 / ST $0.193089 / "
+        "LT $1.386730. Walls: CMLAX / LILAX / LELAX 2025 unpublished on the stamped "
+        "book (ticker rename / target-date maturity); BAICX 2024 / BAMBX 2021 / "
+        "BHYAX 2023 / BCBAX 2024 still unpublished on those live year pages."
     )
     live_limitations = (
         "Live HTML on ishares.com/us/capital-gains-distributions is supported. "
@@ -175,6 +187,13 @@ class BlackRockSource(HtmlTableSource):
                 name="leftover_open_end_parallel_g",
                 url=f"{tax}/2021-distributions",
                 fixture="leftover_open_end_parallel_g.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="leftover_open_end_parallel_y",
+                url="https://www.blackrock.com/us/individual/literature/market-commentary/2025distributionsstamped.pdf",
+                fixture="leftover_open_end_parallel_y.html",
                 live=False,
                 role="history",
             ),
@@ -747,8 +766,12 @@ class PimcoSource(HtmlTableSource):
         "/ year-end estimate PDFs were not fetchable — ZZPIMI/ZZPIMB stay parser-layout "
         "samples (not official). Parallel E leftover re-probe (2026-09-13): tax-center "
         "PDFs remain 1099 character (muni % / AMT / US-gov %), not ST/LT $/share; "
-        "BOND ETF product page GET 403; no in-book leftover tickers. Partner ingest "
-        "is the escape hatch for official notices."
+        "BOND ETF product page GET 403; no in-book leftover tickers. Parallel Y "
+        "leftover re-probe (2026-09-16): tax-center / 2021–2025 year-end-forms pages "
+        "are still 1099 character (muni % / AMT / US-gov %), not ST/LT $/share. "
+        "Fixture book has parser-layout samples only (ZZPIMI / ZZPIMB) — no existing "
+        "in-book PIMCO MF tickers to densify. Partner ingest is the escape hatch "
+        "for official notices."
     )
     live_limitations = (
         "No public HTML estimate table or open-end ST/LT PDF on this pass; fixture "
@@ -805,7 +828,12 @@ class InvescoSource(HtmlTableSource):
         "no leftover-missing-year rows (VAFAX etc. absent from 2023). In-book leftovers "
         "are almost all 3y (2023–2025) and cannot reach 5y without both 2021 and 2022. "
         "Fiscal Aug-31 N-CSR highlights are not calendar-safe next to ICI December YE. "
-        "No new ETF identities (RSP / SPHD / QQQM stay out of book)."
+        "No new ETF identities (RSP / SPHD / QQQM stay out of book). "
+        "Parallel Y leftover re-probe (2026-09-16): open-end tax guide still lists "
+        "ICI Primary broker files for 2023–2025 only; oe-2021/2022-primary-broker-file.xlsx "
+        "and 2021/2022-Primary-Broker-File-without-Real-Estate siblings GET 404. "
+        "In-book leftovers remain almost all 3y (2023–2025) and cannot reach 5y "
+        "without both official 2021 and 2022 December YE books. Unmatched / not invented."
     )
     live_limitations = (
         "Estimates are PDF/PR/contentdetail, not an HTML grid. ICI Primary XLSX "
