@@ -240,9 +240,15 @@ class GqgSource(HtmlTableSource):
         "Global Quality Equity Inst GQRIX LT $0.97 / 5.1% of NAV; "
         "Global Quality Value Inst GQFIX LT $0.27 / 2.2% of NAV). "
         "Record 12/17/2025; ex 12/18/2025; pay 12/19/2025. "
-        "Official PDF is the full Inst/Inv/R6 + GQGU ETF book; published $0.00 stored."
+        "Official PDF is the full Inst/Inv/R6 + GQGU ETF book; published $0.00 stored. "
+        "Leftover paid/final book is unpublished: 2024/2025 PDFs stay estimates "
+        "(finals publish on declaration date); Wayback CDX empty/offline this session. "
+        "Do not upgrade those estimates to paid."
     )
-    live_limitations = "Estimate book is PDF. Fixture transcribes the official printed ticker book."
+    live_limitations = (
+        "Estimate book is PDF. Fixture transcribes the official printed ticker book. "
+        "No harvestable paid/final leftover page."
+    )
 
     def pages(self) -> list[PageSpec]:
         return [
@@ -302,7 +308,10 @@ class HeartlandSource(HtmlTableSource):
         "(Mid Cap Value Investor HRMDX LT $0.12387; "
         "Value Investor HRTVX ST $0.05228 / LT $4.34950; "
         "Value Plus Investor HRVIX no CG in 2025). "
-        "Record 12/18/2025; pay 12/19/2025."
+        "Record 12/18/2025; pay 12/19/2025. "
+        "Leftover paid history 2021–2024 for in-book Investor + Institutional leftovers "
+        "(HRMDX / HNMDX / HRVIX / HNVIX / HRTVX / HNTVX). 2025 already on the live "
+        "fixture. Issuer prints Record + Payable; Ex stored as the printed Payable day."
     )
     live_limitations = (
         "Live HTML is public but tax-center layout may not parse. "
@@ -318,7 +327,15 @@ class HeartlandSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
-            )
+            ),
+            PageSpec(
+                name="leftover_paid_history_parallel_v",
+                url="https://www.heartlandadvisors.com/Resources/Tax-Information",
+                fixture="leftover_paid_history_parallel_v.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
+            ),
         ]
 
 
@@ -332,7 +349,10 @@ class FmiSource(HtmlTableSource):
         "https://www.fmimgt.com/fmi/funds/cs/CS_distribution_summary_2025.pdf "
         "(Common Stock Institutional FMIUX income $0.11660616 / ST $0.47986 / LT $3.8237; "
         "Investor FMIMX income $0.1803821 / same ST/LT). "
-        "Ex 12/19/2025. Fixture transcribes the 2025 year-end rows only."
+        "Ex 12/19/2025. Fixture transcribes the 2025 year-end rows only. "
+        "Leftover paid history 2021–2024 for in-book FMIUX / FMIMX only "
+        "(official printed $0.00000 ST stored). FMIHX / FMIJX / FMIYX / FMIQX "
+        "are not in the family book."
     )
     live_limitations = "Paid book is a multi-decade PDF. Fixture transcribes 2025 year-end rows."
 
@@ -345,7 +365,15 @@ class FmiSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
-            )
+            ),
+            PageSpec(
+                name="leftover_paid_history_parallel_v",
+                url="https://www.fmimgt.com/fmi/funds/cs/CS_distribution_summary_2025.pdf",
+                fixture="leftover_paid_history_parallel_v.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
+            ),
         ]
 
 

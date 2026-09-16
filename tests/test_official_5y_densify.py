@@ -19,7 +19,14 @@ from app.sources.families import (
     VanguardSource,
 )
 from app.sources.dws import DwsSource
-from app.sources.eighth_tier import ArielSource, BairdSource, PrimecapSource
+from app.sources.eighth_tier import (
+    ArielSource,
+    BairdSource,
+    FmiSource,
+    GqgSource,
+    HeartlandSource,
+    PrimecapSource,
+)
 from app.sources.eleventh_tier import AmgSource, GuidestoneSource
 from app.sources.fifth_tier import (
     GabelliSource,
@@ -53,7 +60,7 @@ from app.sources.next_tier import (
     NuveenSource,
     SchwabSource,
 )
-from app.sources.ninth_tier import AmericanBeaconSource
+from app.sources.ninth_tier import AmericanBeaconSource, BaillieGiffordSource, BrandesSource
 from app.sources.third_tier import (
     AllianceBernsteinSource,
     AllspringSource,
@@ -423,8 +430,14 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # page / paid PDF leftover +4 MF (BRUSX / BOSVX / BRAGX / BRSVX). AQR
     # 2023+2025 finals and leftover 2024 N/R6 are year-depth only (3y).
     # Jensen 2021–2023 and TCW 2021–2024 stay unmatched. No new identities.
-    assert digest.funds_with_5y == 3497
-    assert digest.funds_with_5y_mf == 2747
+    # Parallel V leftover: Heartland Investor+Institutional tax-center paid
+    # history +6 MF (HRMDX / HNMDX / HRVIX / HNVIX / HRTVX / HNTVX), FMI
+    # Common Stock leftover +2 MF (FMIUX / FMIMX), and Brandes Class I
+    # product-page paid YE +5 MF (BGVIX / BIIEX / BSCMX / BEMIX / BISMX).
+    # Baillie Gifford 2025 Final is year-depth only. GQG leftovers stay
+    # estimate-only (no paid/final book). ETF 5y unchanged. No new identities.
+    assert digest.funds_with_5y == 3510
+    assert digest.funds_with_5y_mf == 2760
     assert digest.funds_with_5y_etf == 750
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
@@ -5937,3 +5950,217 @@ def test_parallel_r_heroes_are_searchable(client: TestClient) -> None:
         if row.get("ticker") == "DHSIX" and row.get("amount") is not None
     ]
     assert dhsix_paid == []
+
+
+def test_parallel_v_heartland_leftover_paid_fills_5y() -> None:
+    records = HeartlandSource().fetch(mode="fixture").records
+    hrtvx_2024_lt = next(
+        row
+        for row in records
+        if row.ticker == "HRTVX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2024-12-20"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert hrtvx_2024_lt.amount == Decimal("3.86958")
+    hrmdx_2021_lt = next(
+        row
+        for row in records
+        if row.ticker == "HRMDX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2021-12-29"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert hrmdx_2021_lt.amount == Decimal("2.10121")
+    for ticker in ("HRMDX", "HNMDX", "HRVIX", "HNVIX", "HRTVX", "HNTVX"):
+        assert set(LOOKBACK_YEARS) <= _paid_years(records, ticker), ticker
+
+
+def test_parallel_v_fmi_leftover_paid_fills_5y() -> None:
+    records = FmiSource().fetch(mode="fixture").records
+    fmiux_2021_lt = next(
+        row
+        for row in records
+        if row.ticker == "FMIUX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2021-12-17"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert fmiux_2021_lt.amount == Decimal("3.86103")
+    fmimx_2024_lt = next(
+        row
+        for row in records
+        if row.ticker == "FMIMX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2024-12-20"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert fmimx_2024_lt.amount == Decimal("0.64647")
+    fmiux_2021_st = next(
+        row
+        for row in records
+        if row.ticker == "FMIUX"
+        and row.estimate_type == EstimateType.short_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2021-12-17"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert fmiux_2021_st.amount == Decimal("0.00000")
+    for ticker in ("FMIUX", "FMIMX"):
+        assert set(LOOKBACK_YEARS) <= _paid_years(records, ticker), ticker
+    assert [row for row in records if row.ticker == "FMIHX"] == []
+
+
+def test_parallel_v_brandes_leftover_paid_fills_5y() -> None:
+    records = BrandesSource().fetch(mode="fixture").records
+    bgvix_2025_lt = next(
+        row
+        for row in records
+        if row.ticker == "BGVIX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-10"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert bgvix_2025_lt.amount == Decimal("3.624675")
+    bemix_2022_oi = next(
+        row
+        for row in records
+        if row.ticker == "BEMIX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2022-12-30"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert bemix_2022_oi.amount == Decimal("0.000000")
+    for ticker in ("BGVIX", "BIIEX", "BSCMX", "BEMIX", "BISMX"):
+        assert set(LOOKBACK_YEARS) <= _paid_years(records, ticker), ticker
+    assert [row for row in records if row.ticker == "BGVAX"] == []
+
+
+def test_parallel_v_baillie_leftover_is_year_depth() -> None:
+    records = BaillieGiffordSource().fetch(mode="fixture").records
+    bgakx_2025_lt = next(
+        row
+        for row in records
+        if row.ticker == "BGAKX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-29"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert bgakx_2025_lt.amount == Decimal("5.18723")
+    bsgpx_2025_lt = next(
+        row
+        for row in records
+        if row.ticker == "BSGPX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-29"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert bsgpx_2025_lt.amount == Decimal("9.00459")
+    for ticker in ("BGAKX", "BINSX", "BGESX", "BSGPX"):
+        years = _paid_years(records, ticker)
+        assert 2025 in years, ticker
+        assert years.isdisjoint({2021, 2022, 2023, 2024}), ticker
+    bgcsx_final = [
+        row
+        for row in records
+        if row.ticker == "BGCSX"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert bgcsx_final == []
+
+
+def test_parallel_v_leftover_walls_stay_unmatched() -> None:
+    gqg = GqgSource().fetch(mode="fixture").records
+    gqg_final = [
+        row
+        for row in gqg
+        if row.publication_stage == PublicationStage.final and row.amount is not None
+    ]
+    assert gqg_final == []
+    fmi = FmiSource().fetch(mode="fixture").records
+    assert [row for row in fmi if row.ticker in {"FMIHX", "FMIJX", "FMIYX", "FMIQX"}] == []
+    baillie = BaillieGiffordSource().fetch(mode="fixture").records
+    assert [
+        row
+        for row in baillie
+        if row.ticker == "BGCSX"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ] == []
+    brandes = BrandesSource().fetch(mode="fixture").records
+    assert [row for row in brandes if row.ticker in {"BGVAX", "BIEAX", "BSCAX"}] == []
+
+
+def test_parallel_v_heroes_are_searchable(client: TestClient) -> None:
+    for slug in ("heartland", "fmi", "brandes", "baillie_gifford", "gqg"):
+        fetched = client.post(
+            "/ingest/fetch", json={"fund_family": slug, "mode": "fixture"}
+        )
+        assert fetched.status_code == 200, fetched.text
+        assert fetched.json()["created"] > 0
+
+    for ticker in ("HRTVX", "HRMDX", "FMIUX", "BGVIX", "BGAKX", "GQEIX"):
+        body = client.get("/funds", params={"q": ticker}).json()
+        tickers = [item["ticker"] for item in body["items"]]
+        assert ticker in tickers, f"{ticker} missing from GET /funds?q={ticker}: {tickers[:8]}"
+
+    hrtvx = client.get(
+        "/distributions",
+        params={"ticker": "HRTVX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    hrtvx_2024 = [
+        Decimal(row["amount"])
+        for row in hrtvx["items"]
+        if row.get("ticker") == "HRTVX"
+        and row.get("estimate_type") == "long_term_capital_gains"
+        and str(row.get("ex_date") or "").startswith("2024-12-20")
+    ]
+    assert Decimal("3.86958") in hrtvx_2024
+    hrtvx_years = {
+        str(row.get("ex_date") or "")[:4]
+        for row in hrtvx["items"]
+        if row.get("ticker") == "HRTVX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= hrtvx_years
+
+    bgvix = client.get(
+        "/distributions",
+        params={"ticker": "BGVIX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    bgvix_2025 = [
+        Decimal(row["amount"])
+        for row in bgvix["items"]
+        if row.get("ticker") == "BGVIX"
+        and row.get("estimate_type") == "long_term_capital_gains"
+        and str(row.get("ex_date") or "").startswith("2025-12-10")
+    ]
+    assert Decimal("3.624675") in bgvix_2025
+
+    gqeix = client.get(
+        "/distributions",
+        params={"ticker": "GQEIX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    gqeix_paid = [
+        row
+        for row in gqeix["items"]
+        if row.get("ticker") == "GQEIX" and row.get("amount") is not None
+    ]
+    assert gqeix_paid == []

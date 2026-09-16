@@ -4860,3 +4860,86 @@ def test_parallel_s_leftover_paid_fixtures() -> None:
     assert not any(
         r.ticker == "DGFAX" and r.ex_date and r.ex_date.year == 2022 for r in davis
     )
+
+
+def test_parallel_v_leftover_paid_fixtures() -> None:
+    heartland = parse_distribution_html(
+        (ROOT / "heartland" / "leftover_paid_history_parallel_v.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://heartland-leftover-v",
+        fund_family="Heartland",
+    )
+    hrtvx_2024_lt = next(
+        r
+        for r in heartland
+        if r.ticker == "HRTVX"
+        and r.estimate_type == EstimateType.long_term_capital_gains
+        and str(r.ex_date) == "2024-12-20"
+    )
+    assert hrtvx_2024_lt.amount == Decimal("3.86958")
+    assert hrtvx_2024_lt.publication_stage == PublicationStage.final
+    assert {r.ticker for r in heartland} == {
+        "HRMDX",
+        "HNMDX",
+        "HRVIX",
+        "HNVIX",
+        "HRTVX",
+        "HNTVX",
+    }
+
+    fmi = parse_distribution_html(
+        (ROOT / "fmi" / "leftover_paid_history_parallel_v.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://fmi-leftover-v",
+        fund_family="FMI",
+    )
+    fmiux_2021_lt = next(
+        r
+        for r in fmi
+        if r.ticker == "FMIUX"
+        and r.estimate_type == EstimateType.long_term_capital_gains
+        and str(r.ex_date) == "2021-12-17"
+    )
+    assert fmiux_2021_lt.amount == Decimal("3.86103")
+    assert fmiux_2021_lt.publication_stage == PublicationStage.final
+    assert {r.ticker for r in fmi} == {"FMIUX", "FMIMX"}
+    assert not any(r.ticker == "FMIHX" for r in fmi)
+
+    brandes = parse_distribution_html(
+        (ROOT / "brandes" / "leftover_paid_history_parallel_v.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://brandes-leftover-v",
+        fund_family="Brandes",
+    )
+    bgvix_2025_lt = next(
+        r
+        for r in brandes
+        if r.ticker == "BGVIX"
+        and r.estimate_type == EstimateType.long_term_capital_gains
+        and str(r.ex_date) == "2025-12-10"
+    )
+    assert bgvix_2025_lt.amount == Decimal("3.624675")
+    assert bgvix_2025_lt.publication_stage == PublicationStage.final
+    assert {r.ticker for r in brandes} == {"BGVIX", "BIIEX", "BSCMX", "BEMIX", "BISMX"}
+
+    baillie = parse_distribution_html(
+        (ROOT / "baillie_gifford" / "leftover_paid_history_parallel_v.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://baillie-leftover-v",
+        fund_family="Baillie Gifford",
+    )
+    bgakx_2025_lt = next(
+        r
+        for r in baillie
+        if r.ticker == "BGAKX"
+        and r.estimate_type == EstimateType.long_term_capital_gains
+        and str(r.ex_date) == "2025-12-29"
+    )
+    assert bgakx_2025_lt.amount == Decimal("5.18723")
+    assert bgakx_2025_lt.publication_stage == PublicationStage.final
+    assert {r.ticker for r in baillie} == {"BGAKX", "BINSX", "BGESX", "BSGPX"}
+    assert not any(r.ticker == "BGCSX" for r in baillie)
