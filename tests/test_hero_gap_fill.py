@@ -255,5 +255,7 @@ def test_fixture_book_lookback_stays_official_only() -> None:
     # midyear / quarterly typed rows for American Funds, Vanguard, T. Rowe,
     # and iShares. MFS #186 mid-year fills stay. +1 MF 5y from a published
     # midyear fill on the Parallel T tip (3545).
-    assert digest.funds_with_5y == 3546
+    # Parallel U leftover: Tweedy + Osterweis + Longleaf leftover paid YE
+    # +10 MF 5y. Buffalo 2024–2025 and Third Avenue 2022–2024 are year-depth.
+    assert digest.funds_with_5y == 3556
     assert digest.book_funds >= 7200

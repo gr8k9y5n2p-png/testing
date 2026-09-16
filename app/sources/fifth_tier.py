@@ -266,7 +266,11 @@ class TweedySource(HtmlTableSource):
         "https://www.tweedyfunds.com/wp-content/uploads/sites/10/2024/09/"
         "2024-Estimated-Distributions-8-31-24.pdf "
         "(International Value TBGVX LT $1.706; Value Fund TWEBX LT $1.604; printed None ST omitted). "
-        "2024 Final Distributions sibling URLs 404."
+        "2024 Final Distributions sibling URLs 404. "
+        "Official 5y parallel U leftover: issuer product-page paid YE "
+        "Distribution History tables fill leftover Investor years 2021–2025 "
+        "(TBGVX / TWEBX / TBCUX / TBHDX). Printed dashes omitted. Midyear "
+        "TBHDX income stays on the live page."
     )
     live_limitations = "Family estimate book is PDF. Fixture transcribes public Investor-class rows."
 
@@ -300,6 +304,13 @@ class TweedySource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
+            ),
+            PageSpec(
+                name="leftover_paid_year_end_parallel_u",
+                url="https://www.tweedyfunds.com/mutual-funds/international-value-fund-distributions/",
+                fixture="leftover_paid_year_end_parallel_u.html",
+                live=False,
+                role="history",
             ),
         ]
 

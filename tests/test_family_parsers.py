@@ -2519,6 +2519,24 @@ def test_fifth_tier_fixtures() -> None:
     assert tbgvx_24.amount == Decimal("1.706")
     assert str(tbgvx_24.as_of)[:4] == "2024"
 
+    tweedy_leftover = parse_distribution_html(
+        (ROOT / "tweedy" / "leftover_paid_year_end_parallel_u.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="https://www.tweedyfunds.com/mutual-funds/international-value-fund-distributions/",
+        fund_family="Tweedy, Browne",
+    )
+    tbgvx_paid_2025 = next(
+        r
+        for r in tweedy_leftover
+        if r.ticker == "TBGVX"
+        and r.estimate_type == EstimateType.long_term_capital_gains
+        and r.ex_date
+        and str(r.ex_date) == "2025-12-11"
+    )
+    assert tbgvx_paid_2025.amount == Decimal("2.793")
+    assert tbgvx_paid_2025.publication_stage == PublicationStage.final
+
     gabelli = parse_distribution_html(
         (ROOT / "gabelli" / "2025_year_end_distributions.html").read_text(encoding="utf-8"),
         source_url="fixture://gabelli",
@@ -3794,6 +3812,24 @@ def test_seventh_tier_fixtures() -> None:
     )
     assert ostfx.amount == Decimal("1.10")
 
+    osterweis_leftover = parse_distribution_html(
+        (ROOT / "osterweis" / "leftover_paid_history_parallel_u.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="https://www.osterweis.com/files/OSTFX_Historical_Distributions.pdf",
+        fund_family="Osterweis",
+    )
+    ostfx_paid = next(
+        r
+        for r in osterweis_leftover
+        if r.ticker == "OSTFX"
+        and r.estimate_type == EstimateType.long_term_capital_gains
+        and r.ex_date
+        and str(r.ex_date) == "2025-12-15"
+    )
+    assert ostfx_paid.amount == Decimal("1.17276")
+    assert ostfx_paid.publication_stage == PublicationStage.final
+
     davis = parse_distribution_html(
         (ROOT / "davis" / "2025_year_end_distributions.html").read_text(
             encoding="utf-8"
@@ -3883,6 +3919,24 @@ def test_eighth_tier_fixtures() -> None:
     )
     assert llpfx.amount == Decimal("1.7935")
 
+    longleaf_leftover = parse_distribution_html(
+        (ROOT / "longleaf" / "leftover_paid_year_end_parallel_u.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="https://southeasternasset.com/investment-offerings/longleaf-partners-fund/",
+        fund_family="Longleaf Partners",
+    )
+    llpfx_2024 = next(
+        r
+        for r in longleaf_leftover
+        if r.ticker == "LLPFX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.ex_date
+        and str(r.ex_date) == "2024-12-20"
+    )
+    assert llpfx_2024.amount == Decimal("0.2469")
+    assert llpfx_2024.publication_stage == PublicationStage.final
+
     buffalo = parse_distribution_html(
         (ROOT / "buffalo" / "2025_estimated_capital_gains.html").read_text(
             encoding="utf-8"
@@ -3896,6 +3950,24 @@ def test_eighth_tier_fixtures() -> None:
         if r.ticker == "BUFEX" and r.estimate_type == EstimateType.long_term_capital_gains
     )
     assert bufex.amount == Decimal("3.35047")
+
+    buffalo_leftover = parse_distribution_html(
+        (ROOT / "buffalo" / "leftover_paid_year_end_parallel_u.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="https://buffalofunds.com/overview/",
+        fund_family="Buffalo",
+    )
+    bufex_paid = next(
+        r
+        for r in buffalo_leftover
+        if r.ticker == "BUFEX"
+        and r.estimate_type == EstimateType.long_term_capital_gains
+        and r.ex_date
+        and str(r.ex_date) == "2025-12-04"
+    )
+    assert bufex_paid.amount == Decimal("3.35562")
+    assert bufex_paid.publication_stage == PublicationStage.final
 
     gqg = parse_distribution_html(
         (ROOT / "gqg" / "2025_estimated_capital_gains.html").read_text(encoding="utf-8"),
@@ -3922,6 +3994,24 @@ def test_eighth_tier_fixtures() -> None:
         if r.ticker == "TAVFX" and r.estimate_type == EstimateType.long_term_capital_gains
     )
     assert tavfx.amount == Decimal("3.34191")
+
+    third_avenue_leftover = parse_distribution_html(
+        (ROOT / "third_avenue" / "leftover_paid_year_end_parallel_u.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="https://www.thirdave.com/2024-income-capital-gain-distributions",
+        fund_family="Third Avenue",
+    )
+    tavfx_2024 = next(
+        r
+        for r in third_avenue_leftover
+        if r.ticker == "TAVFX"
+        and r.estimate_type == EstimateType.long_term_capital_gains
+        and r.ex_date
+        and str(r.ex_date) == "2024-12-11"
+    )
+    assert tavfx_2024.amount == Decimal("4.08400")
+    assert tavfx_2024.publication_stage == PublicationStage.final
 
     heartland = parse_distribution_html(
         (ROOT / "heartland" / "2025_year_end_distributions.html").read_text(

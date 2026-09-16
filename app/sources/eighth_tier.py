@@ -166,7 +166,10 @@ class LongleafSource(HtmlTableSource):
         "Global https://southeasternasset.com/investment-offerings/longleaf-partners-global-fund/ "
         "(LLGLX ST $0.1104 / LT $0.8608). "
         "Record 12/15/2025; ex 12/16/2025. "
-        "International product-page sibling 404 this session."
+        "International product-page sibling 404 this session. "
+        "Official 5y parallel U leftover: same product-page paid tables fill "
+        "leftover 2021–2024 (LLPFX / LLSCX / LLGLX). Printed dashes and "
+        "all-dash November placeholders omitted. 2025 already on the live fixture."
     )
     live_limitations = (
         "Live HTML is public but product-page layout may not parse. Fixture fallback. "
@@ -191,6 +194,13 @@ class LongleafSource(HtmlTableSource):
                 role="estimate",
                 empty_ok=True,
             ),
+            PageSpec(
+                name="leftover_paid_year_end_parallel_u",
+                url="https://southeasternasset.com/investment-offerings/longleaf-partners-fund/",
+                fixture="leftover_paid_year_end_parallel_u.html",
+                live=False,
+                role="history",
+            ),
         ]
 
 
@@ -208,7 +218,11 @@ class BuffaloSource(HtmlTableSource):
         "CG record/pay 12/04–12/05/2025. The PDF is class-level without tickers; "
         "Investor tickers from official buffalofunds.com product pages / SAI "
         "(BUFEX / BUFOX / BUFBX / BUFGX / BUFDX / BUFIX / BUFTX / BUFMX). "
-        "High Yield income-only / Small Cap Growth all-dash omitted."
+        "High Yield income-only / Small Cap Growth all-dash omitted. "
+        "Official 5y parallel U leftover: issuer overview Past Distributions "
+        "fills leftover Investor paid 2024–2025. Rolling 2-year table — "
+        "2021–2023 unpublished (Wayback CDX offline this session). "
+        "Institutional siblings and BUFHX / BUFSX not in-book leftovers."
     )
     live_limitations = (
         "Estimate book is PDF. Fixture transcribes public Investor-class identifiers."
@@ -223,7 +237,14 @@ class BuffaloSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
-            )
+            ),
+            PageSpec(
+                name="leftover_paid_year_end_parallel_u",
+                url="https://buffalofunds.com/overview/",
+                fixture="leftover_paid_year_end_parallel_u.html",
+                live=False,
+                role="history",
+            ),
         ]
 
 
@@ -277,7 +298,10 @@ class ThirdAvenueSource(HtmlTableSource):
         "(Value TAVFX income $1.72194 / LT $3.34191; "
         "Small-Cap Value TASCX ST $0.03591 / LT $0.70304; "
         "Real Estate Value TAREX ST $0.00295 / LT $1.09875). "
-        "Record 12/09/2025; ex/reinvest 12/10/2025; pay 12/11/2025."
+        "Record 12/09/2025; ex/reinvest 12/10/2025; pay 12/11/2025. "
+        "Official 5y parallel U leftover: issuer 2022 / 2024 paid pages plus "
+        "Wayback 2023 fill leftover Institutional years (TAVFX / TASCX / TAREX). "
+        "Investor / Z not in-book leftovers. 2021 live sibling 404."
     )
     live_limitations = (
         "Live HTML is public but page layout may not parse. Fixture fallback."
@@ -292,7 +316,14 @@ class ThirdAvenueSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
-            )
+            ),
+            PageSpec(
+                name="leftover_paid_year_end_parallel_u",
+                url="https://www.thirdave.com/2024-income-capital-gain-distributions",
+                fixture="leftover_paid_year_end_parallel_u.html",
+                live=False,
+                role="history",
+            ),
         ]
 
 
