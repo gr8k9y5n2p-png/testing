@@ -136,9 +136,12 @@ describe("saved-assets HTTP account scoping", () => {
     const store = new MemorySavedAssetStore();
     const userA = newAccountId();
     const payload = {
-      bookDollars: 1_000_000,
-      current: [{ ticker: "AGTHX", weightPct: 100, holdingDollars: 1_000_000 }],
-      proposed: [{ ticker: "AMCPX", weightPct: 100, holdingDollars: 1_000_000 }],
+      version: 1,
+      books: {
+        bookDollars: 1_000_000,
+        current: [{ ticker: "AGTHX", weightPct: 100, holdingDollars: 1_000_000 }],
+        proposed: [{ ticker: "AMCPX", weightPct: 100, holdingDollars: 1_000_000 }],
+      },
     };
     const create = await handleSavedAssetsCollection(
       request("http://localhost/api/saved-assets", {

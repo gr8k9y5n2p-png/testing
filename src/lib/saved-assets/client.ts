@@ -6,9 +6,10 @@
  * on open. Do not invent holdings.
  */
 
+import { SAVED_ASSETS_API_PATH } from "./contract.ts";
 import type { SavedAsset, SavedAssetType, SavedAssetWrite } from "./types.ts";
 
-export const SAVED_ASSETS_API_PATH = "/api/saved-assets";
+export { SAVED_ASSETS_API_PATH };
 
 export type SavedAssetsListResponse = {
   items: SavedAsset[];

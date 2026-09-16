@@ -3,7 +3,15 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, it } from "node:test";
-import { parseListPayload, parsePortfolioBooksPayload } from "./payloads.ts";
+import {
+  parseListPayload,
+  parsePortfolioBooksPayload,
+  toPortfolioAssetPayload,
+} from "./payloads.ts";
+import {
+  PORTFOLIO_PAYLOAD_VERSION,
+  SAVED_ASSETS_CONTRACT,
+} from "./contract.ts";
 import {
   getSavedAssetForAccount,
   saveSavedAssetForAccount,
@@ -83,6 +91,20 @@ describe("saved asset store scoping", () => {
     const parsed = parsePortfolioBooksPayload(opened?.payload);
     assert.equal(parsed?.current[0]?.ticker, "AGTHX");
     assert.deepEqual(parsed?.proposed, []);
+
+    const enveloped = toPortfolioAssetPayload({
+      bookDollars: 1_000_000,
+      current: [],
+      proposed: [],
+      currentUnit: "pct",
+      proposedUnit: "pct",
+    });
+    assert.equal(enveloped.version, PORTFOLIO_PAYLOAD_VERSION);
+    assert.equal(SAVED_ASSETS_CONTRACT.apiPath, "/api/saved-assets");
+    assert.deepEqual(
+      parsePortfolioBooksPayload(enveloped)?.proposed,
+      [],
+    );
   });
 
   it("persists to the JSON file store", async () => {

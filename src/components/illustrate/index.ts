@@ -89,11 +89,25 @@ export {
 export {
   parseListPayload,
   parsePortfolioBooksPayload,
+  toPortfolioAssetPayload,
 } from "@/lib/saved-assets/payloads";
 export type {
+  PortfolioAssetPayload,
   PortfolioBooksSnapshot,
   PortfolioHoldingSnapshot,
 } from "@/lib/saved-assets/payloads";
+export {
+  PORTFOLIO_PAYLOAD_VERSION,
+  SAVED_ASSETS_CONTRACT,
+  SAVED_ASSETS_ENDPOINTS,
+} from "@/lib/saved-assets/contract";
+export type {
+  SavedAssetCollectionResponse,
+  SavedAssetItemResponse,
+  SavedAssetPatchBody,
+  SavedAssetRecord,
+  SavedAssetWriteBody,
+} from "@/lib/saved-assets/contract";
 export type {
   ListAssetPayload,
   SavedAsset,

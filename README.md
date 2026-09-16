@@ -210,12 +210,14 @@ Revert this default (or delete the bypass) before the freemium sprint / public l
 
 Lists (`/lists`) has **Save** and **Open** at the top. Save names the current ticker list for the signed-in account; Open loads a previously saved list. Existing paste / filter / sort behavior is unchanged.
 
+Contract for Modules: [`docs/saved-assets.md`](docs/saved-assets.md) and `src/lib/saved-assets/contract.ts` (also re-exported from `@/components/illustrate`).
+
 Shared backbone: `GET|POST /api/saved-assets` and `GET|PATCH|DELETE /api/saved-assets/:id`. Types:
 
 | `type` | Payload | Who owns it |
 | --- | --- | --- |
 | `list` | `{ tickers: string[] }` | Website Lists |
-| `portfolio` | opaque JSON (Current/Proposed books + holdings) | Modules |
+| `portfolio` | `{ version: 1, books }` envelope — Current/Proposed books + holdings (opaque) | Modules |
 
 Every row is scoped to `accountId`. User A cannot read user B.
 

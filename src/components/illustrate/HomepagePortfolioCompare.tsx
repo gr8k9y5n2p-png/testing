@@ -11,7 +11,10 @@ import {
 import { WEBSITE_PORTFOLIO_HOLDINGS } from "@/lib/illustrate/portfolio-compare-mount";
 import { PORTFOLIO_COMPARE_BOOK_DOLLARS } from "@/lib/illustrate/portfolio-compare-types";
 import { UI_DEFAULT_TAX_RATES } from "@/lib/illustrate/types";
-import { parsePortfolioBooksPayload } from "@/lib/saved-assets/payloads";
+import {
+  parsePortfolioBooksPayload,
+  toPortfolioAssetPayload,
+} from "@/lib/saved-assets/payloads";
 
 const HOMEPAGE_TAX_RATES = UI_DEFAULT_TAX_RATES;
 
@@ -52,7 +55,17 @@ export function HomepagePortfolioCompare({
                   books?.proposed.some((row) => row.ticker.trim()),
               );
             }}
-            getPayload={() => booksApiRef.current?.getBooks() ?? { current: [], proposed: [] }}
+            getPayload={() =>
+              toPortfolioAssetPayload(
+                booksApiRef.current?.getBooks() ?? {
+                  bookDollars: PORTFOLIO_COMPARE_BOOK_DOLLARS,
+                  current: [],
+                  proposed: [],
+                  currentUnit: "pct",
+                  proposedUnit: "pct",
+                },
+              )
+            }
             onOpen={(asset) => {
               const books = parsePortfolioBooksPayload(asset.payload);
               if (!books) return;

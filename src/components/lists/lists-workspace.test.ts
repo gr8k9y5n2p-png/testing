@@ -14,6 +14,9 @@ describe("Lists Save / Open chrome", () => {
     assert.match(source, /getPayload=\{\(\) => \(\{ tickers \}\)\}/);
     assert.match(source, /parseListPayload/);
     assert.match(source, /lists-heading/);
+    const actionsAt = source.indexOf("<SavedAssetActions");
+    const detailAt = source.indexOf("{LISTS_DETAIL}");
+    assert.ok(actionsAt > 0 && detailAt > actionsAt, "Open/Save sit above the paste helper copy");
     assert.doesNotMatch(source, /NEXT_PUBLIC_FREEMIUM/);
     assert.doesNotMatch(source, /PaywallDialog/);
   });

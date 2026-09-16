@@ -168,21 +168,21 @@ export function SavedAssetActions({
         type="button"
         className={buttonClass}
         onClick={() => {
+          void openPicker();
+        }}
+      >
+        {copy.open}
+      </button>
+      <button
+        type="button"
+        className={buttonClass}
+        onClick={() => {
           setName("");
           setError(payloadSavable() ? null : copy.saveEmpty);
           setDialog("save");
         }}
       >
         {copy.save}
-      </button>
-      <button
-        type="button"
-        className={buttonClass}
-        onClick={() => {
-          void openPicker();
-        }}
-      >
-        {copy.open}
       </button>
 
       {dialog === "save" ? (

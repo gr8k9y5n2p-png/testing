@@ -7,7 +7,10 @@
  */
 
 import { parseTickerList } from "../lists/parse-tickers.ts";
+import { PORTFOLIO_PAYLOAD_VERSION } from "./contract.ts";
 import type { ListAssetPayload } from "./types.ts";
+
+export { PORTFOLIO_PAYLOAD_VERSION } from "./contract.ts";
 
 export function parseListPayload(payload: unknown): ListAssetPayload | null {
   if (!payload || typeof payload !== "object") return null;
@@ -70,9 +73,22 @@ function parseHoldings(value: unknown): PortfolioHoldingSnapshot[] {
     .filter((row): row is PortfolioHoldingSnapshot => row != null);
 }
 
+export type PortfolioAssetPayload = {
+  version: typeof PORTFOLIO_PAYLOAD_VERSION;
+  books: PortfolioBooksSnapshot & Record<string, unknown>;
+};
+
+/** Wrap a books snapshot in the Modules envelope. Extra keys pass through. */
+export function toPortfolioAssetPayload(
+  books: PortfolioBooksSnapshot,
+): PortfolioAssetPayload {
+  return { version: PORTFOLIO_PAYLOAD_VERSION, books };
+}
+
 /**
- * Modules-owned portfolio payload. Extra keys are ignored, not invented.
- * Missing books become empty arrays — never seeded with demo tickers.
+ * Modules-owned portfolio payload. Accepts the `{ version, books }` envelope
+ * or a flat books object. Extra keys are ignored, not invented. Missing books
+ * become empty arrays — never seeded with demo tickers.
  */
 export function parsePortfolioBooksPayload(
   payload: unknown,
@@ -80,9 +96,20 @@ export function parsePortfolioBooksPayload(
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
     return null;
   }
-  const raw = payload as Partial<PortfolioBooksSnapshot> & {
+  const root = payload as {
+    version?: unknown;
+    books?: unknown;
+    bookDollars?: unknown;
     book_dollars?: unknown;
+    current?: unknown;
+    proposed?: unknown;
+    currentUnit?: unknown;
+    proposedUnit?: unknown;
   };
+  const raw =
+    root.books && typeof root.books === "object" && !Array.isArray(root.books)
+      ? (root.books as typeof root)
+      : root;
   const bookDollars =
     typeof raw.bookDollars === "number" && raw.bookDollars > 0
       ? raw.bookDollars

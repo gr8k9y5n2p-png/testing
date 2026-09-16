@@ -181,19 +181,16 @@ export function ListsWorkspace({
 
   return (
     <section aria-labelledby="lists-heading">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-faint">
-            {SEARCH_UPCOMING_KICKER}
-          </p>
-          <h1
-            id="lists-heading"
-            className="mt-1 font-serif text-2xl tracking-tight text-ink"
-          >
-            {LISTS_HEADING}
-          </h1>
-          <p className="mt-2 max-w-2xl text-sm text-muted">{LISTS_DETAIL}</p>
-        </div>
+      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-faint">
+        {SEARCH_UPCOMING_KICKER}
+      </p>
+      <h1
+        id="lists-heading"
+        className="mt-1 font-serif text-2xl tracking-tight text-ink"
+      >
+        {LISTS_HEADING}
+      </h1>
+      <div className="mt-4">
         <SavedAssetActions
           type="list"
           canSave={tickers.length > 0}
@@ -207,6 +204,7 @@ export function ListsWorkspace({
           onNotice={onNotice}
         />
       </div>
+      <p className="mt-3 max-w-2xl text-sm text-muted">{LISTS_DETAIL}</p>
       <NoticeToast message={notice} onDismiss={dismissNotice} />
 
       <form
