@@ -60,10 +60,16 @@ export function portfolioBooksAreSavable(
   );
 }
 
+function asTickerSlots(
+  tickers: Array<string | undefined | null> = [],
+): string[] {
+  return tickers.map((ticker) => (typeof ticker === "string" ? ticker : ""));
+}
+
 export function compareWorkspaceIsSavable(
   tickers: Array<string | undefined | null> = [],
 ): boolean {
-  return filledCompareTickers(tickers).length > 0;
+  return filledCompareTickers(asTickerSlots(tickers)).length > 0;
 }
 
 export function portfolioSavePayloadFromBooks(
@@ -101,7 +107,7 @@ export function compareWorkspaceToPortfolioBooks(
   snapshot: CompareWorkspaceSnapshot,
   funds: CompareFundHint[] = [],
 ): ComparePortfolioBooks {
-  const tickers = filledCompareTickers(snapshot.tickers);
+  const tickers = filledCompareTickers(asTickerSlots(snapshot.tickers));
   const holdingDollars =
     typeof snapshot.holdingDollars === "number" && snapshot.holdingDollars > 0
       ? snapshot.holdingDollars
