@@ -963,7 +963,11 @@ class AlgerSource(HtmlTableSource):
         "Distrib_FUNDS_2021 / 2023 / 2024 siblings still 404; Wayback "
         "20221103225410 of Distrib_FUNDS.pdf is 2022 estimates (as of Oct 17) "
         "— not ingested as paid. 2024 ETF Wayback is estimates. CHUSX "
-        "2021/2023/2024 stay unmatched."
+        "2021/2023/2024 stay unmatched. Official 5y parallel T leftover "
+        "re-probe: Distrib_FUNDS_2021 / 2023 / 2024 siblings still unpublished. "
+        "ETF Wayback 20241126184535 of Distrib_ETFs.pdf is truncated; "
+        "20251209195815 is Oct 2025 estimates — not ingested as paid. "
+        "ATFV / FRTY 2022+2024 and leftover MF 2021/2023/2024 stay unmatched."
     )
     live_limitations = (
         "Year-end book is PDF. Weekly walk uses the DividendsDistributions hub + 2025 "
@@ -1042,7 +1046,13 @@ class HardingLoevnerSource(HtmlTableSource):
         "HLMEX 2024 LT $2.094041). Class-level — never copied. Global Equity "
         "HLMGX / HLMVX have no 2022 row (unpublished). AMG JSON 404 leftover "
         "Z / HLEMX / HLIDX 2023 rows from Wayback HLF-2023-Distributions.pdf. "
-        "2025 stays on the existing PDF fixture. Em-dash ST/LT omitted."
+        "2025 stays on the existing PDF fixture. Em-dash ST/LT omitted. "
+        "Official 5y parallel T leftover: Wayback issuer PDFs "
+        "HLF-Distributions-2021.pdf (20220116110203) and "
+        "HLF-Distributions-2022.pdf (20230317075511) fill leftover HLEMX "
+        "2021+2022 / HLGZX 2021 / HLIZX 2021+2022 / HLIDX 2022. Global Equity "
+        "2022 printed dashes stay unmatched. HLFZX / HLRZX 2021–2022 unpublished "
+        "under those tickers. 2024 leftover Z / HLEMX / HLIDX still 404."
     )
     live_limitations = (
         "Year-end book is PDF. Weekly walk uses the official media.hardingloevner.com PDF; "
@@ -1070,6 +1080,18 @@ class HardingLoevnerSource(HtmlTableSource):
                 name="leftover_product_page_history_2021_2024",
                 url="https://wealth.amg.com/wp-json/amgfundsdata/v1/fund-detail/HLMNX/performance",
                 fixture="leftover_product_page_history_2021_2024.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
+            ),
+            PageSpec(
+                name="leftover_paid_year_end_parallel_t",
+                url=(
+                    "https://web.archive.org/web/20230317075511id_/"
+                    "https://media.hardingloevner.com/fileadmin/pdf/HLF/"
+                    "HLF-Distributions-2022.pdf"
+                ),
+                fixture="leftover_paid_year_end_parallel_t.html",
                 live=False,
                 role="history",
                 large_aum_only=False,

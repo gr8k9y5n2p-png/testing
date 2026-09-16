@@ -249,5 +249,7 @@ def test_fixture_book_lookback_stays_official_only() -> None:
     # Parallel W leftover: Manning & Napier December paid YE +27 MF and
     # Westwood Institutional paid history +3 MF. Year-depth / walls unchanged
     # for Lazard / Homestead / Madison / BP / LSV leftover years.
-    assert digest.funds_with_5y == 3540
+    # Parallel T leftover: Marsico Investor leftover paid YE +5 MF.
+    # Harding leftover 2021/2022 PDFs are year-depth. Alger / Driehaus walls.
+    assert digest.funds_with_5y == 3545
     assert digest.book_funds >= 7200
