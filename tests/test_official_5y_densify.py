@@ -703,8 +703,15 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # years +14 (12 MF / 2 ETF): BIV / BND / VBIIX / VBIMX / VBMFX / VBMPX /
     # VBTIX / VCITX / VCLAX / VFIRX / VFISX / VTBSX / VUSXX / VWALX.
     # Schwab / SSGA / DFA / Nuveen leftover re-probes stay walls.
-    assert digest.funds_with_5y == 3570
-    assert digest.funds_with_5y_mf == 2818
+    # Parallel AB leftover (rebased onto tip 3570 / MF 2818 / ETF 752):
+    # Oakmark 2024 class-level Wayback YE +22 MF (OAYMX / OANMX / OAZMX
+    # families + OAKBX E&I) and Janus Daily leftover ICI month-end income
+    # +40 MF (JAFIX / JAHYX / JMUIX / JUCAX families). Year-depth only:
+    # LBNDX 2022 / LTRAX 2021. Dodge Class X 2021 / Artisan 2023 Mid Small
+    # Focus Discovery / 2022 GOPPS / Lord Daily AJAX stay walls. ETF 5y
+    # unchanged from AA. No new identities. Honest pin = tip 3570 + AB +62.
+    assert digest.funds_with_5y == 3632
+    assert digest.funds_with_5y_mf == 2880
     assert digest.funds_with_5y_etf == 752
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
@@ -1947,6 +1954,90 @@ def test_oakmark_leftover_wayback_2021_2023_fills_investor_5y() -> None:
     assert oakcx_2023 == []
 
 
+def test_oakmark_leftover_2024_class_level_fills_5y() -> None:
+    records = OakmarkSource().fetch(mode="fixture").records
+    oaymx_2024 = next(
+        row
+        for row in records
+        if row.ticker == "OAYMX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2024-12-12"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert oaymx_2024.amount == Decimal("1.9817")
+    oanmx_2024 = next(
+        row
+        for row in records
+        if row.ticker == "OANMX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2024-12-12"
+        and row.amount
+    )
+    assert oanmx_2024.amount == Decimal("2.0405")
+    oazmx_2024 = next(
+        row
+        for row in records
+        if row.ticker == "OAZMX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2024-12-12"
+        and row.amount
+    )
+    assert oazmx_2024.amount == Decimal("2.1015")
+    oayex_2024_lt = next(
+        row
+        for row in records
+        if row.ticker == "OAYEX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and row.ex_date.year == 2024
+        and row.amount
+    )
+    assert oayex_2024_lt.amount == Decimal("0.7241")
+    oakbx_2024 = next(
+        row
+        for row in records
+        if row.ticker == "OAKBX"
+        and row.ex_date
+        and row.ex_date.year == 2024
+        and row.amount is not None
+    )
+    assert oakbx_2024.amount == Decimal("0.0000")
+    # Class-level — Advisor income is not copied onto Investor.
+    oakmx_2024 = next(
+        row
+        for row in records
+        if row.ticker == "OAKMX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2024
+        and row.amount
+    )
+    assert oakmx_2024.amount == Decimal("1.6971")
+    for ticker in ("OAYMX", "OANMX", "OAZMX", "OAYEX", "OAKBX"):
+        years = {
+            row.ex_date.year
+            for row in records
+            if row.ticker == ticker
+            and row.ex_date
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        }
+        assert set(LOOKBACK_YEARS) <= years, ticker
+    oakcx_2021 = [
+        row
+        for row in records
+        if row.ticker == "OAKCX"
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount is not None
+    ]
+    assert oakcx_2021 == []
+
+
 def test_harding_loevner_leftover_amg_json_fills_5y() -> None:
     records = HardingLoevnerSource().fetch(mode="fixture").records
     hlmnx_2022 = next(
@@ -2893,7 +2984,7 @@ def test_lord_abbett_leftover_product_page_history_is_2y() -> None:
     assert 2023 not in lagwx_years
     assert 2025 not in lagwx_years
 
-    # Bond Debenture / Total Return leftover years stay JS-unpublished.
+    # Bond Debenture 2021 / Total Return 2024 Daily income stay AJAX-unpublished.
     for ticker, year in (("LBNDX", 2021), ("LTRAX", 2024)):
         paid = [
             row
@@ -2905,6 +2996,150 @@ def test_lord_abbett_leftover_product_page_history_is_2y() -> None:
             and row.amount is not None
         ]
         assert paid == []
+
+
+def test_janus_leftover_parallel_ab_daily_ici_fills_5y() -> None:
+    records = JanusHendersonSource().fetch(mode="fixture").records
+    jafix_2025 = next(
+        row
+        for row in records
+        if row.ticker == "JAFIX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2025-01-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert jafix_2025.amount == Decimal("0.03748179")
+    jahyx_2025 = next(
+        row
+        for row in records
+        if row.ticker == "JAHYX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2025-01-31"
+        and row.amount
+    )
+    assert jahyx_2025.amount == Decimal("0.04181576")
+    jmuix_2025 = next(
+        row
+        for row in records
+        if row.ticker == "JMUIX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2025-01-31"
+        and row.amount
+    )
+    assert jmuix_2025.amount == Decimal("0.04791137")
+    for ticker in ("JAFIX", "JAHYX", "JMUIX", "JASBX", "JUCAX"):
+        years = {
+            row.ex_date.year
+            for row in records
+            if row.ticker == ticker
+            and row.ex_date
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        }
+        assert set(LOOKBACK_YEARS) <= years, ticker
+    # Col 14 dash / unpublished leftover years stay unmatched.
+    hfaax_2024 = [
+        row
+        for row in records
+        if row.ticker == "HFAAX"
+        and row.ex_date
+        and row.ex_date.year == 2024
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert hfaax_2024 == []
+    jagax_2025 = [
+        row
+        for row in records
+        if row.ticker == "JAGAX"
+        and row.ex_date
+        and row.ex_date.year == 2025
+        and row.amount is not None
+    ]
+    assert jagax_2025 == []
+
+
+def test_lord_abbett_leftover_parallel_ab_product_page_is_year_depth() -> None:
+    records = LordAbbettSource().fetch(mode="fixture").records
+    lbndx_2022 = next(
+        row
+        for row in records
+        if row.ticker == "LBNDX"
+        and row.estimate_type == EstimateType.short_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2022-07-28"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert lbndx_2022.amount == Decimal("0.0131")
+    ltrax_2021 = next(
+        row
+        for row in records
+        if row.ticker == "LTRAX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2021-12-17"
+        and row.amount
+    )
+    assert ltrax_2021.amount == Decimal("0.0629")
+    lbndx_years = {
+        row.ex_date.year
+        for row in records
+        if row.ticker == "LBNDX"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert 2022 in lbndx_years
+    assert 2021 not in lbndx_years
+    assert 2023 not in lbndx_years
+    assert 2024 not in lbndx_years
+    ltrax_years = {
+        row.ex_date.year
+        for row in records
+        if row.ticker == "LTRAX"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert 2021 in ltrax_years
+    assert 2024 not in ltrax_years
+
+
+def test_parallel_ab_leftover_walls_stay_unmatched() -> None:
+    dodge = DodgeCoxSource().fetch(mode="fixture").records
+    for ticker in ("DOXGX", "DOXBX", "DOXIX", "DOXFX", "DOXWX", "DOXLX"):
+        paid_2021 = [
+            row
+            for row in dodge
+            if row.ticker == ticker
+            and _year_for_row(row.as_of, row.ex_date, row.payable_date) == 2021
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        ]
+        assert paid_2021 == [], ticker
+
+    artisan = ArtisanSource().fetch(mode="fixture").records
+    for ticker, year in (
+        ("ARTMX", 2023),
+        ("ARTSX", 2023),
+        ("ARTRX", 2022),
+        ("APDRX", 2022),
+        ("APHRX", 2022),
+    ):
+        paid = [
+            row
+            for row in artisan
+            if row.ticker == ticker
+            and (row.ex_date or row.as_of)
+            and (row.ex_date or row.as_of).year == year
+            and row.amount is not None
+        ]
+        assert paid == [], f"{ticker} {year}"
 
 
 def test_parallel_h_leftover_walls_stay_unmatched() -> None:
