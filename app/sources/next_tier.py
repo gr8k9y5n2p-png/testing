@@ -258,7 +258,11 @@ class NuveenSource(HtmlTableSource):
         "TSOHX 2021 income $0.3063 / ST $0.0355 / LT $0.0666; NSBRX 2025-12-15 ST "
         "$0.0360 / LT $4.9421). Never copied onto TINRX / NSBAX / TIEIX. Issuer "
         "dashes omitted. NSBRX 2021 unpublished on the printed table. Most other "
-        "product pages are JS-empty / No Records — leftover years stay unmatched."
+        "product pages are JS-empty / No Records — leftover years stay unmatched. "
+        "Parallel AA leftover re-probe (2026-09-16): tax-hub uniqueId letters "
+        "are 2024/2025 QDI / tax-character / state notices — not ST/LT $/share. "
+        "No 2021–2024 paid YE book on the live hub. Leftover Class A / C / R6 "
+        "years stay unmatched."
     )
     live_limitations = (
         "Estimate book is a PDF viewer, not scrapeable HTML. Fixture transcribes "
@@ -486,7 +490,11 @@ class SchwabSource(HtmlTableSource):
         "money-market daily NII (omitted from the family PDF), target-date pages "
         "that still stop at 2020, and MarketTrack / Monthly Income product pages "
         "that live-403 with Wayback CDX landing on 2021/2023 captures that do not "
-        "print 2021–2024 December YE — unmatched, not invented $0."
+        "print 2021–2024 December YE — unmatched, not invented $0. "
+        "Parallel AA leftover re-probe (2026-09-16): live tax-resource hub still "
+        "lists 2025 Actual Annual Distributions only; 2021–2024 family annual "
+        "PDF siblings unpublished. Money-market leftovers stay daily NII. "
+        "Target-date / MarketTrack / Monthly Income leftover years stay unmatched."
     )
     live_limitations = (
         "Family annual grid is JavaScript-rendered. Product pages mix performance "
@@ -592,7 +600,11 @@ class DimensionalSource(HtmlTableSource):
         "table. No public filled ICI file. Leftover MF 3y (DISVX / DFELX / "
         "DFQTX and 43 peers) stay unmatched for 2021–2022 — never invent $0 "
         "and never transcribe aliased 480410/218591/332797 bytes as 2021/2022. "
-        "Tax center: https://www.dimensional.com/us-en/tax"
+        "Parallel AA leftover re-probe (2026-09-16): live tax center still "
+        "lists 2023/2024/2025 sheets only (0 mentions of 2021 or 2022). 2023 "
+        "and 2025 ETF tax sheets are year-depth for 1y ETF leftovers — they "
+        "cannot complete 5y without unpublished 2021–2022. Wayback CDX was "
+        "offline this session. Tax center: https://www.dimensional.com/us-en/tax"
     )
     live_limitations = "Year-end book is PDF. Fixture transcribes public paid/estimate rows."
 

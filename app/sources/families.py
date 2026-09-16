@@ -238,7 +238,22 @@ class VanguardSource(HtmlTableSource):
         "ST/LT the December-only CSVs omitted. Daily / money-market lines still "
         "skipped. VBINX 2025-03-27 OI $0.276100 / ST $0.006602 / LT $0.638521; "
         "VIGAX 2025-06-30 income $0.254400. Row as_of is the event ex-date — "
-        "never collapsed onto Dec 31."
+        "never collapsed onto Dec 31. Official 5y parallel AA leftover (same "
+        "official ICI PDFs; re-extracted 2026-09-16): leftover in-book bond / "
+        "tax-exempt / money-market years still short of 2021–2025. December "
+        "dated rows first (BND 2022-12-29 income $0.172311 / 2025-12-22 "
+        "$0.246638; VBIIX 2022-12-01 $0.021170; VWALX 2022-12-01 $0.030387). "
+        "Tax-exempt income uses the printed total/exempt dollar when ICI col "
+        "14 is a dash — not invented. When December is unpublished in that "
+        "year's extract, the latest leftover-year dated row is stored (BIV "
+        "2025-08-05 $0.265057; VBTIX 2023-04-03 $0.024227; VFIRX 2023-09-01 "
+        "$0.035085; VTBSX 2022-05-02 $0.018866; VCLAX 2023-03-01 $0.029218). "
+        "Daily NII keeps one December snapshot (VUSXX). VBTLX 2023 / BSV "
+        "2022+2025 / VWEHX 2025 wrap-absent. Recent launches (BNDP / VBIL / "
+        "VDIG / VEXC / VGHY / VGMS / VGUS / VGVT / VSDB / VTG / VTP / VUSG / "
+        "VUSV / VCPSX) and VEDIX 2025 official dashes stay unmatched. VFLQ "
+        "2022-11-28 $99.896787 is official ROC/liquidation (col 14 income "
+        "dash) — not stored as ordinary income."
     )
     live_limitations = (
         "Advisor year-end page is JavaScript-rendered; ICI archives are PDFs "
@@ -353,6 +368,42 @@ class VanguardSource(HtmlTableSource):
                 name="ici_leftover_quarterly_midyear",
                 url=f"{ici}/ICIprimary_012026.pdf",
                 fixture="ici_leftover_quarterly_midyear.csv",
+                live=False,
+                parser="ici",
+                large_aum_only=False,
+                role="history",
+            ),
+            PageSpec(
+                name="leftover_ici_primary_2025",
+                url=f"{ici}/ICIprimary_012026.pdf",
+                fixture="leftover_ici_primary_2025.csv",
+                live=False,
+                parser="ici",
+                large_aum_only=False,
+                role="history",
+            ),
+            PageSpec(
+                name="leftover_ici_primary_2024",
+                url=f"{ici}/ICI_revised_2024_Primary_layout_spreadsheet.pdf",
+                fixture="leftover_ici_primary_2024.csv",
+                live=False,
+                parser="ici",
+                large_aum_only=False,
+                role="history",
+            ),
+            PageSpec(
+                name="leftover_ici_primary_2023",
+                url=f"{ici}/2023_ICI_Primary_Layout.pdf",
+                fixture="leftover_ici_primary_2023.csv",
+                live=False,
+                parser="ici",
+                large_aum_only=False,
+                role="history",
+            ),
+            PageSpec(
+                name="leftover_ici_primary_2022",
+                url=f"{ici}/2022_ICI_Primary_Layout.pdf",
+                fixture="leftover_ici_primary_2022.csv",
                 live=False,
                 parser="ici",
                 large_aum_only=False,
@@ -509,7 +560,11 @@ class StateStreetSource(HtmlTableSource):
         "only): NZAC 2022-12-01 income $0.214724 and 2023-12-01 $0.229707 plus the "
         "June semi-annual companions (empty ST/LT cells omitted, not invented $0). "
         "HYBL 2021 / SPDG 2021–2022 unpublished (inception). Later 1y / 2y launches "
-        "stay unmatched."
+        "stay unmatched. Parallel AA leftover re-probe (2026-09-16): same official "
+        "XLSX. SPLG was renamed SPYM (10/31/2025) — leftover years stay under "
+        "SPYM, not copied onto SPLG. ALLW / PRIV / premium-income and MyMap "
+        "2024–2025 launches stay unmatched (inception). GLD grantor trust "
+        "still publishes no distributions."
     )
     live_limitations = (
         "SSGA estimate tables are client-rendered Angular. Historical XLSX is public but "

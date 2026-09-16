@@ -257,5 +257,7 @@ def test_fixture_book_lookback_stays_official_only() -> None:
     # midyear fill on the Parallel T tip (3545).
     # Parallel U leftover: Tweedy + Osterweis + Longleaf leftover paid YE
     # +10 MF 5y. Buffalo 2024–2025 and Third Avenue 2022–2024 are year-depth.
-    assert digest.funds_with_5y == 3556
+    # Parallel AA leftover: Vanguard leftover ICI bond / tax-exempt / MM
+    # years +14 (12 MF / 2 ETF). Schwab / SSGA / DFA / Nuveen stay walls.
+    assert digest.funds_with_5y == 3570
     assert digest.book_funds >= 7200
