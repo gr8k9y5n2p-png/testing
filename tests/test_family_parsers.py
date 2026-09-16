@@ -4344,6 +4344,112 @@ def test_tenth_tier_fixtures() -> None:
     assert rpxix.amount == Decimal("2.6688")
 
 
+def test_parallel_w_leftover_paid_fixtures() -> None:
+    manning = parse_distribution_html(
+        (ROOT / "manning_napier" / "leftover_paid_year_end_parallel_w.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://manning-leftover-w",
+        fund_family="Manning & Napier",
+    )
+    mnhix_2021_lt = next(
+        r
+        for r in manning
+        if r.ticker == "MNHIX"
+        and r.estimate_type == EstimateType.long_term_capital_gains
+        and str(r.ex_date) == "2021-12-14"
+    )
+    assert mnhix_2021_lt.amount == Decimal("0.85360")
+    assert mnhix_2021_lt.publication_stage == PublicationStage.final
+    assert "MSHIX" not in {r.ticker for r in manning}
+    assert {r.ticker for r in manning if r.ticker} <= {
+        "CEIIX",
+        "CEISX",
+        "CEIZX",
+        "EXBAX",
+        "EXEYX",
+        "EXHAX",
+        "MDFSX",
+        "MDVWX",
+        "MDVZX",
+        "MEYWX",
+        "MHYWX",
+        "MHYZX",
+        "MNBAX",
+        "MNBIX",
+        "MNBRX",
+        "MNBWX",
+        "MNDFX",
+        "MNECX",
+        "MNHAX",
+        "MNHCX",
+        "MNHIX",
+        "MNHRX",
+        "MNHWX",
+        "MNHYX",
+        "MNMCX",
+        "MNMIX",
+        "MNMRX",
+        "MNMWX",
+        "RAIIX",
+        "RAIRX",
+        "RAIWX",
+        "RISAX",
+    }
+
+    westwood = parse_distribution_html(
+        (ROOT / "westwood" / "leftover_paid_history_parallel_w.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://westwood-leftover-w",
+        fund_family="Westwood",
+    )
+    whglx_2025_lt = next(
+        r
+        for r in westwood
+        if r.ticker == "WHGLX"
+        and r.estimate_type == EstimateType.long_term_capital_gains
+        and str(r.ex_date) == "2025-12-12"
+    )
+    assert whglx_2025_lt.amount == Decimal("2.4094")
+    assert {r.ticker for r in westwood} == {"WHGLX", "WWMCX", "WHGMX", "WHGSX", "WQAIX"}
+    assert not any(r.ticker in {"WWLAX", "WHGQX", "WHGAX"} for r in westwood)
+
+    boston = parse_distribution_html(
+        (ROOT / "boston_partners" / "leftover_paid_finals_parallel_w.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://boston-leftover-w",
+        fund_family="Boston Partners",
+    )
+    bpaix_2025_lt = next(
+        r
+        for r in boston
+        if r.ticker == "BPAIX"
+        and r.estimate_type == EstimateType.long_term_capital_gains
+        and str(r.ex_date) == "2025-12-12"
+    )
+    assert bpaix_2025_lt.amount == Decimal("2.68")
+    assert not any(r.ticker in {"BELSX", "WPGHX"} for r in boston)
+
+    lsv = parse_distribution_html(
+        (ROOT / "lsv" / "leftover_paid_year_end_parallel_w.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://lsv-leftover-w",
+        fund_family="LSV",
+    )
+    lsvex_2024_lt = next(
+        r
+        for r in lsv
+        if r.ticker == "LSVEX"
+        and r.estimate_type == EstimateType.long_term_capital_gains
+        and str(r.ex_date) == "2024-12-23"
+    )
+    assert lsvex_2024_lt.amount == Decimal("1.6848")
+    assert lsvex_2024_lt.publication_stage == PublicationStage.final
+
+
 def test_eleventh_tier_fixtures() -> None:
     amg = parse_distribution_html(
         (ROOT / "amg" / "2025_year_end_distributions.html").read_text(encoding="utf-8"),

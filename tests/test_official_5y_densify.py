@@ -94,6 +94,15 @@ from app.sources.seventh_tier import (
     JensenSource,
     TcwSource,
 )
+from app.sources.tenth_tier import (
+    BostonPartnersSource,
+    HomesteadSource,
+    LazardSource,
+    LsvSource,
+    MadisonSource,
+    ManningNapierSource,
+    WestwoodSource,
+)
 from app.sources.parser import NormalizedRecord
 from app.sources.registry import list_sources
 
@@ -436,8 +445,14 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # product-page paid YE +5 MF (BGVIX / BIIEX / BSCMX / BEMIX / BISMX).
     # Baillie Gifford 2025 Final is year-depth only. GQG leftovers stay
     # estimate-only (no paid/final book). ETF 5y unchanged. No new identities.
-    assert digest.funds_with_5y == 3510
-    assert digest.funds_with_5y_mf == 2760
+    # Parallel W leftover: Manning & Napier December paid YE +27 MF (EXEYX /
+    # MNHIX / MNDFX families) and Westwood Institutional paid history +3 MF
+    # (WHGLX / WHGMX / WHGSX). Year-depth only: Callodine 3y, RAIIX 4y,
+    # RISAX 3y, WWMCX 3y, WQAIX 4y, Boston Partners 2024+2025 / LSV 2024
+    # (2y). Lazard / Homestead / Madison leftover years stay unmatched.
+    # ETF 5y unchanged. No new identities.
+    assert digest.funds_with_5y == 3540
+    assert digest.funds_with_5y_mf == 2790
     assert digest.funds_with_5y_etf == 750
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
@@ -6164,3 +6179,301 @@ def test_parallel_v_heroes_are_searchable(client: TestClient) -> None:
         if row.get("ticker") == "GQEIX" and row.get("amount") is not None
     ]
     assert gqeix_paid == []
+
+def test_parallel_w_manning_leftover_paid_fills_5y() -> None:
+    records = ManningNapierSource().fetch(mode="fixture").records
+    mnhix_2021_lt = next(
+        row
+        for row in records
+        if row.ticker == "MNHIX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2021-12-14"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert mnhix_2021_lt.amount == Decimal("0.85360")
+    exeyx_2024_lt = next(
+        row
+        for row in records
+        if row.ticker == "EXEYX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2024-12-12"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert exeyx_2024_lt.amount == Decimal("1.73250")
+    for ticker in (
+        "EXEYX",
+        "MNHIX",
+        "MNDFX",
+        "EXBAX",
+        "EXHAX",
+        "RAIWX",
+        "RAIRX",
+    ):
+        years = {
+            row.ex_date.year
+            for row in records
+            if row.ticker == ticker
+            and row.ex_date
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        }
+        assert set(LOOKBACK_YEARS) <= years, ticker
+
+
+def test_parallel_w_westwood_leftover_paid_fills_5y() -> None:
+    records = WestwoodSource().fetch(mode="fixture").records
+    whglx_2025_lt = next(
+        row
+        for row in records
+        if row.ticker == "WHGLX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-12"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert whglx_2025_lt.amount == Decimal("2.4094")
+    for ticker in ("WHGLX", "WHGMX", "WHGSX"):
+        years = {
+            row.ex_date.year
+            for row in records
+            if row.ticker == ticker
+            and row.ex_date
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        }
+        assert set(LOOKBACK_YEARS) <= years, ticker
+    wwmcx_years = {
+        row.ex_date.year
+        for row in records
+        if row.ticker == "WWMCX"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert wwmcx_years == {2023, 2024, 2025}
+    wqaix_years = {
+        row.ex_date.year
+        for row in records
+        if row.ticker == "WQAIX"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert wqaix_years == {2021, 2022, 2023, 2024}
+
+
+def test_parallel_w_boston_partners_and_lsv_are_year_depth() -> None:
+    boston = BostonPartnersSource().fetch(mode="fixture").records
+    bpaix_2025_lt = next(
+        row
+        for row in boston
+        if row.ticker == "BPAIX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-12"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert bpaix_2025_lt.amount == Decimal("2.68")
+    bpaix_2024_lt = next(
+        row
+        for row in boston
+        if row.ticker == "BPAIX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2024-12-13"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert bpaix_2024_lt.amount == Decimal("2.81")
+    for ticker in ("BPAIX", "BPSIX", "BPGIX", "WPGSX"):
+        years = {
+            row.ex_date.year
+            for row in boston
+            if row.ticker == ticker
+            and row.ex_date
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        }
+        assert years == {2024, 2025}, ticker
+
+    lsv = LsvSource().fetch(mode="fixture").records
+    lsvex_2024_lt = next(
+        row
+        for row in lsv
+        if row.ticker == "LSVEX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2024-12-23"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert lsvex_2024_lt.amount == Decimal("1.6848")
+    for ticker in ("LSVEX", "LVAEX", "LSVVX", "LSVMX"):
+        years = {
+            row.ex_date.year
+            for row in lsv
+            if row.ticker == ticker
+            and row.ex_date
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        }
+        assert years == {2024, 2025}, ticker
+
+
+def test_parallel_w_leftover_walls_stay_unmatched() -> None:
+    lazard = LazardSource().fetch(mode="fixture").records
+    lazard_paid = [
+        row
+        for row in lazard
+        if row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert lazard_paid == []
+    assert [row for row in lazard if row.ticker == "RLCIX"] == []
+
+    homestead = HomesteadSource().fetch(mode="fixture").records
+    homestead_early = [
+        row
+        for row in homestead
+        if row.ex_date
+        and row.ex_date.year in {2021, 2022, 2023, 2024}
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert homestead_early == []
+
+    madison = MadisonSource().fetch(mode="fixture").records
+    madison_early = [
+        row
+        for row in madison
+        if row.ex_date
+        and row.ex_date.year in {2021, 2022, 2023, 2024}
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert madison_early == []
+
+    manning = ManningNapierSource().fetch(mode="fixture").records
+    for ticker, missing in (
+        ("CEIIX", {2021, 2022}),
+        ("MSHIX", {2021, 2022, 2023, 2024}),
+        ("RAIIX", {2022}),
+        ("RISAX", {2022, 2024}),
+    ):
+        years = {
+            row.ex_date.year
+            for row in manning
+            if row.ticker == ticker
+            and row.ex_date
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        }
+        assert missing.isdisjoint(years), ticker
+
+    boston = BostonPartnersSource().fetch(mode="fixture").records
+    assert [row for row in boston if row.ticker in {"BELSX", "WPGHX"}] == []
+    boston_early = [
+        row
+        for row in boston
+        if row.ex_date
+        and row.ex_date.year in {2021, 2022, 2023}
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert boston_early == []
+
+    westwood = WestwoodSource().fetch(mode="fixture").records
+    assert [row for row in westwood if row.ticker in {"WWLAX", "WHGQX", "WHGAX"}] == []
+
+    lsv = LsvSource().fetch(mode="fixture").records
+    lsv_early = [
+        row
+        for row in lsv
+        if row.ex_date
+        and row.ex_date.year in {2021, 2022, 2023}
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert lsv_early == []
+
+
+def test_parallel_w_heroes_are_searchable(client: TestClient) -> None:
+    for slug in (
+        "manning_napier",
+        "westwood",
+        "boston_partners",
+        "lsv",
+        "lazard",
+        "homestead",
+        "madison",
+    ):
+        fetched = client.post(
+            "/ingest/fetch", json={"fund_family": slug, "mode": "fixture"}
+        )
+        assert fetched.status_code == 200, fetched.text
+        assert fetched.json()["created"] > 0
+
+    for ticker in (
+        "MNHIX",
+        "EXEYX",
+        "WHGLX",
+        "WHGSX",
+        "BPAIX",
+        "LSVEX",
+        "LZIEX",
+        "HOVLX",
+        "MNVAX",
+    ):
+        body = client.get("/funds", params={"q": ticker}).json()
+        tickers = [item["ticker"] for item in body["items"]]
+        assert ticker in tickers, f"{ticker} missing from GET /funds?q={ticker}: {tickers[:8]}"
+
+    mnhix = client.get(
+        "/distributions",
+        params={"ticker": "MNHIX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    mnhix_2021 = [
+        Decimal(row["amount"])
+        for row in mnhix["items"]
+        if row.get("ticker") == "MNHIX"
+        and row.get("estimate_type") == "long_term_capital_gains"
+        and str(row.get("ex_date") or "").startswith("2021-12-14")
+    ]
+    assert Decimal("0.85360") in mnhix_2021
+    mnhix_years = {
+        str(row.get("ex_date") or row.get("payable_date") or "")[:4]
+        for row in mnhix["items"]
+        if row.get("ticker") == "MNHIX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= mnhix_years
+
+    whglx = client.get(
+        "/distributions",
+        params={"ticker": "WHGLX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    whglx_2025 = [
+        Decimal(row["amount"])
+        for row in whglx["items"]
+        if row.get("ticker") == "WHGLX"
+        and row.get("estimate_type") == "long_term_capital_gains"
+        and str(row.get("ex_date") or "").startswith("2025-12-12")
+    ]
+    assert Decimal("2.4094") in whglx_2025
+
+    lziex = client.get(
+        "/distributions",
+        params={"ticker": "LZIEX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    lziex_paid = [
+        row
+        for row in lziex["items"]
+        if row.get("ticker") == "LZIEX" and row.get("amount") is not None
+    ]
+    assert lziex_paid == []
