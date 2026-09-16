@@ -133,12 +133,6 @@ export function TickerField({
     };
   }, [query]);
 
-  useEffect(() => {
-    if (cleared || !ticker || fundName) return;
-    const match = findExactFund([...remoteFunds, ...funds], ticker);
-    if (match) onSelect(match);
-  }, [cleared, fundName, funds, remoteFunds, ticker]);
-
   function commitUnknown(typed: string) {
     const tickerInUniverse =
       remotePending ||
@@ -149,6 +143,12 @@ export function TickerField({
     onSelect({ ticker: typed, fundName: "", nav: null });
     notifyPortfolioTickerMiss(typed, tickerInUniverse, onNotice);
   }
+
+  const matches = useMemo(() => {
+    const needle = (open ? query : cleared ? "" : ticker).trim();
+    if (!needle) return [];
+    return tickerFieldMatches(funds, remoteFunds, needle);
+  }, [cleared, funds, open, query, remoteFunds, ticker]);
 
   function commitTyped(typed: string): boolean {
     if (!typed) return false;
@@ -179,12 +179,6 @@ export function TickerField({
     pickedRef.current = true;
     onSelect(emptyTickerSelection());
   }
-
-  const matches = useMemo(() => {
-    const needle = (open ? query : cleared ? "" : ticker).trim();
-    if (!needle) return [];
-    return tickerFieldMatches(funds, remoteFunds, needle);
-  }, [cleared, funds, open, query, remoteFunds, ticker]);
 
   function showSuggestions(value: string) {
     setOpen(shouldOpenFundSuggestions(value));
