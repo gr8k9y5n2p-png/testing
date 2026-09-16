@@ -61,6 +61,10 @@ def test_history_catalog_has_sample_distribution_days() -> None:
         ("VFIAX", date(2025, 12, 23)),
         ("SPY", date(2025, 12, 19)),
         ("DBEF", date(2025, 12, 19)),
+        ("WHOSX", date(2021, 12, 15)),
+        ("ARGFX", date(2024, 12, 18)),
+        ("POSKX", date(2025, 12, 15)),
+        ("GQETX", date(2025, 12, 12)),
     ):
         quote = catalog.get((ticker, when))
         assert quote is not None, (ticker, when)

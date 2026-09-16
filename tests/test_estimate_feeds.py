@@ -201,6 +201,7 @@ def test_coverage_exposes_estimate_feed_readiness(session) -> None:
     assert diamond.estimate_feed_ready is True
     assert diamond.history_years == [2021, 2022, 2023, 2024, 2025]
     assert "DHLAX" in diamond.performance_tickers
+    assert "DHIAX" in diamond.performance_tickers
 
     guidestone = by_slug["guidestone"]
     assert guidestone.estimate_feed_ready is True
@@ -261,6 +262,7 @@ def test_coverage_exposes_estimate_feed_readiness(session) -> None:
     assert voya.estimate_feed_ready is True
     assert voya.history_years == [2021, 2022, 2023, 2024, 2025]
     assert "NLCAX" in voya.performance_tickers
+    assert "VYCAX" in voya.performance_tickers
 
     oakmark = by_slug["oakmark"]
     assert oakmark.estimate_feed_ready is True
@@ -315,6 +317,38 @@ def test_coverage_exposes_estimate_feed_readiness(session) -> None:
     bridgeway = by_slug["bridgeway"]
     assert bridgeway.estimate_feed_ready is True
     assert bridgeway.history_years == [2021, 2022, 2023, 2024, 2025]
+    assert "BRUSX" in bridgeway.performance_tickers
+    assert "BOSVX" in bridgeway.performance_tickers
+    assert "BRAGX" not in bridgeway.performance_tickers
+    assert "BRSVX" not in bridgeway.performance_tickers
+
+    wasatch = by_slug["wasatch"]
+    assert "WHOSX" in wasatch.performance_tickers
+    assert "WMCVX" in wasatch.performance_tickers
+
+    gmo = by_slug["gmo"]
+    assert "GQETX" in gmo.performance_tickers
+    assert "GMUEX" in gmo.performance_tickers
+    assert "GTMIX" in gmo.performance_tickers
+
+    ariel = by_slug["ariel"]
+    assert "ARGFX" in ariel.performance_tickers
+    assert "ARAIX" in ariel.performance_tickers
+
+    primecap = by_slug["primecap"]
+    assert "POSKX" in primecap.performance_tickers
+    assert "POGRX" in primecap.performance_tickers
+    assert "POAGX" in primecap.performance_tickers
+
+    champlain = by_slug["champlain"]
+    assert "CIPIX" in champlain.performance_tickers
+
+    hotchkis = by_slug["hotchkis"]
+    assert "HWLIX" in hotchkis.performance_tickers
+
+    impax = by_slug["impax"]
+    assert "PAXLX" in impax.performance_tickers
+    assert "PAXDX" in impax.performance_tickers
 
 
 def test_ranks_63_to_80_have_live_estimate_feed() -> None:
