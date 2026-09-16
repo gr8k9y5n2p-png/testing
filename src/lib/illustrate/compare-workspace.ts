@@ -6,7 +6,10 @@ import {
   upcomingPctOfNavFromPerShare,
 } from "./portfolio-compare-copy.ts";
 import {
+  announcedDateOf,
+  isFutureAnnouncedDate,
   publicationBucket,
+  utcToday,
   type UpcomingRow,
 } from "./publication-stage.ts";
 
@@ -190,8 +193,9 @@ export function growthFundsFromSlots(
 }
 
 /**
- * Upcoming rows for Compare tickers. Unpaid announced only.
- * Catalog dates attach only when the live row is still upcoming — never from paidHistory.
+ * Upcoming rows for Compare tickers. Unpaid announced with a future
+ * Announced date only. Past / blank announced holdings are omitted —
+ * never an Awaiting Estimate placeholder, never from paidHistory.
  */
 export function upcomingRowsFromCompareTickers(
   loaded: Array<{
@@ -201,17 +205,21 @@ export function upcomingRowsFromCompareTickers(
     holdingDollars?: number | null;
     navPerShare?: number | null;
   }>,
+  today = utcToday(),
 ): UpcomingRow[] {
-  return loaded.map((item, index) =>
-    upcomingRowForCompareTicker({
-      ticker: item.ticker,
-      fund: item.fund,
-      upcoming: item.upcoming,
-      holdingDollars: item.holdingDollars,
-      navPerShare: item.navPerShare,
-      index,
-    }),
-  );
+  return loaded
+    .map((item, index) =>
+      upcomingRowForCompareTicker({
+        ticker: item.ticker,
+        fund: item.fund,
+        upcoming: item.upcoming,
+        holdingDollars: item.holdingDollars,
+        navPerShare: item.navPerShare,
+        index,
+        today,
+      }),
+    )
+    .filter((row) => row.available);
 }
 
 export function upcomingRowForCompareTicker(input: {
@@ -221,13 +229,19 @@ export function upcomingRowForCompareTicker(input: {
   index: number;
   holdingDollars?: number | null;
   navPerShare?: number | null;
+  today?: string;
 }): UpcomingRow {
   const ticker = normalizeTicker(input.ticker) || input.ticker;
   const fund = input.fund ?? null;
-  const catalogUpcoming = catalogIsUnpaidAnnounced(fund);
+  const today = input.today ?? utcToday();
+  const catalogUpcoming = catalogIsUnpaidAnnounced(fund, today);
   // Live compare summary has no ex-date. Do not keep a row in Upcoming after
   // catalog ex-date has passed (payable may still be ahead).
-  const announced = Boolean(input.upcoming?.announced) && !catalogExHasPassed(fund);
+  const liveAnnouncedDate = input.upcoming?.asOf ?? null;
+  const announced =
+    Boolean(input.upcoming?.announced) &&
+    !catalogExHasPassed(fund, today) &&
+    isFutureAnnouncedDate(liveAnnouncedDate, today);
   const available = announced || catalogUpcoming;
   const holdingDollars =
     input.holdingDollars != null && input.holdingDollars > 0
@@ -272,16 +286,24 @@ export function upcomingRowForCompareTicker(input: {
     ordinaryPerShare,
     capitalGainsPerShare,
     estimatedTax: announced ? (input.upcoming?.dollars ?? null) : null,
-    asOf: catalogUpcoming ? fund?.asOfDate ?? null : input.upcoming?.asOf ?? null,
-    announcedDate: catalogUpcoming
-      ? fund?.publishedAt ?? fund?.asOfDate ?? null
-      : input.upcoming?.asOf ?? null,
+    asOf: available
+      ? catalogUpcoming
+        ? fund?.asOfDate ?? null
+        : input.upcoming?.asOf ?? null
+      : null,
+    announcedDate: available
+      ? catalogUpcoming
+        ? fund?.publishedAt ?? fund?.asOfDate ?? null
+        : liveAnnouncedDate
+      : null,
     recordDate: catalogUpcoming ? fund?.recordDate ?? null : null,
     exDate: catalogUpcoming ? fund?.exDate ?? null : null,
     payableDate: catalogUpcoming ? fund?.payableDate ?? null : null,
     stage: catalogUpcoming
       ? fund?.publicationStage ?? null
-      : input.upcoming?.publicationStage ?? null,
+      : available
+        ? input.upcoming?.publicationStage ?? null
+        : null,
     bucket: available ? "upcoming" : "paid_history",
     heat: 0,
     available,
@@ -293,9 +315,9 @@ export function upcomingRowForCompareTicker(input: {
 /**
  * Unpaid future announcement only. Do not use `isUpcomingFund` here — that
  * gate drops manager-published $0 as a catalog leftover. Advisors want
- * announced zeros. Identity / paid / final / past-event rows still fail
- * `publicationBucket`. Awaiting Estimate when there is no unpaid publish
- * and the ticker is in universe; Add to universe when it is not.
+ * announced zeros. Identity / paid / final / past-event / past-or-blank
+ * announced rows still fail. Awaiting Estimate copy is the empty module
+ * state — never a per-ticker placeholder row.
  */
 function catalogDistributionRow(fund: FundEstimateView) {
   return {
@@ -310,13 +332,23 @@ function catalogDistributionRow(fund: FundEstimateView) {
   };
 }
 
-function catalogIsUnpaidAnnounced(fund?: FundEstimateView | null): boolean {
+function catalogIsUnpaidAnnounced(
+  fund?: FundEstimateView | null,
+  today = utcToday(),
+): boolean {
   if (!fund) return false;
-  return publicationBucket(catalogDistributionRow(fund)) === "upcoming";
+  const row = catalogDistributionRow(fund);
+  return (
+    publicationBucket(row, today) === "upcoming" &&
+    isFutureAnnouncedDate(announcedDateOf(row), today)
+  );
 }
 
 /** True when catalog dates say the unpaid announce already went ex. */
-function catalogExHasPassed(fund?: FundEstimateView | null): boolean {
+function catalogExHasPassed(
+  fund?: FundEstimateView | null,
+  today = utcToday(),
+): boolean {
   if (!fund) return false;
-  return publicationBucket(catalogDistributionRow(fund)) === "paid_history";
+  return publicationBucket(catalogDistributionRow(fund), today) === "paid_history";
 }

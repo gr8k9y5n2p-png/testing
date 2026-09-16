@@ -19,6 +19,8 @@ export {
 export type { DistributionBucket, UpcomingRow } from "@/lib/illustrate/publication-stage";
 export {
   announcedDateOf,
+  isFutureAnnouncedDate,
+  isQualifyingUpcomingEvent,
   distributionHasPayable,
   eventDateOf,
   formatAsOfStage,

@@ -104,7 +104,8 @@ export function UpcomingTable({
   taxRates?: TaxRates;
   combineStateWithFederal?: boolean;
 }) {
-  const anyAvailable = rows.some((row) => row.available);
+  const visibleRows = rows.filter((row) => row.available);
+  const anyAvailable = visibleRows.length > 0;
   const legend = sideLabel
     ? `${UPCOMING_MODULE_DETAIL} · ${sideLabel}`
     : UPCOMING_MODULE_DETAIL;
@@ -125,13 +126,14 @@ export function UpcomingTable({
         {!anyAvailable ? (
           <div className="px-1 py-5">
             <p className="font-serif text-base tracking-tight text-ink">
-              {upcomingEmptyHeadline(rows)}
+              {upcomingEmptyHeadline(visibleRows)}
             </p>
             <p className="mt-1 text-[12px] leading-relaxed text-muted">
-              {upcomingEmptyDetail(rows)}
+              {upcomingEmptyDetail(visibleRows)}
             </p>
           </div>
         ) : null}
+        {anyAvailable ? (
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead className="text-[10px] font-semibold uppercase tracking-[0.12em] text-faint">
@@ -146,7 +148,7 @@ export function UpcomingTable({
               </tr>
             </thead>
             <tbody>
-              {rows.map((row) => {
+              {visibleRows.map((row) => {
                 const perShare = upcomingDistributionPerShareAmount(row);
                 const pct = upcomingPctOfNavAmount(row);
                 const impact = upcomingDollarImpactAmount(row, rates);
@@ -188,6 +190,7 @@ export function UpcomingTable({
             </tbody>
           </table>
         </div>
+        ) : null}
       </div>
       <p className="mt-2 text-[10px] text-faint">
         one row per ticker · manager unpaid $/share · % of NAV = $/share ÷ weekly

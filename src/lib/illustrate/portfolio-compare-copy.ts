@@ -12,8 +12,9 @@ export const SINGLE_BOOK_DELTA_DETAIL =
 
 /**
  * Eric lock — Compare / Portfolio Upcoming empty estimate:
- * in-universe, no unpaid announced estimate → Awaiting Estimate.
- * Not in universe → Add to universe (intake / requestTicker).
+ * module empty copy when no holding has unpaid announced with a future
+ * Announced date → Awaiting Estimate (in-universe) / Add to universe.
+ * Do not list Awaiting Estimate rows for past or blank announced dates.
  * Undisclosed stays for other matched=false amount gaps. Never invent $.
  */
 export const UPCOMING_AWAITING_ESTIMATE = "Awaiting Estimate";

@@ -46,6 +46,17 @@ describe("growthTaxChartPad / start amount off the plot", () => {
     assert.ok(tenM.left >= oneM.left);
     assert.notEqual(startAmountLabel(10_000), startAmountLabel(1_000_000));
   });
+
+  it("keeps $18k, $10k, and -$400 fully left of the plot", () => {
+    const pad = growthTaxChartPad(10_000, ["$18k", "$10k", "-$400"]);
+    assert.ok(pad.left >= 128, "left gutter must clear the plot edge");
+    for (const label of ["$18k", "$10k", "-$400"] as const) {
+      assert.ok(
+        labelSitsOffPlot(label, pad.left),
+        `${label} must sit left of pad.left=${pad.left}`,
+      );
+    }
+  });
 });
 
 describe("growthTaxTableLayout tracks yearLayout for 1–6 funds", () => {

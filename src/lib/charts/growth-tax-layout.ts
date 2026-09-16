@@ -11,9 +11,11 @@ import {
 export const GROWTH_TAX_STUB_MIN_PX = 90;
 /** Room for under-bar tickers on one line and the calendar year below. */
 export const GROWTH_TAX_YEAR_AXIS_PX = 58;
-export const AXIS_LABEL_GAP_PX = 8;
+export const AXIS_LABEL_GAP_PX = 14;
 /** 9px ui-monospace advance — used only to size the left gutter. */
-export const AXIS_CHAR_PX = 5.6;
+export const AXIS_CHAR_PX = 7.2;
+/** Extra room so $18k / $10k / -$400 sit fully left of the plot edge. */
+export const GROWTH_TAX_AXIS_MIN_PX = 128;
 
 /**
  * Drawn bar width. Slots stay full-width so the type table can still
@@ -78,13 +80,16 @@ export function growthTaxChartPad(
   const candidates = [
     startAmountLabel(startDollars),
     formatCompactUsd(-Math.max(Math.abs(startDollars), 1)),
+    formatCompactUsd(Math.max(startDollars * 1.8, 18_000)),
+    formatCompactUsd(-400),
     ...extraLabels,
   ];
   const widestAxis = Math.max(...candidates.map(estimateAxisLabelWidth));
   const left = Math.max(
     base.left,
     GROWTH_TAX_STUB_MIN_PX,
-    widestAxis + AXIS_LABEL_GAP_PX + 4,
+    GROWTH_TAX_AXIS_MIN_PX,
+    widestAxis + AXIS_LABEL_GAP_PX + 10,
   );
   return {
     ...base,

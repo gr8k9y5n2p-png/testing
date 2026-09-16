@@ -20,6 +20,8 @@ import {
 import type { PortfolioFundOption } from "@/lib/illustrate/portfolio-compare-types";
 import {
   emptyTickerSelection,
+  isTickerLockKey,
+  shouldKeepLockedTickerOnFocus,
   tickerFieldDisplay,
   tickerFieldSubtitle,
 } from "@/components/illustrate/portfolio-compare/ticker-field-clear";
@@ -78,6 +80,16 @@ export function TickerField({
     ? ""
     : tickerFieldSubtitle({ fundName, cleared });
   const canClear = Boolean(display || hasSelection);
+  const lockedInUniverse =
+    hasSelection &&
+    (Boolean(fundName) ||
+      Boolean(findExactFund([...remoteFunds, ...funds], ticker)));
+  const lockedMiss =
+    hasSelection &&
+    !lockedInUniverse &&
+    !remotePending &&
+    !remoteUnavailable &&
+    (notInUniverse || looksLikeExactTicker(ticker));
 
   useEffect(() => {
     const q = query.trim();
@@ -121,6 +133,12 @@ export function TickerField({
     };
   }, [query]);
 
+  useEffect(() => {
+    if (cleared || !ticker || fundName) return;
+    const match = findExactFund([...remoteFunds, ...funds], ticker);
+    if (match) onSelect(match);
+  }, [cleared, fundName, funds, remoteFunds, ticker]);
+
   function commitUnknown(typed: string) {
     const tickerInUniverse =
       remotePending ||
@@ -130,6 +148,28 @@ export function TickerField({
     setCleared(false);
     onSelect({ ticker: typed, fundName: "", nav: null });
     notifyPortfolioTickerMiss(typed, tickerInUniverse, onNotice);
+  }
+
+  function commitTyped(typed: string): boolean {
+    if (!typed) return false;
+    const exact = findExactFund([...remoteFunds, ...funds], typed);
+    const match = exact ?? matches[0];
+    if (match) {
+      pickedRef.current = true;
+      setCleared(false);
+      onSelect(match);
+      setQuery(match.ticker);
+      setOpen(false);
+      return true;
+    }
+    if (looksLikeExactTicker(typed)) {
+      pickedRef.current = true;
+      commitUnknown(typed);
+      setQuery(typed);
+      setOpen(false);
+      return true;
+    }
+    return false;
   }
 
   function clearSelection() {
@@ -166,7 +206,7 @@ export function TickerField({
           aria-autocomplete="list"
           aria-expanded={open}
           aria-controls={`${inputId}-list`}
-          className={`h-10 w-full rounded-md border ${tickerSlotBorderClass({ committed: hasSelection, midEdit: open })} bg-paper px-2.5 pr-9 font-mono text-sm font-medium text-ink placeholder:normal-case placeholder:tracking-normal placeholder:text-faint ${open ? "normal-case tracking-normal" : "uppercase tracking-wide"}`}
+          className={`h-10 w-full rounded-md border ${tickerSlotBorderClass({ committed: lockedInUniverse, midEdit: open, notInUniverse: lockedMiss })} bg-paper px-2.5 pr-9 font-mono text-sm font-medium text-ink placeholder:normal-case placeholder:tracking-normal placeholder:text-faint ${open ? "normal-case tracking-normal" : "uppercase tracking-wide"}`}
           onChange={(event) => {
             const next = event.target.value;
             if (
@@ -184,8 +224,13 @@ export function TickerField({
             showSuggestions(next);
           }}
           onFocus={() => {
-            if (hasSelection || cleared) {
+            if (cleared) {
               setQuery("");
+              setOpen(false);
+              return;
+            }
+            if (shouldKeepLockedTickerOnFocus({ hasSelection, cleared })) {
+              setQuery(ticker);
               setOpen(false);
               return;
             }
@@ -204,6 +249,10 @@ export function TickerField({
                 return;
               }
               const typed = query.trim().toUpperCase();
+              if (hasSelection && (!typed || typed === ticker)) {
+                setQuery(ticker);
+                return;
+              }
               if (!typed) {
                 setQuery("");
                 if (allowEmpty || ticker || fundName) {
@@ -212,20 +261,13 @@ export function TickerField({
                 return;
               }
               if (typed !== ticker) {
-                const match = findExactFund([...remoteFunds, ...funds], typed);
-                if (match) {
-                  onSelect(match);
-                  return;
+                if (!commitTyped(typed)) {
+                  onSelect({
+                    ticker: typed,
+                    fundName: "",
+                    nav: null,
+                  });
                 }
-                if (looksLikeExactTicker(typed)) {
-                  commitUnknown(typed);
-                  return;
-                }
-                onSelect({
-                  ticker: typed,
-                  fundName: "",
-                  nav: null,
-                });
               } else {
                 setQuery(ticker);
               }
@@ -248,24 +290,11 @@ export function TickerField({
               clearSelection();
               return;
             }
-            if (event.key === "Enter") {
-              event.preventDefault();
-              const typed = query.trim().toUpperCase();
+            if (isTickerLockKey(event.key)) {
+              const typed = (query || ticker).trim().toUpperCase();
               if (!typed) return;
-              const exact = findExactFund([...remoteFunds, ...funds], typed);
-              const match = exact ?? matches[0];
-              if (match) {
-                pickedRef.current = true;
-                setCleared(false);
-                onSelect(match);
-                setQuery(match.ticker);
-                setOpen(false);
-              } else if (looksLikeExactTicker(typed)) {
-                pickedRef.current = true;
-                commitUnknown(typed);
-                setQuery(typed);
-                setOpen(false);
-              }
+              if (event.key === "Enter") event.preventDefault();
+              commitTyped(typed);
             }
           }}
         />
