@@ -627,6 +627,10 @@ class ArtisanSource(HtmlTableSource):
         "OI $0.114735. APDRX / ARTRX / APHRX 2022 absent from the ICI PDF. "
         "2021 International Explorer / Value Income / debt inception walls. "
         "2023 Mid / Small / Discovery / Focus unpublished on the ICI PDF. "
+        "Official 5y parallel AB leftover re-probe of the same 2021–2023 ICI "
+        "Primary PDFs: Mid Cap / Small Cap / Focus / Global Discovery still "
+        "absent from the 2023 book; Global Opportunities still absent from "
+        "2022. Unpublished leftover years stay unmatched. "
         "Year selector for older HTML YE tables is JavaScript — skip SPA. "
         "NRA / DRD PDFs are tax-character layouts, not ingested as CG."
     )

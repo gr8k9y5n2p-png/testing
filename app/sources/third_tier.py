@@ -154,6 +154,12 @@ class JanusHendersonSource(HtmlTableSource):
         "dash — unmatched (2025 income $0.00657517 is official col 14). "
         "HFECX 2021 / JEASX 2024 / JEGRX 2023 / JIGCX 2021 / JSVSX 2022 / "
         "JVSCX 2022 remain official ICI dashes. "
+        "Official 5y parallel AB leftover: same official ICI Primary PDFs, leftover "
+        "Daily month-end income the December / quarterly extracts omitted (col 14/15/22 "
+        "only; dashes not invented from total). Heroes: JAFIX 2025-01-31 income "
+        "$0.03748179; JAHYX 2025-01-31 $0.04181576; JMUIX 2025-01-31 $0.04791137. "
+        "HFAAX 2024 col 14 dash / JAGAX 2025 unpublished / HFQSX 2023 absent / "
+        "HEMSX 2025 July all-dash remain unmatched. "
         "2025 final YE estimates (through 11/03/2025) remain as the estimate book "
         "(JDCAX LT $6.92). 2024 Preliminary Distribution Estimates 2024.pdf "
         "(JDCAX LT $5.42). 2023 Final Distribution Estimates 2023.pdf "
@@ -193,6 +199,15 @@ class JanusHendersonSource(HtmlTableSource):
                 name="ici_leftover_quarterly_midyear",
                 url=f"{cdn}/Janus%20Henderson%202025%20ICI%20Primary%20Layout.pdf",
                 fixture="ici_leftover_quarterly_midyear.csv",
+                live=False,
+                parser="ici",
+                large_aum_only=False,
+                role="history",
+            ),
+            PageSpec(
+                name="ici_leftover_parallel_ab",
+                url=f"{cdn}/Janus%20Henderson%202025%20ICI%20Primary%20Layout.pdf",
+                fixture="ici_leftover_parallel_ab.csv",
                 live=False,
                 parser="ici",
                 large_aum_only=False,
@@ -403,7 +418,10 @@ class DodgeCoxSource(HtmlTableSource):
         "DOXGX 2025 income $0.0446 / LT $1.1999; 2024 LT $12.0360; 2023 LT "
         "$3.9800; 2022 LT $7.2500. Official 5y parallel I leftover: Class X "
         "2021 remains an inception wall (May 2022) — never copy Class I 2021 "
-        "onto DOXGX / DOXBX / DOXIX / DOXFX / DOXWX / DOXLX."
+        "onto DOXGX / DOXBX / DOXIX / DOXFX / DOXWX / DOXLX. "
+        "Official 5y parallel AB leftover re-probe of "
+        "https://api-v1.dodgeandcox.com/api/funds-distribution confirms Class X "
+        "years start 2022. Worldwide / DOAA* tickers are not in-book."
     )
     live_limitations = "Estimates and the tax letter are PDF. Fixtures transcribe those public tables."
 
@@ -729,8 +747,12 @@ class LordAbbettSource(HtmlTableSource):
         "(ex/pay 11/26/2024) from "
         "https://www.lordabbett.com/en-us/financial-advisor/investments-and-performance/"
         "mutual-funds/us-equity/developing-growth-fund.class-a.html — 2y, not 5y. "
-        "LBNDX / LTRAX dividend and CG tables are JavaScript — no scrapeable "
-        "paid grid. Lord ICI / 2024 Funds-with-Losses URLs still 404."
+        "Official 5y parallel AB leftover: live Class A product pages now publish "
+        "Bond Debenture 2022 ST $0.0131 (record 7/27/2022, payable 7/28/2022) and "
+        "Total Return 2021 LT $0.0629 (record 12/16/2021, payable 12/17/2021) — "
+        "year-depth only. Daily 2021–2025 income year selector AJAX "
+        "dividendpayments.data.class-a.date-YYYY.html is 404; LAGWX 2022/2023 "
+        "absent from the product-page year dropdown. Lord ICI still 404."
     )
     live_limitations = (
         "HTML hub has no table. The public PDF lists funds expected to pay $0, "

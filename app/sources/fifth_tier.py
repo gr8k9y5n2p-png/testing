@@ -205,6 +205,12 @@ class OakmarkSource(HtmlTableSource):
         "(OAKMX 2021 income $0.6236 / ST $0.3759 / LT $0.7462; OAKEX 2022 LT $0.0917; "
         "OAKGX 2023 LT $0.8688). Class-level — never copied. Bond omitted on 2021 "
         "Investor and all 2023 classes (unpublished). Official printed $0.0000 stored. "
+        "Official 5y parallel AB leftover: Wayback 2024 year-end HTML (live sibling "
+        "404; snapshot 20251211232601) restores leftover Investor E&I / Bond plus "
+        "Advisor / Institutional / R6 class-level YE (OAYMX income $1.9817; OANMX "
+        "$2.0405; OAZMX $2.1015; OAYEX ST $0.0276 / LT $0.7241). Investor OAKMX / "
+        "OAKLX / OAKGX / OAKWX / OAKIX / OAKEX stay on the existing 2024 fixture. "
+        "Printed $0.0000 stored. Bond 2023 and OAKCX 2021 stay unpublished. "
         "Tax estimates hub is % of NAV only (no ST/LT $/share). "
         "Tax guide: https://oakmark.com/wp-content/uploads/sites/3/documents/HarrisOakmark-Tax-Information-Guide.pdf"
     )
@@ -237,6 +243,17 @@ class OakmarkSource(HtmlTableSource):
                     "https://oakmark.com/news-insights/2023-oakmark-year-end-fund-distributions/"
                 ),
                 fixture="leftover_year_end_2021_2023.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
+            ),
+            PageSpec(
+                name="leftover_year_end_2024",
+                url=(
+                    "https://web.archive.org/web/20251211232601id_/"
+                    "https://oakmark.com/news-insights/2024-oakmark-year-end-fund-distributions/"
+                ),
+                fixture="leftover_year_end_2024.html",
                 live=False,
                 role="history",
                 large_aum_only=False,
