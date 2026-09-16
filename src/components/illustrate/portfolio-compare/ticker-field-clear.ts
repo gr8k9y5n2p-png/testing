@@ -37,6 +37,19 @@ export function shouldRehydrateTickerFromSelection(input: {
   return !input.cleared;
 }
 
+/**
+ * Parent replaced the slot (Compare/Portfolio Open). Accept the new ticker
+ * even if the user had wiped the field. Empty parent tickers stay wiped.
+ */
+export function shouldHydrateTickerFromParent(input: {
+  ticker: string;
+  previousTicker: string;
+}): boolean {
+  const next = input.ticker.trim().toUpperCase();
+  const previous = input.previousTicker.trim().toUpperCase();
+  return Boolean(next) && next !== previous;
+}
+
 /** Tab or Enter locks the typed ticker — do not wait for a dropdown click. */
 export function isTickerLockKey(key: string): boolean {
   return key === "Enter" || key === "Tab";
