@@ -180,6 +180,7 @@ def test_coverage_exposes_estimate_feed_readiness(session) -> None:
 
     marsico = by_slug["marsico"]
     assert marsico.estimate_feed_ready is True
+    assert marsico.history_years == [2021, 2022, 2023, 2024, 2025]
     assert "MFOCX" in marsico.performance_tickers
 
     first_trust = by_slug["first_trust"]

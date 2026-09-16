@@ -90,8 +90,10 @@ from app.sources.seventh_tier import (
     ChamplainSource,
     DavisSource,
     DiamondHillSource,
+    DriehausSource,
     HotchkisWileySource,
     JensenSource,
+    MarsicoSource,
     TcwSource,
 )
 from app.sources.tenth_tier import (
@@ -451,8 +453,13 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # RISAX 3y, WWMCX 3y, WQAIX 4y, Boston Partners 2024+2025 / LSV 2024
     # (2y). Lazard / Homestead / Madison leftover years stay unmatched.
     # ETF 5y unchanged. No new identities.
-    assert digest.funds_with_5y == 3540
-    assert digest.funds_with_5y_mf == 2790
+    # Parallel T leftover: Marsico Investor leftover paid YE +5 MF
+    # (MFOCX / MGRIX / MXXIX / MIOFX / MGLBX). Institutional leftovers are
+    # 4y (2021 unpublished). Harding Loevner leftover 2021/2022 PDFs are
+    # year-depth (HLEMX 4y; 2024 leftover Z / HLEMX / HLIDX unpublished).
+    # Alger 2021/2023/2024 MF and Driehaus 2021–2024 stay unmatched.
+    assert digest.funds_with_5y == 3545
+    assert digest.funds_with_5y_mf == 2795
     assert digest.funds_with_5y_etf == 750
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
@@ -6477,3 +6484,270 @@ def test_parallel_w_heroes_are_searchable(client: TestClient) -> None:
         if row.get("ticker") == "LZIEX" and row.get("amount") is not None
     ]
     assert lziex_paid == []
+
+
+def test_parallel_t_marsico_leftover_investor_paid_fills_5y() -> None:
+    records = MarsicoSource().fetch(mode="fixture").records
+    mfocx_2024_lt = next(
+        row
+        for row in records
+        if row.ticker == "MFOCX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2024-12-20"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert mfocx_2024_lt.amount == Decimal("1.7590")
+    mfocx_2022_lt = next(
+        row
+        for row in records
+        if row.ticker == "MFOCX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2022-12-16"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert mfocx_2022_lt.amount == Decimal("2.8135")
+    mgrix_2021_oct_lt = next(
+        row
+        for row in records
+        if row.ticker == "MGRIX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2021-10-01"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert mgrix_2021_oct_lt.amount == Decimal("6.1495")
+    mgrix_2022_zero = next(
+        row
+        for row in records
+        if row.ticker == "MGRIX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2022-12-16"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert mgrix_2022_zero.amount == Decimal("0.0000")
+    for ticker in ("MFOCX", "MGRIX", "MXXIX", "MIOFX", "MGLBX"):
+        years = {
+            row.ex_date.year
+            for row in records
+            if row.ticker == ticker
+            and row.ex_date
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        }
+        assert set(LOOKBACK_YEARS) <= years, ticker
+
+
+def test_parallel_t_harding_leftover_2021_2022_is_year_depth() -> None:
+    records = HardingLoevnerSource().fetch(mode="fixture").records
+    hlemx_2021_lt = next(
+        row
+        for row in records
+        if row.ticker == "HLEMX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2021-12-14"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert hlemx_2021_lt.amount == Decimal("4.720760")
+    hlemx_2022_lt = next(
+        row
+        for row in records
+        if row.ticker == "HLEMX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2022-12-13"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert hlemx_2022_lt.amount == Decimal("3.125550")
+    hlgzx_2021_lt = next(
+        row
+        for row in records
+        if row.ticker == "HLGZX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2021-12-14"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert hlgzx_2021_lt.amount == Decimal("6.637289")
+    hlemx_years = {
+        row.ex_date.year
+        for row in records
+        if row.ticker == "HLEMX"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert {2021, 2022, 2023, 2025} <= hlemx_years
+    assert 2024 not in hlemx_years
+    hlizx_years = {
+        row.ex_date.year
+        for row in records
+        if row.ticker == "HLIZX"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert {2021, 2022, 2023, 2025} <= hlizx_years
+    assert 2024 not in hlizx_years
+
+
+def test_parallel_t_leftover_walls_stay_unmatched() -> None:
+    harding = HardingLoevnerSource().fetch(mode="fixture").records
+    hlmgx_2022 = [
+        row
+        for row in harding
+        if row.ticker == "HLMGX"
+        and row.ex_date
+        and row.ex_date.year == 2022
+        and row.amount is not None
+    ]
+    assert hlmgx_2022 == []
+    for ticker, year in (("HLFZX", 2021), ("HLFZX", 2022), ("HLRZX", 2021), ("HLIDX", 2021)):
+        rows = [
+            row
+            for row in harding
+            if row.ticker == ticker
+            and row.ex_date
+            and row.ex_date.year == year
+            and row.amount is not None
+        ]
+        assert rows == [], (ticker, year)
+    hleffx = [row for row in harding if row.ticker == "HLFFX"]
+    assert hleffx == []
+
+    marsico = MarsicoSource().fetch(mode="fixture").records
+    for ticker in ("MIFOX", "MIGWX", "MIDFX", "MIIOX", "MIGOX"):
+        years = {
+            row.ex_date.year
+            for row in marsico
+            if row.ticker == ticker
+            and row.ex_date
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        }
+        assert years == {2022, 2023, 2024, 2025}, ticker
+        assert 2021 not in years
+
+    alger = AlgerSource().fetch(mode="fixture").records
+    for year in (2021, 2023, 2024):
+        chusx = [
+            row
+            for row in alger
+            if row.ticker == "CHUSX"
+            and row.ex_date
+            and row.ex_date.year == year
+            and row.amount is not None
+        ]
+        assert chusx == [], year
+    for ticker, year in (("ATFV", 2022), ("ATFV", 2024), ("FRTY", 2022), ("FRTY", 2024)):
+        rows = [
+            row
+            for row in alger
+            if row.ticker == ticker
+            and row.ex_date
+            and row.ex_date.year == year
+            and row.amount is not None
+        ]
+        assert rows == [], (ticker, year)
+
+    driehaus = DriehausSource().fetch(mode="fixture").records
+    driehaus_early = [
+        row
+        for row in driehaus
+        if row.ex_date
+        and row.ex_date.year in {2021, 2022, 2023, 2024}
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert driehaus_early == []
+    dmcqx = [row for row in driehaus if row.ticker == "DMCQX"]
+    assert dmcqx == []
+
+
+def test_parallel_t_heroes_are_searchable(client: TestClient) -> None:
+    for slug in ("marsico", "harding_loevner", "alger", "driehaus"):
+        fetched = client.post(
+            "/ingest/fetch", json={"fund_family": slug, "mode": "fixture"}
+        )
+        assert fetched.status_code == 200, fetched.text
+        assert fetched.json()["created"] > 0
+
+    for ticker in ("MFOCX", "HLMNX", "CHUSX", "DMCRX", "HLEMX"):
+        body = client.get("/funds", params={"q": ticker}).json()
+        tickers = [item["ticker"] for item in body["items"]]
+        assert ticker in tickers, f"{ticker} missing from GET /funds?q={ticker}: {tickers[:8]}"
+
+    mfocx = client.get(
+        "/distributions",
+        params={"ticker": "MFOCX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    mfocx_2024 = [
+        Decimal(row["amount"])
+        for row in mfocx["items"]
+        if row.get("ticker") == "MFOCX"
+        and row.get("estimate_type") == "long_term_capital_gains"
+        and str(row.get("ex_date") or "").startswith("2024-12-20")
+    ]
+    assert Decimal("1.7590") in mfocx_2024
+    mfocx_years = {
+        str(row.get("ex_date") or "")[:4]
+        for row in mfocx["items"]
+        if row.get("ticker") == "MFOCX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= mfocx_years
+
+    hlemx = client.get(
+        "/distributions",
+        params={"ticker": "HLEMX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    hlemx_2021 = [
+        Decimal(row["amount"])
+        for row in hlemx["items"]
+        if row.get("ticker") == "HLEMX"
+        and row.get("estimate_type") == "long_term_capital_gains"
+        and str(row.get("ex_date") or "").startswith("2021-12-14")
+    ]
+    assert Decimal("4.720760") in hlemx_2021
+    hlemx_years = {
+        str(row.get("ex_date") or "")[:4]
+        for row in hlemx["items"]
+        if row.get("ticker") == "HLEMX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2025"} <= hlemx_years
+    assert "2024" not in hlemx_years
+
+    mifox = client.get(
+        "/distributions",
+        params={"ticker": "MIFOX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    mifox_years = {
+        str(row.get("ex_date") or "")[:4]
+        for row in mifox["items"]
+        if row.get("ticker") == "MIFOX" and row.get("amount") is not None
+    }
+    assert {"2022", "2023", "2024", "2025"} <= mifox_years
+    assert "2021" not in mifox_years
+
+    chusx = client.get(
+        "/distributions",
+        params={"ticker": "CHUSX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    chusx_early = [
+        row
+        for row in chusx["items"]
+        if row.get("ticker") == "CHUSX"
+        and str(row.get("ex_date") or "")[:4] in {"2021", "2023", "2024"}
+        and row.get("amount") is not None
+    ]
+    assert chusx_early == []
+

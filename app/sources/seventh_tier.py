@@ -306,7 +306,10 @@ class DriehausSource(HtmlTableSource):
         "Record 12/17/2025; ex/pay 12/18/2025. Published $0.00 stored. "
         "Tickers from official driehaus.com fund pages / SEC series list "
         "(DMCRX / DVSMX / DNSMX / DSMDX / DRIOX / DIDEX / DREGX / DIEMX / DRESX / "
-        "DEVDX / DMAGX). Amounts unchanged."
+        "DEVDX / DMAGX). Amounts unchanged. Official 5y parallel T leftover "
+        "re-probe: DMF_Year_end_Distribution_2021–2024 sibling PDFs unpublished "
+        "(Wayback CDX empty for Distribution filenames; performance Dividends "
+        "& Distributions tab is JS). Leftover 2021–2024 stay unmatched."
     )
     live_limitations = (
         "Year-end book is PDF. Fixture transcribes the official full book; "
@@ -387,11 +390,17 @@ class MarsicoSource(HtmlTableSource):
         "(e.g. Focus Investor MFOCX LT $4.9890; Growth Investor MGRIX LT $4.0748; "
         "Midcap Growth Focus Investor MXXIX ST $0.5894 / LT $6.0842). "
         "Record 12/18/2025; pay 12/19/2025. Published $0.0000 stored. "
-        "MXXIX is Midcap Growth Focus (official)."
+        "MXXIX is Midcap Growth Focus (official). "
+        "Official 5y parallel T leftover: Wayback snapshots of the same "
+        "distributions page fill in-book leftovers. Investor MFOCX / MGRIX / "
+        "MXXIX / MIOFX / MGLBX complete 2021–2025 (2021 Oct + Dec paid). "
+        "Institutional MIFOX / MIGWX / MIDFX / MIIOX / MIGOX are 2022–2025 "
+        "(2021 unpublished — not copied from Investor). Printed $0.0000 stored."
     )
     live_limitations = (
         "Live HTML is public but table layout may not parse. "
-        "Fixture transcribes the official Investor + Institutional book."
+        "Fixture transcribes the official Investor + Institutional book. "
+        "Leftover 2021–2024 is Wayback of the distributions page."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -403,7 +412,19 @@ class MarsicoSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
-            )
+            ),
+            PageSpec(
+                name="leftover_paid_year_end_parallel_t",
+                url=(
+                    "https://web.archive.org/web/20251118035530id_/"
+                    "https://www.marsicofunds.com/investor-resources/content/"
+                    "distributions.fs"
+                ),
+                fixture="leftover_paid_year_end_parallel_t.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
+            ),
         ]
 
 
