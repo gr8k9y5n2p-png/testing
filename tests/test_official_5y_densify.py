@@ -58,6 +58,7 @@ from app.sources.fourth_tier import (
 from app.sources.next_tier import (
     AmundiSource,
     BnyMellonSource,
+    ColumbiaThreadneedleSource,
     DimensionalSource,
     FranklinTempletonSource,
     MorganStanleySource,
@@ -724,8 +725,13 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # 2024 estimate PDFs, and Thrivent unpublished CG years stay walls.
     # #188 midyear all-events not redone. ETF 5y unchanged vs Y tip.
     # No new identities.
-    assert digest.funds_with_5y == 3660
-    assert digest.funds_with_5y_mf == 2908
+    # Mass Z leftover (rebased onto #195 AC tip 3660): Columbia Institutional
+    # 2021$+2022 leftover+2023 leftover +24 MF and MFS leftover year
+    # finals +9 MF. T. Rowe Advisor/R 2023+2025 is year-depth only
+    # (2024 wall). Hartford leftover years stay unmatched. Additive on
+    # tip fills — no double-count. Honest pin = tip 3660 + Z +33.
+    assert digest.funds_with_5y == 3693
+    assert digest.funds_with_5y_mf == 2941
     assert digest.funds_with_5y_etf == 752
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
@@ -7988,3 +7994,355 @@ def test_parallel_ac_heroes_are_searchable(client: TestClient) -> None:
         and str(row.get("ex_date") or "").startswith("2025-12-29")
     ]
     assert Decimal("0.1804") in pfrsx_2025
+
+def _lookback_years(records, ticker: str) -> set[int]:
+    years = {
+        _year_for_row(row.as_of, row.ex_date, row.payable_date)
+        for row in records
+        if row.ticker == ticker
+        and row.publication_stage in {PublicationStage.final, PublicationStage.paid}
+        and row.amount is not None
+        and getattr(row.amount_unit, "value", row.amount_unit) == "per_share"
+    }
+    years.discard(None)
+    return years
+
+
+def test_mass_z_t_rowe_leftover_advisor_is_year_depth() -> None:
+    records = TRowePriceSource().fetch(mode="fixture").records
+    pabgx_2023 = next(
+        row
+        for row in records
+        if row.ticker == "PABGX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2023-12-13"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert pabgx_2023.amount == Decimal("5.2095")
+    pabgx_2025_st = next(
+        row
+        for row in records
+        if row.ticker == "PABGX"
+        and row.estimate_type == EstimateType.short_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-11"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert pabgx_2025_st.amount == Decimal("0.0748")
+    pabgx_2025_lt = next(
+        row
+        for row in records
+        if row.ticker == "PABGX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-11"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert pabgx_2025_lt.amount == Decimal("10.9575")
+    trbcx_2025 = next(
+        row
+        for row in records
+        if row.ticker == "TRBCX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and _year_for_row(row.as_of, row.ex_date, row.payable_date) == 2025
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert trbcx_2025.amount == Decimal("10.9575")
+    pabgx_years = _lookback_years(records, "PABGX")
+    assert {2021, 2022, 2023, 2025} <= pabgx_years
+    assert 2024 not in pabgx_years
+    rrbgx_years = _lookback_years(records, "RRBGX")
+    assert {2021, 2022, 2023, 2025} <= rrbgx_years
+    assert 2024 not in rrbgx_years
+
+
+def test_mass_z_columbia_institutional_leftover_completes_5y() -> None:
+    records = ColumbiaThreadneedleSource().fetch(mode="fixture").records
+    gsftx_2021 = next(
+        row
+        for row in records
+        if row.ticker == "GSFTX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2021-12-14"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert gsftx_2021.amount == Decimal("0.44721")
+    smgix_2021_st = next(
+        row
+        for row in records
+        if row.ticker == "SMGIX"
+        and row.estimate_type == EstimateType.short_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2021-12-09"
+        and row.amount
+    )
+    assert smgix_2021_st.amount == Decimal("0.54063")
+    smgix_2021_lt = next(
+        row
+        for row in records
+        if row.ticker == "SMGIX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2021-12-09"
+        and row.amount
+    )
+    assert smgix_2021_lt.amount == Decimal("3.85482")
+    for ticker in (
+        "CPAZX",
+        "NBGPX",
+        "SMGIX",
+        "CCRZX",
+        "CLQZX",
+        "CVQZX",
+        "GSFTX",
+        "CDOZX",
+        "CMTFX",
+        "CEVZX",
+        "CDVZX",
+        "NMIMX",
+        "NINDX",
+        "NMPAX",
+        "CSVZX",
+        "NAMAX",
+        "CSSZX",
+        "CSGZX",
+        "CCIZX",
+        "NMSCX",
+        "NSVAX",
+        "CDAZX",
+        "CZMSX",
+        "CZMVX",
+    ):
+        assert set(LOOKBACK_YEARS) <= _lookback_years(records, ticker), ticker
+    lbsax_years = _lookback_years(records, "LBSAX")
+    assert {2022, 2023, 2024, 2025} <= lbsax_years
+    assert 2021 not in lbsax_years
+
+
+def test_mass_z_mfs_leftover_year_finals_complete_5y() -> None:
+    records = MfsSource().fetch(mode="fixture").records
+    megbx_2022 = next(
+        row
+        for row in records
+        if row.ticker == "MEGBX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2022-12-13"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert megbx_2022.amount == Decimal("1.39190")
+    migbx_2023 = next(
+        row
+        for row in records
+        if row.ticker == "MIGBX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2023-12-21"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert migbx_2023.amount == Decimal("1.38597")
+    for ticker in (
+        "MEGBX",
+        "MEGRX",
+        "MFEHX",
+        "MFEJX",
+        "MFELX",
+        "MIGBX",
+        "MIGKX",
+        "MIGMX",
+        "MIRGX",
+    ):
+        assert set(LOOKBACK_YEARS) <= _lookback_years(records, ticker), ticker
+    mfegx_midyear = next(
+        row
+        for row in records
+        if row.ticker == "MFEGX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2025-07-31"
+        and row.amount
+    )
+    assert mfegx_midyear.amount == Decimal("4.12961")
+    mfegx_ye = next(
+        row
+        for row in records
+        if row.ticker == "MFEGX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-16"
+        and row.publication_stage in {PublicationStage.final, PublicationStage.paid}
+        and row.amount == Decimal("25.35332")
+    )
+    assert mfegx_ye.amount == Decimal("25.35332")
+
+
+def test_mass_z_leftover_walls_stay_unmatched() -> None:
+    trowe = TRowePriceSource().fetch(mode="fixture").records
+    pabgx_2024 = [
+        row
+        for row in trowe
+        if row.ticker == "PABGX"
+        and row.ex_date
+        and row.ex_date.year == 2024
+        and row.amount is not None
+    ]
+    assert pabgx_2024 == []
+
+    columbia = ColumbiaThreadneedleSource().fetch(mode="fixture").records
+    lbsax_2021 = [
+        row
+        for row in columbia
+        if row.ticker == "LBSAX"
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount is not None
+    ]
+    assert lbsax_2021 == []
+
+    hartford = HartfordSource().fetch(mode="fixture").records
+    hdbax_2021 = [
+        row
+        for row in hartford
+        if row.ticker == "HDBAX"
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount is not None
+    ]
+    assert hdbax_2021 == []
+    ihoax_early = [
+        row
+        for row in hartford
+        if row.ticker == "IHOAX"
+        and row.ex_date
+        and row.ex_date.year in {2021, 2022, 2023, 2024}
+        and row.amount is not None
+    ]
+    assert ihoax_early == []
+    hdgix_hist = [
+        row
+        for row in hartford
+        if row.ticker == "HDGIX"
+        and row.ex_date
+        and row.ex_date.year in {2021, 2022, 2023, 2024}
+        and row.amount is not None
+    ]
+    assert hdgix_hist == []
+
+    mfs = MfsSource().fetch(mode="fixture").records
+    for ticker, year in (("MEMBX", 2022), ("BRSPX", 2023), ("MNWTX", 2021)):
+        rows = [
+            row
+            for row in mfs
+            if row.ticker == ticker
+            and row.ex_date
+            and row.ex_date.year == year
+            and row.amount is not None
+        ]
+        assert rows == [], (ticker, year)
+
+
+def test_mass_z_leftover_tickers_are_in_book_only() -> None:
+    leftover_tickers = {
+        "PABGX",
+        "RRBGX",
+        "GSFTX",
+        "SMGIX",
+        "CPAZX",
+        "MEGBX",
+        "MIGBX",
+        "HDBAX",
+        "IHOAX",
+        "HDGIX",
+    }
+    for source in (
+        TRowePriceSource(),
+        ColumbiaThreadneedleSource(),
+        MfsSource(),
+        HartfordSource(),
+    ):
+        records = source.fetch(mode="fixture").records
+        family_tickers = {
+            (row.ticker or "").strip().upper()
+            for row in records
+            if row.ticker and not row.ticker.startswith("ZZ")
+        }
+        overlap = leftover_tickers & family_tickers
+        assert overlap, source.slug
+        assert leftover_tickers.isdisjoint(
+            {t for t in leftover_tickers if t.startswith("ZZ")}
+        )
+
+
+def test_mass_z_heroes_are_searchable(client: TestClient) -> None:
+    for slug in ("t_rowe_price", "columbia_threadneedle", "mfs", "hartford"):
+        fetched = client.post(
+            "/ingest/fetch", json={"fund_family": slug, "mode": "fixture"}
+        )
+        assert fetched.status_code == 200, fetched.text
+        assert fetched.json()["created"] > 0
+
+    for ticker in ("PABGX", "GSFTX", "MEGBX", "HDBAX"):
+        body = client.get("/funds", params={"q": ticker}).json()
+        tickers = [item["ticker"] for item in body["items"]]
+        assert ticker in tickers, f"{ticker} missing from GET /funds?q={ticker}: {tickers[:8]}"
+
+    pabgx = client.get(
+        "/distributions",
+        params={"ticker": "PABGX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    pabgx_2025 = [
+        Decimal(row["amount"])
+        for row in pabgx["items"]
+        if row.get("ticker") == "PABGX"
+        and row.get("estimate_type") == "long_term_capital_gains"
+        and str(row.get("ex_date") or "").startswith("2025-12-11")
+    ]
+    assert Decimal("10.9575") in pabgx_2025
+    pabgx_years = {
+        str(row.get("ex_date") or "")[:4]
+        for row in pabgx["items"]
+        if row.get("ticker") == "PABGX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2025"} <= pabgx_years
+    assert "2024" not in pabgx_years
+
+    gsftx = client.get(
+        "/distributions",
+        params={"ticker": "GSFTX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    gsftx_2021 = [
+        Decimal(row["amount"])
+        for row in gsftx["items"]
+        if row.get("ticker") == "GSFTX"
+        and row.get("estimate_type") == "long_term_capital_gains"
+        and str(row.get("ex_date") or "").startswith("2021-12-14")
+    ]
+    assert Decimal("0.44721") in gsftx_2021
+    gsftx_years = {
+        str(row.get("ex_date") or "")[:4]
+        for row in gsftx["items"]
+        if row.get("ticker") == "GSFTX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= gsftx_years
+
+    megbx = client.get(
+        "/distributions",
+        params={"ticker": "MEGBX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    megbx_2022 = [
+        Decimal(row["amount"])
+        for row in megbx["items"]
+        if row.get("ticker") == "MEGBX"
+        and row.get("estimate_type") == "long_term_capital_gains"
+        and str(row.get("ex_date") or "").startswith("2022-12-13")
+    ]
+    assert Decimal("1.39190") in megbx_2022

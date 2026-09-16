@@ -957,7 +957,13 @@ class TRowePriceSource(HtmlTableSource):
         "All-events leftover (2026-09-16, in-book only): official quarterly "
         "income HTML 2023–2025 plus Wayback captures of the 2021 (Q1+Q2) and "
         "2022 pages. PRFDX 2025-06-26 income $0.1922 / RPBAX $0.1849. TRBCX / "
-        "PRGFX are YE-only on those quarterly books — unmatched, not invented."
+        "PRGFX are YE-only on those quarterly books — unmatched, not invented. "
+        "Mass Z leftover (2026-09-16): official FAI 2023 Year-End Tax "
+        "Distributions PDF plus 2025 Year-End XLSX fill leftover Advisor / R / "
+        "Institutional years (PABGX 2023 LT $5.2095 / 2025 ST $0.0748 / LT "
+        "$10.9575; RRBGX same LT). Class-level — never copied from Investor "
+        "TRBCX. Advisor/R 2024 all-class PDF/XLSX still unpublished — those "
+        "leftovers stay 4y (2021–2023+2025), not 5y."
     )
     live_limitations = (
         "Live year-end HTML is supported for 2023–2025. "
@@ -1051,5 +1057,13 @@ class TRowePriceSource(HtmlTableSource):
                 fixture="leftover_quarterly_2021_2025.html",
                 live=False,
                 role="history",
+            ),
+            PageSpec(
+                name="leftover_advisor_r_institutional_paid_year_end",
+                url=f"{tax_pdf}/T. Rowe Price 2023 Year-End Tax Distributions.pdf",
+                fixture="leftover_advisor_r_institutional_paid_year_end.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
             ),
         ]
