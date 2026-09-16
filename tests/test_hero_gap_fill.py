@@ -246,5 +246,8 @@ def test_fixture_book_lookback_stays_official_only() -> None:
     # Jensen 2021–2023 and TCW 2021–2024 stay unmatched.
     # Parallel V leftover: Heartland +6 MF, FMI +2 MF, Brandes Class I +5 MF.
     # Baillie 2025 Final is year-depth only. GQG leftovers stay estimate-only.
-    assert digest.funds_with_5y == 3510
+    # Parallel W leftover: Manning & Napier December paid YE +27 MF and
+    # Westwood Institutional paid history +3 MF. Year-depth / walls unchanged
+    # for Lazard / Homestead / Madison / BP / LSV leftover years.
+    assert digest.funds_with_5y == 3540
     assert digest.book_funds >= 7200
