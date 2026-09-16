@@ -19,10 +19,16 @@ class LazardSource(HtmlTableSource):
         "Emerging Markets Equity Advantage Institutional LEAIX LT $0.17; "
         "International Quality Growth Institutional ICMPX ST $0.05 / LT $0.60). "
         "Record 12/18/2025; ex/reinvest 12/19/2025; pay 12/22/2025. "
-        "All-dash Concentrated / High Yield rows omitted. Printed 0.00* stored as 0.00."
+        "All-dash Concentrated / High Yield rows omitted. Printed 0.00* stored as 0.00. "
+        "Official 5y parallel W leftover re-probe (2026-09-16): live tax library still "
+        "serves estimate / Important Tax Information / Form 8937 only. The 2021 "
+        "https://www.lazardassetmanagement.com/docs/1631/LazardFundsAnnualDistributions.pdf "
+        "is an Estimated Distribution Per Share book. 2022–2024 December paid "
+        "declaration PDFs unpublished. Leftover years stay unmatched."
     )
     live_limitations = (
-        "Year-end book is PDF. Fixture transcribes the official Institutional / Open / R6 table."
+        "Year-end book is PDF. Fixture transcribes the official Institutional / Open / R6 table. "
+        "Paid 2021–2024 declaration siblings unpublished."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -68,25 +74,36 @@ class ManningNapierSource(HtmlTableSource):
         "MNHAX / MNHYX / MHYWX / MHYZX / MNBIX / MNECX / MNBRX / MNBAX / MNBWX / "
         "MNHIX / MNHCX / MNHRX / EXHAX / MNHWX / MNMIX / MNMCX / MNMRX / EXBAX / "
         "MNMWX / RAIIX / RISAX / RAIWX / RAIRX / MSHIX / MSYSX / MSHWX / MSYZX). "
-        "Amounts and CUSIPs unchanged."
+        "Amounts and CUSIPs unchanged. "
+        "Official 5y parallel W leftover: December paid YE from the same "
+        "`YYYY%20Distributions.pdf` path for 2021–2024 "
+        "(MNHIX 2021 ST $0.83490 / LT $0.85360; EXEYX 2024 LT $1.73250). "
+        "Callodine 2021–2022, Systematic High Yield 2021–2024, RAIIX 2022, and "
+        "RISAX 2022+2024 December rows unpublished."
     )
     live_limitations = (
-        "Paid book is PDF. Fixture transcribes December CG-paying CUSIP/class rows."
+        "Paid book is PDF. Fixture transcribes December CG-paying CUSIP/class rows. "
+        "Weekly walk hits the current-year PDF; older leftover years are fixture history."
     )
 
     def pages(self) -> list[PageSpec]:
+        dist = "https://am.manning-napier.com/media/fund-documents/distributions"
         return [
             PageSpec(
                 name="2025_distributions",
-                url=(
-                    "https://am.manning-napier.com/media/fund-documents/"
-                    "distributions/2025%20Distributions.pdf"
-                ),
+                url=f"{dist}/2025%20Distributions.pdf",
                 fixture="2025_distributions.html",
                 live=True,
                 role="estimate",
                 empty_ok=True,
-            )
+            ),
+            PageSpec(
+                name="leftover_paid_year_end_parallel_w",
+                url=f"{dist}/2024%20Distributions.pdf",
+                fixture="leftover_paid_year_end_parallel_w.html",
+                live=False,
+                role="history",
+            ),
         ]
 
 
@@ -104,10 +121,16 @@ class WestwoodSource(HtmlTableSource):
         "Quality MidCap Institutional WWMCX ST $0.250 / LT $0.459; "
         "Quality SmallCap Institutional WHGSX ST $0.422 / LT $0.684). "
         "Record 12/11/2025; ex 12/12/2025; pay 12/15/2025. "
-        "The PDF is fund-level for all share classes; tickers are public Institutional identifiers."
+        "The PDF is fund-level for all share classes; tickers are public Institutional identifiers. "
+        "Official 5y parallel W leftover: Institutional paid history "
+        "https://westwoodgroup.com/assets/distribution-history/ "
+        "(WHGLX 2025 LT $2.4094 / 2021 ST $0.3881 / LT $1.8895). A / C / Ultra "
+        "siblings are not in-book leftovers. WWMCX 2021–2022 and WQAIX 2025 paid "
+        "unpublished on the Institutional history."
     )
     live_limitations = (
-        "Estimate book is PDF. Fixture transcribes public Institutional identifiers."
+        "Estimate book is PDF. Fixture transcribes public Institutional identifiers. "
+        "Paid history is a multi-class PDF; leftover fixture keeps in-book Institutional rows."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -122,7 +145,14 @@ class WestwoodSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
-            )
+            ),
+            PageSpec(
+                name="leftover_paid_history_parallel_w",
+                url="https://westwoodgroup.com/assets/distribution-history/",
+                fixture="leftover_paid_history_parallel_w.html",
+                live=False,
+                role="history",
+            ),
         ]
 
 
@@ -141,10 +171,19 @@ class BostonPartnersSource(HtmlTableSource):
         "Record 12/11/2025; ex/pay 12/12/2025. "
         "Estimated distribution applies to all share classes; fixture uses printed Inst/Inv tickers. "
         "Emerging Markets Dynamic Equity printed dash / liquidation — omitted. "
-        "Published $0.00 ST stored."
+        "Published $0.00 ST stored. "
+        "Official 5y parallel W leftover: 2025 final "
+        "https://www.bostonpartners.com/uploads/2026/01/"
+        "b74c74af65fea1e9b9f5d0e970e8a009/bp-funds-2025-final-cap-gain-distv2.pdf "
+        "(BPAIX ST $0.02 / LT $2.68) and 2024 final "
+        "https://www.bostonpartners.com/uploads/2024/12/"
+        "6a90ad46be706c82555fd6c9ea3d7cd2/bp-funds-2024-final-cap-gain-dist.pdf "
+        "(BPAIX ST $0.04 / LT $2.81). BELSX / WPGHX not in-book leftovers. "
+        "2021–2023 December finals unpublished on the live uploads tree."
     )
     live_limitations = (
-        "Estimate book is PDF. Fixture transcribes public Institutional + Investor identifiers."
+        "Estimate book is PDF. Fixture transcribes public Institutional + Investor identifiers. "
+        "Paid leftover years are fixture history."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -160,7 +199,17 @@ class BostonPartnersSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
-            )
+            ),
+            PageSpec(
+                name="leftover_paid_finals_parallel_w",
+                url=(
+                    "https://www.bostonpartners.com/uploads/2026/01/"
+                    "b74c74af65fea1e9b9f5d0e970e8a009/bp-funds-2025-final-cap-gain-distv2.pdf"
+                ),
+                fixture="leftover_paid_finals_parallel_w.html",
+                live=False,
+                role="history",
+            ),
         ]
 
 
@@ -176,9 +225,16 @@ class HomesteadSource(HtmlTableSource):
         "(Value HOVLX LT $3.7449; Growth HNASX ST $0.0121 / LT $2.4302; "
         "Small-Company Stock HSCSX LT $2.1494). "
         "Record 12/12/2025; ex/reinvest 12/15/2025; pay 12/16/2025. "
-        "The PDF is fund-level; tickers are public no-load identifiers."
+        "The PDF is fund-level; tickers are public no-load identifiers. "
+        "Official 5y parallel W leftover re-probe (2026-09-16): live product pages "
+        "print current + previous calendar year only (HOVLX 2025 YE already in book; "
+        "2026 mid-year is outside the window). Dated 2021–2024 Year-End-Distributions.pdf "
+        "siblings unpublished; Wayback CDX was offline on re-probe. Leftover years stay unmatched."
     )
-    live_limitations = "Year-end book is PDF. Fixture transcribes public no-load identifiers."
+    live_limitations = (
+        "Year-end book is PDF. Fixture transcribes public no-load identifiers. "
+        "Product-page history is current + previous year only."
+    )
 
     def pages(self) -> list[PageSpec]:
         return [
@@ -208,10 +264,15 @@ class MadisonSource(HtmlTableSource):
         "The live table is fund-level with no ticker column; fixture attaches public "
         "Class A / Y identifiers. Official ETF tickers from "
         "https://madisonfunds.com/etfs/ (MAGG LT $0.00386; MSTI LT $0.05541). "
-        "All-None Conservative Allocation / Core Bond / Covered Call omitted."
+        "All-None Conservative Allocation / Core Bond / Covered Call omitted. "
+        "Official 5y parallel W leftover re-probe (2026-09-16): live tax-center "
+        "HTML is the 2025 book only. Dated 2021–2024 tax-center / capital-gains "
+        "siblings unpublished; Wayback CDX was offline on re-probe. Class Y / I / R6 "
+        "siblings not in the tickered leftover set are not copied. Leftover years stay unmatched."
     )
     live_limitations = (
-        "Public HTML is fund-name / ST / LT only (no ticker column). Fixture fallback."
+        "Public HTML is fund-name / ST / LT only (no ticker column). Fixture fallback. "
+        "Prior-year tax-center tables unpublished."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -241,10 +302,16 @@ class LsvSource(HtmlTableSource):
         "Capital-gain record 12/16/2025; ex 12/17/2025; pay 12/18/2025. "
         "The PDF lists Institutional / Investor ticker pairs; fixture uses both. "
         "Income rows use the official December dividend table (record 12/29/2025). "
-        "Published $0.0000 ST stored."
+        "Published $0.0000 ST stored. "
+        "Official 5y parallel W leftover: 2024 paid "
+        "https://www.lsvasset.com/pdf/fund-docs/2024-Distributions.pdf "
+        "(LSVEX ST $0.0152 / LT $1.6848; income $0.5666). 2021–2023 year-end PDFs "
+        "404; fiscal October 31 annual-report totals are not calendar YE with printed "
+        "dates — leftover years stay unmatched."
     )
     live_limitations = (
-        "Year-end book is PDF. Fixture transcribes public Institutional + Investor identifiers."
+        "Year-end book is PDF. Fixture transcribes public Institutional + Investor identifiers. "
+        "2021–2023 year-end PDFs 404."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -256,7 +323,14 @@ class LsvSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
-            )
+            ),
+            PageSpec(
+                name="leftover_paid_year_end_parallel_w",
+                url="https://www.lsvasset.com/pdf/fund-docs/2024-Distributions.pdf",
+                fixture="leftover_paid_year_end_parallel_w.html",
+                live=False,
+                role="history",
+            ),
         ]
 
 
