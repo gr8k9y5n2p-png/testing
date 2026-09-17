@@ -212,11 +212,32 @@ class ThriventSource(HtmlTableSource):
         "Official 5y parallel AC leftover (2026-09-16): Class S product pages "
         "and GetDistributionSummary remain current-year only. Same leftover "
         "years still unpublished. Moderate-allocation short URLs 404; correct "
-        "paths stay current-year dividends + 2025 CG."
+        "paths stay current-year dividends + 2025 CG. "
+        "Official 5y WAVE BL leftover (existing in-book only): Thrivent Mutual "
+        "Funds FYE October 31 N-CSR Financial Highlights unlock leftover "
+        "Class S years on the 2025 paid tax-center book (TMAIX 2022; TMCVX "
+        "2023; TSCSX 2023; TCAIX 2022–2023; TSCGX 2022 CG; IBBFX 2021–2024; "
+        "TWAIX 2021–2024). Calendar-safe as_of 10/31. Class-level Class S — "
+        "never sibling-copied onto Class A leftovers (THMAX / TCAAX / AASMX / "
+        "AABFX / TWAAX). Mid Cap Value and Small Cap Growth print Class S "
+        "only. Income is ordinary income; net realized gain is unsplit total "
+        "capital gains. Issuer dashes omitted (TCAIX 2023 CG; IBBFX "
+        "2021/2023/2024 CG; TWAIX 2021/2023/2024 CG; TSCGX 2022 OI and "
+        "2023–2024 OI+CG). TSCGX 2023–2024 official all-dash years stay "
+        "unmatched — never invent $0. 2025 stays on the existing paid "
+        "tax-center HTML. Years already booked on the official tax-center "
+        "HTML stay on those pages. N-CSR "
+        "https://www.sec.gov/Archives/edgar/data/811869/000081186925000327/"
+        "primary-document.htm (0000811869-25-000327). WAVE BK DWS RREEF "
+        "TOLLX, WAVE BI DWS Sci&Tech KTCAX, WAVE BJ RiverPark RWGIX / RWGFX, "
+        "WAVE BG DWS Dec 31 BTIEX / SXPAX, WAVE BH TCW, and prior BD–BF "
+        "books stay on their leftover pages. Alger leftovers stay reserved / "
+        "disjoint. WAVE BL leftover N-CSR paid history is fixture-only."
     )
     live_limitations = (
         "Family page is public HTML with a 'Thrivent Mutual Fund' header (no ticker column). "
-        "Layout can change. Fixture fallback if 0 rows. Live page is the current-year book."
+        "Layout can change. Fixture fallback if 0 rows. Live page is the current-year book. "
+        "Leftover 2021–2024 N-CSR paid history is fixture-only."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -265,6 +286,16 @@ class ThriventSource(HtmlTableSource):
                     "https://www.thriventfunds.com/support/tax-resource-center/capital-gains.html"
                 ),
                 fixture="2021_paid_capital_gains.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="leftover_ncsr_2021_2024_wave_bl",
+                url=(
+                    "https://www.sec.gov/Archives/edgar/data/811869/"
+                    "000081186925000327/primary-document.htm"
+                ),
+                fixture="leftover_ncsr_2021_2024_wave_bl.html",
                 live=False,
                 role="history",
             ),
