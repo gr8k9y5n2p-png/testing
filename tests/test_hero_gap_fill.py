@@ -272,5 +272,7 @@ def test_fixture_book_lookback_stays_official_only() -> None:
     # WAVE AD leftover: Macquarie / Delaware Class A N-CSR 2021 +7 MF and
     # Eaton Vance EOI N-CSR +1 ETF. Honest pin remasured after rebase
     # onto #201 tip: 3729 → 3737.
-    assert digest.funds_with_5y == 3737
+    # WAVE AE leftover: Invesco ETF Tax Center ICI leftover December YE
+    # +5 ETF (PIN / PSCI / IDMO / IVRA / PBP). Honest pin = tip 3737 + 5 → 3742.
+    assert digest.funds_with_5y == 3742
     assert digest.book_funds >= 7200

@@ -284,6 +284,50 @@ def test_invesco_ici_primary_december_2023_2025() -> None:
     assert not any(r.ticker and r.ticker.startswith("ZZ") for r in y2025)
 
 
+def test_invesco_leftover_etf_ici_wave_ae_pins() -> None:
+    inv = Path(__file__).resolve().parents[1] / "fixtures" / "invesco"
+    y2021 = parse_ici_primary(
+        (inv / "leftover_etf_ici_2021.csv").read_text(encoding="utf-8"),
+        source_url=(
+            "https://www.invesco.com/content/dam/invesco/us/en/documents/"
+            "tax-document/ce-ici-primary-and-secondary-distribution-file-and-nra-file-ivz-etf-2021.xlsx"
+        ),
+        fund_family="Invesco",
+    )
+    y2025 = parse_ici_primary(
+        (inv / "leftover_etf_ici_2025.csv").read_text(encoding="utf-8"),
+        source_url=(
+            "https://www.invesco.com/content/dam/invesco/us/en/documents/"
+            "tax-documents/ICI-Primary-and-Secondary-and-NRA-File-IVZ-ETF-2025.xlsx"
+        ),
+        fund_family="Invesco",
+    )
+    pin_2021 = next(
+        r
+        for r in y2021
+        if r.ticker == "PIN" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert pin_2021.amount == Decimal("1.31763")
+    assert str(pin_2021.ex_date) == "2021-12-20"
+    assert pin_2021.publication_stage == PublicationStage.final
+    idmo_2021 = next(
+        r
+        for r in y2021
+        if r.ticker == "IDMO" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert idmo_2021.amount == Decimal("0.218")
+    assert {"PIN", "PSCI", "IDMO", "IVRA", "PBP"} <= {r.ticker for r in y2021}
+    assert "QQQ" not in {r.ticker for r in y2021}
+    assert "VAFAX" not in {r.ticker for r in y2021 + y2025}
+    pin_2025 = next(
+        r
+        for r in y2025
+        if r.ticker == "PIN" and r.estimate_type == EstimateType.long_term_capital_gains
+    )
+    assert pin_2025.amount == Decimal("1.79635")
+    assert {"HIYS", "BSJW", "BSJX", "GTOC", "IQSZ", "MTRA"} <= {r.ticker for r in y2025}
+
+
 def test_ishares_ici_primary_december_mega_etfs() -> None:
     br = Path(__file__).resolve().parents[1] / "fixtures" / "blackrock"
     y2025 = parse_ici_primary(

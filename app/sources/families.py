@@ -614,7 +614,12 @@ class StateStreetSource(HtmlTableSource):
         "XLSX. SPLG was renamed SPYM (10/31/2025) — leftover years stay under "
         "SPYM, not copied onto SPLG. ALLW / PRIV / premium-income and MyMap "
         "2024–2025 launches stay unmatched (inception). GLD grantor trust "
-        "still publishes no distributions."
+        "still publishes no distributions. "
+        "WAVE AE leftover re-probe (2026-09-17): same official ETF XLSX has no "
+        "missing-year fills for leftover in-book tickers. HYBL 2021 / SPDG "
+        "2021–2022 remain unpublished (inception). Later 1y / 2y launches "
+        "(ALLW / PRIV / MyMap / premium-income) stay unmatched. Official MF "
+        "historical-distribution XLSX sibling still 404. Unmatched / not invented."
     )
     live_limitations = (
         "SSGA estimate tables are client-rendered Angular. Historical XLSX is public but "
@@ -907,7 +912,18 @@ class InvescoSource(HtmlTableSource):
         "ICI Primary broker files for 2023–2025 only; oe-2021/2022-primary-broker-file.xlsx "
         "and 2021/2022-Primary-Broker-File-without-Real-Estate siblings GET 404. "
         "In-book leftovers remain almost all 3y (2023–2025) and cannot reach 5y "
-        "without both official 2021 and 2022 December YE books. Unmatched / not invented."
+        "without both official 2021 and 2022 December YE books. Unmatched / not invented. "
+        "Official 5y leftover WAVE AE (existing in-book ETF estimate identities only): "
+        "ETF Tax Center ICI Primary/Secondary/NRA XLSX 2021–2025 "
+        "(ICI-Primary-and-Secondary-and-NRA-File-IVZ-ETF-2025.xlsx and "
+        "ce-ici-primary-and-secondary-distribution-file-and-nra-file-ivz-etf-2021..2024) "
+        "unlock PIN / PSCI / IDMO / IVRA / PBP to 5y from official December YE "
+        "$/share (PIN 2021 LT $1.31763 / 2022 LT $2.99469; IDMO 2021 income $0.218; "
+        "IVRA 2021 ST $0.36875 / LT $0.02875; PBP 2021 ST $1.24053; PSCI 2021 "
+        "income $0.18503). QQQ already 5y — not redone. Year-depth only: HIYS "
+        "2023–2025, BSJW 2024–2025, BSJX / GTOC / IQSZ / MTRA 2025. Open-end MF "
+        "Investor A leftovers belong to Y #194 — 2021–2022 ICI still 404, not "
+        "redone. No new ETF identities."
     )
     live_limitations = (
         "Estimates are PDF/PR/contentdetail, not an HTML grid. ICI Primary XLSX "
@@ -973,6 +989,66 @@ class InvescoSource(HtmlTableSource):
                 url="https://www.invesco.com/content/dam/invesco/hk/en/pdf/annual-report/Invesco_QQQ_AnnualReport.pdf",
                 fixture="qqq_annual_report_distributions.html",
                 live=False,
+            ),
+            PageSpec(
+                name="leftover_etf_ici_2025",
+                url=(
+                    "https://www.invesco.com/content/dam/invesco/us/en/documents/"
+                    "tax-documents/ICI-Primary-and-Secondary-and-NRA-File-IVZ-ETF-2025.xlsx"
+                ),
+                fixture="leftover_etf_ici_2025.csv",
+                live=False,
+                parser="ici",
+                large_aum_only=False,
+                role="history",
+            ),
+            PageSpec(
+                name="leftover_etf_ici_2024",
+                url=(
+                    "https://www.invesco.com/content/dam/invesco/us/en/documents/"
+                    "tax-document/ce-ici-primary-and-secondary-distribution-file-file-ivz-etf-2024-02-10-2025.xlsx"
+                ),
+                fixture="leftover_etf_ici_2024.csv",
+                live=False,
+                parser="ici",
+                large_aum_only=False,
+                role="history",
+            ),
+            PageSpec(
+                name="leftover_etf_ici_2023",
+                url=(
+                    "https://www.invesco.com/content/dam/invesco/us/en/documents/"
+                    "tax-document/ce-ici-primary-and-secondary-distribution-file-and-nra-file-ivz-etf-2023.xlsx"
+                ),
+                fixture="leftover_etf_ici_2023.csv",
+                live=False,
+                parser="ici",
+                large_aum_only=False,
+                role="history",
+            ),
+            PageSpec(
+                name="leftover_etf_ici_2022",
+                url=(
+                    "https://www.invesco.com/content/dam/invesco/us/en/documents/"
+                    "tax-document/ce-ici-primary-and-secondary-distribution-file-and-nra-file-ivz-etf-2022.xlsx"
+                ),
+                fixture="leftover_etf_ici_2022.csv",
+                live=False,
+                parser="ici",
+                large_aum_only=False,
+                role="history",
+            ),
+            PageSpec(
+                name="leftover_etf_ici_2021",
+                url=(
+                    "https://www.invesco.com/content/dam/invesco/us/en/documents/"
+                    "tax-document/ce-ici-primary-and-secondary-distribution-file-and-nra-file-ivz-etf-2021.xlsx"
+                ),
+                fixture="leftover_etf_ici_2021.csv",
+                live=False,
+                parser="ici",
+                large_aum_only=False,
+                role="history",
             ),
         ]
 

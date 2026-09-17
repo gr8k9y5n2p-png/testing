@@ -1,0 +1,7 @@
+as_of,fund_name,cusip,ticker,record_date,ex_dividend_date,payable_date,income_dividends,short_term_capital_gain,total_capital_gain_distribution
+2023-12-31,Invesco High Yield Select ETF,46090A754,HIYS,12/19/2023,12/18/2023,12/22/2023,0.20335,,
+2023-12-31,Invesco S&P International Developed Momentum ETF,46138E222,IDMO,12/19/2023,12/18/2023,12/22/2023,0.12803,,
+2023-12-31,Invesco Real Assets ESG ETF,46090A788,IVRA,12/19/2023,12/18/2023,12/22/2023,0.07873,,
+2023-12-31,Invesco S&P 500 BuyWrite ETF,46137V399,PBP,12/19/2023,12/18/2023,12/22/2023,0.15704,,
+2023-12-31,Invesco India ETF,46137R109,PIN,12/19/2023,12/18/2023,12/22/2023,,,0.42727
+2023-12-31,Invesco S&P SmallCap Industrials ETF,46138E123,PSCI,12/19/2023,12/18/2023,12/22/2023,0.29938,,
