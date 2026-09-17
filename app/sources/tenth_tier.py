@@ -501,11 +501,35 @@ class RiverparkSource(HtmlTableSource):
         "Next Century Large Growth Institutional RPNLX LT $0.7953). "
         "Capital-gain record 12/16/2025; ex 12/17/2025; pay 12/18/2025. "
         "Institutional + Retail paying rows only. All-dash Long/Short, Short Term "
-        "High Yield, Floating Rate CMBS, and Next Century Growth omitted."
+        "High Yield, Floating Rate CMBS, and Next Century Growth omitted. "
+        "Official 5y WAVE BJ leftover (existing in-book only): tax-center December "
+        "Final Capital Gains & Income PDFs unlock leftover 2021–2024 on the "
+        "2025 paid Final book. Wedgewood Institutional RWGIX / Retail RWGFX "
+        "complete 5y (2021 ST $0.0066 / LT $0.6912; 2022 ST $0.0077 / LT $0.5773; "
+        "2023 LT $0.0994; 2024 LT $0.8195). Large Growth RPXIX / RPXFX is "
+        "year-depth only (2021 ST $1.0083 / LT $3.0750; RPXIX 2022 income "
+        "$0.0011; 2024 LT $2.0330) — 2023 official dashes stay unmatched. "
+        "Calendar-safe December ex / payable dates. Class-level Institutional / "
+        "Retail — never sibling-copied. Next Century Large Growth 2024 dashes, "
+        "Long/Short, Short Term High Yield, Floating Rate CMBS, Strategic Income, "
+        "and Next Century Growth are not in-book leftovers. 2025 stays on the "
+        "existing paid Final PDF (RWGIX ST $0.0068 / LT $0.5577 is not "
+        "overwritten). Official leftovers "
+        "https://www.riverparkfunds.com/assets/pdfs/news/"
+        "Year_End_Final_Distribution_Information_2021.pdf "
+        "https://www.riverparkfunds.com/assets/pdfs/news/"
+        "Year_End_Final_Distribution_Information_2022.pdf "
+        "https://www.riverparkfunds.com/assets/pdfs/news/"
+        "Distribution_Info_2023_Website_RFT_FINAL_CAP_GAINS_FINAL_INCOME.pdf "
+        "https://riverparkfunds.com/assets/pdfs/news/"
+        "Distribution_Info_2024_Website_RFT_FINAL_CAP_GAINS_FINAL_INCOME.pdf "
+        "WAVE BJ leftover paid history is fixture-only. Live most-recent 2025 "
+        "Final still omits 2021–2024."
     )
     live_limitations = (
         "Year-end book is PDF. Fixture transcribes public Institutional + Retail paying rows. "
-        "Weekly walk hits the how-to-invest hub (empty/403/PDF-bytes = no-op success)."
+        "Weekly walk hits the how-to-invest hub (empty/403/PDF-bytes = no-op success). "
+        "Leftover 2021–2024 tax-center paid history is fixture-only."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -528,5 +552,15 @@ class RiverparkSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
-            )
+            ),
+            PageSpec(
+                name="leftover_paid_year_end_2021_2024_wave_bj",
+                url=(
+                    "https://www.riverparkfunds.com/assets/pdfs/news/"
+                    "Year_End_Final_Distribution_Information_2021.pdf"
+                ),
+                fixture="leftover_paid_year_end_2021_2024_wave_bj.html",
+                live=False,
+                role="history",
+            ),
         ]
