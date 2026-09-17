@@ -521,6 +521,21 @@ class FidelitySource(HtmlTableSource):
         "table; FIVQX / FICCX print only December 2020 foreign-tax footnotes; "
         "FIIMX / FSRIX Dec 31 N-CSR pay tables are February 2022 (calendar "
         "2022); FINSX / FGZMX 2021 Class I pay rows not extracted. "
+        "Official 5y WAVE CX leftover (2026-09-17, existing in-book retail "
+        "equity-index only): official Institutional "
+        "fundHistoricalDistributions JSON unlocks leftover FXAIX 2022–2023 "
+        "and sibling FSKAX 2021–2023 on the paid DPL6 books so both newly "
+        "qualify for 5y. Calendar-safe ex / pay dates. Class-level — never "
+        "sibling-copied onto FDGRX / FBGRX / FMAGX / FAGIX, ZERO FZROX / "
+        "bond FXNAX (not in this distribution book), Advisor DPL2, or WAVE "
+        "AO Class I. Empty official ST / LT cells omitted — never invent "
+        "$0. Concord Street FYE February 28 N-CSR highlights are not "
+        "calendar-safe and are not used. 2021 (FXAIX) / 2024 / 2025 stay on "
+        "existing DPL6. WAVE AO / WAVE X / FCNTX highlights not redone. "
+        "Sister WAVE CU Alger Focus Equity ALAFX / ALGRX / ALGYX / ALZFX "
+        "and CG–CT leftover pages stay unmatched / not re-emitted. Alger "
+        "Mid Cap / JH Oct 31 / Pioneer calendar-unsafe / Lazard-Harding "
+        "commencement walls already probed by WAVE CW stay unmatched. "
         "Hub: https://www.fidelity.com/mutual-funds/information/overview. "
         "Wave 10 share-class densify: Fidelity Advisor Funds are a separate "
         "official DPL (not on retail FIIS_SP52/SP10_DPL6). Full A/C/M/I/Z "
@@ -555,7 +570,8 @@ class FidelitySource(HtmlTableSource):
         "Advisor DPL2 2022–2024 leftover history is fixture-only (Wayback "
         "unfiltered Class I); 2021 Class I DPL2 unpublished; FTRIX 2021 is "
         "N-CSR fixture-only. WAVE AO leftover Class I December 2021 N-CSR "
-        "pay tables are fixture-only. "
+        "pay tables are fixture-only. WAVE CX leftover FXAIX / FSKAX "
+        "fundHistoricalDistributions years are fixture-only. "
         "Estimate + paid DPL omit Record Date; ETF Annual-Distribution-Calendar "
         "PDF prints Record but is not this mutual-fund estimate book."
     )
@@ -641,6 +657,17 @@ class FidelitySource(HtmlTableSource):
                 name="leftover_ncsr_class_i_2021_wave_ao",
                 url="https://www.sec.gov/Archives/edgar/data/744822/000137949121005051/filing918.htm",
                 fixture="leftover_ncsr_class_i_2021_wave_ao.html",
+                live=False,
+                role="history",
+                large_aum_only=True,
+            ),
+            PageSpec(
+                name="leftover_fxaix_fskax_2021_2023_wave_cx",
+                url=(
+                    "https://institutional.fidelity.com/app/funds/"
+                    "fundHistoricalDistributions?fundNo=2328#fxaix-fskax"
+                ),
+                fixture="leftover_fxaix_fskax_2021_2023_wave_cx.html",
                 live=False,
                 role="history",
                 large_aum_only=True,
