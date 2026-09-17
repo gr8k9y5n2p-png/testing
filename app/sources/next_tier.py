@@ -906,8 +906,19 @@ class AmundiSource(HtmlTableSource):
         "WAVE BL Thrivent, WAVE BK TOLLX, WAVE BI KTCAX, WAVE BJ RiverPark, "
         "WAVE BH TCW, WAVE BG DWS Dec 31, and prior BD–BF books stay on their "
         "leftover pages — not re-emitted here. Alger leftovers stay reserved / "
-        "disjoint. WAVE BQ / BS / BU / BX / CA / BZ leftover N-CSR paid "
-        "history is fixture-only."
+        "disjoint. Official 5y WAVE CC leftover (existing in-book only): Pioneer "
+        "Fund Class R FYE December 31 and Pioneer Equity Income Class R FYE "
+        "October 31 N-CSR Financial Highlights unlock leftover 2021–2024 on the "
+        "2025 paid Class R book (PIORX / PQIRX). Calendar-safe as_of 12/31 and "
+        "10/31. Class-level Class R — never sibling-copied onto Class A "
+        "(PIODX / PEQIX; WAVE BQ / BS) or Class C/Y/K (WAVE CA / BZ). Issuer "
+        "dashes omitted (PIORX 2021 OI; PQIRX 2021 CG). 2025 stays on the "
+        "existing paid finals. Sister WAVE CD Lazard R6 RLEMX / RLIEX / RLITX / "
+        "RLUSX / RLSMX, WAVE CB Lazard Open, WAVE BY Institutional, WAVE BZ "
+        "Equity Income C/Y/K, WAVE CA Pioneer Fund / Core Equity C/Y/K, WAVE BX "
+        "Mid Cap Value C/Y/K, and prior sister leftover pages stay unmatched / "
+        "not re-emitted here. CERPX is not in-book. WAVE BQ / BS / BU / BX / "
+        "CA / BZ / CC leftover N-CSR paid history is fixture-only."
     )
     live_limitations = (
         "Pioneer/Victory tax hubs are HTML shells; estimate/final books are PDF. "
@@ -1081,6 +1092,26 @@ class AmundiSource(HtmlTableSource):
                     "000119312525002069/d869528dncsr.htm"
                 ),
                 fixture="leftover_ncsr_pceqx_pyeqx_peqkx_2021_2024_wave_bz.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="leftover_ncsr_piorx_2021_2024_wave_cc",
+                url=(
+                    "https://www.sec.gov/Archives/edgar/data/78713/"
+                    "000119312525040547/d908634dncsr.htm#class-r"
+                ),
+                fixture="leftover_ncsr_piorx_2021_2024_wave_cc.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="leftover_ncsr_pqirx_2021_2024_wave_cc",
+                url=(
+                    "https://www.sec.gov/Archives/edgar/data/869356/"
+                    "000119312525002069/d869528dncsr.htm#class-r"
+                ),
+                fixture="leftover_ncsr_pqirx_2021_2024_wave_cc.html",
                 live=False,
                 role="history",
             ),
