@@ -1107,14 +1107,31 @@ class HardingLoevnerSource(HtmlTableSource):
         "ordinary income; net realized gain is unsplit total capital gains. "
         "Issuer 2022 OI dashes omitted. 2022 N-CSR "
         "https://www.sec.gov/Archives/edgar/data/1018170/000119312523002209/"
-        "d363948dncsr.htm. Leftover 2024 Emerging Markets / International Z / "
-        "International Developed (HLEMX / HLIZX / HLIDX) stay unmatched. "
-        "WAVE AW leftover N-CSR paid history is fixture-only."
+        "d363948dncsr.htm. WAVE AW leftover N-CSR paid history is fixture-only. "
+        "Official 5y WAVE CH leftover (existing in-book only): Harding, Loevner "
+        "Funds, Inc. FYE October 31 2024 N-CSR Financial Highlights unlock "
+        "leftover 2024 on the 2021–2023+2025 paid Emerging Markets Advisor / "
+        "Global Equity Institutional Z / International Equity Institutional Z "
+        "book (HLEMX / HLGZX / HLIZX) and leftover 2021 / 2022 / 2024 on "
+        "Frontier Emerging Markets Institutional Z (HLFZX). Calendar-safe "
+        "as_of 10/31. Class-level — never sibling-copied onto Advisor / "
+        "Institutional / Investor siblings or onto WAVE AW Global Equity "
+        "HLMGX / HLMVX. Income is ordinary income; net realized gain is "
+        "unsplit total capital gains. Official dashes omitted. 2025 stays on "
+        "the existing paid HLF-2025-Distributions.pdf book. 2024 N-CSR "
+        "https://www.sec.gov/Archives/edgar/data/1018170/000089843025000008/"
+        "8dd25e24ef2e8b3.htm (0000898430-25-000008). HLIDX 2021 commencement "
+        "wall and HLRZX Institutional Z commencement April 4, 2023 stay "
+        "unmatched. Sister WAVE CG Lazard Real Assets RALIX / RALOX, WAVE CF "
+        "Alger Responsible Investing, WAVE CC Pioneer Class R, WAVE CD / CB / "
+        "BY Lazard, and prior leftover pages stay unmatched / not re-emitted "
+        "here. WAVE CH leftover N-CSR paid history is fixture-only."
     )
     live_limitations = (
         "Year-end book is PDF. Weekly walk uses the official media.hardingloevner.com PDF; "
         "empty/PDF-bytes pages are no-op success. Leftover 2021–2024 is AMG JSON / Wayback PDF. "
-        "Leftover Global Equity 2022 N-CSR paid history is fixture-only."
+        "Leftover Global Equity 2022 N-CSR and WAVE CH leftover Oct 31 2024 N-CSR "
+        "paid history are fixture-only."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -1158,6 +1175,16 @@ class HardingLoevnerSource(HtmlTableSource):
                 name="leftover_ncsr_global_equity_2022_wave_aw",
                 url="https://www.sec.gov/Archives/edgar/data/1018170/000119312523002209/d363948dncsr.htm",
                 fixture="leftover_ncsr_global_equity_2022_wave_aw.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="leftover_ncsr_hlemx_2024_wave_ch",
+                url=(
+                    "https://www.sec.gov/Archives/edgar/data/1018170/"
+                    "000089843025000008/8dd25e24ef2e8b3.htm#hlemx-2024"
+                ),
+                fixture="leftover_ncsr_hlemx_2024_wave_ch.html",
                 live=False,
                 role="history",
             ),

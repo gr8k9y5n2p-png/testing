@@ -1450,8 +1450,24 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # dashes, and READX / RCMPX stay unmatched.
     # Honest pin remasured on WAVE CF tip 92e214e0: 4281 → 4283 (+2 MF; ETF 5y
     # unchanged at 758).
-    assert digest.funds_with_5y == 4283
-    assert digest.funds_with_5y_mf == 3525
+    # WAVE CH leftover (existing in-book only): Harding, Loevner Funds, Inc.
+    # FYE October 31 2024 N-CSR unlock leftover HLEMX / HLGZX / HLIZX 2024
+    # and HLFZX 2021 / 2022 / 2024 on the 2021–2023+2025 paid book.
+    # Calendar-safe as_of 10/31. Class-level — never sibling-copied onto
+    # WAVE AW Global Equity HLMGX / HLMVX or Investor / Institutional
+    # siblings. Does not redo AF–CG (especially CG Lazard Real Assets
+    # RALIX / RALOX, CF Alger Responsible Investing SPEGX / AGFCX / AGIFX /
+    # ALGZX, CC Pioneer Class R PIORX / PQIRX, CD Lazard R6, CB Open, BY
+    # Institutional, BZ Pioneer EI C/Y/K, CA Pioneer Fund / Core Equity
+    # C/Y/K, BX Pioneer MCV C/Y/K, BW Rainier RAIIX, BV HMDCX, BU PCGRX, BT
+    # Federated SVD, BS PEQIX, BR Grandeur Peak, BQ Pioneer Dec 31 Class A).
+    # HLIDX 2021 commencement wall, HLRZX Institutional Z commencement
+    # April 4, 2023, RALYX, and calendar-unsafe Pioneer leftovers stay
+    # unmatched.
+    # Honest pin remasured on WAVE CG tip e429eb91: 4283 → 4287 (+4 MF; ETF 5y
+    # unchanged at 758).
+    assert digest.funds_with_5y == 4287
+    assert digest.funds_with_5y_mf == 3529
     assert digest.funds_with_5y_etf == 758
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
@@ -14203,8 +14219,7 @@ def test_wave_aw_harding_global_equity_leftover_oct31_2022_fills_5y() -> None:
     assert hlmgx_2022_cg.ticker != hlmvx_2022_cg.ticker
     for ticker in WAVE_AW_HARDING_LEFTOVER_5Y:
         assert set(LOOKBACK_YEARS) <= _paid_lookback_years(records, ticker), ticker
-    # Institutional Z 2022 is official year-depth only (2024 unpublished).
-    assert 2024 not in _paid_lookback_years(records, "HLGZX")
+    # WAVE CH later unlocks Institutional Z leftover 2024 via the 2024 N-CSR.
 
 
 def test_wave_aw_leftover_walls_stay_unmatched() -> None:
@@ -14234,9 +14249,9 @@ def test_wave_aw_leftover_walls_stay_unmatched() -> None:
     assert 2023 not in _paid_lookback_years(principal, "PGBGX")
 
     harding = HardingLoevnerSource().fetch(mode="fixture").records
-    # Leftover 2024 Emerging Markets / International Z stay unpublished.
-    assert 2024 not in _paid_lookback_years(harding, "HLEMX")
-    assert 2024 not in _paid_lookback_years(harding, "HLIZX")
+    # WAVE CH later unlocks leftover 2024 on HLEMX / HLIZX / HLGZX.
+    # International Developed HLIDX 2021 commencement wall stays unmatched.
+    assert 2021 not in _paid_lookback_years(harding, "HLIDX")
     assert 2024 not in _paid_lookback_years(harding, "HLIDX")
     # Global Equity 2022 ordinary-income highlights are official dashes.
     hlmgx_2022_oi = [
@@ -26705,6 +26720,293 @@ def test_wave_cg_heroes_are_searchable(client: TestClient) -> None:
         assert {"2021", "2022", "2023", "2024", "2025"} <= years, ticker
 
     for ticker in WAVE_CG_CD_DISJOINT:
+        body = client.get(
+            "/distributions",
+            params={"ticker": ticker, "publication_stage": "final", "page_size": 200},
+        ).json()
+        years = {
+            str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[
+                :4
+            ]
+            for row in body["items"]
+            if row.get("ticker") == ticker and row.get("amount") is not None
+        }
+        assert {"2021", "2022", "2023", "2024", "2025"} <= years, ticker
+
+
+WAVE_CH_HARDING_LEFTOVER_5Y = ("HLEMX", "HLGZX", "HLIZX", "HLFZX")
+WAVE_CH_CG_DISJOINT = WAVE_CG_LAZARD_LEFTOVER_5Y
+WAVE_CH_CF_DISJOINT = WAVE_CF_ALGER_LEFTOVER_5Y
+WAVE_CH_CC_DISJOINT = WAVE_CC_PIONEER_LEFTOVER_5Y
+WAVE_CH_CD_DISJOINT = WAVE_CD_LAZARD_LEFTOVER_5Y
+WAVE_CH_CB_DISJOINT = WAVE_CB_LAZARD_LEFTOVER_5Y
+WAVE_CH_BY_DISJOINT = WAVE_BY_LAZARD_LEFTOVER_5Y
+WAVE_CH_CA_DISJOINT = WAVE_CA_PIONEER_LEFTOVER_5Y
+WAVE_CH_BZ_DISJOINT = WAVE_BZ_PIONEER_LEFTOVER_5Y
+WAVE_CH_BX_DISJOINT = WAVE_BX_PIONEER_LEFTOVER_5Y
+WAVE_CH_BW_DISJOINT = WAVE_BW_RAINIER_LEFTOVER_5Y
+WAVE_CH_BV_DISJOINT = WAVE_BV_HARTFORD_LEFTOVER_5Y
+WAVE_CH_BU_DISJOINT = WAVE_BU_PIONEER_LEFTOVER_5Y
+WAVE_CH_BT_DISJOINT = WAVE_BT_FEDERATED_LEFTOVER_5Y
+WAVE_CH_BS_DISJOINT = WAVE_BS_PIONEER_LEFTOVER_5Y
+WAVE_CH_BR_DISJOINT = WAVE_BS_BR_DISJOINT
+WAVE_CH_BQ_DISJOINT = WAVE_BQ_PIONEER_LEFTOVER_5Y
+WAVE_CH_AW_HARDING = WAVE_AW_HARDING_LEFTOVER_5Y
+WAVE_CH_WALLS = ("HLIDX", "HLRZX", "RALYX", "CHUSX", "ALGAX", "ALSRX", "ACAAX")
+WAVE_CH_ALGER_RESERVED = WAVE_BH_ALGER_RESERVED
+WAVE_CH_NCSR_ACCESSION = "000089843025000008"
+WAVE_CH_LEFTOVER_URL = "leftover_ncsr_hlemx_2024_wave_ch"
+
+
+def _wave_ch_source_match(source_url: str | None) -> bool:
+    if not source_url:
+        return False
+    return WAVE_CH_LEFTOVER_URL in source_url or source_url.endswith("#hlemx-2024")
+
+
+def _wave_ch_leftover_rows(records: list[NormalizedRecord]) -> list[NormalizedRecord]:
+    return [
+        row
+        for row in records
+        if row.ticker in WAVE_CH_HARDING_LEFTOVER_5Y
+        and row.as_of
+        and row.as_of.year in {2021, 2022, 2024}
+        and _wave_ch_source_match(row.source_url)
+    ]
+
+
+def test_wave_ch_harding_leftover_oct31_fills_5y() -> None:
+    records = HardingLoevnerSource().fetch(mode="fixture").records
+    leftover = _wave_ch_leftover_rows(records)
+
+    expected = {
+        ("HLEMX", "2024-10-31", EstimateType.ordinary_income, Decimal("0.59")),
+        ("HLEMX", "2024-10-31", EstimateType.total_capital_gains, Decimal("0.69")),
+        ("HLGZX", "2024-10-31", EstimateType.ordinary_income, Decimal("0.16")),
+        ("HLGZX", "2024-10-31", EstimateType.total_capital_gains, Decimal("0.09")),
+        ("HLIZX", "2024-10-31", EstimateType.ordinary_income, Decimal("0.54")),
+        ("HLIZX", "2024-10-31", EstimateType.total_capital_gains, Decimal("0.47")),
+        ("HLFZX", "2024-10-31", EstimateType.ordinary_income, Decimal("0.14")),
+        ("HLFZX", "2022-10-31", EstimateType.ordinary_income, Decimal("0.08")),
+        ("HLFZX", "2021-10-31", EstimateType.ordinary_income, Decimal("0.14")),
+    }
+    got = {
+        (row.ticker, str(row.as_of), row.estimate_type, row.amount)
+        for row in leftover
+        if row.amount is not None and row.publication_stage == PublicationStage.final
+    }
+    assert expected <= got
+
+    leftover_cg_hlfzx = [
+        row
+        for row in leftover
+        if row.ticker == "HLFZX" and row.estimate_type == EstimateType.total_capital_gains
+    ]
+    assert leftover_cg_hlfzx == []
+
+    leftover_tickers = {row.ticker for row in leftover}
+    assert leftover_tickers == set(WAVE_CH_HARDING_LEFTOVER_5Y)
+    assert WAVE_CH_NCSR_ACCESSION in leftover[0].source_url
+    assert all(str(row.as_of).endswith("-10-31") for row in leftover)
+
+    sisters_on_ch = [
+        row
+        for row in records
+        if row.ticker
+        in WAVE_CH_CG_DISJOINT
+        + WAVE_CH_CF_DISJOINT
+        + WAVE_CH_CC_DISJOINT
+        + WAVE_CH_CD_DISJOINT
+        + WAVE_CH_CB_DISJOINT
+        + WAVE_CH_BY_DISJOINT
+        + WAVE_CH_AW_HARDING
+        + WAVE_CH_WALLS
+        + WAVE_CH_ALGER_RESERVED
+        and _wave_ch_source_match(row.source_url)
+    ]
+    assert sisters_on_ch == []
+
+    for ticker in WAVE_CH_HARDING_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(records, ticker), ticker
+    for ticker in WAVE_CH_AW_HARDING:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(records, ticker), ticker
+    lazard = LazardSource().fetch(mode="fixture").records
+    for ticker in WAVE_CH_CG_DISJOINT + WAVE_CH_CD_DISJOINT + WAVE_CH_CB_DISJOINT + WAVE_CH_BY_DISJOINT:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(lazard, ticker), ticker
+    alger = AlgerSource().fetch(mode="fixture").records
+    for ticker in WAVE_CH_CF_DISJOINT:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(alger, ticker), ticker
+
+
+def test_wave_ch_leftover_walls_stay_unmatched() -> None:
+    harding = HardingLoevnerSource().fetch(mode="fixture").records
+    leftover = _wave_ch_leftover_rows(harding)
+    leftover_tickers = {row.ticker for row in leftover}
+    assert leftover_tickers == set(WAVE_CH_HARDING_LEFTOVER_5Y)
+
+    assert 2021 not in _paid_lookback_years(harding, "HLIDX")
+    assert 2024 not in _paid_lookback_years(harding, "HLIDX")
+    assert 2021 not in _paid_lookback_years(harding, "HLRZX")
+    assert 2022 not in _paid_lookback_years(harding, "HLRZX")
+    for ticker in ("HLIDX", "HLRZX"):
+        on_ch = [
+            row
+            for row in harding
+            if row.ticker == ticker and _wave_ch_source_match(row.source_url)
+        ]
+        assert on_ch == [], ticker
+
+    for ticker in WAVE_CH_AW_HARDING:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(harding, ticker), ticker
+        on_ch = [
+            row
+            for row in harding
+            if row.ticker == ticker and _wave_ch_source_match(row.source_url)
+        ]
+        assert on_ch == [], ticker
+
+    lazard = LazardSource().fetch(mode="fixture").records
+    for ticker in WAVE_CH_CG_DISJOINT:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(lazard, ticker), ticker
+        on_ch = [
+            row
+            for row in lazard
+            if row.ticker == ticker and _wave_ch_source_match(row.source_url)
+        ]
+        assert on_ch == [], ticker
+    assert 2021 not in _paid_lookback_years(lazard, "RALYX")
+
+    alger = AlgerSource().fetch(mode="fixture").records
+    for ticker in WAVE_CH_CF_DISJOINT:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(alger, ticker), ticker
+    for ticker in WAVE_CH_ALGER_RESERVED:
+        assert not set(LOOKBACK_YEARS) <= _paid_lookback_years(alger, ticker), ticker
+
+    pioneer = AmundiSource().fetch(mode="fixture").records
+    for ticker in (
+        WAVE_CH_CC_DISJOINT
+        + WAVE_CH_CA_DISJOINT
+        + WAVE_CH_BZ_DISJOINT
+        + WAVE_CH_BX_DISJOINT
+        + WAVE_CH_BQ_DISJOINT
+        + WAVE_CH_BS_DISJOINT
+        + WAVE_CH_BU_DISJOINT
+    ):
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(pioneer, ticker), ticker
+        on_ch = [
+            row
+            for row in pioneer
+            if row.ticker == ticker and _wave_ch_source_match(row.source_url)
+        ]
+        assert on_ch == [], ticker
+    for ticker in ("AOBLX", "PINDX", "PGOFX"):
+        assert not set(LOOKBACK_YEARS) <= _paid_lookback_years(pioneer, ticker), ticker
+
+    manning = ManningNapierSource().fetch(mode="fixture").records
+    for ticker in WAVE_CH_BW_DISJOINT:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(manning, ticker), ticker
+    hartford = HartfordSource().fetch(mode="fixture").records
+    for ticker in WAVE_CH_BV_DISJOINT:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(hartford, ticker), ticker
+    federated = FederatedHermesSource().fetch(mode="fixture").records
+    for ticker in WAVE_CH_BT_DISJOINT:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(federated, ticker), ticker
+    grandeur = GrandeurPeakSource().fetch(mode="fixture").records
+    for ticker in WAVE_CH_BR_DISJOINT:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(grandeur, ticker), ticker
+
+    harding_ch = {row.ticker for row in leftover}
+    assert harding_ch == set(WAVE_CH_HARDING_LEFTOVER_5Y)
+    assert not harding_ch & set(WAVE_CH_CG_DISJOINT)
+    assert not harding_ch & set(WAVE_CH_CF_DISJOINT)
+    assert not harding_ch & set(WAVE_CH_CC_DISJOINT)
+    assert not harding_ch & set(WAVE_CH_CD_DISJOINT)
+    assert not harding_ch & set(WAVE_CH_AW_HARDING)
+    assert not harding_ch & set(WAVE_CH_WALLS)
+    assert not harding_ch & set(WAVE_CH_ALGER_RESERVED)
+
+
+def test_wave_ch_heroes_are_searchable(client: TestClient) -> None:
+    fetched = client.post(
+        "/ingest/fetch", json={"fund_family": "harding_loevner", "mode": "fixture"}
+    )
+    assert fetched.status_code == 200, fetched.text
+    assert fetched.json()["created"] > 0
+
+    for ticker in WAVE_CH_HARDING_LEFTOVER_5Y:
+        body = client.get("/funds", params={"q": ticker}).json()
+        tickers = [item["ticker"] for item in body["items"]]
+        assert ticker in tickers, f"{ticker} missing from GET /funds?q={ticker}: {tickers[:8]}"
+
+    hlemx = client.get(
+        "/distributions",
+        params={"ticker": "HLEMX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    hlemx_2024_oi = [
+        Decimal(row["amount"])
+        for row in hlemx["items"]
+        if row.get("ticker") == "HLEMX"
+        and row.get("estimate_type") == "ordinary_income"
+        and str(row.get("as_of") or "").startswith("2024-10-31")
+    ]
+    assert Decimal("0.59") in hlemx_2024_oi
+    hlemx_2024_cg = [
+        Decimal(row["amount"])
+        for row in hlemx["items"]
+        if row.get("ticker") == "HLEMX"
+        and row.get("estimate_type") == "total_capital_gains"
+        and str(row.get("as_of") or "").startswith("2024-10-31")
+    ]
+    assert Decimal("0.69") in hlemx_2024_cg
+    for ticker in WAVE_CH_HARDING_LEFTOVER_5Y:
+        body = client.get(
+            "/distributions",
+            params={"ticker": ticker, "publication_stage": "final", "page_size": 200},
+        ).json()
+        years = {
+            str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[
+                :4
+            ]
+            for row in body["items"]
+            if row.get("ticker") == ticker and row.get("amount") is not None
+        }
+        assert {"2021", "2022", "2023", "2024", "2025"} <= years, ticker
+
+    hlidx = client.get(
+        "/distributions",
+        params={"ticker": "HLIDX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    hlidx_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in hlidx["items"]
+        if row.get("ticker") == "HLIDX" and row.get("amount") is not None
+    }
+    assert "2021" not in hlidx_years
+    assert "2024" not in hlidx_years
+
+    lazard_fetched = client.post(
+        "/ingest/fetch", json={"fund_family": "lazard", "mode": "fixture"}
+    )
+    assert lazard_fetched.status_code == 200, lazard_fetched.text
+    for ticker in WAVE_CH_CG_DISJOINT:
+        body = client.get(
+            "/distributions",
+            params={"ticker": ticker, "publication_stage": "final", "page_size": 200},
+        ).json()
+        years = {
+            str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[
+                :4
+            ]
+            for row in body["items"]
+            if row.get("ticker") == ticker and row.get("amount") is not None
+        }
+        assert {"2021", "2022", "2023", "2024", "2025"} <= years, ticker
+
+    alger_fetched = client.post(
+        "/ingest/fetch", json={"fund_family": "alger", "mode": "fixture"}
+    )
+    assert alger_fetched.status_code == 200, alger_fetched.text
+    for ticker in WAVE_CH_CF_DISJOINT:
         body = client.get(
             "/distributions",
             params={"ticker": ticker, "publication_stage": "final", "page_size": 200},
