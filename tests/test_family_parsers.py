@@ -1993,6 +1993,76 @@ def test_third_tier_fixtures() -> None:
         "FHESX",
     }
 
+    federated_ncsr_ci = parse_distribution_html(
+        (ROOT / "federated_hermes" / "leftover_ncsr_svalx_2021_2025_wave_ci.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url=(
+            "https://www.sec.gov/Archives/edgar/data/745968/"
+            "000162363225001789/fef2029-form.htm#svalx-r6"
+        ),
+        fund_family="Federated Hermes",
+    )
+    svalx_2025_oi = next(
+        r
+        for r in federated_ncsr_ci
+        if r.ticker == "SVALX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.as_of
+        and str(r.as_of) == "2025-10-31"
+    )
+    assert svalx_2025_oi.amount == Decimal("0.22")
+    assert svalx_2025_oi.publication_stage == PublicationStage.final
+    svalx_2025_cg = next(
+        r
+        for r in federated_ncsr_ci
+        if r.ticker == "SVALX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and str(r.as_of) == "2025-10-31"
+    )
+    assert svalx_2025_cg.amount == Decimal("0.11")
+    svalx_2023_oi = next(
+        r
+        for r in federated_ncsr_ci
+        if r.ticker == "SVALX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and str(r.as_of) == "2023-10-31"
+    )
+    assert svalx_2023_oi.amount == Decimal("0.24")
+    svalx_2021_oi = next(
+        r
+        for r in federated_ncsr_ci
+        if r.ticker == "SVALX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and str(r.as_of) == "2021-10-31"
+    )
+    assert svalx_2021_oi.amount == Decimal("0.21")
+    assert not any(
+        r.ticker == "SVALX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and r.as_of
+        and r.as_of.year in {2021, 2022, 2024}
+        for r in federated_ncsr_ci
+    )
+    assert {r.ticker for r in federated_ncsr_ci} == {"SVALX"}
+    assert not any(
+        r.ticker
+        in {
+            "SVAAX",
+            "SVACX",
+            "SVAIX",
+            "HLEMX",
+            "HLGZX",
+            "HLIZX",
+            "HLFZX",
+            "RALIX",
+            "ALBAX",
+            "ALBCX",
+            "AGIZX",
+        }
+        for r in federated_ncsr_ci
+    )
+
     virtus = parse_distribution_html(
         (ROOT / "virtus" / "2026_june_capital_gain_estimates.html").read_text(encoding="utf-8"),
         source_url="fixture://virtus",
