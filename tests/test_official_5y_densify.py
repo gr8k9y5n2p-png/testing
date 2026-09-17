@@ -1392,8 +1392,23 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # Concentrated Open 2025 dashes, and Real Assets RALOX stay unmatched.
     # Honest pin remasured on WAVE BZ tip 10c7ead6: 4256 → 4270 (+14 MF; ETF 5y
     # unchanged at 758).
-    assert digest.funds_with_5y == 4270
-    assert digest.funds_with_5y_mf == 3512
+    # WAVE CD leftover (existing in-book only): Lazard Funds, Inc. R6 Dec 31
+    # N-CSR unlocks leftover RLEMX / RLIEX / RLITX / RLUSX / RLSMX 2021–2025.
+    # Calendar-safe as_of 12/31. Class-level R6 — never sibling-copied onto
+    # Institutional (WAVE BY) or Open (WAVE CB). Does not redo AF–CB
+    # (especially CB Lazard Open GLFOX / LCAOX / LDMOX / LEAOX / LEOOX /
+    # LISOX / LZFOX / LZIOX / LZOEX / LZSCX / LZSIX / LZSMX / LZUOX / OCMPX,
+    # BZ Pioneer Equity Income PCEQX / PYEQX / PEQKX, CA Pioneer Fund / Core
+    # Equity C/Y/K, BY Lazard Institutional, BX Pioneer MCV C/Y/K, BW Rainier
+    # RAIIX, BV HMDCX, BU PCGRX, BT Federated SVD, BS PEQIX, BR Grandeur Peak,
+    # BQ Pioneer Dec 31 Class A, BP Beacon, BO–BI / BK / BG DWS, BM Baird, BL
+    # Thrivent, BJ RiverPark, BH TCW, BD–BF). READX / RCMPX R6 inception
+    # February 22, 2023, CONIX / CONOX, US Equity Concentrated RLUEX 2025
+    # dashes, and Real Assets RALYX / RALOX stay unmatched.
+    # Honest pin remasured on WAVE CB tip 0e12dfb2: 4270 → 4275 (+5 MF; ETF 5y
+    # unchanged at 758).
+    assert digest.funds_with_5y == 4275
+    assert digest.funds_with_5y_mf == 3517
     assert digest.funds_with_5y_etf == 758
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
@@ -24737,6 +24752,10 @@ WAVE_CB_INSTITUTIONAL_DISJOINT = WAVE_BY_LAZARD_LEFTOVER_5Y
 WAVE_CB_R6_WALLS = (
     "RCMPX",
     "READX",
+)
+WAVE_CB_R6_SIBLINGS = (
+    "RCMPX",
+    "READX",
     "RLEMX",
     "RLIEX",
     "RLITX",
@@ -24858,7 +24877,7 @@ def test_wave_cb_lazard_open_leftover_dec31_fills_5y() -> None:
     r6_on_cb = [
         row
         for row in records
-        if row.ticker in WAVE_CB_R6_WALLS and _wave_cb_source_match(row.source_url)
+        if row.ticker in WAVE_CB_R6_SIBLINGS and _wave_cb_source_match(row.source_url)
     ]
     assert r6_on_cb == []
 
@@ -24867,7 +24886,7 @@ def test_wave_cb_lazard_open_leftover_dec31_fills_5y() -> None:
         for row in leftover
         if row.ticker
         in WAVE_CB_INSTITUTIONAL_DISJOINT
-        + WAVE_CB_R6_WALLS
+        + WAVE_CB_R6_SIBLINGS
         + WAVE_CB_BZ_DISJOINT
         + WAVE_CB_CA_DISJOINT
         + WAVE_CB_BX_DISJOINT
@@ -24929,6 +24948,13 @@ def test_wave_cb_leftover_walls_stay_unmatched() -> None:
     for ticker in WAVE_CB_WALLS + WAVE_CB_R6_WALLS:
         assert not set(LOOKBACK_YEARS) <= _paid_lookback_years(lazard, ticker), ticker
         assert 2021 not in _paid_lookback_years(lazard, ticker), ticker
+        on_cb = [
+            row
+            for row in lazard
+            if row.ticker == ticker and _wave_cb_source_match(row.source_url)
+        ]
+        assert on_cb == [], ticker
+    for ticker in WAVE_CB_R6_SIBLINGS:
         on_cb = [
             row
             for row in lazard
@@ -25002,7 +25028,7 @@ def test_wave_cb_leftover_walls_stay_unmatched() -> None:
     lazard_cb = {row.ticker for row in leftover}
     assert lazard_cb == set(WAVE_CB_LAZARD_LEFTOVER_5Y)
     assert not lazard_cb & set(WAVE_CB_INSTITUTIONAL_DISJOINT)
-    assert not lazard_cb & set(WAVE_CB_R6_WALLS)
+    assert not lazard_cb & set(WAVE_CB_R6_SIBLINGS)
     assert not lazard_cb & set(WAVE_CB_BZ_DISJOINT)
     assert not lazard_cb & set(WAVE_CB_CA_DISJOINT)
     assert not lazard_cb & set(WAVE_CB_BX_DISJOINT)
@@ -25087,6 +25113,398 @@ def test_wave_cb_heroes_are_searchable(client: TestClient) -> None:
     )
     assert pioneer_fetched.status_code == 200, pioneer_fetched.text
     for ticker in WAVE_CB_BZ_DISJOINT + WAVE_CB_CA_DISJOINT:
+        body = client.get(
+            "/distributions",
+            params={"ticker": ticker, "publication_stage": "final", "page_size": 200},
+        ).json()
+        years = {
+            str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[
+                :4
+            ]
+            for row in body["items"]
+            if row.get("ticker") == ticker and row.get("amount") is not None
+        }
+        assert {"2021", "2022", "2023", "2024", "2025"} <= years, ticker
+
+
+WAVE_CD_LAZARD_LEFTOVER_5Y = (
+    "RLEMX",
+    "RLIEX",
+    "RLITX",
+    "RLUSX",
+    "RLSMX",
+)
+WAVE_CD_OPEN_DISJOINT = WAVE_CB_LAZARD_LEFTOVER_5Y
+WAVE_CD_INSTITUTIONAL_DISJOINT = WAVE_BY_LAZARD_LEFTOVER_5Y
+WAVE_CD_REMAINING_R6_WALLS = WAVE_CB_R6_WALLS
+WAVE_CD_WALLS = WAVE_CB_WALLS + ("RALYX", "RLUEX")
+WAVE_CD_NCSR_ACCESSION = "000093041326000617"
+WAVE_CD_LEFTOVER_URL = "leftover_ncsr_r6_2021_2025_wave_cd"
+WAVE_CD_ALGER_RESERVED = WAVE_BH_ALGER_RESERVED
+WAVE_CD_BZ_DISJOINT = WAVE_BZ_PIONEER_LEFTOVER_5Y
+WAVE_CD_CA_DISJOINT = WAVE_CA_PIONEER_LEFTOVER_5Y
+WAVE_CD_BX_DISJOINT = WAVE_BX_PIONEER_LEFTOVER_5Y
+WAVE_CD_BW_DISJOINT = WAVE_BW_RAINIER_LEFTOVER_5Y
+WAVE_CD_BV_DISJOINT = WAVE_BV_HARTFORD_LEFTOVER_5Y
+WAVE_CD_BU_DISJOINT = WAVE_BU_PIONEER_LEFTOVER_5Y
+WAVE_CD_BT_DISJOINT = WAVE_BT_FEDERATED_LEFTOVER_5Y
+WAVE_CD_BS_DISJOINT = WAVE_BS_PIONEER_LEFTOVER_5Y
+WAVE_CD_BR_DISJOINT = WAVE_BS_BR_DISJOINT
+WAVE_CD_BQ_DISJOINT = WAVE_BQ_PIONEER_LEFTOVER_5Y
+
+
+def _wave_cd_source_match(source_url: str | None) -> bool:
+    if not source_url:
+        return False
+    return WAVE_CD_LEFTOVER_URL in source_url or source_url.endswith("#r6")
+
+
+def _wave_cd_leftover_rows(records: list[NormalizedRecord]) -> list[NormalizedRecord]:
+    return [
+        row
+        for row in records
+        if row.ticker in WAVE_CD_LAZARD_LEFTOVER_5Y
+        and row.as_of
+        and row.as_of.year in {2021, 2022, 2023, 2024, 2025}
+        and _wave_cd_source_match(row.source_url)
+    ]
+
+
+def test_wave_cd_lazard_r6_leftover_dec31_fills_5y() -> None:
+    records = LazardSource().fetch(mode="fixture").records
+    leftover = _wave_cd_leftover_rows(records)
+
+    expected = {
+        ("RLIEX", "2025-12-31", EstimateType.ordinary_income, Decimal("0.48")),
+        ("RLIEX", "2025-12-31", EstimateType.total_capital_gains, Decimal("1.84")),
+        ("RLIEX", "2024-12-31", EstimateType.ordinary_income, Decimal("0.57")),
+        ("RLIEX", "2024-12-31", EstimateType.total_capital_gains, Decimal("0.84")),
+        ("RLIEX", "2021-12-31", EstimateType.ordinary_income, Decimal("1.08")),
+        ("RLIEX", "2021-12-31", EstimateType.total_capital_gains, Decimal("2.13")),
+        ("RLEMX", "2025-12-31", EstimateType.ordinary_income, Decimal("0.51")),
+        ("RLEMX", "2024-12-31", EstimateType.ordinary_income, Decimal("0.56")),
+        ("RLEMX", "2021-12-31", EstimateType.ordinary_income, Decimal("0.89")),
+        ("RLITX", "2025-12-31", EstimateType.ordinary_income, Decimal("0.29")),
+        ("RLITX", "2025-12-31", EstimateType.total_capital_gains, Decimal("3.49")),
+        ("RLITX", "2021-12-31", EstimateType.return_of_capital, Decimal("0.31")),
+        ("RLUSX", "2025-12-31", EstimateType.ordinary_income, Decimal("0.11")),
+        ("RLUSX", "2025-12-31", EstimateType.total_capital_gains, Decimal("2.19")),
+        ("RLSMX", "2025-12-31", EstimateType.ordinary_income, Decimal("0.08")),
+        ("RLSMX", "2025-12-31", EstimateType.total_capital_gains, Decimal("0.51")),
+        ("RLSMX", "2024-12-31", EstimateType.total_capital_gains, Decimal("1.83")),
+        ("RLSMX", "2021-12-31", EstimateType.ordinary_income, Decimal("0.03")),
+    }
+    got = {
+        (row.ticker, str(row.as_of), row.estimate_type, row.amount)
+        for row in leftover
+        if row.amount is not None and row.publication_stage == PublicationStage.final
+    }
+    assert expected <= got
+
+    # Official issuer dashes — never invent $0.
+    rlemx_cg = [
+        row
+        for row in leftover
+        if row.ticker == "RLEMX" and row.estimate_type == EstimateType.total_capital_gains
+    ]
+    assert rlemx_cg == []
+    rlsmx_2024_oi = [
+        row
+        for row in leftover
+        if row.ticker == "RLSMX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and str(row.as_of) == "2024-12-31"
+    ]
+    assert rlsmx_2024_oi == []
+    rlitx_2023_cg = [
+        row
+        for row in leftover
+        if row.ticker == "RLITX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and str(row.as_of) == "2023-12-31"
+    ]
+    assert rlitx_2023_cg == []
+
+    leftover_tickers = {row.ticker for row in leftover}
+    assert leftover_tickers == set(WAVE_CD_LAZARD_LEFTOVER_5Y)
+
+    open_on_cd = [
+        row
+        for row in records
+        if row.ticker in WAVE_CD_OPEN_DISJOINT and _wave_cd_source_match(row.source_url)
+    ]
+    assert open_on_cd == []
+    institutional_on_cd = [
+        row
+        for row in records
+        if row.ticker in WAVE_CD_INSTITUTIONAL_DISJOINT
+        and _wave_cd_source_match(row.source_url)
+    ]
+    assert institutional_on_cd == []
+
+    reserved = [
+        row
+        for row in leftover
+        if row.ticker
+        in WAVE_CD_OPEN_DISJOINT
+        + WAVE_CD_INSTITUTIONAL_DISJOINT
+        + WAVE_CD_REMAINING_R6_WALLS
+        + WAVE_CD_BZ_DISJOINT
+        + WAVE_CD_CA_DISJOINT
+        + WAVE_CD_BX_DISJOINT
+        + WAVE_CD_BW_DISJOINT
+        + WAVE_CD_BV_DISJOINT
+        + WAVE_CD_BU_DISJOINT
+        + WAVE_CD_BT_DISJOINT
+        + WAVE_CD_BS_DISJOINT
+        + WAVE_CD_BR_DISJOINT
+        + WAVE_CD_BQ_DISJOINT
+        + WAVE_BP_BEACON_LEFTOVER_5Y
+        + WAVE_BO_DWS_LEFTOVER_5Y
+        + WAVE_BN_DWS_LEFTOVER_5Y
+        + WAVE_BM_BAIRD_LEFTOVER_5Y
+        + WAVE_BL_THRIVENT_LEFTOVER_5Y
+        + WAVE_BK_DWS_LEFTOVER_5Y
+        + WAVE_BI_DWS_LEFTOVER_5Y
+        + WAVE_BJ_RIVERPARK_LEFTOVER_5Y
+        + WAVE_BG_DWS_LEFTOVER_5Y
+        + WAVE_BH_TCW_LEFTOVER_5Y
+        + WAVE_CD_ALGER_RESERVED
+    ]
+    assert reserved == []
+
+    for ticker in WAVE_CD_LAZARD_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(records, ticker), ticker
+    for ticker in WAVE_CD_OPEN_DISJOINT:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(records, ticker), ticker
+    for ticker in WAVE_CD_INSTITUTIONAL_DISJOINT:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(records, ticker), ticker
+    pioneer = AmundiSource().fetch(mode="fixture").records
+    for ticker in (
+        WAVE_CD_BZ_DISJOINT
+        + WAVE_CD_CA_DISJOINT
+        + WAVE_CD_BX_DISJOINT
+        + WAVE_CD_BU_DISJOINT
+        + WAVE_CD_BS_DISJOINT
+        + WAVE_CD_BQ_DISJOINT
+    ):
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(pioneer, ticker), ticker
+    manning = ManningNapierSource().fetch(mode="fixture").records
+    for ticker in WAVE_CD_BW_DISJOINT:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(manning, ticker), ticker
+    hartford = HartfordSource().fetch(mode="fixture").records
+    for ticker in WAVE_CD_BV_DISJOINT:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(hartford, ticker), ticker
+    federated = FederatedHermesSource().fetch(mode="fixture").records
+    for ticker in WAVE_CD_BT_DISJOINT:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(federated, ticker), ticker
+    grandeur = GrandeurPeakSource().fetch(mode="fixture").records
+    for ticker in WAVE_CD_BR_DISJOINT:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(grandeur, ticker), ticker
+
+
+def test_wave_cd_leftover_walls_stay_unmatched() -> None:
+    lazard = LazardSource().fetch(mode="fixture").records
+    leftover = _wave_cd_leftover_rows(lazard)
+    leftover_tickers = {row.ticker for row in leftover}
+    assert leftover_tickers == set(WAVE_CD_LAZARD_LEFTOVER_5Y)
+
+    for ticker in WAVE_CD_WALLS + WAVE_CD_REMAINING_R6_WALLS:
+        assert not set(LOOKBACK_YEARS) <= _paid_lookback_years(lazard, ticker), ticker
+        assert 2021 not in _paid_lookback_years(lazard, ticker), ticker
+        on_cd = [
+            row
+            for row in lazard
+            if row.ticker == ticker and _wave_cd_source_match(row.source_url)
+        ]
+        assert on_cd == [], ticker
+
+    open_on_cd = [
+        row
+        for row in lazard
+        if row.ticker in WAVE_CD_OPEN_DISJOINT and _wave_cd_source_match(row.source_url)
+    ]
+    assert open_on_cd == []
+    institutional_on_cd = [
+        row
+        for row in lazard
+        if row.ticker in WAVE_CD_INSTITUTIONAL_DISJOINT
+        and _wave_cd_source_match(row.source_url)
+    ]
+    assert institutional_on_cd == []
+
+    pioneer = AmundiSource().fetch(mode="fixture").records
+    for ticker in (
+        WAVE_CD_BZ_DISJOINT
+        + WAVE_CD_CA_DISJOINT
+        + WAVE_CD_BX_DISJOINT
+        + WAVE_CD_BU_DISJOINT
+        + WAVE_CD_BS_DISJOINT
+        + WAVE_CD_BQ_DISJOINT
+    ):
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(pioneer, ticker), ticker
+        on_cd = [
+            row
+            for row in pioneer
+            if row.ticker == ticker and _wave_cd_source_match(row.source_url)
+        ]
+        assert on_cd == [], ticker
+    manning = ManningNapierSource().fetch(mode="fixture").records
+    for ticker in WAVE_CD_BW_DISJOINT:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(manning, ticker), ticker
+    hartford = HartfordSource().fetch(mode="fixture").records
+    for ticker in WAVE_CD_BV_DISJOINT:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(hartford, ticker), ticker
+    federated = FederatedHermesSource().fetch(mode="fixture").records
+    for ticker in WAVE_CD_BT_DISJOINT:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(federated, ticker), ticker
+    grandeur = GrandeurPeakSource().fetch(mode="fixture").records
+    for ticker in WAVE_CD_BR_DISJOINT:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(grandeur, ticker), ticker
+    beacon = AmericanBeaconSource().fetch(mode="fixture").records
+    for ticker in WAVE_BP_BEACON_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(beacon, ticker), ticker
+    dws = DwsSource().fetch(mode="fixture").records
+    for ticker in (
+        WAVE_BO_DWS_LEFTOVER_5Y
+        + WAVE_BN_DWS_LEFTOVER_5Y
+        + WAVE_BK_DWS_LEFTOVER_5Y
+        + WAVE_BI_DWS_LEFTOVER_5Y
+        + WAVE_BG_DWS_LEFTOVER_5Y
+    ):
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(dws, ticker), ticker
+    baird = BairdSource().fetch(mode="fixture").records
+    for ticker in WAVE_BM_BAIRD_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(baird, ticker), ticker
+    thrivent = ThriventSource().fetch(mode="fixture").records
+    for ticker in WAVE_BL_THRIVENT_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(thrivent, ticker), ticker
+    riverpark = RiverparkSource().fetch(mode="fixture").records
+    for ticker in WAVE_BJ_RIVERPARK_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(riverpark, ticker), ticker
+    tcw = TcwSource().fetch(mode="fixture").records
+    for ticker in WAVE_BH_TCW_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(tcw, ticker), ticker
+    alger = AlgerSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(alger, "CHUSX")
+
+    lazard_cd = {row.ticker for row in leftover}
+    assert lazard_cd == set(WAVE_CD_LAZARD_LEFTOVER_5Y)
+    assert not lazard_cd & set(WAVE_CD_OPEN_DISJOINT)
+    assert not lazard_cd & set(WAVE_CD_INSTITUTIONAL_DISJOINT)
+    assert not lazard_cd & set(WAVE_CD_REMAINING_R6_WALLS)
+    assert not lazard_cd & set(WAVE_CD_BZ_DISJOINT)
+    assert not lazard_cd & set(WAVE_CD_CA_DISJOINT)
+    assert not lazard_cd & set(WAVE_CD_BX_DISJOINT)
+    assert not lazard_cd & set(WAVE_CD_BW_DISJOINT)
+    assert not lazard_cd & set(WAVE_CD_BV_DISJOINT)
+    assert not lazard_cd & set(WAVE_CD_BU_DISJOINT)
+    assert not lazard_cd & set(WAVE_CD_BT_DISJOINT)
+    assert not lazard_cd & set(WAVE_CD_BS_DISJOINT)
+    assert not lazard_cd & set(WAVE_CD_BR_DISJOINT)
+    assert not lazard_cd & set(WAVE_CD_BQ_DISJOINT)
+    assert not lazard_cd & set(WAVE_CD_ALGER_RESERVED)
+
+
+def test_wave_cd_heroes_are_searchable(client: TestClient) -> None:
+    fetched = client.post(
+        "/ingest/fetch", json={"fund_family": "lazard", "mode": "fixture"}
+    )
+    assert fetched.status_code == 200, fetched.text
+    assert fetched.json()["created"] > 0
+
+    for ticker in WAVE_CD_LAZARD_LEFTOVER_5Y:
+        body = client.get("/funds", params={"q": ticker}).json()
+        tickers = [item["ticker"] for item in body["items"]]
+        assert ticker in tickers, f"{ticker} missing from GET /funds?q={ticker}: {tickers[:8]}"
+
+    rliex = client.get(
+        "/distributions",
+        params={"ticker": "RLIEX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    rliex_2025_oi = [
+        Decimal(row["amount"])
+        for row in rliex["items"]
+        if row.get("ticker") == "RLIEX"
+        and row.get("estimate_type") == "ordinary_income"
+        and str(row.get("as_of") or "").startswith("2025-12-31")
+    ]
+    assert Decimal("0.48") in rliex_2025_oi
+    rliex_2025_cg = [
+        Decimal(row["amount"])
+        for row in rliex["items"]
+        if row.get("ticker") == "RLIEX"
+        and row.get("estimate_type") == "total_capital_gains"
+        and str(row.get("as_of") or "").startswith("2025-12-31")
+    ]
+    assert Decimal("1.84") in rliex_2025_cg
+    rliex_2024_oi = [
+        Decimal(row["amount"])
+        for row in rliex["items"]
+        if row.get("ticker") == "RLIEX"
+        and row.get("estimate_type") == "ordinary_income"
+        and str(row.get("as_of") or "").startswith("2024-12-31")
+    ]
+    assert Decimal("0.57") in rliex_2024_oi
+    for ticker in WAVE_CD_LAZARD_LEFTOVER_5Y:
+        body = client.get(
+            "/distributions",
+            params={"ticker": ticker, "publication_stage": "final", "page_size": 200},
+        ).json()
+        years = {
+            str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[
+                :4
+            ]
+            for row in body["items"]
+            if row.get("ticker") == ticker and row.get("amount") is not None
+        }
+        assert {"2021", "2022", "2023", "2024", "2025"} <= years, ticker
+
+    # Keep sister WAVE CB Open and WAVE BY Institutional searchable and class-level.
+    lziox = client.get(
+        "/distributions",
+        params={"ticker": "LZIOX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    lziox_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in lziox["items"]
+        if row.get("ticker") == "LZIOX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= lziox_years
+    lziox_2025_oi = [
+        Decimal(row["amount"])
+        for row in lziox["items"]
+        if row.get("ticker") == "LZIOX"
+        and row.get("estimate_type") == "ordinary_income"
+        and str(row.get("as_of") or "").startswith("2025-12-31")
+    ]
+    assert Decimal("0.43") in lziox_2025_oi
+    lziex = client.get(
+        "/distributions",
+        params={"ticker": "LZIEX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    lziex_2024_oi = [
+        Decimal(row["amount"])
+        for row in lziex["items"]
+        if row.get("ticker") == "LZIEX"
+        and row.get("estimate_type") == "ordinary_income"
+        and str(row.get("as_of") or "").startswith("2024-12-31")
+    ]
+    assert Decimal("0.56") in lziex_2024_oi
+    lziox_2024_oi = [
+        Decimal(row["amount"])
+        for row in lziox["items"]
+        if row.get("ticker") == "LZIOX"
+        and row.get("estimate_type") == "ordinary_income"
+        and str(row.get("as_of") or "").startswith("2024-12-31")
+    ]
+    assert Decimal("0.52") in lziox_2024_oi
+
+    pioneer_fetched = client.post(
+        "/ingest/fetch", json={"fund_family": "amundi", "mode": "fixture"}
+    )
+    assert pioneer_fetched.status_code == 200, pioneer_fetched.text
+    for ticker in WAVE_CD_BZ_DISJOINT + WAVE_CD_CA_DISJOINT:
         body = client.get(
             "/distributions",
             params={"ticker": ticker, "publication_stage": "final", "page_size": 200},
