@@ -34,12 +34,31 @@ class AmericanBeaconSource(HtmlTableSource):
         "3y AHL Multi-Alternatives / Garcia Hamilton Quality Bond / NIS "
         "Core Plus are absent from the 2021 and 2022 YE books (not listed). "
         "Official dashes / absent rows stay unmatched — never invent $0. "
+        "Official 5y WAVE BP leftover (existing in-book only): Garcia Hamilton "
+        "Quality Bond FYE October 31 N-CSR Financial Highlights unlock leftover "
+        "2021–2022 on the 2023–2025 paid year-end book (R5 GHQIX / Y GHQYX / "
+        "Investor GHQPX / R6 GHQRX). Calendar-safe as_of 10/31. Class-level — "
+        "never sibling-copied. Income is ordinary income; net realized gain is "
+        "unsplit total capital gains. Issuer dashes omitted (2022 CG) — never "
+        "invent $0. 2023–2025 stay on the existing paid YE PDFs. N-CSR "
+        "https://www.sec.gov/Archives/edgar/data/809593/000119312526005743/"
+        "d77694dncsr.htm (0001193125-26-005743) verified against the official "
+        "October 31 2023 annual-report Financial Highlights. SiM High Yield "
+        "FYE August 31, NIS Core Plus FYE January 31, Stephens Mid-Cap Growth "
+        "2023 all-dash, SSI Alternative Income 2024 all-dash, and Sound Point "
+        "2025 all-dash stay unmatched. WAVE BO DWS KTRAX, WAVE BN KGDAX, "
+        "WAVE BM Baird, WAVE BL Thrivent, WAVE BK TOLLX, WAVE BI KTCAX, "
+        "WAVE BJ RiverPark, WAVE BH TCW, WAVE BG DWS Dec 31, and prior BD–BF "
+        "books stay on their leftover pages — not re-emitted here. Alger "
+        "leftovers stay reserved / disjoint. WAVE BP leftover N-CSR paid "
+        "history is fixture-only. "
         "Live WP GET 403 this session — weekly walk still hits the tax-center hub + "
         "2025 PDF URL (empty/403 = no-op success)."
     )
     live_limitations = (
         "Year-end book is PDF. Live WP path is sometimes 403; fixture transcribes "
-        "the official Wayback / issuer full share-class books."
+        "the official Wayback / issuer full share-class books. "
+        "Leftover 2021–2022 Garcia Hamilton Oct 31 N-CSR paid history is fixture-only."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -89,6 +108,16 @@ class AmericanBeaconSource(HtmlTableSource):
                 name="2021_annual_ordinary_income_and_capital_gains",
                 url=f"{archive}/2021YearEndDistributions.pdf",
                 fixture="2021_annual_ordinary_income_and_capital_gains.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="leftover_ncsr_2021_2022_wave_bp",
+                url=(
+                    "https://www.sec.gov/Archives/edgar/data/809593/"
+                    "000119312526005743/d77694dncsr.htm"
+                ),
+                fixture="leftover_ncsr_2021_2022_wave_bp.html",
                 live=False,
                 role="history",
             ),
