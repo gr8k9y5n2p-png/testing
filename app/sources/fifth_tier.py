@@ -381,7 +381,13 @@ class GabelliSource(HtmlTableSource):
         "https://gabelli.com/wp-content/uploads/2026/02/Supplementary-Tax-Information-for-2025.pdf "
         "(GABSX OI $0.12560 / ST $0.02020 / LT $1.65380; GABEX OI $0.30000 / ST $0.60540 / LT $0.82000). "
         "2021–2023 Supplementary-Tax / Year-End-Dividend-Summary sibling URLs returned 403 "
-        "(Wayback CDX empty) — unpaid years stay unmatched. Class A/C/I not in NAV book."
+        "(Wayback CDX empty; 2026-09-17 leftover re-probe still 404). Official 5y WAVE AI "
+        "leftover: Class AAA N-CSR Financial Highlights FYE December 31 2021–2023 fill "
+        "in-book leftovers GABAX / GABBX / GICPX to 5y and add GABGX 2021+2023 year-depth. "
+        "Heroes: GABAX 2021 OI $0.19 / CG $5.53; GABBX 2022 CG $0.24 / ROC $0.04; GICPX "
+        "2021 OI $0.02 / CG $2.28 (as_of 12/31). GABGX 2022 distribution columns are "
+        "official dashes — unmatched. GABSX / GABEX Equity Series FYE September 30 not "
+        "calendar-safe. Class A/C/I not in NAV book — never copied."
     )
     live_limitations = (
         "Year-end book is PDF. Live GET is sometimes 403; fixture transcribes "
@@ -420,6 +426,17 @@ class GabelliSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
+            ),
+            PageSpec(
+                name="leftover_ncsr_aaa_2021_2023",
+                url=(
+                    "https://www.sec.gov/Archives/edgar/data/783898/"
+                    "000182912624001467/gabelliasset_ncsr.htm"
+                ),
+                fixture="leftover_ncsr_aaa_2021_2023.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
             ),
         ]
 

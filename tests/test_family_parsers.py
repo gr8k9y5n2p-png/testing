@@ -2594,6 +2594,26 @@ def test_fifth_tier_fixtures() -> None:
     assert gabex_2025.amount == Decimal("0.60540")
     assert "GABGX" not in {r.ticker for r in gabelli_leftover}
 
+    gabelli_ncsr = parse_distribution_html(
+        (ROOT / "gabelli" / "leftover_ncsr_aaa_2021_2023.html").read_text(encoding="utf-8"),
+        source_url=(
+            "https://www.sec.gov/Archives/edgar/data/783898/"
+            "000182912624001467/gabelliasset_ncsr.htm"
+        ),
+        fund_family="Gabelli",
+    )
+    gabax_ncsr = next(
+        r
+        for r in gabelli_ncsr
+        if r.ticker == "GABAX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and r.as_of
+        and str(r.as_of) == "2021-12-31"
+    )
+    assert gabax_ncsr.amount == Decimal("5.53")
+    assert gabax_ncsr.publication_stage == PublicationStage.final
+    assert "GATAX" not in {r.ticker for r in gabelli_ncsr}
+
     royce = parse_distribution_html(
         (ROOT / "royce" / "2025_year_end_distributions.html").read_text(encoding="utf-8"),
         source_url="fixture://royce",
