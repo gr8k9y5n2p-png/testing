@@ -2,27 +2,27 @@
 
 import type { Facets, SearchFilters } from "@/data/types";
 
+/** Homepage Upcoming / Announced filters. Year lives on Paid History only. */
+export type UpcomingSearchFilters = Pick<SearchFilters, "family" | "category">;
+
 export function SearchToolbar({
   filters,
   facets,
   onChange,
 }: {
-  filters: SearchFilters;
-  facets: Facets;
-  onChange: (next: SearchFilters) => void;
+  filters: UpcomingSearchFilters;
+  facets: Pick<Facets, "families" | "categories">;
+  onChange: (next: UpcomingSearchFilters) => void;
 }) {
-  function update<K extends keyof SearchFilters>(key: K, value: SearchFilters[K]) {
+  function update<K extends keyof UpcomingSearchFilters>(
+    key: K,
+    value: UpcomingSearchFilters[K],
+  ) {
     onChange({ ...filters, [key]: value || undefined });
   }
 
   const selectClass =
     "h-10 w-full min-w-[10rem] rounded-md border border-line bg-surface px-2.5 text-sm text-ink";
-  const years = facets.years;
-  const selectedYear = filters.year;
-  const yearOptions =
-    selectedYear && !years.includes(selectedYear)
-      ? [selectedYear, ...years]
-      : years;
 
   return (
     <div className="mb-4 rounded-lg border border-line bg-surface p-3 shadow-[0_1px_2px_rgba(26,29,26,0.04)]">
@@ -61,35 +61,13 @@ export function SearchToolbar({
             ))}
           </select>
         </label>
-        <div className="flex flex-col">
-          <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.12em] text-faint">
-            Year
-          </span>
-          <div className="flex gap-2">
-            <select
-              className={selectClass}
-              value={filters.year ?? ""}
-              onChange={(event) =>
-                update("year", event.target.value ? Number(event.target.value) : undefined)
-              }
-              aria-label="Distribution year"
-            >
-              <option value="">All years</option>
-              {yearOptions.map((year) => (
-                <option key={year} value={year}>
-                  {year}
-                </option>
-              ))}
-            </select>
-            <button
-              type="button"
-              onClick={() => onChange({})}
-              className="h-10 shrink-0 rounded-md border border-line px-3 text-sm text-muted hover:border-line-strong hover:text-ink"
-            >
-              Clear
-            </button>
-          </div>
-        </div>
+        <button
+          type="button"
+          onClick={() => onChange({})}
+          className="h-10 shrink-0 rounded-md border border-line px-3 text-sm text-muted hover:border-line-strong hover:text-ink"
+        >
+          Clear
+        </button>
       </div>
     </div>
   );
