@@ -442,6 +442,55 @@ describe("Search Upcoming still-future unpaid prelims", () => {
     assert.equal(isUpcomingFund(cghm, TODAY), false);
     assert.equal(splitFundsByBucket([amcpx, cghm]).upcoming.length, 0);
   });
+
+  it("Paid History ticker click does not put paid AMCPX rows into Search Upcoming", () => {
+    const unpaid = hydrate(
+      "FGRIX",
+      "Growth & Income",
+      "Fidelity",
+      true,
+      [
+        row({
+          id: "fgrix-ltcg-future",
+          ticker: "FGRIX",
+          fund_name: "Growth & Income",
+          estimate_type: "long_term_capital_gains",
+          amount: "5.552000",
+          amount_unit: "per_share",
+          ex_date: "2026-12-15",
+          payable_date: "2026-12-17",
+          as_of: "2026-07-31",
+          publication_stage: "preliminary_estimate",
+        }),
+      ],
+    );
+    const amcpx = hydrate("AMCPX", "AMCAP Fund", "American Funds", true, AMCPX_ROWS);
+    const history = paidHistoryViews([amcpx], 2026);
+    const clicked = history.find((row) => row.ticker === "AMCPX");
+    assert.ok(clicked);
+    assert.equal(clicked.publicationStage, "paid");
+    assert.equal(clicked.exDate, "2026-06-16");
+
+    const selected = buildSearchTableFunds([unpaid], [clicked], {}, "AMCPX");
+    const { upcoming, paid } = splitFundsByBucket(selected);
+    assert.equal(
+      upcoming.some((fund) => fund.ticker === "AMCPX"),
+      false,
+      "clicked Paid History AMCPX must stay out of Search Upcoming",
+    );
+    assert.equal(
+      upcoming.some(
+        (fund) =>
+          fund.publicationStage === "paid" ||
+          fund.exDate === "2026-06-16" ||
+          fund.payableDate === "2026-06-17",
+      ),
+      false,
+      "Search Upcoming must not show Paid / Jun 2026 paid dates after the click",
+    );
+    assert.ok(upcoming.some((fund) => fund.ticker === "FGRIX"));
+    assert.ok(paid.some((fund) => fund.ticker === "AMCPX"));
+  });
 });
 
 describe("Search Paid history 2026 midyear paids", () => {

@@ -1,13 +1,10 @@
 import type { ReactNode } from "react";
 import type { FundEstimate } from "@/data/types";
-import { isUpcomingFund, publicationStageLabel } from "@/data/distribution-bucket";
-import { hideUpcomingAmounts } from "@/data/hydrate-funds";
+import { publicationStageLabel } from "@/data/distribution-bucket";
 import type { IllustrationComponent, IllustrateResponse } from "@/lib/illustrate/types";
 import {
+  dollarIllustrationUpcoming,
   illustrationComponentBucket,
-  splitIllustrationComponents,
-  upcomingEstimateTypeRows,
-  upcomingIllustrationTotals,
 } from "@/lib/illustrate/illustration-upcoming";
 import { DistributionDateStrip } from "@/components/DistributionDateStrip";
 import { Disclaimer } from "@/components/Disclaimer";
@@ -49,14 +46,11 @@ export function IllustrationResults({
 }) {
   const { components } = result;
   const warnings = userFacingNotes(result.warnings);
-  const { upcoming: upcomingAll } = splitIllustrationComponents(
-    components,
-    fund,
-  );
-  const upcomingComponents = upcomingEstimateTypeRows(upcomingAll, fund);
-  const upcomingTotals = upcomingIllustrationTotals(upcomingComponents);
-  const catalogUpcoming =
-    fund != null && isUpcomingFund(fund) && !hideUpcomingAmounts(fund);
+  const {
+    rows: upcomingComponents,
+    totals: upcomingTotals,
+    catalogUpcoming,
+  } = dollarIllustrationUpcoming(components, fund);
 
   return (
     <div className="space-y-4">
