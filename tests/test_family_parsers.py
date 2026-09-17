@@ -4544,6 +4544,70 @@ def test_ninth_tier_fixtures() -> None:
     )
     assert aadex_2024.amount == Decimal("2.5614")
 
+    beacon_ncsr_bp = parse_distribution_html(
+        (ROOT / "american_beacon" / "leftover_ncsr_2021_2022_wave_bp.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url=(
+            "https://www.sec.gov/Archives/edgar/data/809593/"
+            "000119312526005743/d77694dncsr.htm"
+        ),
+        fund_family="American Beacon",
+    )
+    ghqix_2022_oi = next(
+        r
+        for r in beacon_ncsr_bp
+        if r.ticker == "GHQIX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.as_of
+        and str(r.as_of) == "2022-10-31"
+    )
+    assert ghqix_2022_oi.amount == Decimal("0.21")
+    assert ghqix_2022_oi.publication_stage == PublicationStage.final
+    ghqix_2021_cg = next(
+        r
+        for r in beacon_ncsr_bp
+        if r.ticker == "GHQIX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and r.as_of
+        and str(r.as_of) == "2021-10-31"
+    )
+    assert ghqix_2021_cg.amount == Decimal("0.19")
+    ghqpx_2022_oi = next(
+        r
+        for r in beacon_ncsr_bp
+        if r.ticker == "GHQPX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.as_of
+        and str(r.as_of) == "2022-10-31"
+    )
+    assert ghqpx_2022_oi.amount == Decimal("0.18")
+    assert {r.ticker for r in beacon_ncsr_bp} == {"GHQIX", "GHQYX", "GHQPX", "GHQRX"}
+    assert not any(
+        r.ticker
+        in {
+            "KTRAX",
+            "KGDAX",
+            "TOLLX",
+            "KTCAX",
+            "BTIEX",
+            "SXPAX",
+            "CCGIX",
+            "SFMIX",
+            "SHOAX",
+            "NISAX",
+            "SSIJX",
+        }
+        for r in beacon_ncsr_bp
+    )
+    assert not any(
+        r.ticker in {"GHQIX", "GHQYX", "GHQPX", "GHQRX"}
+        and r.estimate_type == EstimateType.total_capital_gains
+        and r.as_of
+        and r.as_of.year == 2022
+        for r in beacon_ncsr_bp
+    )
+
     bg = parse_distribution_html(
         (ROOT / "baillie_gifford" / "2025_estimated_capital_gains.html").read_text(
             encoding="utf-8"
