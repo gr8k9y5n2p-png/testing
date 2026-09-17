@@ -312,12 +312,22 @@ class HartfordSource(HtmlTableSource):
         "Official 5y WAVE AM leftover re-probe (2026-09-17): I/C/F/R/Y 2021–2024 "
         "still unpublished on the Class A historical PDF; product-page HTML still "
         "truncates to 2025–2026; HDBAX 2021 / IHOAX 2021–2024 stay unmatched. "
-        "No calendar-safe class-level official publish for leftover share classes."
+        "Official 5y WAVE AN leftover (2026-09-17, in-book only): class-level "
+        "N-CSR Financial Highlights years ended October 31, 2021–2024 fill leftover "
+        "I/C/F/R/Y (and leftover Class A IHOAX) already on 2025 product-page books. "
+        "as_of 10/31/YYYY is calendar-safe (same rule as ACI / GS Oct 31). Income "
+        "is ordinary income; net realized gain is unsplit total capital gains. "
+        "Never copied from Class A historical PDF onto sibling classes (HDGIX 2023 "
+        "CG $1.37 is not IHGIX). Heroes: HDGIX 2021 OI $0.41 / CG $0.57; 2022 OI "
+        "$0.41 / CG $1.62; 2023 OI $0.47 / CG $1.37; 2024 OI $0.58 / CG $0.11; "
+        "HFMIX / HGIIX / IHOAX same N-CSR books. Walls: HDBAX 2021 still unpublished "
+        "/ pre-inception; Class Y leftovers whose N-CSR books omit Y (HBAIX / "
+        "HCKIX); Schroders R6 leftovers unpublished on these books."
     )
     live_limitations = (
         "Estimate and final books are PDF. Share-class product pages are HTML; "
         "fixture transcribes the public 10/31 estimate plus finals plus 2025 "
-        "product-page classes."
+        "product-page classes. WAVE AN leftover N-CSR 2021–2024 is fixture-only."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -364,6 +374,17 @@ class HartfordSource(HtmlTableSource):
                     + "Tax%20Center/capgainsdistributions/HistoricalCapitalGainsReport.pdf"
                 ),
                 fixture="2021_2024_historical_capital_gains.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
+            ),
+            PageSpec(
+                name="leftover_ncsr_share_classes_wave_an",
+                url=(
+                    "https://www.sec.gov/Archives/edgar/data/1006415/"
+                    "000119312524000389/d647714dncsr.htm"
+                ),
+                fixture="leftover_ncsr_share_classes_wave_an.html",
                 live=False,
                 role="history",
                 large_aum_only=False,
@@ -716,13 +737,22 @@ class ArtisanSource(HtmlTableSource):
         "still has no ARTMX / ARTSX / ARTTX / APFDX / APHMX / APHSX / APHTX "
         "rows; 2021 inception leftovers (International Explorer / Value Income / "
         "debt) stay unmatched. "
+        "Official 5y WAVE AN leftover (2026-09-17, in-book only): Artisan Partners "
+        "Funds, Inc. N-CSR Financial Highlights year ended September 30, 2023 fill "
+        "leftover Mid / Small / Focus / Discovery Institutional class-level OI "
+        "(ARTMX $0.08 / APDMX $0.13 / APHMX $0.16; ARTSX $0.08 / APDSX $0.10 / "
+        "APHSX $0.15; ARTTX $0.05 / APDTX $0.08 / APHTX $0.10; APHDX $0.02). "
+        "as_of 9/30/2023 is calendar-safe. CG dashes omitted. Never copied across "
+        "Investor / Advisor / Institutional. Walls: APFDX / APDDX 2023 N-CSR "
+        "dashes; 2021 inception leftovers stay unmatched. "
         "Year selector for older HTML YE tables is JavaScript — skip SPA. "
         "NRA / DRD PDFs are tax-character layouts, not ingested as CG."
     )
     live_limitations = (
         "Live YTD page is public HTML; year-end equity capital-gains sit behind a year selector. "
         "2021–2025 ICI-style Year-End Tax Reporting PDFs are the full-book fixtures. "
-        "Leftover years are the same official ICI PDFs plus printed-$0 HTML."
+        "Leftover years are the same official ICI PDFs plus printed-$0 HTML. "
+        "WAVE AN leftover 2023 N-CSR is fixture-only."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -812,6 +842,17 @@ class ArtisanSource(HtmlTableSource):
                     "Year-End-Tax-Reporting-Information-2022.pdf"
                 ),
                 fixture="ici_leftover_printed_zero.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
+            ),
+            PageSpec(
+                name="leftover_ncsr_2023_wave_an",
+                url=(
+                    "https://www.sec.gov/Archives/edgar/data/935015/"
+                    "000199937123000698/artisan-ncsr_093023.htm"
+                ),
+                fixture="leftover_ncsr_2023_wave_an.html",
                 live=False,
                 role="history",
                 large_aum_only=False,

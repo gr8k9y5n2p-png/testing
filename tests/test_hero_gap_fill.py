@@ -296,5 +296,9 @@ def test_fixture_book_lookback_stays_official_only() -> None:
     # Real Estate Equity leftover 2021 N-CSR +12 MF. Honest pin remasured
     # after additive rebase onto #209 tip e5cbe71d: 3850 → 3862 (+12 MF;
     # ETF 5y unchanged at 758).
-    assert digest.funds_with_5y == 3862
+    # WAVE AN leftover: Hartford leftover I/C/F/R/Y + IHOAX Oct 31 N-CSR
+    # + Artisan Mid/Small/Focus/Discovery 2023 N-CSR +136 MF. Honest pin
+    # remasured on #210 tip 51e2b28b: 3862 → 3998 (+136 MF; ETF 5y
+    # unchanged at 758).
+    assert digest.funds_with_5y == 3998
     assert digest.book_funds >= 7200

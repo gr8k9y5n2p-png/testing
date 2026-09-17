@@ -2329,6 +2329,117 @@ def test_fourth_tier_fixtures() -> None:
     assert haiax_2024.amount == Decimal("4.43")
     assert len({(r.ticker or "").upper() or r.fund_name for r in hartford_2024}) >= 14
 
+    hartford_an = parse_distribution_html(
+        (ROOT / "hartford" / "leftover_ncsr_share_classes_wave_an.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url=(
+            "https://www.sec.gov/Archives/edgar/data/1006415/"
+            "000119312524000389/d647714dncsr.htm"
+        ),
+        fund_family="Hartford Funds",
+    )
+    hdgix_2023_an = next(
+        r
+        for r in hartford_an
+        if r.ticker == "HDGIX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and str(r.as_of) == "2023-10-31"
+    )
+    assert hdgix_2023_an.amount == Decimal("1.37")
+    assert hdgix_2023_an.publication_stage == PublicationStage.final
+    hdgix_2021_an = next(
+        r
+        for r in hartford_an
+        if r.ticker == "HDGIX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and str(r.as_of) == "2021-10-31"
+    )
+    assert hdgix_2021_an.amount == Decimal("0.41")
+    ihoax_2022_an = next(
+        r
+        for r in hartford_an
+        if r.ticker == "IHOAX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and str(r.as_of) == "2022-10-31"
+    )
+    assert ihoax_2022_an.amount == Decimal("1.75")
+    ihoax_2021_an = next(
+        r
+        for r in hartford_an
+        if r.ticker == "IHOAX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and str(r.as_of) == "2021-10-31"
+    )
+    assert ihoax_2021_an.amount == Decimal("0.07")
+    assert "HDBAX" not in {r.ticker for r in hartford_an}
+    assert "HBAIX" not in {r.ticker for r in hartford_an}
+    assert "HCKIX" not in {r.ticker for r in hartford_an}
+
+    artisan_an = parse_distribution_html(
+        (ROOT / "artisan" / "leftover_ncsr_2023_wave_an.html").read_text(encoding="utf-8"),
+        source_url=(
+            "https://www.sec.gov/Archives/edgar/data/935015/"
+            "000199937123000698/artisan-ncsr_093023.htm"
+        ),
+        fund_family="Artisan Partners",
+    )
+    artmx_2023_an = next(
+        r
+        for r in artisan_an
+        if r.ticker == "ARTMX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and str(r.as_of) == "2023-09-30"
+    )
+    assert artmx_2023_an.amount == Decimal("0.08")
+    assert artmx_2023_an.publication_stage == PublicationStage.final
+    aphmx_2023_an = next(
+        r
+        for r in artisan_an
+        if r.ticker == "APHMX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and str(r.as_of) == "2023-09-30"
+    )
+    assert aphmx_2023_an.amount == Decimal("0.16")
+    aphsx_2023_an = next(
+        r
+        for r in artisan_an
+        if r.ticker == "APHSX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and str(r.as_of) == "2023-09-30"
+    )
+    assert aphsx_2023_an.amount == Decimal("0.15")
+    aphtx_2023_an = next(
+        r
+        for r in artisan_an
+        if r.ticker == "APHTX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and str(r.as_of) == "2023-09-30"
+    )
+    assert aphtx_2023_an.amount == Decimal("0.10")
+    aphdX_2023_an = next(
+        r
+        for r in artisan_an
+        if r.ticker == "APHDX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and str(r.as_of) == "2023-09-30"
+    )
+    assert aphdX_2023_an.amount == Decimal("0.02")
+    assert {r.ticker for r in artisan_an} == {
+        "ARTMX",
+        "APDMX",
+        "APHMX",
+        "ARTSX",
+        "APDSX",
+        "APHSX",
+        "ARTTX",
+        "APDTX",
+        "APHTX",
+        "APHDX",
+    }
+    assert "APFDX" not in {r.ticker for r in artisan_an}
+    assert "APDDX" not in {r.ticker for r in artisan_an}
+
     mac_2024 = parse_distribution_html(
         (ROOT / "macquarie" / "2024_paid_capital_gains.html").read_text(encoding="utf-8"),
         source_url="fixture://mac-2024",
