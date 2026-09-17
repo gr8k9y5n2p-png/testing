@@ -87,7 +87,7 @@ overwrite Compare’s holding. Soft-wall / Checkout stay off.
 
 Public account: `{ id, email, stripeCustomerId }` (`stripeCustomerId` is `null` until Checkout).
 
-Forgot password always returns 200 for a valid email (no account-existence leak). Reset tokens are stored as SHA-256 hashes, expire in one hour, and are single-use. Mail is Resend from `noreply@getaftertax.com` when `RESEND_API_KEY` is set — the response does not claim a message was sent when it was not. Friends-beta shared password stays a separate site gate (`/account/forgot` and `/account/reset` stay reachable so the emailed link works).
+Forgot password always returns 200 for a valid email (no account-existence leak). Reset tokens are stored as SHA-256 hashes, expire in one hour, and are single-use. Mail is Resend from `noreply@getaftertax.com` when `RESEND_API_KEY` is set. Production also needs the Resend DKIM + SPF records on `getaftertax.com` (copy from the Resend Domains dashboard). The response does not claim a message was sent when the key or domain is missing. Friends-beta shared password stays a separate site gate (`/account/forgot` and `/account/reset` stay reachable so the emailed link works).
 
 ## Persistence
 

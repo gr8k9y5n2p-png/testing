@@ -225,13 +225,23 @@ Every row is scoped to `accountId`. User A cannot read user B.
 
 **Forgot password:** `/account/forgot` → hashed one-time token (1 hour, single use) → Resend transactional mail from **`noreply@getaftertax.com`** with `https://getaftertax.com/account/reset?token=…` → `POST /api/account/reset` sets the new scrypt hash, invalidates the token, and signs in. Not Gmail. `POST /api/account/forgot` always returns 200 for a valid email (no account-existence leak). The user-facing copy depends only on whether mail is configured — it does **not** say a message was sent when `RESEND_API_KEY` is unset. Non-prod logs the reset URL; production does not.
 
-**Production email env (Vercel):**
+**Production email env (Vercel → Project → Settings → Environment Variables, Production + Preview):**
 
 | Var | Required | Notes |
 | --- | --- | --- |
-| `RESEND_API_KEY` | yes, to actually send | Resend API key. Verify the `getaftertax.com` domain in Resend and add `noreply@getaftertax.com`. |
-| `AFTERTAX_MAIL_FROM` | no | Defaults to `Aftertax <noreply@getaftertax.com>`. |
-| `AFTERTAX_PUBLIC_URL` | recommended | Reset link origin. Production should be `https://getaftertax.com`. |
+| `RESEND_API_KEY` | **yes, to actually send** | Resend API key. Without it, Forgot Password still creates a hashed token but the UI says no email was sent. |
+| `AFTERTAX_MAIL_FROM` | no | Defaults to `Aftertax <noreply@getaftertax.com>`. Change only after that address is verified on Resend. |
+| `AFTERTAX_PUBLIC_URL` | recommended | Reset-link origin. Production: `https://getaftertax.com`. |
+
+**DNS (getaftertax.com) — copy the exact records from Resend → Domains → Records.** Do not invent values.
+
+1. Add domain `getaftertax.com` in the Resend dashboard (send from `noreply@getaftertax.com` once verified; no mailbox required).
+2. Publish the **DKIM** record(s) Resend shows (`resend._domainkey` TXT, or the newer CNAME set).
+3. Publish the **SPF** record(s) Resend shows (classic: SPF TXT + return-path MX, often on a `send` subdomain; newer domains may use CNAMEs). Merge with any existing SPF — one `v=spf1` TXT per host.
+4. Optional but recommended: **DMARC** at `_dmarc.getaftertax.com` (`v=DMARC1; p=none; rua=mailto:operations@getaftertax.com` to start).
+5. Wait for Resend status **verified** (often minutes, up to 72 hours). Then set `RESEND_API_KEY` on Vercel and redeploy.
+
+Until DNS + `RESEND_API_KEY` are in place, Forgot Password is honest: same 200 for known/unknown emails, copy says mail is not configured, non-prod logs the reset URL.
 
 **Auth root cause (login always “wrong password”):** Account rows lived in a process-local JSON snapshot. Sign-up wrote one serverless instance; sign-in read another and treated a miss as a bad password. The file store now reloads from disk on every read/write. Pin `AFTERTAX_ACCOUNTS_PATH` to a persistent disk in production (Vercel `/tmp` is still ephemeral across instances). Session cookies now honor `x-forwarded-proto` so `Secure` is set behind the HTTPS proxy. Hash compare is still scrypt + timing-safe equal — no bypass.
 

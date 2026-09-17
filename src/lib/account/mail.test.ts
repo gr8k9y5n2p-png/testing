@@ -1,4 +1,7 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, it } from "node:test";
 import {
   DEFAULT_MAIL_FROM,
@@ -76,5 +79,19 @@ describe("password-reset Resend mail", () => {
     );
     assert.deepEqual(sent, { configured: true, sent: true });
     assert.deepEqual(calls, ["POST https://api.resend.com/emails"]);
+  });
+
+  it("documents Vercel RESEND_API_KEY plus getaftertax.com SPF/DKIM", () => {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const readme = readFileSync(join(here, "../../../README.md"), "utf8");
+    const env = readFileSync(join(here, "../../../.env.example"), "utf8");
+    for (const source of [readme, env]) {
+      assert.match(source, /RESEND_API_KEY/);
+      assert.match(source, /noreply@getaftertax\.com/);
+      assert.match(source, /DKIM/);
+      assert.match(source, /SPF/);
+    }
+    assert.match(readme, /DMARC/);
+    assert.match(readme, /does \*\*not\*\* say a message was sent|no email was sent/);
   });
 });
