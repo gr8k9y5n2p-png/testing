@@ -14,7 +14,8 @@ import type { PerformanceQuery, PerformanceResponse } from "../performance/types
  *   3 tickers: 6 compare + 6 performance.
  *
  * After:
- *   1 ticker → 1 YoY compare + 1 performance (in parallel).
+ *   /compare first paint skips the unpaid catalog dump.
+ *   1 ticker → 1 YoY compare + 1 performance (in parallel) + 1 identity hydrate.
  *   3 tickers → 3 YoY + 3 performance (in parallel, progressive onRow).
  *   Adding a 4th ticker does not require a second compare storm for the
  *   first three when prefetch/cache covers them.

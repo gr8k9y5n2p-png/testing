@@ -17,8 +17,10 @@ import {
   filledCompareTickers,
   growthFundsFromSlots,
   keepFreshCompareRows,
+  mergeCompareFundViews,
   mergeCompareLoadedRows,
   padCompareSlots,
+  pickFundViewFromSearch,
   parseCompareHoldingDollars,
   parseCompareQueryTickers,
   setCompareSlot,
@@ -704,5 +706,38 @@ describe("compare progressive loaded rows", () => {
       merged.map((row) => row.ticker),
       ["AGTHX", "AMCPX"],
     );
+  });
+
+  it("merges per-ticker fund identity without dropping earlier slots", () => {
+    const first = mergeCompareFundViews([], view("AGTHX"), ["AGTHX"]);
+    const next = mergeCompareFundViews(first, view("AMCPX"), ["AGTHX", "AMCPX"]);
+    assert.deepEqual(
+      next.map((fund) => fund.ticker),
+      ["AGTHX", "AMCPX"],
+    );
+    assert.equal(
+      pickFundViewFromSearch(next, "agthx")?.ticker,
+      "AGTHX",
+    );
+    assert.equal(pickFundViewFromSearch([{ ticker: "VFIAX" }], "AGTHX"), null);
+  });
+});
+
+describe("compare page first paint", () => {
+  it("does not block /compare on the unpaid catalog dump", () => {
+    const page = readFileSync(
+      join(here, "../../app/compare/page.tsx"),
+      "utf8",
+    );
+    const workspace = readFileSync(
+      join(here, "../../components/illustrate/CompareWorkspace.tsx"),
+      "utf8",
+    );
+    assert.doesNotMatch(page, /getDistributionRepository/);
+    assert.doesNotMatch(page, /repository\.search/);
+    assert.match(page, /loadCoverageSnapshot/);
+    assert.match(workspace, /fetchFundsSearch/);
+    assert.match(workspace, /navOnly: false/);
+    assert.match(workspace, /pickFundViewFromSearch/);
   });
 });

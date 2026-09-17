@@ -87,6 +87,52 @@ export function mergeCompareLoadedRows(
     .filter((row): row is CompareLoadedTicker => Boolean(row));
 }
 
+function fundViewTicker(fund: FundEstimateView): string {
+  return fund.ticker.trim().toUpperCase();
+}
+
+/** Merge per-ticker identity / unpaid hydrate without dropping other slots. */
+export function mergeCompareFundViews(
+  current: FundEstimateView[],
+  incoming: FundEstimateView,
+  order: string[] = [],
+): FundEstimateView[] {
+  const key = fundViewTicker(incoming);
+  if (!key) return current;
+  const byTicker = new Map(
+    current.map((fund) => [fundViewTicker(fund), fund]),
+  );
+  byTicker.set(key, incoming);
+  const keys = order.length ? order : [...byTicker.keys()];
+  const seen = new Set<string>();
+  const next: FundEstimateView[] = [];
+  for (const raw of keys) {
+    const ticker = raw.trim().toUpperCase();
+    if (!ticker || seen.has(ticker)) continue;
+    seen.add(ticker);
+    const fund = byTicker.get(ticker);
+    if (fund) next.push(fund);
+  }
+  return next;
+}
+
+/** Exact ticker hit from `/api/funds`. Null when the page has no identity row. */
+export function pickFundViewFromSearch(
+  items: unknown[],
+  ticker: string,
+): FundEstimateView | null {
+  const key = ticker.trim().toUpperCase();
+  if (!key) return null;
+  for (const item of items) {
+    if (!item || typeof item !== "object") continue;
+    const row = item as Partial<FundEstimateView>;
+    if (String(row.ticker ?? "").trim().toUpperCase() !== key) continue;
+    if (!row.fundName && !row.id) continue;
+    return row as FundEstimateView;
+  }
+  return null;
+}
+
 export function taxRatesEqual(left: TaxRates, right: TaxRates): boolean {
   return (
     left.ordinary_income === right.ordinary_income &&

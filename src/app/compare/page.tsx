@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Disclaimer } from "@/components/Disclaimer";
 import { CoverageProvider } from "@/components/coverage/CoverageProvider";
 import { CompareWorkspace } from "@/components/illustrate/CompareWorkspace";
-import { getDistributionRepository } from "@/data";
 import { loadCoverageSnapshot } from "@/lib/data-api/coverage";
 import { COPY } from "@/lib/copy";
 import { parseCompareQueryTickers } from "@/lib/illustrate/compare-workspace";
@@ -26,18 +25,15 @@ export default async function ComparePage({
 }) {
   const params = await searchParams;
   const initialTickers = parseCompareQueryTickers(params);
-  const repository = await getDistributionRepository();
-  const [funds, coverage] = await Promise.all([
-    repository.search(),
-    loadCoverageSnapshot(),
-  ]);
+  // Do not wait on the unpaid-announce catalog dump. Compare hydrates
+  // identity per confirmed ticker so Growth / tax can start immediately.
+  const coverage = await loadCoverageSnapshot();
 
   return (
     <main className="mx-auto w-full max-w-7xl px-4 pb-16 pt-6 sm:px-6 lg:px-8">
       <CoverageProvider families={coverage.families}>
         <CompareWorkspace
           key={initialTickers.join(",") || "empty"}
-          funds={funds}
           initialTickers={initialTickers}
         />
       </CoverageProvider>
