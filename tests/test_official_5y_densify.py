@@ -22404,7 +22404,7 @@ WAVE_BU_BQ_DISJOINT = WAVE_BQ_PIONEER_LEFTOVER_5Y
 WAVE_BU_LEFTOVER_URL = "leftover_ncsr_pcgrx_2021_2022_wave_bu"
 
 
-def _wave_bu_leftover_rows(records: list) -> list:
+def _wave_bu_leftover_rows(records: list[NormalizedRecord]) -> list[NormalizedRecord]:
     return [
         row
         for row in records
