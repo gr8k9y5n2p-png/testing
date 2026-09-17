@@ -2013,6 +2013,37 @@ def test_third_tier_fixtures() -> None:
     )
     assert stvtx_2024.amount == Decimal("1.907616")
 
+    virtus_ncsr = parse_distribution_html(
+        (ROOT / "virtus" / "leftover_ncsr_asset_trust_2021_2024_wave_as.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url=(
+            "https://www.sec.gov/Archives/edgar/data/1018593/"
+            "000119312526093483/d65653dncsr.htm"
+        ),
+        fund_family="Virtus",
+    )
+    stvtx_ncsr = next(
+        r
+        for r in virtus_ncsr
+        if r.ticker == "STVTX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and r.as_of
+        and str(r.as_of) == "2021-12-31"
+    )
+    assert stvtx_ncsr.amount == Decimal("3.88")
+    assert stvtx_ncsr.publication_stage == PublicationStage.final
+    sviiix_ncsr = next(
+        r
+        for r in virtus_ncsr
+        if r.ticker == "SVIIX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.as_of
+        and str(r.as_of) == "2021-12-31"
+    )
+    assert sviiix_ncsr.amount == Decimal("0.10")
+    assert {r.ticker for r in virtus_ncsr if r.as_of and r.as_of.year == 2025} == set()
+
 
 def test_thrivent_live_header_shape() -> None:
     html = """

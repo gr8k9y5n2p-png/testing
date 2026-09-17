@@ -309,5 +309,8 @@ def test_fixture_book_lookback_stays_official_only() -> None:
     # WAVE AR leftover: Homestead leftover no-load FYE Dec 31 N-CSR
     # Financial Highlights +5 MF. Honest pin remasured on WAVE AP tip
     # c8dee49: 4028 → 4033 (+5 MF; ETF 5y unchanged at 758).
-    assert digest.funds_with_5y == 4033
+    # WAVE AS leftover: Virtus Asset Trust leftover FYE Dec 31 N-CSR
+    # Financial Highlights +37 MF. Honest pin remasured on WAVE AR tip
+    # e82c647: 4033 → 4070 (+37 MF; ETF 5y unchanged at 758).
+    assert digest.funds_with_5y == 4070
     assert digest.book_funds >= 7200

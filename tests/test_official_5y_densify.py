@@ -874,8 +874,19 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # calendar-safe). Does not redo AF–AP (especially AO Fidelity Class I,
     # AP Vanguard ICI Dec, AN Hartford/Artisan). Honest pin remasured on
     # WAVE AP tip c8dee49: 4028 → 4033 (+5 MF; ETF 5y unchanged at 758).
-    assert digest.funds_with_5y == 4033
-    assert digest.funds_with_5y_mf == 3275
+    # WAVE AS leftover (existing in-book only): Virtus Asset Trust leftover
+    # FYE Dec 31 N-CSR Financial Highlights unlock +37 MF already on the
+    # 2025 calendar book (Ceredex / SGA International Growth / Silvant
+    # Large-Cap Growth / Seix). Disjoint from AQ (Janus / Putnam /
+    # Touchstone / Victory / PGIM / AB / EV / MSIM / Macquarie) and AR
+    # Homestead. Preferred GMO / Tweedy already 5y; Calamos / First Eagle
+    # GRA-Smid / Royce 2023 / Wasatch 2023 / KAR FYE Sep 30 remasured as
+    # walls. Does not redo AF–AR (especially AO Fidelity Class I, AP
+    # Vanguard ICI Dec, AN Hartford/Artisan, AR Homestead). Honest pin
+    # remasured on WAVE AR tip e82c647: 4033 → 4070 (+37 MF; ETF 5y
+    # unchanged at 758).
+    assert digest.funds_with_5y == 4070
+    assert digest.funds_with_5y_mf == 3312
     assert digest.funds_with_5y_etf == 758
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
@@ -12101,4 +12112,258 @@ def test_wave_ar_heroes_are_searchable(client: TestClient) -> None:
         and row.get("publication_stage") == "final"
     ]
     assert tmvi_early == []
+
+
+WAVE_AS_VIRTUS_LEFTOVER_5Y = (
+    "STVTX",
+    "STVZX",
+    "SVIFX",
+    "SVIIX",
+    "SAMVX",
+    "SMVFX",
+    "SMVTX",
+    "SMVZX",
+    "SASVX",
+    "SCETX",
+    "STCEX",
+    "VVERX",
+    "SCIIX",
+    "SCIZX",
+    "STITX",
+    "STGIX",
+    "STGZX",
+    "STIGX",
+    "SAMBX",
+    "SFRAX",
+    "SFRCX",
+    "SFRZX",
+    "SCFTX",
+    "SFLTX",
+    "HYIZX",
+    "HYPSX",
+    "SAMHX",
+    "SISIX",
+    "STTBX",
+    "CBPSX",
+    "SAMFX",
+    "SAMZX",
+    "SIGVX",
+    "SIGZX",
+    "STCAX",
+    "STCIX",
+    "STCZX",
+)
+
+
+def test_wave_as_virtus_leftover_ncsr_fills_5y() -> None:
+    records = VirtusSource().fetch(mode="fixture").records
+    stvtx_2021_cg = next(
+        row
+        for row in records
+        if row.ticker == "STVTX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2021-12-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert stvtx_2021_cg.amount == Decimal("3.88")
+    stvtx_2021_oi = next(
+        row
+        for row in records
+        if row.ticker == "STVTX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2021-12-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert stvtx_2021_oi.amount == Decimal("0.15")
+    sviiix_2021_oi = next(
+        row
+        for row in records
+        if row.ticker == "SVIIX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2021-12-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert sviiix_2021_oi.amount == Decimal("0.10")
+    stcix_2024_cg = next(
+        row
+        for row in records
+        if row.ticker == "STCIX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2024-12-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert stcix_2024_cg.amount == Decimal("0.08")
+    stgix_2022_oi = next(
+        row
+        for row in records
+        if row.ticker == "STGIX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2022-12-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert stgix_2022_oi.amount == Decimal("0.22")
+    # 2025 stays on the existing calendar PDF — not re-emitted from N-CSR.
+    ncsr_2025 = [
+        row
+        for row in records
+        if row.ticker in WAVE_AS_VIRTUS_LEFTOVER_5Y
+        and row.as_of
+        and row.as_of.year == 2025
+        and row.source_url
+        and "d65653dncsr" in row.source_url
+    ]
+    assert ncsr_2025 == []
+    # Zevenbergen Innovative Growth / SGA International Class C are not
+    # in-book leftovers (Eric freeze).
+    assert [row for row in records if row.ticker in {"SAGAX", "SCICX"}] == []
+    for ticker in WAVE_AS_VIRTUS_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(records, ticker), ticker
+
+
+def test_wave_as_leftover_walls_stay_unmatched() -> None:
+    virtus = VirtusSource().fetch(mode="fixture").records
+    # SSAGX 2021 leftover highlights are official footnote-only dashes.
+    ssagx_2021 = [
+        row
+        for row in virtus
+        if row.ticker == "SSAGX"
+        and row.as_of
+        and str(row.as_of) == "2021-12-31"
+        and row.amount is not None
+    ]
+    assert ssagx_2021 == []
+    # SGA International leftover OI highlights are dashes.
+    sciix_oi = [
+        row
+        for row in virtus
+        if row.ticker == "SCIIX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and row.as_of.year in {2021, 2022, 2023, 2024}
+        and row.amount is not None
+    ]
+    assert sciix_oi == []
+    # Merger Fund / KAR Equity Trust leftovers stay unmatched (calendar PDFs
+    # alias 2025; KAR FYE September 30 is not calendar-safe).
+    merfx_early = [
+        row
+        for row in virtus
+        if row.ticker == "MERFX"
+        and row.ex_date
+        and row.ex_date.year in {2021, 2022, 2023, 2024}
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert merfx_early == []
+    pksax_early = [
+        row
+        for row in virtus
+        if row.ticker == "PKSAX"
+        and (
+            (row.as_of and row.as_of.year in {2021, 2022, 2023, 2024})
+            or (row.ex_date and row.ex_date.year in {2021, 2022, 2023, 2024})
+        )
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert pksax_early == []
+
+    first_eagle = FirstEagleSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(first_eagle, "FERAX")
+    assert 2021 not in _paid_lookback_years(first_eagle, "FESMX")
+
+    calamos = CalamosSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(calamos, "CAISX")
+
+    royce = RoyceSource().fetch(mode="fixture").records
+    assert 2023 not in _paid_lookback_years(royce, "RVPHX")
+
+    wasatch = WasatchSource().fetch(mode="fixture").records
+    assert 2023 not in _paid_lookback_years(wasatch, "WGROX")
+
+    # Do not redo WAVE AO Fidelity Class I / AP Vanguard ICI Dec / AN Hartford
+    # / AR Homestead.
+    fidelity = FidelitySource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(fidelity, "FIXIX")
+    assert 2021 not in _paid_lookback_years(fidelity, "FFRIX")
+
+    vanguard = VanguardSource().fetch(mode="fixture").records
+    assert 2025 not in _paid_lookback_years(vanguard, "VEDIX")
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(vanguard, "VWEHX")
+
+    hartford = HartfordSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(hartford, "IHOAX")
+
+    homestead = HomesteadSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(homestead, "HOVLX")
+
+
+def test_wave_as_heroes_are_searchable(client: TestClient) -> None:
+    fetched = client.post(
+        "/ingest/fetch", json={"fund_family": "virtus", "mode": "fixture"}
+    )
+    assert fetched.status_code == 200, fetched.text
+    assert fetched.json()["created"] > 0
+
+    for ticker in ("STVTX", "SVIIX", "STCIX", "SCIIX", "STGIX", "SAMBX", "MERFX"):
+        body = client.get("/funds", params={"q": ticker}).json()
+        tickers = [item["ticker"] for item in body["items"]]
+        assert ticker in tickers, f"{ticker} missing from GET /funds?q={ticker}: {tickers[:8]}"
+
+    stvtx = client.get(
+        "/distributions",
+        params={"ticker": "STVTX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    stvtx_2021 = [
+        Decimal(row["amount"])
+        for row in stvtx["items"]
+        if row.get("ticker") == "STVTX"
+        and row.get("estimate_type") == "total_capital_gains"
+        and str(row.get("as_of") or "").startswith("2021-12-31")
+    ]
+    assert Decimal("3.88") in stvtx_2021
+    stvtx_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in stvtx["items"]
+        if row.get("ticker") == "STVTX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= stvtx_years
+
+    sviiix = client.get(
+        "/distributions",
+        params={"ticker": "SVIIX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    sviiix_2021 = [
+        Decimal(row["amount"])
+        for row in sviiix["items"]
+        if row.get("ticker") == "SVIIX"
+        and row.get("estimate_type") == "ordinary_income"
+        and str(row.get("as_of") or "").startswith("2021-12-31")
+    ]
+    assert Decimal("0.10") in sviiix_2021
+
+    merfx_dist = client.get(
+        "/distributions",
+        params={"ticker": "MERFX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    merfx_early = [
+        row
+        for row in merfx_dist["items"]
+        if row.get("ticker") == "MERFX"
+        and str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        in {"2021", "2022", "2023", "2024"}
+        and row.get("amount") is not None
+        and row.get("publication_stage") == "final"
+    ]
+    assert merfx_early == []
 

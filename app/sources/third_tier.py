@@ -1060,9 +1060,27 @@ class VirtusSource(HtmlTableSource):
         "years stay unmatched. Official 5y leftover WAVE AF re-probe "
         "(2026-09-17): 2024/2023-mfs_distributions_calyr_detail.pdf still "
         "serve the 2025 book (identical 410608-byte payload). Product-page "
-        "Distribution History stays JavaScript. No new prior-year paid book."
+        "Distribution History stays JavaScript. No new prior-year paid book. "
+        "Official 5y WAVE AS leftover (existing in-book only): Virtus Asset "
+        "Trust FYE December 31 N-CSR Financial Highlights unlock leftover "
+        "2021–2024 on the 2025 Ceredex / SGA International Growth / Silvant "
+        "Large-Cap Growth / Seix bond book. Calendar-safe as_of 12/31. "
+        "Class-level A / C / I / R6 — never sibling-copied. 2025 N-CSR "
+        "https://www.sec.gov/Archives/edgar/data/1018593/000119312526093483/"
+        "d65653dncsr.htm verified against 2024 "
+        "https://www.sec.gov/Archives/edgar/data/1018593/000119312525049847/"
+        "d910476dncsr.htm. Income is ordinary income; net realized gain is "
+        "unsplit total capital gains. Issuer dashes and footnote-only dashes "
+        "omitted (SSAGX 2021; SGA International leftover OI). Equity Trust "
+        "KAR leftovers FYE September 30 are not calendar-safe. Zevenbergen "
+        "Innovative Growth and SGA International Class C are not in-book "
+        "leftovers and are not added. 2025 stays on the existing calendar "
+        "PDF. WAVE AS leftover N-CSR paid history is fixture-only."
     )
-    live_limitations = "Estimate book is PDF. Fixture transcribes the public June 2026 table."
+    live_limitations = (
+        "Estimate book is PDF. Fixture transcribes the public June 2026 table. "
+        "Leftover 2021–2024 Asset Trust N-CSR paid history is fixture-only."
+    )
 
     def pages(self) -> list[PageSpec]:
         return [
@@ -1098,6 +1116,16 @@ class VirtusSource(HtmlTableSource):
                 live=False,
                 role="history",
                 large_aum_only=False,
+            ),
+            PageSpec(
+                name="leftover_ncsr_asset_trust_2021_2024_wave_as",
+                url=(
+                    "https://www.sec.gov/Archives/edgar/data/1018593/"
+                    "000119312526093483/d65653dncsr.htm"
+                ),
+                fixture="leftover_ncsr_asset_trust_2021_2024_wave_as.html",
+                live=False,
+                role="history",
             ),
         ]
 
