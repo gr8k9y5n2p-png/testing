@@ -788,8 +788,14 @@ class CalamosSource(HtmlTableSource):
         "$4.17 / 2021 $4.9490; CPLSX 2025 ST $0.62 / LT $0.03 / 2021 printed "
         "$0.0000; CCVIX 2025 ST $0.65 / LT $1.60 / 2021 $3.1893. Official printed "
         "$0.00 on 2022–2023 stored. 2024/2025 PDF dashes omitted. CAGCX 2024 "
-        "product-page printed $0.0000. CAISX 2021 / 2024 and CMRAX 2021 / 2022 "
-        "unpublished. ETF leftover: CCEF 2024 ST $0.09; CANQ 2024 dashes omitted."
+        "product-page printed $0.0000. Official 5y leftover WAVE AF: CAISX "
+        "product-page Total Capital Gains 2024 printed $0.0000 "
+        "(https://www.calamos.com/funds/mutual/calamos-international-small-cap-growth-fund-caisx/ "
+        "verified 2026-09-17) fills the dashed 2024 paid-PDF year — still 4y "
+        "(inception 03/31/22; 2021 commencement). CMRAX inception 09/29/23 — "
+        "2021–2022 unmatched (commencement; no Total Capital Gains table). "
+        "CANQ / CCEF leftover early years stay commencement / unpublished. "
+        "ETF leftover: CCEF 2024 ST $0.09; CANQ 2024 dashes omitted."
     )
     live_limitations = (
         "Estimate book is PDF. Paid leftover books are official capital-gains PDFs "
@@ -874,6 +880,14 @@ class CalamosSource(HtmlTableSource):
                 name="leftover_2024_etf_paid_capital_gains",
                 url="https://www.calamos.com/globalassets/media/documents/tax-center/2024-calamos-exchange-traded-funds-capital-gains.pdf",
                 fixture="leftover_2024_etf_paid_capital_gains.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
+            ),
+            PageSpec(
+                name="leftover_product_page_parallel_af",
+                url="https://www.calamos.com/funds/mutual/calamos-international-small-cap-growth-fund-caisx/",
+                fixture="leftover_product_page_parallel_af.html",
                 live=False,
                 role="history",
                 large_aum_only=False,

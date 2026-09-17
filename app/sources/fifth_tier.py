@@ -17,9 +17,25 @@ class HarborSource(HtmlTableSource):
         "Institutional tickers attached from the official Harbor Funds prospectus "
         "(HACAX / HSICX / HAOSX / HASCX / HAIDX / HAISX / HAVLX / HMCLX / HAMVX). "
         "Third-party combined dividend totals unused (no official ST/LT split). "
-        "Weekly walk also hits the tax-center hub."
+        "Weekly walk also hits the tax-center hub. "
+        "Official 5y leftover WAVE AF (existing Institutional leftovers only): "
+        "issuer product-page Distribution History "
+        "https://www.harborcapital.com/fund/{ticker}/ (verified 2026-09-17) "
+        "fills paid 2021–2025 for HACAX / HAVLX / HASCX / HAIDX / HAISX / "
+        "HAMVX / HAOSX / HMCLX. Heroes: HACAX 2021-12-16 TCG/LT $18.78540 / "
+        "2024-12-18 TCG/LT $12.36068 / 2025-12-09 TCG/LT $13.12011 (2022–2023 "
+        "and 2025-12-17 official TCG $0.00000 stored); HAVLX 2025-12-17 OI "
+        "$0.09101 / ST $0.04961 / LT $3.88137. Every printed midyear + YE "
+        "OI/ST/LT/TCG kept, including official $0.00000. Dashes omitted. "
+        "Class-level Institutional — never copied onto Investor / Retirement / "
+        "Administrative. HSICX inception 2024-03-01 — 2021–2023 unmatched "
+        "(commencement; 2024–2025 year-depth only)."
     )
-    live_limitations = "Estimate book is PDF. Fixture transcribes public Institutional-class rows."
+    live_limitations = (
+        "Estimate book is PDF. Leftover paid history is fixture-only from "
+        "official Institutional product-page Distribution History (Gatsby "
+        "column-oriented table). Live GET is the estimate hub."
+    )
 
     def pages(self) -> list[PageSpec]:
         return [
@@ -38,6 +54,14 @@ class HarborSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
+            ),
+            PageSpec(
+                name="leftover_paid_history_parallel_af",
+                url="https://www.harborcapital.com/fund/hacax/",
+                fixture="leftover_paid_history_parallel_af.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
             ),
         ]
 

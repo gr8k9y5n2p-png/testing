@@ -992,7 +992,10 @@ class VirtusSource(HtmlTableSource):
         "2025 book (md5 5b73972be59f5701812a8445fe223940). Product-page "
         "Distribution History is JavaScript. Wayback CDX of virtus.com/assets/files "
         "did not recover a distinct prior-year calendar PDF. Leftover 2021–2024 "
-        "years stay unmatched."
+        "years stay unmatched. Official 5y leftover WAVE AF re-probe "
+        "(2026-09-17): 2024/2023-mfs_distributions_calyr_detail.pdf still "
+        "serve the 2025 book (identical 410608-byte payload). Product-page "
+        "Distribution History stays JavaScript. No new prior-year paid book."
     )
     live_limitations = "Estimate book is PDF. Fixture transcribes the public June 2026 table."
 
