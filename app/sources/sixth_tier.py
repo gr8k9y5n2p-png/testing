@@ -1020,13 +1020,40 @@ class AlgerSource(HtmlTableSource):
         "BY Lazard, WAVE BZ / CA / BX Pioneer C/Y/K, WAVE BW RAIIX, WAVE BV "
         "HMDCX, WAVE BT Federated SVD, sister CI Federated SVALX / NYLI Class I, "
         "and prior leftover pages stay unmatched / not re-emitted here. WAVE CJ "
-        "leftover N-CSR paid history is fixture-only."
+        "leftover N-CSR paid history is fixture-only. "
+        "Official 5y WAVE CS leftover (existing in-book only): The Alger Funds "
+        "Capital Appreciation FYE October 31 N-CSR Financial Highlights unlock "
+        "leftover 2021 / 2023 / 2024 on the 2022+2025 paid Class C / Z book "
+        "(ALCCX / ACAZX). Calendar-safe as_of 10/31. Class-level — never "
+        "sibling-copied onto reserved Alger CHUSX / ALGAX / ALSRX / ACAAX, WAVE "
+        "CF Responsible Investing SPEGX / AGFCX / AGIFX / ALGZX, WAVE CJ Growth "
+        "& Income ALBAX / ALBCX / AGIZX, Spectra SPECX, or Institutional ALARX "
+        "/ ACARX / ACAYX / ACIZX. Income dividends from net investment income "
+        "are official dashes — omitted, never invent $0. Net realized gain is "
+        "unsplit total capital gains. 2022 and 2025 stay on the existing paid "
+        "Distrib_FUNDS.pdf books. The Alger Funds 2025 N-CSR "
+        "https://www.sec.gov/Archives/edgar/data/3521/000113322825014263/"
+        "taf-efp21605_ncsr.htm (0001133228-25-014263) and matching 2024 / 2023 "
+        "N-CSR https://www.sec.gov/Archives/edgar/data/3521/000113322824011659/"
+        "tgf-efp13340_ncsr.htm (0001133228-24-011659) / "
+        "https://www.sec.gov/Archives/edgar/data/3521/000114036123059776/"
+        "ef20017112_ncsr.htm (0001140361-23-059776). Sister WAVE CR remaining "
+        "JH Oct 31 leftovers, WAVE CP PZFVX, WAVE CO JHJAX, WAVE CN FIDAX / "
+        "FRBAX, WAVE CL SVBAX / JDIBX / JEMQX / JDJAX, WAVE CM JEEBX, WAVE CK "
+        "TAGRX / JCCAX, WAVE CJ Growth & Income, WAVE CI Federated SVALX / "
+        "NYLI Class I, WAVE CH Harding Loevner, WAVE CG Lazard Real Assets, "
+        "WAVE CF Responsible Investing, WAVE CC Pioneer Class R, WAVE CD / CB "
+        "/ BY Lazard, WAVE BZ / CA / BX Pioneer C/Y/K, WAVE BW RAIIX, WAVE BV "
+        "HMDCX, WAVE BT Federated SVD, and prior leftover pages stay unmatched "
+        "/ not re-emitted here. WAVE CS leftover N-CSR paid history is "
+        "fixture-only."
     )
     live_limitations = (
         "Year-end book is PDF. Weekly walk uses the DividendsDistributions hub + 2025 "
         "MF/ETF PDFs; empty/PDF-bytes pages are no-op success. 2023/2024 MF official "
-        "URLs missing. WAVE CF leftover Responsible Investing and WAVE CJ leftover "
-        "Growth & Income Oct 31 N-CSR paid history are fixture-only."
+        "URLs missing. WAVE CF leftover Responsible Investing, WAVE CJ leftover "
+        "Growth & Income, and WAVE CS leftover Capital Appreciation C/Z Oct 31 "
+        "N-CSR paid history are fixture-only."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -1093,6 +1120,16 @@ class AlgerSource(HtmlTableSource):
                     "000113322824011659/tgf-efp13340_ncsr.htm#growth-income"
                 ),
                 fixture="leftover_ncsr_albax_2021_2024_wave_cj.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="leftover_ncsr_alccx_acazx_2021_2024_wave_cs",
+                url=(
+                    "https://www.sec.gov/Archives/edgar/data/3521/"
+                    "000113322825014263/taf-efp21605_ncsr.htm#capital-appreciation"
+                ),
+                fixture="leftover_ncsr_alccx_acazx_2021_2024_wave_cs.html",
                 live=False,
                 role="history",
             ),
