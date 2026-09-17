@@ -391,6 +391,17 @@ class MacquarieSource(HtmlTableSource):
         "CGE-RET-ACT-2021 / CGE-RET-2021 / CGE-RET-ACT-21 still 404. Nomura "
         "product-page Distribution history is Institutional Class JavaScript "
         "(WSTAX Class A not printed — never copy ISTIX $30.863 onto WSTAX). "
+        "Official 5y leftover WAVE AD (existing in-book Class A only): "
+        "Delaware Group N-CSR Financial Highlights complete 2021 for 4y "
+        "leftovers DCCAX / DEVLX / DDIAX (Equity Funds V year ended "
+        "November 30 2021), DDVAX (Equity Funds II), DLHAX (Healthcare "
+        "year ended March 31 2021), and FGINX / FIUSX (Equity Funds IV "
+        "year ended September 30 2021). Heroes: DCCAX 2021 CG $0.19; "
+        "DEVLX 2021 income $0.41; DDVAX 2021 income $0.35 / CG $0.14; "
+        "FGINX 2021 income $0.21 / CG $0.70. Ivy leftover 2021 N-CSR "
+        "tables (WSTAX / WASAX / IRSAX / WLGAX families) were not a "
+        "recoverable per-share book this session — unmatched. Class-level "
+        "— never copied onto C / R / I / R6. "
         "Literature hub: https://www.macquarie.com/mam/literature."
     )
     live_limitations = "US estimate/paid books are fulfillment PDFs, not an HTML grid."
@@ -428,6 +439,38 @@ class MacquarieSource(HtmlTableSource):
                 url="https://mim.fgsfulfillment.com/download.aspx?sku=CGE-RET-ACT-2022",
                 fixture="2022_paid_capital_gains.html",
                 live=False,
+            ),
+            PageSpec(
+                name="leftover_ncsr_equity_funds_v_2021",
+                url="https://www.sec.gov/Archives/edgar/data/809821/000120677422000345/mimscvf4008301-ncsr.htm",
+                fixture="leftover_ncsr_equity_funds_v_2021.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
+            ),
+            PageSpec(
+                name="leftover_ncsr_equity_funds_ii_2021",
+                url="https://www.sec.gov/Archives/edgar/data/27574/000120677422000339/mimvf4008321-ncsr.htm",
+                fixture="leftover_ncsr_equity_funds_ii_2021.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
+            ),
+            PageSpec(
+                name="leftover_ncsr_healthcare_2021",
+                url="https://www.sec.gov/Archives/edgar/data/778108/000120677422001495/mimhf4058571-ncsr.htm",
+                fixture="leftover_ncsr_healthcare_2021.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
+            ),
+            PageSpec(
+                name="leftover_ncsr_equity_funds_iv_2021",
+                url="https://www.sec.gov/Archives/edgar/data/778108/000120677421002848/mimiaef3978691-ncsr.htm",
+                fixture="leftover_ncsr_equity_funds_iv_2021.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
             ),
         ]
 

@@ -76,6 +76,7 @@ from app.sources.third_tier import (
     AllspringSource,
     AmericanCenturySource,
     DodgeCoxSource,
+    EatonVanceSource,
     FederatedHermesSource,
     JanusHendersonSource,
     LordAbbettSource,
@@ -750,9 +751,16 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # (inception 03/31/22). Virtus 2021–2024 calendar PDFs still alias
     # 2025. Transamerica / Neuberger have no in-book leftover identities.
     # Honest pin = tip 3721 + AF +8.
-    assert digest.funds_with_5y == 3729
-    assert digest.funds_with_5y_mf == 2977
-    assert digest.funds_with_5y_etf == 752
+    # WAVE AD leftover (existing in-book only): Macquarie / Delaware Class A
+    # N-CSR 2021 +7 MF (DCCAX / DEVLX / DDIAX / DDVAX / DLHAX / FGINX /
+    # FIUSX) and Eaton Vance EOI N-CSR 2021–2025 +1 ETF. AB CHCLX 2022
+    # N-CSR is year-depth only (2023–2024 dashes). Ivy leftovers, MSIM
+    # ETF 2021–2023, and PGIM (no in-book tickers) stay walls.
+    # Honest pin remasured after rebase onto #201 tip: 3729 + AD +8
+    # (7 MF / 1 ETF) → 3737.
+    assert digest.funds_with_5y == 3737
+    assert digest.funds_with_5y_mf == 2984
+    assert digest.funds_with_5y_etf == 753
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
 
@@ -3952,6 +3960,8 @@ def test_parallel_j_ab_leftover_class_a_paid_fills_5y() -> None:
         and row.publication_stage == PublicationStage.final
         and row.amount is not None
     }
+    # J leftover paid book is ex_date only (2021 + 2025). AD leftover
+    # CHCLX 2022 is N-CSR FYE as_of year-depth — not an ex_date event.
     assert {2021, 2025} <= chclx_years
     assert 2022 not in chclx_years
     assert 2023 not in chclx_years
@@ -9037,3 +9047,234 @@ def test_parallel_af_heroes_are_searchable(client: TestClient) -> None:
         and str(row.get("ex_date") or "").startswith("2025-12-18")
     ]
     assert Decimal("3.88137") in havlx_2025
+
+
+def test_parallel_ad_macquarie_leftover_ncsr_2021_fills_5y() -> None:
+    records = MacquarieSource().fetch(mode="fixture").records
+    dccax_2021_cg = next(
+        row
+        for row in records
+        if row.ticker == "DCCAX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2021-11-30"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert dccax_2021_cg.amount == Decimal("0.19")
+    devlx_2021_oi = next(
+        row
+        for row in records
+        if row.ticker == "DEVLX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2021-11-30"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert devlx_2021_oi.amount == Decimal("0.41")
+    ddvax_2021_oi = next(
+        row
+        for row in records
+        if row.ticker == "DDVAX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2021-11-30"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert ddvax_2021_oi.amount == Decimal("0.35")
+    fginx_2021_cg = next(
+        row
+        for row in records
+        if row.ticker == "FGINX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2021-09-30"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert fginx_2021_cg.amount == Decimal("0.70")
+    for ticker in ("DCCAX", "DEVLX", "DDIAX", "DDVAX", "DLHAX", "FGINX", "FIUSX"):
+        years = {
+            _year_for_row(row.as_of, row.ex_date, row.payable_date)
+            for row in records
+            if row.ticker == ticker
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        }
+        years.discard(None)
+        assert set(LOOKBACK_YEARS) <= years, ticker
+    # Ivy leftover Class A 2021 N-CSR tables stay unmatched this slice.
+    wstax_years = {
+        _year_for_row(row.as_of, row.ex_date, row.payable_date)
+        for row in records
+        if row.ticker == "WSTAX"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    wstax_years.discard(None)
+    assert wstax_years == {2022, 2023, 2024, 2025}
+
+
+def test_parallel_ad_ab_chclx_ncsr_2022_is_year_depth() -> None:
+    records = AllianceBernsteinSource().fetch(mode="fixture").records
+    chclx_2022_cg = next(
+        row
+        for row in records
+        if row.ticker == "CHCLX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2022-07-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert chclx_2022_cg.amount == Decimal("2.32")
+    chclx_years = {
+        _year_for_row(row.as_of, row.ex_date, row.payable_date)
+        for row in records
+        if row.ticker == "CHCLX"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    chclx_years.discard(None)
+    assert chclx_years == {2021, 2022, 2025}
+
+
+def test_parallel_ad_eoi_ncsr_fills_5y() -> None:
+    records = EatonVanceSource().fetch(mode="fixture").records
+    eoi_2021_oi = next(
+        row
+        for row in records
+        if row.ticker == "EOI"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2021-09-30"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert eoi_2021_oi.amount == Decimal("0.075")
+    eoi_2021_roc = next(
+        row
+        for row in records
+        if row.ticker == "EOI"
+        and row.estimate_type == EstimateType.return_of_capital
+        and row.as_of
+        and str(row.as_of) == "2021-09-30"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert eoi_2021_roc.amount == Decimal("0.034")
+    eoi_2025_cg = next(
+        row
+        for row in records
+        if row.ticker == "EOI"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2025-09-30"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert eoi_2025_cg.amount == Decimal("1.61")
+    eoi_years = {
+        _year_for_row(row.as_of, row.ex_date, row.payable_date)
+        for row in records
+        if row.ticker == "EOI"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    eoi_years.discard(None)
+    assert set(LOOKBACK_YEARS) <= eoi_years
+    # Existing March 2025 19(b) estimate stays estimate-stage.
+    eoi_19b = next(
+        row
+        for row in records
+        if row.ticker == "EOI"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.payable_date
+        and str(row.payable_date) == "2025-03-31"
+        and row.amount
+    )
+    assert eoi_19b.amount == Decimal("0.1338")
+    assert eoi_19b.publication_stage != PublicationStage.final
+
+
+def test_parallel_ad_leftover_walls_stay_unmatched() -> None:
+    macquarie = MacquarieSource().fetch(mode="fixture").records
+    for ticker in ("WSTAX", "WASAX", "IRSAX", "WLGAX", "WMGAX", "WSGAX", "WCEAX"):
+        rows_2021 = [
+            row
+            for row in macquarie
+            if row.ticker == ticker
+            and _year_for_row(row.as_of, row.ex_date, row.payable_date) == 2021
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        ]
+        assert rows_2021 == [], f"{ticker} 2021 should stay unmatched"
+
+    ab = AllianceBernsteinSource().fetch(mode="fixture").records
+    for year in (2023, 2024):
+        chclx = [
+            row
+            for row in ab
+            if row.ticker == "CHCLX"
+            and _year_for_row(row.as_of, row.ex_date, row.payable_date) == year
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        ]
+        assert chclx == [], f"CHCLX {year} should stay unmatched"
+
+    msim = MorganStanleySource().fetch(mode="fixture").records
+    for ticker in ("CVLC", "CDEI", "EVIM"):
+        early = [
+            row
+            for row in msim
+            if row.ticker == ticker
+            and _year_for_row(row.as_of, row.ex_date, row.payable_date) in {2021, 2022, 2023}
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        ]
+        assert early == [], f"{ticker} 2021–2023 should stay unmatched"
+
+    # PGIM / Prudential is not an in-book family — no new identities.
+    slugs = {source.slug for source in list_sources()}
+    assert "pgim" not in slugs
+    assert "prudential" not in slugs
+
+
+def test_parallel_ad_heroes_are_searchable(client: TestClient) -> None:
+    for slug in ("macquarie", "ab", "eaton_vance"):
+        fetched = client.post(
+            "/ingest/fetch", json={"fund_family": slug, "mode": "fixture"}
+        )
+        assert fetched.status_code == 200, fetched.text
+        assert fetched.json()["created"] > 0
+
+    for ticker in ("DCCAX", "DEVLX", "DDVAX", "FGINX", "CHCLX", "EOI"):
+        body = client.get("/funds", params={"q": ticker}).json()
+        tickers = [item["ticker"] for item in body["items"]]
+        assert ticker in tickers, f"{ticker} missing from GET /funds?q={ticker}: {tickers[:8]}"
+
+    dccax = client.get(
+        "/distributions",
+        params={"ticker": "DCCAX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    dccax_2021 = [
+        Decimal(row["amount"])
+        for row in dccax["items"]
+        if row.get("ticker") == "DCCAX"
+        and row.get("estimate_type") == "total_capital_gains"
+        and str(row.get("as_of") or "").startswith("2021-11-30")
+    ]
+    assert Decimal("0.19") in dccax_2021
+
+    eoi = client.get(
+        "/distributions",
+        params={"ticker": "EOI", "publication_stage": "final", "page_size": 200},
+    ).json()
+    eoi_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in eoi["items"]
+        if row.get("ticker") == "EOI" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= eoi_years

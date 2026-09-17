@@ -269,5 +269,8 @@ def test_fixture_book_lookback_stays_official_only() -> None:
     # after rebase onto #192 tip: 3693 → 3721 (+28 MF).
     # WAVE AF leftover: Harbor Institutional product-page paid history +8 MF.
     # Honest pin = tip 3721 + AF +8.
-    assert digest.funds_with_5y == 3729
+    # WAVE AD leftover: Macquarie / Delaware Class A N-CSR 2021 +7 MF and
+    # Eaton Vance EOI N-CSR +1 ETF. Honest pin remasured after rebase
+    # onto #201 tip: 3729 → 3737.
+    assert digest.funds_with_5y == 3737
     assert digest.book_funds >= 7200
