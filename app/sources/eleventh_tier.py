@@ -25,11 +25,29 @@ class AmgSource(HtmlTableSource):
         "distribution_details Calendar Year rows 2021–2024 (YACKX 2022 income "
         "$0.3301 / LT $1.2226). Family 2022 PDF URL 403 — product JSON is the "
         "class-level book. Null / unpublished years omitted (GWSZX / Systematica). "
-        "2025 stays on the existing year-end PDF fixture."
+        "2025 stays on the existing year-end PDF fixture. "
+        "Official 5y WAVE AT leftover (existing in-book only): Frontier "
+        "Small Cap Growth FYE October 31 2022 N-CSR Financial Highlights "
+        "unlock leftover 2022 on MSSVX / MSSCX / MSSYX, and GW&K Small/Mid "
+        "Cap Growth FYE October 31 2023 N-CSR unlocks leftover 2023 on "
+        "ACWDX / ACWIX (ACWZX 2023 is official year-depth only). "
+        "Calendar-safe as_of 10/31. Class-level N / I / Z — never "
+        "sibling-copied. Income is ordinary income; net realized gain is "
+        "unsplit total capital gains. Issuer dashes omitted (TimesSquare "
+        "TSCPX/TSQIX/TSCIX 2023; Veritas Asia MGSEX/MSEIX 2022; Veritas "
+        "China MMCFX/MIMFX 2022; GWGVX Class N 2023 OI and CG). Never "
+        "sibling-copy GWGIX 2023 onto GWGVX. GWSZX / Systematica stay "
+        "unpublished. ACWZX 2021 Class Z commencement dashes stay unmatched. "
+        "Frontier 2022 "
+        "https://www.sec.gov/Archives/edgar/data/882443/000119312523003421/"
+        "d398011dncsr.htm and GW&K 2023 "
+        "https://www.sec.gov/Archives/edgar/data/1089951/000119312524003306/"
+        "d110485dncsr.htm. WAVE AT leftover N-CSR paid history is fixture-only."
     )
     live_limitations = (
         "Year-end book is PDF. Weekly walk uses the tax hub + PDF URL; "
-        "empty/PDF-bytes pages are no-op success."
+        "empty/PDF-bytes pages are no-op success. "
+        "Leftover Frontier 2022 / GW&K SMID 2023 N-CSR paid history is fixture-only."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -57,6 +75,26 @@ class AmgSource(HtmlTableSource):
                 live=False,
                 role="history",
                 large_aum_only=False,
+            ),
+            PageSpec(
+                name="leftover_ncsr_frontier_2022_wave_at",
+                url=(
+                    "https://www.sec.gov/Archives/edgar/data/882443/"
+                    "000119312523003421/d398011dncsr.htm"
+                ),
+                fixture="leftover_ncsr_frontier_2022_wave_at.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="leftover_ncsr_gwk_smid_2023_wave_at",
+                url=(
+                    "https://www.sec.gov/Archives/edgar/data/1089951/"
+                    "000119312524003306/d110485dncsr.htm"
+                ),
+                fixture="leftover_ncsr_gwk_smid_2023_wave_at.html",
+                live=False,
+                role="history",
             ),
         ]
 
