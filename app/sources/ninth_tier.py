@@ -344,10 +344,23 @@ class FamSource(HtmlTableSource):
         "Record 12/29/2025; ex/pay 12/30/2025. Published $0.00 stored. "
         "The HTML is class-level without tickers; tickers from official "
         "fenimoreasset.com product pages. Prior FAMDX-on-Investor assignment "
-        "corrected to official Investor FAMFX / Institutional FAMDX."
+        "corrected to official Investor FAMFX / Institutional FAMDX. "
+        "Official 5y WAVE AX leftover (existing in-book only): Fenimore Asset "
+        "Management Trust FYE December 31 N-CSR Financial Highlights unlock "
+        "leftover 2021–2024 on the 2025 tax-center paid book (FAMVX / FAMWX / "
+        "FAMEX / FAMFX / FAMDX). Calendar-safe as_of 12/31. Class-level Investor "
+        "/ Institutional — never sibling-copied. Dividend Focus Institutional "
+        "is not offered and is not an in-book leftover. Income is ordinary "
+        "income; net realized gain is unsplit total capital gains. Issuer dashes "
+        "omitted (Value 2024 OI; Dividend Focus 2021 OI). Small Cap leftover "
+        "years have no ordinary-income distribution. 2024 N-CSR "
+        "https://www.sec.gov/Archives/edgar/data/797136/000158064225001402/fam_ncsr.htm "
+        "verified against 2023/2022/2021 N-CSR siblings. WAVE AX leftover N-CSR "
+        "paid history is fixture-only."
     )
     live_limitations = (
-        "Live HTML is public but class-name rows have no ticker column. Fixture fallback."
+        "Live HTML is public but class-name rows have no ticker column. Fixture fallback. "
+        "Leftover 2021–2024 N-CSR paid history is fixture-only."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -359,7 +372,14 @@ class FamSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
-            )
+            ),
+            PageSpec(
+                name="leftover_ncsr_2021_2024_wave_ax",
+                url="https://www.sec.gov/Archives/edgar/data/797136/000158064225001402/fam_ncsr.htm",
+                fixture="leftover_ncsr_2021_2024_wave_ax.html",
+                live=False,
+                role="history",
+            ),
         ]
 
 

@@ -324,5 +324,8 @@ def test_fixture_book_lookback_stays_official_only() -> None:
     # WAVE AV leftover: Third Avenue leftover Institutional Oct 31 2021
     # N-CSR +3 MF. Honest pin remasured on WAVE AU tip e103f0e:
     # 4106 → 4109 (+3 MF; ETF 5y unchanged at 758).
-    assert digest.funds_with_5y == 4109
+    # WAVE AX leftover: FAM / Fenimore leftover Investor / Institutional
+    # Dec 31 2021–2024 N-CSR +5 MF. Honest pin remasured on WAVE AV tip
+    # ddef182: 4109 → 4114 (+5 MF; ETF 5y unchanged at 758).
+    assert digest.funds_with_5y == 4114
     assert digest.book_funds >= 7200
