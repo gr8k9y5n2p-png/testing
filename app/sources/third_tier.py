@@ -849,8 +849,11 @@ class AllianceBernsteinSource(HtmlTableSource):
         "restores Class A paid YE 2021–2025 for in-book leftovers (AGRFX 2025 LT "
         "$16.5000 / ST $0.6757; APGAX 2021 LT $2.2996; ABASX 2021 income $0.2155). "
         "Class-level — never copied onto Advisor / C / I / R / Z. CHCLX 2022–2024 "
-        "unpublished on that API (wall). Tax-center 1099 Tax Guides are "
-        "characterization, not paid $/share."
+        "unpublished on that API (wall). Official 5y leftover WAVE AD: "
+        "AB Discovery Growth Fund, Inc. N-CSR Financial Highlights "
+        "(year ended July 31 2022) fills CHCLX 2022 CG $2.32 — year-depth "
+        "only (2023–2024 N-CSR distribution rows are printed dashes). "
+        "Tax-center 1099 Tax Guides are characterization, not paid $/share."
     )
     live_limitations = "Estimates are PDF. Fixture transcribes public Class A rows."
 
@@ -886,6 +889,14 @@ class AllianceBernsteinSource(HtmlTableSource):
                 fixture="leftover_class_a_paid_parallel_j.html",
                 live=False,
                 role="history",
+            ),
+            PageSpec(
+                name="leftover_ncsr_chclx_2022",
+                url="https://www.sec.gov/Archives/edgar/data/19614/000119312522254297/d356750dncsr.htm",
+                fixture="leftover_ncsr_chclx_2022.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
             ),
         ]
 
@@ -1053,10 +1064,15 @@ class EatonVanceSource(HtmlTableSource):
         "EVSB / EVSD / EVSM / EVTR / EVYM / EVMO / XAGG); 2024 YE leftover "
         "fills live on the official MSIM 2024 ETF PDF (MorganStanleySource). "
         "EVYM / EVMO / XAGG 2024 unpublished on that PDF. 2021–2023 ETF YE "
-        "PDFs unpublished. Open-end EV tax guides are characterization / DRD "
-        "/ exempt-interest — not a paid $/share YE book. 2024 sibling "
-        "combined19bpressreleasemarch2024.pdf / combined_19b_press_release_022924.pdf "
-        "returned 403. Open-end family estimate HTML was not found on 2026-09-07."
+        "PDFs unpublished. Official 5y leftover WAVE AD: EOI N-CSR Financial "
+        "Highlights (years ended September 30) fill the in-book CEF leftover "
+        "to 5y (2021 income $0.075 / CG $1.008 / ROC $0.034; 2025 CG $1.61). "
+        "Section 19(b) notices stay estimates. Open-end EV tax guides are "
+        "characterization / DRD / exempt-interest — not a paid $/share YE book. "
+        "2024 sibling combined19bpressreleasemarch2024.pdf / "
+        "combined_19b_press_release_022924.pdf returned 403. Open-end family "
+        "estimate HTML was not found on 2026-09-07. PGIM / Prudential has no "
+        "in-book leftover tickers — not added (Eric freeze)."
     )
     live_limitations = (
         "Open-end estimates are not a public HTML grid. Fixture transcribes a public CEF 19(b) notice."
@@ -1082,5 +1098,13 @@ class EatonVanceSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
-            )
+            ),
+            PageSpec(
+                name="leftover_ncsr_eoi_2021_2025",
+                url="https://www.sec.gov/Archives/edgar/data/1300391/000119312522293301/d393428dncsr.htm",
+                fixture="leftover_ncsr_eoi_2021_2025.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
+            ),
         ]

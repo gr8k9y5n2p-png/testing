@@ -416,9 +416,11 @@ class MorganStanleySource(HtmlTableSource):
         "PHEQ $0.199903). CG columns em-dash / 0.00% omitted. EVYM / EVMO / "
         "XAGG unpublished on the 2024 PDF (2025 launches). 2021–2023 ETF YE "
         "sibling PDFs unpublished (Wayback CDX empty; Calvert pages 403). "
-        "Live GET is often Akamai 403. No public filled ICI file. Open-end "
-        "2025 PDF was Akamai-blocked. Open-end MSIM tickers are not in-book "
-        "leftovers — not added."
+        "Official 5y leftover WAVE AD re-probe: Calvert / EV ETF inception "
+        "is 2023–2025 so 2021–2022 cannot exist; 2023 N-CSR is year-depth "
+        "only and cannot complete 5y. Open-end MSIM tickers are not in-book "
+        "leftovers — not added. Live GET is often Akamai 403. No public "
+        "filled ICI file. Open-end 2025 PDF was Akamai-blocked."
     )
     live_limitations = (
         "Year-end PDFs are often Akamai-walled to automated clients. "
