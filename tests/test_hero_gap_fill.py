@@ -266,6 +266,6 @@ def test_fixture_book_lookback_stays_official_only() -> None:
     # years stay walls. #188 midyear all-events not redone.
     # WAVE X leftover: Fidelity FTRIX + ACI Investor + JPM Trust II Class A +
     # GS Insights leftover N-CSR / DPL2 paid fills. Honest pin remasured
-    # after rebase onto #192 tip.
-    assert digest.funds_with_5y == 3660
+    # after rebase onto #192 tip: 3693 → 3721 (+28 MF).
+    assert digest.funds_with_5y == 3721
     assert digest.book_funds >= 7200

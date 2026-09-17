@@ -740,10 +740,10 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # Year-depth only: Fidelity Advisor Class I leftovers stay 4y (2021 DPL2
     # Class A name-only), TWHIX 4y / ANOIX 3y (N-CSR dashes), PGSGX 4y (2024
     # dashed), JEPQ 4y (2021 commencement), retail DPL6 2022–2023 unpublished.
-    # Honest pin remasured after rebase onto #192 tip.
-    # ETF 5y unchanged. No new identities.
-    assert digest.funds_with_5y == 3693
-    assert digest.funds_with_5y_mf == 2941
+    # Honest pin remasured after rebase onto #192 tip: 3693 → 3721
+    # (+28 MF; ETF 5y unchanged at 752). No new identities.
+    assert digest.funds_with_5y == 3721
+    assert digest.funds_with_5y_mf == 2969
     assert digest.funds_with_5y_etf == 752
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
