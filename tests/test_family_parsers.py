@@ -5261,3 +5261,53 @@ def test_parallel_v_leftover_paid_fixtures() -> None:
     assert bgakx_2025_lt.publication_stage == PublicationStage.final
     assert {r.ticker for r in baillie} == {"BGAKX", "BINSX", "BGESX", "BSGPX"}
     assert not any(r.ticker == "BGCSX" for r in baillie)
+
+
+def test_wave_ag_victory_leftover_paid_fixtures() -> None:
+    ncsr = parse_distribution_html(
+        (ROOT / "victory" / "leftover_ncsr_rs_2021.html").read_text(encoding="utf-8"),
+        source_url="fixture://victory-leftover-ag-ncsr",
+        fund_family="Victory Capital",
+    )
+    rsgrx_2021_oi = next(
+        r
+        for r in ncsr
+        if r.ticker == "RSGRX" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert rsgrx_2021_oi.amount == Decimal("0.02")
+    assert str(rsgrx_2021_oi.as_of) == "2021-12-31"
+    assert rsgrx_2021_oi.publication_stage == PublicationStage.final
+    rsgrx_2021_cg = next(
+        r
+        for r in ncsr
+        if r.ticker == "RSGRX" and r.estimate_type == EstimateType.total_capital_gains
+    )
+    assert rsgrx_2021_cg.amount == Decimal("2.35")
+    rspfx_oi = [
+        r
+        for r in ncsr
+        if r.ticker == "RSPFX" and r.estimate_type == EstimateType.ordinary_income
+    ]
+    assert rspfx_oi == []
+
+    leftover_2024 = parse_distribution_html(
+        (ROOT / "victory" / "leftover_2024_r_member_r6.html").read_text(encoding="utf-8"),
+        source_url="fixture://victory-leftover-ag-2024",
+        fund_family="Victory Capital",
+    )
+    getgx_2024 = next(
+        r
+        for r in leftover_2024
+        if r.ticker == "GETGX" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert getgx_2024.amount == Decimal("0.130481")
+    assert str(getgx_2024.ex_date) == "2024-12-13"
+    assert getgx_2024.publication_stage == PublicationStage.final
+    assert {r.ticker for r in leftover_2024} >= {
+        "GETGX",
+        "GOGFX",
+        "GRINX",
+        "MGOSX",
+        "MUXRX",
+        "MMMMX",
+    }
