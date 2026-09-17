@@ -995,11 +995,26 @@ class FederatedHermesSource(HtmlTableSource):
         "$0.60489673 (4y — 2022 unpublished on that API). Official printed $0 "
         "stored. Duplicate Class R identities (two R tickers, same fund) skipped. "
         "Clover Small Value / MDT Small Cap Value / R6 / munis unpublished on "
-        "the in-book map stay unmatched."
+        "the in-book map stay unmatched. "
+        "Official 5y WAVE AW leftover (existing in-book only): Kaufmann Fund / "
+        "Kaufmann Small Cap FYE October 31 2022 N-CSR Financial Highlights unlock "
+        "leftover 2022 on the Parallel N 2021/2023–2025 API book (KAUAX / KAUCX / "
+        "KAUFX / KAUIX CG $0.65; FKASX / FKCSX / FKAIX CG $4.93) and SDG "
+        "Engagement Equity FYE October 31 2021 N-CSR unlocks leftover 2021 "
+        "(FHEQX / FHESX OI $0.11). Calendar-safe as_of 10/31. Class-level A / C / "
+        "R / Institutional — never sibling-copied. Income is ordinary income; net "
+        "realized gain is unsplit total capital gains. Issuer dashes omitted. "
+        "Kaufmann 2022 "
+        "https://www.sec.gov/Archives/edgar/data/745968/000162363222001593/"
+        "fef632-form.htm and SDG 2021 from the 2023 N-CSR "
+        "https://www.sec.gov/Archives/edgar/data/1707560/000162363223001599/"
+        "form1381.htm. MDT Balanced FYE July 31 leftover 2023 is not "
+        "calendar-safe. WAVE AW leftover N-CSR paid history is fixture-only."
     )
     live_limitations = (
         "Family tax-center tables are JavaScript. Weekly walk uses preliminary.do; "
-        "full prelim book is the official 50135 PDF fixture."
+        "full prelim book is the official 50135 PDF fixture. "
+        "Leftover Kaufmann / SDG N-CSR paid history is fixture-only."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -1036,6 +1051,13 @@ class FederatedHermesSource(HtmlTableSource):
                 live=False,
                 role="history",
                 large_aum_only=False,
+            ),
+            PageSpec(
+                name="leftover_ncsr_kaufmann_sdg_2021_2022_wave_aw",
+                url="https://www.sec.gov/Archives/edgar/data/745968/000162363222001593/fef632-form.htm",
+                fixture="leftover_ncsr_kaufmann_sdg_2021_2022_wave_aw.html",
+                live=False,
+                role="history",
             ),
         ]
 

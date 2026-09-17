@@ -327,5 +327,9 @@ def test_fixture_book_lookback_stays_official_only() -> None:
     # WAVE AX leftover: FAM / Fenimore leftover Investor / Institutional
     # Dec 31 2021–2024 N-CSR +5 MF. Honest pin remasured on WAVE AV tip
     # ddef182: 4109 → 4114 (+5 MF; ETF 5y unchanged at 758).
-    assert digest.funds_with_5y == 4114
+    # WAVE AW leftover: Federated Kaufmann / Small Cap Oct 31 2022 N-CSR
+    # + SDG Engagement Oct 31 2021 N-CSR + Harding Global Equity Oct 31
+    # 2022 N-CSR +11 MF. Honest pin remasured on WAVE AX tip b195629:
+    # 4114 → 4125 (+11 MF; ETF 5y unchanged at 758).
+    assert digest.funds_with_5y == 4125
     assert digest.book_funds >= 7200
