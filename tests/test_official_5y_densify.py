@@ -16236,7 +16236,7 @@ WAVE_BF_BAILLIE_LEFTOVER_5Y = (
     "BGESX",
     "BSGPX",
 )
-WAVE_BF_SIBLING_WALLS = ("BGIKX", "BGEKX", "BGPKX", "BGCSX")
+WAVE_BF_SIBLING_WALLS = ("BGIKX", "BGEKX", "BGPKX")
 WAVE_BF_DRIEHAUS_DISJOINT = WAVE_BE_DRIEHAUS_LEFTOVER_5Y
 WAVE_BF_LOCORR_DISJOINT = WAVE_BE_LOCORR_DISJOINT
 
@@ -16366,8 +16366,23 @@ def test_wave_bf_baillie_leftover_dec31_fills_5y() -> None:
         and row.as_of.year == 2024
     ]
     assert bsgpx_2024_cg == []
-    # Class-level — never sibling-copied.
-    assert [row for row in records if row.ticker in WAVE_BF_SIBLING_WALLS] == []
+    # Class-level — never sibling-copied onto Class K / Institutional leftovers.
+    ncsr_siblings = [
+        row
+        for row in records
+        if row.ticker in WAVE_BF_SIBLING_WALLS
+        and row.source_url
+        and "000110465925020192" in row.source_url
+    ]
+    assert ncsr_siblings == []
+    bgcsx_ncsr = [
+        row
+        for row in records
+        if row.ticker == "BGCSX"
+        and row.source_url
+        and "000110465925020192" in row.source_url
+    ]
+    assert bgcsx_ncsr == []
     # 2025 stays on the existing paid Final product-page book — not re-emitted from N-CSR.
     ncsr_late = [
         row
@@ -16386,6 +16401,7 @@ def test_wave_bf_baillie_leftover_dec31_fills_5y() -> None:
         and row.estimate_type == EstimateType.long_term_capital_gains
         and row.ex_date
         and str(row.ex_date) == "2025-12-29"
+        and row.publication_stage == PublicationStage.final
         and row.amount is not None
     )
     assert bgakx_2025.amount == Decimal("5.18723")
@@ -16396,6 +16412,7 @@ def test_wave_bf_baillie_leftover_dec31_fills_5y() -> None:
         and row.estimate_type == EstimateType.long_term_capital_gains
         and row.ex_date
         and str(row.ex_date) == "2025-12-29"
+        and row.publication_stage == PublicationStage.final
         and row.amount is not None
     )
     assert bsgpx_2025.amount == Decimal("9.00459")
@@ -16405,8 +16422,30 @@ def test_wave_bf_baillie_leftover_dec31_fills_5y() -> None:
 
 def test_wave_bf_leftover_walls_stay_unmatched() -> None:
     baillie = BaillieGiffordSource().fetch(mode="fixture").records
-    assert [row for row in baillie if row.ticker in WAVE_BF_SIBLING_WALLS] == []
-    assert 2025 not in _paid_lookback_years(baillie, "BGCSX")
+    ncsr_siblings = [
+        row
+        for row in baillie
+        if row.ticker in WAVE_BF_SIBLING_WALLS
+        and row.source_url
+        and "000110465925020192" in row.source_url
+    ]
+    assert ncsr_siblings == []
+    bgcsx_ncsr = [
+        row
+        for row in baillie
+        if row.ticker == "BGCSX"
+        and row.source_url
+        and "000110465925020192" in row.source_url
+    ]
+    assert bgcsx_ncsr == []
+    bgcsx_final = [
+        row
+        for row in baillie
+        if row.ticker == "BGCSX"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert bgcsx_final == []
     assert 2021 not in _paid_lookback_years(baillie, "BGCSX")
 
     # Keep sister WAVE BE Driehaus — DMCRX / DVSMX / DNSMX stay 5y on tip.
