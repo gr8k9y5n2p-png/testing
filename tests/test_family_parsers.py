@@ -5983,6 +5983,62 @@ def test_dws_xtrackers_fixtures() -> None:
         for r in dws_ncsr_bk
     )
 
+    baird_ncsr_bm = parse_distribution_html(
+        (ROOT / "baird" / "leftover_ncsr_2021_2024_wave_bm.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url=(
+            "https://www.sec.gov/Archives/edgar/data/1282693/"
+            "000113322826002879/bf-efp22201_ncsr.htm"
+        ),
+        fund_family="Baird",
+    )
+    ccgix_2021 = next(
+        r
+        for r in baird_ncsr_bm
+        if r.ticker == "CCGIX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.as_of
+        and str(r.as_of) == "2021-12-31"
+    )
+    assert ccgix_2021.amount == Decimal("0.08")
+    assert ccgix_2021.publication_stage == PublicationStage.final
+    ccgsx_2023 = next(
+        r
+        for r in baird_ncsr_bm
+        if r.ticker == "CCGSX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.as_of
+        and str(r.as_of) == "2023-12-31"
+    )
+    assert ccgsx_2023.amount == Decimal("0.04")
+    ccwix_2024 = next(
+        r
+        for r in baird_ncsr_bm
+        if r.ticker == "CCWIX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.as_of
+        and str(r.as_of) == "2024-12-31"
+    )
+    assert ccwix_2024.amount == Decimal("0.12")
+    ccwsx_2024 = next(
+        r
+        for r in baird_ncsr_bm
+        if r.ticker == "CCWSX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.as_of
+        and str(r.as_of) == "2024-12-31"
+    )
+    assert ccwsx_2024.amount == Decimal("0.08")
+    assert {r.ticker for r in baird_ncsr_bm} == {"CCGIX", "CCGSX", "CCWIX", "CCWSX"}
+    assert not any(
+        r.ticker in {"BSVIX", "BSVSX", "BMDIX", "BMDSX", "BCOIX", "BSGIX", "TMAIX"}
+        for r in baird_ncsr_bm
+    )
+    assert not any(
+        r.estimate_type == EstimateType.total_capital_gains for r in baird_ncsr_bm
+    )
+
 
 def test_catalyst_annual_distribution_fixtures() -> None:
     catalyst = parse_distribution_html(
