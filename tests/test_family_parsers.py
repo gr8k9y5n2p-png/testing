@@ -2923,6 +2923,94 @@ def test_fourth_tier_fixtures() -> None:
         for r in jh_ncsr_cm
     )
 
+    jh_ncsr_cl = parse_distribution_html(
+        (
+            ROOT
+            / "john_hancock"
+            / "leftover_ncsr_svbax_jdibx_jemqx_jdjax_2021_2025_wave_cl.html"
+        ).read_text(encoding="utf-8"),
+        source_url=(
+            "https://www.sec.gov/Archives/edgar/data/22370/"
+            "000119312525327167/8de3f384d18ebda.htm#svbax-jdibx-jemqx-jdjax"
+        ),
+        fund_family="John Hancock / Manulife",
+    )
+    svbax_2025_oi = next(
+        r
+        for r in jh_ncsr_cl
+        if r.ticker == "SVBAX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.as_of
+        and str(r.as_of) == "2025-10-31"
+    )
+    assert svbax_2025_oi.amount == Decimal("0.48")
+    assert svbax_2025_oi.publication_stage == PublicationStage.final
+    svbax_2025_cg = next(
+        r
+        for r in jh_ncsr_cl
+        if r.ticker == "SVBAX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and str(r.as_of) == "2025-10-31"
+    )
+    assert svbax_2025_cg.amount == Decimal("0.63")
+    jdibx_2025_cg = next(
+        r
+        for r in jh_ncsr_cl
+        if r.ticker == "JDIBX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and str(r.as_of) == "2025-10-31"
+    )
+    assert jdibx_2025_cg.amount == Decimal("1.27")
+    jemqx_2025_oi = next(
+        r
+        for r in jh_ncsr_cl
+        if r.ticker == "JEMQX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and str(r.as_of) == "2025-10-31"
+    )
+    assert jemqx_2025_oi.amount == Decimal("0.01")
+    jdjax_2024_cg = next(
+        r
+        for r in jh_ncsr_cl
+        if r.ticker == "JDJAX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and str(r.as_of) == "2024-10-31"
+    )
+    assert jdjax_2024_cg.amount == Decimal("0.21")
+    assert {r.ticker for r in jh_ncsr_cl} == {"SVBAX", "JDIBX", "JEMQX", "JDJAX"}
+    assert not any(
+        r.ticker
+        in {
+            "JEEBX",
+            "TAGRX",
+            "JCCAX",
+            "JVLAX",
+            "JBGAX",
+            "SVBCX",
+            "SVBIX",
+            "JDICX",
+            "JEMZX",
+            "JDJCX",
+            "ALBAX",
+            "SVALX",
+        }
+        for r in jh_ncsr_cl
+    )
+    assert not any(
+        r.ticker == "SVBAX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and r.as_of
+        and r.as_of.year in {2023, 2024}
+        for r in jh_ncsr_cl
+    )
+    assert not any(
+        r.ticker == "JEMQX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.as_of
+        and r.as_of.year == 2022
+        for r in jh_ncsr_cl
+    )
+
     hartford_final = parse_distribution_html(
         (ROOT / "hartford" / "2025_final_capital_gains.html").read_text(encoding="utf-8"),
         source_url="fixture://hartford-2025-final",
