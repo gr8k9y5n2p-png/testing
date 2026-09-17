@@ -1304,8 +1304,17 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # Kaufmann / SDG). MDT Balanced FYE July 31 leftover 2023 stays unmatched.
     # Honest pin remasured on WAVE BS tip 7b242a3: 4224 → 4227 (+3 MF;
     # ETF 5y unchanged at 758).
-    assert digest.funds_with_5y == 4227
-    assert digest.funds_with_5y_mf == 3469
+    # WAVE BU leftover (existing in-book only): Pioneer Mid Cap Value Oct 31
+    # N-CSR unlocks leftover PCGRX 2021+2022. Calendar-safe as_of 10/31.
+    # Class-level A — never sibling-copied onto C / Y / K / R. Does not redo
+    # AF–BT (especially BT Federated SVD SVAAX / SVACX / SVAIX, BS PEQIX,
+    # BR Grandeur Peak, BQ Pioneer Dec 31, BP Beacon, BO–BI / BK / BG DWS,
+    # BM Baird, BL Thrivent, BJ RiverPark, BH TCW, BD–BF, AW Kaufmann / SDG).
+    # CVFCX / GLOSX FYE Aug 31, PIGFX FYE March 31, and PIIFX stay unmatched.
+    # Honest pin remasured on WAVE BT tip 68618a84: 4227 → 4228 (+1 MF;
+    # ETF 5y unchanged at 758).
+    assert digest.funds_with_5y == 4228
+    assert digest.funds_with_5y_mf == 3470
     assert digest.funds_with_5y_etf == 758
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
@@ -20771,7 +20780,7 @@ WAVE_BQ_SIBLING_WALLS = (
 WAVE_BQ_NCSR_ACCESSION = "000119312524058913"
 WAVE_BQ_ALGER_RESERVED = WAVE_BH_ALGER_RESERVED
 WAVE_BQ_MARCH31_WALLS = ("PIGFX",)
-WAVE_BQ_OTHER_CLASS_A_WALLS = ("CVFCX", "GLOSX", "PCGRX", "PIIFX")
+WAVE_BQ_OTHER_CLASS_A_WALLS = ("CVFCX", "GLOSX", "PIIFX")
 
 
 def test_wave_bq_pioneer_leftover_dec31_fills_5y() -> None:
@@ -21625,7 +21634,7 @@ WAVE_BS_SIBLING_WALLS = ("PCEQX", "PYEQX", "PEQKX", "PQIRX")
 WAVE_BS_NCSR_ACCESSION = "000119312524001420"
 WAVE_BS_ALGER_RESERVED = WAVE_BH_ALGER_RESERVED
 WAVE_BS_MARCH31_WALLS = ("PIGFX",)
-WAVE_BS_OTHER_CLASS_A_WALLS = ("CVFCX", "GLOSX", "PCGRX", "PIIFX")
+WAVE_BS_OTHER_CLASS_A_WALLS = ("CVFCX", "GLOSX", "PIIFX")
 WAVE_BS_BR_DISJOINT = ("GPEIX", "GPGCX", "GPROX")
 
 
@@ -22379,3 +22388,285 @@ def test_wave_bt_heroes_are_searchable(client: TestClient) -> None:
         if row.get("ticker") == "GPEIX" and row.get("amount") is not None
     }
     assert {"2021", "2022", "2023", "2024", "2025"} <= gpeix_years
+
+
+WAVE_BU_PIONEER_LEFTOVER_5Y = ("PCGRX",)
+WAVE_BU_SIBLING_WALLS = ("PCCGX", "PYCGX", "PMCKX")
+WAVE_BU_NCSR_ACCESSION = "000119312524001432"
+WAVE_BU_ALGER_RESERVED = WAVE_BH_ALGER_RESERVED
+WAVE_BU_AUG31_WALLS = ("CVFCX", "GLOSX")
+WAVE_BU_MARCH31_WALLS = ("PIGFX",)
+WAVE_BU_OTHER_CLASS_A_WALLS = ("PIIFX",)
+WAVE_BU_BT_DISJOINT = WAVE_BT_FEDERATED_LEFTOVER_5Y
+WAVE_BU_BS_DISJOINT = WAVE_BS_PIONEER_LEFTOVER_5Y
+WAVE_BU_BR_DISJOINT = WAVE_BS_BR_DISJOINT
+WAVE_BU_BQ_DISJOINT = WAVE_BQ_PIONEER_LEFTOVER_5Y
+WAVE_BU_LEFTOVER_URL = "leftover_ncsr_pcgrx_2021_2022_wave_bu"
+
+
+def _wave_bu_leftover_rows(records: list[NormalizedRecord]) -> list[NormalizedRecord]:
+    return [
+        row
+        for row in records
+        if row.ticker in WAVE_BU_PIONEER_LEFTOVER_5Y
+        and row.as_of
+        and row.as_of.year in {2021, 2022}
+        and row.source_url
+        and (
+            WAVE_BU_NCSR_ACCESSION in row.source_url
+            or WAVE_BU_LEFTOVER_URL in row.source_url
+        )
+    ]
+
+
+def test_wave_bu_pioneer_mcv_leftover_oct31_fills_5y() -> None:
+    records = AmundiSource().fetch(mode="fixture").records
+    leftover = _wave_bu_leftover_rows(records)
+    pcgrx_2022_oi = next(
+        row
+        for row in leftover
+        if row.ticker == "PCGRX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and str(row.as_of) == "2022-10-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert pcgrx_2022_oi.amount == Decimal("0.16")
+    pcgrx_2022_cg = next(
+        row
+        for row in leftover
+        if row.ticker == "PCGRX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and str(row.as_of) == "2022-10-31"
+        and row.amount is not None
+    )
+    assert pcgrx_2022_cg.amount == Decimal("3.59")
+    pcgrx_2021_oi = next(
+        row
+        for row in leftover
+        if row.ticker == "PCGRX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and str(row.as_of) == "2021-10-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert pcgrx_2021_oi.amount == Decimal("0.17")
+    # Official 2021 CG dash — never invent $0.
+    pcgrx_2021_cg = [
+        row
+        for row in leftover
+        if row.ticker == "PCGRX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and str(row.as_of) == "2021-10-31"
+    ]
+    assert pcgrx_2021_cg == []
+    leftover_tickers = {row.ticker for row in leftover}
+    assert leftover_tickers == set(WAVE_BU_PIONEER_LEFTOVER_5Y)
+    ncsr_siblings = [
+        row
+        for row in records
+        if row.ticker in WAVE_BU_SIBLING_WALLS
+        and row.source_url
+        and (
+            WAVE_BU_NCSR_ACCESSION in row.source_url
+            or WAVE_BU_LEFTOVER_URL in row.source_url
+        )
+    ]
+    assert ncsr_siblings == []
+    # Sister leftovers are not re-emitted here.
+    reserved = [
+        row
+        for row in leftover
+        if row.ticker
+        in WAVE_BU_BT_DISJOINT
+        + WAVE_BU_BS_DISJOINT
+        + WAVE_BU_BR_DISJOINT
+        + WAVE_BU_BQ_DISJOINT
+        + WAVE_BP_BEACON_LEFTOVER_5Y
+        + WAVE_BO_DWS_LEFTOVER_5Y
+        + WAVE_BN_DWS_LEFTOVER_5Y
+        + WAVE_BM_BAIRD_LEFTOVER_5Y
+        + WAVE_BL_THRIVENT_LEFTOVER_5Y
+        + WAVE_BK_DWS_LEFTOVER_5Y
+        + WAVE_BI_DWS_LEFTOVER_5Y
+        + WAVE_BJ_RIVERPARK_LEFTOVER_5Y
+        + WAVE_BG_DWS_LEFTOVER_5Y
+        + WAVE_BH_TCW_LEFTOVER_5Y
+        + WAVE_BU_ALGER_RESERVED
+    ]
+    assert reserved == []
+    leftover_late = [
+        row for row in leftover if row.as_of and row.as_of.year in {2023, 2024, 2025}
+    ]
+    assert leftover_late == []
+    for ticker in WAVE_BU_PIONEER_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(records, ticker), ticker
+    # Keep sister WAVE BS / BQ Pioneer leftovers 5y on tip.
+    for ticker in WAVE_BU_BS_DISJOINT + WAVE_BU_BQ_DISJOINT:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(records, ticker), ticker
+    # Keep sister WAVE BT Federated SVD leftovers 5y on tip.
+    federated = FederatedHermesSource().fetch(mode="fixture").records
+    for ticker in WAVE_BU_BT_DISJOINT:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(federated, ticker), ticker
+    grandeur = GrandeurPeakSource().fetch(mode="fixture").records
+    for ticker in WAVE_BU_BR_DISJOINT:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(grandeur, ticker), ticker
+
+
+def test_wave_bu_leftover_walls_stay_unmatched() -> None:
+    pioneer = AmundiSource().fetch(mode="fixture").records
+    leftover = _wave_bu_leftover_rows(pioneer)
+    leftover_tickers = {row.ticker for row in leftover}
+    assert leftover_tickers == set(WAVE_BU_PIONEER_LEFTOVER_5Y)
+    ncsr_siblings = [
+        row
+        for row in pioneer
+        if row.ticker in WAVE_BU_SIBLING_WALLS
+        and row.source_url
+        and (
+            WAVE_BU_NCSR_ACCESSION in row.source_url
+            or WAVE_BU_LEFTOVER_URL in row.source_url
+        )
+    ]
+    assert ncsr_siblings == []
+    for ticker in WAVE_BU_SIBLING_WALLS:
+        assert 2021 not in _paid_lookback_years(pioneer, ticker), ticker
+    # WAVE BS Equity Income accession still does not emit PCGRX.
+    bs_pcgrx = [
+        row
+        for row in pioneer
+        if row.ticker == "PCGRX"
+        and row.source_url
+        and WAVE_BS_NCSR_ACCESSION in row.source_url
+    ]
+    assert bs_pcgrx == []
+    # WAVE BQ Dec 31 accession still does not emit PCGRX.
+    bq_pcgrx = [
+        row
+        for row in pioneer
+        if row.ticker == "PCGRX"
+        and row.source_url
+        and WAVE_BQ_NCSR_ACCESSION in row.source_url
+    ]
+    assert bq_pcgrx == []
+    for ticker in WAVE_BU_AUG31_WALLS + WAVE_BU_OTHER_CLASS_A_WALLS:
+        assert 2021 not in _paid_lookback_years(pioneer, ticker), ticker
+        assert {2023, 2024, 2025} <= _paid_lookback_years(pioneer, ticker), ticker
+    for ticker in WAVE_BU_MARCH31_WALLS:
+        assert 2021 not in _paid_lookback_years(pioneer, ticker), ticker
+    # Keep sister leftovers 5y on tip.
+    for ticker in WAVE_BU_BS_DISJOINT + WAVE_BU_BQ_DISJOINT:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(pioneer, ticker), ticker
+    federated = FederatedHermesSource().fetch(mode="fixture").records
+    for ticker in WAVE_BU_BT_DISJOINT:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(federated, ticker), ticker
+    # MDT Balanced FYE July 31 leftover 2023 stays unmatched.
+    for ticker in WAVE_BT_MDT_JULY31_WALLS:
+        assert 2023 not in _paid_lookback_years(federated, ticker), ticker
+    grandeur = GrandeurPeakSource().fetch(mode="fixture").records
+    for ticker in WAVE_BU_BR_DISJOINT:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(grandeur, ticker), ticker
+    beacon = AmericanBeaconSource().fetch(mode="fixture").records
+    for ticker in WAVE_BP_BEACON_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(beacon, ticker), ticker
+    dws = DwsSource().fetch(mode="fixture").records
+    for ticker in (
+        WAVE_BO_DWS_LEFTOVER_5Y
+        + WAVE_BN_DWS_LEFTOVER_5Y
+        + WAVE_BK_DWS_LEFTOVER_5Y
+        + WAVE_BI_DWS_LEFTOVER_5Y
+        + WAVE_BG_DWS_LEFTOVER_5Y
+    ):
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(dws, ticker), ticker
+    baird = BairdSource().fetch(mode="fixture").records
+    for ticker in WAVE_BM_BAIRD_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(baird, ticker), ticker
+    thrivent = ThriventSource().fetch(mode="fixture").records
+    for ticker in WAVE_BL_THRIVENT_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(thrivent, ticker), ticker
+    riverpark = RiverparkSource().fetch(mode="fixture").records
+    for ticker in WAVE_BJ_RIVERPARK_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(riverpark, ticker), ticker
+    tcw = TcwSource().fetch(mode="fixture").records
+    for ticker in WAVE_BH_TCW_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(tcw, ticker), ticker
+    alger = AlgerSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(alger, "CHUSX")
+    pioneer_bu = {row.ticker for row in leftover}
+    assert pioneer_bu == set(WAVE_BU_PIONEER_LEFTOVER_5Y)
+    assert not pioneer_bu & set(WAVE_BU_BT_DISJOINT)
+    assert not pioneer_bu & set(WAVE_BU_BS_DISJOINT)
+    assert not pioneer_bu & set(WAVE_BU_BR_DISJOINT)
+    assert not pioneer_bu & set(WAVE_BU_BQ_DISJOINT)
+    assert not pioneer_bu & set(WAVE_BU_ALGER_RESERVED)
+    assert not pioneer_bu & set(WAVE_BU_SIBLING_WALLS)
+
+
+def test_wave_bu_heroes_are_searchable(client: TestClient) -> None:
+    fetched = client.post(
+        "/ingest/fetch", json={"fund_family": "amundi", "mode": "fixture"}
+    )
+    assert fetched.status_code == 200, fetched.text
+    assert fetched.json()["created"] > 0
+
+    for ticker in WAVE_BU_PIONEER_LEFTOVER_5Y:
+        body = client.get("/funds", params={"q": ticker}).json()
+        tickers = [item["ticker"] for item in body["items"]]
+        assert ticker in tickers, f"{ticker} missing from GET /funds?q={ticker}: {tickers[:8]}"
+
+    pcgrx = client.get(
+        "/distributions",
+        params={"ticker": "PCGRX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    pcgrx_2022 = [
+        Decimal(row["amount"])
+        for row in pcgrx["items"]
+        if row.get("ticker") == "PCGRX"
+        and row.get("estimate_type") == "ordinary_income"
+        and str(row.get("as_of") or "").startswith("2022-10-31")
+    ]
+    assert Decimal("0.16") in pcgrx_2022
+    pcgrx_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in pcgrx["items"]
+        if row.get("ticker") == "PCGRX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= pcgrx_years
+
+    # Keep sister WAVE BS / BQ / BT searchable after the additive leftover.
+    peqix = client.get(
+        "/distributions",
+        params={"ticker": "PEQIX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    peqix_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in peqix["items"]
+        if row.get("ticker") == "PEQIX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= peqix_years
+
+    piodx = client.get(
+        "/distributions",
+        params={"ticker": "PIODX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    piodx_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in piodx["items"]
+        if row.get("ticker") == "PIODX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= piodx_years
+
+    federated_fetched = client.post(
+        "/ingest/fetch", json={"fund_family": "federated_hermes", "mode": "fixture"}
+    )
+    assert federated_fetched.status_code == 200, federated_fetched.text
+    svaax = client.get(
+        "/distributions",
+        params={"ticker": "SVAAX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    svaax_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in svaax["items"]
+        if row.get("ticker") == "SVAAX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= svaax_years
