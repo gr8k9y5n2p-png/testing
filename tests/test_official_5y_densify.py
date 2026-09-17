@@ -1313,8 +1313,18 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # CVFCX / GLOSX FYE Aug 31, PIGFX FYE March 31, and PIIFX stay unmatched.
     # Honest pin remasured on WAVE BT tip 68618a84: 4227 → 4228 (+1 MF;
     # ETF 5y unchanged at 758).
-    assert digest.funds_with_5y == 4228
-    assert digest.funds_with_5y_mf == 3470
+    # WAVE BV leftover (existing in-book only): Hartford MidCap Class C
+    # HMDCX Oct 31 2024 N-CSR CG $0.59 (income dash omitted) unlocks the
+    # missing calendar 2024 year after WAVE AN 2021–2023. Class-level only —
+    # never sibling-copied. Does not redo AF–BU (especially BU PCGRX, BT
+    # Federated SVAAX / SVACX / SVAIX, BS PEQIX, BR Grandeur Peak, BQ Pioneer
+    # Dec 31, BP Beacon, BO–BI / BK / BG DWS, BM Baird, BL Thrivent, BJ
+    # RiverPark, BH TCW, BD–BF, AN Hartford I/C/F/R/Y beyond HMDCX 2024).
+    # Healthcare 2024 N-CSR distribution dashes stay unmatched. Honest pin
+    # remasured on WAVE BU tip 5b317642: 4228 → 4229 (+1 MF; ETF 5y
+    # unchanged at 758).
+    assert digest.funds_with_5y == 4229
+    assert digest.funds_with_5y_mf == 3471
     assert digest.funds_with_5y_etf == 758
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
@@ -22670,3 +22680,269 @@ def test_wave_bu_heroes_are_searchable(client: TestClient) -> None:
         if row.get("ticker") == "SVAAX" and row.get("amount") is not None
     }
     assert {"2021", "2022", "2023", "2024", "2025"} <= svaax_years
+
+
+WAVE_BV_HARTFORD_LEFTOVER_5Y = ("HMDCX",)
+WAVE_BV_NCSR_ACCESSION = "000119312525001898"
+WAVE_BV_LEFTOVER_URL = "leftover_ncsr_hmdcx_2024_wave_bv"
+WAVE_BV_HEALTHCARE_2024_WALLS = (
+    "HGHCX",
+    "HGHIX",
+    "HGHFX",
+    "HGHYX",
+)
+WAVE_BV_SIBLING_ALREADY_5Y = (
+    "HFMCX",
+    "HFMIX",
+    "HMDFX",
+    "HMDYX",
+)
+WAVE_BV_ALGER_RESERVED = WAVE_BH_ALGER_RESERVED
+WAVE_BV_BT_DISJOINT = WAVE_BT_FEDERATED_LEFTOVER_5Y
+WAVE_BV_BS_DISJOINT = WAVE_BS_PIONEER_LEFTOVER_5Y
+WAVE_BV_BR_DISJOINT = WAVE_BS_BR_DISJOINT
+WAVE_BV_BU_DISJOINT = WAVE_BU_PIONEER_LEFTOVER_5Y
+
+
+def _wave_bv_leftover_rows(records: list[NormalizedRecord]) -> list[NormalizedRecord]:
+    return [
+        row
+        for row in records
+        if row.ticker in WAVE_BV_HARTFORD_LEFTOVER_5Y
+        and row.as_of
+        and row.as_of.year == 2024
+        and row.source_url
+        and (
+            WAVE_BV_NCSR_ACCESSION in row.source_url
+            or WAVE_BV_LEFTOVER_URL in row.source_url
+        )
+    ]
+
+
+def test_wave_bv_hartford_hmdcx_leftover_oct31_2024_fills_5y() -> None:
+    records = HartfordSource().fetch(mode="fixture").records
+    leftover = _wave_bv_leftover_rows(records)
+    hmdcx_2024_cg = next(
+        row
+        for row in leftover
+        if row.ticker == "HMDCX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and str(row.as_of) == "2024-10-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert hmdcx_2024_cg.amount == Decimal("0.59")
+    # Official 2024 income dash — never invent $0.
+    hmdcx_2024_oi = [
+        row
+        for row in leftover
+        if row.ticker == "HMDCX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and str(row.as_of) == "2024-10-31"
+    ]
+    assert hmdcx_2024_oi == []
+    leftover_tickers = {row.ticker for row in leftover}
+    assert leftover_tickers == set(WAVE_BV_HARTFORD_LEFTOVER_5Y)
+    # Class-level — sibling MidCap classes are not re-emitted on this page.
+    sibling_bv = [
+        row
+        for row in records
+        if row.ticker in WAVE_BV_SIBLING_ALREADY_5Y
+        and row.source_url
+        and (
+            WAVE_BV_NCSR_ACCESSION in row.source_url
+            or WAVE_BV_LEFTOVER_URL in row.source_url
+        )
+    ]
+    assert sibling_bv == []
+    # Sister leftovers are not re-emitted here.
+    reserved = [
+        row
+        for row in leftover
+        if row.ticker
+        in WAVE_BV_BU_DISJOINT
+        + WAVE_BV_BT_DISJOINT
+        + WAVE_BV_BS_DISJOINT
+        + WAVE_BV_BR_DISJOINT
+        + WAVE_BQ_PIONEER_LEFTOVER_5Y
+        + WAVE_BP_BEACON_LEFTOVER_5Y
+        + WAVE_BO_DWS_LEFTOVER_5Y
+        + WAVE_BN_DWS_LEFTOVER_5Y
+        + WAVE_BM_BAIRD_LEFTOVER_5Y
+        + WAVE_BL_THRIVENT_LEFTOVER_5Y
+        + WAVE_BK_DWS_LEFTOVER_5Y
+        + WAVE_BI_DWS_LEFTOVER_5Y
+        + WAVE_BJ_RIVERPARK_LEFTOVER_5Y
+        + WAVE_BG_DWS_LEFTOVER_5Y
+        + WAVE_BH_TCW_LEFTOVER_5Y
+        + WAVE_BV_ALGER_RESERVED
+    ]
+    assert reserved == []
+    leftover_2025 = [
+        row for row in leftover if row.as_of and row.as_of.year == 2025
+    ]
+    assert leftover_2025 == []
+    # Existing WAVE AN 2021–2023 HMDCX rows stay on the AN book (additive).
+    hmdcx_2023_cg = next(
+        row
+        for row in records
+        if row.ticker == "HMDCX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2023-10-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert hmdcx_2023_cg.amount == Decimal("2.25")
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(records, "HMDCX")
+    # Keep WAVE AN Hartford heroes 5y on tip.
+    for ticker in WAVE_AN_HARTFORD_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(records, ticker), ticker
+    # Keep sister WAVE BT Federated leftovers 5y on tip.
+    federated = FederatedHermesSource().fetch(mode="fixture").records
+    for ticker in WAVE_BV_BT_DISJOINT:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(federated, ticker), ticker
+    # Keep sister WAVE BS Pioneer leftover 5y on tip.
+    pioneer = AmundiSource().fetch(mode="fixture").records
+    for ticker in WAVE_BV_BS_DISJOINT:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(pioneer, ticker), ticker
+    # Keep sister WAVE BR Grandeur Peak leftovers 5y on tip.
+    grandeur = GrandeurPeakSource().fetch(mode="fixture").records
+    for ticker in WAVE_BV_BR_DISJOINT:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(grandeur, ticker), ticker
+    # Keep sister WAVE BU Pioneer Mid Cap Value leftover 5y on tip.
+    pioneer_bu = AmundiSource().fetch(mode="fixture").records
+    for ticker in WAVE_BV_BU_DISJOINT:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(pioneer_bu, ticker), ticker
+
+
+def test_wave_bv_leftover_walls_stay_unmatched() -> None:
+    hartford = HartfordSource().fetch(mode="fixture").records
+    leftover = _wave_bv_leftover_rows(hartford)
+    leftover_tickers = {row.ticker for row in leftover}
+    assert leftover_tickers == set(WAVE_BV_HARTFORD_LEFTOVER_5Y)
+    # Healthcare 2024 N-CSR distribution dashes stay unmatched on WAVE BV page.
+    for ticker in WAVE_BV_HEALTHCARE_2024_WALLS:
+        healthcare_bv_2024 = [
+            row
+            for row in hartford
+            if row.ticker == ticker
+            and row.as_of
+            and row.as_of.year == 2024
+            and row.source_url
+            and (
+                WAVE_BV_NCSR_ACCESSION in row.source_url
+                or WAVE_BV_LEFTOVER_URL in row.source_url
+            )
+        ]
+        assert healthcare_bv_2024 == [], ticker
+    federated = FederatedHermesSource().fetch(mode="fixture").records
+    for ticker in WAVE_BV_BT_DISJOINT:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(federated, ticker), ticker
+    pioneer = AmundiSource().fetch(mode="fixture").records
+    for ticker in WAVE_BV_BS_DISJOINT:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(pioneer, ticker), ticker
+    grandeur = GrandeurPeakSource().fetch(mode="fixture").records
+    for ticker in WAVE_BV_BR_DISJOINT:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(grandeur, ticker), ticker
+    beacon = AmericanBeaconSource().fetch(mode="fixture").records
+    for ticker in WAVE_BP_BEACON_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(beacon, ticker), ticker
+    dws = DwsSource().fetch(mode="fixture").records
+    for ticker in (
+        WAVE_BO_DWS_LEFTOVER_5Y
+        + WAVE_BN_DWS_LEFTOVER_5Y
+        + WAVE_BK_DWS_LEFTOVER_5Y
+        + WAVE_BI_DWS_LEFTOVER_5Y
+        + WAVE_BG_DWS_LEFTOVER_5Y
+    ):
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(dws, ticker), ticker
+    baird = BairdSource().fetch(mode="fixture").records
+    for ticker in WAVE_BM_BAIRD_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(baird, ticker), ticker
+    thrivent = ThriventSource().fetch(mode="fixture").records
+    for ticker in WAVE_BL_THRIVENT_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(thrivent, ticker), ticker
+    riverpark = RiverparkSource().fetch(mode="fixture").records
+    for ticker in WAVE_BJ_RIVERPARK_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(riverpark, ticker), ticker
+    tcw = TcwSource().fetch(mode="fixture").records
+    for ticker in WAVE_BH_TCW_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(tcw, ticker), ticker
+    alger = AlgerSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(alger, "CHUSX")
+    hartford_bv = {row.ticker for row in leftover}
+    assert hartford_bv == set(WAVE_BV_HARTFORD_LEFTOVER_5Y)
+    assert not hartford_bv & set(WAVE_BV_BU_DISJOINT)
+    assert not hartford_bv & set(WAVE_BV_BT_DISJOINT)
+    assert not hartford_bv & set(WAVE_BV_BS_DISJOINT)
+    assert not hartford_bv & set(WAVE_BV_BR_DISJOINT)
+    assert not hartford_bv & set(WAVE_BV_ALGER_RESERVED)
+    assert not hartford_bv & set(WAVE_BV_HEALTHCARE_2024_WALLS)
+    pioneer_bu = AmundiSource().fetch(mode="fixture").records
+    for ticker in WAVE_BV_BU_DISJOINT:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(pioneer_bu, ticker), ticker
+
+
+def test_wave_bv_heroes_are_searchable(client: TestClient) -> None:
+    fetched = client.post(
+        "/ingest/fetch", json={"fund_family": "hartford", "mode": "fixture"}
+    )
+    assert fetched.status_code == 200, fetched.text
+    assert fetched.json()["created"] > 0
+
+    for ticker in WAVE_BV_HARTFORD_LEFTOVER_5Y:
+        body = client.get("/funds", params={"q": ticker}).json()
+        tickers = [item["ticker"] for item in body["items"]]
+        assert ticker in tickers, f"{ticker} missing from GET /funds?q={ticker}: {tickers[:8]}"
+
+    hmdcx = client.get(
+        "/distributions",
+        params={"ticker": "HMDCX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    hmdcx_2024 = [
+        Decimal(row["amount"])
+        for row in hmdcx["items"]
+        if row.get("ticker") == "HMDCX"
+        and row.get("estimate_type") == "total_capital_gains"
+        and str(row.get("as_of") or "").startswith("2024-10-31")
+    ]
+    assert Decimal("0.59") in hmdcx_2024
+    hmdcx_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in hmdcx["items"]
+        if row.get("ticker") == "HMDCX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= hmdcx_years
+
+    # Keep sister WAVE BT Federated searchable after the additive leftover.
+    federated_fetched = client.post(
+        "/ingest/fetch", json={"fund_family": "federated_hermes", "mode": "fixture"}
+    )
+    assert federated_fetched.status_code == 200, federated_fetched.text
+    svaax = client.get(
+        "/distributions",
+        params={"ticker": "SVAAX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    svaax_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in svaax["items"]
+        if row.get("ticker") == "SVAAX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= svaax_years
+
+    # Keep sister WAVE BU Pioneer Mid Cap Value searchable after the additive leftover.
+    pioneer_bu_fetched = client.post(
+        "/ingest/fetch", json={"fund_family": "amundi", "mode": "fixture"}
+    )
+    assert pioneer_bu_fetched.status_code == 200, pioneer_bu_fetched.text
+    pcgrx = client.get(
+        "/distributions",
+        params={"ticker": "PCGRX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    pcgrx_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in pcgrx["items"]
+        if row.get("ticker") == "PCGRX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= pcgrx_years

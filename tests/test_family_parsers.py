@@ -2611,6 +2611,35 @@ def test_fourth_tier_fixtures() -> None:
     assert "HBAIX" not in {r.ticker for r in hartford_an}
     assert "HCKIX" not in {r.ticker for r in hartford_an}
 
+    hartford_bv = parse_distribution_html(
+        (ROOT / "hartford" / "leftover_ncsr_hmdcx_2024_wave_bv.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url=(
+            "https://www.sec.gov/Archives/edgar/data/1006415/"
+            "000119312525001898/d905284dncsr.htm"
+        ),
+        fund_family="Hartford Funds",
+    )
+    hmdcx_2024_bv = next(
+        r
+        for r in hartford_bv
+        if r.ticker == "HMDCX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and str(r.as_of) == "2024-10-31"
+    )
+    assert hmdcx_2024_bv.amount == Decimal("0.59")
+    assert hmdcx_2024_bv.publication_stage == PublicationStage.final
+    hmdcx_2024_oi_bv = [
+        r
+        for r in hartford_bv
+        if r.ticker == "HMDCX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and str(r.as_of) == "2024-10-31"
+    ]
+    assert hmdcx_2024_oi_bv == []
+    assert {r.ticker for r in hartford_bv} == {"HMDCX"}
+
     artisan_an = parse_distribution_html(
         (ROOT / "artisan" / "leftover_ncsr_2023_wave_an.html").read_text(encoding="utf-8"),
         source_url=(
