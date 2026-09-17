@@ -846,8 +846,16 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # MFS leftover Excel / Lord LAGWX July 31 / Dodge Class X 2021 / Oakmark
     # Bond 2023 stay walls. Honest pin remasured on #210 tip 51e2b28b:
     # 3862 → 3998 (+136 MF; ETF 5y unchanged at 758).
-    assert digest.funds_with_5y == 3998
-    assert digest.funds_with_5y_mf == 3240
+    # WAVE AO leftover (existing in-book only): Fidelity Advisor leftover
+    # Class I December 2021 N-CSR Distributions (Unaudited) pay tables
+    # unlock leftover Class I already on WAVE X DPL2 2022–2024 (FIXIX /
+    # FOPIX / FIADX / FWIFX / FVIFX / FASOX / EQPGX / FSCIX / FMCCX).
+    # Does not redo AF–AN (especially AN Hartford I/C/F/R/Y + Artisan
+    # 2023). MFS leftover Excel / Lord LAGWX July 31 / Dodge Class X
+    # 2021 / Oakmark Bond 2023 stay walls. Honest pin remasured on
+    # WAVE AN tip 9fb7db5: 3998 → 4007 (+9 MF; ETF 5y unchanged at 758).
+    assert digest.funds_with_5y == 4007
+    assert digest.funds_with_5y_mf == 3249
     assert digest.funds_with_5y_etf == 758
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
@@ -8566,7 +8574,9 @@ def test_parallel_x_fidelity_leftover_fills() -> None:
         and row.amount is not None
     }
     eqpgx_years.discard(None)
-    assert eqpgx_years == {2022, 2023, 2024, 2025}
+    # WAVE X left EQPGX at 4y (2021 DPL2 Class A name-only). WAVE AO
+    # fills Class I December 2021 N-CSR CG $2.262 (pay 12/29/2021).
+    assert set(LOOKBACK_YEARS) <= eqpgx_years
 
 
 def test_parallel_x_aci_leftover_fills() -> None:
@@ -11466,3 +11476,228 @@ def test_wave_an_heroes_are_searchable(client: TestClient) -> None:
         if row.get("ticker") == "APFDX" and row.get("amount") is not None
     }
     assert "2023" not in apfdx_years
+
+
+WAVE_AO_FIDELITY_LEFTOVER_5Y = (
+    "FIXIX",
+    "FOPIX",
+    "FIADX",
+    "FWIFX",
+    "FVIFX",
+    "FASOX",
+    "EQPGX",
+    "FSCIX",
+    "FMCCX",
+)
+
+
+def test_wave_ao_fidelity_leftover_ncsr_fills_5y() -> None:
+    records = FidelitySource().fetch(mode="fixture").records
+    fixix_2021_oi = next(
+        row
+        for row in records
+        if row.ticker == "FIXIX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.payable_date
+        and str(row.payable_date) == "2021-12-06"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert fixix_2021_oi.amount == Decimal("0.717")
+    fixix_2021_cg = next(
+        row
+        for row in records
+        if row.ticker == "FIXIX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.payable_date
+        and str(row.payable_date) == "2021-12-06"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert fixix_2021_cg.amount == Decimal("1.522")
+    fopix_2021_cg = next(
+        row
+        for row in records
+        if row.ticker == "FOPIX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.payable_date
+        and str(row.payable_date) == "2021-12-06"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert fopix_2021_cg.amount == Decimal("2.309")
+    fiadx_2021_oi = next(
+        row
+        for row in records
+        if row.ticker == "FIADX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.payable_date
+        and str(row.payable_date) == "2021-12-06"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert fiadx_2021_oi.amount == Decimal("1.418")
+    fwifx_2021_cg = next(
+        row
+        for row in records
+        if row.ticker == "FWIFX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.payable_date
+        and str(row.payable_date) == "2021-12-06"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert fwifx_2021_cg.amount == Decimal("4.425")
+    fvifx_2021_oi = next(
+        row
+        for row in records
+        if row.ticker == "FVIFX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.payable_date
+        and str(row.payable_date) == "2021-12-06"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert fvifx_2021_oi.amount == Decimal("0.249")
+    fasox_2021_oi = next(
+        row
+        for row in records
+        if row.ticker == "FASOX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.payable_date
+        and str(row.payable_date) == "2021-12-29"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert fasox_2021_oi.amount == Decimal("0.507")
+    eqpgx_2021_cg = next(
+        row
+        for row in records
+        if row.ticker == "EQPGX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.payable_date
+        and str(row.payable_date) == "2021-12-29"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert eqpgx_2021_cg.amount == Decimal("2.262")
+    fscix_2021_cg = next(
+        row
+        for row in records
+        if row.ticker == "FSCIX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.payable_date
+        and str(row.payable_date) == "2021-12-29"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert fscix_2021_cg.amount == Decimal("3.595")
+    fmccx_2021_cg = next(
+        row
+        for row in records
+        if row.ticker == "FMCCX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.payable_date
+        and str(row.payable_date) == "2021-12-29"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert fmccx_2021_cg.amount == Decimal("5.496")
+    # Class-level — never sibling-copy retail / A / C onto Class I.
+    # EQPGX 2021 CG $2.262 is the printed Class I row, not Class A $2.217.
+    for ticker in WAVE_AO_FIDELITY_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(records, ticker), ticker
+
+
+def test_wave_ao_leftover_walls_stay_unmatched() -> None:
+    fidelity = FidelitySource().fetch(mode="fixture").records
+    # Class I leftovers whose official Dec 2021 pay table is unpublished
+    # or not calendar-2021 — never invent $0 / never use Feb 2022 as 2021.
+    assert 2021 not in _paid_lookback_years(fidelity, "FFRIX")
+    assert 2021 not in _paid_lookback_years(fidelity, "FIVQX")
+    assert 2021 not in _paid_lookback_years(fidelity, "FICCX")
+    assert 2021 not in _paid_lookback_years(fidelity, "FIIMX")
+    assert 2021 not in _paid_lookback_years(fidelity, "FSRIX")
+    assert 2021 not in _paid_lookback_years(fidelity, "FINSX")
+    assert 2021 not in _paid_lookback_years(fidelity, "FGZMX")
+    assert {2022, 2023, 2024, 2025} <= _paid_lookback_years(fidelity, "FFRIX")
+    # WAVE X FTRIX June 30 2021 not overwritten / not redone.
+    assert 2021 in _paid_lookback_years(fidelity, "FTRIX")
+
+    # AN leftover walls — do not redo / do not invent.
+    hartford = HartfordSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(hartford, "HDBAX")
+    artisan = ArtisanSource().fetch(mode="fixture").records
+    assert 2023 not in _paid_lookback_years(artisan, "APFDX")
+    mfs = MfsSource().fetch(mode="fixture").records
+    assert 2023 not in _paid_lookback_years(mfs, "BRSPX")
+    assert 2022 not in _paid_lookback_years(mfs, "MEMBX")
+    dodge = DodgeCoxSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(dodge, "DOXGX")
+    oakmark = OakmarkSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(oakmark, "OAKCX")
+    lord = LordAbbettSource().fetch(mode="fixture").records
+    assert 2022 not in _paid_lookback_years(lord, "LAGWX")
+    assert 2023 not in _paid_lookback_years(lord, "LAGWX")
+
+
+def test_wave_ao_heroes_are_searchable(client: TestClient) -> None:
+    fetched = client.post(
+        "/ingest/fetch", json={"fund_family": "fidelity", "mode": "fixture"}
+    )
+    assert fetched.status_code == 200, fetched.text
+    assert fetched.json()["created"] > 0
+
+    for ticker in ("FIXIX", "FOPIX", "FIADX", "EQPGX", "FASOX", "FMCCX", "FFRIX"):
+        body = client.get("/funds", params={"q": ticker}).json()
+        tickers = [item["ticker"] for item in body["items"]]
+        assert ticker in tickers, f"{ticker} missing from GET /funds?q={ticker}: {tickers[:8]}"
+
+    fixix = client.get(
+        "/distributions",
+        params={"ticker": "FIXIX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    fixix_2021 = [
+        Decimal(row["amount"])
+        for row in fixix["items"]
+        if row.get("ticker") == "FIXIX"
+        and row.get("estimate_type") == "ordinary_income"
+        and str(row.get("payable_date") or "").startswith("2021-12-06")
+    ]
+    assert Decimal("0.717") in fixix_2021
+    fixix_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in fixix["items"]
+        if row.get("ticker") == "FIXIX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= fixix_years
+
+    eqpgx = client.get(
+        "/distributions",
+        params={"ticker": "EQPGX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    eqpgx_2021 = [
+        Decimal(row["amount"])
+        for row in eqpgx["items"]
+        if row.get("ticker") == "EQPGX"
+        and row.get("estimate_type") == "total_capital_gains"
+        and str(row.get("payable_date") or "").startswith("2021-12-29")
+    ]
+    assert Decimal("2.262") in eqpgx_2021
+
+    ffrix = client.get(
+        "/distributions",
+        params={"ticker": "FFRIX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    ffrix_2021 = [
+        row
+        for row in ffrix["items"]
+        if row.get("ticker") == "FFRIX"
+        and str(row.get("payable_date") or row.get("as_of") or row.get("ex_date") or "").startswith(
+            "2021"
+        )
+        and row.get("amount") is not None
+        and row.get("publication_stage") == "final"
+    ]
+    assert ffrix_2021 == []
+

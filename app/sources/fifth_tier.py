@@ -244,6 +244,9 @@ class OakmarkSource(HtmlTableSource):
         "Official 5y WAVE AN leftover re-probe (2026-09-17): Bond 2023 and "
         "OAKCX 2021 still unpublished on Wayback YE HTML; annual-report "
         "distributions are fund-level $ not per-share — never invented. "
+        "Official 5y WAVE AO leftover re-probe (2026-09-17): Bond 2023 and "
+        "OAKCX 2021 still unpublished on Wayback YE HTML; annual-report "
+        "distributions are fund-level $ not per-share — never invented. "
         "Tax estimates hub is % of NAV only (no ST/LT $/share). "
         "Tax guide: https://oakmark.com/wp-content/uploads/sites/3/documents/HarrisOakmark-Tax-Information-Guide.pdf"
     )

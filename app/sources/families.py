@@ -481,6 +481,19 @@ class FidelitySource(HtmlTableSource):
         "2022–2023 still unpublished in CDX (HPDY SPA). Puritan Aug 31 / "
         "Magellan Mar 31 / Securities Fund July 31 N-CSR highlights are not "
         "calendar-safe. Advisor DPL2 / FTRIX from WAVE X not redone. "
+        "Official 5y WAVE AO leftover (2026-09-17, in-book Class I only): "
+        "class-level December 2021 N-CSR Distributions (Unaudited) pay tables "
+        "unlock leftover Advisor Class I already on WAVE X DPL2 2022–2024 "
+        "(FIXIX / FOPIX / FIADX / FWIFX / FVIFX pay 12/06/2021; FASOX / "
+        "EQPGX / FSCIX / FMCCX pay 12/29/2021). Income is ordinary income; "
+        "capital gains are unsplit total capital gains. Never sibling-copy "
+        "A/C/M/Z/retail onto Class I. WAVE X DPL2 / FTRIX and WAVE AN "
+        "Hartford / Artisan not redone. Walls: Freedom / Freedom Blend "
+        "March 31 FYE not calendar-safe; Sector Series VII July 31 not "
+        "calendar-safe; FFRIX Oct 31 N-CSR has no December 2021 Class I pay "
+        "table; FIVQX / FICCX print only December 2020 foreign-tax footnotes; "
+        "FIIMX / FSRIX Dec 31 N-CSR pay tables are February 2022 (calendar "
+        "2022); FINSX / FGZMX 2021 Class I pay rows not extracted. "
         "Hub: https://www.fidelity.com/mutual-funds/information/overview. "
         "Wave 10 share-class densify: Fidelity Advisor Funds are a separate "
         "official DPL (not on retail FIIS_SP52/SP10_DPL6). Full A/C/M/I/Z "
@@ -514,7 +527,8 @@ class FidelitySource(HtmlTableSource):
         "live table is Class I-heavy. "
         "Advisor DPL2 2022–2024 leftover history is fixture-only (Wayback "
         "unfiltered Class I); 2021 Class I DPL2 unpublished; FTRIX 2021 is "
-        "N-CSR fixture-only. "
+        "N-CSR fixture-only. WAVE AO leftover Class I December 2021 N-CSR "
+        "pay tables are fixture-only. "
         "Estimate + paid DPL omit Record Date; ETF Annual-Distribution-Calendar "
         "PDF prints Record but is not this mutual-fund estimate book."
     )
@@ -592,6 +606,14 @@ class FidelitySource(HtmlTableSource):
                 name="leftover_ftrix_ncsr_2021",
                 url="https://www.sec.gov/Archives/edgar/data/35348/000003534823000091/filing6692.htm",
                 fixture="leftover_ftrix_ncsr_2021.html",
+                live=False,
+                role="history",
+                large_aum_only=True,
+            ),
+            PageSpec(
+                name="leftover_ncsr_class_i_2021_wave_ao",
+                url="https://www.sec.gov/Archives/edgar/data/744822/000137949121005051/filing918.htm",
+                fixture="leftover_ncsr_class_i_2021_wave_ao.html",
                 live=False,
                 role="history",
                 large_aum_only=True,

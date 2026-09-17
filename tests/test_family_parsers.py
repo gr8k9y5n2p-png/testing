@@ -4801,6 +4801,49 @@ def test_parallel_x_leftover_paid_fixtures() -> None:
     assert ftrix_2021_oi.publication_stage == PublicationStage.final
     assert {r.ticker for r in ftrix_ncsr} == {"FTRIX"}
 
+    wave_ao = parse_distribution_html(
+        (ROOT / "fidelity" / "leftover_ncsr_class_i_2021_wave_ao.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://fidelity-leftover-ao-ncsr",
+        fund_family="Fidelity",
+    )
+    fixix_ao = next(
+        r
+        for r in wave_ao
+        if r.ticker == "FIXIX" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert fixix_ao.amount == Decimal("0.717")
+    assert str(fixix_ao.payable_date) == "2021-12-06"
+    assert str(fixix_ao.record_date) == "2021-12-03"
+    assert fixix_ao.publication_stage == PublicationStage.final
+    fopix_ao = next(
+        r
+        for r in wave_ao
+        if r.ticker == "FOPIX"
+        and r.estimate_type == EstimateType.total_capital_gains
+    )
+    assert fopix_ao.amount == Decimal("2.309")
+    eqpgx_ao = next(
+        r
+        for r in wave_ao
+        if r.ticker == "EQPGX"
+        and r.estimate_type == EstimateType.total_capital_gains
+    )
+    assert eqpgx_ao.amount == Decimal("2.262")
+    assert str(eqpgx_ao.payable_date) == "2021-12-29"
+    assert {r.ticker for r in wave_ao} == {
+        "FIXIX",
+        "FOPIX",
+        "FIADX",
+        "FWIFX",
+        "FVIFX",
+        "FASOX",
+        "EQPGX",
+        "FSCIX",
+        "FMCCX",
+    }
+
     aci = parse_distribution_html(
         (ROOT / "american_century" / "leftover_ncsr_investor_2021_2025.html").read_text(
             encoding="utf-8"
