@@ -40,6 +40,7 @@ from app.sources.eleventh_tier import (
     GuidestoneSource,
     HodgesSource,
     KopernikSource,
+    LocorrSource,
     PermanentPortfolioSource,
     TimothyPlanSource,
     TocquevilleSource,
@@ -1052,8 +1053,28 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # years, Davis FYE July 31, and Boston Partners FYE Aug 31 remasured as
     # walls. Honest pin remasured on WAVE BC tip 3654402: 4173 → 4176
     # (+3 MF; ETF 5y unchanged at 758).
-    assert digest.funds_with_5y == 4176
-    assert digest.funds_with_5y_mf == 3418
+    # WAVE BD leftover (existing in-book only): LoCorr leftover Class I
+    # Dec 31 2021–2024 N-CSR Financial Highlights unlock leftover LFMIX /
+    # LCSIX / LOTIX / LEQIX already on the 2025 paid annual-distributions
+    # book. LHEIX 2024 is official year-depth only (commencement 7/10/2024).
+    # LSAIX commenced 1/8/2025. Does not redo AF–BB (especially BB Boston
+    # Trust Walden Dec 31, BC Mairs & Power + LKCM Dec 31, BA Madison Oct
+    # 31, AZ Kinetics Dec 31, AY Hennessy Oct 31, AW Federated Kaufmann/SDG
+    # + Harding, AX FAM / Fenimore, AV Third Avenue, AU LSV, AT AMG
+    # Frontier / GW&K, AQ Victory I/II, AS Virtus Asset Trust, or AR
+    # Homestead). Sister BB Boston Trust BTBFX / BTMFX / WSEFX stay 5y on
+    # this tip. Preferred William Blair leftover beyond remasured walls,
+    # Allspring leftover FYE July 31, First Eagle GRA-Smid 2021 inception
+    # 11/30/21, Calamos CAISX 2021 inception, GuideStone index 2022
+    # inception, Davis FYE July 31, American Beacon leftover all-dash
+    # years, Oberweis official 2023 dashes, Hodges FYE March 31, Grandeur
+    # Peak FYE April 30, RiverPark FYE September 30, Conestoga FYE
+    # September 30, Buffalo FYE March 31, Jensen FYE May 31, leftover ETF
+    # wrappers FEGE / FEOE / CANQ / CCEF, and Minnesota ETF MINN remasured
+    # as walls. Honest pin remasured on WAVE BB tip 481e719: 4176 → 4180
+    # (+4 MF; ETF 5y unchanged at 758).
+    assert digest.funds_with_5y == 4180
+    assert digest.funds_with_5y_mf == 3422
     assert digest.funds_with_5y_etf == 758
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
@@ -15470,5 +15491,362 @@ def test_wave_bb_heroes_are_searchable(client: TestClient) -> None:
         if row.get("ticker") == "WWWFX" and row.get("amount") is not None
     }
     assert {"2021", "2022", "2023", "2024", "2025"} <= wwwfx_years
+
+
+WAVE_BD_LOCORR_LEFTOVER_5Y = (
+    "LFMIX",
+    "LCSIX",
+    "LOTIX",
+    "LEQIX",
+)
+
+
+def test_wave_bd_locorr_leftover_dec31_fills_5y() -> None:
+    locorr = LocorrSource().fetch(mode="fixture").records
+    lfmix_2021_oi = next(
+        row
+        for row in locorr
+        if row.ticker == "LFMIX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2021-12-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert lfmix_2021_oi.amount == Decimal("0.41")
+    lfmix_2022_cg = next(
+        row
+        for row in locorr
+        if row.ticker == "LFMIX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2022-12-31"
+        and row.amount is not None
+    )
+    assert lfmix_2022_cg.amount == Decimal("0.94")
+    lfmix_2024_roc = next(
+        row
+        for row in locorr
+        if row.ticker == "LFMIX"
+        and row.estimate_type == EstimateType.return_of_capital
+        and row.as_of
+        and str(row.as_of) == "2024-12-31"
+        and row.amount is not None
+    )
+    assert lfmix_2024_roc.amount == Decimal("0.01")
+    lcsix_2021_oi = next(
+        row
+        for row in locorr
+        if row.ticker == "LCSIX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2021-12-31"
+        and row.amount is not None
+    )
+    assert lcsix_2021_oi.amount == Decimal("0.76")
+    # LCSIX 2023 ROC less than $0.005 stays unmatched.
+    lcsix_2023_roc = [
+        row
+        for row in locorr
+        if row.ticker == "LCSIX"
+        and row.estimate_type == EstimateType.return_of_capital
+        and row.as_of
+        and row.as_of.year == 2023
+    ]
+    assert lcsix_2023_roc == []
+    lotix_2022_cg = next(
+        row
+        for row in locorr
+        if row.ticker == "LOTIX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2022-12-31"
+        and row.amount is not None
+    )
+    assert lotix_2022_cg.amount == Decimal("1.66")
+    leqix_2021_cg = next(
+        row
+        for row in locorr
+        if row.ticker == "LEQIX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2021-12-31"
+        and row.amount is not None
+    )
+    assert leqix_2021_cg.amount == Decimal("0.78")
+    # LEQIX 2021–2022 OI dashes stay unmatched.
+    leqix_early_oi = [
+        row
+        for row in locorr
+        if row.ticker == "LEQIX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and row.as_of.year in {2021, 2022}
+    ]
+    assert leqix_early_oi == []
+    # Class-level Class I — never sibling-copied onto Class A / C.
+    assert [row for row in locorr if row.ticker in {"LFMAX", "LFMCX", "LCSAX", "LEQAX"}] == []
+    # Spectrum Income is not an in-book leftover.
+    assert [row for row in locorr if row.ticker == "LSPIX"] == []
+    # LSAIX commenced 1/8/2025 — no 2021–2024 leftover row.
+    lsaix_history = [
+        row
+        for row in locorr
+        if row.ticker == "LSAIX"
+        and row.as_of
+        and row.as_of.year in {2021, 2022, 2023, 2024}
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert lsaix_history == []
+    # LHEIX 2024 is official year-depth only (commencement 7/10/2024).
+    lheix_2024_oi = next(
+        row
+        for row in locorr
+        if row.ticker == "LHEIX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2024-12-31"
+        and row.amount is not None
+    )
+    assert lheix_2024_oi.amount == Decimal("0.06")
+    assert 2021 not in _paid_lookback_years(locorr, "LHEIX")
+    assert 2022 not in _paid_lookback_years(locorr, "LHEIX")
+    assert 2023 not in _paid_lookback_years(locorr, "LHEIX")
+    assert {2024, 2025} <= _paid_lookback_years(locorr, "LHEIX")
+    # 2025 stays on the existing paid annual-distributions book — not re-emitted from N-CSR.
+    ncsr_late = [
+        row
+        for row in locorr
+        if row.ticker in WAVE_BD_LOCORR_LEFTOVER_5Y
+        and row.as_of
+        and row.as_of.year == 2025
+        and row.source_url
+        and "000113322826003096" in row.source_url
+    ]
+    assert ncsr_late == []
+    lfmix_2025 = next(
+        row
+        for row in locorr
+        if row.ticker == "LFMIX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-09"
+        and row.amount is not None
+    )
+    assert lfmix_2025.amount == Decimal("0.2444")
+    leqix_2025 = next(
+        row
+        for row in locorr
+        if row.ticker == "LEQIX"
+        and row.estimate_type == EstimateType.short_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-31"
+        and row.amount is not None
+    )
+    assert leqix_2025.amount == Decimal("2.0297")
+    for ticker in WAVE_BD_LOCORR_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(locorr, ticker), ticker
+
+
+def test_wave_bd_leftover_walls_stay_unmatched() -> None:
+    # Keep sister WAVE BB Boston Trust — BTBFX / BTMFX / WSEFX stay 5y on tip.
+    boston = BostonTrustSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(boston, "BTBFX")
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(boston, "BTMFX")
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(boston, "WSEFX")
+
+    william_blair = WilliamBlairSource().fetch(mode="fixture").records
+    assert 2023 not in _paid_lookback_years(william_blair, "LCGFX")
+    assert 2023 not in _paid_lookback_years(william_blair, "LCGNX")
+    assert 2024 not in _paid_lookback_years(william_blair, "WESNX")
+    assert 2024 not in _paid_lookback_years(william_blair, "BESIX")
+    assert 2022 not in _paid_lookback_years(william_blair, "WISNX")
+    assert 2021 not in _paid_lookback_years(william_blair, "WBCIX")
+    assert 2022 not in _paid_lookback_years(william_blair, "WBCIX")
+    assert 2021 not in _paid_lookback_years(william_blair, "ISMVX")
+    assert 2021 not in _paid_lookback_years(william_blair, "WVMIX")
+
+    allspring = AllspringSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(allspring, "WDSAX")
+    assert 2023 not in _paid_lookback_years(allspring, "EAAFX")
+    assert 2021 not in _paid_lookback_years(allspring, "ASPAX")
+
+    first_eagle = FirstEagleSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(first_eagle, "FERAX")
+    assert 2021 not in _paid_lookback_years(first_eagle, "FESMX")
+
+    calamos = CalamosSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(calamos, "CAISX")
+
+    guidestone = GuidestoneSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(guidestone, "GEIZX")
+    assert 2021 not in _paid_lookback_years(guidestone, "GVIZX")
+    assert 2021 not in _paid_lookback_years(guidestone, "GIIZX")
+
+    davis = DavisSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(davis, "NYVTX")
+    assert 2021 not in _paid_lookback_years(davis, "RPEAX")
+
+    oberweis = OberweisSource().fetch(mode="fixture").records
+    assert 2023 not in _paid_lookback_years(oberweis, "OBMCX")
+    assert 2023 not in _paid_lookback_years(oberweis, "OBEGX")
+
+    hodges = HodgesSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(hodges, "HDPMX")
+    assert 2021 not in _paid_lookback_years(hodges, "HDPSX")
+
+    # Keep sister WAVE BC Mairs & Power / LKCM — MPGFX / LKEQX stay 5y on tip.
+    mairs = MairsPowerSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(mairs, "MPGFX")
+    lkcm = LkcmSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(lkcm, "LKEQX")
+
+    # Keep sister WAVE BA Madison — MAGSX stays 5y on tip.
+    madison = MadisonSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(madison, "MAGSX")
+
+    # Keep sister WAVE AZ Kinetics — WWWFX stays 5y on tip.
+    kinetics = KineticsSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(kinetics, "WWWFX")
+
+    # Keep sister WAVE AY Hennessy — HFCSX stays 5y on tip.
+    hennessy = HennessySource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(hennessy, "HFCSX")
+
+    # Keep sister WAVE AW Kaufmann / SDG + Harding.
+    federated = FederatedHermesSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(federated, "KAUAX")
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(federated, "FKASX")
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(federated, "FHEQX")
+    harding = HardingLoevnerSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(harding, "HLMGX")
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(harding, "HLMVX")
+
+    # Do not redo WAVE AX FAM / Fenimore Dec 31 — FAMVX stays 5y.
+    fam = FamSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(fam, "FAMVX")
+
+    # Do not redo WAVE AV Third Avenue Institutional Oct 31 — TAVFX stays 5y.
+    third = ThirdAvenueSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(third, "TAVFX")
+
+    # Do not redo WAVE AU LSV I/Investor Oct 31 — LSVEX stays 5y.
+    lsv = LsvSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(lsv, "LSVEX")
+
+    # Exclusive leftover — LoCorr tickers stay disjoint from BB / BC / BA books.
+    locorr = LocorrSource().fetch(mode="fixture").records
+    locorr_tickers = {row.ticker for row in locorr if row.ticker}
+    assert not locorr_tickers & {row.ticker for row in boston if row.ticker}
+    assert not locorr_tickers & {row.ticker for row in mairs if row.ticker}
+    assert not locorr_tickers & {row.ticker for row in lkcm if row.ticker}
+    assert not locorr_tickers & {row.ticker for row in madison if row.ticker}
+    assert not locorr_tickers & {row.ticker for row in kinetics if row.ticker}
+
+
+def test_wave_bd_heroes_are_searchable(client: TestClient) -> None:
+    locorr_fetched = client.post(
+        "/ingest/fetch", json={"fund_family": "locorr", "mode": "fixture"}
+    )
+    assert locorr_fetched.status_code == 200, locorr_fetched.text
+    assert locorr_fetched.json()["created"] > 0
+
+    for ticker in WAVE_BD_LOCORR_LEFTOVER_5Y:
+        body = client.get("/funds", params={"q": ticker}).json()
+        tickers = [item["ticker"] for item in body["items"]]
+        assert ticker in tickers, f"{ticker} missing from GET /funds?q={ticker}: {tickers[:8]}"
+
+    lfmix = client.get(
+        "/distributions",
+        params={"ticker": "LFMIX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    lfmix_2021 = [
+        Decimal(row["amount"])
+        for row in lfmix["items"]
+        if row.get("ticker") == "LFMIX"
+        and row.get("estimate_type") == "ordinary_income"
+        and str(row.get("as_of") or "").startswith("2021-12-31")
+    ]
+    assert Decimal("0.41") in lfmix_2021
+    lfmix_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in lfmix["items"]
+        if row.get("ticker") == "LFMIX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= lfmix_years
+
+    leqix = client.get(
+        "/distributions",
+        params={"ticker": "LEQIX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    leqix_2021 = [
+        Decimal(row["amount"])
+        for row in leqix["items"]
+        if row.get("ticker") == "LEQIX"
+        and row.get("estimate_type") == "total_capital_gains"
+        and str(row.get("as_of") or "").startswith("2021-12-31")
+    ]
+    assert Decimal("0.78") in leqix_2021
+
+    # Keep WAVE BB Boston Trust searchable after the additive leftover.
+    boston = client.post(
+        "/ingest/fetch", json={"fund_family": "boston_trust", "mode": "fixture"}
+    )
+    assert boston.status_code == 200, boston.text
+    btbfx = client.get(
+        "/distributions",
+        params={"ticker": "BTBFX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    btbfx_2024 = [
+        Decimal(row["amount"])
+        for row in btbfx["items"]
+        if row.get("ticker") == "BTBFX"
+        and row.get("estimate_type") == "ordinary_income"
+        and str(row.get("as_of") or "").startswith("2024-12-31")
+    ]
+    assert Decimal("0.94") in btbfx_2024
+    btbfx_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in btbfx["items"]
+        if row.get("ticker") == "BTBFX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= btbfx_years
+
+    # Keep WAVE BC Mairs searchable after the additive leftover.
+    mairs = client.post(
+        "/ingest/fetch", json={"fund_family": "mairs_power", "mode": "fixture"}
+    )
+    assert mairs.status_code == 200, mairs.text
+    mpgfx = client.get(
+        "/distributions",
+        params={"ticker": "MPGFX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    mpgfx_2021 = [
+        Decimal(row["amount"])
+        for row in mpgfx["items"]
+        if row.get("ticker") == "MPGFX"
+        and row.get("estimate_type") == "total_capital_gains"
+        and str(row.get("as_of") or "").startswith("2021-12-31")
+    ]
+    assert Decimal("12.31") in mpgfx_2021
+
+    # Keep WAVE BA Madison searchable after the additive leftover.
+    madison = client.post(
+        "/ingest/fetch", json={"fund_family": "madison", "mode": "fixture"}
+    )
+    assert madison.status_code == 200, madison.text
+    magsx = client.get(
+        "/distributions",
+        params={"ticker": "MAGSX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    magsx_2021 = [
+        Decimal(row["amount"])
+        for row in magsx["items"]
+        if row.get("ticker") == "MAGSX"
+        and row.get("estimate_type") == "total_capital_gains"
+        and str(row.get("as_of") or "").startswith("2021-10-31")
+    ]
+    assert Decimal("0.94") in magsx_2021
 
 

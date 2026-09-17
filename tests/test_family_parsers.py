@@ -5490,6 +5490,58 @@ def test_eleventh_tier_fixtures() -> None:
     )
     assert leqix.amount == Decimal("2.0297")
 
+    locorr_ncsr = parse_distribution_html(
+        (ROOT / "locorr" / "leftover_ncsr_2021_2024_wave_bd.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url=(
+            "https://www.sec.gov/Archives/edgar/data/1506768/"
+            "000113322826003096/lit-efp22581_ncsr.htm"
+        ),
+        fund_family="LoCorr",
+    )
+    lfmix_2021 = next(
+        r
+        for r in locorr_ncsr
+        if r.ticker == "LFMIX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.as_of
+        and str(r.as_of) == "2021-12-31"
+    )
+    assert lfmix_2021.amount == Decimal("0.41")
+    assert lfmix_2021.publication_stage == PublicationStage.final
+    lfmix_2022_cg = next(
+        r
+        for r in locorr_ncsr
+        if r.ticker == "LFMIX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and r.as_of
+        and str(r.as_of) == "2022-12-31"
+    )
+    assert lfmix_2022_cg.amount == Decimal("0.94")
+    lfmix_2024_roc = next(
+        r
+        for r in locorr_ncsr
+        if r.ticker == "LFMIX"
+        and r.estimate_type == EstimateType.return_of_capital
+        and r.as_of
+        and str(r.as_of) == "2024-12-31"
+    )
+    assert lfmix_2024_roc.amount == Decimal("0.01")
+    leqix_2021_cg = next(
+        r
+        for r in locorr_ncsr
+        if r.ticker == "LEQIX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and r.as_of
+        and str(r.as_of) == "2021-12-31"
+    )
+    assert leqix_2021_cg.amount == Decimal("0.78")
+    assert {r.ticker for r in locorr_ncsr if r.as_of and r.as_of.year == 2025} == set()
+    assert "LFMAX" not in {r.ticker for r in locorr_ncsr}
+    assert "LSPIX" not in {r.ticker for r in locorr_ncsr}
+    assert "LSAIX" not in {r.ticker for r in locorr_ncsr}
+
     timothy = parse_distribution_html(
         (ROOT / "timothy_plan" / "2025_year_end_distributions.html").read_text(
             encoding="utf-8"
