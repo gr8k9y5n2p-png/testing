@@ -306,14 +306,28 @@ class DriehausSource(HtmlTableSource):
         "Record 12/17/2025; ex/pay 12/18/2025. Published $0.00 stored. "
         "Tickers from official driehaus.com fund pages / SEC series list "
         "(DMCRX / DVSMX / DNSMX / DSMDX / DRIOX / DIDEX / DREGX / DIEMX / DRESX / "
-        "DEVDX / DMAGX). Amounts unchanged. Official 5y parallel T leftover "
-        "re-probe: DMF_Year_end_Distribution_2021–2024 sibling PDFs unpublished "
-        "(Wayback CDX empty for Distribution filenames; performance Dividends "
-        "& Distributions tab is JS). Leftover 2021–2024 stay unmatched."
+        "DEVDX / DMAGX). Amounts unchanged. Official 5y WAVE BE leftover "
+        "(existing in-book only): 2025 N-CSR Financial Highlights unlock leftover "
+        "2021–2024 on the 2025 paid PDF book. Calendar-safe as_of 12/31. "
+        "Class-level Investor / Institutional — never sibling-copied and never "
+        "attached to out-of-book DMCQX. Income is ordinary income; net realized "
+        "gain is unsplit total capital gains; tax return of capital is return "
+        "of capital. 2025 stays on the existing paid PDF. Official source "
+        "https://www.sec.gov/Archives/edgar/data/1016073/000206657826000860/"
+        "8de7aed561cba19.htm (accession 0002066578-26-000860). Cross-checked "
+        "against the 2024 N-CSR Financial Highlights "
+        "https://www.sec.gov/Archives/edgar/data/1016073/000114554925016403/"
+        "8dd5b73594a86ad.htm (2024 / 2023 / 2022 / 2021 columns match). "
+        "Issuer dashes omitted (DRESX 2022 / DSMDX 2023 unmatched). DIDEX "
+        "inception 04/30/24 — 2021–2023 unmatched. WAVE BE leftover N-CSR "
+        "paid history is fixture-only. Dated 2021–2024 year-end sibling PDFs "
+        "remain unpublished."
     )
     live_limitations = (
         "Year-end book is PDF. Fixture transcribes the official full book; "
-        "tickers from official product pages / SEC series list."
+        "tickers from official product pages / SEC series list. Weekly walk "
+        "hits the 2025 paid PDF (empty/403/PDF-bytes = no-op success). "
+        "Leftover 2021–2024 N-CSR paid history is fixture-only."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -328,7 +342,17 @@ class DriehausSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
-            )
+            ),
+            PageSpec(
+                name="leftover_ncsr_2021_2024_wave_be",
+                url=(
+                    "https://www.sec.gov/Archives/edgar/data/1016073/"
+                    "000206657826000860/8de7aed561cba19.htm"
+                ),
+                fixture="leftover_ncsr_2021_2024_wave_be.html",
+                live=False,
+                role="history",
+            ),
         ]
 
 
