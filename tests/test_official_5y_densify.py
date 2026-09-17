@@ -37,6 +37,7 @@ from app.sources.eighth_tier import (
 from app.sources.eleventh_tier import AmgSource, GuidestoneSource
 from app.sources.fifth_tier import (
     GabelliSource,
+    HarborSource,
     NationwideSource,
     NylifeSource,
     OakmarkSource,
@@ -742,8 +743,15 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # dashed), JEPQ 4y (2021 commencement), retail DPL6 2022–2023 unpublished.
     # Honest pin remasured after rebase onto #192 tip: 3693 → 3721
     # (+28 MF; ETF 5y unchanged at 752). No new identities.
-    assert digest.funds_with_5y == 3721
-    assert digest.funds_with_5y_mf == 2969
+    # WAVE AF leftover (existing in-book only): Harbor Institutional
+    # product-page paid history +8 MF (HACAX / HAVLX / HASCX / HAIDX /
+    # HAISX / HAMVX / HAOSX / HMCLX). HSICX 2024–2025 is year-depth
+    # (inception 2024-03-01). Calamos CAISX 2024 printed $0 is year-depth
+    # (inception 03/31/22). Virtus 2021–2024 calendar PDFs still alias
+    # 2025. Transamerica / Neuberger have no in-book leftover identities.
+    # Honest pin = tip 3721 + AF +8.
+    assert digest.funds_with_5y == 3729
+    assert digest.funds_with_5y_mf == 2977
     assert digest.funds_with_5y_etf == 752
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
@@ -8821,3 +8829,211 @@ def test_parallel_x_heroes_are_searchable(client: TestClient) -> None:
         and str(row.get("as_of") or "").startswith("2021-10-31")
     ]
     assert Decimal("3.80") in glcgx_2021
+
+
+def test_parallel_af_harbor_leftover_fills() -> None:
+    records = HarborSource().fetch(mode="fixture").records
+    hacax_2021_lt = next(
+        row
+        for row in records
+        if row.ticker == "HACAX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2021-12-19"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert hacax_2021_lt.amount == Decimal("18.78540")
+    hacax_2024_lt = next(
+        row
+        for row in records
+        if row.ticker == "HACAX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2024-12-19"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert hacax_2024_lt.amount == Decimal("12.36068")
+    hacax_2025_lt = next(
+        row
+        for row in records
+        if row.ticker == "HACAX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-10"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert hacax_2025_lt.amount == Decimal("13.12011")
+    hacax_2022_zero = next(
+        row
+        for row in records
+        if row.ticker == "HACAX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2022-12-18"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert hacax_2022_zero.amount == Decimal("0.00000")
+    havlx_2025_lt = next(
+        row
+        for row in records
+        if row.ticker == "HAVLX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-18"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert havlx_2025_lt.amount == Decimal("3.88137")
+    for ticker in (
+        "HACAX",
+        "HAVLX",
+        "HASCX",
+        "HAIDX",
+        "HAISX",
+        "HAMVX",
+        "HAOSX",
+        "HMCLX",
+    ):
+        years = {
+            _year_for_row(row.as_of, row.ex_date, row.payable_date)
+            for row in records
+            if row.ticker == ticker
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        }
+        years.discard(None)
+        assert set(LOOKBACK_YEARS) <= years, ticker
+
+
+def test_parallel_af_calamos_caisx_2024_zero() -> None:
+    records = CalamosSource().fetch(mode="fixture").records
+    caisx_2024 = next(
+        row
+        for row in records
+        if row.ticker == "CAISX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2024-12-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert caisx_2024.amount == Decimal("0.0000")
+    years = {
+        _year_for_row(row.as_of, row.ex_date, row.payable_date)
+        for row in records
+        if row.ticker == "CAISX"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    years.discard(None)
+    assert {2022, 2023, 2024, 2025} <= years
+    assert 2021 not in years
+
+
+def test_parallel_af_leftover_walls_stay_unmatched() -> None:
+    harbor = HarborSource().fetch(mode="fixture").records
+    hsicx_early = [
+        row
+        for row in harbor
+        if row.ticker == "HSICX"
+        and _year_for_row(row.as_of, row.ex_date, row.payable_date) in {2021, 2022, 2023}
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert hsicx_early == []
+    # Investor sibling is not copied from leftover Institutional HACAX.
+    hcaix = [
+        row
+        for row in harbor
+        if row.ticker == "HCAIX"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert hcaix == []
+
+    calamos = CalamosSource().fetch(mode="fixture").records
+    cmrax_early = [
+        row
+        for row in calamos
+        if row.ticker == "CMRAX"
+        and _year_for_row(row.as_of, row.ex_date, row.payable_date) in {2021, 2022}
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert cmrax_early == []
+
+    virtus = VirtusSource().fetch(mode="fixture").records
+    merfx_early = [
+        row
+        for row in virtus
+        if row.ticker == "MERFX"
+        and row.ex_date
+        and row.ex_date.year in {2021, 2022, 2023, 2024}
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert merfx_early == []
+    stvtx_early = [
+        row
+        for row in virtus
+        if row.ticker == "STVTX"
+        and row.ex_date
+        and row.ex_date.year in {2021, 2022, 2023}
+        and row.amount is not None
+    ]
+    assert stvtx_early == []
+
+    # Transamerica / Neuberger have no registered leftover identities.
+    slugs = {source.slug for source in list_sources()}
+    assert "transamerica" not in slugs
+    assert "neuberger" not in slugs
+    assert "neuberger_berman" not in slugs
+
+
+def test_parallel_af_heroes_are_searchable(client: TestClient) -> None:
+    fetched = client.post(
+        "/ingest/fetch", json={"fund_family": "harbor", "mode": "fixture"}
+    )
+    assert fetched.status_code == 200, fetched.text
+    assert fetched.json()["created"] > 0
+
+    for ticker in ("HACAX", "HAVLX", "HASCX", "HAISX"):
+        body = client.get("/funds", params={"q": ticker}).json()
+        tickers = [item["ticker"] for item in body["items"]]
+        assert ticker in tickers, f"{ticker} missing from GET /funds?q={ticker}: {tickers[:8]}"
+
+    hacax = client.get(
+        "/distributions",
+        params={"ticker": "HACAX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    hacax_2021 = [
+        Decimal(row["amount"])
+        for row in hacax["items"]
+        if row.get("ticker") == "HACAX"
+        and row.get("estimate_type") == "long_term_capital_gains"
+        and str(row.get("ex_date") or "").startswith("2021-12-19")
+    ]
+    assert Decimal("18.78540") in hacax_2021
+    hacax_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in hacax["items"]
+        if row.get("ticker") == "HACAX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= hacax_years
+
+    havlx = client.get(
+        "/distributions",
+        params={"ticker": "HAVLX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    havlx_2025 = [
+        Decimal(row["amount"])
+        for row in havlx["items"]
+        if row.get("ticker") == "HAVLX"
+        and row.get("estimate_type") == "long_term_capital_gains"
+        and str(row.get("ex_date") or "").startswith("2025-12-18")
+    ]
+    assert Decimal("3.88137") in havlx_2025
