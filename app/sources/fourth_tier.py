@@ -34,13 +34,20 @@ class JohnHancockSource(HtmlTableSource):
         "Class-level A — never sibling-copied onto JHLVX / JLVIX / JCCIX. "
         "Issuer dashes omitted — never invent $0 (TAGRX 2022 OI / 2021 CG; "
         "JCCAX printed no OI). Estimate press-release PDFs stay estimates. "
-        "JEEBX Infrastructure and JVLAX stay unmatched. Does not redo "
-        "WAVE CJ Alger ALBAX / ALBCX / AGIZX, CI Federated SVALX, CH "
-        "Harding HLEMX / HLGZX / HLIZX / HLFZX, CG RALIX / RALOX, CF "
-        "SPEGX / AGFCX / AGIFX / ALGZX, CC PIORX / PQIRX, CD Lazard R6, "
-        "CB Open, BY Institutional, BZ/CA/BX Pioneer C/Y/K, BW RAIIX, "
-        "BT SVAAX / SVACX / SVAIX, or reserved Alger CHUSX / ALGAX / "
-        "ALSRX / ACAAX."
+        "Official 5y WAVE CM leftover (2026-09-17): same Investment Trust "
+        "FYE October 31 2025 N-CSR Financial Highlights unlock leftover "
+        "Class A JEEBX Infrastructure 2021–2025 on the estimate-only "
+        "in-book identity. Calendar-safe as_of 10/31. Class-level A — "
+        "never sibling-copied onto JEEFX / JEEIX / JEEDX. Issuer dashes "
+        "omitted — never invent $0 (JEEBX 2025 / 2024 / 2023 CG). "
+        "Estimate press-release PDFs stay estimates. Does not redo WAVE "
+        "CK TAGRX / JCCAX. JVLAX Disciplined Value (Funds III FYE March "
+        "31) stays unmatched — calendar-unsafe. Does not redo WAVE CJ "
+        "Alger ALBAX / ALBCX / AGIZX, CI Federated SVALX, CH Harding "
+        "HLEMX / HLGZX / HLIZX / HLFZX, CG RALIX / RALOX, CF SPEGX / "
+        "AGFCX / AGIFX / ALGZX, CC PIORX / PQIRX, CD Lazard R6, CB Open, "
+        "BY Institutional, BZ/CA/BX Pioneer C/Y/K, BW RAIIX, BT SVAAX / "
+        "SVACX / SVAIX, or reserved Alger CHUSX / ALGAX / ALSRX / ACAAX."
     )
     live_limitations = (
         "Family book is a PDF (press-release HTML is a viewer/shell). Fixture transcribes public A-share ranges."
@@ -88,6 +95,16 @@ class JohnHancockSource(HtmlTableSource):
                     "000119312525327165/8de3f22fa35613b.htm#tagrx-jccax"
                 ),
                 fixture="leftover_ncsr_tagrx_jccax_2021_2025_wave_ck.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="leftover_ncsr_jeebx_2021_2025_wave_cm",
+                url=(
+                    "https://www.sec.gov/Archives/edgar/data/22370/"
+                    "000119312525327165/8de3f22fa35613b.htm#jeebx"
+                ),
+                fixture="leftover_ncsr_jeebx_2021_2025_wave_cm.html",
                 live=False,
                 role="history",
             ),

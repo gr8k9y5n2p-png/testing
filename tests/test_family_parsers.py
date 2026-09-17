@@ -2882,6 +2882,47 @@ def test_fourth_tier_fixtures() -> None:
         for r in jh_ncsr_ck
     )
 
+    jh_ncsr_cm = parse_distribution_html(
+        (ROOT / "john_hancock" / "leftover_ncsr_jeebx_2021_2025_wave_cm.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url=(
+            "https://www.sec.gov/Archives/edgar/data/22370/"
+            "000119312525327165/8de3f22fa35613b.htm#jeebx"
+        ),
+        fund_family="John Hancock / Manulife",
+    )
+    jeebx_2025_oi = next(
+        r
+        for r in jh_ncsr_cm
+        if r.ticker == "JEEBX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.as_of
+        and str(r.as_of) == "2025-10-31"
+    )
+    assert jeebx_2025_oi.amount == Decimal("0.34")
+    assert jeebx_2025_oi.publication_stage == PublicationStage.final
+    jeebx_2022_cg = next(
+        r
+        for r in jh_ncsr_cm
+        if r.ticker == "JEEBX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and str(r.as_of) == "2022-10-31"
+    )
+    assert jeebx_2022_cg.amount == Decimal("0.49")
+    assert {r.ticker for r in jh_ncsr_cm} == {"JEEBX"}
+    assert not any(
+        r.ticker in {"TAGRX", "JCCAX", "JVLAX", "JEEFX", "JEEIX", "JEEDX", "ALBAX", "SVALX"}
+        for r in jh_ncsr_cm
+    )
+    assert not any(
+        r.ticker == "JEEBX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and r.as_of
+        and r.as_of.year in {2023, 2024, 2025}
+        for r in jh_ncsr_cm
+    )
+
     hartford_final = parse_distribution_html(
         (ROOT / "hartford" / "2025_final_capital_gains.html").read_text(encoding="utf-8"),
         source_url="fixture://hartford-2025-final",
