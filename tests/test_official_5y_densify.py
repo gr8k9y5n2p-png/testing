@@ -808,8 +808,18 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # Cohen/Guggenheim/DoubleLine/Russell (no in-book source) stay walls.
     # Honest pin remasured after additive rebase onto #207 tip 70b8d77a:
     # 3780 → 3783 (+3 MF; ETF 5y unchanged at 758). No overlap with AJ/AH/AG/AE/AD/AF.
-    assert digest.funds_with_5y == 3783
-    assert digest.funds_with_5y_mf == 3025
+    # WAVE AK leftover (existing in-book only): American Century Mutual Funds,
+    # Inc. leftover sibling-class FYE Oct 31 N-CSR Financial Highlights unlock
+    # +31 MF already on estimate books (Growth / Select / Ultra / Large Cap
+    # Equity leftover A/C/I/R/R5/R6/Y plus Ultra G / LCE G; Balanced
+    # TWBIX / ABINX / ABGNX). Investor WAVE X leftovers not redone. Growth G
+    # ACIHX 2021 commencement, Heritage 2023 dashes, LCE C/R 2021 dashes,
+    # Small Cap Growth 2023–2024 dashes, Select G 2024 commencement stay
+    # walls. Janus / Principal / Nationwide / Thrivent / EV leftover years
+    # stay unmatched. Honest pin remasured after additive rebase onto #206
+    # tip 56c52345: 3783 → 3814 (+31 MF; ETF 5y unchanged at 758).
+    assert digest.funds_with_5y == 3814
+    assert digest.funds_with_5y_mf == 3056
     assert digest.funds_with_5y_etf == 758
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
@@ -10381,3 +10391,206 @@ def test_wave_ai_heroes_are_searchable(client: TestClient) -> None:
         and row.get("publication_stage") == "final"
     ]
     assert gabgx_2022 == []
+
+
+def test_wave_ak_aci_leftover_sibling_ncsr_fills_5y() -> None:
+    records = AmericanCenturySource().fetch(mode="fixture").records
+    twgix_2021_cg = next(
+        row
+        for row in records
+        if row.ticker == "TWGIX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2021-10-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert twgix_2021_cg.amount == Decimal("1.56")
+    twgix_2023_oi = next(
+        row
+        for row in records
+        if row.ticker == "TWGIX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2023-10-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert twgix_2023_oi.amount == Decimal("0.05")
+    agywx_2023_oi = next(
+        row
+        for row in records
+        if row.ticker == "AGYWX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2023-10-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert agywx_2023_oi.amount == Decimal("0.11")
+    acihx_2022_cg = next(
+        row
+        for row in records
+        if row.ticker == "ACIHX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2022-10-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert acihx_2022_cg.amount == Decimal("1.01")
+    twbix_2021_oi = next(
+        row
+        for row in records
+        if row.ticker == "TWBIX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2021-10-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert twbix_2021_oi.amount == Decimal("0.17")
+    twsix_2025_cg = next(
+        row
+        for row in records
+        if row.ticker == "TWSIX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2025-10-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert twsix_2025_cg.amount == Decimal("4.47")
+    afeix_2025_cg = next(
+        row
+        for row in records
+        if row.ticker == "AFEIX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2025-10-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert afeix_2025_cg.amount == Decimal("3.22")
+    for ticker in (
+        "TCRAX",
+        "TWRCX",
+        "TWGIX",
+        "AGWRX",
+        "AGWUX",
+        "AGRDX",
+        "AGYWX",
+        "TWCAX",
+        "ACSLX",
+        "TWSIX",
+        "ASERX",
+        "ASLGX",
+        "ASDEX",
+        "ASLWX",
+        "TWUAX",
+        "TWCCX",
+        "TWUIX",
+        "AULRX",
+        "AULGX",
+        "AULDX",
+        "AULYX",
+        "AULNX",
+        "AFDAX",
+        "AFEIX",
+        "AFYDX",
+        "AFDGX",
+        "AFEDX",
+        "AFEGX",
+        "TWBIX",
+        "ABINX",
+        "ABGNX",
+    ):
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(records, ticker), ticker
+
+
+def test_wave_ak_leftover_walls_stay_unmatched() -> None:
+    aci = AmericanCenturySource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(aci, "ACIHX")
+    assert _paid_lookback_years(aci, "ACIHX") == {2022, 2023, 2024, 2025}
+    assert 2023 not in _paid_lookback_years(aci, "ATHIX")
+    assert _paid_lookback_years(aci, "ATHIX") == {2021, 2022, 2024, 2025}
+    assert 2021 not in _paid_lookback_years(aci, "AFDCX")
+    assert 2021 not in _paid_lookback_years(aci, "AFDRX")
+    assert _paid_lookback_years(aci, "ANOAX") == {2021, 2022}
+    assert _paid_lookback_years(aci, "ASLDX") == {2024, 2025}
+    # Class-level G stub — never copied from Investor 2022 CG $6.32.
+    acihx_2022 = [
+        row.amount
+        for row in aci
+        if row.ticker == "ACIHX"
+        and row.publication_stage in {PublicationStage.final, PublicationStage.paid}
+        and row.amount is not None
+        and _year_for_row(row.as_of, row.ex_date, row.payable_date) == 2022
+    ]
+    assert acihx_2022 == [Decimal("1.01")]
+
+    janus = JanusHendersonSource().fetch(mode="fixture").records
+    assert 2024 not in _paid_lookback_years(janus, "HFAAX")
+    assert 2024 not in _paid_lookback_years(janus, "JEASX")
+    assert 2025 not in _paid_lookback_years(janus, "JAGAX")
+
+    principal = PrincipalSource().fetch(mode="fixture").records
+    assert 2023 not in _paid_lookback_years(principal, "PBLCX")
+    for ticker in ("PEAPX", "PRIAX"):
+        assert 2024 not in _paid_lookback_years(principal, ticker), ticker
+
+    nationwide = NationwideSource().fetch(mode="fixture").records
+    for ticker in ("NWHOX", "NWHJX", "NTDAX"):
+        assert 2024 not in _paid_lookback_years(nationwide, ticker), ticker
+
+    thrivent = ThriventSource().fetch(mode="fixture").records
+    assert 2022 not in _paid_lookback_years(thrivent, "TMAIX")
+
+    ev = EatonVanceSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(ev, "EOI")
+
+
+def test_wave_ak_heroes_are_searchable(client: TestClient) -> None:
+    fetched = client.post(
+        "/ingest/fetch", json={"fund_family": "american_century", "mode": "fixture"}
+    )
+    assert fetched.status_code == 200, fetched.text
+    assert fetched.json()["created"] > 0
+
+    for ticker in ("TWGIX", "TCRAX", "TWBIX", "TWSIX", "AFEIX", "ACIHX", "ATHIX"):
+        body = client.get("/funds", params={"q": ticker}).json()
+        tickers = [item["ticker"] for item in body["items"]]
+        assert ticker in tickers, f"{ticker} missing from GET /funds?q={ticker}: {tickers[:8]}"
+
+    twgix = client.get(
+        "/distributions",
+        params={"ticker": "TWGIX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    twgix_2021 = [
+        Decimal(row["amount"])
+        for row in twgix["items"]
+        if row.get("ticker") == "TWGIX"
+        and row.get("estimate_type") == "total_capital_gains"
+        and str(row.get("as_of") or "").startswith("2021-10-31")
+    ]
+    assert Decimal("1.56") in twgix_2021
+    twgix_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in twgix["items"]
+        if row.get("ticker") == "TWGIX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= twgix_years
+
+    acihx = client.get(
+        "/distributions",
+        params={"ticker": "ACIHX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    acihx_2021 = [
+        row
+        for row in acihx["items"]
+        if row.get("ticker") == "ACIHX"
+        and str(row.get("as_of") or row.get("ex_date") or "").startswith("2021")
+        and row.get("amount") is not None
+        and row.get("publication_stage") == "final"
+    ]
+    assert acihx_2021 == []

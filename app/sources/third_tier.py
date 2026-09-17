@@ -324,11 +324,20 @@ class AmericanCenturySource(HtmlTableSource):
         "2021–2025 fiscal totals; TWHIX skips 2023 dashes (4y); ANOIX skips "
         "2023–2024 dashes (3y). Income is ordinary income; net realized gain is "
         "unsplit total capital gains. Sibling I / A / C / R / R6 are not copied "
-        "from Investor."
+        "from Investor. Official 5y leftover WAVE AK: same Mutual Funds, Inc. "
+        "N-CSR class-level leftover siblings (not Investor redo) — Growth "
+        "TCRAX / TWRCX / TWGIX / AGWRX / AGWUX / AGRDX / AGYWX; Select TWCAX / "
+        "ACSLX / TWSIX / ASERX / ASLGX / ASDEX / ASLWX; Ultra TWUAX / TWCCX / "
+        "TWUIX / AULRX / AULGX / AULDX / AULYX / AULNX; Large Cap Equity AFDAX / "
+        "AFEIX / AFYDX / AFDGX / AFEDX / AFEGX; Balanced TWBIX / ABINX / ABGNX. "
+        "Growth G ACIHX 2022(4) stub CG $1.01 (2021 commencement wall). Heritage "
+        "2023 dashes and Small Cap Growth 2023–2024 most-class dashes stay "
+        "unmatched. Large Cap Equity C/R 2021 dashes stay 4y. Class-level only."
     )
     live_limitations = (
         "Family HTML grid is JavaScript-rendered; the retail PDF is the parseable book. "
-        "Investor leftover 2021–2025 N-CSR paid history is fixture-only."
+        "Investor leftover 2021–2025 N-CSR paid history is fixture-only. "
+        "WAVE AK leftover sibling N-CSR paid history is fixture-only."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -403,6 +412,14 @@ class AmericanCenturySource(HtmlTableSource):
                 name="leftover_ncsr_investor_2021_2025",
                 url="https://www.sec.gov/Archives/edgar/data/100334/000010033425000090/ck0000100334-20251031.htm",
                 fixture="leftover_ncsr_investor_2021_2025.html",
+                live=False,
+                role="history",
+                large_aum_only=True,
+            ),
+            PageSpec(
+                name="leftover_ncsr_sibling_2021_2025",
+                url="https://www.sec.gov/Archives/edgar/data/100334/000010033425000090/ck0000100334-20251031.htm",
+                fixture="leftover_ncsr_sibling_2021_2025.html",
                 live=False,
                 role="history",
                 large_aum_only=True,

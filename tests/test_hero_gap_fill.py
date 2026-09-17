@@ -286,5 +286,8 @@ def test_fixture_book_lookback_stays_official_only() -> None:
     # WAVE AI leftover: Gabelli Class AAA FYE Dec 31 N-CSR +3 MF
     # (GABAX / GABBX / GICPX). Honest pin remasured after additive rebase
     # onto #207 tip 70b8d77a: 3780 → 3783 (+3 MF; no overlap with AF/AD/AE/AG/AH/AJ).
-    assert digest.funds_with_5y == 3783
+    # WAVE AK leftover: American Century Mutual Funds, Inc. leftover sibling
+    # N-CSR +31 MF. Honest pin remasured after additive rebase onto #206 tip
+    # 56c52345: 3783 → 3814 (+31 MF; ETF 5y unchanged at 758).
+    assert digest.funds_with_5y == 3814
     assert digest.book_funds >= 7200
