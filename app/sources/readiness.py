@@ -227,7 +227,7 @@ HISTORY_YEARS: dict[str, tuple[int, ...]] = {
     "manning_napier": (2025,),
     "westwood": (2025,),
     "boston_partners": (2025,),
-    "homestead": (2025,),
+    "homestead": (2021, 2022, 2023, 2024, 2025),
     "madison": (2025,),
     "lsv": (2025,),
     "lkcm": (2025,),

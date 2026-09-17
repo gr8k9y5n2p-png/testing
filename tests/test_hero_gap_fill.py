@@ -306,5 +306,8 @@ def test_fixture_book_lookback_stays_official_only() -> None:
     # WAVE AP leftover: Vanguard leftover 4y bond / GNMA / tax-exempt
     # December ICI monthly income +21 MF. Honest pin remasured on WAVE AO
     # tip 058c4ca: 4007 → 4028 (+21 MF; ETF 5y unchanged at 758).
-    assert digest.funds_with_5y == 4028
+    # WAVE AR leftover: Homestead leftover no-load FYE Dec 31 N-CSR
+    # Financial Highlights +5 MF. Honest pin remasured on WAVE AP tip
+    # c8dee49: 4028 → 4033 (+5 MF; ETF 5y unchanged at 758).
+    assert digest.funds_with_5y == 4033
     assert digest.book_funds >= 7200

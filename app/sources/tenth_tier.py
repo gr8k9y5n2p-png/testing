@@ -229,11 +229,22 @@ class HomesteadSource(HtmlTableSource):
         "Official 5y parallel W leftover re-probe (2026-09-16): live product pages "
         "print current + previous calendar year only (HOVLX 2025 YE already in book; "
         "2026 mid-year is outside the window). Dated 2021–2024 Year-End-Distributions.pdf "
-        "siblings unpublished; Wayback CDX was offline on re-probe. Leftover years stay unmatched."
+        "siblings unpublished; Wayback CDX was offline on re-probe. "
+        "Official 5y WAVE AR leftover (existing in-book only): Homestead Funds, Inc. "
+        "FYE December 31 N-CSR Financial Highlights unlock leftover 2021–2024 on the "
+        "2025 no-load book (HSTIX / HOVLX / HNASX / HISIX / HSCSX). Calendar-safe "
+        "as_of 12/31. Class-level single-class no-load — never sibling-copied. "
+        "2024 N-CSR https://www.sec.gov/Archives/edgar/data/865733/000114554925016761/8dd5cf6f78f6691.htm "
+        "verified against 2023/2022/2021 N-CSR siblings. Income is ordinary income; "
+        "net realized gain is unsplit total capital gains. Issuer dashes and "
+        "less-than-$0.01 omitted (HSCSX 2022 OI; HNASX 2021–2024 OI). Bond / "
+        "money-market / liquidated Rural America names are not in-book leftovers. "
+        "WAVE AR leftover N-CSR paid history is fixture-only."
     )
     live_limitations = (
         "Year-end book is PDF. Fixture transcribes public no-load identifiers. "
-        "Product-page history is current + previous year only."
+        "Product-page history is current + previous year only. "
+        "Leftover 2021–2024 N-CSR paid history is fixture-only."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -245,7 +256,14 @@ class HomesteadSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
-            )
+            ),
+            PageSpec(
+                name="leftover_ncsr_2021_2024_wave_ar",
+                url="https://www.sec.gov/Archives/edgar/data/865733/000114554925016761/8dd5cf6f78f6691.htm",
+                fixture="leftover_ncsr_2021_2024_wave_ar.html",
+                live=False,
+                role="history",
+            ),
         ]
 
 

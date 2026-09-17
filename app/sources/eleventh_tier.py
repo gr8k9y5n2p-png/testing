@@ -343,7 +343,11 @@ class TimothyPlanSource(HtmlTableSource):
         "Record 12/10/2025; ex 12/11/2025. "
         "PDF is fund-level; tickers are public Class I / Class A identifiers. "
         "WAVE AJ leftover re-probe: no recoverable official prior-year "
-        "$/share book for in-book leftovers."
+        "$/share book for in-book leftovers. "
+        "Official 5y WAVE AR leftover re-probe (2026-09-17): Timothy Plan "
+        "N-CSR FYE September 30 is not calendar-safe next to the December "
+        "Capital_Gains_Distribution.pdf book. Dated 2021–2024 December PDFs "
+        "still unpublished. Leftover years stay unmatched — never invent $0."
     )
     live_limitations = "Year-end book is PDF. Fixture attaches public Class I / Class A tickers."
 
