@@ -3960,6 +3960,8 @@ def test_parallel_j_ab_leftover_class_a_paid_fills_5y() -> None:
         and row.publication_stage == PublicationStage.final
         and row.amount is not None
     }
+    # J leftover paid book is ex_date only (2021 + 2025). AD leftover
+    # CHCLX 2022 is N-CSR FYE as_of year-depth — not an ex_date event.
     assert {2021, 2025} <= chclx_years
     assert 2022 not in chclx_years
     assert 2023 not in chclx_years
