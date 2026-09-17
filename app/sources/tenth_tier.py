@@ -24,11 +24,31 @@ class LazardSource(HtmlTableSource):
         "serves estimate / Important Tax Information / Form 8937 only. The 2021 "
         "https://www.lazardassetmanagement.com/docs/1631/LazardFundsAnnualDistributions.pdf "
         "is an Estimated Distribution Per Share book. 2022–2024 December paid "
-        "declaration PDFs unpublished. Leftover years stay unmatched."
+        "declaration PDFs unpublished. "
+        "Official 5y WAVE BY leftover (existing in-book only): Lazard Funds, Inc. "
+        "FYE December 31 N-CSR Financial Highlights unlock leftover Institutional "
+        "2021–2025 paid history on estimate-only in-book identities (LZIEX / LZEMX / "
+        "GLIFX / LDMIX / LISIX / LZFIX / LEAIX / ICMPX / LZESX / LZUSX / LZCOX / "
+        "LZISX / LEOIX / LCAIX). Calendar-safe as_of 12/31. Class-level "
+        "Institutional — never sibling-copied onto Open / R6. Income is ordinary "
+        "income; net realized gain is unsplit total capital gains; printed return "
+        "of capital stored. Issuer dashes omitted. Heroes: LZIEX 2025 OI $0.48 / "
+        "CG $1.84; LZEMX 2025 OI $0.51; GLIFX 2025 OI $0.51 / CG $0.62. N-CSR "
+        "https://www.sec.gov/Archives/edgar/data/874964/000093041326000617/"
+        "c114847_ncsr-ixbrl.htm (0000930413-26-000617) verified against 2023 "
+        "0000930413-24-000784. US Convertibles CONIX incomplete Institutional "
+        "lookback years stay unmatched. Sister WAVE BX Pioneer Mid Cap Value "
+        "PCCGX / PYCGX / PMCKX, BW Rainier RAIIX, BV HMDCX, BU PCGRX, BT "
+        "Federated SVD, BS PEQIX, BR Grandeur Peak, BQ Pioneer Dec 31, BP Beacon, "
+        "BO–BI / BK / BG DWS, BM Baird, BL Thrivent, BJ RiverPark, BH TCW, and "
+        "prior BD–BF books stay on their leftover pages — not re-emitted here. "
+        "Alger leftovers stay reserved / disjoint. WAVE BY leftover N-CSR paid "
+        "history is fixture-only."
     )
     live_limitations = (
         "Year-end book is PDF. Fixture transcribes the official Institutional / Open / R6 table. "
-        "Paid 2021–2024 declaration siblings unpublished."
+        "Paid 2021–2024 declaration siblings unpublished. "
+        "WAVE BY Lazard Institutional 2021–2025 leftover N-CSR is fixture-only."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -51,7 +71,17 @@ class LazardSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
-            )
+            ),
+            PageSpec(
+                name="leftover_ncsr_institutional_2021_2025_wave_by",
+                url=(
+                    "https://www.sec.gov/Archives/edgar/data/874964/"
+                    "000093041326000617/c114847_ncsr-ixbrl.htm"
+                ),
+                fixture="leftover_ncsr_institutional_2021_2025_wave_by.html",
+                live=False,
+                role="history",
+            ),
         ]
 
 
