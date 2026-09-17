@@ -81,7 +81,25 @@ class JohnHancockSource(HtmlTableSource):
         "2021–2024 official CG dashes and JIJAX 2025 / 2024 official "
         "dashes stay unmatched — not 5y. JVLAX Funds III FYE March 31 "
         "and JBGAX Funds II FYE August 31 stay unmatched — "
-        "calendar-unsafe."
+        "calendar-unsafe. Official 5y WAVE CP leftover (2026-09-17): "
+        "John Hancock Capital Series FYE October 31 2025 N-CSR "
+        "(accession 0001193125-25-327164) Financial Highlights unlock "
+        "leftover Class A PZFVX Classic Value 2021–2025 on the "
+        "estimate-only in-book identity. Calendar-safe as_of 10/31. "
+        "Class-level A — never sibling-copied onto JCVCX / JCVIX / "
+        "JCVSX / JCVFX / JCVVX / JCVWX. Issuer dashes omitted — never "
+        "invent $0 (PZFVX 2022 / 2021 CG). USGLX on the same N-CSR stays "
+        "unmatched (2024 / 2023 official CG dashes and no OI — not 5y). "
+        "Estimate press-release PDFs stay estimates. Does not redo WAVE "
+        "CO JHJAX, WAVE CN FIDAX / FRBAX, WAVE CL SVBAX / JDIBX / JEMQX "
+        "/ JDJAX, WAVE CM JEEBX, or WAVE CK TAGRX / JCCAX. JHNBX / "
+        "TAUSX Bond Trust / Sovereign Bond FYE May 31 stay unmatched — "
+        "calendar-unsafe. Does not redo WAVE CJ Alger ALBAX / ALBCX / "
+        "AGIZX, CI Federated SVALX, CH Harding HLEMX / HLGZX / HLIZX / "
+        "HLFZX, CG RALIX / RALOX, CF SPEGX / AGFCX / AGIFX / ALGZX, CC "
+        "PIORX / PQIRX, CD Lazard R6, CB Open, BY Institutional, "
+        "BZ/CA/BX Pioneer C/Y/K, BW RAIIX, BT SVAAX / SVACX / SVAIX, or "
+        "reserved Alger CHUSX / ALGAX / ALSRX / ACAAX."
     )
     live_limitations = (
         "Family book is a PDF (press-release HTML is a viewer/shell). Fixture transcribes public A-share ranges."
@@ -169,6 +187,16 @@ class JohnHancockSource(HtmlTableSource):
                     "000119312525327166/8de3f25f2c247e5.htm#jhjax"
                 ),
                 fixture="leftover_ncsr_jhjax_2021_2025_wave_co.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="leftover_ncsr_pzfvx_2021_2025_wave_cp",
+                url=(
+                    "https://www.sec.gov/Archives/edgar/data/45291/"
+                    "000119312525327164/8de3f34f2561fa1.htm#pzfvx"
+                ),
+                fixture="leftover_ncsr_pzfvx_2021_2025_wave_cp.html",
                 live=False,
                 role="history",
             ),

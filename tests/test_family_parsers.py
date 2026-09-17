@@ -3128,6 +3128,8 @@ def test_fourth_tier_fixtures() -> None:
             "JHJRX",
             "JVLAX",
             "JBGAX",
+            "PZFVX",
+            "USGLX",
             "ALBAX",
             "SVALX",
         }
@@ -3146,6 +3148,75 @@ def test_fourth_tier_fixtures() -> None:
         and r.as_of
         and r.as_of.year == 2022
         for r in jh_ncsr_co
+    )
+
+    jh_ncsr_cp = parse_distribution_html(
+        (ROOT / "john_hancock" / "leftover_ncsr_pzfvx_2021_2025_wave_cp.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url=(
+            "https://www.sec.gov/Archives/edgar/data/45291/"
+            "000119312525327164/8de3f34f2561fa1.htm#pzfvx"
+        ),
+        fund_family="John Hancock / Manulife",
+    )
+    pzfvx_2025_oi = next(
+        r
+        for r in jh_ncsr_cp
+        if r.ticker == "PZFVX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.as_of
+        and str(r.as_of) == "2025-10-31"
+    )
+    assert pzfvx_2025_oi.amount == Decimal("0.93")
+    assert pzfvx_2025_oi.publication_stage == PublicationStage.final
+    pzfvx_2025_cg = next(
+        r
+        for r in jh_ncsr_cp
+        if r.ticker == "PZFVX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and str(r.as_of) == "2025-10-31"
+    )
+    assert pzfvx_2025_cg.amount == Decimal("11.45")
+    pzfvx_2023_cg = next(
+        r
+        for r in jh_ncsr_cp
+        if r.ticker == "PZFVX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and str(r.as_of) == "2023-10-31"
+    )
+    assert pzfvx_2023_cg.amount == Decimal("5.39")
+    assert {r.ticker for r in jh_ncsr_cp} == {"PZFVX"}
+    assert not any(
+        r.ticker
+        in {
+            "JHJAX",
+            "FIDAX",
+            "FRBAX",
+            "SVBAX",
+            "JDIBX",
+            "JEMQX",
+            "JDJAX",
+            "JEEBX",
+            "TAGRX",
+            "JCCAX",
+            "USGLX",
+            "JCVCX",
+            "JCVIX",
+            "JCVWX",
+            "JVLAX",
+            "JBGAX",
+            "ALBAX",
+            "SVALX",
+        }
+        for r in jh_ncsr_cp
+    )
+    assert not any(
+        r.ticker == "PZFVX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and r.as_of
+        and r.as_of.year in {2021, 2022}
+        for r in jh_ncsr_cp
     )
 
     hartford_final = parse_distribution_html(
