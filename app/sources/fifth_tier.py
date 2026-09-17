@@ -602,7 +602,10 @@ class TouchstoneSource(HtmlTableSource):
         "absent from the issuer JSON, not missed transcription. Official 5y "
         "WAVE AG leftover re-probe: Mid Cap Growth 2023 and Emerging Markets "
         "Growth 2022–2023 remain unpublished on product-page JSON (third-party "
-        "histories that skip those years are unused). No invented unpaid $0."
+        "histories that skip those years are unused). No invented unpaid $0. "
+        "Official 5y WAVE AQ leftover re-probe (2026-09-17): Mid Cap Growth "
+        "2023 (TEGIX / TEGYX / TFGRX / TOECX) and Emerging Markets Growth "
+        "2022–2023 remain unpublished on issuer JSON — unmatched."
     )
     live_limitations = "Year-end book is PDF. Fixture transcribes public Class A rows."
 
@@ -671,8 +674,24 @@ class VictorySource(HtmlTableSource):
         "Member / R6 from the same I/II PDF already used for A and leftover "
         "I/C/Y (GETGX OI $0.130481 / ST $0.542703 / LT $4.150428; GOGFX OI "
         "$0.177100 / ST $0.125199 / LT $3.571324) is year-depth — 2021 I/II "
-        "sibling still 404. I/II FYE June 30 and USAA / Portfolios III FYE "
-        "March 31 2021 N-CSR columns stay unmatched (not calendar-safe). "
+        "sibling still 404. I/II Integrity / Munder / S&P 500 Index FYE June 30 "
+        "and USAA / Portfolios III FYE March 31 2021 N-CSR columns stay unmatched "
+        "(not calendar-safe). "
+        "Official 5y WAVE AQ leftover (2026-09-17, existing in-book I/II only): "
+        "Victory Portfolios N-CSR Financial Highlights year ended October 31, 2021 "
+        "(https://www.sec.gov/Archives/edgar/data/802716/000110465922001831/"
+        "tm2131749d1_ncsr.htm) unlock leftover Sycamore Established Value / "
+        "Sycamore Small Company Opportunity / Diversified Stock classes already "
+        "on 2022–2025 I/II books (VETAX OI $0.52 / CG $1.67; VEVIX OI $0.65 / "
+        "CG $1.67; GETGX OI $0.43 / CG $1.67; SSGSX OI $0.17 / CG $0.15; "
+        "VSOIX OI $0.29 / CG $0.15; GOGFX OI $0.11 / CG $0.15; SRVEX OI $0.01 / "
+        "CG $0.46; VDSIX OI $0.02 / CG $0.46). Income is ordinary income; net "
+        "realized gains are unsplit total capital gains; dashes omitted. "
+        "Class-level — never copy A onto C/I/R/R6/Y. FYE October 31 is "
+        "calendar-safe as_of 2021-10-31 (same Oct 31 rule as ACI / GS / "
+        "Hartford). WAVE AG leftover RS FYE December 31 2021 is not redone. "
+        "Integrity / Munder / S&P 500 Index FYE June 30 (MMEAX) and USAA / "
+        "Portfolios III FYE March 31 / July 31 (USSPX) stay unmatched. "
         "Wave 7 lookback: official 2022 hyphenated + 2023 space-encoded I/II finals "
         "(MMEAX 2022 LT $2.389672 / 2023 LT $0.390522; VETAX 2022 LT $2.782434 / "
         "2023 LT $2.095967), 2023–2024 RS MF books (RSGRX 2023 LT $0.036599 / "
@@ -682,7 +701,8 @@ class VictorySource(HtmlTableSource):
     )
     live_limitations = (
         "Integrity/Sycamore/RS/USAA books are PDF. Weekly walk uses the tax-center "
-        "hub + 2025 estimate PDF; empty/PDF-bytes pages are no-op success."
+        "hub + 2025 estimate PDF; empty/PDF-bytes pages are no-op success. "
+        "WAVE AQ leftover Sycamore / Diversified Oct 31 2021 N-CSR is fixture-only."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -802,6 +822,17 @@ class VictorySource(HtmlTableSource):
                     "000110465923028289/tm232551d1_ncsr.htm"
                 ),
                 fixture="leftover_ncsr_rs_2021.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
+            ),
+            PageSpec(
+                name="leftover_ncsr_sycamore_diversified_2021_wave_aq",
+                url=(
+                    "https://www.sec.gov/Archives/edgar/data/802716/"
+                    "000110465922001831/tm2131749d1_ncsr.htm"
+                ),
+                fixture="leftover_ncsr_sycamore_diversified_2021_wave_aq.html",
                 live=False,
                 role="history",
                 large_aum_only=False,

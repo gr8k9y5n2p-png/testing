@@ -91,7 +91,10 @@ class FranklinTempletonSource(HtmlTableSource):
         "identities. Unmatched / not invented. "
         "Official 5y WAVE AM leftover re-probe (2026-09-17): DIST-SUMM-2021–2024 "
         "walls from Y / AG stay walls. No new Putnam / Franklin open-end "
-        "identities."
+        "identities. "
+        "Official 5y WAVE AQ leftover re-probe (2026-09-17): DIST-SUMM-2021–2024 "
+        "still 204 empty. Putnam open-end MF share classes stay out of the "
+        "frozen book — no new identities."
     )
     live_limitations = (
         "Open-end December estimate tool is JavaScript-rendered. "
@@ -452,7 +455,10 @@ class MorganStanleySource(HtmlTableSource):
         "is 2023–2025 so 2021–2022 cannot exist; 2023 N-CSR is year-depth "
         "only and cannot complete 5y. Open-end MSIM tickers are not in-book "
         "leftovers — not added. Live GET is often Akamai 403. No public "
-        "filled ICI file. Open-end 2025 PDF was Akamai-blocked."
+        "filled ICI file. Open-end 2025 PDF was Akamai-blocked. "
+        "Official 5y WAVE AQ leftover re-probe (2026-09-17): Calvert / EV ETF "
+        "inception remains 2023–2025 so 2021–2022 cannot exist; 2023 N-CSR is "
+        "year-depth only. PGIM still has no in-book leftover tickers."
     )
     live_limitations = (
         "Year-end PDFs are often Akamai-walled to automated clients. "

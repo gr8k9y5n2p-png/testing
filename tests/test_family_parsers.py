@@ -5805,3 +5805,64 @@ def test_wave_ag_victory_leftover_paid_fixtures() -> None:
         "MUXRX",
         "MMMMX",
     }
+
+
+def test_wave_aq_victory_leftover_oct31_ncsr() -> None:
+    ncsr = parse_distribution_html(
+        (ROOT / "victory" / "leftover_ncsr_sycamore_diversified_2021_wave_aq.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://victory-leftover-aq-ncsr",
+        fund_family="Victory Capital",
+    )
+    vetax_2021_oi = next(
+        r
+        for r in ncsr
+        if r.ticker == "VETAX" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert vetax_2021_oi.amount == Decimal("0.52")
+    assert str(vetax_2021_oi.as_of) == "2021-10-31"
+    assert vetax_2021_oi.publication_stage == PublicationStage.final
+    vetax_2021_cg = next(
+        r
+        for r in ncsr
+        if r.ticker == "VETAX" and r.estimate_type == EstimateType.total_capital_gains
+    )
+    assert vetax_2021_cg.amount == Decimal("1.67")
+    vevix_2021_oi = next(
+        r
+        for r in ncsr
+        if r.ticker == "VEVIX" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert vevix_2021_oi.amount == Decimal("0.65")
+    getgx_2021_oi = next(
+        r
+        for r in ncsr
+        if r.ticker == "GETGX" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert getgx_2021_oi.amount == Decimal("0.43")
+    grinx_oi = [
+        r
+        for r in ncsr
+        if r.ticker == "GRINX" and r.estimate_type == EstimateType.ordinary_income
+    ]
+    assert grinx_oi == []
+    assert {r.ticker for r in ncsr} == {
+        "VETAX",
+        "VEVCX",
+        "VEVIX",
+        "GETGX",
+        "VEVRX",
+        "VEVYX",
+        "SSGSX",
+        "VSOIX",
+        "GOGFX",
+        "VSORX",
+        "VSOYX",
+        "SRVEX",
+        "VDSCX",
+        "VDSIX",
+        "GRINX",
+        "VDSRX",
+        "VDSYX",
+    }
