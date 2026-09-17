@@ -4610,6 +4610,34 @@ def test_tenth_tier_fixtures() -> None:
     )
     assert hovlx.amount == Decimal("3.7449")
 
+    homestead_ncsr = parse_distribution_html(
+        (ROOT / "homestead" / "leftover_ncsr_2021_2024_wave_ar.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url=(
+            "https://www.sec.gov/Archives/edgar/data/865733/"
+            "000114554925016761/8dd5cf6f78f6691.htm"
+        ),
+        fund_family="Homestead",
+    )
+    hovlx_ncsr = next(
+        r
+        for r in homestead_ncsr
+        if r.ticker == "HOVLX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and r.as_of
+        and str(r.as_of) == "2021-12-31"
+    )
+    assert hovlx_ncsr.amount == Decimal("4.06")
+    assert hovlx_ncsr.publication_stage == PublicationStage.final
+    assert {r.ticker for r in homestead_ncsr} == {
+        "HSTIX",
+        "HOVLX",
+        "HNASX",
+        "HISIX",
+        "HSCSX",
+    }
+
     madison = parse_distribution_html(
         (ROOT / "madison" / "2025_capital_gains.html").read_text(encoding="utf-8"),
         source_url="fixture://madison",

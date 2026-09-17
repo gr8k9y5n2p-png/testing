@@ -40,6 +40,7 @@ from app.sources.eleventh_tier import (
     GuidestoneSource,
     KopernikSource,
     PermanentPortfolioSource,
+    TimothyPlanSource,
     TocquevilleSource,
     ValueLineSource,
 )
@@ -864,8 +865,17 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # American Funds ANEFX/SMCWX/CNWCX 2022 remasured as walls. Does not
     # redo AF–AO. Honest pin remasured on WAVE AO tip 058c4ca: 4007 → 4028
     # (+21 MF; ETF 5y unchanged at 758).
-    assert digest.funds_with_5y == 4028
-    assert digest.funds_with_5y_mf == 3270
+    # WAVE AR leftover (existing in-book only): Homestead leftover no-load
+    # FYE Dec 31 N-CSR Financial Highlights unlock +5 MF already on the 2025
+    # YE book (HSTIX / HOVLX / HNASX / HISIX / HSCSX). Disjoint from AQ
+    # (Janus / Putnam / Touchstone / Victory / PGIM / AB / EV / MSIM /
+    # Macquarie). Timothy FYE Sep 30 / Calvert / Parnassus / Domini /
+    # Eventide / Ave Maria remasured as walls (no in-book leftover or not
+    # calendar-safe). Does not redo AF–AP (especially AO Fidelity Class I,
+    # AP Vanguard ICI Dec, AN Hartford/Artisan). Honest pin remasured on
+    # WAVE AP tip c8dee49: 4028 → 4033 (+5 MF; ETF 5y unchanged at 758).
+    assert digest.funds_with_5y == 4033
+    assert digest.funds_with_5y_mf == 3275
     assert digest.funds_with_5y_etf == 758
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
@@ -6990,16 +7000,8 @@ def test_parallel_w_leftover_walls_stay_unmatched() -> None:
     assert lazard_paid == []
     assert [row for row in lazard if row.ticker == "RLCIX"] == []
 
-    homestead = HomesteadSource().fetch(mode="fixture").records
-    homestead_early = [
-        row
-        for row in homestead
-        if row.ex_date
-        and row.ex_date.year in {2021, 2022, 2023, 2024}
-        and row.publication_stage == PublicationStage.final
-        and row.amount is not None
-    ]
-    assert homestead_early == []
+    # WAVE AR fills Homestead leftover 2021–2024 N-CSR years. Parallel W
+    # still documents the unpublished Year-End-Distributions.pdf siblings.
 
     madison = MadisonSource().fetch(mode="fixture").records
     madison_early = [
@@ -11909,4 +11911,194 @@ def test_wave_ap_heroes_are_searchable(client: TestClient) -> None:
         and row.get("publication_stage") == "final"
     ]
     assert vedix_2025 == []
+
+
+WAVE_AR_HOMESTEAD_LEFTOVER_5Y = (
+    "HSTIX",
+    "HOVLX",
+    "HNASX",
+    "HISIX",
+    "HSCSX",
+)
+
+
+def test_wave_ar_homestead_leftover_ncsr_fills_5y() -> None:
+    records = HomesteadSource().fetch(mode="fixture").records
+    hovlx_2021_cg = next(
+        row
+        for row in records
+        if row.ticker == "HOVLX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2021-12-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert hovlx_2021_cg.amount == Decimal("4.06")
+    hovlx_2021_oi = next(
+        row
+        for row in records
+        if row.ticker == "HOVLX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2021-12-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert hovlx_2021_oi.amount == Decimal("0.64")
+    hnasx_2024_cg = next(
+        row
+        for row in records
+        if row.ticker == "HNASX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2024-12-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert hnasx_2024_cg.amount == Decimal("1.16")
+    hstix_2022_oi = next(
+        row
+        for row in records
+        if row.ticker == "HSTIX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2022-12-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert hstix_2022_oi.amount == Decimal("0.34")
+    # 2025 stays on the existing YE PDF — not re-emitted from N-CSR.
+    ncsr_2025 = [
+        row
+        for row in records
+        if row.ticker in WAVE_AR_HOMESTEAD_LEFTOVER_5Y
+        and row.as_of
+        and row.as_of.year == 2025
+        and row.source_url
+        and "8dd5cf6f78f6691" in row.source_url
+    ]
+    assert ncsr_2025 == []
+    # Bond / money-market names are not in-book leftovers.
+    assert [row for row in records if row.ticker in {"HOSGX", "HOSBX", "HDIXX"}] == []
+    for ticker in WAVE_AR_HOMESTEAD_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(records, ticker), ticker
+
+
+def test_wave_ar_leftover_walls_stay_unmatched() -> None:
+    homestead = HomesteadSource().fetch(mode="fixture").records
+    # HSCSX 2022 OI is an official less-than-$0.01 — omitted, not invented $0.
+    hscsx_2022_oi = [
+        row
+        for row in homestead
+        if row.ticker == "HSCSX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2022-12-31"
+        and row.amount is not None
+    ]
+    assert hscsx_2022_oi == []
+    # HNASX leftover OI highlights are dashes.
+    hnasx_oi = [
+        row
+        for row in homestead
+        if row.ticker == "HNASX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and row.as_of.year in {2021, 2022, 2023, 2024}
+        and row.amount is not None
+    ]
+    assert hnasx_oi == []
+
+    timothy = TimothyPlanSource().fetch(mode="fixture").records
+    timothy_early = [
+        row
+        for row in timothy
+        if row.ex_date
+        and row.ex_date.year in {2021, 2022, 2023, 2024}
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert timothy_early == []
+
+    # Do not redo WAVE AO Fidelity Class I / AP Vanguard ICI Dec / AN Hartford.
+    fidelity = FidelitySource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(fidelity, "FIXIX")
+    assert 2021 not in _paid_lookback_years(fidelity, "FFRIX")
+
+    vanguard = VanguardSource().fetch(mode="fixture").records
+    assert 2025 not in _paid_lookback_years(vanguard, "VEDIX")
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(vanguard, "VWEHX")
+
+    hartford = HartfordSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(hartford, "IHOAX")
+
+
+def test_wave_ar_heroes_are_searchable(client: TestClient) -> None:
+    fetched = client.post(
+        "/ingest/fetch", json={"fund_family": "homestead", "mode": "fixture"}
+    )
+    assert fetched.status_code == 200, fetched.text
+    assert fetched.json()["created"] > 0
+
+    for ticker in ("HOVLX", "HNASX", "HSTIX", "HISIX", "HSCSX", "TMVIX"):
+        body = client.get("/funds", params={"q": ticker}).json()
+        tickers = [item["ticker"] for item in body["items"]]
+        if ticker == "TMVIX":
+            continue
+        assert ticker in tickers, f"{ticker} missing from GET /funds?q={ticker}: {tickers[:8]}"
+
+    timothy = client.post(
+        "/ingest/fetch", json={"fund_family": "timothy_plan", "mode": "fixture"}
+    )
+    assert timothy.status_code == 200, timothy.text
+    tmvi = client.get("/funds", params={"q": "TMVIX"}).json()
+    assert "TMVIX" in [item["ticker"] for item in tmvi["items"]]
+
+    hovlx = client.get(
+        "/distributions",
+        params={"ticker": "HOVLX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    hovlx_2021 = [
+        Decimal(row["amount"])
+        for row in hovlx["items"]
+        if row.get("ticker") == "HOVLX"
+        and row.get("estimate_type") == "total_capital_gains"
+        and str(row.get("as_of") or "").startswith("2021-12-31")
+    ]
+    assert Decimal("4.06") in hovlx_2021
+    hovlx_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in hovlx["items"]
+        if row.get("ticker") == "HOVLX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= hovlx_years
+
+    hnasx = client.get(
+        "/distributions",
+        params={"ticker": "HNASX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    hnasx_2024 = [
+        Decimal(row["amount"])
+        for row in hnasx["items"]
+        if row.get("ticker") == "HNASX"
+        and row.get("estimate_type") == "total_capital_gains"
+        and str(row.get("as_of") or "").startswith("2024-12-31")
+    ]
+    assert Decimal("1.16") in hnasx_2024
+
+    tmvi_dist = client.get(
+        "/distributions",
+        params={"ticker": "TMVIX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    tmvi_early = [
+        row
+        for row in tmvi_dist["items"]
+        if row.get("ticker") == "TMVIX"
+        and str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        in {"2021", "2022", "2023", "2024"}
+        and row.get("amount") is not None
+        and row.get("publication_stage") == "final"
+    ]
+    assert tmvi_early == []
 
