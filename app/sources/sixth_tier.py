@@ -984,12 +984,30 @@ class AlgerSource(HtmlTableSource):
         "re-probe: Distrib_FUNDS_2021 / 2023 / 2024 siblings still unpublished. "
         "ETF Wayback 20241126184535 of Distrib_ETFs.pdf is truncated; "
         "20251209195815 is Oct 2025 estimates — not ingested as paid. "
-        "ATFV / FRTY 2022+2024 and leftover MF 2021/2023/2024 stay unmatched."
+        "ATFV / FRTY 2022+2024 and leftover MF 2021/2023/2024 stay unmatched. "
+        "Official 5y WAVE CF leftover (existing in-book only): Alger Funds II "
+        "Responsible Investing FYE October 31 N-CSR Financial Highlights unlock "
+        "leftover 2021 / 2023 / 2024 on the 2022+2025 paid Class A / C / I / Z "
+        "book (SPEGX / AGFCX / AGIFX / ALGZX). Calendar-safe as_of 10/31. "
+        "Class-level — never sibling-copied onto reserved Alger CHUSX / ALGAX / "
+        "ALSRX / ACAAX or Spectra SPECX (2024 CG dash omitted). Income dividends "
+        "from net investment income are official dashes — omitted, never invent "
+        "$0. Net realized gain is unsplit total capital gains. 2022 and 2025 stay "
+        "on the existing paid Distrib_FUNDS.pdf books. Alger Funds II N-CSR "
+        "https://www.sec.gov/Archives/edgar/data/92751/000113322824011661/"
+        "tgfii-efp13341_ncsr.htm (0001133228-24-011661) and matching 2023 N-CSR "
+        "https://www.sec.gov/Archives/edgar/data/92751/000114036123059788/"
+        "ef20017111_ncsr.htm (0001140361-23-059788). Sister WAVE CC Pioneer "
+        "Class R PIORX / PQIRX, WAVE CD Lazard R6, WAVE CB Open, WAVE BY "
+        "Institutional, WAVE BZ / CA / BX Pioneer C/Y/K, and prior sister leftover "
+        "pages stay unmatched / not re-emitted here. WAVE CF leftover N-CSR paid "
+        "history is fixture-only."
     )
     live_limitations = (
         "Year-end book is PDF. Weekly walk uses the DividendsDistributions hub + 2025 "
         "MF/ETF PDFs; empty/PDF-bytes pages are no-op success. 2023/2024 MF official "
-        "URLs missing."
+        "URLs missing. WAVE CF leftover Responsible Investing Oct 31 N-CSR paid "
+        "history is fixture-only."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -1036,6 +1054,16 @@ class AlgerSource(HtmlTableSource):
                 name="2021_etf_dividends_and_distributions",
                 url="https://www.alger.com/AlgerDocuments/Distrib_ETFs.pdf",
                 fixture="2021_etf_dividends_and_distributions.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="leftover_ncsr_spegx_2021_2024_wave_cf",
+                url=(
+                    "https://www.sec.gov/Archives/edgar/data/92751/"
+                    "000113322824011661/tgfii-efp13341_ncsr.htm#responsible-investing"
+                ),
+                fixture="leftover_ncsr_spegx_2021_2024_wave_cf.html",
                 live=False,
                 role="history",
             ),

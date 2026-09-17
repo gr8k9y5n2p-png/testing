@@ -4140,6 +4140,42 @@ def test_sixth_tier_fixtures() -> None:
     assert frty_21.amount == Decimal("1.0687")
     assert frty_21.publication_stage == PublicationStage.final
 
+    alger_ncsr_cf = parse_distribution_html(
+        (ROOT / "alger" / "leftover_ncsr_spegx_2021_2024_wave_cf.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url=(
+            "https://www.sec.gov/Archives/edgar/data/92751/"
+            "000113322824011661/tgfii-efp13341_ncsr.htm#responsible-investing"
+        ),
+        fund_family="Alger / Fred Alger",
+    )
+    spegx_2024_cg = next(
+        r
+        for r in alger_ncsr_cf
+        if r.ticker == "SPEGX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and str(r.as_of) == "2024-10-31"
+    )
+    assert spegx_2024_cg.amount == Decimal("0.44")
+    assert spegx_2024_cg.publication_stage == PublicationStage.final
+    spegx_2021_cg = next(
+        r
+        for r in alger_ncsr_cf
+        if r.ticker == "SPEGX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and str(r.as_of) == "2021-10-31"
+    )
+    assert spegx_2021_cg.amount == Decimal("1.04")
+    assert {r.ticker for r in alger_ncsr_cf} == {"SPEGX", "AGFCX", "AGIFX", "ALGZX"}
+    assert not any(
+        r.ticker in {"CHUSX", "ALGAX", "ALSRX", "ACAAX", "SPECX", "PIORX"}
+        for r in alger_ncsr_cf
+    )
+    assert not any(
+        r.estimate_type == EstimateType.ordinary_income for r in alger_ncsr_cf
+    )
+
     harding = parse_distribution_html(
         (ROOT / "harding_loevner" / "2025_year_end_distributions.html").read_text(
             encoding="utf-8"
