@@ -1018,7 +1018,25 @@ class FederatedHermesSource(HtmlTableSource):
         "realized gain is unsplit total capital gains. Issuer dashes omitted "
         "(2021 CG). Class A 2023 OI $0.22 / CG $0.32; 2021 OI $0.20. Cross-checked "
         "vs 2022 N-CSR 2021 column. MDT Balanced FYE July 31 leftover 2023 stays "
-        "unmatched. WAVE BT leftover N-CSR paid history is fixture-only."
+        "unmatched. WAVE BT leftover N-CSR paid history is fixture-only. "
+        "Official 5y WAVE CI leftover (existing in-book only): Strategic Value "
+        "Dividend FYE October 31 2025 N-CSR Financial Highlights unlock leftover "
+        "Class R6 SVALX 2021–2025 on the estimate-only in-book identity. "
+        "Calendar-safe as_of 10/31. Class-level R6 — never sibling-copied onto "
+        "WAVE BT Class A / C / Institutional (SVAAX / SVACX / SVAIX). Income is "
+        "ordinary income; net realized gain is unsplit total capital gains. "
+        "Issuer dashes omitted (2021 / 2022 / 2024 CG). Class R6 2025 OI $0.22 / "
+        "CG $0.11; 2024 OI $0.24; 2023 OI $0.24 / CG $0.32; 2022 OI $0.25; 2021 "
+        "OI $0.21. Official source 2025 N-CSR "
+        "https://www.sec.gov/Archives/edgar/data/745968/000162363225001789/"
+        "fef2029-form.htm verified against 2024 N-CSR "
+        "https://www.sec.gov/Archives/edgar/data/745968/000162363224002069/"
+        "fef1369-form.htm and 2023 N-CSR form1383.htm. MDT Balanced FYE July 31 "
+        "leftover 2023 stays unmatched. Sister WAVE CH Harding Loevner HLEMX / "
+        "HLGZX / HLIZX / HLFZX, WAVE CG Lazard Real Assets RALIX / RALOX, WAVE "
+        "CF Alger Responsible Investing, WAVE CC Pioneer Class R, WAVE CD / CB / "
+        "BY Lazard, and prior leftover pages stay unmatched / not re-emitted "
+        "here. WAVE CI leftover N-CSR paid history is fixture-only."
     )
     live_limitations = (
         "Family tax-center tables are JavaScript. Weekly walk uses preliminary.do; "
@@ -1073,6 +1091,16 @@ class FederatedHermesSource(HtmlTableSource):
                 name="leftover_ncsr_svaax_2021_2023_wave_bt",
                 url="https://www.sec.gov/Archives/edgar/data/745968/000162363223001614/form1383.htm",
                 fixture="leftover_ncsr_svaax_2021_2023_wave_bt.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="leftover_ncsr_svalx_2021_2025_wave_ci",
+                url=(
+                    "https://www.sec.gov/Archives/edgar/data/745968/"
+                    "000162363225001789/fef2029-form.htm#svalx-r6"
+                ),
+                fixture="leftover_ncsr_svalx_2021_2025_wave_ci.html",
                 live=False,
                 role="history",
             ),
