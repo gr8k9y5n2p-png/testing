@@ -5225,6 +5225,83 @@ def test_tenth_tier_fixtures() -> None:
     assert lziex.amount == Decimal("1.50")
     assert {r.ticker for r in lazard if r.ticker} >= {"LZIEX", "LEAIX", "ICMPX", "LISIX"}
 
+    lazard_ncsr_cb = parse_distribution_html(
+        (ROOT / "lazard" / "leftover_ncsr_open_2021_2025_wave_cb.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url=(
+            "https://www.sec.gov/Archives/edgar/data/874964/"
+            "000093041326000617/c114847_ncsr-ixbrl.htm#open"
+        ),
+        fund_family="Lazard",
+    )
+    lziox_2025_oi = next(
+        r
+        for r in lazard_ncsr_cb
+        if r.ticker == "LZIOX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.as_of
+        and str(r.as_of) == "2025-12-31"
+    )
+    assert lziox_2025_oi.amount == Decimal("0.43")
+    assert lziox_2025_oi.publication_stage == PublicationStage.final
+    lziox_2025_cg = next(
+        r
+        for r in lazard_ncsr_cb
+        if r.ticker == "LZIOX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and r.as_of
+        and str(r.as_of) == "2025-12-31"
+    )
+    assert lziox_2025_cg.amount == Decimal("1.84")
+    lisox_2021_roc = next(
+        r
+        for r in lazard_ncsr_cb
+        if r.ticker == "LISOX"
+        and r.estimate_type == EstimateType.return_of_capital
+        and r.as_of
+        and str(r.as_of) == "2021-12-31"
+    )
+    assert lisox_2021_roc.amount == Decimal("0.29")
+    assert not any(
+        r.ticker == "OCMPX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.as_of
+        and str(r.as_of) == "2021-12-31"
+        for r in lazard_ncsr_cb
+    )
+    assert {r.ticker for r in lazard_ncsr_cb} == {
+        "GLFOX",
+        "LCAOX",
+        "LDMOX",
+        "LEAOX",
+        "LEOOX",
+        "LISOX",
+        "LZFOX",
+        "LZIOX",
+        "LZOEX",
+        "LZSCX",
+        "LZSIX",
+        "LZSMX",
+        "LZUOX",
+        "OCMPX",
+    }
+    assert not any(
+        r.ticker
+        in {
+            "LZIEX",
+            "GLIFX",
+            "LZEMX",
+            "PCEQX",
+            "PYEQX",
+            "PEQKX",
+            "PCODX",
+            "RCMPX",
+            "CONIX",
+        }
+        for r in lazard_ncsr_cb
+    )
+
     manning = parse_distribution_html(
         (ROOT / "manning_napier" / "2025_distributions.html").read_text(
             encoding="utf-8"
