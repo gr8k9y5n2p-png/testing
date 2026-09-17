@@ -5503,6 +5503,89 @@ def test_tenth_tier_fixtures() -> None:
         for r in lazard_ncsr_cd
     )
 
+    lazard_ncsr_cg = parse_distribution_html(
+        (ROOT / "lazard" / "leftover_ncsr_real_assets_2021_2025_wave_cg.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url=(
+            "https://www.sec.gov/Archives/edgar/data/874964/"
+            "000093041326000617/c114847_ncsr-ixbrl.htm#real-assets"
+        ),
+        fund_family="Lazard",
+    )
+    ralix_2025_oi = next(
+        r
+        for r in lazard_ncsr_cg
+        if r.ticker == "RALIX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.as_of
+        and str(r.as_of) == "2025-12-31"
+    )
+    assert ralix_2025_oi.amount == Decimal("0.86")
+    assert ralix_2025_oi.publication_stage == PublicationStage.final
+    ralox_2025_oi = next(
+        r
+        for r in lazard_ncsr_cg
+        if r.ticker == "RALOX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.as_of
+        and str(r.as_of) == "2025-12-31"
+    )
+    assert ralox_2025_oi.amount == Decimal("0.84")
+    ralix_2022_cg = next(
+        r
+        for r in lazard_ncsr_cg
+        if r.ticker == "RALIX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and r.as_of
+        and str(r.as_of) == "2022-12-31"
+    )
+    assert ralix_2022_cg.amount == Decimal("0.01")
+    ralox_2021_oi = next(
+        r
+        for r in lazard_ncsr_cg
+        if r.ticker == "RALOX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.as_of
+        and str(r.as_of) == "2021-12-31"
+    )
+    assert ralox_2021_oi.amount == Decimal("1.23")
+    assert not any(
+        r.ticker == "RALIX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and r.as_of
+        and str(r.as_of) == "2025-12-31"
+        for r in lazard_ncsr_cg
+    )
+    assert not any(
+        r.ticker == "RALOX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and r.as_of
+        and str(r.as_of) == "2023-12-31"
+        for r in lazard_ncsr_cg
+    )
+    assert {r.ticker for r in lazard_ncsr_cg} == {"RALIX", "RALOX"}
+    assert not any(
+        r.ticker
+        in {
+            "RALYX",
+            "CONIX",
+            "CONOX",
+            "RLUEX",
+            "READX",
+            "RCMPX",
+            "RLEMX",
+            "RLIEX",
+            "LZIOX",
+            "LZIEX",
+            "SPEGX",
+            "AGFCX",
+            "PIORX",
+            "PQIRX",
+        }
+        for r in lazard_ncsr_cg
+    )
+
     manning = parse_distribution_html(
         (ROOT / "manning_napier" / "2025_distributions.html").read_text(
             encoding="utf-8"

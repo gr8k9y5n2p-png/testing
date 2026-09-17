@@ -45,29 +45,41 @@ class LazardSource(HtmlTableSource):
         "(WAVE BY) or R6. Heroes: LZIOX 2025 OI $0.43 / CG $1.84; LZOEX 2025 "
         "OI $0.45; GLFOX 2025 OI $0.48 / CG $0.62. Issuer dashes omitted. US "
         "Convertibles CONIX / CONOX, US Equity Concentrated Open 2025 dashes, "
-        "and Real Assets RALOX stay unmatched. Official 5y WAVE CD leftover "
-        "(existing in-book only): the same FYE December 31 N-CSR Financial "
-        "Highlights unlock leftover R6 2021–2025 paid history on estimate-only "
-        "in-book identities (RLEMX / RLIEX / RLITX / RLUSX / RLSMX). "
-        "Calendar-safe as_of 12/31. Class-level R6 — never sibling-copied onto "
-        "Institutional (WAVE BY) or Open (WAVE CB). Heroes: RLIEX 2025 OI "
-        "$0.48 / CG $1.84; RLEMX 2025 OI $0.51; RLITX 2025 OI $0.29 / CG "
-        "$3.49. Issuer dashes omitted. READX / RCMPX R6 inception February 22, "
-        "2023, US Equity Concentrated RLUEX 2025 dashes, and Real Assets RALYX "
-        "stay unmatched. Sister WAVE CB Open, WAVE BZ Pioneer Equity Income "
-        "PCEQX / PYEQX / PEQKX, WAVE CA Pioneer Fund / Core Equity C/Y/K, "
-        "WAVE BY Institutional, WAVE BX Pioneer Mid Cap Value C/Y/K, BW "
-        "Rainier RAIIX, BV HMDCX, BU PCGRX, BT Federated SVD, BS PEQIX, BR "
-        "Grandeur Peak, BQ Pioneer Dec 31, BP Beacon, BO–BI / BK / BG DWS, BM "
-        "Baird, BL Thrivent, BJ RiverPark, BH TCW, and prior BD–BF books stay "
-        "on their leftover pages — not re-emitted here. Alger leftovers stay "
-        "reserved / disjoint. WAVE BY Institutional, WAVE CB Open, and WAVE CD "
-        "R6 leftover N-CSR paid history is fixture-only."
+        "and Real Assets RALOX (later WAVE CG) stay unmatched. Official 5y "
+        "WAVE CD leftover (existing in-book only): the same FYE December 31 "
+        "N-CSR Financial Highlights unlock leftover R6 2021–2025 paid history "
+        "on estimate-only in-book identities (RLEMX / RLIEX / RLITX / RLUSX / "
+        "RLSMX). Calendar-safe as_of 12/31. Class-level R6 — never "
+        "sibling-copied onto Institutional (WAVE BY) or Open (WAVE CB). "
+        "Heroes: RLIEX 2025 OI $0.48 / CG $1.84; RLEMX 2025 OI $0.51; RLITX "
+        "2025 OI $0.29 / CG $3.49. Issuer dashes omitted. READX / RCMPX R6 "
+        "inception February 22, 2023, US Equity Concentrated RLUEX 2025 "
+        "dashes, and Real Assets RALYX stay unmatched. Official 5y WAVE CG "
+        "leftover (existing in-book only): the same FYE December 31 N-CSR "
+        "Financial Highlights unlock leftover Real Assets Institutional + "
+        "Open 2021–2025 paid history on estimate-only in-book identities "
+        "(RALIX / RALOX). Calendar-safe as_of 12/31. Class-level — never "
+        "sibling-copied onto R6 RALYX (inception July 22, 2022). Heroes: "
+        "RALIX 2025 OI $0.86; RALOX 2025 OI $0.84. Issuer dashes omitted "
+        "(2023–2025 CG). Sister WAVE CF Alger Responsible Investing SPEGX / "
+        "AGFCX / AGIFX / ALGZX, WAVE CC Pioneer Class R PIORX / PQIRX, WAVE "
+        "CD Lazard R6, WAVE CB Open, WAVE BY Institutional, WAVE BZ Pioneer "
+        "Equity Income PCEQX / PYEQX / PEQKX, WAVE CA Pioneer Fund / Core "
+        "Equity C/Y/K, WAVE BX Pioneer Mid Cap Value C/Y/K, BW Rainier "
+        "RAIIX, BV HMDCX, BU PCGRX, BT Federated SVD, BS PEQIX, BR Grandeur "
+        "Peak, BQ Pioneer Dec 31, BP Beacon, BO–BI / BK / BG DWS, BM Baird, "
+        "BL Thrivent, BJ RiverPark, BH TCW, and prior BD–BF books stay on "
+        "their leftover pages — not re-emitted here. Alger leftovers stay "
+        "reserved / disjoint. RALYX, CONIX / CONOX, US Equity Concentrated "
+        "RLUEX 2025 dashes, and READX / RCMPX stay unmatched. WAVE BY "
+        "Institutional, WAVE CB Open, WAVE CD R6, and WAVE CG Real Assets "
+        "leftover N-CSR paid history is fixture-only."
     )
     live_limitations = (
         "Year-end book is PDF. Fixture transcribes the official Institutional / Open / R6 table. "
         "Paid 2021–2024 declaration siblings unpublished. "
-        "WAVE BY Lazard Institutional, WAVE CB Open, and WAVE CD R6 2021–2025 leftover N-CSR are fixture-only."
+        "WAVE BY Lazard Institutional, WAVE CB Open, WAVE CD R6, and WAVE CG Real Assets "
+        "2021–2025 leftover N-CSR are fixture-only."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -118,6 +130,16 @@ class LazardSource(HtmlTableSource):
                     "000093041326000617/c114847_ncsr-ixbrl.htm#r6"
                 ),
                 fixture="leftover_ncsr_r6_2021_2025_wave_cd.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="leftover_ncsr_real_assets_2021_2025_wave_cg",
+                url=(
+                    "https://www.sec.gov/Archives/edgar/data/874964/"
+                    "000093041326000617/c114847_ncsr-ixbrl.htm#real-assets"
+                ),
+                fixture="leftover_ncsr_real_assets_2021_2025_wave_cg.html",
                 live=False,
                 role="history",
             ),
