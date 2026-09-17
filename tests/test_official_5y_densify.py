@@ -1323,8 +1323,17 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # Healthcare 2024 N-CSR distribution dashes stay unmatched. Honest pin
     # remasured on WAVE BU tip 5b317642: 4228 → 4229 (+1 MF; ETF 5y
     # unchanged at 758).
-    assert digest.funds_with_5y == 4229
-    assert digest.funds_with_5y_mf == 3471
+    # WAVE BW leftover (existing in-book only): Manning & Napier Rainier
+    # International Discovery Class I Oct 31 N-CSR unlocks leftover RAIIX
+    # 2022 CG $0.51 (OI dash omitted). Calendar-safe as_of 10/31. Class-level
+    # I — never sibling-copied onto S / W / Z. Does not redo AF–BV (especially
+    # BV HMDCX, BU PCGRX, BT Federated SVAAX / SVACX / SVAIX, BS PEQIX, BR
+    # Grandeur Peak, BQ Pioneer Dec 31, BP Beacon, BO–BI / BK / BG DWS, BM
+    # Baird, BL Thrivent, BJ RiverPark, BH TCW, BD–BF). RISAX 2022+2024 and
+    # HTCIX / HTECX 2024 issuer dashes stay unmatched. Honest pin remasured
+    # on WAVE BV tip dba04ba: 4229 → 4230 (+1 MF; ETF 5y unchanged at 758).
+    assert digest.funds_with_5y == 4230
+    assert digest.funds_with_5y_mf == 3472
     assert digest.funds_with_5y_etf == 758
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
@@ -22932,6 +22941,261 @@ def test_wave_bv_heroes_are_searchable(client: TestClient) -> None:
     assert {"2021", "2022", "2023", "2024", "2025"} <= svaax_years
 
     # Keep sister WAVE BU Pioneer Mid Cap Value searchable after the additive leftover.
+    pioneer_bu_fetched = client.post(
+        "/ingest/fetch", json={"fund_family": "amundi", "mode": "fixture"}
+    )
+    assert pioneer_bu_fetched.status_code == 200, pioneer_bu_fetched.text
+    pcgrx = client.get(
+        "/distributions",
+        params={"ticker": "PCGRX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    pcgrx_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in pcgrx["items"]
+        if row.get("ticker") == "PCGRX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= pcgrx_years
+
+
+WAVE_BW_RAINIER_LEFTOVER_5Y = ("RAIIX",)
+WAVE_BW_SIBLING_WALLS = ("RISAX",)
+WAVE_BW_SIBLING_ALREADY_5Y = ("RAIWX", "RAIRX")
+WAVE_BW_NCSR_ACCESSION = "000199937126000259"
+WAVE_BW_LEFTOVER_URL = "leftover_ncsr_raiix_2022_wave_bw"
+WAVE_BW_ALGER_RESERVED = WAVE_BH_ALGER_RESERVED
+WAVE_BW_BV_DISJOINT = WAVE_BV_HARTFORD_LEFTOVER_5Y
+WAVE_BW_BU_DISJOINT = WAVE_BU_PIONEER_LEFTOVER_5Y
+WAVE_BW_BT_DISJOINT = WAVE_BT_FEDERATED_LEFTOVER_5Y
+WAVE_BW_BS_DISJOINT = WAVE_BS_PIONEER_LEFTOVER_5Y
+WAVE_BW_BR_DISJOINT = WAVE_BS_BR_DISJOINT
+
+
+def _wave_bw_leftover_rows(records: list[NormalizedRecord]) -> list[NormalizedRecord]:
+    return [
+        row
+        for row in records
+        if row.ticker in WAVE_BW_RAINIER_LEFTOVER_5Y
+        and row.as_of
+        and row.as_of.year == 2022
+        and row.source_url
+        and (
+            WAVE_BW_NCSR_ACCESSION in row.source_url
+            or WAVE_BW_LEFTOVER_URL in row.source_url
+        )
+    ]
+
+
+def test_wave_bw_rainier_raiix_leftover_oct31_2022_fills_5y() -> None:
+    records = ManningNapierSource().fetch(mode="fixture").records
+    leftover = _wave_bw_leftover_rows(records)
+    raiix_2022_cg = next(
+        row
+        for row in leftover
+        if row.ticker == "RAIIX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and str(row.as_of) == "2022-10-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert raiix_2022_cg.amount == Decimal("0.51")
+    # Official 2022 income dash — never invent $0.
+    raiix_2022_oi = [
+        row
+        for row in leftover
+        if row.ticker == "RAIIX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and str(row.as_of) == "2022-10-31"
+    ]
+    assert raiix_2022_oi == []
+    leftover_tickers = {row.ticker for row in leftover}
+    assert leftover_tickers == set(WAVE_BW_RAINIER_LEFTOVER_5Y)
+    # Class-level — sibling Rainier classes are not re-emitted on this page.
+    sibling_bw = [
+        row
+        for row in records
+        if row.ticker in WAVE_BW_SIBLING_WALLS + WAVE_BW_SIBLING_ALREADY_5Y
+        and row.source_url
+        and (
+            WAVE_BW_NCSR_ACCESSION in row.source_url
+            or WAVE_BW_LEFTOVER_URL in row.source_url
+        )
+    ]
+    assert sibling_bw == []
+    # Sister leftovers are not re-emitted here.
+    reserved = [
+        row
+        for row in leftover
+        if row.ticker
+        in WAVE_BW_BV_DISJOINT
+        + WAVE_BW_BU_DISJOINT
+        + WAVE_BW_BT_DISJOINT
+        + WAVE_BW_BS_DISJOINT
+        + WAVE_BW_BR_DISJOINT
+        + WAVE_BQ_PIONEER_LEFTOVER_5Y
+        + WAVE_BP_BEACON_LEFTOVER_5Y
+        + WAVE_BO_DWS_LEFTOVER_5Y
+        + WAVE_BN_DWS_LEFTOVER_5Y
+        + WAVE_BM_BAIRD_LEFTOVER_5Y
+        + WAVE_BL_THRIVENT_LEFTOVER_5Y
+        + WAVE_BK_DWS_LEFTOVER_5Y
+        + WAVE_BI_DWS_LEFTOVER_5Y
+        + WAVE_BJ_RIVERPARK_LEFTOVER_5Y
+        + WAVE_BG_DWS_LEFTOVER_5Y
+        + WAVE_BH_TCW_LEFTOVER_5Y
+        + WAVE_BW_ALGER_RESERVED
+    ]
+    assert reserved == []
+    leftover_late = [
+        row for row in leftover if row.as_of and row.as_of.year in {2023, 2024, 2025}
+    ]
+    assert leftover_late == []
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(records, "RAIIX")
+    # Keep Parallel W Rainier W/Z leftovers 5y on tip.
+    for ticker in WAVE_BW_SIBLING_ALREADY_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(records, ticker), ticker
+    # Keep sister WAVE BV Hartford MidCap leftover 5y on tip.
+    hartford = HartfordSource().fetch(mode="fixture").records
+    for ticker in WAVE_BW_BV_DISJOINT:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(hartford, ticker), ticker
+    # Keep sister WAVE BU Pioneer Mid Cap Value leftover 5y on tip.
+    pioneer = AmundiSource().fetch(mode="fixture").records
+    for ticker in WAVE_BW_BU_DISJOINT:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(pioneer, ticker), ticker
+    # Keep sister WAVE BT Federated leftovers 5y on tip.
+    federated = FederatedHermesSource().fetch(mode="fixture").records
+    for ticker in WAVE_BW_BT_DISJOINT:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(federated, ticker), ticker
+
+
+def test_wave_bw_leftover_walls_stay_unmatched() -> None:
+    manning = ManningNapierSource().fetch(mode="fixture").records
+    leftover = _wave_bw_leftover_rows(manning)
+    leftover_tickers = {row.ticker for row in leftover}
+    assert leftover_tickers == set(WAVE_BW_RAINIER_LEFTOVER_5Y)
+    # Class S RISAX 2022+2024 stay unmatched on this Class I page.
+    risax_bw = [
+        row
+        for row in manning
+        if row.ticker == "RISAX"
+        and row.source_url
+        and (
+            WAVE_BW_NCSR_ACCESSION in row.source_url
+            or WAVE_BW_LEFTOVER_URL in row.source_url
+        )
+    ]
+    assert risax_bw == []
+    assert 2022 not in _paid_lookback_years(manning, "RISAX")
+    assert 2024 not in _paid_lookback_years(manning, "RISAX")
+    # Keep Parallel W Rainier W/Z 5y on tip.
+    for ticker in WAVE_BW_SIBLING_ALREADY_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(manning, ticker), ticker
+    # Hennessy Technology 2024 issuer dashes stay unmatched.
+    hennessy = HennessySource().fetch(mode="fixture").records
+    assert 2024 not in _paid_lookback_years(hennessy, "HTECX")
+    assert 2024 not in _paid_lookback_years(hennessy, "HTCIX")
+    # Nationwide Bailard 2024 estimate wall stays unmatched.
+    nationwide = NationwideSource().fetch(mode="fixture").records
+    assert 2024 not in _paid_lookback_years(nationwide, "NWHJX")
+    assert 2024 not in _paid_lookback_years(nationwide, "NWHOX")
+    # Keep sister leftovers 5y on tip.
+    hartford = HartfordSource().fetch(mode="fixture").records
+    for ticker in WAVE_BW_BV_DISJOINT:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(hartford, ticker), ticker
+    pioneer = AmundiSource().fetch(mode="fixture").records
+    for ticker in WAVE_BW_BU_DISJOINT + WAVE_BW_BS_DISJOINT:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(pioneer, ticker), ticker
+    federated = FederatedHermesSource().fetch(mode="fixture").records
+    for ticker in WAVE_BW_BT_DISJOINT:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(federated, ticker), ticker
+    grandeur = GrandeurPeakSource().fetch(mode="fixture").records
+    for ticker in WAVE_BW_BR_DISJOINT:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(grandeur, ticker), ticker
+    beacon = AmericanBeaconSource().fetch(mode="fixture").records
+    for ticker in WAVE_BP_BEACON_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(beacon, ticker), ticker
+    dws = DwsSource().fetch(mode="fixture").records
+    for ticker in (
+        WAVE_BO_DWS_LEFTOVER_5Y
+        + WAVE_BN_DWS_LEFTOVER_5Y
+        + WAVE_BK_DWS_LEFTOVER_5Y
+        + WAVE_BI_DWS_LEFTOVER_5Y
+        + WAVE_BG_DWS_LEFTOVER_5Y
+    ):
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(dws, ticker), ticker
+    baird = BairdSource().fetch(mode="fixture").records
+    for ticker in WAVE_BM_BAIRD_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(baird, ticker), ticker
+    thrivent = ThriventSource().fetch(mode="fixture").records
+    for ticker in WAVE_BL_THRIVENT_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(thrivent, ticker), ticker
+    riverpark = RiverparkSource().fetch(mode="fixture").records
+    for ticker in WAVE_BJ_RIVERPARK_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(riverpark, ticker), ticker
+    tcw = TcwSource().fetch(mode="fixture").records
+    for ticker in WAVE_BH_TCW_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(tcw, ticker), ticker
+    alger = AlgerSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(alger, "CHUSX")
+    rainier_bw = {row.ticker for row in leftover}
+    assert rainier_bw == set(WAVE_BW_RAINIER_LEFTOVER_5Y)
+    assert not rainier_bw & set(WAVE_BW_BV_DISJOINT)
+    assert not rainier_bw & set(WAVE_BW_BU_DISJOINT)
+    assert not rainier_bw & set(WAVE_BW_BT_DISJOINT)
+    assert not rainier_bw & set(WAVE_BW_BS_DISJOINT)
+    assert not rainier_bw & set(WAVE_BW_BR_DISJOINT)
+    assert not rainier_bw & set(WAVE_BW_ALGER_RESERVED)
+    assert not rainier_bw & set(WAVE_BW_SIBLING_WALLS)
+    assert not rainier_bw & set(WAVE_BW_SIBLING_ALREADY_5Y)
+
+
+def test_wave_bw_heroes_are_searchable(client: TestClient) -> None:
+    fetched = client.post(
+        "/ingest/fetch", json={"fund_family": "manning_napier", "mode": "fixture"}
+    )
+    assert fetched.status_code == 200, fetched.text
+    assert fetched.json()["created"] > 0
+
+    for ticker in WAVE_BW_RAINIER_LEFTOVER_5Y:
+        body = client.get("/funds", params={"q": ticker}).json()
+        tickers = [item["ticker"] for item in body["items"]]
+        assert ticker in tickers, f"{ticker} missing from GET /funds?q={ticker}: {tickers[:8]}"
+
+    raiix = client.get(
+        "/distributions",
+        params={"ticker": "RAIIX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    raiix_2022 = [
+        Decimal(row["amount"])
+        for row in raiix["items"]
+        if row.get("ticker") == "RAIIX"
+        and row.get("estimate_type") == "total_capital_gains"
+        and str(row.get("as_of") or "").startswith("2022-10-31")
+    ]
+    assert Decimal("0.51") in raiix_2022
+    raiix_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in raiix["items"]
+        if row.get("ticker") == "RAIIX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= raiix_years
+
+    # Keep sister WAVE BV Hartford MidCap searchable after the additive leftover.
+    hartford_fetched = client.post(
+        "/ingest/fetch", json={"fund_family": "hartford", "mode": "fixture"}
+    )
+    assert hartford_fetched.status_code == 200, hartford_fetched.text
+    hmdcx = client.get(
+        "/distributions",
+        params={"ticker": "HMDCX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    hmdcx_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in hmdcx["items"]
+        if row.get("ticker") == "HMDCX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= hmdcx_years
+
+    # Keep sister WAVE BU Pioneer Mid Cap Value searchable.
     pioneer_bu_fetched = client.post(
         "/ingest/fetch", json={"fund_family": "amundi", "mode": "fixture"}
     )
