@@ -5298,8 +5298,82 @@ def test_tenth_tier_fixtures() -> None:
             "PCODX",
             "RCMPX",
             "CONIX",
+            "RLEMX",
+            "RLIEX",
         }
         for r in lazard_ncsr_cb
+    )
+
+    lazard_ncsr_cc = parse_distribution_html(
+        (ROOT / "lazard" / "leftover_ncsr_r6_2021_2025_wave_cc.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url=(
+            "https://www.sec.gov/Archives/edgar/data/874964/"
+            "000093041326000617/c114847_ncsr-ixbrl.htm#r6"
+        ),
+        fund_family="Lazard",
+    )
+    rliex_2025_oi = next(
+        r
+        for r in lazard_ncsr_cc
+        if r.ticker == "RLIEX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.as_of
+        and str(r.as_of) == "2025-12-31"
+    )
+    assert rliex_2025_oi.amount == Decimal("0.48")
+    assert rliex_2025_oi.publication_stage == PublicationStage.final
+    rliex_2025_cg = next(
+        r
+        for r in lazard_ncsr_cc
+        if r.ticker == "RLIEX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and r.as_of
+        and str(r.as_of) == "2025-12-31"
+    )
+    assert rliex_2025_cg.amount == Decimal("1.84")
+    rlitx_2021_roc = next(
+        r
+        for r in lazard_ncsr_cc
+        if r.ticker == "RLITX"
+        and r.estimate_type == EstimateType.return_of_capital
+        and r.as_of
+        and str(r.as_of) == "2021-12-31"
+    )
+    assert rlitx_2021_roc.amount == Decimal("0.31")
+    assert not any(
+        r.ticker == "RLSMX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.as_of
+        and str(r.as_of) == "2024-12-31"
+        for r in lazard_ncsr_cc
+    )
+    assert {r.ticker for r in lazard_ncsr_cc} == {
+        "RLEMX",
+        "RLIEX",
+        "RLITX",
+        "RLSMX",
+        "RLUSX",
+    }
+    assert not any(
+        r.ticker
+        in {
+            "LZIEX",
+            "LZIOX",
+            "GLIFX",
+            "GLFOX",
+            "LZEMX",
+            "LZOEX",
+            "PCEQX",
+            "PYEQX",
+            "PEQKX",
+            "PCODX",
+            "RCMPX",
+            "READX",
+            "CONIX",
+        }
+        for r in lazard_ncsr_cc
     )
 
     manning = parse_distribution_html(
