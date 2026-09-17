@@ -16012,6 +16012,7 @@ def test_wave_bf_baillie_leftover_dec31_fills_5y() -> None:
         and row.estimate_type == EstimateType.long_term_capital_gains
         and row.ex_date
         and str(row.ex_date) == "2025-12-29"
+        and row.publication_stage == PublicationStage.final
         and row.amount is not None
     )
     assert bgakx_2025.amount == Decimal("5.18723")
@@ -16022,6 +16023,7 @@ def test_wave_bf_baillie_leftover_dec31_fills_5y() -> None:
         and row.estimate_type == EstimateType.ordinary_income
         and row.ex_date
         and str(row.ex_date) == "2025-12-29"
+        and row.publication_stage == PublicationStage.final
         and row.amount is not None
     )
     assert bsgpx_2025.amount == Decimal("2.50773")
