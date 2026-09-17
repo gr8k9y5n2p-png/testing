@@ -84,6 +84,7 @@ from app.sources.ninth_tier import (
     BaillieGiffordSource,
     BrandesSource,
     FamSource,
+    HennessySource,
 )
 from app.sources.third_tier import (
     AllianceBernsteinSource,
@@ -968,8 +969,24 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # Harding leftover 2024 HLEMX / HLIZX / HLIDX remasured as walls.
     # Honest pin remasured on WAVE AX tip b195629: 4114 → 4125 (+11 MF;
     # ETF 5y unchanged at 758).
-    assert digest.funds_with_5y == 4125
-    assert digest.funds_with_5y_mf == 3367
+    # WAVE AY leftover (existing in-book only): Hennessy leftover Investor /
+    # Institutional Oct 31 2021–2024 N-CSR Financial Highlights unlock leftover
+    # HFCSX / HFCIX / HFLGX / HILGX / HFCVX / HICVX / HDOGX / HEIFX / HEIIX /
+    # HBFBX / GASFX / HGASX / HJPSX / HJSIX / HSFNX / HISFX already on the
+    # 2025 distributions paid book. Does not redo AF–AW (especially AW
+    # Federated Kaufmann/SDG + Harding Global Equity, AX FAM / Fenimore Dec
+    # 31, AV Third Avenue Oct 31, AU LSV I/Investor Oct 31, AT AMG Frontier /
+    # GW&K SMID, AQ Victory I/II, AS Virtus Asset Trust, or AR Homestead).
+    # Preferred William Blair leftover beyond remasured walls, Allspring
+    # leftover FYE July 31, First Eagle GRA-Smid 2021 inception 11/30/21,
+    # Calamos CAISX 2021 inception, GuideStone index 2022 inception, Davis
+    # FYE July 31, Marsico Institutional, Meridian FYE June 30, and
+    # WisdomTree leftover 2021 ticker restructures remasured as walls.
+    # Honest pin remasured on WAVE AW tip 0e3f805: 4125 → 4141 (+16 MF; ETF
+    # 5y unchanged at 758). Still +16 MF vs the previous 4114 → 4130 pin;
+    # the extra +11 on tip is AW Kaufmann/Harding, not new AY content.
+    assert digest.funds_with_5y == 4141
+    assert digest.funds_with_5y_mf == 3383
     assert digest.funds_with_5y_etf == 758
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
@@ -13910,4 +13927,277 @@ def test_wave_aw_heroes_are_searchable(client: TestClient) -> None:
         and row.get("publication_stage") == "final"
     ]
     assert lcgfx_2023 == []
+
+
+WAVE_AY_HENNESSY_LEFTOVER_5Y = (
+    "HFCSX",
+    "HFCIX",
+    "HFLGX",
+    "HILGX",
+    "HFCVX",
+    "HICVX",
+    "HDOGX",
+    "HEIFX",
+    "HEIIX",
+    "HBFBX",
+    "GASFX",
+    "HGASX",
+    "HJPSX",
+    "HJSIX",
+    "HSFNX",
+    "HISFX",
+)
+
+
+def test_wave_ay_hennessy_leftover_oct31_2021_2024_fills_5y() -> None:
+    records = HennessySource().fetch(mode="fixture").records
+    hfcsx_2021_cg = next(
+        row
+        for row in records
+        if row.ticker == "HFCSX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2021-10-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert hfcsx_2021_cg.amount == Decimal("22.03")
+    hfcix_2021_cg = next(
+        row
+        for row in records
+        if row.ticker == "HFCIX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2021-10-31"
+        and row.amount is not None
+    )
+    assert hfcix_2021_cg.amount == Decimal("22.83")
+    hflgx_2021_oi = next(
+        row
+        for row in records
+        if row.ticker == "HFLGX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2021-10-31"
+        and row.amount is not None
+    )
+    assert hflgx_2021_oi.amount == Decimal("0.10")
+    gasfx_2021_oi = next(
+        row
+        for row in records
+        if row.ticker == "GASFX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2021-10-31"
+        and row.amount is not None
+    )
+    assert gasfx_2021_oi.amount == Decimal("0.57")
+    hdogx_2021_cg = next(
+        row
+        for row in records
+        if row.ticker == "HDOGX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2021-10-31"
+        and row.amount is not None
+    )
+    assert hdogx_2021_cg.amount == Decimal("0.76")
+    # Class-level — Investor HFCSX is not copied from Institutional HFCIX.
+    assert hfcsx_2021_cg.amount != hfcix_2021_cg.amount
+    # Cornerstone Growth Investor and Midstream are not in-book leftovers.
+    assert [row for row in records if row.ticker == "HFCGX"] == []
+    assert [row for row in records if row.ticker in {"HMSFX", "HMSIX"}] == []
+    # 2025 stays on the existing distributions book — not re-emitted from N-CSR.
+    ncsr_late = [
+        row
+        for row in records
+        if row.ticker in WAVE_AY_HENNESSY_LEFTOVER_5Y
+        and row.as_of
+        and row.as_of.year == 2025
+        and row.source_url
+        and "000199937126000464" in row.source_url
+    ]
+    assert ncsr_late == []
+    for ticker in WAVE_AY_HENNESSY_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(records, ticker), ticker
+
+
+def test_wave_ay_leftover_walls_stay_unmatched() -> None:
+    hennessy = HennessySource().fetch(mode="fixture").records
+    # Official leftover all-dash years stay unmatched.
+    assert 2021 not in _paid_lookback_years(hennessy, "HICGX")
+    assert 2021 not in _paid_lookback_years(hennessy, "HFMDX")
+    assert 2021 not in _paid_lookback_years(hennessy, "HIMDX")
+    assert 2021 not in _paid_lookback_years(hennessy, "HNRGX")
+    assert 2024 not in _paid_lookback_years(hennessy, "HNRGX")
+    assert 2021 not in _paid_lookback_years(hennessy, "HNRIX")
+    assert 2024 not in _paid_lookback_years(hennessy, "HNRIX")
+    assert 2021 not in _paid_lookback_years(hennessy, "HJPNX")
+    assert 2023 not in _paid_lookback_years(hennessy, "HJPNX")
+    assert 2021 not in _paid_lookback_years(hennessy, "HJPIX")
+    assert 2023 not in _paid_lookback_years(hennessy, "HJPIX")
+    assert 2021 not in _paid_lookback_years(hennessy, "HLFNX")
+    assert 2021 not in _paid_lookback_years(hennessy, "HILFX")
+    assert 2024 not in _paid_lookback_years(hennessy, "HTECX")
+    assert 2024 not in _paid_lookback_years(hennessy, "HTCIX")
+
+    william_blair = WilliamBlairSource().fetch(mode="fixture").records
+    assert 2023 not in _paid_lookback_years(william_blair, "LCGFX")
+    assert 2023 not in _paid_lookback_years(william_blair, "LCGNX")
+    assert 2024 not in _paid_lookback_years(william_blair, "WESNX")
+    assert 2024 not in _paid_lookback_years(william_blair, "BESIX")
+    assert 2022 not in _paid_lookback_years(william_blair, "WISNX")
+    assert 2021 not in _paid_lookback_years(william_blair, "WBCIX")
+    assert 2022 not in _paid_lookback_years(william_blair, "WBCIX")
+    assert 2021 not in _paid_lookback_years(william_blair, "ISMVX")
+    assert 2021 not in _paid_lookback_years(william_blair, "WVMIX")
+
+    allspring = AllspringSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(allspring, "WDSAX")
+    assert 2023 not in _paid_lookback_years(allspring, "EAAFX")
+    assert 2021 not in _paid_lookback_years(allspring, "ASPAX")
+
+    first_eagle = FirstEagleSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(first_eagle, "FERAX")
+    assert 2021 not in _paid_lookback_years(first_eagle, "FESMX")
+
+    calamos = CalamosSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(calamos, "CAISX")
+
+    guidestone = GuidestoneSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(guidestone, "GEIZX")
+    assert 2021 not in _paid_lookback_years(guidestone, "GVIZX")
+    assert 2021 not in _paid_lookback_years(guidestone, "GIIZX")
+
+    davis = DavisSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(davis, "NYVTX")
+    assert 2021 not in _paid_lookback_years(davis, "RPEAX")
+
+    # Keep sister WAVE AW Kaufmann / SDG + Harding — KAUAX / FKASX / FHEQX
+    # and HLMGX / HLMVX stay 5y on tip.
+    federated = FederatedHermesSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(federated, "KAUAX")
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(federated, "FKASX")
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(federated, "FHEQX")
+    harding = HardingLoevnerSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(harding, "HLMGX")
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(harding, "HLMVX")
+
+    # Do not redo WAVE AX FAM / Fenimore Dec 31 — FAMVX stays 5y.
+    fam = FamSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(fam, "FAMVX")
+
+    # Do not redo WAVE AV Third Avenue Institutional Oct 31 — TAVFX stays 5y.
+    third = ThirdAvenueSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(third, "TAVFX")
+
+    # Do not redo WAVE AU LSV I/Investor Oct 31 — LSVEX stays 5y.
+    lsv = LsvSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(lsv, "LSVEX")
+
+    # Do not redo WAVE AT AMG Frontier / GW&K SMID — YACKX stays 5y.
+    amg = AmgSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(amg, "YACKX")
+
+    # Do not redo WAVE AQ Victory I/II Oct 31 N-CSR — VETAX stays 5y.
+    victory = VictorySource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(victory, "VETAX")
+
+    # Do not redo WAVE AS Virtus Asset Trust Dec 31 N-CSR — STVTX stays 5y.
+    virtus = VirtusSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(virtus, "STVTX")
+
+    # Do not redo WAVE AR Homestead Dec 31 N-CSR — HOVLX stays 5y.
+    homestead = HomesteadSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(homestead, "HOVLX")
+
+    # Exclusive leftover — Hennessy tickers stay disjoint from AW books.
+    hennessy_tickers = {row.ticker for row in hennessy if row.ticker}
+    assert not any(row.ticker in hennessy_tickers for row in federated)
+    assert not any(row.ticker in hennessy_tickers for row in harding)
+    principal = PrincipalSource().fetch(mode="fixture").records
+    assert not any(row.ticker in hennessy_tickers for row in principal)
+
+
+def test_wave_ay_heroes_are_searchable(client: TestClient) -> None:
+    fetched = client.post(
+        "/ingest/fetch", json={"fund_family": "hennessy", "mode": "fixture"}
+    )
+    assert fetched.status_code == 200, fetched.text
+    assert fetched.json()["created"] > 0
+
+    for ticker in ("HFCSX", "HFCIX", "HFLGX", "GASFX", "HDOGX"):
+        body = client.get("/funds", params={"q": ticker}).json()
+        tickers = [item["ticker"] for item in body["items"]]
+        assert ticker in tickers, f"{ticker} missing from GET /funds?q={ticker}: {tickers[:8]}"
+
+    hfcsx = client.get(
+        "/distributions",
+        params={"ticker": "HFCSX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    hfcsx_2021 = [
+        Decimal(row["amount"])
+        for row in hfcsx["items"]
+        if row.get("ticker") == "HFCSX"
+        and row.get("estimate_type") == "total_capital_gains"
+        and str(row.get("as_of") or "").startswith("2021-10-31")
+    ]
+    assert Decimal("22.03") in hfcsx_2021
+    hfcsx_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in hfcsx["items"]
+        if row.get("ticker") == "HFCSX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= hfcsx_years
+
+    hfcix = client.get(
+        "/distributions",
+        params={"ticker": "HFCIX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    hfcix_2021 = [
+        Decimal(row["amount"])
+        for row in hfcix["items"]
+        if row.get("ticker") == "HFCIX"
+        and row.get("estimate_type") == "total_capital_gains"
+        and str(row.get("as_of") or "").startswith("2021-10-31")
+    ]
+    assert Decimal("22.83") in hfcix_2021
+
+    # Keep WAVE AW Kaufmann searchable after the additive rebase.
+    federated = client.post(
+        "/ingest/fetch", json={"fund_family": "federated_hermes", "mode": "fixture"}
+    )
+    assert federated.status_code == 200, federated.text
+    kauax = client.get(
+        "/distributions",
+        params={"ticker": "KAUAX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    kauax_2022 = [
+        Decimal(row["amount"])
+        for row in kauax["items"]
+        if row.get("ticker") == "KAUAX"
+        and row.get("estimate_type") == "total_capital_gains"
+        and str(row.get("as_of") or "").startswith("2022-10-31")
+    ]
+    assert Decimal("0.65") in kauax_2022
+
+    william_blair = client.post(
+        "/ingest/fetch", json={"fund_family": "william_blair", "mode": "fixture"}
+    )
+    assert william_blair.status_code == 200, william_blair.text
+    wisnx = client.get(
+        "/distributions",
+        params={"ticker": "WISNX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    wisnx_2022 = [
+        row
+        for row in wisnx["items"]
+        if row.get("ticker") == "WISNX"
+        and str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "").startswith(
+            "2022"
+        )
+        and row.get("amount") is not None
+        and row.get("publication_stage") == "final"
+    ]
+    assert wisnx_2022 == []
 

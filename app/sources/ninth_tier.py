@@ -311,11 +311,30 @@ class HennessySource(HtmlTableSource):
         "Cornerstone Value Investor HFCVX ST $0.01310 / LT $1.06282). "
         "Capital-gains record 12/03/2025; pay 12/04/2025. "
         "March/June/September quarterly income-only omitted. Monthly Midstream omitted. "
-        "Cornerstone Growth Investor printed no 2025 distributions — omitted."
+        "Cornerstone Growth Investor printed no 2025 distributions — omitted. "
+        "Official 5y WAVE AY leftover (existing in-book only): Hennessy Funds "
+        "Trust FYE October 31 N-CSR Financial Highlights unlock leftover "
+        "2021–2024 on the 2025 distributions paid book (Focus HFCSX / HFCIX, "
+        "Large Growth HFLGX / HILGX, Value HFCVX / HICVX, Total Return HDOGX, "
+        "Equity and Income HEIFX / HEIIX, Balanced HBFBX, Gas GASFX / HGASX, "
+        "Japan Small Cap HJPSX / HJSIX, Small Cap Financial HSFNX / HISFX). "
+        "Calendar-safe as_of 10/31. Class-level Investor / Institutional — "
+        "never sibling-copied. Cornerstone Growth Investor HFCGX is not on the "
+        "2025 paid book and is not an in-book leftover. Midstream HMSFX / "
+        "HMSIX monthly income was omitted from the 2025 paid book. Income is "
+        "ordinary income; net realized gain is unsplit total capital gains. "
+        "Issuer dashes and between-$(0.005)-and-$0.005 footnotes omitted "
+        "(Cornerstone Growth Inst 2021; Mid Cap 30 2021; Energy 2021+2024; "
+        "Japan 2021+2023; Large Cap Financial 2021; Technology 2024). 2025 "
+        "N-CSR https://www.sec.gov/Archives/edgar/data/891944/000199937126000464/"
+        "hft-ncsr_103125.htm verified against 2024 "
+        "0001999371-25-000211 / hft_hf-ncsr.htm. WAVE AY leftover N-CSR paid "
+        "history is fixture-only."
     )
     live_limitations = (
         "Live HTML is public but expandable history tables may not parse. "
-        "Fixture transcribes official December YE Investor + Institutional rows."
+        "Fixture transcribes official December YE Investor + Institutional rows. "
+        "Leftover 2021–2024 N-CSR paid history is fixture-only."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -327,7 +346,17 @@ class HennessySource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
-            )
+            ),
+            PageSpec(
+                name="leftover_ncsr_2021_2024_wave_ay",
+                url=(
+                    "https://www.sec.gov/Archives/edgar/data/891944/"
+                    "000199937126000464/hft-ncsr_103125.htm"
+                ),
+                fixture="leftover_ncsr_2021_2024_wave_ay.html",
+                live=False,
+                role="history",
+            ),
         ]
 
 
