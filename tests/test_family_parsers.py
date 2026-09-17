@@ -4744,6 +4744,65 @@ def test_ninth_tier_fixtures() -> None:
     )
     assert gpeix.amount == Decimal("2.30240")
 
+    grandeur_br = parse_distribution_html(
+        (ROOT / "grandeur_peak" / "leftover_paid_year_end_2021_2024_wave_br.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="https://grandeurpeakglobal.com/distributions/",
+        fund_family="Grandeur Peak",
+    )
+    gpeix_2021_lt = next(
+        r
+        for r in grandeur_br
+        if r.ticker == "GPEIX"
+        and r.estimate_type == EstimateType.long_term_capital_gains
+        and r.ex_date
+        and str(r.ex_date) == "2021-12-28"
+    )
+    assert gpeix_2021_lt.amount == Decimal("1.96306")
+    assert gpeix_2021_lt.publication_stage == PublicationStage.final
+    gpgcx_2021_st = next(
+        r
+        for r in grandeur_br
+        if r.ticker == "GPGCX"
+        and r.estimate_type == EstimateType.short_term_capital_gains
+        and r.ex_date
+        and str(r.ex_date) == "2021-12-28"
+    )
+    assert gpgcx_2021_st.amount == Decimal("0.47077")
+    gprox_2024_oi = next(
+        r
+        for r in grandeur_br
+        if r.ticker == "GPROX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.ex_date
+        and str(r.ex_date) == "2024-12-20"
+    )
+    assert gprox_2024_oi.amount == Decimal("0.25570")
+    assert {r.ticker for r in grandeur_br} == {"GPEIX", "GPGCX", "GPROX"}
+    assert not any(
+        r.ticker
+        in {
+            "GPEOX",
+            "GPRIX",
+            "GPGOX",
+            "GPGIX",
+            "GHQIX",
+            "KTRAX",
+            "KGDAX",
+            "CCGIX",
+            "TOLLX",
+            "KTCAX",
+            "PIODX",
+            "PIOTX",
+            "LCGFX",
+            "VALLX",
+            "CHUSX",
+        }
+        for r in grandeur_br
+    )
+    assert not any(r.ex_date and r.ex_date.year == 2025 for r in grandeur_br)
+
     hennessy = parse_distribution_html(
         (ROOT / "hennessy" / "2025_year_end_distributions.html").read_text(
             encoding="utf-8"

@@ -389,10 +389,26 @@ class GrandeurPeakSource(HtmlTableSource):
         "(Emerging Markets Opportunities Inst GPEIX ST $0.10530 / LT $2.30240; "
         "Global Contrarian Inst GPGCX ST $0.49440 / LT $1.26100; "
         "Global Reach Investor GPROX ST $0.14570 / LT $2.26220). "
-        "Record 12/18/2025; ex/pay 12/19/2025."
+        "Record 12/18/2025; ex/pay 12/19/2025. "
+        "Official 5y WAVE BR leftover (existing in-book only): December YE "
+        "tax-center accordion 2021–2024 unlock leftover GPEIX / GPGCX / GPROX "
+        "already on the 2025 paid book. Calendar-safe December record / ex / "
+        "payable dates — not N-CSR FYE April 30. Class-level Institutional / "
+        "Investor — never sibling-copied onto GPEOX / GPRIX / GPGOX / GPGIX. "
+        "Official printed $0.00000 stored (GPROX 2022 all-zero year is "
+        "issuer-printed). 2025 stays on the existing paid book. Official "
+        "https://grandeurpeakglobal.com/distributions/ (GPEIX 2021 ST $0.03700 / "
+        "LT $1.96306; 2024 OI $0.14620 / LT $0.11010; GPGCX 2021 ST $0.47077 / "
+        "LT $0.28123; GPROX 2021 ST $0.31745 / LT $2.99655). WAVE BP Beacon "
+        "GHQIX, WAVE BO KTRAX, WAVE BN KGDAX, WAVE BM Baird, WAVE BL Thrivent, "
+        "WAVE BK TOLLX, WAVE BI KTCAX, WAVE BJ RiverPark, WAVE BH TCW, WAVE BG "
+        "DWS Dec 31, and prior BD–BF books stay on their leftover pages. Sister "
+        "WAVE BQ Pioneer PIODX / PIOTX and Alger leftovers stay unmatched. "
+        "WAVE BR leftover paid history is fixture-only."
     )
     live_limitations = (
-        "Live HTML is public but multi-year accordion tables may not parse. Fixture fallback."
+        "Live HTML is public but multi-year accordion tables may not parse. "
+        "Fixture fallback. Leftover 2021–2024 December YE paid history is fixture-only."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -404,7 +420,14 @@ class GrandeurPeakSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
-            )
+            ),
+            PageSpec(
+                name="leftover_paid_year_end_2021_2024_wave_br",
+                url="https://grandeurpeakglobal.com/distributions/",
+                fixture="leftover_paid_year_end_2021_2024_wave_br.html",
+                live=False,
+                role="history",
+            ),
         ]
 
 
