@@ -81,6 +81,21 @@ class JohnHancockSource(HtmlTableSource):
         "2021–2024 official CG dashes and JIJAX 2025 / 2024 official "
         "dashes stay unmatched — not 5y. JVLAX Funds III FYE March 31 "
         "and JBGAX Funds II FYE August 31 stay unmatched — "
+        "calendar-unsafe. Official 5y WAVE CQ leftover (2026-09-17): "
+        "John Hancock Capital Series FYE October 31 2025 N-CSR "
+        "(accession 0001193125-25-327164) Financial Highlights unlock "
+        "leftover Class A PZFVX Classic Value 2021–2025 on the "
+        "estimate-only in-book identity. Calendar-safe as_of 10/31. "
+        "Class-level A — never sibling-copied onto JCVCX / JCVIX / "
+        "JCVVX / JCVWX / JCVSX. Issuer dashes omitted — never invent "
+        "$0 (PZFVX 2022 / 2021 CG). Estimate press-release PDFs stay "
+        "estimates. Does not redo WAVE CO JHJAX, WAVE CN FIDAX / "
+        "FRBAX, WAVE CL SVBAX / JDIBX / JEMQX / JDJAX, WAVE CM JEEBX, "
+        "or WAVE CK TAGRX / JCCAX. USGLX 2024 / 2023 official CG "
+        "dashes stay unmatched — not 5y. JABZX 2021 commencement / "
+        "2021–2024 official dashes and JIJAX 2025 / 2024 official "
+        "dashes stay unmatched — not 5y. JVLAX Funds III FYE March 31 "
+        "and JBGAX Funds II FYE August 31 stay unmatched — "
         "calendar-unsafe."
     )
     live_limitations = (
@@ -169,6 +184,16 @@ class JohnHancockSource(HtmlTableSource):
                     "000119312525327166/8de3f25f2c247e5.htm#jhjax"
                 ),
                 fixture="leftover_ncsr_jhjax_2021_2025_wave_co.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="leftover_ncsr_pzfvx_2021_2025_wave_cq",
+                url=(
+                    "https://www.sec.gov/Archives/edgar/data/45291/"
+                    "000119312525327164/8de3f34f2561fa1.htm#pzfvx"
+                ),
+                fixture="leftover_ncsr_pzfvx_2021_2025_wave_cq.html",
                 live=False,
                 role="history",
             ),
