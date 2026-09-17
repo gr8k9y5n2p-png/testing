@@ -818,8 +818,20 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # walls. Janus / Principal / Nationwide / Thrivent / EV leftover years
     # stay unmatched. Honest pin remasured after additive rebase onto #206
     # tip 56c52345: 3783 → 3814 (+31 MF; ETF 5y unchanged at 758).
-    assert digest.funds_with_5y == 3814
-    assert digest.funds_with_5y_mf == 3056
+    # WAVE AL leftover (existing in-book only): T. Rowe leftover Advisor / R /
+    # Institutional 2024 N-CSR Financial Highlights unlock +36 MF already on
+    # WAVE Z 2021–2023+2025 books (PABGX / RRBGX / PACLX / PAFDX / PMEGX /
+    # IEMFX and Dec 31 / Oct 31 leftover siblings). FAI 2024 all-class
+    # XLSX/PDF still unpublished; iinvestor 2024 is Investor/I only.
+    # RRCOX 2024 N-CSR dashed. Retirement / Target May 31 FYE not
+    # calendar-safe. Fidelity retail DPL6 2022–2023 still HPDY SPA.
+    # JPM Trust I leftover Class A XBRL-nested; PGSGX 2024 dashed; JEPQ
+    # 2021 commencement. GS GLCGX / GCGIX already 5y — no leftover
+    # identities. No overlap with AF–AK. Honest pin remasured after
+    # additive rebase onto #208 tip e8887ce9: 3814 → 3850 (+36 MF;
+    # ETF 5y unchanged at 758).
+    assert digest.funds_with_5y == 3850
+    assert digest.funds_with_5y_mf == 3092
     assert digest.funds_with_5y_etf == 758
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
@@ -8161,10 +8173,9 @@ def test_mass_z_t_rowe_leftover_advisor_is_year_depth() -> None:
     assert trbcx_2025.amount == Decimal("10.9575")
     pabgx_years = _lookback_years(records, "PABGX")
     assert {2021, 2022, 2023, 2025} <= pabgx_years
-    assert 2024 not in pabgx_years
     rrbgx_years = _lookback_years(records, "RRBGX")
     assert {2021, 2022, 2023, 2025} <= rrbgx_years
-    assert 2024 not in rrbgx_years
+    # WAVE AL fills official 2024 N-CSR leftover years (PABGX CG $16.42).
 
 
 def test_mass_z_columbia_institutional_leftover_completes_5y() -> None:
@@ -10594,3 +10605,211 @@ def test_wave_ak_heroes_are_searchable(client: TestClient) -> None:
         and row.get("publication_stage") == "final"
     ]
     assert acihx_2021 == []
+
+
+WAVE_AL_TROWE_LEFTOVER_2024 = (
+    "PABGX",
+    "RRBGX",
+    "PACLX",
+    "PACOX",
+    "PAFDX",
+    "RRFDX",
+    "PAGEX",
+    "PAMCX",
+    "RRMGX",
+    "PAREX",
+    "PASSX",
+    "PASVX",
+    "PAULX",
+    "PAVLX",
+    "PAWAX",
+    "TADGX",
+    "TAMVX",
+    "RRMVX",
+    "TQAAX",
+    "TQSAX",
+    "TQVAX",
+    "TRSAX",
+    "RRGSX",
+    "PMEGX",
+    "TPLGX",
+    "TRSSX",
+    "PAAOX",
+    "PAFGX",
+    "PAGLX",
+    "PAIGX",
+    "RRIGX",
+    "PAIJX",
+    "PAITX",
+    "RRITX",
+    "PRNCX",
+    "IEMFX",
+)
+
+
+def test_wave_al_t_rowe_leftover_ncsr_fills_5y() -> None:
+    records = TRowePriceSource().fetch(mode="fixture").records
+    pabgx_2024_cg = next(
+        row
+        for row in records
+        if row.ticker == "PABGX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2024-12-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert pabgx_2024_cg.amount == Decimal("16.42")
+    rrbgx_2024_cg = next(
+        row
+        for row in records
+        if row.ticker == "RRBGX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2024-12-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert rrbgx_2024_cg.amount == Decimal("16.15")
+    paclx_2024_oi = next(
+        row
+        for row in records
+        if row.ticker == "PACLX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2024-12-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert paclx_2024_oi.amount == Decimal("0.71")
+    paclx_2024_cg = next(
+        row
+        for row in records
+        if row.ticker == "PACLX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2024-12-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert paclx_2024_cg.amount == Decimal("2.79")
+    pafdx_2024_oi = next(
+        row
+        for row in records
+        if row.ticker == "PAFDX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2024-12-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert pafdx_2024_oi.amount == Decimal("0.63")
+    pmegx_2024_cg = next(
+        row
+        for row in records
+        if row.ticker == "PMEGX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2024-12-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert pmegx_2024_cg.amount == Decimal("8.52")
+    iemfx_2024_oi = next(
+        row
+        for row in records
+        if row.ticker == "IEMFX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2024-10-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert iemfx_2024_oi.amount == Decimal("0.60")
+    # Class-level — never copied from Investor TRBCX 2024 YE LT $16.1515
+    # or N-CSR Investor $16.91.
+    trbcx_2024_ncsr = [
+        row.amount
+        for row in records
+        if row.ticker == "TRBCX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2024-12-31"
+        and row.amount is not None
+    ]
+    assert trbcx_2024_ncsr == []
+    assert pabgx_2024_cg.amount != Decimal("16.91")
+    assert pabgx_2024_cg.amount != Decimal("16.1515")
+    for ticker in WAVE_AL_TROWE_LEFTOVER_2024:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(records, ticker), ticker
+
+
+def test_wave_al_leftover_walls_stay_unmatched() -> None:
+    trowe = TRowePriceSource().fetch(mode="fixture").records
+    assert 2024 not in _paid_lookback_years(trowe, "RRCOX")
+    assert {2021, 2022, 2023, 2025} <= _paid_lookback_years(trowe, "RRCOX")
+    # Retirement leftovers stay 4y — May 31 FYE not calendar-safe and the
+    # FAI 2024 Year-End all-class XLSX/PDF still unpublished.
+    assert 2024 not in _paid_lookback_years(trowe, "PARIX")
+    assert {2021, 2022, 2023, 2025} <= _paid_lookback_years(trowe, "PARIX")
+
+    fidelity = FidelitySource().fetch(mode="fixture").records
+    fbgrx_years = _paid_lookback_years(fidelity, "FBGRX")
+    assert 2022 not in fbgrx_years
+    assert 2023 not in fbgrx_years
+
+    jpm = JPMorganSource().fetch(mode="fixture").records
+    assert 2024 not in _paid_lookback_years(jpm, "PGSGX")
+    assert 2021 not in _paid_lookback_years(jpm, "JEPQ")
+    for ticker in ("JSEAX", "IUAEX", "JFAMX"):
+        assert 2021 not in _paid_lookback_years(jpm, ticker), ticker
+
+    gs = GoldmanSachsSource().fetch(mode="fixture").records
+    for ticker in ("GLCGX", "GCGIX"):
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(gs, ticker), ticker
+
+
+def test_wave_al_heroes_are_searchable(client: TestClient) -> None:
+    fetched = client.post(
+        "/ingest/fetch", json={"fund_family": "t_rowe_price", "mode": "fixture"}
+    )
+    assert fetched.status_code == 200, fetched.text
+    assert fetched.json()["created"] > 0
+
+    for ticker in ("PABGX", "RRBGX", "PACLX", "PAFDX", "PMEGX", "IEMFX", "RRCOX", "PARIX"):
+        body = client.get("/funds", params={"q": ticker}).json()
+        tickers = [item["ticker"] for item in body["items"]]
+        assert ticker in tickers, f"{ticker} missing from GET /funds?q={ticker}: {tickers[:8]}"
+
+    pabgx = client.get(
+        "/distributions",
+        params={"ticker": "PABGX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    pabgx_2024 = [
+        Decimal(row["amount"])
+        for row in pabgx["items"]
+        if row.get("ticker") == "PABGX"
+        and row.get("estimate_type") == "total_capital_gains"
+        and str(row.get("as_of") or "").startswith("2024-12-31")
+    ]
+    assert Decimal("16.42") in pabgx_2024
+    pabgx_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in pabgx["items"]
+        if row.get("ticker") == "PABGX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= pabgx_years
+
+    rrcox = client.get(
+        "/distributions",
+        params={"ticker": "RRCOX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    rrcox_2024 = [
+        row
+        for row in rrcox["items"]
+        if row.get("ticker") == "RRCOX"
+        and str(row.get("as_of") or row.get("ex_date") or "").startswith("2024")
+        and row.get("amount") is not None
+        and row.get("publication_stage") == "final"
+    ]
+    assert rrcox_2024 == []

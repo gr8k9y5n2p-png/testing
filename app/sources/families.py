@@ -473,6 +473,10 @@ class FidelitySource(HtmlTableSource):
         "Official 5y WAVE AG leftover does not redo Advisor DPL2 / FTRIX N-CSR "
         "from WAVE X. Remaining retail leftovers still miss 2022–2023 DPL6 "
         "(HPDY SPA); July-31 / March-31 highlights stay not calendar-safe. "
+        "Official 5y WAVE AL leftover re-probe (2026-09-17): retail DPL6 "
+        "2022–2023 still unpublished in CDX (HPDY SPA). Puritan Aug 31 / "
+        "Magellan Mar 31 / Securities Fund July 31 N-CSR highlights are not "
+        "calendar-safe. Advisor DPL2 / FTRIX from WAVE X not redone. "
         "Hub: https://www.fidelity.com/mutual-funds/information/overview. "
         "Wave 10 share-class densify: Fidelity Advisor Funds are a separate "
         "official DPL (not on retail FIIS_SP52/SP10_DPL6). Full A/C/M/I/Z "
@@ -737,7 +741,12 @@ class JPMorganSource(HtmlTableSource):
         "omitted, not stored as $0. Existing 2024 Section 19a leftovers keep "
         "that book. UBVAX is a different trust — unmatched. PGSGX 2024 both "
         "columns dashed — 2024 unmatched. JEPQ 2021 remains a commencement "
-        "wall. No sibling copy."
+        "wall. No sibling copy. "
+        "Official 5y WAVE AL leftover re-probe (2026-09-17): Trust II leftovers "
+        "already 5y from WAVE X. Trust I leftover Class A (JSEAX / IUAEX / "
+        "JFAMX) 2021–2024 N-CSR Financial Highlights are XBRL-nested and not "
+        "column-safe this session — unmatched, not invented. PGSGX 2024 still "
+        "dashed. JEPQ 2021 remains commencement. UBVAX already has 2024–2025."
     )
     live_limitations = (
         "No scrapeable HTML grid; 19a books are PDF. Fixture / partner ingest only. "
@@ -804,7 +813,10 @@ class GoldmanSachsSource(HtmlTableSource):
         "net realized gain is unsplit total capital gains. Printed dashes "
         "omitted. 2025 calendar YE stays on the existing year-end sample "
         "(GLCGX / GCGIX LT $2.74 ex 2025-12-11). Class-level only — no sibling "
-        "copy. Third-party history unused."
+        "copy. Third-party history unused. "
+        "Official 5y WAVE AL leftover re-probe (2026-09-17): GLCGX / GCGIX "
+        "already 5y from WAVE X. No other in-book leftover identities on the "
+        "public tax-center / N-CSR books."
     )
     live_limitations = (
         "Advisor tax center is login/403-walled (including historical packs). "
@@ -1119,11 +1131,26 @@ class TRowePriceSource(HtmlTableSource):
         "Institutional years (PABGX 2023 LT $5.2095 / 2025 ST $0.0748 / LT "
         "$10.9575; RRBGX same LT). Class-level — never copied from Investor "
         "TRBCX. Advisor/R 2024 all-class PDF/XLSX still unpublished — those "
-        "leftovers stay 4y (2021–2023+2025), not 5y."
+        "leftovers stay 4y (2021–2023+2025), not 5y. "
+        "Official 5y WAVE AL leftover (2026-09-17, in-book Advisor / R / "
+        "Institutional only): class-level N-CSR Financial Highlights fill the "
+        "2024 wall WAVE Z left open. December 31 FYE leftovers use as_of "
+        "12/31/2024 (PABGX CG $16.42 / RRBGX $16.15 — not Investor TRBCX "
+        "$16.91; PACLX OI $0.71 / CG $2.79; PAFDX OI $0.63 / CG $2.35; "
+        "PMEGX OI $0.03 / CG $8.52). October 31 FYE international / allocation "
+        "/ IEMFX leftovers use as_of 10/31/2024 (calendar-safe, same rule as "
+        "ACI / GS Oct 31; IEMFX OI $0.60; PAIGX $0.42). Income is ordinary "
+        "income; net realized gain is unsplit total capital gains. Printed "
+        "dashes omitted. WAVE Z 2023+2025 Advisor/R leftover page is not "
+        "re-emitted. Walls: RRCOX 2024 N-CSR dashed; Retirement / Target "
+        "trusts FYE May 31 (not calendar-safe) and the FAI 2024 Year-End "
+        "all-class XLSX/PDF still has no download path. iinvestor 2024 PDF "
+        "is Investor / I only."
     )
     live_limitations = (
         "Live year-end HTML is supported for 2023–2025. "
-        "2021–2022 YE and 2022 prelim are PDF transcriptions (live=False)."
+        "2021–2022 YE and 2022 prelim are PDF transcriptions (live=False). "
+        "WAVE AL leftover Advisor / R / Institutional 2024 N-CSR is fixture-only."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -1218,6 +1245,14 @@ class TRowePriceSource(HtmlTableSource):
                 name="leftover_advisor_r_institutional_paid_year_end",
                 url=f"{tax_pdf}/T. Rowe Price 2023 Year-End Tax Distributions.pdf",
                 fixture="leftover_advisor_r_institutional_paid_year_end.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
+            ),
+            PageSpec(
+                name="leftover_ncsr_advisor_r_inst_wave_al",
+                url="https://www.sec.gov/Archives/edgar/data/902259/000119312525031529/d927665dncsr.htm",
+                fixture="leftover_ncsr_advisor_r_inst_wave_al.html",
                 live=False,
                 role="history",
                 large_aum_only=False,

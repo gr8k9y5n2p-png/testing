@@ -289,5 +289,8 @@ def test_fixture_book_lookback_stays_official_only() -> None:
     # WAVE AK leftover: American Century Mutual Funds, Inc. leftover sibling
     # N-CSR +31 MF. Honest pin remasured after additive rebase onto #206 tip
     # 56c52345: 3783 → 3814 (+31 MF; ETF 5y unchanged at 758).
-    assert digest.funds_with_5y == 3814
+    # WAVE AL leftover: T. Rowe leftover Advisor / R / Institutional 2024
+    # N-CSR +36 MF. Honest pin remasured after additive rebase onto #208 tip
+    # e8887ce9: 3814 → 3850 (+36 MF; ETF 5y unchanged at 758).
+    assert digest.funds_with_5y == 3850
     assert digest.book_funds >= 7200
