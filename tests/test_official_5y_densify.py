@@ -1278,6 +1278,7 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # American Beacon Garcia Hamilton Quality Bond Oct 31 N-CSR.
     # 4218 → 4220 (+2 MF; ETF 5y unchanged at 758) on WAVE BQ leftover
     # Pioneer Fund / Pioneer Core Equity Dec 31 N-CSR.
+
     # WAVE BR leftover (existing in-book only): Grandeur Peak December YE
     # tax-center 2021–2024 unlock leftover GPEIX / GPGCX / GPROX already on
     # the 2025 paid book. Calendar-safe December dates — not N-CSR FYE April
@@ -1292,8 +1293,10 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # CAISX 2021 inception, and GuideStone index 2021 remasured as walls.
     # Honest pin remasured on WAVE BQ tip 1e338d6: 4220 → 4223 (+3 MF;
     # ETF 5y unchanged at 758).
-    assert digest.funds_with_5y == 4223
-    assert digest.funds_with_5y_mf == 3465
+    # 4223 → 4224 (+1 MF; ETF 5y unchanged at 758) on WAVE BS leftover
+    # Pioneer Equity Income Oct 31 N-CSR.
+    assert digest.funds_with_5y == 4224
+    assert digest.funds_with_5y_mf == 3466
     assert digest.funds_with_5y_etf == 758
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
@@ -20744,6 +20747,7 @@ def test_wave_bp_heroes_are_searchable(client: TestClient) -> None:
 
 
 
+
 WAVE_BQ_PIONEER_LEFTOVER_5Y = ("PIODX", "PIOTX")
 WAVE_BQ_SIBLING_WALLS = (
     "PCODX",
@@ -20758,7 +20762,7 @@ WAVE_BQ_SIBLING_WALLS = (
 WAVE_BQ_NCSR_ACCESSION = "000119312524058913"
 WAVE_BQ_ALGER_RESERVED = WAVE_BH_ALGER_RESERVED
 WAVE_BQ_MARCH31_WALLS = ("PIGFX",)
-WAVE_BQ_OTHER_CLASS_A_WALLS = ("PEQIX", "CVFCX", "GLOSX", "PCGRX", "PIIFX")
+WAVE_BQ_OTHER_CLASS_A_WALLS = ("CVFCX", "GLOSX", "PCGRX", "PIIFX")
 
 
 def test_wave_bq_pioneer_leftover_dec31_fills_5y() -> None:
@@ -21605,3 +21609,444 @@ def test_wave_br_heroes_are_searchable(client: TestClient) -> None:
         if row.get("ticker") == "CCGIX" and row.get("amount") is not None
     }
     assert {"2021", "2022", "2023", "2024", "2025"} <= ccgix_years
+
+
+WAVE_BS_PIONEER_LEFTOVER_5Y = ("PEQIX",)
+WAVE_BS_SIBLING_WALLS = ("PCEQX", "PYEQX", "PEQKX", "PQIRX")
+WAVE_BS_NCSR_ACCESSION = "000119312524001420"
+WAVE_BS_ALGER_RESERVED = WAVE_BH_ALGER_RESERVED
+WAVE_BS_MARCH31_WALLS = ("PIGFX",)
+WAVE_BS_OTHER_CLASS_A_WALLS = ("CVFCX", "GLOSX", "PCGRX", "PIIFX")
+WAVE_BS_BR_DISJOINT = ("GPEIX", "GPGCX", "GPROX")
+
+
+def test_wave_bs_pioneer_leftover_oct31_fills_5y() -> None:
+    records = AmundiSource().fetch(mode="fixture").records
+    peqix_2022_oi = next(
+        row
+        for row in records
+        if row.ticker == "PEQIX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2022-10-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert peqix_2022_oi.amount == Decimal("0.59")
+    peqix_2022_cg = next(
+        row
+        for row in records
+        if row.ticker == "PEQIX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2022-10-31"
+        and row.amount is not None
+    )
+    assert peqix_2022_cg.amount == Decimal("3.26")
+    peqix_2021_oi = next(
+        row
+        for row in records
+        if row.ticker == "PEQIX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2021-10-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert peqix_2021_oi.amount == Decimal("0.51")
+    # Official 2021 CG dash — never invent $0.
+    peqix_2021_cg = [
+        row
+        for row in records
+        if row.ticker == "PEQIX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2021-10-31"
+        and row.source_url
+        and WAVE_BS_NCSR_ACCESSION in row.source_url
+    ]
+    assert peqix_2021_cg == []
+    ncsr_siblings = [
+        row
+        for row in records
+        if row.ticker in WAVE_BS_SIBLING_WALLS
+        and row.source_url
+        and WAVE_BS_NCSR_ACCESSION in row.source_url
+    ]
+    assert ncsr_siblings == []
+    ncsr_reserved = [
+        row
+        for row in records
+        if row.ticker
+        in WAVE_BQ_PIONEER_LEFTOVER_5Y
+        + WAVE_BP_BEACON_LEFTOVER_5Y
+        + WAVE_BO_DWS_LEFTOVER_5Y
+        + WAVE_BN_DWS_LEFTOVER_5Y
+        + WAVE_BM_BAIRD_LEFTOVER_5Y
+        + WAVE_BL_THRIVENT_LEFTOVER_5Y
+        + WAVE_BK_DWS_LEFTOVER_5Y
+        + WAVE_BI_DWS_LEFTOVER_5Y
+        + WAVE_BJ_RIVERPARK_LEFTOVER_5Y
+        + WAVE_BG_DWS_LEFTOVER_5Y
+        + WAVE_BH_TCW_LEFTOVER_5Y
+        + WAVE_BS_BR_DISJOINT
+        and row.source_url
+        and WAVE_BS_NCSR_ACCESSION in row.source_url
+    ]
+    assert ncsr_reserved == []
+    ncsr_late = [
+        row
+        for row in records
+        if row.ticker in WAVE_BS_PIONEER_LEFTOVER_5Y
+        and row.as_of
+        and row.as_of.year in {2023, 2024, 2025}
+        and row.source_url
+        and WAVE_BS_NCSR_ACCESSION in row.source_url
+    ]
+    assert ncsr_late == []
+    peqix_2025 = next(
+        row
+        for row in records
+        if row.ticker == "PEQIX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.as_of
+        and row.as_of.year == 2025
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+        and row.amount > 0
+    )
+    assert peqix_2025.amount == Decimal("1.6997")
+    for ticker in WAVE_BS_PIONEER_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(records, ticker), ticker
+    # Keep sister WAVE BQ Pioneer Dec 31 leftovers 5y on tip.
+    for ticker in WAVE_BQ_PIONEER_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(records, ticker), ticker
+    beacon = AmericanBeaconSource().fetch(mode="fixture").records
+    for ticker in WAVE_BP_BEACON_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(beacon, ticker), ticker
+    dws = DwsSource().fetch(mode="fixture").records
+    for ticker in WAVE_BO_DWS_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(dws, ticker), ticker
+    for ticker in (
+        WAVE_BN_DWS_LEFTOVER_5Y
+        + WAVE_BK_DWS_LEFTOVER_5Y
+        + WAVE_BI_DWS_LEFTOVER_5Y
+        + WAVE_BG_DWS_LEFTOVER_5Y
+    ):
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(dws, ticker), ticker
+    baird = BairdSource().fetch(mode="fixture").records
+    for ticker in WAVE_BM_BAIRD_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(baird, ticker), ticker
+    thrivent = ThriventSource().fetch(mode="fixture").records
+    for ticker in WAVE_BL_THRIVENT_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(thrivent, ticker), ticker
+    riverpark = RiverparkSource().fetch(mode="fixture").records
+    for ticker in WAVE_BJ_RIVERPARK_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(riverpark, ticker), ticker
+
+
+def test_wave_bs_leftover_walls_stay_unmatched() -> None:
+    pioneer = AmundiSource().fetch(mode="fixture").records
+    ncsr_siblings = [
+        row
+        for row in pioneer
+        if row.ticker in WAVE_BS_SIBLING_WALLS
+        and row.source_url
+        and WAVE_BS_NCSR_ACCESSION in row.source_url
+    ]
+    assert ncsr_siblings == []
+    ncsr_tickers = {
+        row.ticker
+        for row in pioneer
+        if row.source_url and WAVE_BS_NCSR_ACCESSION in row.source_url
+    }
+    assert ncsr_tickers == set(WAVE_BS_PIONEER_LEFTOVER_5Y)
+    assert 2021 not in _paid_lookback_years(pioneer, "PIGFX")
+    for ticker in WAVE_BS_OTHER_CLASS_A_WALLS:
+        assert 2021 not in _paid_lookback_years(pioneer, ticker), ticker
+        assert {2023, 2024, 2025} <= _paid_lookback_years(pioneer, ticker), ticker
+    # WAVE BQ Dec 31 accession still does not emit PEQIX.
+    bq_peqix = [
+        row
+        for row in pioneer
+        if row.ticker == "PEQIX"
+        and row.source_url
+        and WAVE_BQ_NCSR_ACCESSION in row.source_url
+    ]
+    assert bq_peqix == []
+    # Keep sister WAVE BQ Pioneer leftovers 5y on tip.
+    for ticker in WAVE_BQ_PIONEER_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(pioneer, ticker), ticker
+    beacon = AmericanBeaconSource().fetch(mode="fixture").records
+    for ticker in WAVE_BP_BEACON_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(beacon, ticker), ticker
+    dws = DwsSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(dws, "KTRAX")
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(dws, "KGDAX")
+    baird = BairdSource().fetch(mode="fixture").records
+    for ticker in WAVE_BM_BAIRD_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(baird, ticker), ticker
+    thrivent = ThriventSource().fetch(mode="fixture").records
+    for ticker in WAVE_BL_THRIVENT_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(thrivent, ticker), ticker
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(dws, "TOLLX")
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(dws, "KTCAX")
+    riverpark = RiverparkSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(riverpark, "RWGIX")
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(riverpark, "RWGFX")
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(dws, "BTIEX")
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(dws, "SXPAX")
+    tcw = TcwSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(tcw, "TGDIX")
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(tcw, "TGVOX")
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(tcw, "TGCEX")
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(tcw, "TGPCX")
+    baillie = BaillieGiffordSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(baillie, "BGAKX")
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(baillie, "BINSX")
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(baillie, "BGESX")
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(baillie, "BSGPX")
+    driehaus = DriehausSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(driehaus, "DMCRX")
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(driehaus, "DVSMX")
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(driehaus, "DNSMX")
+    locorr = LocorrSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(locorr, "LFMIX")
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(locorr, "LCSIX")
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(locorr, "LOTIX")
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(locorr, "LEQIX")
+
+    pioneer_bs = {
+        row.ticker
+        for row in pioneer
+        if row.source_url and WAVE_BS_NCSR_ACCESSION in row.source_url
+    }
+    pioneer_bq = {
+        row.ticker
+        for row in pioneer
+        if row.source_url and WAVE_BQ_NCSR_ACCESSION in row.source_url
+    }
+    beacon_bp = {
+        row.ticker for row in beacon if row.source_url and WAVE_BP_NCSR_ACCESSION in row.source_url
+    }
+    dws_bo = {row.ticker for row in dws if row.source_url and WAVE_BO_NCSR_ACCESSION in row.source_url}
+    dws_bn = {row.ticker for row in dws if row.source_url and WAVE_BN_NCSR_ACCESSION in row.source_url}
+    baird_tickers = {row.ticker for row in baird if row.ticker}
+    thrivent_tickers = {row.ticker for row in thrivent if row.ticker}
+    baillie_tickers = {row.ticker for row in baillie if row.ticker}
+    driehaus_tickers = {row.ticker for row in driehaus if row.ticker}
+    locorr_tickers = {row.ticker for row in locorr if row.ticker}
+    tcw_tickers = {row.ticker for row in tcw if row.ticker}
+    riverpark_tickers = {row.ticker for row in riverpark if row.ticker}
+    alger = AlgerSource().fetch(mode="fixture").records
+    alger_tickers = {row.ticker for row in alger if row.ticker}
+    grandeur = GrandeurPeakSource().fetch(mode="fixture").records
+    grandeur_tickers = {row.ticker for row in grandeur if row.ticker}
+    assert pioneer_bs == set(WAVE_BS_PIONEER_LEFTOVER_5Y)
+    assert pioneer_bq == set(WAVE_BQ_PIONEER_LEFTOVER_5Y)
+    assert not pioneer_bs & pioneer_bq
+    assert not pioneer_bs & beacon_bp
+    assert not pioneer_bs & set(WAVE_BP_BEACON_LEFTOVER_5Y)
+    assert not pioneer_bs & dws_bo
+    assert not pioneer_bs & dws_bn
+    assert not pioneer_bs & set(WAVE_BO_DWS_LEFTOVER_5Y)
+    assert not pioneer_bs & set(WAVE_BN_DWS_LEFTOVER_5Y)
+    assert not pioneer_bs & set(WAVE_BM_BAIRD_LEFTOVER_5Y)
+    assert not pioneer_bs & set(WAVE_BL_THRIVENT_LEFTOVER_5Y)
+    assert not pioneer_bs & set(WAVE_BK_DWS_LEFTOVER_5Y)
+    assert not pioneer_bs & set(WAVE_BI_DWS_LEFTOVER_5Y)
+    assert not pioneer_bs & set(WAVE_BJ_RIVERPARK_LEFTOVER_5Y)
+    assert not pioneer_bs & set(WAVE_BG_DWS_LEFTOVER_5Y)
+    assert not pioneer_bs & set(WAVE_BH_TCW_LEFTOVER_5Y)
+    assert not pioneer_bs & set(WAVE_BF_BAILLIE_LEFTOVER_5Y)
+    assert not pioneer_bs & set(WAVE_BF_DRIEHAUS_DISJOINT)
+    assert not pioneer_bs & set(WAVE_BF_LOCORR_DISJOINT)
+    assert not pioneer_bs & set(WAVE_BS_ALGER_RESERVED)
+    assert not pioneer_bs & set(WAVE_BS_BR_DISJOINT)
+    assert not pioneer_bs & baird_tickers
+    assert not pioneer_bs & thrivent_tickers
+    assert not pioneer_bs & baillie_tickers
+    assert not pioneer_bs & driehaus_tickers
+    assert not pioneer_bs & locorr_tickers
+    assert not pioneer_bs & tcw_tickers
+    assert not pioneer_bs & riverpark_tickers
+    assert not pioneer_bs & alger_tickers
+    assert not pioneer_bs & grandeur_tickers
+    assert 2021 not in _paid_lookback_years(alger, "CHUSX")
+    assert 2023 not in _paid_lookback_years(alger, "CHUSX")
+    assert 2024 not in _paid_lookback_years(alger, "CHUSX")
+
+    william_blair = WilliamBlairSource().fetch(mode="fixture").records
+    assert 2023 not in _paid_lookback_years(william_blair, "LCGFX")
+    assert 2024 not in _paid_lookback_years(william_blair, "WESNX")
+    allspring = AllspringSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(allspring, "WDSAX")
+    first_eagle = FirstEagleSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(first_eagle, "FERAX")
+    calamos = CalamosSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(calamos, "CAISX")
+    guidestone = GuidestoneSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(guidestone, "GEIZX")
+    assert 2023 not in _paid_lookback_years(beacon, "SFMIX")
+    davis = DavisSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(davis, "NYVTX")
+    oberweis = OberweisSource().fetch(mode="fixture").records
+    assert 2023 not in _paid_lookback_years(oberweis, "OBMCX")
+    hodges = HodgesSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(hodges, "HDPMX")
+    # Keep sister WAVE BR Grandeur Peak Dec YE leftovers 5y on tip.
+    for ticker in WAVE_BR_GRANDEUR_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(grandeur, ticker), ticker
+
+
+def test_wave_bs_heroes_are_searchable(client: TestClient) -> None:
+    fetched = client.post(
+        "/ingest/fetch", json={"fund_family": "amundi", "mode": "fixture"}
+    )
+    assert fetched.status_code == 200, fetched.text
+    assert fetched.json()["created"] > 0
+
+    for ticker in WAVE_BS_PIONEER_LEFTOVER_5Y:
+        body = client.get("/funds", params={"q": ticker}).json()
+        tickers = [item["ticker"] for item in body["items"]]
+        assert ticker in tickers, f"{ticker} missing from GET /funds?q={ticker}: {tickers[:8]}"
+
+    peqix = client.get(
+        "/distributions",
+        params={"ticker": "PEQIX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    peqix_2022 = [
+        Decimal(row["amount"])
+        for row in peqix["items"]
+        if row.get("ticker") == "PEQIX"
+        and row.get("estimate_type") == "ordinary_income"
+        and str(row.get("as_of") or "").startswith("2022-10-31")
+    ]
+    assert Decimal("0.59") in peqix_2022
+    peqix_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in peqix["items"]
+        if row.get("ticker") == "PEQIX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= peqix_years
+
+    # Keep sister WAVE BQ Pioneer Dec 31 searchable after the additive leftover.
+    piodx = client.get(
+        "/distributions",
+        params={"ticker": "PIODX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    piodx_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in piodx["items"]
+        if row.get("ticker") == "PIODX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= piodx_years
+
+    # Keep sister WAVE BR Grandeur Peak searchable after the additive leftover.
+    grandeur_fetched = client.post(
+        "/ingest/fetch", json={"fund_family": "grandeur_peak", "mode": "fixture"}
+    )
+    assert grandeur_fetched.status_code == 200, grandeur_fetched.text
+    gpeix = client.get(
+        "/distributions",
+        params={"ticker": "GPEIX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    gpeix_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in gpeix["items"]
+        if row.get("ticker") == "GPEIX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= gpeix_years
+
+    beacon_fetched = client.post(
+        "/ingest/fetch", json={"fund_family": "american_beacon", "mode": "fixture"}
+    )
+    assert beacon_fetched.status_code == 200, beacon_fetched.text
+    ghqix = client.get(
+        "/distributions",
+        params={"ticker": "GHQIX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    ghqix_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in ghqix["items"]
+        if row.get("ticker") == "GHQIX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= ghqix_years
+
+    dws_fetched = client.post(
+        "/ingest/fetch", json={"fund_family": "dws", "mode": "fixture"}
+    )
+    assert dws_fetched.status_code == 200, dws_fetched.text
+    for ticker in ("KTRAX", "KGDAX", "TOLLX", "KTCAX", "BTIEX", "SXPAX"):
+        body = client.get(
+            "/distributions",
+            params={"ticker": ticker, "publication_stage": "final", "page_size": 200},
+        ).json()
+        years = {
+            str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+            for row in body["items"]
+            if row.get("ticker") == ticker and row.get("amount") is not None
+        }
+        assert {"2021", "2022", "2023", "2024", "2025"} <= years, ticker
+
+    baird_fetched = client.post(
+        "/ingest/fetch", json={"fund_family": "baird", "mode": "fixture"}
+    )
+    assert baird_fetched.status_code == 200, baird_fetched.text
+    for ticker in WAVE_BM_BAIRD_LEFTOVER_5Y:
+        body = client.get(
+            "/distributions",
+            params={"ticker": ticker, "publication_stage": "final", "page_size": 200},
+        ).json()
+        years = {
+            str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+            for row in body["items"]
+            if row.get("ticker") == ticker and row.get("amount") is not None
+        }
+        assert {"2021", "2022", "2023", "2024", "2025"} <= years, ticker
+
+    thrivent_fetched = client.post(
+        "/ingest/fetch", json={"fund_family": "thrivent", "mode": "fixture"}
+    )
+    assert thrivent_fetched.status_code == 200, thrivent_fetched.text
+    for ticker in WAVE_BL_THRIVENT_LEFTOVER_5Y:
+        body = client.get(
+            "/distributions",
+            params={"ticker": ticker, "publication_stage": "final", "page_size": 200},
+        ).json()
+        years = {
+            str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+            for row in body["items"]
+            if row.get("ticker") == ticker and row.get("amount") is not None
+        }
+        assert {"2021", "2022", "2023", "2024", "2025"} <= years, ticker
+
+    riverpark_fetched = client.post(
+        "/ingest/fetch", json={"fund_family": "riverpark", "mode": "fixture"}
+    )
+    assert riverpark_fetched.status_code == 200, riverpark_fetched.text
+    rwgix = client.get(
+        "/distributions",
+        params={"ticker": "RWGIX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    rwgix_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in rwgix["items"]
+        if row.get("ticker") == "RWGIX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= rwgix_years
+
+    tcw_fetched = client.post(
+        "/ingest/fetch", json={"fund_family": "tcw", "mode": "fixture"}
+    )
+    assert tcw_fetched.status_code == 200, tcw_fetched.text
+    tgdix = client.get(
+        "/distributions",
+        params={"ticker": "TGDIX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    tgdix_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in tgdix["items"]
+        if row.get("ticker") == "TGDIX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= tgdix_years

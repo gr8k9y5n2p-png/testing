@@ -966,6 +966,70 @@ def test_next_tier_fixtures() -> None:
         for r in amundi_ncsr_bq
     )
 
+    amundi_ncsr_bs = parse_distribution_html(
+        (ROOT / "amundi" / "leftover_ncsr_2021_2022_wave_bs.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url=(
+            "https://www.sec.gov/Archives/edgar/data/869356/"
+            "000119312524001420/d578736dncsr.htm"
+        ),
+        fund_family="Amundi US / Pioneer",
+    )
+    peqix_2022_oi = next(
+        r
+        for r in amundi_ncsr_bs
+        if r.ticker == "PEQIX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.as_of
+        and str(r.as_of) == "2022-10-31"
+    )
+    assert peqix_2022_oi.amount == Decimal("0.59")
+    assert peqix_2022_oi.publication_stage == PublicationStage.final
+    peqix_2022_cg = next(
+        r
+        for r in amundi_ncsr_bs
+        if r.ticker == "PEQIX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and r.as_of
+        and str(r.as_of) == "2022-10-31"
+    )
+    assert peqix_2022_cg.amount == Decimal("3.26")
+    peqix_2021_oi = next(
+        r
+        for r in amundi_ncsr_bs
+        if r.ticker == "PEQIX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.as_of
+        and str(r.as_of) == "2021-10-31"
+    )
+    assert peqix_2021_oi.amount == Decimal("0.51")
+    # 2021 CG is an official dash — never invent $0.
+    assert not any(
+        r.ticker == "PEQIX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and r.as_of
+        and str(r.as_of) == "2021-10-31"
+        for r in amundi_ncsr_bs
+    )
+    assert {r.ticker for r in amundi_ncsr_bs} == {"PEQIX"}
+    assert not any(
+        r.ticker
+        in {
+            "PCEQX",
+            "PYEQX",
+            "PEQKX",
+            "PQIRX",
+            "PIODX",
+            "PIOTX",
+            "PIGFX",
+            "GPEIX",
+            "GHQIX",
+            "KTRAX",
+        }
+        for r in amundi_ncsr_bs
+    )
+
     ft_2024 = parse_distribution_html(
         (ROOT / "franklin_templeton" / "2024_section_19a.html").read_text(encoding="utf-8"),
         source_url="fixture://ft-2024",
