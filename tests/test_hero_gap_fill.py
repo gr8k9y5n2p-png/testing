@@ -318,5 +318,8 @@ def test_fixture_book_lookback_stays_official_only() -> None:
     # WAVE AT leftover: AMG leftover Frontier 2022 + GW&K SMID Growth
     # 2023 Oct 31 N-CSR +5 MF. Honest pin remasured on WAVE AQ tip
     # 4a585a8: 4087 → 4092 (+5 MF; ETF 5y unchanged at 758).
-    assert digest.funds_with_5y == 4092
+    # WAVE AU leftover: LSV leftover Institutional / Investor Oct 31
+    # 2021–2023 N-CSR +14 MF. Honest pin remasured on WAVE AT tip
+    # c0b49ce: 4092 → 4106 (+14 MF; ETF 5y unchanged at 758).
+    assert digest.funds_with_5y == 4106
     assert digest.book_funds >= 7200
