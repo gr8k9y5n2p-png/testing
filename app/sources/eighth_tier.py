@@ -301,10 +301,20 @@ class ThirdAvenueSource(HtmlTableSource):
         "Record 12/09/2025; ex/reinvest 12/10/2025; pay 12/11/2025. "
         "Official 5y parallel U leftover: issuer 2022 / 2024 paid pages plus "
         "Wayback 2023 fill leftover Institutional years (TAVFX / TASCX / TAREX). "
-        "Investor / Z not in-book leftovers. 2021 live sibling 404."
+        "Investor / Z not in-book leftovers. 2021 live sibling 404. "
+        "Official 5y WAVE AV leftover (existing in-book only): Third Avenue "
+        "Trust FYE October 31 2021 N-CSR Financial Highlights unlock leftover "
+        "2021 on the 2022–2025 Institutional paid book (TAVFX / TASCX / TAREX). "
+        "Calendar-safe as_of 10/31. Class-level Institutional — never "
+        "sibling-copied onto Investor / Z. 2021 N-CSR "
+        "https://www.sec.gov/Archives/edgar/data/1031661/000119312522001631/d245346dncsr.htm "
+        "(TAVFX OI $0.30 / CG dash; TASCX OI dash / CG $0.26; TAREX OI $0.23 / "
+        "CG dash). Issuer dashes omitted. WAVE AV leftover N-CSR paid history "
+        "is fixture-only."
     )
     live_limitations = (
-        "Live HTML is public but page layout may not parse. Fixture fallback."
+        "Live HTML is public but page layout may not parse. Fixture fallback. "
+        "2021 paid siblings 404. Leftover 2021 N-CSR paid history is fixture-only."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -321,6 +331,13 @@ class ThirdAvenueSource(HtmlTableSource):
                 name="leftover_paid_year_end_parallel_u",
                 url="https://www.thirdave.com/2024-income-capital-gain-distributions",
                 fixture="leftover_paid_year_end_parallel_u.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="leftover_ncsr_2021_wave_av",
+                url="https://www.sec.gov/Archives/edgar/data/1031661/000119312522001631/d245346dncsr.htm",
+                fixture="leftover_ncsr_2021_wave_av.html",
                 live=False,
                 role="history",
             ),
