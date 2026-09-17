@@ -4,6 +4,18 @@
  */
 
 import { looksLikeExactTicker } from "./request-ticker.ts";
+import {
+  FUNDS_SEARCH_CACHE_TTL_MS,
+  createInflightCache,
+} from "./inflight-cache.ts";
+
+const fundsSearchCache = createInflightCache<FundsApiClientResult<unknown>>(
+  FUNDS_SEARCH_CACHE_TTL_MS,
+);
+
+export function resetFundsSearchCache(): void {
+  fundsSearchCache.clear();
+}
 
 export type FundsApiClientResult<T = unknown> = {
   items: T[];
@@ -127,7 +139,19 @@ export async function fetchFundsSearch<T = unknown>(
 ): Promise<FundsApiClientResult<T>> {
   const q = query.trim();
   if (!q) return { items: [], unavailable: false };
-  const params = fundsSearchParams(q, limit, options);
+  const navOnly = options?.navOnly !== false;
+  const key = `${q.toUpperCase()}\0${limit}\0${navOnly ? "1" : "0"}`;
+  return fundsSearchCache.remember(key, () =>
+    fetchFundsSearchUncached<T>(q, limit, options),
+  ) as Promise<FundsApiClientResult<T>>;
+}
+
+async function fetchFundsSearchUncached<T>(
+  query: string,
+  limit: number,
+  options?: { navOnly?: boolean },
+): Promise<FundsApiClientResult<T>> {
+  const params = fundsSearchParams(query, limit, options);
   try {
     const response = await fetch(`${FUNDS_SEARCH_PATH}?${params.toString()}`, {
       cache: "no-store",
@@ -135,7 +159,7 @@ export async function fetchFundsSearch<T = unknown>(
     const body = await response.json().catch(() => null);
     const page = parseFundsApiResponse<T>(response.ok, body);
     if (page.unavailable) return page;
-    if (!fundsSearchNotInUniverse(page.items, q)) return page;
+    if (!fundsSearchNotInUniverse(page.items, query)) return page;
     return { items: page.items, unavailable: false, notInUniverse: true };
   } catch {
     return { items: [], unavailable: true };

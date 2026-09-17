@@ -8,6 +8,7 @@ import {
   COMPARE_DEFAULT_COMBINE_STATE,
   COMPARE_DEFAULT_HOLDING_DOLLARS,
   COMPARE_DEFAULT_TAX_RATES,
+  COMPARE_FETCH_DEBOUNCE_MS,
   COMPARE_SLOT_COUNT,
   compareTickersPath,
   compareInputsMatch,
@@ -15,6 +16,8 @@ import {
   emptyCompareSlots,
   filledCompareTickers,
   growthFundsFromSlots,
+  keepFreshCompareRows,
+  mergeCompareLoadedRows,
   padCompareSlots,
   parseCompareHoldingDollars,
   parseCompareQueryTickers,
@@ -675,5 +678,31 @@ describe("Compare workspace Upcoming + NAV soft path", () => {
     assert.match(workspace, /GrowthAndTaxDragModule/);
     assert.match(workspace, /UpcomingTable/);
     assert.doesNotMatch(barrel, /CompareDeltaStrip/);
+  });
+});
+
+describe("compare progressive loaded rows", () => {
+  it("keeps a short confirm debounce and merges tickers in slot order", () => {
+    assert.ok(COMPARE_FETCH_DEBOUNCE_MS <= 80);
+    const first = keepFreshCompareRows(
+      [
+        { ticker: "AGTHX", fund: null, tax: null },
+        { ticker: "OLD", fund: null, tax: null },
+      ],
+      ["AGTHX", "AMCPX"],
+    );
+    assert.deepEqual(
+      first.map((row) => row.ticker),
+      ["AGTHX"],
+    );
+    const merged = mergeCompareLoadedRows(
+      first,
+      { ticker: "AMCPX", fund: null, tax: null },
+      ["AGTHX", "AMCPX"],
+    );
+    assert.deepEqual(
+      merged.map((row) => row.ticker),
+      ["AGTHX", "AMCPX"],
+    );
   });
 });

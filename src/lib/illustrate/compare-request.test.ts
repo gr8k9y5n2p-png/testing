@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+  compareRequestCacheKey,
   compareSelectorsFromFund,
   compareSideFromFund,
   compareTaxRequestFields,
@@ -505,5 +506,47 @@ describe("compare-request NAV / Data body", () => {
       body.periods?.map((period) => period.year),
       [2021, 2022, 2023, 2024, 2025],
     );
+  });
+});
+
+describe("compare request cache key", () => {
+  it("keys YoY by ticker, holding, rates, and periods — not display labels", () => {
+    const left = yoyTaxDragCompareRequest({
+      ticker: "agthx",
+      label: "Fund A",
+      holdingDollars: 10_000,
+      periods: [{ year: 2024 }, { year: 2025 }],
+    });
+    const right = yoyTaxDragCompareRequest({
+      ticker: "AGTHX",
+      label: "Growth Fund",
+      holdingDollars: 10_000,
+      periods: [{ year: 2024 }, { year: 2025 }],
+    });
+    assert.equal(compareRequestCacheKey(left), compareRequestCacheKey(right));
+    assert.notEqual(
+      compareRequestCacheKey(left),
+      compareRequestCacheKey(
+        yoyTaxDragCompareRequest({
+          ticker: "AMCPX",
+          holdingDollars: 10_000,
+          periods: [{ year: 2024 }, { year: 2025 }],
+        }),
+      ),
+    );
+    assert.notEqual(
+      compareRequestCacheKey(left),
+      compareRequestCacheKey(
+        yoyTaxDragCompareRequest({
+          ticker: "AGTHX",
+          holdingDollars: 25_000,
+          periods: [{ year: 2024 }, { year: 2025 }],
+        }),
+      ),
+    );
+    const client = readFileSync(join(here, "compare-client.ts"), "utf8");
+    assert.match(client, /compareResponseCache\.remember/);
+    assert.match(client, /compareRequestCacheKey/);
+    assert.match(client, /postIllustrateCompareUncached/);
   });
 });

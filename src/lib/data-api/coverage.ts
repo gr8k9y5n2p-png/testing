@@ -1,5 +1,9 @@
 import { fetchDataApi } from "@/lib/data-api/fetch";
 import {
+  CATALOG_CACHE_TTL_MS,
+  createInflightCache,
+} from "@/lib/data-api/inflight-cache";
+import {
   TOP_ADVISOR_FAMILIES,
   type CoverageTier,
   type FundFamilyCoverage,
@@ -56,7 +60,19 @@ function parseFamilies(payload: unknown): FundFamilyCoverage[] {
   return [];
 }
 
+const coverageSnapshotCache = createInflightCache<DataCoverageSnapshot>(
+  CATALOG_CACHE_TTL_MS,
+);
+
+export function resetCoverageSnapshotCache(): void {
+  coverageSnapshotCache.clear();
+}
+
 export async function loadCoverageSnapshot(): Promise<DataCoverageSnapshot> {
+  return coverageSnapshotCache.remember("coverage", loadCoverageSnapshotUncached);
+}
+
+async function loadCoverageSnapshotUncached(): Promise<DataCoverageSnapshot> {
   try {
     const coverageRes = await fetchDataApi("/coverage");
     if (coverageRes.ok) {

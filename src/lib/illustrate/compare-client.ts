@@ -4,8 +4,15 @@ import {
   readRuntimeEnv,
   sameOriginApiUrl,
 } from "@/lib/data-api/config";
+import {
+  COMPARE_CACHE_TTL_MS,
+  createInflightCache,
+} from "@/lib/data-api/inflight-cache";
 import { mockCompareResponse } from "@/lib/illustrate/compare-fixture";
-import { toDataApiCompareBody } from "@/lib/illustrate/compare-request";
+import {
+  compareRequestCacheKey,
+  toDataApiCompareBody,
+} from "@/lib/illustrate/compare-request";
 import type {
   CompareRequest,
   CompareResponse,
@@ -14,6 +21,14 @@ import { IllustrateRequestError } from "@/lib/illustrate/client";
 import { userFacingIllustrateError } from "@/lib/illustrate/illustrate-error";
 import { gateCompareUpcoming } from "@/lib/illustrate/upcoming-compare";
 import { userFacingNotes } from "@/lib/illustrate/user-facing-notes";
+
+export { compareRequestCacheKey } from "@/lib/illustrate/compare-request";
+
+const compareResponseCache = createInflightCache<CompareResponse>(COMPARE_CACHE_TTL_MS);
+
+export function resetCompareResponseCache(): void {
+  compareResponseCache.clear();
+}
 
 export function getCompareEndpoint(): string {
   if (typeof window !== "undefined") return sameOriginApiUrl("/illustrate/compare");
@@ -228,6 +243,16 @@ export async function postIllustrateCompare(
   request: CompareRequest,
   init?: { signal?: AbortSignal },
 ): Promise<CompareResponse> {
+  return compareResponseCache.remember(
+    compareRequestCacheKey(request),
+    () => postIllustrateCompareUncached(request),
+    init?.signal,
+  );
+}
+
+async function postIllustrateCompareUncached(
+  request: CompareRequest,
+): Promise<CompareResponse> {
   const endpoint = getCompareEndpoint();
   const remote = !isMockCompareEndpoint(endpoint);
   const payload = toDataApiCompareBody(request);
@@ -237,7 +262,6 @@ export async function postIllustrateCompare(
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "application/json" },
       body: JSON.stringify(payload),
-      signal: init?.signal,
     });
   }
 

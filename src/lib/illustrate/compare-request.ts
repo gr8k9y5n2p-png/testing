@@ -352,6 +352,24 @@ export function toDataApiCompareBody(
   };
 }
 
+/** Stable key for YoY / pair compare. Omits display-only labels. */
+export function compareRequestCacheKey(request: CompareRequest): string {
+  const body = toDataApiCompareBody(request);
+  return JSON.stringify({
+    mode: body.mode ?? "fund_vs_fund",
+    holding: body.holding_dollars,
+    nav: body.nav_per_share ?? null,
+    rates: body.tax_rates ?? null,
+    combine: body.combine_state_with_federal !== false,
+    selectors: body.selectors ?? null,
+    left: body.left?.selectors ?? null,
+    right: body.right?.selectors ?? null,
+    leftNav: body.left?.nav_per_share ?? null,
+    rightNav: body.right?.nav_per_share ?? null,
+    periods: body.periods ?? null,
+  });
+}
+
 /**
  * Locked POST /illustrate body. Attach `nav_per_share` from the request or
  * search/seed metadata (same pattern as compare) so holding dollars can

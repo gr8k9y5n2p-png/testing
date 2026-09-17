@@ -1,5 +1,6 @@
 import type { FundEstimateView } from "../../data/types.ts";
 import { MAX_GROWTH_FUNDS } from "../charts/series-colors.ts";
+import type { CompareResponse } from "./compare-types.ts";
 import { UI_DEFAULT_TAX_RATES, type TaxRates } from "./types.ts";
 import {
   upcomingDistDollarsFromPerShare,
@@ -53,6 +54,38 @@ export function parseCompareHoldingDollars(
 export const COMPARE_DEFAULT_TAX_RATES: TaxRates = UI_DEFAULT_TAX_RATES;
 
 export const COMPARE_DEFAULT_COMBINE_STATE = true;
+
+/** Slot confirm is already committed — keep this short so modules start together. */
+export const COMPARE_FETCH_DEBOUNCE_MS = 50;
+
+export type CompareLoadedTicker = {
+  ticker: string;
+  fund: FundEstimateView | null;
+  tax: CompareResponse | null;
+  needsNav?: boolean;
+};
+
+/** Keep already-filled tickers on screen while a new slot loads. */
+export function keepFreshCompareRows(
+  current: CompareLoadedTicker[],
+  tickers: string[],
+): CompareLoadedTicker[] {
+  const want = new Set(tickers);
+  return current.filter((row) => want.has(row.ticker));
+}
+
+/** Progressive Upcoming / prefetch: merge one ticker without dropping the others. */
+export function mergeCompareLoadedRows(
+  current: CompareLoadedTicker[],
+  incoming: CompareLoadedTicker,
+  order: string[],
+): CompareLoadedTicker[] {
+  const byTicker = new Map(current.map((row) => [row.ticker, row]));
+  byTicker.set(incoming.ticker, incoming);
+  return order
+    .map((ticker) => byTicker.get(ticker))
+    .filter((row): row is CompareLoadedTicker => Boolean(row));
+}
 
 export function taxRatesEqual(left: TaxRates, right: TaxRates): boolean {
   return (

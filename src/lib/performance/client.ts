@@ -1,4 +1,8 @@
 import { dataApiUrl, isRemoteDataApi } from "@/lib/data-api/config";
+import {
+  PERFORMANCE_CACHE_TTL_MS,
+  createInflightCache,
+} from "@/lib/data-api/inflight-cache";
 import { IllustrateRequestError } from "@/lib/illustrate/client";
 import {
   isAbortError,
@@ -23,6 +27,31 @@ import type {
 } from "@/lib/performance/types";
 
 export { defaultPerformanceMode, resolvePerformanceMode } from "@/lib/performance/mode";
+
+const performanceResponseCache = createInflightCache<PerformanceResponse | null>(
+  PERFORMANCE_CACHE_TTL_MS,
+);
+
+export function performanceRequestCacheKey(
+  method: "GET" | "POST",
+  request: PerformanceQuery,
+): string {
+  return JSON.stringify({
+    method,
+    ticker: request.ticker?.trim().toUpperCase() ?? "",
+    fund_identifier: request.fund_identifier ?? "",
+    benchmark: request.benchmark ?? "",
+    start_dollars: request.start_dollars ?? null,
+    start_date: request.start_date ?? "",
+    end_date: request.end_date ?? "",
+    mode: resolvePerformanceMode(request.mode),
+    asset_class: request.asset_class ?? "",
+  });
+}
+
+export function resetPerformanceResponseCache(): void {
+  performanceResponseCache.clear();
+}
 
 export function getPerformanceEndpoint(): string {
   return dataApiUrl("/performance");
@@ -215,12 +244,22 @@ export async function fetchPerformanceIfAvailable(
   request: PerformanceQuery,
   init?: { signal?: AbortSignal; method?: "GET" | "POST" },
 ): Promise<PerformanceResponse | null> {
+  const method = init?.method === "POST" ? "POST" : "GET";
+  return performanceResponseCache.remember(
+    performanceRequestCacheKey(method, request),
+    () => fetchPerformanceIfAvailableUncached(request, { method }),
+    init?.signal,
+  );
+}
+
+async function fetchPerformanceIfAvailableUncached(
+  request: PerformanceQuery,
+  init?: { method?: "GET" | "POST" },
+): Promise<PerformanceResponse | null> {
   try {
-    const response = await loadPerformance(init?.method === "POST" ? "POST" : "GET", request, init);
+    const response = await loadPerformance(init?.method === "POST" ? "POST" : "GET", request);
     return performancePackIsUsable(response) ? response : null;
   } catch (error) {
-    if (init?.signal?.aborted) throw error;
-    // Stray AbortError (connection reuse / sibling cancel) must not fail the book.
     if (isAbortError(error)) return null;
     return performanceFromFetchError(error);
   }

@@ -16,20 +16,23 @@ import {
   trailingCalendarPeriods,
   yoyTaxDragCompareRequest,
 } from "@/lib/illustrate/compare-request";
-import type { CompareResponse } from "@/lib/illustrate/compare-types";
 import {
   COMPARE_DEFAULT_COMBINE_STATE,
   COMPARE_DEFAULT_HOLDING_DOLLARS,
   COMPARE_DEFAULT_TAX_RATES,
+  COMPARE_FETCH_DEBOUNCE_MS,
   COMPARE_SLOT_COUNT,
   compareInputsMatch,
   compareSlotPlaceholder,
   filledCompareTickers,
   growthFundsFromSlots,
+  keepFreshCompareRows,
+  mergeCompareLoadedRows,
   padCompareSlots,
   parseCompareHoldingDollars,
   setCompareSlot,
   upcomingRowsFromCompareTickers,
+  type CompareLoadedTicker,
 } from "@/lib/illustrate/compare-workspace";
 import {
   compareWorkspaceIsSavable,
@@ -42,13 +45,6 @@ import { isMissingNavError } from "@/lib/illustrate/illustrate-error";
 import { toUpcomingSummary } from "@/lib/illustrate/tax-drag-chart";
 import type { TaxRates } from "@/lib/illustrate/types";
 import type { PortfolioFundOption } from "@/lib/illustrate/portfolio-compare-types";
-
-type LoadedTicker = {
-  ticker: string;
-  fund: FundEstimateView | null;
-  tax: CompareResponse | null;
-  needsNav?: boolean;
-};
 
 export function CompareWorkspace({
   funds,
@@ -87,7 +83,7 @@ export function CompareWorkspace({
     holdingDollars: number;
     taxRates: TaxRates;
     combine: boolean;
-    rows: LoadedTicker[];
+    rows: CompareLoadedTicker[];
   }>({
     holdingDollars: COMPARE_DEFAULT_HOLDING_DOLLARS,
     taxRates: COMPARE_DEFAULT_TAX_RATES,
@@ -100,8 +96,25 @@ export function CompareWorkspace({
   useEffect(() => {
     const tickers = filledKey ? filledKey.split(",") : [];
     if (tickers.length === 0) {
+      setLoaded((current) => ({
+        holdingDollars,
+        taxRates,
+        combine: combineState,
+        rows: keepFreshCompareRows(current.rows, []),
+      }));
+      setNavNeededTickers([]);
       return;
     }
+
+    // Keep already-confirmed tickers on screen while a new slot loads.
+    setLoaded((current) => ({
+      holdingDollars,
+      taxRates,
+      combine: combineState,
+      rows: compareInputsMatch(current, holdingDollars, taxRates, combineState)
+        ? keepFreshCompareRows(current.rows, tickers)
+        : [],
+    }));
 
     const controller = new AbortController();
     const periods = trailingCalendarPeriods();
@@ -109,6 +122,7 @@ export function CompareWorkspace({
       void Promise.all(
         tickers.map(async (ticker) => {
           const fund = resolveFundView(funds, ticker) ?? null;
+          let row: CompareLoadedTicker;
           try {
             const tax = await postIllustrateCompare(
               yoyTaxDragCompareRequest({
@@ -127,40 +141,36 @@ export function CompareWorkspace({
               }),
               { signal: controller.signal },
             );
-            return { ticker, fund, tax, needsNav: false };
+            row = { ticker, fund, tax, needsNav: false };
           } catch (caught) {
             if (caught instanceof DOMException && caught.name === "AbortError") {
-              throw caught;
+              return;
             }
-            return {
+            row = {
               ticker,
               fund,
               tax: null,
               needsNav: isMissingNavError(caught),
             };
           }
-        }),
-      )
-        .then((rows) => {
-          setLoaded({ holdingDollars, taxRates, combine: combineState, rows });
-          setNavNeededTickers(
-            rows.filter((row) => row.needsNav).map((row) => row.ticker),
-          );
-        })
-        .catch((caught: unknown) => {
-          if (caught instanceof DOMException && caught.name === "AbortError") return;
-          setLoaded({
+          if (controller.signal.aborted) return;
+          setLoaded((current) => ({
             holdingDollars,
             taxRates,
             combine: combineState,
-            rows: tickers.map((ticker) => ({
-              ticker,
-              fund: resolveFundView(funds, ticker) ?? null,
-              tax: null,
-            })),
+            rows: mergeCompareLoadedRows(current.rows, row, tickers),
+          }));
+          setNavNeededTickers((current) => {
+            if (row.needsNav) {
+              return current.includes(ticker) ? current : [...current, ticker];
+            }
+            return current.filter((item) => item !== ticker);
           });
-        });
-    }, 250);
+        }),
+      ).catch((caught: unknown) => {
+        if (caught instanceof DOMException && caught.name === "AbortError") return;
+      });
+    }, COMPARE_FETCH_DEBOUNCE_MS);
 
     return () => {
       controller.abort();
@@ -339,7 +349,6 @@ export function CompareWorkspace({
         className="mt-10 w-full scroll-mt-20"
       >
         <GrowthAndTaxDragModule
-          key={filledKey || "empty"}
           funds={growthFunds}
           seedFunds={growthFunds}
           lockToSeed
