@@ -273,9 +273,30 @@ class BostonTrustSource(HtmlTableSource):
         "(Asset Management BTBFX ST $0.014659 / LT $6.205293; "
         "Midcap BTMFX ST $0.058862 / LT $2.253903; "
         "Walden Equity WSEFX LT $3.989025). "
-        "Record 12/15/2025; ex 12/16/2025; pay 12/17/2025."
+        "Record 12/15/2025; ex 12/16/2025; pay 12/17/2025. "
+        "Official 5y WAVE BB leftover (existing in-book only): May 1, 2026 "
+        "prospectus Financial Highlights unlock leftover 2021–2024 on the "
+        "2025 paid PDF book (BTBFX / BTMFX / WSEFX). Calendar-safe as_of "
+        "12/31. Single-class in-book identities — never sibling-copied and "
+        "never attached to out-of-book BTEFX / BTSMX / WSBFX / WAMFX / "
+        "WASMX / BOSOX / WIEFX. Income is ordinary income; net realized "
+        "gain is unsplit total capital gains. 2025 stays on the existing "
+        "paid PDF. Official source "
+        "https://www.sec.gov/Archives/edgar/data/882748/000139834426007318/"
+        "fp0098118-14_485bposixbrl.htm (accession 0001398344-26-007318; "
+        "audited by Cohen & Company, Ltd.). Cross-checked against the 2023 "
+        "N-CSR Financial Highlights "
+        "https://www.sec.gov/Archives/edgar/data/882748/000139834424005166/"
+        "fp0087387-1_ncsr.htm (2023 / 2022 / 2021 columns match). The "
+        "10/31/24 estimated capital-gains PDF is not used. WAVE BB leftover "
+        "N-CSR / prospectus paid history is fixture-only."
     )
-    live_limitations = "Year-end book is PDF. Fixture transcribes public ticker rows."
+    live_limitations = (
+        "Year-end book is PDF. Fixture transcribes public ticker rows. "
+        "Weekly walk hits the 2025 paid PDF (empty/403/PDF-bytes = no-op "
+        "success). Leftover 2021–2024 N-CSR / prospectus paid history is "
+        "fixture-only."
+    )
 
     def pages(self) -> list[PageSpec]:
         return [
@@ -289,7 +310,17 @@ class BostonTrustSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
-            )
+            ),
+            PageSpec(
+                name="leftover_ncsr_2021_2024_wave_bb",
+                url=(
+                    "https://www.sec.gov/Archives/edgar/data/882748/"
+                    "000139834426007318/fp0098118-14_485bposixbrl.htm"
+                ),
+                fixture="leftover_ncsr_2021_2024_wave_bb.html",
+                live=False,
+                role="history",
+            ),
         ]
 
 
