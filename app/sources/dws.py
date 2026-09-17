@@ -45,6 +45,24 @@ class DwsSource(HtmlTableSource):
         "(ASHR 12/20/2024 income $0.29945; DBEF 12/20/2024 $0.29706; "
         "HYLB 12/23/2024 $0.21907). 2021–2023 ICI siblings still 404 / "
         "Wayback CDX empty — leftover ETFs stay 2y, not 5y. "
+        "Official 5y WAVE BG leftover (existing in-book only): DWS Equity 500 "
+        "Index Class S BTIEX and S&P 500 Index Class A SXPAX FYE December 31 "
+        "N-CSR Financial Highlights unlock leftover 2021–2024 on the 2025 paid "
+        "retail book. Calendar-safe as_of 12/31. Class-level Class S / Class A "
+        "— never sibling-copied onto Institutional / Class R / Class C / Class S "
+        "siblings (BTIIX / BTIRX / SXPCX / SCPIX / SXPRX). Income is ordinary "
+        "income; net realized gain is unsplit total capital gains. 2025 stays "
+        "on the existing paid retail PDF (BTIEX ST $3.5046 / LT $16.0529 is not "
+        "overwritten by N-CSR 2-decimal highlights). Equity 500 Index N-CSR "
+        "https://www.sec.gov/Archives/edgar/data/862157/000008805326000209/"
+        "ar123125e500.htm and S&P 500 Index N-CSR "
+        "https://www.sec.gov/Archives/edgar/data/862157/000008805326000213/"
+        "ar123125spf500if.htm verified against 2023 N-CSR 0000088053-24-000160. "
+        "Science and Technology KTCAX FYE October 31 is calendar-safe but not "
+        "on this December 31 leftover page. SUWAX / SDGAX FYE September 30 and "
+        "DESAX ~November 30 are not calendar-safe. WAVE BG leftover N-CSR paid "
+        "history is fixture-only. Live most-recent retail PDF still omits "
+        "2021–2024; Wayback CDX offline. "
         "2026 Xtrackers dividend schedule has dates only. "
         "etf.dws.com and dws.com mutual-fund product lists are JavaScript SPAs. "
         "ICI secondary is 1099 characterization, not amounts. "
@@ -57,7 +75,8 @@ class DwsSource(HtmlTableSource):
         "2026 dividend-schedule hub, etf.dws.com home, and the mutual-fund SPA. "
         "Empty/PDF-bytes pages are no-op success. "
         "2024 ICI primary URL 404s. Do not invent amounts from the date schedule "
-        "or ICI secondary percentages."
+        "or ICI secondary percentages. Leftover 2021–2024 N-CSR paid history is "
+        "fixture-only."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -152,5 +171,15 @@ class DwsSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
+            ),
+            PageSpec(
+                name="leftover_ncsr_2021_2024_wave_bg",
+                url=(
+                    "https://www.sec.gov/Archives/edgar/data/862157/"
+                    "000008805326000209/ar123125e500.htm"
+                ),
+                fixture="leftover_ncsr_2021_2024_wave_bg.html",
+                live=False,
+                role="history",
             ),
         ]

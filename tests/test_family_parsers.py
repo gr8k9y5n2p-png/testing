@@ -5830,6 +5830,41 @@ def test_dws_xtrackers_fixtures() -> None:
     )
     assert btiex_mid.amount == Decimal("6.1523")
 
+    dws_ncsr = parse_distribution_html(
+        (ROOT / "dws" / "leftover_ncsr_2021_2024_wave_bg.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url=(
+            "https://www.sec.gov/Archives/edgar/data/862157/"
+            "000008805326000209/ar123125e500.htm"
+        ),
+        fund_family="DWS / Xtrackers",
+    )
+    btiex_2024 = next(
+        r
+        for r in dws_ncsr
+        if r.ticker == "BTIEX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.as_of
+        and str(r.as_of) == "2024-12-31"
+    )
+    assert btiex_2024.amount == Decimal("1.98")
+    assert btiex_2024.publication_stage == PublicationStage.final
+    sxpax_2022_cg = next(
+        r
+        for r in dws_ncsr
+        if r.ticker == "SXPAX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and r.as_of
+        and str(r.as_of) == "2022-12-31"
+    )
+    assert sxpax_2022_cg.amount == Decimal("1.47")
+    assert {r.ticker for r in dws_ncsr} == {"BTIEX", "SXPAX"}
+    assert not any(
+        r.ticker in {"BTIIX", "BTIRX", "SXPCX", "SCPIX", "SXPRX", "KTCAX"}
+        for r in dws_ncsr
+    )
+
 
 def test_catalyst_annual_distribution_fixtures() -> None:
     catalyst = parse_distribution_html(
