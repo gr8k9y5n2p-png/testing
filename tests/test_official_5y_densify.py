@@ -799,8 +799,17 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # redo Gabelli AAA / BNY AH / Victory AG / Harbor AF / Macquarie AD /
     # Invesco ETF AE. Honest pin remasured after rebase onto #205 tip
     # f6bb49ef: 3762 → 3780 (+18 MF; ETF 5y unchanged at 758).
-    assert digest.funds_with_5y == 3780
-    assert digest.funds_with_5y_mf == 3022
+    # WAVE AI leftover (existing in-book only): Gabelli Class AAA FYE Dec 31
+    # 2021–2023 N-CSR Financial Highlights unlock +3 MF already on 2024–2025
+    # AAA books (GABAX / GABBX / GICPX). GABGX 2021+2023 is year-depth (2022
+    # highlights dashes). GABSX / GABEX FYE Sep 30, Allspring leftover FYEs,
+    # Federated Kaufmann/MDT/SDG unpublished API years, SEI 2021–2024 final
+    # PDFs 404, Voya NLCAX/NMCAX May 31, Wasatch Sep 30, Causeway CCENX, and
+    # Cohen/Guggenheim/DoubleLine/Russell (no in-book source) stay walls.
+    # Honest pin remasured after additive rebase onto #207 tip 70b8d77a:
+    # 3780 → 3783 (+3 MF; ETF 5y unchanged at 758). No overlap with AJ/AH/AG/AE/AD/AF.
+    assert digest.funds_with_5y == 3783
+    assert digest.funds_with_5y_mf == 3025
     assert digest.funds_with_5y_etf == 758
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
@@ -5270,6 +5279,11 @@ def test_parallel_p_gabelli_leftover_2025_is_year_depth() -> None:
     for ticker in ("GICPX", "GABSX", "GABEX", "GABGX", "GABAX", "GABBX"):
         years = _paid_lookback_years(records, ticker)
         assert {2024, 2025} <= years, ticker
+    # WAVE AI later fills GABAX / GABBX / GICPX 2021–2023 and GABGX 2021+2023
+    # from Dec 31 N-CSR. Equity Series GABSX / GABEX stay 2024–2025 only
+    # (FYE September 30 is not calendar-safe).
+    for ticker in ("GABSX", "GABEX"):
+        years = _paid_lookback_years(records, ticker)
         assert 2021 not in years, ticker
         assert 2022 not in years, ticker
         assert 2023 not in years, ticker
@@ -10193,3 +10207,177 @@ def test_wave_aj_heroes_are_searchable(client: TestClient) -> None:
         if row.get("ticker") == "VLEOX" and row.get("amount") is not None
     }
     assert {"2021", "2022", "2023", "2024", "2025"} <= vleox_years
+
+def test_wave_ai_gabelli_leftover_ncsr_fills_5y() -> None:
+    records = GabelliSource().fetch(mode="fixture").records
+    gabax_2021_cg = next(
+        row
+        for row in records
+        if row.ticker == "GABAX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2021-12-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert gabax_2021_cg.amount == Decimal("5.53")
+    gabax_2023_oi = next(
+        row
+        for row in records
+        if row.ticker == "GABAX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2023-12-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert gabax_2023_oi.amount == Decimal("0.16")
+    gabbx_2022_roc = next(
+        row
+        for row in records
+        if row.ticker == "GABBX"
+        and row.estimate_type == EstimateType.return_of_capital
+        and row.as_of
+        and str(row.as_of) == "2022-12-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert gabbx_2022_roc.amount == Decimal("0.04")
+    gicpx_2021_cg = next(
+        row
+        for row in records
+        if row.ticker == "GICPX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2021-12-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert gicpx_2021_cg.amount == Decimal("2.28")
+    gabgx_2023_cg = next(
+        row
+        for row in records
+        if row.ticker == "GABGX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2023-12-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert gabgx_2023_cg.amount == Decimal("1.45")
+
+    for ticker in ("GABAX", "GABBX", "GICPX"):
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(records, ticker), ticker
+    assert _paid_lookback_years(records, "GABGX") == {2021, 2023, 2024, 2025}
+
+
+def test_wave_ai_leftover_walls_stay_unmatched() -> None:
+    gabelli = GabelliSource().fetch(mode="fixture").records
+    gabgx_2022 = [
+        row
+        for row in gabelli
+        if row.ticker == "GABGX"
+        and row.publication_stage in {PublicationStage.final, PublicationStage.paid}
+        and row.amount is not None
+        and _year_for_row(row.as_of, row.ex_date, row.payable_date) == 2022
+    ]
+    assert gabgx_2022 == []
+    for ticker in ("GABSX", "GABEX"):
+        years = _paid_lookback_years(gabelli, ticker)
+        assert years == {2024, 2025}, ticker
+    # Class-level AAA only — sibling A/C/I tickers stay out of the NAV book.
+    for ticker in ("GATAX", "GATCX", "GABIX", "GGCAX"):
+        assert [row for row in gabelli if row.ticker == ticker] == [], ticker
+
+    federated = FederatedHermesSource().fetch(mode="fixture").records
+    for ticker in ("KAUAX", "FKASX", "FKAIX"):
+        years = _paid_lookback_years(federated, ticker)
+        assert 2022 not in years, ticker
+        assert {2021, 2023, 2024, 2025} <= years, ticker
+    for ticker in ("QABGX", "QCBGX", "QIBGX"):
+        years = _paid_lookback_years(federated, ticker)
+        assert 2023 not in years, ticker
+    for ticker in ("FHEQX", "FHESX"):
+        years = _paid_lookback_years(federated, ticker)
+        assert 2021 not in years, ticker
+
+    allspring = AllspringSource().fetch(mode="fixture").records
+    for ticker, missing in (
+        ("ASPAX", 2021),
+        ("EAAFX", 2023),
+        ("EKJAX", 2022),
+        ("WDSAX", 2021),
+        ("WFDAX", 2023),
+        ("WFSTX", 2023),
+    ):
+        years = _paid_lookback_years(allspring, ticker)
+        assert missing not in years, ticker
+        assert len(years) == 4, ticker
+
+    sei = SeiSource().fetch(mode="fixture").records
+    simt = [
+        row
+        for row in sei
+        if row.fund_name == "SIMT Large Cap Growth"
+        and row.publication_stage in {PublicationStage.final, PublicationStage.paid}
+        and row.amount is not None
+        and _year_for_row(row.as_of, row.ex_date, row.payable_date) in {2021, 2022, 2023, 2024}
+    ]
+    assert simt == []
+
+    voya = VoyaSource().fetch(mode="fixture").records
+    assert 2023 not in _paid_lookback_years(voya, "NLCAX")
+    assert 2022 not in _paid_lookback_years(voya, "NMCAX")
+
+    wasatch = WasatchSource().fetch(mode="fixture").records
+    assert 2023 not in _paid_lookback_years(wasatch, "WGROX")
+
+    causeway = CausewaySource().fetch(mode="fixture").records
+    for ticker in ("CCENX", "CCEVX"):
+        assert _paid_lookback_years(causeway, ticker) == {2021, 2022}
+
+
+def test_wave_ai_heroes_are_searchable(client: TestClient) -> None:
+    fetched = client.post(
+        "/ingest/fetch", json={"fund_family": "gabelli", "mode": "fixture"}
+    )
+    assert fetched.status_code == 200, fetched.text
+    assert fetched.json()["created"] > 0
+
+    for ticker in ("GABAX", "GABBX", "GICPX", "GABGX", "GABSX"):
+        body = client.get("/funds", params={"q": ticker}).json()
+        tickers = [item["ticker"] for item in body["items"]]
+        assert ticker in tickers, f"{ticker} missing from GET /funds?q={ticker}: {tickers[:8]}"
+
+    gabax = client.get(
+        "/distributions",
+        params={"ticker": "GABAX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    gabax_2021 = [
+        Decimal(row["amount"])
+        for row in gabax["items"]
+        if row.get("ticker") == "GABAX"
+        and row.get("estimate_type") == "total_capital_gains"
+        and str(row.get("as_of") or "").startswith("2021-12-31")
+    ]
+    assert Decimal("5.53") in gabax_2021
+    gabax_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in gabax["items"]
+        if row.get("ticker") == "GABAX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= gabax_years
+
+    gabgx = client.get(
+        "/distributions",
+        params={"ticker": "GABGX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    gabgx_2022 = [
+        row
+        for row in gabgx["items"]
+        if row.get("ticker") == "GABGX"
+        and str(row.get("as_of") or row.get("ex_date") or "").startswith("2022")
+        and row.get("amount") is not None
+        and row.get("publication_stage") == "final"
+    ]
+    assert gabgx_2022 == []

@@ -275,7 +275,7 @@ def test_coverage_exposes_estimate_feed_readiness(session) -> None:
 
     gabelli = by_slug["gabelli"]
     assert gabelli.estimate_feed_ready is True
-    assert gabelli.history_years == [2024, 2025]
+    assert gabelli.history_years == [2021, 2022, 2023, 2024, 2025]
 
     royce = by_slug["royce"]
     assert royce.estimate_feed_ready is True
