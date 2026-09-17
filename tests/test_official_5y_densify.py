@@ -79,7 +79,12 @@ from app.sources.next_tier import (
     NuveenSource,
     SchwabSource,
 )
-from app.sources.ninth_tier import AmericanBeaconSource, BaillieGiffordSource, BrandesSource
+from app.sources.ninth_tier import (
+    AmericanBeaconSource,
+    BaillieGiffordSource,
+    BrandesSource,
+    FamSource,
+)
 from app.sources.third_tier import (
     AllianceBernsteinSource,
     AllspringSource,
@@ -936,8 +941,22 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # 2021 commencement / FYE Sep 30, and WisdomTree leftover 2021 ticker
     # restructures remasured as walls. Honest pin remasured on WAVE AU tip
     # e103f0e: 4106 → 4109 (+3 MF; ETF 5y unchanged at 758).
-    assert digest.funds_with_5y == 4109
-    assert digest.funds_with_5y_mf == 3351
+    # WAVE AX leftover (existing in-book only): FAM / Fenimore leftover
+    # Investor / Institutional Dec 31 2021–2024 N-CSR Financial Highlights
+    # unlock leftover FAMVX / FAMWX / FAMEX / FAMFX / FAMDX already on the
+    # 2025 tax-center paid book. Does not redo AF–AV (especially AV Third
+    # Avenue Oct 31, AU LSV I/Investor Oct 31, AT AMG Frontier / GW&K SMID,
+    # AQ Victory I/II, AS Virtus Asset Trust, or AR Homestead). Disjoint
+    # from AW (Federated / Principal / Harding / Beacon / ETF-wrapper).
+    # Preferred William Blair leftover beyond remasured walls, Allspring
+    # leftover FYE July 31, First Eagle GRA-Smid 2021 inception 11/30/21,
+    # Calamos CAISX 2021 inception, GuideStone index 2022 inception, Davis
+    # FYE July 31, Marsico Institutional, Meridian FYE June 30, and
+    # WisdomTree leftover 2021 ticker restructures remasured as walls.
+    # Honest pin remasured on WAVE AV tip ddef182: 4109 → 4114 (+5 MF; ETF
+    # 5y unchanged at 758).
+    assert digest.funds_with_5y == 4114
+    assert digest.funds_with_5y_mf == 3356
     assert digest.funds_with_5y_etf == 758
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
@@ -13320,6 +13339,259 @@ def test_wave_av_heroes_are_searchable(client: TestClient) -> None:
         and str(row.get("as_of") or "").startswith("2021-10-31")
     ]
     assert Decimal("0.26") in tascs_2021
+
+    william_blair = client.post(
+        "/ingest/fetch", json={"fund_family": "william_blair", "mode": "fixture"}
+    )
+    assert william_blair.status_code == 200, william_blair.text
+    wisnx = client.get(
+        "/distributions",
+        params={"ticker": "WISNX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    wisnx_2022 = [
+        row
+        for row in wisnx["items"]
+        if row.get("ticker") == "WISNX"
+        and str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "").startswith(
+            "2022"
+        )
+        and row.get("amount") is not None
+        and row.get("publication_stage") == "final"
+    ]
+    assert wisnx_2022 == []
+
+
+WAVE_AX_FAM_LEFTOVER_5Y = (
+    "FAMVX",
+    "FAMWX",
+    "FAMEX",
+    "FAMFX",
+    "FAMDX",
+)
+
+
+def test_wave_ax_fam_leftover_dec31_2021_2024_fills_5y() -> None:
+    records = FamSource().fetch(mode="fixture").records
+    famvx_2021_oi = next(
+        row
+        for row in records
+        if row.ticker == "FAMVX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2021-12-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert famvx_2021_oi.amount == Decimal("0.02")
+    famvx_2021_cg = next(
+        row
+        for row in records
+        if row.ticker == "FAMVX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2021-12-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert famvx_2021_cg.amount == Decimal("4.95")
+    famwx_2021_oi = next(
+        row
+        for row in records
+        if row.ticker == "FAMWX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2021-12-31"
+        and row.amount is not None
+    )
+    assert famwx_2021_oi.amount == Decimal("0.16")
+    famex_2024_oi = next(
+        row
+        for row in records
+        if row.ticker == "FAMEX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2024-12-31"
+        and row.amount is not None
+    )
+    assert famex_2024_oi.amount == Decimal("0.08")
+    famfx_2021_cg = next(
+        row
+        for row in records
+        if row.ticker == "FAMFX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2021-12-31"
+        and row.amount is not None
+    )
+    assert famfx_2021_cg.amount == Decimal("1.63")
+    # Class-level — Investor FAMVX is not copied from Institutional FAMWX.
+    assert famvx_2021_oi.amount != famwx_2021_oi.amount
+    # Dividend Focus Institutional is not offered and is not an in-book leftover.
+    assert [row for row in records if row.ticker == "FAMIX"] == []
+    # 2025 stays on the existing tax-center book — not re-emitted from N-CSR.
+    ncsr_late = [
+        row
+        for row in records
+        if row.ticker in WAVE_AX_FAM_LEFTOVER_5Y
+        and row.as_of
+        and row.as_of.year == 2025
+        and row.source_url
+        and "000158064225001402" in row.source_url
+    ]
+    assert ncsr_late == []
+    for ticker in WAVE_AX_FAM_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(records, ticker), ticker
+
+
+def test_wave_ax_leftover_walls_stay_unmatched() -> None:
+    fam = FamSource().fetch(mode="fixture").records
+    # Value leftover 2024 OI highlights are official dashes.
+    for ticker in ("FAMVX", "FAMWX"):
+        leftover_oi = [
+            row
+            for row in fam
+            if row.ticker == ticker
+            and row.estimate_type == EstimateType.ordinary_income
+            and row.as_of
+            and str(row.as_of) == "2024-12-31"
+            and row.amount is not None
+        ]
+        assert leftover_oi == [], ticker
+    # Dividend Focus leftover 2021 OI is an official dash.
+    famex_2021_oi = [
+        row
+        for row in fam
+        if row.ticker == "FAMEX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2021-12-31"
+        and row.amount is not None
+    ]
+    assert famex_2021_oi == []
+    # Small Cap leftover years have no ordinary-income distribution.
+    for ticker in ("FAMFX", "FAMDX"):
+        leftover_oi = [
+            row
+            for row in fam
+            if row.ticker == ticker
+            and row.estimate_type == EstimateType.ordinary_income
+            and row.as_of
+            and row.as_of.year in {2021, 2022, 2023, 2024}
+            and row.amount is not None
+        ]
+        assert leftover_oi == [], ticker
+
+    william_blair = WilliamBlairSource().fetch(mode="fixture").records
+    assert 2023 not in _paid_lookback_years(william_blair, "LCGFX")
+    assert 2023 not in _paid_lookback_years(william_blair, "LCGNX")
+    assert 2024 not in _paid_lookback_years(william_blair, "WESNX")
+    assert 2024 not in _paid_lookback_years(william_blair, "BESIX")
+    assert 2022 not in _paid_lookback_years(william_blair, "WISNX")
+    assert 2021 not in _paid_lookback_years(william_blair, "WBCIX")
+    assert 2022 not in _paid_lookback_years(william_blair, "WBCIX")
+    assert 2021 not in _paid_lookback_years(william_blair, "ISMVX")
+    assert 2021 not in _paid_lookback_years(william_blair, "WVMIX")
+
+    allspring = AllspringSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(allspring, "WDSAX")
+    assert 2023 not in _paid_lookback_years(allspring, "EAAFX")
+    assert 2021 not in _paid_lookback_years(allspring, "ASPAX")
+
+    first_eagle = FirstEagleSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(first_eagle, "FERAX")
+    assert 2021 not in _paid_lookback_years(first_eagle, "FESMX")
+
+    calamos = CalamosSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(calamos, "CAISX")
+
+    guidestone = GuidestoneSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(guidestone, "GEIZX")
+    assert 2021 not in _paid_lookback_years(guidestone, "GVIZX")
+    assert 2021 not in _paid_lookback_years(guidestone, "GIIZX")
+
+    davis = DavisSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(davis, "NYVTX")
+    assert 2021 not in _paid_lookback_years(davis, "RPEAX")
+
+    # Do not redo WAVE AV Third Avenue Institutional Oct 31 — TAVFX stays 5y.
+    third = ThirdAvenueSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(third, "TAVFX")
+
+    # Do not redo WAVE AU LSV I/Investor Oct 31 — LSVEX stays 5y.
+    lsv = LsvSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(lsv, "LSVEX")
+
+    # Do not redo WAVE AT AMG Frontier / GW&K SMID — YACKX stays 5y.
+    amg = AmgSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(amg, "YACKX")
+
+    # Do not redo WAVE AQ Victory I/II Oct 31 N-CSR — VETAX stays 5y.
+    victory = VictorySource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(victory, "VETAX")
+
+    # Do not redo WAVE AS Virtus Asset Trust Dec 31 N-CSR — STVTX stays 5y.
+    virtus = VirtusSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(virtus, "STVTX")
+
+    # Do not redo WAVE AR Homestead Dec 31 N-CSR — HOVLX stays 5y.
+    homestead = HomesteadSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(homestead, "HOVLX")
+
+    # AW Federated / Principal / Harding / Beacon leftovers stay unmatched here.
+    federated = FederatedHermesSource().fetch(mode="fixture").records
+    principal = PrincipalSource().fetch(mode="fixture").records
+    harding = HardingLoevnerSource().fetch(mode="fixture").records
+    beacon = AmericanBeaconSource().fetch(mode="fixture").records
+    fam_tickers = {row.ticker for row in fam if row.ticker}
+    assert not any(row.ticker in fam_tickers for row in federated)
+    assert not any(row.ticker in fam_tickers for row in principal)
+    assert not any(row.ticker in fam_tickers for row in harding)
+    assert not any(row.ticker in fam_tickers for row in beacon)
+
+
+def test_wave_ax_heroes_are_searchable(client: TestClient) -> None:
+    fetched = client.post(
+        "/ingest/fetch", json={"fund_family": "fam", "mode": "fixture"}
+    )
+    assert fetched.status_code == 200, fetched.text
+    assert fetched.json()["created"] > 0
+
+    for ticker in ("FAMVX", "FAMWX", "FAMEX", "FAMFX", "FAMDX"):
+        body = client.get("/funds", params={"q": ticker}).json()
+        tickers = [item["ticker"] for item in body["items"]]
+        assert ticker in tickers, f"{ticker} missing from GET /funds?q={ticker}: {tickers[:8]}"
+
+    famvx = client.get(
+        "/distributions",
+        params={"ticker": "FAMVX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    famvx_2021 = [
+        Decimal(row["amount"])
+        for row in famvx["items"]
+        if row.get("ticker") == "FAMVX"
+        and row.get("estimate_type") == "ordinary_income"
+        and str(row.get("as_of") or "").startswith("2021-12-31")
+    ]
+    assert Decimal("0.02") in famvx_2021
+    famvx_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in famvx["items"]
+        if row.get("ticker") == "FAMVX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= famvx_years
+
+    famwx = client.get(
+        "/distributions",
+        params={"ticker": "FAMWX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    famwx_2021 = [
+        Decimal(row["amount"])
+        for row in famwx["items"]
+        if row.get("ticker") == "FAMWX"
+        and row.get("estimate_type") == "ordinary_income"
+        and str(row.get("as_of") or "").startswith("2021-12-31")
+    ]
+    assert Decimal("0.16") in famwx_2021
 
     william_blair = client.post(
         "/ingest/fetch", json={"fund_family": "william_blair", "mode": "fixture"}
