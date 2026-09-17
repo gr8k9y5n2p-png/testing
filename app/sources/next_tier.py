@@ -84,7 +84,11 @@ class FranklinTempletonSource(HtmlTableSource):
         "2021 still 204 empty; ICI reports hub remains a JS SPA; open-end estimate "
         "grid remains JS. In-book leftovers are the 2025 CEF DIST-SUMM tickers "
         "(FT / FTF / PIM / PMM / PMO / PPT and siblings) still 1y — prior-year "
-        "official calendar-year DIST-SUMM unpublished. Unmatched / not invented."
+        "official calendar-year DIST-SUMM unpublished. Unmatched / not invented. "
+        "Official 5y WAVE AG leftover: Franklin/Putnam CEF DIST-SUMM-2021–2024 "
+        "walls from Y stay walls (HTTP 204). Putnam open-end MF share classes "
+        "(PEYAX / PNOPX) are not in the frozen 10056-ticker book — no new "
+        "identities. Unmatched / not invented."
     )
     live_limitations = (
         "Open-end December estimate tool is JavaScript-rendered. "

@@ -574,7 +574,10 @@ class TouchstoneSource(HtmlTableSource):
         "no 2022; R6 (TPYRX) has no 2021–2022. 2023 supplemental tax PDF "
         "tsf-2188-2312-2023-supplemental-tax-information.pdf is DRD / "
         "Treasury narrative, not a CG $/share book. Leftover years are "
-        "absent from the issuer JSON, not missed transcription."
+        "absent from the issuer JSON, not missed transcription. Official 5y "
+        "WAVE AG leftover re-probe: Mid Cap Growth 2023 and Emerging Markets "
+        "Growth 2022–2023 remain unpublished on product-page JSON (third-party "
+        "histories that skip those years are unused). No invented unpaid $0."
     )
     live_limitations = "Year-end book is PDF. Fixture transcribes public Class A rows."
 
@@ -631,6 +634,20 @@ class VictorySource(HtmlTableSource):
         "printed $0.000000 OI stored). In-book leftover RS classes already on "
         "the 2023–2025 RS fixtures. RPPRX unpublished on the 2022 book. "
         "2021 RS / I/II still 404 — year-depth, not 5y. "
+        "Official 5y WAVE AG leftover (existing in-book only): Victory Portfolios "
+        "N-CSR Financial Highlights year ended December 31, 2021 "
+        "(https://www.sec.gov/Archives/edgar/data/802716/000110465923028289/"
+        "tm232551d1_ncsr.htm) fill leftover RS classes already on 2022–2025 RS "
+        "fixtures (RSGRX OI $0.02 / CG $2.35; GPAFX OI $0.57 / CG $6.32; "
+        "RSPYX OI $0.05 / CG $4.44; RSVAX OI $0.11 / CG $3.61). Income is "
+        "ordinary income; net realized gains are unsplit total capital gains; "
+        "dashes omitted. Class-level — never copy A onto C/R/Y/Member. FYE "
+        "December 31 is calendar-safe as_of 2021-12-31. Leftover 2024 Class R / "
+        "Member / R6 from the same I/II PDF already used for A and leftover "
+        "I/C/Y (GETGX OI $0.130481 / ST $0.542703 / LT $4.150428; GOGFX OI "
+        "$0.177100 / ST $0.125199 / LT $3.571324) is year-depth — 2021 I/II "
+        "sibling still 404. I/II FYE June 30 and USAA / Portfolios III FYE "
+        "March 31 2021 N-CSR columns stay unmatched (not calendar-safe). "
         "Wave 7 lookback: official 2022 hyphenated + 2023 space-encoded I/II finals "
         "(MMEAX 2022 LT $2.389672 / 2023 LT $0.390522; VETAX 2022 LT $2.782434 / "
         "2023 LT $2.095967), 2023–2024 RS MF books (RSGRX 2023 LT $0.036599 / "
@@ -697,6 +714,14 @@ class VictorySource(HtmlTableSource):
                 role="history",
             ),
             PageSpec(
+                name="leftover_2024_r_member_r6",
+                url="https://investor.vcm.com/assets/resources-mutualfunddoc/Victory-Funds-2024-Final-Ordinary-Income-and-Capital-Gains.pdf",
+                fixture="leftover_2024_r_member_r6.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
+            ),
+            PageSpec(
                 name="2024_rs_final_ordinary_income_and_capital_gains",
                 url="https://investor.vcm.com/assets/resources-mutualfunddoc/Victory-RS-and-VVI-Funds-2024-Final-Ordinary-Income-and-Capital-Gains.pdf",
                 fixture="2024_rs_final_ordinary_income_and_capital_gains.html",
@@ -744,5 +769,16 @@ class VictorySource(HtmlTableSource):
                 fixture="leftover_2022_rs_share_classes.html",
                 live=False,
                 role="history",
+            ),
+            PageSpec(
+                name="leftover_ncsr_rs_2021",
+                url=(
+                    "https://www.sec.gov/Archives/edgar/data/802716/"
+                    "000110465923028289/tm232551d1_ncsr.htm"
+                ),
+                fixture="leftover_ncsr_rs_2021.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
             ),
         ]

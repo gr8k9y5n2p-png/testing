@@ -765,8 +765,16 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # belongs to Y #194 — not redone. Year-depth only: HIYS 2023–2025,
     # BSJW 2024–2025, BSJX / GTOC / IQSZ / MTRA 2025. Honest pin =
     # tip 3737 + AE +5 ETF → 3742. No new identities.
-    assert digest.funds_with_5y == 3742
-    assert digest.funds_with_5y_mf == 2984
+    # WAVE AG leftover (existing in-book only): Victory RS FYE Dec 31 2021
+    # N-CSR Financial Highlights unlock +16 MF already on 2022–2025 RS books
+    # (RSGRX / RGWCX / RGRYX / RSINX / RIVCX / RSIYX / GPAFX / RCOCX / RCEYX /
+    # RSPFX / RSPMX / RSPKX / RSPYX / RSVAX / RVACX / RSVYX). Leftover 2024
+    # I/II Class R/Member/R6 is year-depth (2021 I/II still 404). Touchstone
+    # leftover JSON years, Putnam CEF DIST-SUMM 204, Fidelity retail DPL6
+    # 2022–2023, and USAA FYE March 31 stay walls. Advisor DPL2 / FTRIX not
+    # redone. Honest pin = tip 3742 + AG +16 (no overlap with AF/AD/AE).
+    assert digest.funds_with_5y == 3758
+    assert digest.funds_with_5y_mf == 3000
     assert digest.funds_with_5y_etf == 758
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
@@ -9489,3 +9497,230 @@ def test_wave_ae_heroes_are_searchable(client: TestClient) -> None:
         and str(row.get("ex_date") or "").startswith("2021-12-20")
     ]
     assert Decimal("0.218") in idmo_2021
+
+def test_wave_ag_victory_leftover_rs_2021() -> None:
+    records = VictorySource().fetch(mode="fixture").records
+    rsgrx_2021_oi = next(
+        row
+        for row in records
+        if row.ticker == "RSGRX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2021-12-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert rsgrx_2021_oi.amount == Decimal("0.02")
+    rsgrx_2021_cg = next(
+        row
+        for row in records
+        if row.ticker == "RSGRX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2021-12-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert rsgrx_2021_cg.amount == Decimal("2.35")
+    gpafx_2021_oi = next(
+        row
+        for row in records
+        if row.ticker == "GPAFX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2021-12-31"
+        and row.amount
+    )
+    assert gpafx_2021_oi.amount == Decimal("0.57")
+    rspyx_2021_oi = next(
+        row
+        for row in records
+        if row.ticker == "RSPYX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2021-12-31"
+        and row.amount
+    )
+    assert rspyx_2021_oi.amount == Decimal("0.05")
+    rsvax_2021_oi = next(
+        row
+        for row in records
+        if row.ticker == "RSVAX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2021-12-31"
+        and row.amount
+    )
+    assert rsvax_2021_oi.amount == Decimal("0.11")
+    for ticker in (
+        "RSGRX",
+        "RGWCX",
+        "RGRYX",
+        "RSINX",
+        "RIVCX",
+        "RSIYX",
+        "GPAFX",
+        "RCOCX",
+        "RCEYX",
+        "RSPFX",
+        "RSPMX",
+        "RSPKX",
+        "RSPYX",
+        "RSVAX",
+        "RVACX",
+        "RSVYX",
+    ):
+        years = {
+            _year_for_row(row.as_of, row.ex_date, row.payable_date)
+            for row in records
+            if row.ticker == ticker
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        }
+        years.discard(None)
+        assert set(LOOKBACK_YEARS) <= years, ticker
+
+
+def test_wave_ag_victory_leftover_2024_r_member_r6() -> None:
+    records = VictorySource().fetch(mode="fixture").records
+    getgx_2024 = next(
+        row
+        for row in records
+        if row.ticker == "GETGX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2024-12-13"
+        and row.amount
+    )
+    assert getgx_2024.amount == Decimal("0.130481")
+    gogfx_2024_lt = next(
+        row
+        for row in records
+        if row.ticker == "GOGFX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2024-12-13"
+        and row.amount
+    )
+    assert gogfx_2024_lt.amount == Decimal("3.571324")
+    grinx_2024_oi = next(
+        row
+        for row in records
+        if row.ticker == "GRINX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2024-12-13"
+        and row.amount is not None
+    )
+    assert grinx_2024_oi.amount == Decimal("0.000000")
+    getgx_years = {
+        _year_for_row(row.as_of, row.ex_date, row.payable_date)
+        for row in records
+        if row.ticker == "GETGX"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    getgx_years.discard(None)
+    assert {2022, 2023, 2024, 2025} <= getgx_years
+    assert 2021 not in getgx_years
+
+
+def test_wave_ag_leftover_walls_stay_unmatched() -> None:
+    victory = VictorySource().fetch(mode="fixture").records
+    usspx_2021 = [
+        row
+        for row in victory
+        if row.ticker == "USSPX"
+        and _year_for_row(row.as_of, row.ex_date, row.payable_date) == 2021
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert usspx_2021 == []
+    mmeax_2021 = [
+        row
+        for row in victory
+        if row.ticker == "MMEAX"
+        and _year_for_row(row.as_of, row.ex_date, row.payable_date) == 2021
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert mmeax_2021 == []
+
+    touchstone = TouchstoneSource().fetch(mode="fixture").records
+    tegix_2023 = [
+        row
+        for row in touchstone
+        if row.ticker == "TEGIX"
+        and _year_for_row(row.as_of, row.ex_date, row.payable_date) == 2023
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert tegix_2023 == []
+
+    franklin = FranklinTempletonSource().fetch(mode="fixture").records
+    pim_early = [
+        row
+        for row in franklin
+        if row.ticker == "PIM"
+        and _year_for_row(row.as_of, row.ex_date, row.payable_date) in {2021, 2022, 2023, 2024}
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert pim_early == []
+
+    fidelity = FidelitySource().fetch(mode="fixture").records
+    fbgrx_mid = {
+        _year_for_row(row.as_of, row.ex_date, row.payable_date)
+        for row in fidelity
+        if row.ticker == "FBGRX"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    fbgrx_mid.discard(None)
+    assert 2022 not in fbgrx_mid
+    assert 2023 not in fbgrx_mid
+
+
+def test_wave_ag_heroes_are_searchable(client: TestClient) -> None:
+    fetched = client.post(
+        "/ingest/fetch", json={"fund_family": "victory", "mode": "fixture"}
+    )
+    assert fetched.status_code == 200, fetched.text
+    assert fetched.json()["created"] > 0
+
+    for ticker in ("RSGRX", "GPAFX", "RSPYX", "RSVAX", "GETGX", "GOGFX"):
+        body = client.get("/funds", params={"q": ticker}).json()
+        tickers = [item["ticker"] for item in body["items"]]
+        assert ticker in tickers, f"{ticker} missing from GET /funds?q={ticker}: {tickers[:8]}"
+
+    rsgrx = client.get(
+        "/distributions",
+        params={"ticker": "RSGRX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    rsgrx_2021 = [
+        Decimal(row["amount"])
+        for row in rsgrx["items"]
+        if row.get("ticker") == "RSGRX"
+        and row.get("estimate_type") == "total_capital_gains"
+        and str(row.get("as_of") or "").startswith("2021-12-31")
+    ]
+    assert Decimal("2.35") in rsgrx_2021
+    rsgrx_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in rsgrx["items"]
+        if row.get("ticker") == "RSGRX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= rsgrx_years
+
+    getgx = client.get(
+        "/distributions",
+        params={"ticker": "GETGX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    getgx_2024 = [
+        Decimal(row["amount"])
+        for row in getgx["items"]
+        if row.get("ticker") == "GETGX"
+        and row.get("estimate_type") == "ordinary_income"
+        and str(row.get("ex_date") or "").startswith("2024-12-13")
+    ]
+    assert Decimal("0.130481") in getgx_2024
