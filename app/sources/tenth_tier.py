@@ -410,9 +410,27 @@ class LkcmSource(HtmlTableSource):
         "2025-LKCM-Year-End-Mutual-Fund-Distribution-Estimates-11-3-25.pdf "
         "(Equity LKEQX LT $3.8475; Small Cap Equity LKSCX LT $1.8102; "
         "Balanced LKBAX ST $0.0059 / LT $1.1276). "
-        "Record 12/29/2025; ex/pay 12/30/2025."
+        "Record 12/29/2025; ex/pay 12/30/2025. "
+        "Official 5y WAVE BC leftover (existing in-book only): LKCM Funds FYE "
+        "December 31 N-CSR Financial Highlights unlock leftover 2021–2025 on "
+        "the 2025 estimate book (Equity LKEQX, Small Cap LKSCX, Balanced LKBAX; "
+        "Small-Mid LKSMX is official year-depth only). Calendar-safe as_of "
+        "12/31. Class-level — never sibling-copied. Fixed Income / "
+        "International / Aquinas Catholic Equity are not on the 2025 estimate "
+        "book and are not in-book leftovers. 2025 estimate rows stay estimates "
+        "(LKEQX LT $3.8475 is not overwritten by N-CSR CG $2.91). Income is "
+        "ordinary income; capital gains are unsplit total capital gains. "
+        "Issuer dashes and printed $0.00 less-than / rounded footnotes omitted "
+        "(LKSCX 2025 OI; LKSMX 2023–2024 CG dashes). N-CSR "
+        "https://www.sec.gov/Archives/edgar/data/918942/000113322826003110/"
+        "lf-efp22616_ncsr.htm verified against 2024 0001133228-25-002005 and "
+        "2023 0001193125-24-058053. WAVE BC leftover N-CSR paid history is "
+        "fixture-only."
     )
-    live_limitations = "Estimate book is PDF. Fixture transcribes public ticker rows."
+    live_limitations = (
+        "Estimate book is PDF. Fixture transcribes public ticker rows. "
+        "Leftover 2021–2025 N-CSR paid history is fixture-only."
+    )
 
     def pages(self) -> list[PageSpec]:
         return [
@@ -426,7 +444,17 @@ class LkcmSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
-            )
+            ),
+            PageSpec(
+                name="leftover_ncsr_2021_2025_wave_bc",
+                url=(
+                    "https://www.sec.gov/Archives/edgar/data/918942/"
+                    "000113322826003110/lf-efp22616_ncsr.htm"
+                ),
+                fixture="leftover_ncsr_2021_2025_wave_bc.html",
+                live=False,
+                role="history",
+            ),
         ]
 
 

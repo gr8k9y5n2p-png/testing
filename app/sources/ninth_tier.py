@@ -214,10 +214,24 @@ class MairsPowerSource(HtmlTableSource):
         "Balanced MAPOX income $0.62548 / LT $0.90734; "
         "Small Cap MSCFX income $0.00096 / LT $0.70684). "
         "Record 12/12/2025; ex/pay 12/15/2025. The HTML is fund-level; tickers are "
-        "public Investor-class identifiers."
+        "public Investor-class identifiers. "
+        "Official 5y WAVE BC leftover (existing in-book only): Trust for "
+        "Professional Managers FYE December 31 N-CSR Financial Highlights unlock "
+        "leftover 2021–2024 on the 2025 paid year-end book (Growth MPGFX, "
+        "Balanced MAPOX, Small Cap MSCFX). Calendar-safe as_of 12/31. "
+        "Class-level Investor — never sibling-copied. Minnesota Municipal Bond "
+        "ETF MINN is not on the 2025 paid book and is not an in-book leftover. "
+        "Income is ordinary income; capital gains are unsplit total capital "
+        "gains. Issuer printed $0.00 less-than / rounded footnotes omitted "
+        "(MAPOX 2024 CG). 2025 stays on the existing paid year-end book "
+        "(MPGFX LT $6.77074 is not overwritten by N-CSR CG $6.77). N-CSR "
+        "https://www.sec.gov/Archives/edgar/data/1141819/000113322826003081/"
+        "tmpf-efp22286_ncsr.htm verified against 2023 "
+        "0001104659-24-031743. WAVE BC leftover N-CSR paid history is fixture-only."
     )
     live_limitations = (
-        "Live HTML is public but fund-name-only table may not attach tickers. Fixture fallback."
+        "Live HTML is public but fund-name-only table may not attach tickers. Fixture fallback. "
+        "Leftover 2021–2024 N-CSR paid history is fixture-only."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -232,7 +246,17 @@ class MairsPowerSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
-            )
+            ),
+            PageSpec(
+                name="leftover_ncsr_2021_2024_wave_bc",
+                url=(
+                    "https://www.sec.gov/Archives/edgar/data/1141819/"
+                    "000113322826003081/tmpf-efp22286_ncsr.htm"
+                ),
+                fixture="leftover_ncsr_2021_2024_wave_bc.html",
+                live=False,
+                role="history",
+            ),
         ]
 
 
