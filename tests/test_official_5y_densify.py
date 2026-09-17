@@ -1176,8 +1176,25 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # DESAX ~Nov 30, Catalyst FYE June 30, and Xtrackers 2021–2023 ICI 404
     # remasured as walls. Honest pin remasured on WAVE BJ tip 75efd49:
     # 4200 → 4201 (+1 MF; ETF 5y unchanged at 758).
-    assert digest.funds_with_5y == 4201
-    assert digest.funds_with_5y_mf == 3443
+    # WAVE BK leftover (existing in-book only): DWS leftover Dec 31 2021–2024
+    # N-CSR Financial Highlights unlock leftover TOLLX already on the 2025
+    # paid retail book. Does not redo AF–BJ (especially BI DWS Oct 31 KTCAX,
+    # BJ RiverPark Dec YE RWGIX / RWGFX, BG DWS Dec 31 BTIEX / SXPAX, BH TCW
+    # Oct 31, BF Baillie Gifford Dec 31, BE Driehaus Dec 31, BD LoCorr Dec 31).
+    # Sister BI KTCAX, sister BJ RWGIX / RWGFX, sister BG BTIEX / SXPAX, and
+    # sister BH TGDIX / TGVOX / TGCEX / TGPCX stay 5y on this tip. Alger
+    # leftover reserved / disjoint. Preferred William Blair leftover beyond
+    # remasured walls, Allspring leftover FYE July 31, First Eagle GRA-Smid
+    # 2021, Calamos CAISX 2021 inception, GuideStone index 2021, Beacon
+    # leftover all-dash years, Davis FYE July 31, Oberweis official 2023
+    # dashes, Hodges FYE March 31, Grandeur Peak FYE April 30, SUWAX / SDGAX /
+    # SZCAX / DCUAX FYE Sep 30, DESAX / KDHAX ~Nov 30, SUHAX FYE May 31,
+    # KGDAX FYE Oct 31 (not on this Dec 31 leftover page), Catalyst FYE June
+    # 30, and Xtrackers 2021–2023 ICI 404 remasured as walls. Honest pin
+    # remasured on WAVE BI tip 71bb6b5: 4201 → 4202 (+1 MF; ETF 5y unchanged
+    # at 758).
+    assert digest.funds_with_5y == 4202
+    assert digest.funds_with_5y_mf == 3444
     assert digest.funds_with_5y_etf == 758
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
@@ -18140,4 +18157,378 @@ def test_wave_bi_heroes_are_searchable(client: TestClient) -> None:
         if row.get("ticker") == "RWGIX" and row.get("amount") is not None
     }
     assert {"2021", "2022", "2023", "2024", "2025"} <= rwgix_years
+
+
+WAVE_BK_DWS_LEFTOVER_5Y = ("TOLLX",)
+WAVE_BK_SIBLING_WALLS = ("TOLCX", "TOLSX", "TOLIX", "TOLZX")
+WAVE_BK_NCSR_ACCESSION = "000008805326000211"
+
+
+def test_wave_bk_dws_leftover_dec31_fills_5y() -> None:
+    records = DwsSource().fetch(mode="fixture").records
+    tollx_2024_oi = next(
+        row
+        for row in records
+        if row.ticker == "TOLLX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2024-12-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert tollx_2024_oi.amount == Decimal("0.39")
+    tollx_2024_cg = next(
+        row
+        for row in records
+        if row.ticker == "TOLLX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2024-12-31"
+        and row.amount is not None
+    )
+    assert tollx_2024_cg.amount == Decimal("1.01")
+    tollx_2023_oi = next(
+        row
+        for row in records
+        if row.ticker == "TOLLX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2023-12-31"
+        and row.amount is not None
+    )
+    assert tollx_2023_oi.amount == Decimal("0.30")
+    tollx_2023_cg = next(
+        row
+        for row in records
+        if row.ticker == "TOLLX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2023-12-31"
+        and row.amount is not None
+    )
+    assert tollx_2023_cg.amount == Decimal("0.06")
+    tollx_2022_oi = next(
+        row
+        for row in records
+        if row.ticker == "TOLLX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2022-12-31"
+        and row.amount is not None
+    )
+    assert tollx_2022_oi.amount == Decimal("0.21")
+    tollx_2022_cg = next(
+        row
+        for row in records
+        if row.ticker == "TOLLX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2022-12-31"
+        and row.amount is not None
+    )
+    assert tollx_2022_cg.amount == Decimal("1.34")
+    tollx_2021_oi = next(
+        row
+        for row in records
+        if row.ticker == "TOLLX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2021-12-31"
+        and row.amount is not None
+    )
+    assert tollx_2021_oi.amount == Decimal("0.18")
+    tollx_2021_cg = next(
+        row
+        for row in records
+        if row.ticker == "TOLLX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2021-12-31"
+        and row.amount is not None
+    )
+    assert tollx_2021_cg.amount == Decimal("0.86")
+    # Class-level — never sibling-copied onto Class C / S / Institutional / R6.
+    ncsr_siblings = [
+        row
+        for row in records
+        if row.ticker in WAVE_BK_SIBLING_WALLS
+        and row.source_url
+        and WAVE_BK_NCSR_ACCESSION in row.source_url
+    ]
+    assert ncsr_siblings == []
+    # WAVE BG Dec 31 leftovers are not re-emitted on this RREEF page.
+    ncsr_bg = [
+        row
+        for row in records
+        if row.ticker in WAVE_BG_DWS_LEFTOVER_5Y
+        and row.source_url
+        and WAVE_BK_NCSR_ACCESSION in row.source_url
+    ]
+    assert ncsr_bg == []
+    # WAVE BI Oct 31 leftover is not re-emitted on this December 31 page.
+    ncsr_bi = [
+        row
+        for row in records
+        if row.ticker in WAVE_BI_DWS_LEFTOVER_5Y
+        and row.source_url
+        and WAVE_BK_NCSR_ACCESSION in row.source_url
+    ]
+    assert ncsr_bi == []
+    # 2025 stays on the existing paid retail book — not re-emitted from N-CSR.
+    ncsr_late = [
+        row
+        for row in records
+        if row.ticker in WAVE_BK_DWS_LEFTOVER_5Y
+        and row.as_of
+        and row.as_of.year == 2025
+        and row.source_url
+        and WAVE_BK_NCSR_ACCESSION in row.source_url
+    ]
+    assert ncsr_late == []
+    tollx_2025 = next(
+        row
+        for row in records
+        if row.ticker == "TOLLX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-17"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert tollx_2025.amount == Decimal("1.1959")
+    for ticker in WAVE_BK_DWS_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(records, ticker), ticker
+    # Keep sister WAVE BG DWS Dec 31 leftovers 5y on tip.
+    for ticker in WAVE_BG_DWS_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(records, ticker), ticker
+    # Keep sister WAVE BI DWS Oct 31 leftover 5y on tip.
+    for ticker in WAVE_BI_DWS_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(records, ticker), ticker
+    # Keep sister WAVE BJ RiverPark leftovers 5y on tip.
+    riverpark = RiverparkSource().fetch(mode="fixture").records
+    for ticker in ("RWGIX", "RWGFX"):
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(riverpark, ticker), ticker
+
+
+def test_wave_bk_leftover_walls_stay_unmatched() -> None:
+    dws = DwsSource().fetch(mode="fixture").records
+    ncsr_siblings = [
+        row
+        for row in dws
+        if row.ticker in WAVE_BK_SIBLING_WALLS
+        and row.source_url
+        and WAVE_BK_NCSR_ACCESSION in row.source_url
+    ]
+    assert ncsr_siblings == []
+    ncsr_tickers = {
+        row.ticker
+        for row in dws
+        if row.source_url and WAVE_BK_NCSR_ACCESSION in row.source_url
+    }
+    assert ncsr_tickers == set(WAVE_BK_DWS_LEFTOVER_5Y)
+    # SUWAX / SDGAX / SZCAX / DCUAX FYE September 30 are not calendar-safe.
+    assert 2021 not in _paid_lookback_years(dws, "SUWAX")
+    assert 2021 not in _paid_lookback_years(dws, "SDGAX")
+    assert 2021 not in _paid_lookback_years(dws, "SZCAX")
+    assert 2021 not in _paid_lookback_years(dws, "DCUAX")
+    # DESAX / KDHAX ~November 30 are not calendar-safe.
+    assert 2021 not in _paid_lookback_years(dws, "DESAX")
+    assert 2021 not in _paid_lookback_years(dws, "KDHAX")
+    # SUHAX FYE May 31 is not calendar-safe.
+    assert 2021 not in _paid_lookback_years(dws, "SUHAX")
+    # KGDAX FYE Oct 31 is not on this December 31 leftover page.
+    kgdax_bk = [
+        row
+        for row in dws
+        if row.ticker == "KGDAX"
+        and row.source_url
+        and WAVE_BK_NCSR_ACCESSION in row.source_url
+    ]
+    assert kgdax_bk == []
+    assert 2021 not in _paid_lookback_years(dws, "KGDAX")
+    # Xtrackers leftover 2021–2023 ICI siblings stay unmatched.
+    assert 2021 not in _paid_lookback_years(dws, "DEEF")
+    assert 2022 not in _paid_lookback_years(dws, "DEEF")
+    assert 2023 not in _paid_lookback_years(dws, "DEEF")
+
+    # Keep sister WAVE BI DWS — KTCAX stays 5y on tip.
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(dws, "KTCAX")
+    # Keep sister WAVE BG DWS — BTIEX / SXPAX stay 5y on tip.
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(dws, "BTIEX")
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(dws, "SXPAX")
+    # Keep sister WAVE BH TCW — TGDIX / TGVOX / TGCEX / TGPCX stay 5y on tip.
+    tcw = TcwSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(tcw, "TGDIX")
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(tcw, "TGVOX")
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(tcw, "TGCEX")
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(tcw, "TGPCX")
+    # Keep sister WAVE BF Baillie — BGAKX / BINSX / BGESX / BSGPX stay 5y on tip.
+    baillie = BaillieGiffordSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(baillie, "BGAKX")
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(baillie, "BINSX")
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(baillie, "BGESX")
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(baillie, "BSGPX")
+    # Keep sister WAVE BE Driehaus — DMCRX / DVSMX / DNSMX stay 5y on tip.
+    driehaus = DriehausSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(driehaus, "DMCRX")
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(driehaus, "DVSMX")
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(driehaus, "DNSMX")
+    # Keep sister WAVE BD LoCorr — LFMIX / LCSIX / LOTIX / LEQIX stay 5y on tip.
+    locorr = LocorrSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(locorr, "LFMIX")
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(locorr, "LCSIX")
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(locorr, "LOTIX")
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(locorr, "LEQIX")
+    # Keep sister WAVE BJ RiverPark — RWGIX / RWGFX stay 5y on tip.
+    riverpark = RiverparkSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(riverpark, "RWGIX")
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(riverpark, "RWGFX")
+
+    # Exclusive leftover — WAVE BK ticker stays disjoint from BJ / BI / BH /
+    # BF / BE / BD books and from sister BG Dec 31 leftovers / Alger reserved.
+    dws_bk = {row.ticker for row in dws if row.source_url and WAVE_BK_NCSR_ACCESSION in row.source_url}
+    baillie_tickers = {row.ticker for row in baillie if row.ticker}
+    driehaus_tickers = {row.ticker for row in driehaus if row.ticker}
+    locorr_tickers = {row.ticker for row in locorr if row.ticker}
+    tcw_tickers = {row.ticker for row in tcw if row.ticker}
+    alger = AlgerSource().fetch(mode="fixture").records
+    alger_tickers = {row.ticker for row in alger if row.ticker}
+    assert dws_bk == set(WAVE_BK_DWS_LEFTOVER_5Y)
+    assert not dws_bk & set(WAVE_BG_DWS_LEFTOVER_5Y)
+    assert not dws_bk & set(WAVE_BI_DWS_LEFTOVER_5Y)
+    assert not dws_bk & set(WAVE_BH_TCW_LEFTOVER_5Y)
+    assert not dws_bk & baillie_tickers
+    assert not dws_bk & driehaus_tickers
+    assert not dws_bk & locorr_tickers
+    assert not dws_bk & tcw_tickers
+    assert not dws_bk & alger_tickers
+    assert not dws_bk & set(WAVE_BF_BAILLIE_LEFTOVER_5Y)
+    assert not dws_bk & set(WAVE_BF_DRIEHAUS_DISJOINT)
+    assert not dws_bk & set(WAVE_BF_LOCORR_DISJOINT)
+    assert not dws_bk & set(WAVE_BH_ALGER_RESERVED)
+    assert not dws_bk & set(WAVE_BJ_RIVERPARK_LEFTOVER_5Y)
+    riverpark_tickers = {row.ticker for row in riverpark if row.ticker}
+    assert not dws_bk & riverpark_tickers
+    # Sister Alger leftovers stay unmatched on this tip (reserved).
+    assert 2021 not in _paid_lookback_years(alger, "CHUSX")
+    assert 2023 not in _paid_lookback_years(alger, "CHUSX")
+    assert 2024 not in _paid_lookback_years(alger, "CHUSX")
+
+    # Westwood WQAIX 2025 is a remasured wall — N-CSR FYE Oct 31 reprints
+    # already-booked December 2024 paid amounts; 2025 AllCap final is blank.
+    westwood = WestwoodSource().fetch(mode="fixture").records
+    assert 2025 not in _paid_lookback_years(westwood, "WQAIX")
+    assert 2021 not in _paid_lookback_years(westwood, "WWMCX")
+    assert 2022 not in _paid_lookback_years(westwood, "WWMCX")
+    assert [row for row in westwood if row.ticker == "WQAUX"] == []
+
+    william_blair = WilliamBlairSource().fetch(mode="fixture").records
+    assert 2023 not in _paid_lookback_years(william_blair, "LCGFX")
+    assert 2024 not in _paid_lookback_years(william_blair, "WESNX")
+    allspring = AllspringSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(allspring, "WDSAX")
+    first_eagle = FirstEagleSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(first_eagle, "FERAX")
+    calamos = CalamosSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(calamos, "CAISX")
+    guidestone = GuidestoneSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(guidestone, "GEIZX")
+    beacon = AmericanBeaconSource().fetch(mode="fixture").records
+    assert 2023 not in _paid_lookback_years(beacon, "SFMIX")
+    davis = DavisSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(davis, "NYVTX")
+    oberweis = OberweisSource().fetch(mode="fixture").records
+    assert 2023 not in _paid_lookback_years(oberweis, "OBMCX")
+    hodges = HodgesSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(hodges, "HDPMX")
+    grandeur = GrandeurPeakSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(grandeur, "GPEIX")
+
+
+def test_wave_bk_heroes_are_searchable(client: TestClient) -> None:
+    fetched = client.post(
+        "/ingest/fetch", json={"fund_family": "dws", "mode": "fixture"}
+    )
+    assert fetched.status_code == 200, fetched.text
+    assert fetched.json()["created"] > 0
+
+    for ticker in WAVE_BK_DWS_LEFTOVER_5Y:
+        body = client.get("/funds", params={"q": ticker}).json()
+        tickers = [item["ticker"] for item in body["items"]]
+        assert ticker in tickers, f"{ticker} missing from GET /funds?q={ticker}: {tickers[:8]}"
+
+    tollx = client.get(
+        "/distributions",
+        params={"ticker": "TOLLX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    tollx_2024 = [
+        Decimal(row["amount"])
+        for row in tollx["items"]
+        if row.get("ticker") == "TOLLX"
+        and row.get("estimate_type") == "ordinary_income"
+        and str(row.get("as_of") or "").startswith("2024-12-31")
+    ]
+    assert Decimal("0.39") in tollx_2024
+    tollx_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in tollx["items"]
+        if row.get("ticker") == "TOLLX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= tollx_years
+
+    # Keep sister WAVE BI DWS searchable after the additive leftover.
+    ktcax = client.get(
+        "/distributions",
+        params={"ticker": "KTCAX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    ktcax_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in ktcax["items"]
+        if row.get("ticker") == "KTCAX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= ktcax_years
+
+    # Keep sister WAVE BG DWS searchable after the additive leftover.
+    btiex = client.get(
+        "/distributions",
+        params={"ticker": "BTIEX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    btiex_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in btiex["items"]
+        if row.get("ticker") == "BTIEX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= btiex_years
+
+    # Keep sister WAVE BJ RiverPark searchable after the additive leftover.
+    riverpark_fetched = client.post(
+        "/ingest/fetch", json={"fund_family": "riverpark", "mode": "fixture"}
+    )
+    assert riverpark_fetched.status_code == 200, riverpark_fetched.text
+    rwgix = client.get(
+        "/distributions",
+        params={"ticker": "RWGIX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    rwgix_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in rwgix["items"]
+        if row.get("ticker") == "RWGIX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= rwgix_years
+
+    # Keep sister WAVE BH TCW searchable after the additive leftover.
+    tcw_fetched = client.post(
+        "/ingest/fetch", json={"fund_family": "tcw", "mode": "fixture"}
+    )
+    assert tcw_fetched.status_code == 200, tcw_fetched.text
+    tgdix = client.get(
+        "/distributions",
+        params={"ticker": "TGDIX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    tgdix_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in tgdix["items"]
+        if row.get("ticker") == "TGDIX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= tgdix_years
 
