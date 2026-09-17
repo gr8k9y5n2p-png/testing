@@ -6047,6 +6047,73 @@ def test_dws_xtrackers_fixtures() -> None:
         and r.as_of.year in {2021, 2023}
         for r in dws_ncsr_bn
     )
+    assert not any(r.ticker == "KTRAX" for r in dws_ncsr_bn)
+
+    dws_ncsr_bo = parse_distribution_html(
+        (ROOT / "dws" / "leftover_ncsr_2021_2024_wave_bo.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url=(
+            "https://www.sec.gov/Archives/edgar/data/95603/"
+            "000008805325001130/ar103125dgib.htm"
+        ),
+        fund_family="DWS / Xtrackers",
+    )
+    ktrax_2024_oi = next(
+        r
+        for r in dws_ncsr_bo
+        if r.ticker == "KTRAX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.as_of
+        and str(r.as_of) == "2024-10-31"
+    )
+    assert ktrax_2024_oi.amount == Decimal("0.34")
+    assert ktrax_2024_oi.publication_stage == PublicationStage.final
+    ktrax_2022_cg = next(
+        r
+        for r in dws_ncsr_bo
+        if r.ticker == "KTRAX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and r.as_of
+        and str(r.as_of) == "2022-10-31"
+    )
+    assert ktrax_2022_cg.amount == Decimal("0.80")
+    ktrax_2021_oi = next(
+        r
+        for r in dws_ncsr_bo
+        if r.ticker == "KTRAX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.as_of
+        and str(r.as_of) == "2021-10-31"
+    )
+    assert ktrax_2021_oi.amount == Decimal("0.22")
+    assert {r.ticker for r in dws_ncsr_bo} == {"KTRAX"}
+    assert not any(
+        r.ticker
+        in {
+            "KTRCX",
+            "KTRSX",
+            "KTRIX",
+            "KTRZX",
+            "KGDAX",
+            "TOLLX",
+            "KTCAX",
+            "BTIEX",
+            "SXPAX",
+            "CCGIX",
+            "CCGSX",
+            "CCWIX",
+            "CCWSX",
+        }
+        for r in dws_ncsr_bo
+    )
+    assert not any(
+        r.ticker == "KTRAX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and r.as_of
+        and r.as_of.year in {2021, 2023, 2024}
+        for r in dws_ncsr_bo
+    )
 
     baird_ncsr_bm = parse_distribution_html(
         (ROOT / "baird" / "leftover_ncsr_2021_2024_wave_bm.html").read_text(
