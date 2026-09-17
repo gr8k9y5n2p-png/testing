@@ -25,6 +25,9 @@ describe("homepage Account login panel", () => {
     assert.match(form, /autoComplete="username"/);
     assert.match(form, /name="account-email"/);
     assert.match(form, /name="account-password"/);
+    const layout = read("../app/layout.tsx");
+    assert.match(layout, /initialAccount/);
+    assert.match(layout, /verifyAccountCookie/);
   });
 
   it("keeps friends-beta password autofill off the Account login fields", () => {

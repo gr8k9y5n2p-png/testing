@@ -19,9 +19,15 @@ type AccountSessionValue = {
 
 const AccountSessionContext = createContext<AccountSessionValue | null>(null);
 
-export function AccountSessionProvider({ children }: { children: ReactNode }) {
+export function AccountSessionProvider({
+  children,
+  initialAccount = null,
+}: {
+  children: ReactNode;
+  initialAccount?: PublicAccount | null;
+}) {
   const [account, setAccount] = useState<PublicAccount | null | undefined>(
-    undefined,
+    initialAccount,
   );
 
   useEffect(() => {

@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { cookies } from "next/headers";
 import { IBM_Plex_Mono, Source_Sans_3, Source_Serif_4 } from "next/font/google";
 import { AppHeader } from "@/components/AppHeader";
 import { AppFooter } from "@/components/AppFooter";
 import { AccountSessionProvider } from "@/components/AccountSession";
 import { FriendsBetaBanner } from "@/components/FriendsBetaBanner";
+import { ACCOUNT_COOKIE, verifyAccountCookie } from "@/lib/account/session";
+import { getAccountStore, toPublicAccount } from "@/lib/account/store";
 import { COPY } from "@/lib/copy";
 import { publicOrigin } from "@/lib/hosts";
 import "./globals.css";
@@ -48,18 +51,23 @@ export const metadata: Metadata = {
     : { index: true, follow: true },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: ReactNode;
 }>) {
+  const raw = (await cookies()).get(ACCOUNT_COOKIE)?.value;
+  const accountId = verifyAccountCookie(raw);
+  const row = accountId ? await getAccountStore().findById(accountId) : null;
+  const initialAccount = row ? toPublicAccount(row) : null;
+
   return (
     <html
       lang="en"
       className={`${sourceSans.variable} ${sourceSerif.variable} ${plexMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-paper text-ink font-sans">
-        <AccountSessionProvider>
+        <AccountSessionProvider initialAccount={initialAccount}>
           <AppHeader />
           <FriendsBetaBanner />
           <div className="flex-1">{children}</div>
