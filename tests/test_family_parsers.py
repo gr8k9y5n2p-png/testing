@@ -4839,6 +4839,48 @@ def test_tenth_tier_fixtures() -> None:
     )
     assert mnvax.amount == Decimal("1.92670046")
 
+    madison_ncsr = parse_distribution_html(
+        (ROOT / "madison" / "leftover_ncsr_2021_2024_wave_ba.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url=(
+            "https://www.sec.gov/Archives/edgar/data/1040612/"
+            "000175392626000073/g211434_ncsr.htm"
+        ),
+        fund_family="Madison",
+    )
+    magsx_2021 = next(
+        r
+        for r in madison_ncsr
+        if r.ticker == "MAGSX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and r.as_of
+        and str(r.as_of) == "2021-10-31"
+    )
+    assert magsx_2021.amount == Decimal("0.94")
+    assert magsx_2021.publication_stage == PublicationStage.final
+    mnvax_2021 = next(
+        r
+        for r in madison_ncsr
+        if r.ticker == "MNVAX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and r.as_of
+        and str(r.as_of) == "2021-10-31"
+    )
+    assert mnvax_2021.amount == Decimal("2.37")
+    gtsgx_2022_oi = [
+        r
+        for r in madison_ncsr
+        if r.ticker == "GTSGX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.as_of
+        and r.as_of.year == 2022
+    ]
+    assert gtsgx_2022_oi == []
+    assert {r.ticker for r in madison_ncsr if r.as_of and r.as_of.year == 2025} == set()
+    assert "MAGG" not in {r.ticker for r in madison_ncsr}
+    assert "MSTI" not in {r.ticker for r in madison_ncsr}
+
     lsv = parse_distribution_html(
         (ROOT / "lsv" / "2025_year_end_distributions.html").read_text(encoding="utf-8"),
         source_url="fixture://lsv",

@@ -286,11 +286,29 @@ class MadisonSource(HtmlTableSource):
         "Official 5y parallel W leftover re-probe (2026-09-16): live tax-center "
         "HTML is the 2025 book only. Dated 2021–2024 tax-center / capital-gains "
         "siblings unpublished; Wayback CDX was offline on re-probe. Class Y / I / R6 "
-        "siblings not in the tickered leftover set are not copied. Leftover years stay unmatched."
+        "siblings not in the tickered leftover set are not copied. "
+        "Official 5y WAVE BA leftover (existing in-book only): Madison Funds "
+        "FYE October 31 N-CSR Financial Highlights unlock leftover 2021–2024 "
+        "on the 2025 tax-center paid book (Aggressive Allocation MAGSX, "
+        "Diversified Income MBLAX, Dividend Income MADAX, Large Cap MNVAX, "
+        "Mid Cap GTSGX, Moderate Allocation MMDAX, Small Cap BVAOX). "
+        "Calendar-safe as_of 10/31. Class-level Class A / Y — never "
+        "sibling-copied. Conservative Allocation / Core Bond / Covered Call "
+        "are not on the 2025 paid book and are not in-book leftovers. ETF "
+        "wrappers MAGG / MSTI leftover years remasured as walls (different "
+        "trust; calendar Dec 31, not this Oct 31 N-CSR). Income is ordinary "
+        "income; capital gains are unsplit total capital gains. Issuer dashes "
+        "and printed $0.00 less-than / rounded footnotes omitted (GTSGX 2022 "
+        "OI; BVAOX 2022 OI). 2025 stays on the existing tax-center book "
+        "(MNVAX LT $1.92670046 is not overwritten by N-CSR CG $1.59). "
+        "N-CSR https://www.sec.gov/Archives/edgar/data/1040612/"
+        "000175392626000073/g211434_ncsr.htm. WAVE BA leftover N-CSR paid "
+        "history is fixture-only."
     )
     live_limitations = (
         "Public HTML is fund-name / ST / LT only (no ticker column). Fixture fallback. "
-        "Prior-year tax-center tables unpublished."
+        "Prior-year tax-center tables unpublished. "
+        "Leftover 2021–2024 N-CSR paid history is fixture-only."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -302,7 +320,17 @@ class MadisonSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
-            )
+            ),
+            PageSpec(
+                name="leftover_ncsr_2021_2024_wave_ba",
+                url=(
+                    "https://www.sec.gov/Archives/edgar/data/1040612/"
+                    "000175392626000073/g211434_ncsr.htm"
+                ),
+                fixture="leftover_ncsr_2021_2024_wave_ba.html",
+                live=False,
+                role="history",
+            ),
         ]
 
 
