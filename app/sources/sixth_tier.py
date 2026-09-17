@@ -999,9 +999,9 @@ class AlgerSource(HtmlTableSource):
         "https://www.sec.gov/Archives/edgar/data/92751/000114036123059788/"
         "ef20017111_ncsr.htm (0001140361-23-059788). Sister WAVE CC Pioneer "
         "Class R PIORX / PQIRX, WAVE CD Lazard R6, WAVE CB Open, WAVE BY "
-        "Institutional, WAVE BZ / CA / BX Pioneer C/Y/K, and prior sister leftover "
-        "pages stay unmatched / not re-emitted here. WAVE CF leftover N-CSR paid "
-        "history is fixture-only."
+        "Institutional, WAVE CG Lazard Real Assets RALIX / RALOX, WAVE BZ / CA / "
+        "BX Pioneer C/Y/K, and prior sister leftover pages stay unmatched / not "
+        "re-emitted here. WAVE CF leftover N-CSR paid history is fixture-only."
     )
     live_limitations = (
         "Year-end book is PDF. Weekly walk uses the DividendsDistributions hub + 2025 "
