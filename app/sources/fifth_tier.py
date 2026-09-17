@@ -239,6 +239,8 @@ class OakmarkSource(HtmlTableSource):
         "$2.0405; OAZMX $2.1015; OAYEX ST $0.0276 / LT $0.7241). Investor OAKMX / "
         "OAKLX / OAKGX / OAKWX / OAKIX / OAKEX stay on the existing 2024 fixture. "
         "Printed $0.0000 stored. Bond 2023 and OAKCX 2021 stay unpublished. "
+        "Official 5y WAVE AM leftover re-probe (2026-09-17): Bond 2023 and "
+        "OAKCX 2021 still unpublished on Wayback YE HTML. "
         "Tax estimates hub is % of NAV only (no ST/LT $/share). "
         "Tax guide: https://oakmark.com/wp-content/uploads/sites/3/documents/HarrisOakmark-Tax-Information-Guide.pdf"
     )

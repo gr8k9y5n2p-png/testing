@@ -292,5 +292,9 @@ def test_fixture_book_lookback_stays_official_only() -> None:
     # WAVE AL leftover: T. Rowe leftover Advisor / R / Institutional 2024
     # N-CSR +36 MF. Honest pin remasured after additive rebase onto #208 tip
     # e8887ce9: 3814 → 3850 (+36 MF; ETF 5y unchanged at 758).
-    assert digest.funds_with_5y == 3850
+    # WAVE AM leftover: Columbia official all-class $0 leftover years +
+    # Real Estate Equity leftover 2021 N-CSR +12 MF. Honest pin remasured
+    # after additive rebase onto #209 tip e5cbe71d: 3850 → 3862 (+12 MF;
+    # ETF 5y unchanged at 758).
+    assert digest.funds_with_5y == 3862
     assert digest.book_funds >= 7200

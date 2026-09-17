@@ -57,6 +57,10 @@ class BlackRockSource(HtmlTableSource):
         "unmatched (SHV 2021 / IGOV 2023 / ISHG 2022 / INDA 2022 / LEMB 2024). "
         "BACAX / CMLAX / MDGCX / MDDCX 2025, BHYAX 2023, BCBAX / BAICX 2024, "
         "BAMBX 2021, LILAX / LELAX 2025 unpublished on those live year pages. "
+        "Official 5y WAVE AM leftover re-probe (2026-09-17, Investor A MF only): "
+        "MDEFX 2021 still unpublished on the live 2021 open-end tax HTML; "
+        "LifePath 2025 leftovers LPBAX / LILAX / LELAX miss 2025 after maturity "
+        "/ rename. iShares ETF leftovers belong to prior waves — not redone. "
         "All-events leftover (2026-09-16, in-book only): official stamped "
         "distribution-summary PDFs 2022–2025 re-read for non-December ordinary "
         "income / LT / ROC the December-only ICI CSVs omitted. Qualified % "
@@ -865,7 +869,9 @@ class PimcoSource(HtmlTableSource):
         "are still 1099 character (muni % / AMT / US-gov %), not ST/LT $/share. "
         "Fixture book has parser-layout samples only (ZZPIMI / ZZPIMB) — no existing "
         "in-book PIMCO MF tickers to densify. Partner ingest is the escape hatch "
-        "for official notices."
+        "for official notices. "
+        "Official 5y WAVE AM leftover re-probe (2026-09-17): still no in-book "
+        "PIMCO MF leftover tickers; tax-center PDFs remain 1099 character."
     )
     live_limitations = (
         "No public HTML estimate table or open-end ST/LT PDF on this pass; fixture "

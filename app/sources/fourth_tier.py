@@ -308,7 +308,11 @@ class HartfordSource(HtmlTableSource):
         "2025 only — historical name-key did not print IHOAX. "
         "WAVE AJ leftover re-probe (2026-09-17): I/C/F/R/Y 2021–2024 still "
         "unpublished on the Class A historical PDF; HDBAX 2021 still unpublished; "
-        "IHOAX still 2025-only. Never copied onto sibling classes."
+        "IHOAX still 2025-only. Never copied onto sibling classes. "
+        "Official 5y WAVE AM leftover re-probe (2026-09-17): I/C/F/R/Y 2021–2024 "
+        "still unpublished on the Class A historical PDF; product-page HTML still "
+        "truncates to 2025–2026; HDBAX 2021 / IHOAX 2021–2024 stay unmatched. "
+        "No calendar-safe class-level official publish for leftover share classes."
     )
     live_limitations = (
         "Estimate and final books are PDF. Share-class product pages are HTML; "
@@ -708,6 +712,10 @@ class ArtisanSource(HtmlTableSource):
         "Primary PDFs: Mid Cap / Small Cap / Focus / Global Discovery still "
         "absent from the 2023 book; Global Opportunities still absent from "
         "2022. Unpublished leftover years stay unmatched. "
+        "Official 5y WAVE AM leftover re-probe (2026-09-17): 2023 ICI Primary "
+        "still has no ARTMX / ARTSX / ARTTX / APFDX / APHMX / APHSX / APHTX "
+        "rows; 2021 inception leftovers (International Explorer / Value Income / "
+        "debt) stay unmatched. "
         "Year selector for older HTML YE tables is JavaScript — skip SPA. "
         "NRA / DRD PDFs are tax-character layouts, not ingested as CG."
     )

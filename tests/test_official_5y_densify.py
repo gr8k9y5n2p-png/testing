@@ -830,8 +830,18 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # identities. No overlap with AF–AK. Honest pin remasured after
     # additive rebase onto #208 tip e8887ce9: 3814 → 3850 (+36 MF;
     # ETF 5y unchanged at 758).
-    assert digest.funds_with_5y == 3850
-    assert digest.funds_with_5y_mf == 3092
+    # WAVE AM leftover (existing in-book only): Columbia official all-class
+    # $0 leftover years + Real Estate Equity leftover 2021 N-CSR unlock
+    # +12 MF (UMLGX / CSVFX / CREEX / CGEZX / NSEPX / CSCZX 2022; CBALX
+    # 2023; CBMZX / CZMGX 2025; CREAX / CRRVX / CREYX 2021+2022). Does
+    # not redo AF–AL. Hartford / MFS leftover Excel / Artisan 2023 ICI /
+    # Dodge Class X 2021 / Oakmark Bond 2023 / Lord Daily / Franklin
+    # DIST-SUMM / PIMCO / BlackRock MDEFX 2021 / Dimensional 2021–2022 /
+    # Nuveen NSBRX 2021 / Schwab MM stay walls. Honest pin remasured
+    # after additive rebase onto #209 tip e5cbe71d: 3850 → 3862 (+12 MF;
+    # ETF 5y unchanged at 758).
+    assert digest.funds_with_5y == 3862
+    assert digest.funds_with_5y_mf == 3104
     assert digest.funds_with_5y_etf == 758
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
@@ -10813,3 +10823,240 @@ def test_wave_al_heroes_are_searchable(client: TestClient) -> None:
         and row.get("publication_stage") == "final"
     ]
     assert rrcox_2024 == []
+
+
+WAVE_AM_COLUMBIA_LEFTOVER_5Y = (
+    "UMLGX",
+    "CSVFX",
+    "CREEX",
+    "CGEZX",
+    "NSEPX",
+    "CSCZX",
+    "CBALX",
+    "CBMZX",
+    "CZMGX",
+    "CREAX",
+    "CRRVX",
+    "CREYX",
+)
+
+
+def test_wave_am_columbia_leftover_official_zero_and_ncsr_fills_5y() -> None:
+    records = ColumbiaThreadneedleSource().fetch(mode="fixture").records
+    umlgx_2022_lt = next(
+        row
+        for row in records
+        if row.ticker == "UMLGX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2022-12-08"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert umlgx_2022_lt.amount == Decimal("0.00")
+    cbalx_2023_lt = next(
+        row
+        for row in records
+        if row.ticker == "CBALX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2023-12-08"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert cbalx_2023_lt.amount == Decimal("0.00")
+    cbmzx_2025_lt = next(
+        row
+        for row in records
+        if row.ticker == "CBMZX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-19"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert cbmzx_2025_lt.amount == Decimal("0.00")
+    creax_2021_oi = next(
+        row
+        for row in records
+        if row.ticker == "CREAX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2021-12-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert creax_2021_oi.amount == Decimal("0.17")
+    creax_2021_cg = next(
+        row
+        for row in records
+        if row.ticker == "CREAX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2021-12-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert creax_2021_cg.amount == Decimal("0.84")
+    crrvx_2021_cg = next(
+        row
+        for row in records
+        if row.ticker == "CRRVX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2021-12-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert crrvx_2021_cg.amount == Decimal("0.84")
+    creyx_2021_oi = next(
+        row
+        for row in records
+        if row.ticker == "CREYX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2021-12-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert creyx_2021_oi.amount == Decimal("0.23")
+    # Class-level — never sibling-copy Institutional CREEX 2021 onto leftover A / 2 / 3.
+    creex_2021_ncsr = [
+        row.amount
+        for row in records
+        if row.ticker == "CREEX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2021-12-31"
+        and row.amount is not None
+    ]
+    assert creex_2021_ncsr == []
+    for ticker in WAVE_AM_COLUMBIA_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(records, ticker), ticker
+
+
+def test_wave_am_leftover_walls_stay_unmatched() -> None:
+    columbia = ColumbiaThreadneedleSource().fetch(mode="fixture").records
+    # Class A / C / R 2021 $ still unpublished (Institutional-only YE PDF).
+    lbsax_2021 = [
+        row
+        for row in columbia
+        if row.ticker == "LBSAX"
+        and row.publication_stage in {PublicationStage.final, PublicationStage.paid}
+        and row.amount is not None
+        and _year_for_row(row.as_of, row.ex_date, row.payable_date) == 2021
+    ]
+    assert lbsax_2021 == []
+    assert {2022, 2023, 2024, 2025} <= _paid_lookback_years(columbia, "LBSAX")
+
+    hartford = HartfordSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(hartford, "HDBAX")
+    for ticker in ("IHOAX", "HDGIX"):
+        years = _paid_lookback_years(hartford, ticker)
+        assert 2021 not in years, ticker
+        assert 2022 not in years, ticker
+        assert 2023 not in years, ticker
+        assert 2024 not in years, ticker
+
+    mfs = MfsSource().fetch(mode="fixture").records
+    assert 2022 not in _paid_lookback_years(mfs, "MEMBX")
+    assert 2023 not in _paid_lookback_years(mfs, "BRSPX")
+    assert 2023 not in _paid_lookback_years(mfs, "BRSHX")
+    assert 2021 not in _paid_lookback_years(mfs, "MNWTX")
+    assert 2021 not in _paid_lookback_years(mfs, "UIVIX")
+
+    artisan = ArtisanSource().fetch(mode="fixture").records
+    for ticker in ("ARTMX", "ARTSX", "ARTTX", "APFDX"):
+        assert 2023 not in _paid_lookback_years(artisan, ticker), ticker
+
+    dodge = DodgeCoxSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(dodge, "DOXGX")
+    assert {2022, 2023, 2024, 2025} <= _paid_lookback_years(dodge, "DOXGX")
+
+    oakmark = OakmarkSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(oakmark, "OAKCX")
+    # Bond 2023 unpublished on Wayback YE HTML (Investor OAKCX and siblings).
+    assert 2023 not in _paid_lookback_years(oakmark, "OAKCX")
+
+    lord = LordAbbettSource().fetch(mode="fixture").records
+    assert 2022 not in _paid_lookback_years(lord, "LAGWX")
+    assert 2023 not in _paid_lookback_years(lord, "LAGWX")
+
+    dfa = DimensionalSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(dfa, "DISVX")
+    assert 2022 not in _paid_lookback_years(dfa, "DISVX")
+
+    nuveen = NuveenSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(nuveen, "NSBRX")
+
+    br = BlackRockSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(br, "MDEFX")
+
+    # WAVE AL wall — do not redo T. Rowe Advisor/R/Inst leftovers.
+    trowe = TRowePriceSource().fetch(mode="fixture").records
+    assert 2024 not in _paid_lookback_years(trowe, "RRCOX")
+
+
+def test_wave_am_heroes_are_searchable(client: TestClient) -> None:
+    fetched = client.post(
+        "/ingest/fetch", json={"fund_family": "columbia_threadneedle", "mode": "fixture"}
+    )
+    assert fetched.status_code == 200, fetched.text
+    assert fetched.json()["created"] > 0
+
+    for ticker in ("UMLGX", "CREAX", "CRRVX", "CREYX", "CBALX", "CBMZX", "LBSAX"):
+        body = client.get("/funds", params={"q": ticker}).json()
+        tickers = [item["ticker"] for item in body["items"]]
+        assert ticker in tickers, f"{ticker} missing from GET /funds?q={ticker}: {tickers[:8]}"
+
+    umlgx = client.get(
+        "/distributions",
+        params={"ticker": "UMLGX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    umlgx_2022 = [
+        Decimal(row["amount"])
+        for row in umlgx["items"]
+        if row.get("ticker") == "UMLGX"
+        and row.get("estimate_type") == "long_term_capital_gains"
+        and str(row.get("ex_date") or "").startswith("2022-12-08")
+    ]
+    assert Decimal("0.00") in umlgx_2022
+    umlgx_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in umlgx["items"]
+        if row.get("ticker") == "UMLGX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= umlgx_years
+
+    creax = client.get(
+        "/distributions",
+        params={"ticker": "CREAX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    creax_2021 = [
+        Decimal(row["amount"])
+        for row in creax["items"]
+        if row.get("ticker") == "CREAX"
+        and row.get("estimate_type") == "total_capital_gains"
+        and str(row.get("as_of") or "").startswith("2021-12-31")
+    ]
+    assert Decimal("0.84") in creax_2021
+    creax_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in creax["items"]
+        if row.get("ticker") == "CREAX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= creax_years
+
+    lbsax = client.get(
+        "/distributions",
+        params={"ticker": "LBSAX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    lbsax_2021 = [
+        row
+        for row in lbsax["items"]
+        if row.get("ticker") == "LBSAX"
+        and str(row.get("as_of") or row.get("ex_date") or "").startswith("2021")
+        and row.get("amount") is not None
+        and row.get("publication_stage") == "final"
+    ]
+    assert lbsax_2021 == []
