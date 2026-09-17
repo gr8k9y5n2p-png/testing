@@ -885,8 +885,22 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # Vanguard ICI Dec, AN Hartford/Artisan, AR Homestead). Honest pin
     # remasured on WAVE AR tip e82c647: 4033 → 4070 (+37 MF; ETF 5y
     # unchanged at 758).
-    assert digest.funds_with_5y == 4070
-    assert digest.funds_with_5y_mf == 3312
+    # WAVE AQ leftover (existing in-book only): Victory leftover I/II
+    # Sycamore Established Value / Sycamore Small Company Opportunity /
+    # Diversified Stock Oct 31 2021 N-CSR Financial Highlights unlock leftover
+    # classes already on 2022–2025 I/II books (VETAX / VEVIX / GETGX / SSGSX /
+    # VSOIX / GOGFX / SRVEX / VDSIX families). Does not redo AF–AS (especially
+    # AS Virtus Asset Trust Dec 31 N-CSR, AR Homestead Dec 31 N-CSR, AP
+    # Vanguard wrap-absent ICI December, or AG Victory RS Dec 31 2021).
+    # Preferred Schwab / DFA / Nuveen / BlackRock MDEFX and American Funds
+    # ANEFX/SMCWX/CNWCX 2022 remasured as walls. Janus leftover ICI dashes,
+    # Integrity June 30 / USAA March 31, Touchstone 2023 JSON, Putnam
+    # DIST-SUMM 204, Macquarie Ivy 2021, AB CHCLX 2023–2024 dashes, MSIM ETF
+    # inception, and PGIM (no in-book tickers) stay unmatched. Honest pin
+    # remasured on WAVE AS tip 148383d: 4070 → 4087 (+17 MF; ETF 5y
+    # unchanged at 758).
+    assert digest.funds_with_5y == 4087
+    assert digest.funds_with_5y_mf == 3329
     assert digest.funds_with_5y_etf == 758
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
@@ -9722,7 +9736,7 @@ def test_wave_ag_victory_leftover_2024_r_member_r6() -> None:
     }
     getgx_years.discard(None)
     assert {2022, 2023, 2024, 2025} <= getgx_years
-    assert 2021 not in getgx_years
+    # WAVE AQ leftover Oct 31 2021 N-CSR completes GETGX to 5y.
 
 
 def test_wave_ag_leftover_walls_stay_unmatched() -> None:
@@ -12366,4 +12380,253 @@ def test_wave_as_heroes_are_searchable(client: TestClient) -> None:
         and row.get("publication_stage") == "final"
     ]
     assert merfx_early == []
+
+WAVE_AQ_VICTORY_LEFTOVER_5Y = (
+    "VETAX",
+    "VEVCX",
+    "VEVIX",
+    "GETGX",
+    "VEVRX",
+    "VEVYX",
+    "SSGSX",
+    "VSOIX",
+    "GOGFX",
+    "VSORX",
+    "VSOYX",
+    "SRVEX",
+    "VDSCX",
+    "VDSIX",
+    "GRINX",
+    "VDSRX",
+    "VDSYX",
+)
+
+
+def test_wave_aq_victory_leftover_oct31_2021_fills_5y() -> None:
+    records = VictorySource().fetch(mode="fixture").records
+    vetax_2021_oi = next(
+        row
+        for row in records
+        if row.ticker == "VETAX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2021-10-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert vetax_2021_oi.amount == Decimal("0.52")
+    vetax_2021_cg = next(
+        row
+        for row in records
+        if row.ticker == "VETAX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2021-10-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert vetax_2021_cg.amount == Decimal("1.67")
+    vevix_2021_oi = next(
+        row
+        for row in records
+        if row.ticker == "VEVIX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2021-10-31"
+        and row.amount is not None
+    )
+    assert vevix_2021_oi.amount == Decimal("0.65")
+    getgx_2021_oi = next(
+        row
+        for row in records
+        if row.ticker == "GETGX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2021-10-31"
+        and row.amount is not None
+    )
+    assert getgx_2021_oi.amount == Decimal("0.43")
+    ssgsx_2021_oi = next(
+        row
+        for row in records
+        if row.ticker == "SSGSX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2021-10-31"
+        and row.amount is not None
+    )
+    assert ssgsx_2021_oi.amount == Decimal("0.17")
+    vsoix_2021_oi = next(
+        row
+        for row in records
+        if row.ticker == "VSOIX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2021-10-31"
+        and row.amount is not None
+    )
+    assert vsoix_2021_oi.amount == Decimal("0.29")
+    gogfx_2021_oi = next(
+        row
+        for row in records
+        if row.ticker == "GOGFX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2021-10-31"
+        and row.amount is not None
+    )
+    assert gogfx_2021_oi.amount == Decimal("0.11")
+    srvex_2021_oi = next(
+        row
+        for row in records
+        if row.ticker == "SRVEX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2021-10-31"
+        and row.amount is not None
+    )
+    assert srvex_2021_oi.amount == Decimal("0.01")
+    vdsix_2021_oi = next(
+        row
+        for row in records
+        if row.ticker == "VDSIX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2021-10-31"
+        and row.amount is not None
+    )
+    assert vdsix_2021_oi.amount == Decimal("0.02")
+    # Class-level — Investor/A VETAX is not copied from Institutional VEVIX.
+    assert vetax_2021_oi.amount != vevix_2021_oi.amount
+    assert vevix_2021_oi.amount != getgx_2021_oi.amount
+    for ticker in WAVE_AQ_VICTORY_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(records, ticker), ticker
+
+
+def test_wave_aq_leftover_walls_stay_unmatched() -> None:
+    victory = VictorySource().fetch(mode="fixture").records
+    # Integrity / Munder FYE June 30 and USAA FYE March 31 stay unmatched.
+    assert 2021 not in _paid_lookback_years(victory, "MMEAX")
+    assert 2021 not in _paid_lookback_years(victory, "USSPX")
+    # WAVE AG leftover RS Dec 31 2021 is not redone — RSGRX stays 5y.
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(victory, "RSGRX")
+
+    janus = JanusHendersonSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(janus, "JIGCX")
+    assert 2024 not in _paid_lookback_years(janus, "HFAAX")
+    assert 2025 not in _paid_lookback_years(janus, "JAGAX")
+    assert 2025 not in _paid_lookback_years(janus, "HEMSX")
+    assert 2024 not in _paid_lookback_years(janus, "JEASX")
+    assert 2023 not in _paid_lookback_years(janus, "HFQSX")
+
+    touchstone = TouchstoneSource().fetch(mode="fixture").records
+    assert 2023 not in _paid_lookback_years(touchstone, "TEGIX")
+
+    macquarie = MacquarieSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(macquarie, "WSTAX")
+
+    ab = AllianceBernsteinSource().fetch(mode="fixture").records
+    assert 2023 not in _paid_lookback_years(ab, "CHCLX")
+    assert 2024 not in _paid_lookback_years(ab, "CHCLX")
+
+    msim = MorganStanleySource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(msim, "EVIM")
+    assert 2022 not in _paid_lookback_years(msim, "EVIM")
+
+    franklin = FranklinTempletonSource().fetch(mode="fixture").records
+    pim_early = [
+        row
+        for row in franklin
+        if row.ticker == "PIM"
+        and _year_for_row(row.as_of, row.ex_date, row.payable_date) in {2021, 2022, 2023, 2024}
+        and row.publication_stage in {PublicationStage.final, PublicationStage.paid}
+        and row.amount is not None
+    ]
+    assert pim_early == []
+
+    # Preferred AP leftover walls — do not invent past them.
+    af = AmericanFundsSource().fetch(mode="fixture").records
+    assert 2022 not in _paid_lookback_years(af, "ANEFX")
+    schwab = SchwabSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(schwab, "SGUXX")
+    dfa = DimensionalSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(dfa, "DISVX")
+    nuveen = NuveenSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(nuveen, "NSBRX")
+    blackrock = BlackRockSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(blackrock, "MDEFX")
+
+    # Do not redo WAVE AS Virtus Asset Trust Dec 31 N-CSR — STVTX stays 5y.
+    virtus = VirtusSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(virtus, "STVTX")
+
+    # Do not redo WAVE AR Homestead Dec 31 N-CSR — HOVLX stays 5y.
+    homestead = HomesteadSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(homestead, "HOVLX")
+
+    # Do not redo WAVE AP Vanguard wrap-absent December — VWEHX stays 5y.
+    vanguard = VanguardSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(vanguard, "VWEHX")
+    assert 2025 not in _paid_lookback_years(vanguard, "VEDIX")
+
+
+def test_wave_aq_heroes_are_searchable(client: TestClient) -> None:
+    fetched = client.post(
+        "/ingest/fetch", json={"fund_family": "victory", "mode": "fixture"}
+    )
+    assert fetched.status_code == 200, fetched.text
+    assert fetched.json()["created"] > 0
+
+    for ticker in ("VETAX", "VEVIX", "GETGX", "SSGSX", "SRVEX", "MMEAX", "USSPX"):
+        body = client.get("/funds", params={"q": ticker}).json()
+        tickers = [item["ticker"] for item in body["items"]]
+        assert ticker in tickers, f"{ticker} missing from GET /funds?q={ticker}: {tickers[:8]}"
+
+    vetax = client.get(
+        "/distributions",
+        params={"ticker": "VETAX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    vetax_2021 = [
+        Decimal(row["amount"])
+        for row in vetax["items"]
+        if row.get("ticker") == "VETAX"
+        and row.get("estimate_type") == "ordinary_income"
+        and str(row.get("as_of") or "").startswith("2021-10-31")
+    ]
+    assert Decimal("0.52") in vetax_2021
+    vetax_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in vetax["items"]
+        if row.get("ticker") == "VETAX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= vetax_years
+
+    vevix = client.get(
+        "/distributions",
+        params={"ticker": "VEVIX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    vevix_2021 = [
+        Decimal(row["amount"])
+        for row in vevix["items"]
+        if row.get("ticker") == "VEVIX"
+        and row.get("estimate_type") == "ordinary_income"
+        and str(row.get("as_of") or "").startswith("2021-10-31")
+    ]
+    assert Decimal("0.65") in vevix_2021
+
+    mmeax = client.get(
+        "/distributions",
+        params={"ticker": "MMEAX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    mmeax_2021 = [
+        row
+        for row in mmeax["items"]
+        if row.get("ticker") == "MMEAX"
+        and str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "").startswith(
+            "2021"
+        )
+        and row.get("amount") is not None
+        and row.get("publication_stage") == "final"
+    ]
+    assert mmeax_2021 == []
 

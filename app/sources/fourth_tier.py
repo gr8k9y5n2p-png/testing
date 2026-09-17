@@ -430,6 +430,9 @@ class MacquarieSource(HtmlTableSource):
         "tables (WSTAX / WASAX / IRSAX / WLGAX families) were not a "
         "recoverable per-share book this session — unmatched. Class-level "
         "— never copied onto C / R / I / R6. "
+        "Official 5y WAVE AQ leftover re-probe (2026-09-17): leftover Ivy "
+        "Class A 2021 (WSTAX / WLGAX / WMGAX / WSGAX / IRSAX / IVINX / "
+        "IVOAX / WCEAX) still unpublished on a calendar-safe per-share book. "
         "Literature hub: https://www.macquarie.com/mam/literature."
     )
     live_limitations = "US estimate/paid books are fulfillment PDFs, not an HTML grid."

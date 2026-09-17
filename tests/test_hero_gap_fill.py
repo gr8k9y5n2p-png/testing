@@ -312,5 +312,8 @@ def test_fixture_book_lookback_stays_official_only() -> None:
     # WAVE AS leftover: Virtus Asset Trust leftover FYE Dec 31 N-CSR
     # Financial Highlights +37 MF. Honest pin remasured on WAVE AR tip
     # e82c647: 4033 → 4070 (+37 MF; ETF 5y unchanged at 758).
-    assert digest.funds_with_5y == 4070
+    # WAVE AQ leftover: Victory leftover I/II Sycamore / Diversified Oct 31
+    # 2021 N-CSR +17 MF. Honest pin remasured on WAVE AS tip 148383d:
+    # 4070 → 4087 (+17 MF; ETF 5y unchanged at 758).
+    assert digest.funds_with_5y == 4087
     assert digest.book_funds >= 7200

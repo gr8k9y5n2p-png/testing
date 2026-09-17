@@ -160,6 +160,11 @@ class JanusHendersonSource(HtmlTableSource):
         "$0.03748179; JAHYX 2025-01-31 $0.04181576; JMUIX 2025-01-31 $0.04791137. "
         "HFAAX 2024 col 14 dash / JAGAX 2025 unpublished / HFQSX 2023 absent / "
         "HEMSX 2025 July all-dash remain unmatched. "
+        "Official 5y WAVE AQ leftover re-probe (2026-09-17): leftover 4y ICI "
+        "dashes stay unmatched — JIGCX / HFECX 2021, JVSCX / JSVSX 2022, "
+        "JEGRX / HFQSX 2023, JEASX / HFAAX family 2024, JAGAX family / HEMSX "
+        "2025. International Opportunities HFOAX family merged into Overseas "
+        "June 2023 (no 2024–2025 HFOAX book). Class-level — never sibling-copy. "
         "2025 final YE estimates (through 11/03/2025) remain as the estimate book "
         "(JDCAX LT $6.92). 2024 Preliminary Distribution Estimates 2024.pdf "
         "(JDCAX LT $5.42). 2023 Final Distribution Estimates 2023.pdf "
@@ -907,6 +912,8 @@ class AllianceBernsteinSource(HtmlTableSource):
         "AB Discovery Growth Fund, Inc. N-CSR Financial Highlights "
         "(year ended July 31 2022) fills CHCLX 2022 CG $2.32 — year-depth "
         "only (2023–2024 N-CSR distribution rows are printed dashes). "
+        "Official 5y WAVE AQ leftover re-probe (2026-09-17): CHCLX 2023–2024 "
+        "N-CSR distribution rows remain printed dashes — unmatched. "
         "Tax-center 1099 Tax Guides are characterization, not paid $/share."
     )
     live_limitations = "Estimates are PDF. Fixture transcribes public Class A rows."
@@ -1154,7 +1161,9 @@ class EatonVanceSource(HtmlTableSource):
         "2024 sibling combined19bpressreleasemarch2024.pdf / "
         "combined_19b_press_release_022924.pdf returned 403. Open-end family "
         "estimate HTML was not found on 2026-09-07. PGIM / Prudential has no "
-        "in-book leftover tickers — not added (Eric freeze)."
+        "in-book leftover tickers — not added (Eric freeze). "
+        "Official 5y WAVE AQ leftover re-probe (2026-09-17): EOI already 5y "
+        "from WAVE AD; PGIM still has no in-book leftover identities."
     )
     live_limitations = (
         "Open-end estimates are not a public HTML grid. Fixture transcribes a public CEF 19(b) notice."
