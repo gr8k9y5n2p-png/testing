@@ -22,11 +22,28 @@ class TcwSource(HtmlTableSource):
         "no dated official 2024 sibling stored. "
         "Official 5y parallel R leftover re-probe (2026-09-13): dated 2021–2024 "
         "final siblings unpublished; product-page capital-gains history is "
-        "Incapsula-walled. Leftover years stay unmatched."
+        "Incapsula-walled. Official 5y WAVE BH leftover (existing in-book only): "
+        "TCW Funds, Inc. FYE October 31 N-CSR Financial Highlights unlock leftover "
+        "2021–2024 on the 2025 paid Final Class I book. Calendar-safe as_of 10/31. "
+        "Class-level Class I — never sibling-copied onto Class N leftovers "
+        "(TGDVX / TGVNX / TGCNX / TGPNX). Global Real Estate, Emerging Markets "
+        "Income, Emerging Markets Local Currency Income, Core Fixed Income, "
+        "Global Bond, High Yield Bond, Securitized Bond, and Central Cash are "
+        "not on the 2025 paid PDF and are not in-book leftovers. Income is "
+        "ordinary income; net realized gain is unsplit total capital gains. "
+        "Issuer dashes omitted (TGPCX 2024 CG; TGVOX 2021 CG). TGCEX 2021–2024 "
+        "net investment loss — no ordinary-income row stored. 2025 stays on "
+        "the existing paid Final PDF (TGDIX LT $3.4797 is not overwritten by "
+        "N-CSR 2-decimal highlights). N-CSR "
+        "https://www.sec.gov/Archives/edgar/data/892071/000119312525000202/"
+        "d911056dncsr.htm verified against 2023 N-CSR 0001193125-24-001879. "
+        "WAVE BH leftover N-CSR paid history is fixture-only. Dated 2021–2024 "
+        "final PDFs and Incapsula-walled product pages stay unpublished."
     )
     live_limitations = (
         "Year-end book is PDF. Weekly walk uses the unversioned final PDF; "
-        "empty/PDF-bytes pages are no-op success. 2024 dated URL missing."
+        "empty/PDF-bytes pages are no-op success. 2024 dated URL missing. "
+        "Leftover 2021–2024 N-CSR paid history is fixture-only."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -49,6 +66,16 @@ class TcwSource(HtmlTableSource):
                 name="2025_capital_gains",
                 url=pdf,
                 fixture="2025_capital_gains.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="leftover_ncsr_2021_2024_wave_bh",
+                url=(
+                    "https://www.sec.gov/Archives/edgar/data/892071/"
+                    "000119312525000202/d911056dncsr.htm"
+                ),
+                fixture="leftover_ncsr_2021_2024_wave_bh.html",
                 live=False,
                 role="history",
             ),
