@@ -899,8 +899,22 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # inception, and PGIM (no in-book tickers) stay unmatched. Honest pin
     # remasured on WAVE AS tip 148383d: 4070 → 4087 (+17 MF; ETF 5y
     # unchanged at 758).
-    assert digest.funds_with_5y == 4087
-    assert digest.funds_with_5y_mf == 3329
+    # WAVE AT leftover (existing in-book only): AMG leftover Frontier
+    # Small Cap FYE Oct 31 2022 N-CSR + GW&K Small/Mid Cap Growth FYE
+    # Oct 31 2023 N-CSR unlock +5 MF already on the 2025 YE / product-page
+    # book (MSSVX / MSSCX / MSSYX / ACWDX / ACWIX). ACWZX 2023 is official
+    # year-depth only (3y→4y; 2021 Class Z commencement dashes stay
+    # unmatched). Disjoint from AQ Victory I/II, AS Virtus Asset Trust,
+    # and AR Homestead. Preferred William Blair LCG 2023 / EM Small Cap
+    # 2024 dashes, Allspring July 31, First Eagle GRA-Smid 2021
+    # unpublished, Calamos CAISX 2021 inception, TimesSquare / Veritas /
+    # GWGVX leftover dashes remasured as walls. Does not redo AF–AQ
+    # (especially AO Fidelity Class I, AP Vanguard ICI Dec, AN
+    # Hartford/Artisan, AR Homestead, AS Virtus Asset Trust, AQ Victory
+    # I/II). Honest pin remasured on WAVE AQ tip 4a585a8: 4087 → 4092
+    # (+5 MF; ETF 5y unchanged at 758).
+    assert digest.funds_with_5y == 4092
+    assert digest.funds_with_5y_mf == 3334
     assert digest.funds_with_5y_etf == 758
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
@@ -12629,4 +12643,256 @@ def test_wave_aq_heroes_are_searchable(client: TestClient) -> None:
         and row.get("publication_stage") == "final"
     ]
     assert mmeax_2021 == []
+
+
+WAVE_AT_AMG_LEFTOVER_5Y = (
+    "MSSVX",
+    "MSSCX",
+    "MSSYX",
+    "ACWDX",
+    "ACWIX",
+)
+
+
+def test_wave_at_amg_leftover_ncsr_fills_5y() -> None:
+    records = AmgSource().fetch(mode="fixture").records
+    mssvx_2022_cg = next(
+        row
+        for row in records
+        if row.ticker == "MSSVX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2022-10-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert mssvx_2022_cg.amount == Decimal("3.91")
+    msscx_2022_cg = next(
+        row
+        for row in records
+        if row.ticker == "MSSCX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2022-10-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert msscx_2022_cg.amount == Decimal("3.91")
+    acwdx_2023_cg = next(
+        row
+        for row in records
+        if row.ticker == "ACWDX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2023-10-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert acwdx_2023_cg.amount == Decimal("0.27")
+    acwix_2023_cg = next(
+        row
+        for row in records
+        if row.ticker == "ACWIX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2023-10-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert acwix_2023_cg.amount == Decimal("0.27")
+    # ACWZX 2023 is official year-depth only (3y→4y).
+    acwzx_2023_cg = next(
+        row
+        for row in records
+        if row.ticker == "ACWZX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2023-10-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert acwzx_2023_cg.amount == Decimal("0.27")
+    # Leftover N-CSR has no ordinary-income distribution row.
+    ncsr_oi = [
+        row
+        for row in records
+        if row.ticker in WAVE_AT_AMG_LEFTOVER_5Y
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and row.as_of.year in {2022, 2023}
+        and row.source_url
+        and ("d398011dncsr" in row.source_url or "d110485dncsr" in row.source_url)
+        and row.amount is not None
+    ]
+    assert ncsr_oi == []
+    # 2025 stays on the existing year-end PDF — not re-emitted from N-CSR.
+    ncsr_2025 = [
+        row
+        for row in records
+        if row.ticker in {*WAVE_AT_AMG_LEFTOVER_5Y, "ACWZX"}
+        and row.as_of
+        and row.as_of.year == 2025
+        and row.source_url
+        and ("d398011dncsr" in row.source_url or "d110485dncsr" in row.source_url)
+    ]
+    assert ncsr_2025 == []
+    for ticker in WAVE_AT_AMG_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(records, ticker), ticker
+    assert 2021 not in _paid_lookback_years(records, "ACWZX")
+    assert 2023 in _paid_lookback_years(records, "ACWZX")
+
+
+def test_wave_at_leftover_walls_stay_unmatched() -> None:
+    amg = AmgSource().fetch(mode="fixture").records
+    # TimesSquare / Veritas / GWGVX leftover N-CSR years are official dashes.
+    for ticker, year in (
+        ("TSCPX", 2023),
+        ("TSQIX", 2023),
+        ("TSCIX", 2023),
+        ("MGSEX", 2022),
+        ("MSEIX", 2022),
+        ("MMCFX", 2022),
+        ("MIMFX", 2022),
+        ("GWGVX", 2023),
+    ):
+        leftover = [
+            row
+            for row in amg
+            if row.ticker == ticker
+            and row.as_of
+            and row.as_of.year == year
+            and row.amount is not None
+        ]
+        assert leftover == [], ticker
+        assert year not in _paid_lookback_years(amg, ticker), ticker
+    # GWSZX / Systematica unpublished years stay unmatched.
+    gwszx_2022 = [
+        row
+        for row in amg
+        if row.ticker == "GWSZX"
+        and (
+            (row.as_of and row.as_of.year == 2022)
+            or (row.ex_date and row.ex_date.year == 2022)
+        )
+        and row.amount is not None
+    ]
+    assert gwszx_2022 == []
+    # ACWZX 2021 Class Z commencement dashes stay unmatched.
+    acwzx_2021 = [
+        row
+        for row in amg
+        if row.ticker == "ACWZX"
+        and (
+            (row.as_of and row.as_of.year == 2021)
+            or (row.ex_date and row.ex_date.year == 2021)
+        )
+        and row.amount is not None
+    ]
+    assert acwzx_2021 == []
+
+    first_eagle = FirstEagleSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(first_eagle, "FERAX")
+    assert 2021 not in _paid_lookback_years(first_eagle, "FESMX")
+
+    calamos = CalamosSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(calamos, "CAISX")
+
+    william_blair = WilliamBlairSource().fetch(mode="fixture").records
+    assert 2023 not in _paid_lookback_years(william_blair, "LCGFX")
+    assert 2023 not in _paid_lookback_years(william_blair, "LCGNX")
+
+    # Allspring leftover FYE July 31 is not calendar-safe and is not added.
+
+    # AQ Victory I/II stays disjoint — this slice does not emit Victory.
+    victory = VictorySource().fetch(mode="fixture").records
+    victory_tickers = {row.ticker for row in victory if row.ticker}
+    assert not any(row.ticker in victory_tickers for row in amg)
+
+    # Do not redo WAVE AO Fidelity Class I / AP Vanguard ICI Dec / AN
+    # Hartford / AR Homestead / AS Virtus Asset Trust.
+    fidelity = FidelitySource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(fidelity, "FIXIX")
+    assert 2021 not in _paid_lookback_years(fidelity, "FFRIX")
+
+    vanguard = VanguardSource().fetch(mode="fixture").records
+    assert 2025 not in _paid_lookback_years(vanguard, "VEDIX")
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(vanguard, "VWEHX")
+
+    hartford = HartfordSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(hartford, "IHOAX")
+
+    homestead = HomesteadSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(homestead, "HOVLX")
+
+    virtus = VirtusSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(virtus, "STVTX")
+
+    # Do not redo WAVE AQ Victory I/II Oct 31 2021 — VETAX stays 5y.
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(victory, "VETAX")
+
+
+def test_wave_at_heroes_are_searchable(client: TestClient) -> None:
+    fetched = client.post(
+        "/ingest/fetch", json={"fund_family": "amg", "mode": "fixture"}
+    )
+    assert fetched.status_code == 200, fetched.text
+    assert fetched.json()["created"] > 0
+
+    for ticker in ("MSSVX", "MSSCX", "MSSYX", "ACWDX", "ACWIX", "YACKX", "GWSZX"):
+        body = client.get("/funds", params={"q": ticker}).json()
+        tickers = [item["ticker"] for item in body["items"]]
+        assert ticker in tickers, f"{ticker} missing from GET /funds?q={ticker}: {tickers[:8]}"
+
+    mssvx = client.get(
+        "/distributions",
+        params={"ticker": "MSSVX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    mssvx_2022 = [
+        Decimal(row["amount"])
+        for row in mssvx["items"]
+        if row.get("ticker") == "MSSVX"
+        and row.get("estimate_type") == "total_capital_gains"
+        and str(row.get("as_of") or "").startswith("2022-10-31")
+    ]
+    assert Decimal("3.91") in mssvx_2022
+    mssvx_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in mssvx["items"]
+        if row.get("ticker") == "MSSVX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= mssvx_years
+
+    acwdx = client.get(
+        "/distributions",
+        params={"ticker": "ACWDX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    acwdx_2023 = [
+        Decimal(row["amount"])
+        for row in acwdx["items"]
+        if row.get("ticker") == "ACWDX"
+        and row.get("estimate_type") == "total_capital_gains"
+        and str(row.get("as_of") or "").startswith("2023-10-31")
+    ]
+    assert Decimal("0.27") in acwdx_2023
+    acwdx_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in acwdx["items"]
+        if row.get("ticker") == "ACWDX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= acwdx_years
+
+    gwgvx = client.get(
+        "/distributions",
+        params={"ticker": "GWGVX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    gwgvx_2023 = [
+        row
+        for row in gwgvx["items"]
+        if row.get("ticker") == "GWGVX"
+        and str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        == "2023"
+        and row.get("amount") is not None
+        and row.get("publication_stage") == "final"
+    ]
+    assert gwgvx_2023 == []
 

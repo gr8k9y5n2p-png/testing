@@ -5089,6 +5089,55 @@ def test_eleventh_tier_fixtures() -> None:
     assert yackx.amount == Decimal("2.8135")
     assert {r.ticker for r in amg if r.ticker} >= {"YACKX", "YAFIX", "MCGIX", "ARIDX"}
 
+    amg_frontier_ncsr = parse_distribution_html(
+        (ROOT / "amg" / "leftover_ncsr_frontier_2022_wave_at.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url=(
+            "https://www.sec.gov/Archives/edgar/data/882443/"
+            "000119312523003421/d398011dncsr.htm"
+        ),
+        fund_family="AMG",
+    )
+    mssvx_ncsr = next(
+        r
+        for r in amg_frontier_ncsr
+        if r.ticker == "MSSVX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and r.as_of
+        and str(r.as_of) == "2022-10-31"
+    )
+    assert mssvx_ncsr.amount == Decimal("3.91")
+    assert mssvx_ncsr.publication_stage == PublicationStage.final
+    assert [
+        r
+        for r in amg_frontier_ncsr
+        if r.ticker == "MSSVX" and r.estimate_type == EstimateType.ordinary_income
+    ] == []
+    assert {r.ticker for r in amg_frontier_ncsr if r.as_of and r.as_of.year == 2025} == set()
+
+    amg_gwk_ncsr = parse_distribution_html(
+        (ROOT / "amg" / "leftover_ncsr_gwk_smid_2023_wave_at.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url=(
+            "https://www.sec.gov/Archives/edgar/data/1089951/"
+            "000119312524003306/d110485dncsr.htm"
+        ),
+        fund_family="AMG",
+    )
+    acwdx_ncsr = next(
+        r
+        for r in amg_gwk_ncsr
+        if r.ticker == "ACWDX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and r.as_of
+        and str(r.as_of) == "2023-10-31"
+    )
+    assert acwdx_ncsr.amount == Decimal("0.27")
+    assert acwdx_ncsr.publication_stage == PublicationStage.final
+    assert {r.ticker for r in amg_gwk_ncsr} == {"ACWDX", "ACWIX", "ACWZX"}
+
     guidestone = parse_distribution_html(
         (ROOT / "guidestone" / "2025_estimated_capital_gains.html").read_text(
             encoding="utf-8"
