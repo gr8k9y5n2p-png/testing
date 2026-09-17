@@ -115,12 +115,28 @@ class BaillieGiffordSource(HtmlTableSource):
         "Leftover paid 2025 Final product-page tables for in-book leftovers "
         "BGAKX Class K and BINSX / BGESX / BSGPX Institutional only "
         "(official printed $0.00000 ST stored). Class-level — never copy K onto "
-        "Institutional. BGCSX has no Final table. 2021–2024 unpublished on "
-        "live most-recent tables; Wayback CDX offline."
+        "Institutional. BGCSX has no Final table. Official 5y WAVE BF leftover "
+        "(existing in-book only): Baillie Gifford Funds FYE December 31 N-CSR "
+        "Financial Highlights unlock leftover 2021–2024 on the 2025 paid Final "
+        "book. Calendar-safe as_of 12/31. Class-level Class K / Institutional — "
+        "never sibling-copied onto Class 2 / 3 / K or Institutional siblings "
+        "(BGIKX / BGEKX / BGPKX / Global Alpha Institutional). China Equities "
+        "BGCSX has no 2025 Final and is not an in-book leftover on this page. "
+        "Income is ordinary income; net realized gain is unsplit total capital "
+        "gains. Issuer dashes omitted (BGAKX 2023 CG; BINSX 2023–2022 CG; "
+        "BGESX 2022 OI; BSGPX 2024–2023 CG and 2022 OI). 2025 stays on the "
+        "existing paid Final product-page book (BGAKX LT $5.18723 is not "
+        "overwritten by N-CSR 2-decimal highlights). N-CSR "
+        "https://www.sec.gov/Archives/edgar/data/1120543/000110465925020192/"
+        "tm251686d1_ncsr.htm verified against 2023 N-CSR "
+        "0001104659-24-030888. WAVE BF leftover N-CSR paid history is "
+        "fixture-only. Live most-recent product-page tables still omit "
+        "2021–2024; Wayback CDX offline."
     )
     live_limitations = (
         "Estimate book is PDF. Fixture transcribes public Institutional / Class K "
-        "identifiers from the official prospectus. Paid leftover is year-depth only."
+        "identifiers from the official prospectus. Leftover 2021–2024 N-CSR "
+        "paid history is fixture-only."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -146,6 +162,16 @@ class BaillieGiffordSource(HtmlTableSource):
                 live=False,
                 role="history",
                 large_aum_only=False,
+            ),
+            PageSpec(
+                name="leftover_ncsr_2021_2024_wave_bf",
+                url=(
+                    "https://www.sec.gov/Archives/edgar/data/1120543/"
+                    "000110465925020192/tm251686d1_ncsr.htm"
+                ),
+                fixture="leftover_ncsr_2021_2024_wave_bf.html",
+                live=False,
+                role="history",
             ),
         ]
 
