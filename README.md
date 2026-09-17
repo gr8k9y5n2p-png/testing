@@ -1582,7 +1582,7 @@ Weekly GitHub Action `.github/workflows/weekly-ingest.yml` runs `python -m app.c
 | 43 | `voya` (alias `allianzgi`) | Voya | implemented | PDF | https://individuals.voya.com/document/tax-center/2025-estimated-capital-gains.pdf |
 | 44 | `oakmark` (aliases `harris`, `harris_associates`) | Oakmark / Harris Associates | implemented | yes — fixture fallback | https://oakmark.com/news-insights/2025-oakmark-year-end-fund-distributions/ |
 | 45 | `tweedy` (alias `tweedy_browne`) | Tweedy, Browne | implemented | PDF | https://www.tweedyfunds.com/wp-content/uploads/sites/10/2025/10/2025-Estimated-Distributions-9-30-25-2.pdf |
-| 46 | `gabelli` (alias `gamco`) | Gabelli | implemented | PDF | https://gabelli.com/wp-content/uploads/2025/12/Distribution-memo-12.29.2025.pdf |
+| 46 | `gabelli` (alias `gamco`) | Gabelli | implemented | PDF + N-CSR | 2025 memo + 2024 YE summary + WAVE AI Class AAA Dec 31 N-CSR 2021–2023 (GABAX / GABBX / GICPX). GABGX 2022 dashes; GABSX / GABEX FYE Sep 30. |
 | 47 | `royce` | Royce | implemented | yes — fixture fallback | https://www.royceinvest.com/news/2025/4Q25/open-end-funds-2025-year-end-distributions |
 | 48 | `nylife` (aliases `mainstay`, `nyli`) | New York Life Investments / MainStay | implemented | PDF | 2025 paying-fund estimate flyer (24 Class I tickers; MLAIX). https://www.nylim.com/assets/documents/tax/cap-gains-estimate.pdf |
 | 49 | `touchstone` | Touchstone | implemented | PDF | 2025 CG PDF (14 tickers; TVLAX / TGVFX / TEGAX / TSNAX / SAGWX + ETF TSEC / SIO / TUSI). Dividend Equity / International Value / Large Cap Focused / Large Company Growth still name-only. |
