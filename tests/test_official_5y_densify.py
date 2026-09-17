@@ -913,8 +913,19 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # Hartford/Artisan, AR Homestead, AS Virtus Asset Trust, AQ Victory
     # I/II). Honest pin remasured on WAVE AQ tip 4a585a8: 4087 → 4092
     # (+5 MF; ETF 5y unchanged at 758).
-    assert digest.funds_with_5y == 4092
-    assert digest.funds_with_5y_mf == 3334
+    # WAVE AU leftover (existing in-book only): LSV leftover Institutional /
+    # Investor Oct 31 2021–2023 N-CSR Financial Highlights unlock leftover
+    # classes already on 2024–2025 paid PDFs (LSVEX / LVAEX / LSVVX / LSVQX /
+    # LSVMX / LSVZX / LSVFX / LSVGX families). Does not redo AF–AT (especially
+    # AT AMG Frontier / GW&K SMID Oct 31, AQ Victory I/II Oct 31 2021, AS
+    # Virtus Asset Trust Dec 31 N-CSR, or AR Homestead Dec 31 N-CSR). Preferred
+    # William Blair LCG 2023 / EM Small Cap 2024 / Mid Cap Value 2021 inception,
+    # Allspring leftover FYE July 31 / unpublished product-page years, First
+    # Eagle GRA-Smid 2021, and Calamos CAISX 2021 inception remasured as walls.
+    # Honest pin remasured on WAVE AT tip c0b49ce: 4092 → 4106 (+14 MF; ETF 5y
+    # unchanged at 758).
+    assert digest.funds_with_5y == 4106
+    assert digest.funds_with_5y_mf == 3348
     assert digest.funds_with_5y_etf == 758
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
@@ -12895,4 +12906,230 @@ def test_wave_at_heroes_are_searchable(client: TestClient) -> None:
         and row.get("publication_stage") == "final"
     ]
     assert gwgvx_2023 == []
+
+WAVE_AU_LSV_LEFTOVER_5Y = (
+    "LSVEX",
+    "LVAEX",
+    "LSVVX",
+    "LVAVX",
+    "LSVQX",
+    "LVAQX",
+    "LSVMX",
+    "LVAMX",
+    "LSVZX",
+    "LVAZX",
+    "LSVFX",
+    "LVAFX",
+    "LSVGX",
+    "LVAGX",
+)
+
+
+def test_wave_au_lsv_leftover_oct31_2021_2023_fills_5y() -> None:
+    records = LsvSource().fetch(mode="fixture").records
+    lsvex_2021_oi = next(
+        row
+        for row in records
+        if row.ticker == "LSVEX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2021-10-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert lsvex_2021_oi.amount == Decimal("0.62")
+    lsvex_2021_cg = next(
+        row
+        for row in records
+        if row.ticker == "LSVEX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2021-10-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert lsvex_2021_cg.amount == Decimal("0.80")
+    lvaex_2021_oi = next(
+        row
+        for row in records
+        if row.ticker == "LVAEX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2021-10-31"
+        and row.amount is not None
+    )
+    assert lvaex_2021_oi.amount == Decimal("0.58")
+    lsvex_2023_oi = next(
+        row
+        for row in records
+        if row.ticker == "LSVEX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2023-10-31"
+        and row.amount is not None
+    )
+    assert lsvex_2023_oi.amount == Decimal("0.60")
+    lsvgx_2023_oi = next(
+        row
+        for row in records
+        if row.ticker == "LSVGX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2023-10-31"
+        and row.amount is not None
+    )
+    assert lsvgx_2023_oi.amount == Decimal("0.29")
+    lsvqx_2021_oi = next(
+        row
+        for row in records
+        if row.ticker == "LSVQX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2021-10-31"
+        and row.amount is not None
+    )
+    assert lsvqx_2021_oi.amount == Decimal("0.24")
+    # Class-level — Institutional LSVEX is not copied from Investor LVAEX.
+    assert lsvex_2021_oi.amount != lvaex_2021_oi.amount
+    # 2024–2025 stay on the existing paid PDFs — not re-emitted from N-CSR.
+    ncsr_late = [
+        row
+        for row in records
+        if row.ticker in WAVE_AU_LSV_LEFTOVER_5Y
+        and row.as_of
+        and row.as_of.year in {2024, 2025}
+        and row.source_url
+        and "d676331dncsr" in row.source_url
+    ]
+    assert ncsr_late == []
+    for ticker in WAVE_AU_LSV_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(records, ticker), ticker
+
+
+def test_wave_au_leftover_walls_stay_unmatched() -> None:
+    lsv = LsvSource().fetch(mode="fixture").records
+    # Small Cap Value leftover CG highlights are official dashes.
+    lsvqx_cg = [
+        row
+        for row in lsv
+        if row.ticker == "LSVQX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and row.as_of.year in {2021, 2022, 2023}
+        and row.amount is not None
+    ]
+    assert lsvqx_cg == []
+    # Global Value Investor 2023 OI is an official dash.
+    lvagx_2023_oi = [
+        row
+        for row in lsv
+        if row.ticker == "LVAGX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2023-10-31"
+        and row.amount is not None
+    ]
+    assert lvagx_2023_oi == []
+
+    william_blair = WilliamBlairSource().fetch(mode="fixture").records
+    assert 2023 not in _paid_lookback_years(william_blair, "LCGFX")
+    assert 2023 not in _paid_lookback_years(william_blair, "LCGNX")
+    assert 2024 not in _paid_lookback_years(william_blair, "WESNX")
+    assert 2024 not in _paid_lookback_years(william_blair, "BESIX")
+    # Mid Cap Value commenced 2022-03-16 — 2021 cannot exist.
+    assert 2021 not in _paid_lookback_years(william_blair, "WVMIX")
+    assert 2021 not in _paid_lookback_years(william_blair, "WVMRX")
+
+    allspring = AllspringSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(allspring, "WDSAX")
+    assert 2023 not in _paid_lookback_years(allspring, "EAAFX")
+    assert 2021 not in _paid_lookback_years(allspring, "ASPAX")
+
+    first_eagle = FirstEagleSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(first_eagle, "FERAX")
+    assert 2021 not in _paid_lookback_years(first_eagle, "FESMX")
+
+    calamos = CalamosSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(calamos, "CAISX")
+
+    # Do not redo WAVE AT AMG Frontier / GW&K SMID — YACKX stays 5y on tip.
+    amg = AmgSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(amg, "YACKX")
+
+    # Do not redo WAVE AQ Victory I/II Oct 31 N-CSR — VETAX stays 5y.
+    victory = VictorySource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(victory, "VETAX")
+
+    # Do not redo WAVE AS Virtus Asset Trust Dec 31 N-CSR — STVTX stays 5y.
+    virtus = VirtusSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(virtus, "STVTX")
+
+    # Do not redo WAVE AR Homestead Dec 31 N-CSR — HOVLX stays 5y.
+    homestead = HomesteadSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(homestead, "HOVLX")
+
+
+def test_wave_au_heroes_are_searchable(client: TestClient) -> None:
+    fetched = client.post(
+        "/ingest/fetch", json={"fund_family": "lsv", "mode": "fixture"}
+    )
+    assert fetched.status_code == 200, fetched.text
+    assert fetched.json()["created"] > 0
+
+    for ticker in ("LSVEX", "LVAEX", "LSVQX", "LSVGX"):
+        body = client.get("/funds", params={"q": ticker}).json()
+        tickers = [item["ticker"] for item in body["items"]]
+        assert ticker in tickers, f"{ticker} missing from GET /funds?q={ticker}: {tickers[:8]}"
+
+    lsvex = client.get(
+        "/distributions",
+        params={"ticker": "LSVEX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    lsvex_2021 = [
+        Decimal(row["amount"])
+        for row in lsvex["items"]
+        if row.get("ticker") == "LSVEX"
+        and row.get("estimate_type") == "ordinary_income"
+        and str(row.get("as_of") or "").startswith("2021-10-31")
+    ]
+    assert Decimal("0.62") in lsvex_2021
+    lsvex_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in lsvex["items"]
+        if row.get("ticker") == "LSVEX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= lsvex_years
+
+    lvaex = client.get(
+        "/distributions",
+        params={"ticker": "LVAEX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    lvaex_2021 = [
+        Decimal(row["amount"])
+        for row in lvaex["items"]
+        if row.get("ticker") == "LVAEX"
+        and row.get("estimate_type") == "ordinary_income"
+        and str(row.get("as_of") or "").startswith("2021-10-31")
+    ]
+    assert Decimal("0.58") in lvaex_2021
+
+    william_blair = client.post(
+        "/ingest/fetch", json={"fund_family": "william_blair", "mode": "fixture"}
+    )
+    assert william_blair.status_code == 200, william_blair.text
+    lcgfx = client.get(
+        "/distributions",
+        params={"ticker": "LCGFX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    lcgfx_2023 = [
+        row
+        for row in lcgfx["items"]
+        if row.get("ticker") == "LCGFX"
+        and str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "").startswith(
+            "2023"
+        )
+        and row.get("amount") is not None
+        and row.get("publication_stage") == "final"
+    ]
+    assert lcgfx_2023 == []
 
