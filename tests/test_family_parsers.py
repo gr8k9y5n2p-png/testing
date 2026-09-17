@@ -2640,6 +2640,35 @@ def test_fourth_tier_fixtures() -> None:
     assert hmdcx_2024_oi_bv == []
     assert {r.ticker for r in hartford_bv} == {"HMDCX"}
 
+    manning_bw = parse_distribution_html(
+        (ROOT / "manning_napier" / "leftover_ncsr_raiix_2022_wave_bw.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url=(
+            "https://www.sec.gov/Archives/edgar/data/751173/"
+            "000199937126000259/mn-ncsr_103125.htm"
+        ),
+        fund_family="Manning & Napier",
+    )
+    raiix_2022_bw = next(
+        r
+        for r in manning_bw
+        if r.ticker == "RAIIX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and str(r.as_of) == "2022-10-31"
+    )
+    assert raiix_2022_bw.amount == Decimal("0.51")
+    assert raiix_2022_bw.publication_stage == PublicationStage.final
+    raiix_2022_oi_bw = [
+        r
+        for r in manning_bw
+        if r.ticker == "RAIIX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and str(r.as_of) == "2022-10-31"
+    ]
+    assert raiix_2022_oi_bw == []
+    assert {r.ticker for r in manning_bw} == {"RAIIX"}
+
     artisan_an = parse_distribution_html(
         (ROOT / "artisan" / "leftover_ncsr_2023_wave_an.html").read_text(encoding="utf-8"),
         source_url=(

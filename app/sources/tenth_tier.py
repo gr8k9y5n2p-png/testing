@@ -78,12 +78,27 @@ class ManningNapierSource(HtmlTableSource):
         "Official 5y parallel W leftover: December paid YE from the same "
         "`YYYY%20Distributions.pdf` path for 2021–2024 "
         "(MNHIX 2021 ST $0.83490 / LT $0.85360; EXEYX 2024 LT $1.73250). "
-        "Callodine 2021–2022, Systematic High Yield 2021–2024, RAIIX 2022, and "
-        "RISAX 2022+2024 December rows unpublished."
+        "Callodine 2021–2022, Systematic High Yield 2021–2024, and "
+        "RISAX 2022+2024 December rows unpublished. "
+        "Official 5y WAVE BW leftover (existing in-book only): Rainier "
+        "International Discovery Class I FYE October 31 N-CSR Financial "
+        "Highlights unlock leftover 2022 CG $0.51 on the Parallel W / 2025 "
+        "December paid Class I book (RAIIX). Calendar-safe as_of 10/31. "
+        "Class-level — never sibling-copied (RISAX / RAIWX / RAIRX). Income "
+        "dash omitted — never invent $0. Rainier N-CSR "
+        "https://www.sec.gov/Archives/edgar/data/751173/000199937126000259/"
+        "mn-ncsr_103125.htm (0001999371-26-000259) verified against 2024 "
+        "0001999371-25-000097. Sister WAVE BV HMDCX, BU PCGRX, BT Federated "
+        "SVD, BS PEQIX, BR Grandeur Peak, BQ Pioneer Dec 31, BP Beacon, "
+        "BO–BI / BK / BG DWS, BM Baird, BL Thrivent, BJ RiverPark, BH TCW, "
+        "and prior BD–BF books stay on their leftover pages — not re-emitted "
+        "here. Alger leftovers stay reserved / disjoint. WAVE BW leftover "
+        "N-CSR paid history is fixture-only."
     )
     live_limitations = (
         "Paid book is PDF. Fixture transcribes December CG-paying CUSIP/class rows. "
-        "Weekly walk hits the current-year PDF; older leftover years are fixture history."
+        "Weekly walk hits the current-year PDF; older leftover years are fixture history. "
+        "WAVE BW Rainier Class I 2022 leftover N-CSR is fixture-only."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -101,6 +116,16 @@ class ManningNapierSource(HtmlTableSource):
                 name="leftover_paid_year_end_parallel_w",
                 url=f"{dist}/2024%20Distributions.pdf",
                 fixture="leftover_paid_year_end_parallel_w.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="leftover_ncsr_raiix_2022_wave_bw",
+                url=(
+                    "https://www.sec.gov/Archives/edgar/data/751173/"
+                    "000199937126000259/mn-ncsr_103125.htm"
+                ),
+                fixture="leftover_ncsr_raiix_2022_wave_bw.html",
                 live=False,
                 role="history",
             ),
