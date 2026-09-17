@@ -1009,12 +1009,22 @@ class FederatedHermesSource(HtmlTableSource):
         "fef632-form.htm and SDG 2021 from the 2023 N-CSR "
         "https://www.sec.gov/Archives/edgar/data/1707560/000162363223001599/"
         "form1381.htm. MDT Balanced FYE July 31 leftover 2023 is not "
-        "calendar-safe. WAVE AW leftover N-CSR paid history is fixture-only."
+        "calendar-safe. WAVE AW leftover N-CSR paid history is fixture-only. "
+        "Official 5y WAVE BT leftover (existing in-book only): Strategic Value "
+        "Dividend FYE October 31 2023 N-CSR Financial Highlights unlock leftover "
+        "2021+2023 on the Parallel N 2022/2024–2025 API book (SVAAX / SVACX / "
+        "SVAIX). Calendar-safe as_of 10/31. Class-level A / C / Institutional — "
+        "never sibling-copied onto R6 SVALX. Income is ordinary income; net "
+        "realized gain is unsplit total capital gains. Issuer dashes omitted "
+        "(2021 CG). Class A 2023 OI $0.22 / CG $0.32; 2021 OI $0.20. Cross-checked "
+        "vs 2022 N-CSR 2021 column. MDT Balanced FYE July 31 leftover 2023 stays "
+        "unmatched. WAVE BT leftover N-CSR paid history is fixture-only."
     )
     live_limitations = (
         "Family tax-center tables are JavaScript. Weekly walk uses preliminary.do; "
         "full prelim book is the official 50135 PDF fixture. "
-        "Leftover Kaufmann / SDG N-CSR paid history is fixture-only."
+        "Leftover Kaufmann / SDG / Strategic Value Dividend N-CSR paid history is "
+        "fixture-only."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -1056,6 +1066,13 @@ class FederatedHermesSource(HtmlTableSource):
                 name="leftover_ncsr_kaufmann_sdg_2021_2022_wave_aw",
                 url="https://www.sec.gov/Archives/edgar/data/745968/000162363222001593/fef632-form.htm",
                 fixture="leftover_ncsr_kaufmann_sdg_2021_2022_wave_aw.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="leftover_ncsr_svaax_2021_2023_wave_bt",
+                url="https://www.sec.gov/Archives/edgar/data/745968/000162363223001614/form1383.htm",
+                fixture="leftover_ncsr_svaax_2021_2023_wave_bt.html",
                 live=False,
                 role="history",
             ),
