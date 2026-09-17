@@ -295,7 +295,11 @@ class NuveenSource(HtmlTableSource):
         "years stay unmatched. "
         "Official 5y WAVE AM leftover re-probe (2026-09-17): NSBRX 2021 still "
         "unpublished on the printed Institutional table; leftover Class A / C / "
-        "R6 years stay unmatched."
+        "R6 years stay unmatched. "
+        "Official 5y WAVE AP leftover re-probe (2026-09-17): NSBRX 2021 still "
+        "unpublished on the printed Institutional table. Dividend Growth N-CSR "
+        "FYE July 31 is not calendar-safe next to December product-page years. "
+        "Leftover Class A / C / R6 years stay unmatched."
     )
     live_limitations = (
         "Estimate book is a PDF viewer, not scrapeable HTML. Fixture transcribes "
@@ -532,7 +536,11 @@ class SchwabSource(HtmlTableSource):
         "Target-date / MarketTrack / Monthly Income leftover years stay unmatched. "
         "Official 5y WAVE AM leftover re-probe (2026-09-17): live tax-resource "
         "hub still lists 2025 Actual Annual Distributions only; money-market / "
-        "target-date / MarketTrack leftover years stay unmatched."
+        "target-date / MarketTrack leftover years stay unmatched. "
+        "Official 5y WAVE AP leftover re-probe (2026-09-17): leftover 1y books "
+        "remain money-market daily NII, target-date pages that stop at 2020, "
+        "and MarketTrack / Monthly Income years unpublished on official YE / "
+        "N-CSR / tax-center books — unmatched, not invented."
     )
     live_limitations = (
         "Family annual grid is JavaScript-rendered. Product pages mix performance "
@@ -645,7 +653,10 @@ class DimensionalSource(HtmlTableSource):
         "offline this session. "
         "Official 5y WAVE AM leftover re-probe (2026-09-17): live tax center "
         "still lists 2023/2024/2025 sheets only; 2021–2022 stay unmatched "
-        "(year-alias trap). Tax center: https://www.dimensional.com/us-en/tax"
+        "(year-alias trap). Tax center: https://www.dimensional.com/us-en/tax "
+        "Official 5y WAVE AP leftover re-probe (2026-09-17): leftover MF 3y "
+        "still miss 2021–2022 — never invent $0 and never transcribe aliased "
+        "480410/218591/332797 bytes as 2021/2022."
     )
     live_limitations = "Year-end book is PDF. Fixture transcribes public paid/estimate rows."
 

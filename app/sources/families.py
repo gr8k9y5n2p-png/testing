@@ -61,6 +61,10 @@ class BlackRockSource(HtmlTableSource):
         "MDEFX 2021 still unpublished on the live 2021 open-end tax HTML; "
         "LifePath 2025 leftovers LPBAX / LILAX / LELAX miss 2025 after maturity "
         "/ rename. iShares ETF leftovers belong to prior waves — not redone. "
+        "Official 5y WAVE AP leftover re-probe (2026-09-17, Investor A MF only): "
+        "MDEFX / BAMBX / BMPAX 2021 still unpublished on the live 2021 open-end "
+        "tax HTML. EuroFund FYE June/July is not calendar-safe next to July/Dec "
+        "event rows. Class-level — never sibling-copy. "
         "All-events leftover (2026-09-16, in-book only): official stamped "
         "distribution-summary PDFs 2022–2025 re-read for non-December ordinary "
         "income / LT / ROC the December-only ICI CSVs omitted. Qualified % "
@@ -276,7 +280,21 @@ class VanguardSource(HtmlTableSource):
         "VDIG / VEXC / VGHY / VGMS / VGUS / VGVT / VSDB / VTG / VTP / VUSG / "
         "VUSV / VCPSX) and VEDIX 2025 official dashes stay unmatched. VFLQ "
         "2022-11-28 $99.896787 is official ROC/liquidation (col 14 income "
-        "dash) — not stored as ordinary income."
+        "dash) — not stored as ordinary income. "
+        "Official 5y WAVE AP leftover (2026-09-17, in-book only): same official "
+        "ICI Primary PDFs re-read for leftover 4y bond / GNMA / tax-exempt "
+        "December monthly income the AA leftover extract marked wrap-absent. "
+        "Heroes: VWEHX 2025-12-01 OI $0.028290; VWEAX $0.028744; VWETX "
+        "$0.032471; VFSTX $0.039275; VFSUX $0.040226; VFSIX $0.040398; VFIJX "
+        "$0.029108; VSGBX $0.032302; VCAIX $0.030013; VCADX $0.030488; VBISX "
+        "$0.032693; VBITX $0.033632; VBIPX $0.033716; VWAHX 2024-12-02 "
+        "$0.033860; VFICX $0.033574; VFIDX $0.034279; VBLAX $0.039517; VBLIX "
+        "$0.039863; VWITX 2023-12-01 $0.032618; VBTLX $0.026521; VWIUX "
+        "2022-12-01 $0.029810. Tax-exempt uses the printed total/exempt dollar. "
+        "Class-level — never copied across Investor / Admiral / Institutional. "
+        "VEDIX 2025 official dashes, VMFXX 2023 daily NII, BSV 2022+2025, and "
+        "recent-launch 1y books stay unmatched. WAVE AP leftover ICI is "
+        "fixture-only."
     )
     live_limitations = (
         "Advisor year-end page is JavaScript-rendered; ICI archives are PDFs "
@@ -427,6 +445,15 @@ class VanguardSource(HtmlTableSource):
                 name="leftover_ici_primary_2022",
                 url=f"{ici}/2022_ICI_Primary_Layout.pdf",
                 fixture="leftover_ici_primary_2022.csv",
+                live=False,
+                parser="ici",
+                large_aum_only=False,
+                role="history",
+            ),
+            PageSpec(
+                name="leftover_ici_primary_wave_ap",
+                url=f"{ici}/ICIprimary_012026.pdf",
+                fixture="leftover_ici_primary_wave_ap.csv",
                 live=False,
                 parser="ici",
                 large_aum_only=False,

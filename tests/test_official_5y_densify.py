@@ -430,16 +430,18 @@ def test_parallel_aa_leftover_walls_stay_unmatched() -> None:
         and row.amount == Decimal("99.896787")
     ]
     assert vflq_liq == []
-    vbtlx_2023 = [
+    # WAVE AP fills the AA leftover wrap-absent December rows.
+    vbtlx_2023 = next(
         row
         for row in records
         if row.ticker == "VBTLX"
+        and row.estimate_type == EstimateType.ordinary_income
         and row.ex_date
-        and row.ex_date.year == 2023
+        and str(row.ex_date) == "2023-12-01"
         and row.publication_stage == PublicationStage.final
         and row.amount is not None
-    ]
-    assert vbtlx_2023 == []
+    )
+    assert vbtlx_2023.amount == Decimal("0.026521")
     bsv_missing = [
         row
         for row in records
@@ -450,16 +452,17 @@ def test_parallel_aa_leftover_walls_stay_unmatched() -> None:
         and row.amount is not None
     ]
     assert bsv_missing == []
-    vwehx_2025 = [
+    vwehx_2025 = next(
         row
         for row in records
         if row.ticker == "VWEHX"
+        and row.estimate_type == EstimateType.ordinary_income
         and row.ex_date
-        and row.ex_date.year == 2025
+        and str(row.ex_date) == "2025-12-01"
         and row.publication_stage == PublicationStage.final
         and row.amount is not None
-    ]
-    assert vwehx_2025 == []
+    )
+    assert vwehx_2025.amount == Decimal("0.028290")
     vedix_2025 = [
         row
         for row in records
@@ -854,8 +857,15 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # 2023). MFS leftover Excel / Lord LAGWX July 31 / Dodge Class X
     # 2021 / Oakmark Bond 2023 stay walls. Honest pin remasured on
     # WAVE AN tip 9fb7db5: 3998 → 4007 (+9 MF; ETF 5y unchanged at 758).
-    assert digest.funds_with_5y == 4007
-    assert digest.funds_with_5y_mf == 3249
+    # WAVE AP leftover (existing in-book only): Vanguard leftover 4y bond /
+    # GNMA / tax-exempt December monthly income the AA leftover ICI extract
+    # marked wrap-absent (VWEHX / VFSTX 2025 + VWAHX 2024 + VBTLX 2023 +
+    # VWIUX 2022). Preferred Schwab / DFA / Nuveen / BlackRock MDEFX and
+    # American Funds ANEFX/SMCWX/CNWCX 2022 remasured as walls. Does not
+    # redo AF–AO. Honest pin remasured on WAVE AO tip 058c4ca: 4007 → 4028
+    # (+21 MF; ETF 5y unchanged at 758).
+    assert digest.funds_with_5y == 4028
+    assert digest.funds_with_5y_mf == 3270
     assert digest.funds_with_5y_etf == 758
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
@@ -11700,4 +11710,203 @@ def test_wave_ao_heroes_are_searchable(client: TestClient) -> None:
         and row.get("publication_stage") == "final"
     ]
     assert ffrix_2021 == []
+
+
+WAVE_AP_VANGUARD_LEFTOVER_5Y = (
+    "VWEHX",
+    "VWEAX",
+    "VWETX",
+    "VFIJX",
+    "VFSTX",
+    "VFSUX",
+    "VFSIX",
+    "VSGBX",
+    "VCAIX",
+    "VCADX",
+    "VBISX",
+    "VBITX",
+    "VBIPX",
+    "VWAHX",
+    "VFICX",
+    "VFIDX",
+    "VBLAX",
+    "VBLIX",
+    "VWITX",
+    "VBTLX",
+    "VWIUX",
+)
+
+
+def test_wave_ap_vanguard_leftover_ici_fills_5y() -> None:
+    records = VanguardSource().fetch(mode="fixture").records
+    vwehx_2025 = next(
+        row
+        for row in records
+        if row.ticker == "VWEHX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-01"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert vwehx_2025.amount == Decimal("0.028290")
+    vweax_2025 = next(
+        row
+        for row in records
+        if row.ticker == "VWEAX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-01"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert vweax_2025.amount == Decimal("0.028744")
+    vfstx_2025 = next(
+        row
+        for row in records
+        if row.ticker == "VFSTX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-01"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert vfstx_2025.amount == Decimal("0.039275")
+    vwahx_2024 = next(
+        row
+        for row in records
+        if row.ticker == "VWAHX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2024-12-02"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert vwahx_2024.amount == Decimal("0.033860")
+    vbtlx_2023 = next(
+        row
+        for row in records
+        if row.ticker == "VBTLX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2023-12-01"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert vbtlx_2023.amount == Decimal("0.026521")
+    vwiux_2022 = next(
+        row
+        for row in records
+        if row.ticker == "VWIUX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2022-12-01"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert vwiux_2022.amount == Decimal("0.029810")
+    # Class-level — Investor VWEHX is not copied from Admiral VWEAX.
+    assert vwehx_2025.amount != vweax_2025.amount
+    for ticker in WAVE_AP_VANGUARD_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(records, ticker), ticker
+
+
+def test_wave_ap_leftover_walls_stay_unmatched() -> None:
+    vanguard = VanguardSource().fetch(mode="fixture").records
+    assert 2025 not in _paid_lookback_years(vanguard, "VEDIX")
+    assert {2021, 2022, 2023, 2024} <= _paid_lookback_years(vanguard, "VEDIX")
+
+    af = AmericanFundsSource().fetch(mode="fixture").records
+    anefx_2022 = [
+        row
+        for row in af
+        if row.ticker == "ANEFX"
+        and _year_for_row(row.as_of, row.ex_date, row.payable_date) == 2022
+        and row.publication_stage in {PublicationStage.final, PublicationStage.paid}
+        and row.amount is not None
+    ]
+    assert anefx_2022 == []
+    assert 2022 not in _paid_lookback_years(af, "SMCWX")
+    assert 2022 not in _paid_lookback_years(af, "CNWCX")
+
+    schwab = SchwabSource().fetch(mode="fixture").records
+    # Money-market leftover years stay unpublished — never invent $0.
+    assert 2021 not in _paid_lookback_years(schwab, "SGUXX")
+    assert _paid_lookback_years(schwab, "SGUXX") == {2025}
+
+    dfa = DimensionalSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(dfa, "DISVX")
+    assert 2022 not in _paid_lookback_years(dfa, "DISVX")
+
+    nuveen = NuveenSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(nuveen, "NSBRX")
+
+    blackrock = BlackRockSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(blackrock, "MDEFX")
+
+    # Do not redo WAVE AO Fidelity Class I December 2021 — FIXIX stays 5y.
+    fidelity = FidelitySource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(fidelity, "FIXIX")
+    assert 2021 not in _paid_lookback_years(fidelity, "FFRIX")
+
+
+def test_wave_ap_heroes_are_searchable(client: TestClient) -> None:
+    fetched = client.post(
+        "/ingest/fetch", json={"fund_family": "vanguard", "mode": "fixture"}
+    )
+    assert fetched.status_code == 200, fetched.text
+    assert fetched.json()["created"] > 0
+
+    for ticker in ("VWEHX", "VFSTX", "VBTLX", "VWIUX", "VEDIX"):
+        body = client.get("/funds", params={"q": ticker}).json()
+        tickers = [item["ticker"] for item in body["items"]]
+        assert ticker in tickers, f"{ticker} missing from GET /funds?q={ticker}: {tickers[:8]}"
+
+    vwehx = client.get(
+        "/distributions",
+        params={"ticker": "VWEHX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    vwehx_2025 = [
+        Decimal(row["amount"])
+        for row in vwehx["items"]
+        if row.get("ticker") == "VWEHX"
+        and row.get("estimate_type") == "ordinary_income"
+        and str(row.get("ex_date") or "").startswith("2025-12-01")
+    ]
+    assert Decimal("0.028290") in vwehx_2025
+    vwehx_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in vwehx["items"]
+        if row.get("ticker") == "VWEHX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= vwehx_years
+
+    vbtlx = client.get(
+        "/distributions",
+        params={"ticker": "VBTLX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    vbtlx_2023 = [
+        Decimal(row["amount"])
+        for row in vbtlx["items"]
+        if row.get("ticker") == "VBTLX"
+        and row.get("estimate_type") == "ordinary_income"
+        and str(row.get("ex_date") or "").startswith("2023-12-01")
+    ]
+    assert Decimal("0.026521") in vbtlx_2023
+
+    vedix = client.get(
+        "/distributions",
+        params={"ticker": "VEDIX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    vedix_2025 = [
+        row
+        for row in vedix["items"]
+        if row.get("ticker") == "VEDIX"
+        and str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "").startswith(
+            "2025"
+        )
+        and row.get("amount") is not None
+        and row.get("publication_stage") == "final"
+    ]
+    assert vedix_2025 == []
 
