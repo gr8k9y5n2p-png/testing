@@ -331,6 +331,42 @@ def test_vanguard_fixture() -> None:
     assert str(vigax.payable_date) == "2025-12-23"
 
 
+def test_vanguard_wave_ap_leftover_ici() -> None:
+    records = parse_ici_primary(
+        (ROOT / "vanguard" / "leftover_ici_primary_wave_ap.csv").read_text(encoding="utf-8"),
+        source_url="fixture://vanguard-wave-ap",
+        fund_family="Vanguard",
+    )
+    vwehx = next(
+        r
+        for r in records
+        if r.ticker == "VWEHX" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert vwehx.amount == Decimal("0.028290")
+    assert str(vwehx.ex_date) == "2025-12-01"
+    vweax = next(
+        r
+        for r in records
+        if r.ticker == "VWEAX" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert vweax.amount == Decimal("0.028744")
+    assert vwehx.amount != vweax.amount
+    vbtlx = next(
+        r
+        for r in records
+        if r.ticker == "VBTLX" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert vbtlx.amount == Decimal("0.026521")
+    assert str(vbtlx.ex_date) == "2023-12-01"
+    vwiux = next(
+        r
+        for r in records
+        if r.ticker == "VWIUX" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert vwiux.amount == Decimal("0.029810")
+    assert str(vwiux.ex_date) == "2022-12-01"
+
+
 def test_t_rowe_split_header_fixture() -> None:
     html = (ROOT / "t_rowe_price" / "2025_year_end_distributions.html").read_text(encoding="utf-8")
     records = parse_distribution_html(html, source_url="fixture://trp", fund_family="T. Rowe Price")

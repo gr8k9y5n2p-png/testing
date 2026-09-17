@@ -92,7 +92,16 @@ class AmericanFundsSource(FundSource):
         "live historicalDistributions JSON for leftover 4y classes — still no "
         "ANEFX/SMCWX/CNWCX 2022; AAFXX/USGXX 2021; BFICX 2023; CGVBX 2021/2025; "
         "SCWCX 2022/2024. Midyear all-events work belongs to #188 — not redone "
-        "here."
+        "here. "
+        "Official 5y WAVE AP leftover re-probe (2026-09-17): 2022 YE tax-center "
+        "HTML still omits New Economy / SMALLCAP World / New World leftover "
+        "classes; live historicalDistributions JSON still has no 2022 YEAR "
+        "final. N-CSR Financial Highlights FYE Nov 30 / Sep 30 / Oct 31 2022 "
+        "print ANEFX CG $4.67 / SMCWX $7.40 / CNWCX $5.56 — those are the "
+        "already-booked December 2021 payments (ANEFX 2021-12-15 LT $4.6720; "
+        "SMCWX 2021-12-16 LT $7.3960; CNWCX 2021-12-16 LT $5.5580), not "
+        "calendar 2022. Stamping those FYE columns as 2022 would be a "
+        "year-alias trap. Missing 2022 YEAR finals stay unmatched."
     )
 
     def __init__(self, fixtures_dir: Path | None = None) -> None:

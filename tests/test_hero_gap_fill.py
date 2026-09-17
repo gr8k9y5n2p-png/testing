@@ -303,5 +303,8 @@ def test_fixture_book_lookback_stays_official_only() -> None:
     # WAVE AO leftover: Fidelity Advisor leftover Class I December 2021
     # N-CSR pay tables +9 MF. Honest pin remasured on WAVE AN tip
     # 9fb7db5: 3998 → 4007 (+9 MF; ETF 5y unchanged at 758).
-    assert digest.funds_with_5y == 4007
+    # WAVE AP leftover: Vanguard leftover 4y bond / GNMA / tax-exempt
+    # December ICI monthly income +21 MF. Honest pin remasured on WAVE AO
+    # tip 058c4ca: 4007 → 4028 (+21 MF; ETF 5y unchanged at 758).
+    assert digest.funds_with_5y == 4028
     assert digest.book_funds >= 7200
