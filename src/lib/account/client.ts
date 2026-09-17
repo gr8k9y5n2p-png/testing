@@ -59,3 +59,26 @@ export async function signInAccountClient(
 export async function signOutAccountClient(): Promise<void> {
   await requestJson<{ ok: boolean }>("/api/account/signout", { method: "POST" });
 }
+
+export async function requestPasswordResetClient(
+  email: string,
+): Promise<{ ok: true; detail: string; mailConfigured: boolean }> {
+  return requestJson<{ ok: true; detail: string; mailConfigured: boolean }>(
+    "/api/account/forgot",
+    {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    },
+  );
+}
+
+export async function resetAccountPasswordClient(
+  token: string,
+  password: string,
+): Promise<PublicAccount> {
+  const body = await requestJson<{ account: PublicAccount }>("/api/account/reset", {
+    method: "POST",
+    body: JSON.stringify({ token, password }),
+  });
+  return body.account;
+}

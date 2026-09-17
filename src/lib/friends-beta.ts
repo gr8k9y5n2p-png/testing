@@ -18,11 +18,15 @@ export const FRIENDS_BETA_PATH = "/beta";
 
 const SESSION_PAYLOAD = "aftertax.friends-beta.v1";
 
+export const FRIENDS_BETA_PASSWORD_FIELD = "friends-beta-password";
+
 const PUBLIC_EXACT = new Set([
   FRIENDS_BETA_PATH,
   "/terms",
   "/privacy",
   "/robots.txt",
+  "/account/forgot",
+  "/account/reset",
 ]);
 
 export function friendsBetaPassword(

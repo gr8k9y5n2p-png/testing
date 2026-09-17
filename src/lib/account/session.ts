@@ -136,6 +136,10 @@ export function serializeClearedAccountCookie(secure: boolean): string {
 }
 
 export function isHttpsRequest(request: Request): boolean {
+  const forwarded = request.headers.get("x-forwarded-proto");
+  if (forwarded) {
+    return forwarded.split(",")[0]?.trim() === "https";
+  }
   try {
     return new URL(request.url).protocol === "https:";
   } catch {
