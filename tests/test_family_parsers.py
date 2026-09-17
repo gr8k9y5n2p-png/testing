@@ -4681,6 +4681,74 @@ def test_parallel_x_leftover_paid_fixtures() -> None:
     assert glcgx_2021.publication_stage == PublicationStage.final
     assert {r.ticker for r in gs} == {"GLCGX", "GCGIX"}
 
+    trowe_al = parse_distribution_html(
+        (ROOT / "t_rowe_price" / "leftover_ncsr_advisor_r_inst_wave_al.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url=(
+            "https://www.sec.gov/Archives/edgar/data/902259/"
+            "000119312525031529/d927665dncsr.htm"
+        ),
+        fund_family="T. Rowe Price",
+    )
+    pabgx_al = next(
+        r
+        for r in trowe_al
+        if r.ticker == "PABGX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and str(r.as_of) == "2024-12-31"
+    )
+    assert pabgx_al.amount == Decimal("16.42")
+    assert pabgx_al.publication_stage == PublicationStage.final
+    iemfx_al = next(
+        r
+        for r in trowe_al
+        if r.ticker == "IEMFX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and str(r.as_of) == "2024-10-31"
+    )
+    assert iemfx_al.amount == Decimal("0.60")
+    assert "RRCOX" not in {r.ticker for r in trowe_al}
+    assert "TRBCX" not in {r.ticker for r in trowe_al}
+    assert {r.ticker for r in trowe_al} == {
+        "PABGX",
+        "RRBGX",
+        "PACLX",
+        "PACOX",
+        "PAFDX",
+        "RRFDX",
+        "PAGEX",
+        "PAMCX",
+        "RRMGX",
+        "PAREX",
+        "PASSX",
+        "PASVX",
+        "PAULX",
+        "PAVLX",
+        "PAWAX",
+        "TADGX",
+        "TAMVX",
+        "RRMVX",
+        "TQAAX",
+        "TQSAX",
+        "TQVAX",
+        "TRSAX",
+        "RRGSX",
+        "PMEGX",
+        "TPLGX",
+        "TRSSX",
+        "PAAOX",
+        "PAFGX",
+        "PAGLX",
+        "PAIGX",
+        "RRIGX",
+        "PAIJX",
+        "PAITX",
+        "RRITX",
+        "PRNCX",
+        "IEMFX",
+    }
+
 
 def test_eleventh_tier_fixtures() -> None:
     amg = parse_distribution_html(
