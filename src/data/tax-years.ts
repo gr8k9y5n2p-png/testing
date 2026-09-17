@@ -1,6 +1,6 @@
 /**
  * Tax years Data actually has. Never invent a calendar range or $0 year.
- * Search Year dropdown lists these plus an All years option.
+ * Paid History year pager lists these. Upcoming has no year filter.
  */
 
 import { isoDate } from "./distribution-bucket.ts";
