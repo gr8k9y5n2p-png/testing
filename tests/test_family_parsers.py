@@ -4287,6 +4287,28 @@ def test_eighth_tier_fixtures() -> None:
     assert tavfx_2024.amount == Decimal("4.08400")
     assert tavfx_2024.publication_stage == PublicationStage.final
 
+    third_avenue_ncsr = parse_distribution_html(
+        (ROOT / "third_avenue" / "leftover_ncsr_2021_wave_av.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url=(
+            "https://www.sec.gov/Archives/edgar/data/1031661/000119312522001631/"
+            "d245346dncsr.htm"
+        ),
+        fund_family="Third Avenue",
+    )
+    tavfx_2021 = next(
+        r
+        for r in third_avenue_ncsr
+        if r.ticker == "TAVFX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.as_of
+        and str(r.as_of) == "2021-10-31"
+    )
+    assert tavfx_2021.amount == Decimal("0.30")
+    assert tavfx_2021.publication_stage == PublicationStage.final
+    assert [r for r in third_avenue_ncsr if r.ticker in {"TVFVX", "TAVZX"}] == []
+
     heartland = parse_distribution_html(
         (ROOT / "heartland" / "2025_year_end_distributions.html").read_text(
             encoding="utf-8"
