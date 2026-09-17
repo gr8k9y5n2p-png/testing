@@ -912,6 +912,60 @@ def test_next_tier_fixtures() -> None:
     assert piodx_2024.amount == Decimal("4.1900")
     assert {r.ticker for r in amundi_2024} >= {"PGSVX", "PISVX", "AOBLX"}
 
+    amundi_ncsr_bq = parse_distribution_html(
+        (ROOT / "amundi" / "leftover_ncsr_2021_2022_wave_bq.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url=(
+            "https://www.sec.gov/Archives/edgar/data/78713/"
+            "000119312524058913/d793426dncsr.htm"
+        ),
+        fund_family="Amundi US / Pioneer",
+    )
+    piodx_2022_oi = next(
+        r
+        for r in amundi_ncsr_bq
+        if r.ticker == "PIODX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.as_of
+        and str(r.as_of) == "2022-12-31"
+    )
+    assert piodx_2022_oi.amount == Decimal("0.17")
+    assert piodx_2022_oi.publication_stage == PublicationStage.final
+    piodx_2021_cg = next(
+        r
+        for r in amundi_ncsr_bq
+        if r.ticker == "PIODX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and r.as_of
+        and str(r.as_of) == "2021-12-31"
+    )
+    assert piodx_2021_cg.amount == Decimal("6.07")
+    piotx_2022_oi = next(
+        r
+        for r in amundi_ncsr_bq
+        if r.ticker == "PIOTX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.as_of
+        and str(r.as_of) == "2022-12-31"
+    )
+    assert piotx_2022_oi.amount == Decimal("0.16")
+    assert {r.ticker for r in amundi_ncsr_bq} == {"PIODX", "PIOTX"}
+    assert not any(
+        r.ticker
+        in {
+            "PCODX",
+            "PIGFX",
+            "PEQIX",
+            "GHQIX",
+            "KTRAX",
+            "KGDAX",
+            "TOLLX",
+            "KTCAX",
+        }
+        for r in amundi_ncsr_bq
+    )
+
     ft_2024 = parse_distribution_html(
         (ROOT / "franklin_templeton" / "2024_section_19a.html").read_text(encoding="utf-8"),
         source_url="fixture://ft-2024",

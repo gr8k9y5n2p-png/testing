@@ -837,11 +837,30 @@ class AmundiSource(HtmlTableSource):
         "PEQIX / PIOTX / CVFCX / GLOSX / PIIFX / PCGRX) stay missing 2021–2022. "
         "2023–2024 books print Class A tickers and state same-rate across classes "
         "— leftover C / Y / K / R / R6 years are not copied. N-CSR fiscal "
-        "highlights are not used as calendar YE."
+        "highlights are not used as calendar YE except Dec 31 / Oct 31. "
+        "Official 5y WAVE BQ leftover (existing in-book only): Pioneer Fund and "
+        "Pioneer Core Equity FYE December 31 N-CSR Financial Highlights unlock "
+        "leftover 2021–2022 on the 2023–2025 paid Class A book (PIODX / PIOTX). "
+        "Calendar-safe as_of 12/31. Class-level — never sibling-copied. Income "
+        "is ordinary income; net realized gain is unsplit total capital gains. "
+        "Pioneer Fund N-CSR "
+        "https://www.sec.gov/Archives/edgar/data/78713/000119312524058913/"
+        "d793426dncsr.htm (0001193125-24-058913) and Pioneer Series Trust XI "
+        "https://www.sec.gov/Archives/edgar/data/78758/000119312524058923/"
+        "d795500dncsr.htm (0001193125-24-058923). Fundamental Growth PIGFX FYE "
+        "March 31, Equity Income PEQIX FYE October 31 (left for a later slice), "
+        "and leftover Class A 3y names whose FYE is unpublished here stay "
+        "unmatched. WAVE BP GHQIX-family, WAVE BO KTRAX, WAVE BN KGDAX, WAVE "
+        "BM Baird, WAVE BL Thrivent, WAVE BK TOLLX, WAVE BI KTCAX, WAVE BJ "
+        "RiverPark, WAVE BH TCW, WAVE BG DWS Dec 31, and prior BD–BF books "
+        "stay on their leftover pages — not re-emitted here. Alger leftovers "
+        "stay reserved / disjoint. WAVE BQ leftover N-CSR paid history is "
+        "fixture-only."
     )
     live_limitations = (
         "Pioneer/Victory tax hubs are HTML shells; estimate/final books are PDF. "
-        "Weekly walk is no-op success on empty/PDF-bytes pages; fixtures transcribe the official tables."
+        "Weekly walk is no-op success on empty/PDF-bytes pages; fixtures transcribe the official tables. "
+        "Leftover 2021–2022 Pioneer Dec 31 N-CSR paid history is fixture-only."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -940,6 +959,16 @@ class AmundiSource(HtmlTableSource):
                     "resources/tax-center/2023/Capital-Gain-Distribution-Estimates-as-of-10-31-2023.pdf"
                 ),
                 fixture="2023_capital_gain_estimates.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="leftover_ncsr_2021_2022_wave_bq",
+                url=(
+                    "https://www.sec.gov/Archives/edgar/data/78713/"
+                    "000119312524058913/d793426dncsr.htm"
+                ),
+                fixture="leftover_ncsr_2021_2022_wave_bq.html",
                 live=False,
                 role="history",
             ),
