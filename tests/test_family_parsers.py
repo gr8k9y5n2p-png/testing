@@ -4219,6 +4219,36 @@ def test_sixth_tier_fixtures() -> None:
     assert hlmgx_ncsr.publication_stage == PublicationStage.final
     assert {r.ticker for r in harding_ncsr} == {"HLMGX", "HLMVX", "HLGZX"}
 
+    harding_ncsr_ch = parse_distribution_html(
+        (ROOT / "harding_loevner" / "leftover_ncsr_hlemx_2024_wave_ch.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url=(
+            "https://www.sec.gov/Archives/edgar/data/1018170/"
+            "000089843025000008/8dd25e24ef2e8b3.htm#hlemx-2024"
+        ),
+        fund_family="Harding Loevner",
+    )
+    hlemx_2024_cg = next(
+        r
+        for r in harding_ncsr_ch
+        if r.ticker == "HLEMX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and str(r.as_of) == "2024-10-31"
+    )
+    assert hlemx_2024_cg.amount == Decimal("0.69")
+    assert hlemx_2024_cg.publication_stage == PublicationStage.final
+    hlfzx_2021_oi = next(
+        r
+        for r in harding_ncsr_ch
+        if r.ticker == "HLFZX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and str(r.as_of) == "2021-10-31"
+    )
+    assert hlfzx_2021_oi.amount == Decimal("0.14")
+    assert {r.ticker for r in harding_ncsr_ch} == {"HLEMX", "HLGZX", "HLIZX", "HLFZX"}
+    assert not any(r.ticker in {"HLMGX", "HLMVX", "HLIDX", "HLRZX", "RALIX"} for r in harding_ncsr_ch)
+
     matthews = parse_distribution_html(
         (ROOT / "matthews_asia" / "2025_year_end_distributions.html").read_text(
             encoding="utf-8"
