@@ -115,12 +115,29 @@ class BaillieGiffordSource(HtmlTableSource):
         "Leftover paid 2025 Final product-page tables for in-book leftovers "
         "BGAKX Class K and BINSX / BGESX / BSGPX Institutional only "
         "(official printed $0.00000 ST stored). Class-level — never copy K onto "
-        "Institutional. BGCSX has no Final table. 2021–2024 unpublished on "
-        "live most-recent tables; Wayback CDX offline."
+        "Institutional. BGCSX has no Final table. Official 5y WAVE BF leftover "
+        "(existing in-book only): Baillie Gifford Funds FYE December 31 2024 "
+        "issuer annual-statement / 2023 N-CSR Financial Highlights unlock "
+        "leftover 2021–2024 on those same four leftovers. Calendar-safe as_of "
+        "12/31. Class-level Class K / Institutional — never sibling-copied "
+        "onto BGASX / BGIKX / BGEKX / BGPKX. Income is ordinary income; net "
+        "realized gain is unsplit total capital gains. Issuer dashes omitted "
+        "(BGAKX 2023 CG; BINSX 2023–2022 CG; BGESX 2022 OI; BSGPX 2024–2023 "
+        "CG and 2022 OI). 2025 stays on the existing paid Final book "
+        "(BGAKX OI $0.49581 is not overwritten by N-CSR OI $0.26). Official "
+        "2024 issuer annual statements "
+        "https://www.bailliegifford.com/en/usa/non-professional-investor/"
+        "literature-library/funds/mutual-funds/"
+        "baillie-gifford-funds-annual-financial-statements-2024/ verified "
+        "against 2023 N-CSR "
+        "https://www.sec.gov/Archives/edgar/data/1120543/000110465924030888/"
+        "tm241460d1_ncsr.htm. WAVE BF leftover N-CSR paid history is "
+        "fixture-only."
     )
     live_limitations = (
         "Estimate book is PDF. Fixture transcribes public Institutional / Class K "
-        "identifiers from the official prospectus. Paid leftover is year-depth only."
+        "identifiers from the official prospectus. Leftover 2021–2024 N-CSR "
+        "paid history is fixture-only."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -146,6 +163,17 @@ class BaillieGiffordSource(HtmlTableSource):
                 live=False,
                 role="history",
                 large_aum_only=False,
+            ),
+            PageSpec(
+                name="leftover_ncsr_2021_2024_wave_bf",
+                url=(
+                    "https://www.bailliegifford.com/en/usa/non-professional-investor/"
+                    "literature-library/funds/mutual-funds/"
+                    "baillie-gifford-funds-annual-financial-statements-2024/"
+                ),
+                fixture="leftover_ncsr_2021_2024_wave_bf.html",
+                live=False,
+                role="history",
             ),
         ]
 
