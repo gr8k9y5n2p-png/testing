@@ -11451,12 +11451,18 @@ def test_wave_an_heroes_are_searchable(client: TestClient) -> None:
         "/distributions",
         params={"ticker": "APFDX", "publication_stage": "final", "page_size": 200},
     ).json()
-    apfdx_2023 = [
+    apfdx_2023_ncsr = [
         row
         for row in apfdx["items"]
         if row.get("ticker") == "APFDX"
-        and str(row.get("as_of") or row.get("ex_date") or "").startswith("2023")
+        and str(row.get("as_of") or "").startswith("2023-09-30")
         and row.get("amount") is not None
         and row.get("publication_stage") == "final"
     ]
-    assert apfdx_2023 == []
+    assert apfdx_2023_ncsr == []
+    apfdx_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in apfdx["items"]
+        if row.get("ticker") == "APFDX" and row.get("amount") is not None
+    }
+    assert "2023" not in apfdx_years
