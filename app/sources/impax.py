@@ -145,7 +145,10 @@ class ImpaxSource(HtmlTableSource):
         "June 2026 paid: BLDX OI $0.253933 (ETF rec/ex 6/22/2026, pay 6/24/2026). "
         "High Yield PAXHX / PXHIX / PXHAX omitted (not in this in-book slice). "
         "N/A Core Bond ordinary-income cells omitted (monthly book unpublished). "
-        "IGSIX / IGSLX liquidated 2026-05-01 — paid 2024–2025 only."
+        "IGSIX / IGSLX liquidated 2026-05-01 — paid 2024–2025 only. "
+        "WAVE AJ leftover re-probe: PXSAX / PXSCX / PXSIX 2023 official None; "
+        "Core Bond monthly OI unpublished; PAXBX / PXBIX 2021-only; "
+        "already-5y leftover shells not re-emitted."
     )
     live_limitations = (
         "Live hub is geo/investor-type gated and mixes CUSIP / TA-fund-number "

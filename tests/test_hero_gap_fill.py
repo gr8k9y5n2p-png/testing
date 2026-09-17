@@ -280,5 +280,8 @@ def test_fixture_book_lookback_stays_official_only() -> None:
     # WAVE AH leftover: BNY leftover Class A / Investor product-page paid YE
     # +4 MF (DMCVX / MIBLX / MIMSX / MISCX). Honest pin remasured after
     # rebase onto #204 tip 5b1ffa45: 3758 → 3762 (+4 MF).
-    assert digest.funds_with_5y == 3762
+    # WAVE AJ leftover: Value Line + Permanent Portfolio + Kopernik +
+    # Tocqueville leftover paid YE +18 MF. Honest pin remasured after
+    # rebase onto #205 tip f6bb49ef: 3762 → 3780 (+18 MF).
+    assert digest.funds_with_5y == 3780
     assert digest.book_funds >= 7200
