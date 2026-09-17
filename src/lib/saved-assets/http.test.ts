@@ -121,6 +121,50 @@ describe("saved-assets HTTP account scoping", () => {
     assert.equal(stillThere.status, 200);
   });
 
+  it("lets the owner delete their own list by id", async () => {
+    const store = new MemorySavedAssetStore();
+    const userA = newAccountId();
+    const create = await handleSavedAssetsCollection(
+      request("http://localhost/api/saved-assets", {
+        method: "POST",
+        accountId: userA,
+        body: JSON.stringify({
+          type: "list",
+          name: "Test 2",
+          payload: { tickers: ["FBGRX", "AGTHX", "ABALX", "VFIAX"] },
+        }),
+      }),
+      store,
+    );
+    const { item } = (await json(create)) as { item: { id: string } };
+
+    const deleted = await handleSavedAssetItem(
+      request(`http://localhost/api/saved-assets/${item.id}`, {
+        method: "DELETE",
+        accountId: userA,
+      }),
+      item.id,
+      store,
+    );
+    assert.equal(deleted.status, 200);
+    const deletedBody = await json(deleted);
+    assert.equal(deletedBody.ok, true);
+
+    const listed = await handleSavedAssetsCollection(
+      request("http://localhost/api/saved-assets?type=list", { accountId: userA }),
+      store,
+    );
+    const listBody = await json(listed);
+    assert.equal(listBody.count, 0);
+
+    const missing = await handleSavedAssetItem(
+      request(`http://localhost/api/saved-assets/${item.id}`, { accountId: userA }),
+      item.id,
+      store,
+    );
+    assert.equal(missing.status, 404);
+  });
+
   it("returns 401 when the request has no account session", async () => {
     const store = new MemorySavedAssetStore();
     const response = await handleSavedAssetsCollection(

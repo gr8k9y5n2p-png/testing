@@ -29,10 +29,16 @@ import {
 } from "@/lib/copy";
 import { savedPortfolioSubtitle } from "@/lib/illustrate/portfolio-save-open";
 import {
+  deleteSavedAsset,
   listSavedAssets,
   saveSavedAsset,
   SavedAssetsClientError,
 } from "@/lib/saved-assets/client";
+import {
+  applyDeletedPickerItem,
+  savedAssetDeleteConfirm,
+  savedAssetDeleteLabel,
+} from "@/lib/saved-assets/picker";
 import type { SavedAsset, SavedAssetType } from "@/lib/saved-assets/types";
 
 const COPY = {
@@ -99,6 +105,7 @@ export function SavedAssetActions({
   const [items, setItems] = useState<SavedAsset[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function openPicker() {
@@ -120,7 +127,7 @@ export function SavedAssetActions({
   }
 
   function close() {
-    if (busy) return;
+    if (busy || deletingId) return;
     setDialog(null);
     setError(null);
   }
@@ -161,6 +168,27 @@ export function SavedAssetActions({
     onOpen(item);
     setDialog(null);
     onNotice?.(copy.opened);
+  }
+
+  async function onDeleteItem(item: SavedAsset) {
+    if (deletingId || busy) return;
+    if (!window.confirm(savedAssetDeleteConfirm(type, item.name))) return;
+    const previousItems = items;
+    const previousSelected = selectedId;
+    const next = applyDeletedPickerItem(items, selectedId, item.id);
+    setItems(next.items);
+    setSelectedId(next.selectedId);
+    setError(null);
+    setDeletingId(item.id);
+    try {
+      await deleteSavedAsset(item.id);
+    } catch (caught) {
+      setItems(previousItems);
+      setSelectedId(previousSelected);
+      setError(errorMessage(caught));
+    } finally {
+      setDeletingId(null);
+    }
   }
 
   return (
@@ -245,20 +273,37 @@ export function SavedAssetActions({
                 const selected = item.id === selectedId;
                 return (
                   <li key={item.id}>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedId(item.id)}
-                      className={`flex w-full flex-col rounded-md border px-3 py-2 text-left text-sm ${
+                    <div
+                      className={`flex w-full items-start gap-2 rounded-md border px-3 py-2 text-sm ${
                         selected
                           ? "border-accent bg-accent-soft text-ink"
                           : "border-line text-ink hover:border-line-strong"
                       }`}
                     >
-                      <span className="font-medium">{item.name}</span>
-                      <span className="mt-0.5 text-[11px] text-muted">
-                        {subtitleFor(item)}
-                      </span>
-                    </button>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedId(item.id)}
+                        className="min-w-0 flex-1 text-left"
+                      >
+                        <span className="block font-medium">{item.name}</span>
+                        <span className="mt-0.5 block text-[11px] text-muted">
+                          {subtitleFor(item)}
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        className="-mr-1 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted hover:bg-surface hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
+                        aria-label={savedAssetDeleteLabel(type, item.name)}
+                        disabled={deletingId !== null || busy}
+                        onClick={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          void onDeleteItem(item);
+                        }}
+                      >
+                        <TrashCanIcon />
+                      </button>
+                    </div>
                   </li>
                 );
               })}
@@ -270,13 +315,18 @@ export function SavedAssetActions({
             </p>
           ) : null}
           <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-            <button type="button" className={buttonClass} onClick={close} disabled={busy}>
+            <button
+              type="button"
+              className={buttonClass}
+              onClick={close}
+              disabled={busy || deletingId !== null}
+            >
               {SAVED_ASSET_CANCEL}
             </button>
             <button
               type="button"
               className={primaryClass}
-              disabled={busy || !selectedId}
+              disabled={busy || deletingId !== null || !selectedId}
               onClick={onOpenSubmit}
             >
               {SAVED_ASSET_CONFIRM_OPEN}
@@ -285,6 +335,27 @@ export function SavedAssetActions({
         </DialogShell>
       ) : null}
     </div>
+  );
+}
+
+function TrashCanIcon() {
+  return (
+    <svg
+      viewBox="0 0 16 16"
+      width="16"
+      height="16"
+      aria-hidden="true"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    >
+      <path
+        d="M3.5 4.5h9M6.25 4.5V3.25A.75.75 0 0 1 7 2.5h2a.75.75 0 0 1 .75.75V4.5M5.25 4.5l.35 8.1a1 1 0 0 0 1 .9h2.8a1 1 0 0 0 1-.9l.35-8.1"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="M7 7v4.5M9 7v4.5" strokeLinecap="round" />
+    </svg>
   );
 }
 
