@@ -35,7 +35,14 @@ from app.sources.eighth_tier import (
     PrimecapSource,
     ThirdAvenueSource,
 )
-from app.sources.eleventh_tier import AmgSource, GuidestoneSource
+from app.sources.eleventh_tier import (
+    AmgSource,
+    GuidestoneSource,
+    KopernikSource,
+    PermanentPortfolioSource,
+    TocquevilleSource,
+    ValueLineSource,
+)
 from app.sources.fifth_tier import (
     GabelliSource,
     HarborSource,
@@ -118,6 +125,7 @@ from app.sources.tenth_tier import (
     ManningNapierSource,
     WestwoodSource,
 )
+from app.sources.impax import ImpaxSource
 from app.sources.parser import NormalizedRecord
 from app.sources.registry import list_sources
 
@@ -782,8 +790,17 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # Tweedy / PRIMECAP / Ariel already 5y stay walls / unchanged.
     # Honest pin remasured after rebase onto #204 tip 5b1ffa45:
     # 3758 → 3762 (+4 MF; ETF 5y unchanged at 758). No overlap with AF/AD/AE/AG.
-    assert digest.funds_with_5y == 3762
-    assert digest.funds_with_5y_mf == 3004
+    # WAVE AJ leftover (existing in-book only): Value Line historical YE
+    # +10 MF, Permanent Portfolio Class I leftover tax PDFs +3 MF,
+    # Kopernik leftover Final memos +4 MF, Tocqueville leftover paid
+    # notices +1 MF. Calvert / Domini / Parnassus / Neuberger have no
+    # in-book leftovers. Impax / Hartford / Invesco MF leftover years
+    # stay walls. VALLX / VLLIX 2023 official dashes stay 4y. Does not
+    # redo Gabelli AAA / BNY AH / Victory AG / Harbor AF / Macquarie AD /
+    # Invesco ETF AE. Honest pin remasured after rebase onto #205 tip
+    # f6bb49ef: 3762 → 3780 (+18 MF; ETF 5y unchanged at 758).
+    assert digest.funds_with_5y == 3780
+    assert digest.funds_with_5y_mf == 3022
     assert digest.funds_with_5y_etf == 758
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
@@ -9892,3 +9909,287 @@ def test_wave_ah_heroes_are_searchable(client: TestClient) -> None:
         if row.get("ticker") == "DMCVX" and row.get("amount") is not None
     }
     assert {"2021", "2022", "2023", "2024", "2025"} <= dmcvx_years
+
+
+def test_wave_aj_value_line_leftover_paid_fills_5y() -> None:
+    records = ValueLineSource().fetch(mode="fixture").records
+    vleox_2021 = next(
+        row
+        for row in records
+        if row.ticker == "VLEOX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2021-12-14"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert vleox_2021.amount == Decimal("3.27482")
+    vleox_2024 = next(
+        row
+        for row in records
+        if row.ticker == "VLEOX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2024-12-18"
+        and row.amount
+    )
+    assert vleox_2024.amount == Decimal("0.05432")
+    vlaax_2022_oi = next(
+        row
+        for row in records
+        if row.ticker == "VLAAX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2022-12-14"
+        and row.amount
+    )
+    assert vlaax_2022_oi.amount == Decimal("0.32727")
+    vlaax_2022_cg = [
+        row
+        for row in records
+        if row.ticker == "VLAAX"
+        and row.estimate_type
+        in {EstimateType.short_term_capital_gains, EstimateType.long_term_capital_gains}
+        and row.ex_date
+        and row.ex_date.year == 2022
+        and row.amount is not None
+    ]
+    assert vlaax_2022_cg == []
+    for ticker in (
+        "VLEOX",
+        "VLEIX",
+        "VLIFX",
+        "VLMIX",
+        "VALSX",
+        "VILSX",
+        "VLAAX",
+        "VLAIX",
+        "VALIX",
+        "VLIIX",
+    ):
+        years = {
+            row.ex_date.year
+            for row in records
+            if row.ticker == ticker
+            and row.ex_date
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        }
+        assert set(LOOKBACK_YEARS) <= years, ticker
+    for ticker in ("VALLX", "VLLIX"):
+        years = {
+            row.ex_date.year
+            for row in records
+            if row.ticker == ticker
+            and row.ex_date
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        }
+        assert years == {2021, 2022, 2024, 2025}, ticker
+
+
+def test_wave_aj_permanent_portfolio_leftover_paid_fills_5y() -> None:
+    records = PermanentPortfolioSource().fetch(mode="fixture").records
+    prpfx_2021_lt = next(
+        row
+        for row in records
+        if row.ticker == "PRPFX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2021-12-08"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert prpfx_2021_lt.amount == Decimal("0.82485")
+    prpfx_2021_oi = next(
+        row
+        for row in records
+        if row.ticker == "PRPFX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2021-12-08"
+        and row.amount
+    )
+    assert prpfx_2021_oi.amount == Decimal("0.18070")
+    pagrx_2021_st = next(
+        row
+        for row in records
+        if row.ticker == "PAGRX"
+        and row.estimate_type == EstimateType.short_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2021-12-08"
+        and row.amount
+    )
+    assert pagrx_2021_st.amount == Decimal("4.34332")
+    for ticker in ("PRPFX", "PRVBX", "PAGRX"):
+        years = {
+            row.ex_date.year
+            for row in records
+            if row.ticker == ticker
+            and row.ex_date
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        }
+        assert set(LOOKBACK_YEARS) <= years, ticker
+    assert [row for row in records if row.ticker == "PRTBX"] == []
+
+
+def test_wave_aj_kopernik_leftover_paid_fills_5y() -> None:
+    records = KopernikSource().fetch(mode="fixture").records
+    kggix_2021_oi = next(
+        row
+        for row in records
+        if row.ticker == "KGGIX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2021-12-30"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert kggix_2021_oi.amount == Decimal("0.7679")
+    kggix_2021_st = next(
+        row
+        for row in records
+        if row.ticker == "KGGIX"
+        and row.estimate_type == EstimateType.short_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2021-12-22"
+        and row.amount
+    )
+    assert kggix_2021_st.amount == Decimal("0.4856")
+    kggix_2024_lt = next(
+        row
+        for row in records
+        if row.ticker == "KGGIX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2024-12-20"
+        and row.amount
+    )
+    assert kggix_2024_lt.amount == Decimal("0.1144")
+    kggix_2024_st = [
+        row
+        for row in records
+        if row.ticker == "KGGIX"
+        and row.estimate_type == EstimateType.short_term_capital_gains
+        and row.ex_date
+        and row.ex_date.year == 2024
+        and row.amount is not None
+    ]
+    assert kggix_2024_st == []
+    for ticker in ("KGGIX", "KGGAX", "KGIIX", "KGIRX"):
+        years = {
+            row.ex_date.year
+            for row in records
+            if row.ticker == ticker
+            and row.ex_date
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        }
+        assert set(LOOKBACK_YEARS) <= years, ticker
+
+
+def test_wave_aj_tocqueville_leftover_paid_fills_5y() -> None:
+    records = TocquevilleSource().fetch(mode="fixture").records
+    tocqx_2024_lt = next(
+        row
+        for row in records
+        if row.ticker == "TOCQX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2024-12-06"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert tocqx_2024_lt.amount == Decimal("3.813")
+    tocqx_2021_oi = next(
+        row
+        for row in records
+        if row.ticker == "TOCQX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2021-12-10"
+        and row.amount
+    )
+    assert tocqx_2021_oi.amount == Decimal("0.200")
+    years = {
+        row.ex_date.year
+        for row in records
+        if row.ticker == "TOCQX"
+        and row.ex_date
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    assert set(LOOKBACK_YEARS) <= years
+    for sibling in ("TOPPX", "TOPHX"):
+        assert [row for row in records if row.ticker == sibling] == []
+
+
+def test_wave_aj_leftover_walls_stay_unmatched() -> None:
+    value_line = ValueLineSource().fetch(mode="fixture").records
+    for ticker in ("VALLX", "VLLIX"):
+        y2023 = [
+            row
+            for row in value_line
+            if row.ticker == ticker
+            and row.ex_date
+            and row.ex_date.year == 2023
+            and row.amount is not None
+        ]
+        assert y2023 == [], ticker
+
+    hartford = HartfordSource().fetch(mode="fixture").records
+    hdbax_2021 = [
+        row
+        for row in hartford
+        if row.ticker == "HDBAX"
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount is not None
+    ]
+    assert hdbax_2021 == []
+
+    impax = ImpaxSource().fetch(mode="fixture").records
+    for ticker in ("PXSAX", "PXSCX", "PXSIX"):
+        y2023 = [
+            row
+            for row in impax
+            if row.ticker == ticker
+            and row.ex_date
+            and row.ex_date.year == 2023
+            and row.amount is not None
+        ]
+        assert y2023 == [], ticker
+
+
+def test_wave_aj_heroes_are_searchable(client: TestClient) -> None:
+    for slug in ("value_line", "permanent_portfolio", "kopernik", "tocqueville"):
+        fetched = client.post(
+            "/ingest/fetch", json={"fund_family": slug, "mode": "fixture"}
+        )
+        assert fetched.status_code == 200, fetched.text
+        assert fetched.json()["created"] > 0
+
+    for ticker in ("VLEOX", "VLAAX", "VALLX", "PRPFX", "KGGIX", "TOCQX"):
+        body = client.get("/funds", params={"q": ticker}).json()
+        tickers = [item["ticker"] for item in body["items"]]
+        assert ticker in tickers, f"{ticker} missing from GET /funds?q={ticker}: {tickers[:8]}"
+
+    vleox = client.get(
+        "/distributions",
+        params={"ticker": "VLEOX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    vleox_2021 = [
+        Decimal(row["amount"])
+        for row in vleox["items"]
+        if row.get("ticker") == "VLEOX"
+        and row.get("estimate_type") == "long_term_capital_gains"
+        and str(row.get("ex_date") or "").startswith("2021-12-14")
+    ]
+    assert Decimal("3.27482") in vleox_2021
+    vleox_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in vleox["items"]
+        if row.get("ticker") == "VLEOX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= vleox_years

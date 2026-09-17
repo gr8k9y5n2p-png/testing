@@ -129,7 +129,13 @@ class ValueLineSource(HtmlTableSource):
         "(Small Cap Opportunities Investor VLEOX LT $3.79637; "
         "Asset Allocation Investor VLAAX income $0.70009 / LT $3.59915; "
         "Capital Appreciation Investor VALIX income $0.09563 / ST $0.10621 / LT $0.66499). "
-        "Record 12/16/2025; ex/pay/reinvest 12/17/2025."
+        "Record 12/16/2025; ex/pay/reinvest 12/17/2025. "
+        "Official 5y WAVE AJ leftover: historical paid YE "
+        "https://vlfunds.com/gains/historical 2021–2024 for in-book Investor / "
+        "Institutional only (VLEOX 2021 LT $3.27482 / 2024 LT $0.05432; "
+        "VLAAX 2022 official OI $0.32727 only — ST/LT dashes, Total remainder "
+        "not invented). VALLX / VLLIX 2023 official all-dashes stay 4y. "
+        "VAGIX monthly is not in-book."
     )
     live_limitations = (
         "Public HTML is scrapeable; mashed header labels may still return 0 live rows "
@@ -145,7 +151,14 @@ class ValueLineSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
-            )
+            ),
+            PageSpec(
+                name="leftover_paid_history_wave_aj",
+                url="https://vlfunds.com/gains/historical",
+                fixture="leftover_paid_history_wave_aj.html",
+                live=False,
+                role="history",
+            ),
         ]
 
 
@@ -161,7 +174,12 @@ class PermanentPortfolioSource(HtmlTableSource):
         "(Permanent Portfolio Class I PRPFX income $0.872450 / ST $0.011790 / LT $1.561510; "
         "Versatile Bond Class I PRVBX income $2.708090 / ST $0.002690; "
         "Aggressive Growth Class I PAGRX income $0.000930 / ST $0.003150 / LT $0.039230). "
-        "Record 12/3/2025; ex/pay/reinvest 12/4/2025."
+        "Record 12/3/2025; ex/pay/reinvest 12/4/2025. "
+        "Official 5y WAVE AJ leftover: Class I Supplemental Tax Information "
+        "PDFs 2021–2024 (PRPFX 2021 OI $0.18070 / ST $0.01518 / LT $0.82485; "
+        "PRVBX income-only years; PAGRX 2021 ST $4.34332 / LT $1.17571). "
+        "Printed $0 CG omitted. Short-Term Treasury Portfolio not in-book. "
+        "Class I only — never copy siblings."
     )
     live_limitations = (
         "Paid amounts sit in a class-column product table, not a Fund/Ticker/ST/LT grid. "
@@ -180,7 +198,17 @@ class PermanentPortfolioSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
-            )
+            ),
+            PageSpec(
+                name="leftover_paid_history_wave_aj",
+                url=(
+                    "https://www.permanentportfoliofunds.com/pdf/"
+                    "2024%20Supplemental%20Tax%20Information_FINAL.pdf"
+                ),
+                fixture="leftover_paid_history_wave_aj.html",
+                live=False,
+                role="history",
+            ),
         ]
 
 
@@ -232,7 +260,11 @@ class KopernikSource(HtmlTableSource):
         "KGI-CG-MEMO-December-2025-FINAL-1.pdf "
         "(Global All-Cap Class I KGGIX income $0.9635 / ST $0.3420 / LT $1.2488; "
         "International Class I KGIIX income $0.7608 / ST $0.3811 / LT $1.3127). "
-        "Capital-gain record 12/19/2025; ex 12/22/2025; pay 12/23/2025."
+        "Capital-gain record 12/19/2025; ex 12/22/2025; pay 12/23/2025. "
+        "Official 5y WAVE AJ leftover: Final CG / OI memos 2021–2024 "
+        "(KGGIX 2021 OI $0.7679 / ST $0.4856 / LT $0.0435; 2024 OI $0.5334 / "
+        "LT $0.1144). OI and CG use official printed dates per type. "
+        "Printed $0.0000 ST omitted. FYE October 31 N-CSR not calendar-safe."
     )
     live_limitations = "Year-end book is PDF. Fixture transcribes public Class I / Class A rows."
 
@@ -248,7 +280,17 @@ class KopernikSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
-            )
+            ),
+            PageSpec(
+                name="leftover_paid_history_wave_aj",
+                url=(
+                    "https://kopernikglobal.com/wp-content/uploads/2024/12/"
+                    "KGI-CG-MEMO-December-2024-FINAL-1.pdf"
+                ),
+                fixture="leftover_paid_history_wave_aj.html",
+                live=False,
+                role="history",
+            ),
         ]
 
 
@@ -265,7 +307,9 @@ class LocorrSource(HtmlTableSource):
         "Macro Strategies Class I LFMIX income $0.2444; "
         "Market Trend Class I LOTIX income $0.2908). "
         "Most funds record 12/8/2025 / ex 12/9/2025; "
-        "Dynamic Opportunity record 12/30/2025 / ex 12/31/2025."
+        "Dynamic Opportunity record 12/30/2025 / ex 12/31/2025. "
+        "WAVE AJ leftover re-probe: no recoverable official prior-year "
+        "$/share book for in-book Class I leftovers."
     )
     live_limitations = "Year-end book is PDF. Fixture transcribes public Class I rows."
 
@@ -297,7 +341,9 @@ class TimothyPlanSource(HtmlTableSource):
         "Large/Mid Cap Growth Class A TLGAX ST $1.5574 / LT $0.0408; "
         "Small Cap Value Class A TPLNX ST $0.2780 / LT $0.6058). "
         "Record 12/10/2025; ex 12/11/2025. "
-        "PDF is fund-level; tickers are public Class I / Class A identifiers."
+        "PDF is fund-level; tickers are public Class I / Class A identifiers. "
+        "WAVE AJ leftover re-probe: no recoverable official prior-year "
+        "$/share book for in-book leftovers."
     )
     live_limitations = "Year-end book is PDF. Fixture attaches public Class I / Class A tickers."
 
@@ -359,7 +405,11 @@ class TocquevilleSource(HtmlTableSource):
         "2025-FINAL-Distributions-December-9-2025.pdf "
         "(Tocqueville Fund TOCQX income $0.063 / LT $3.578). "
         "Record 12/8/2025; ex/pay 12/9/2025. "
-        "Remaining open-end book is a single fund with a family distribution notice."
+        "Remaining open-end book is a single fund with a family distribution notice. "
+        "Official 5y WAVE AJ leftover: paid year-end notices 2021–2024 "
+        "https://www.tocquevillefunds.com/wp-content/uploads/2025/05/Distributions-2024.pdf "
+        "(TOCQX 2021 OI $0.200 / LT $4.765; 2024 OI $0.117 / ST $0.111 / "
+        "LT $3.813). Printed $0 ST omitted. Opportunity / Phoenix not in-book."
     )
     live_limitations = "Year-end book is PDF. Fixture transcribes the public TOCQX row."
 
@@ -375,5 +425,15 @@ class TocquevilleSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
-            )
+            ),
+            PageSpec(
+                name="leftover_paid_history_wave_aj",
+                url=(
+                    "https://www.tocquevillefunds.com/wp-content/uploads/2025/05/"
+                    "Distributions-2024.pdf"
+                ),
+                fixture="leftover_paid_history_wave_aj.html",
+                live=False,
+                role="history",
+            ),
         ]

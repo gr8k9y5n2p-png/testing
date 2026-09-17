@@ -305,7 +305,10 @@ class HartfordSource(HtmlTableSource):
         "HDGIX / HFMIX / IHOIX). Product-page HTML truncates to latest ~5 "
         "rows (2025–2026). HDBAX Dynamic Bond is 4y (2022–2025 official $0 / "
         "$0.08342; 2021 row unpublished / pre-inception). IHOAX Class A has "
-        "2025 only — historical name-key did not print IHOAX."
+        "2025 only — historical name-key did not print IHOAX. "
+        "WAVE AJ leftover re-probe (2026-09-17): I/C/F/R/Y 2021–2024 still "
+        "unpublished on the Class A historical PDF; HDBAX 2021 still unpublished; "
+        "IHOAX still 2025-only. Never copied onto sibling classes."
     )
     live_limitations = (
         "Estimate and final books are PDF. Share-class product pages are HTML; "

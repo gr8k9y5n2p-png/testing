@@ -926,7 +926,10 @@ class InvescoSource(HtmlTableSource):
         "income $0.18503). QQQ already 5y — not redone. Year-depth only: HIYS "
         "2023–2025, BSJW 2024–2025, BSJX / GTOC / IQSZ / MTRA 2025. Open-end MF "
         "Investor A leftovers belong to Y #194 — 2021–2022 ICI still 404, not "
-        "redone. No new ETF identities."
+        "redone. No new ETF identities. "
+        "WAVE AJ leftover re-probe (2026-09-17): Invesco MF 2021–2022 open-end "
+        "ICI still GET 406 / 404 — leftovers stay 3y (2023–2025). ETF leftovers "
+        "belong to AE and are not redone."
     )
     live_limitations = (
         "Estimates are PDF/PR/contentdetail, not an HTML grid. ICI Primary XLSX "

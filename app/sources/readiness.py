@@ -235,14 +235,14 @@ HISTORY_YEARS: dict[str, tuple[int, ...]] = {
     "riverpark": (2025,),
     "amg": (2025,),
     "guidestone": (2025,),
-    "value_line": (2025,),
-    "permanent_portfolio": (2025,),
+    "value_line": (2021, 2022, 2023, 2024, 2025),
+    "permanent_portfolio": (2021, 2022, 2023, 2024, 2025),
     "conestoga": (2026,),
-    "kopernik": (2025,),
+    "kopernik": (2021, 2022, 2023, 2024, 2025),
     "locorr": (2025,),
     "timothy_plan": (2025,),
     "hodges": (2025,),
-    "tocqueville": (2025,),
+    "tocqueville": (2021, 2022, 2023, 2024, 2025),
 }
 
 # Tickers with Growth of $X fixtures (Yahoo monthly adj close).

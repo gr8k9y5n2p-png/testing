@@ -4825,6 +4825,87 @@ def test_eleventh_tier_fixtures() -> None:
     assert tocqx.amount == Decimal("3.578")
 
 
+def test_wave_aj_leftover_paid_fixtures() -> None:
+    value_line = parse_distribution_html(
+        (ROOT / "value_line" / "leftover_paid_history_wave_aj.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://value_line-wave-aj",
+        fund_family="Value Line",
+    )
+    vleox = next(
+        r
+        for r in value_line
+        if r.ticker == "VLEOX"
+        and r.estimate_type == EstimateType.long_term_capital_gains
+        and r.ex_date
+        and str(r.ex_date) == "2021-12-14"
+    )
+    assert vleox.amount == Decimal("3.27482")
+    assert vleox.publication_stage == PublicationStage.final
+    vlaax_2022 = next(
+        r
+        for r in value_line
+        if r.ticker == "VLAAX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.ex_date
+        and str(r.ex_date) == "2022-12-14"
+    )
+    assert vlaax_2022.amount == Decimal("0.32727")
+
+    permanent = parse_distribution_html(
+        (ROOT / "permanent_portfolio" / "leftover_paid_history_wave_aj.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://permanent_portfolio-wave-aj",
+        fund_family="Permanent Portfolio",
+    )
+    prpfx = next(
+        r
+        for r in permanent
+        if r.ticker == "PRPFX"
+        and r.estimate_type == EstimateType.long_term_capital_gains
+        and r.ex_date
+        and str(r.ex_date) == "2021-12-08"
+    )
+    assert prpfx.amount == Decimal("0.82485")
+
+    kopernik = parse_distribution_html(
+        (ROOT / "kopernik" / "leftover_paid_history_wave_aj.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://kopernik-wave-aj",
+        fund_family="Kopernik",
+    )
+    kggix_oi = next(
+        r
+        for r in kopernik
+        if r.ticker == "KGGIX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.ex_date
+        and str(r.ex_date) == "2021-12-30"
+    )
+    assert kggix_oi.amount == Decimal("0.7679")
+
+    tocqueville = parse_distribution_html(
+        (ROOT / "tocqueville" / "leftover_paid_history_wave_aj.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://tocqueville-wave-aj",
+        fund_family="Tocqueville",
+    )
+    tocqx = next(
+        r
+        for r in tocqueville
+        if r.ticker == "TOCQX"
+        and r.estimate_type == EstimateType.long_term_capital_gains
+        and r.ex_date
+        and str(r.ex_date) == "2024-12-06"
+    )
+    assert tocqx.amount == Decimal("3.813")
+    assert tocqx.publication_stage == PublicationStage.final
+
+
 def test_dws_xtrackers_fixtures() -> None:
     dws_ici = parse_ici_primary(
         (ROOT / "dws" / "ici_primary_2025.csv").read_text(encoding="utf-8"),
