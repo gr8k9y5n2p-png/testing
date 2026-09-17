@@ -353,12 +353,19 @@ class HartfordSource(HtmlTableSource):
         "$0.41 / CG $1.62; 2023 OI $0.47 / CG $1.37; 2024 OI $0.58 / CG $0.11; "
         "HFMIX / HGIIX / IHOAX same N-CSR books. Walls: HDBAX 2021 still unpublished "
         "/ pre-inception; Class Y leftovers whose N-CSR books omit Y (HBAIX / "
-        "HCKIX); Schroders R6 leftovers unpublished on these books."
+        "HCKIX); Schroders R6 leftovers unpublished on these books. "
+        "Official 5y WAVE BV leftover (2026-09-17, in-book only): MidCap Class C "
+        "HMDCX calendar 2024 CG $0.59 from the Oct 31 2024 N-CSR Financial "
+        "Highlights (income dash omitted). WAVE AN already filled HMDCX 2021–2023; "
+        "this additive page unlocks the missing 2024 year only. Class-level — never "
+        "sibling-copied. Healthcare 2024 N-CSR distribution dashes stay unmatched. "
+        "Exclusive vs WAVE BU Pioneer Mid Cap Value PCGRX."
     )
     live_limitations = (
         "Estimate and final books are PDF. Share-class product pages are HTML; "
         "fixture transcribes the public 10/31 estimate plus finals plus 2025 "
-        "product-page classes. WAVE AN leftover N-CSR 2021–2024 is fixture-only."
+        "product-page classes. WAVE AN leftover N-CSR 2021–2024 and WAVE BV "
+        "HMDCX 2024 leftover N-CSR are fixture-only."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -416,6 +423,17 @@ class HartfordSource(HtmlTableSource):
                     "000119312524000389/d647714dncsr.htm"
                 ),
                 fixture="leftover_ncsr_share_classes_wave_an.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
+            ),
+            PageSpec(
+                name="leftover_ncsr_hmdcx_2024_wave_bv",
+                url=(
+                    "https://www.sec.gov/Archives/edgar/data/1006415/"
+                    "000119312525001898/d905284dncsr.htm"
+                ),
+                fixture="leftover_ncsr_hmdcx_2024_wave_bv.html",
                 live=False,
                 role="history",
                 large_aum_only=False,
