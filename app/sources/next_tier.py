@@ -667,15 +667,25 @@ class ColumbiaThreadneedleSource(HtmlTableSource):
         "(LBSAX LT $0.56114; CBLAX LT $1.55549; published $0 omitted). "
         "June midyear rows skipped. Published $0.00 December rows omitted. "
         "Incomplete wrapped ticker tokens dropped — not invented. "
-        "2021 book is estimates (ranges) — not YE finals. "
-        "2023 YE sibling URL still 403/404. No public filled ICI file. "
+        "2021 YE finals "
+        "https://www.columbiathreadneedleus.com/binaries/content/assets/cti/public/2021_cap_gain_yearend_distributions.pdf "
+        "print Institutional $ only (GSFTX LT $0.44721; SMGIX ST $0.54063 / "
+        "LT $3.85482); Class A 2021 $ unpublished (percent-of-NAV only). "
+        "2023 YE leftover share classes "
+        "https://www.columbiathreadneedleus.com/binaries/content/assets/cti/public/2023-cap-gain-distributions.pdf "
+        "(LBSAX LT $0.91496; GSFTX / CDDRX same fund-level $ when printed). "
+        "Mass Z leftover (2026-09-16): 2021 Institutional $ + 2022 leftover "
+        "share classes + 2023 leftover share classes. Fund-level $ stored on "
+        "each printed ticker when the PDF prints one amount. Stacked per-class "
+        "ST skipped when unsafe. Published $0 omitted. No public filled ICI file. "
         "The 2025 mid-year all-funds PDF is wrap-unsafe (share-class % ranges "
         "interleaved with $0.00 fund headers) — not a column-safe full extract. "
         "Investor hub: https://www.columbiathreadneedleus.com/investor"
     )
     live_limitations = (
         "Estimate and YE books are PDF. Fixture transcribes the public mid-year ranges "
-        "and 2022 / 2024 / 2025 YE December share-class rows."
+        "and 2021 Institutional / 2022 leftover / 2023 leftover / 2024 / 2025 "
+        "YE December share-class rows."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -710,6 +720,14 @@ class ColumbiaThreadneedleSource(HtmlTableSource):
                 url=f"{cti}/2022_cap_gains_year_end.pdf",
                 fixture="2022_year_end_distributions.html",
                 live=False,
+                large_aum_only=False,
+            ),
+            PageSpec(
+                name="leftover_paid_year_end_mass_z",
+                url=f"{cti}/2021_cap_gain_yearend_distributions.pdf",
+                fixture="leftover_paid_year_end_mass_z.html",
+                live=False,
+                role="history",
                 large_aum_only=False,
             ),
         ]

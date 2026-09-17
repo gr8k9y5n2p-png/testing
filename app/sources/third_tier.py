@@ -545,7 +545,13 @@ class MfsSource(HtmlTableSource):
         "Excel re-probe (official shareCode only): MEMBX B has no 2022 row; "
         "MRSGX R1 / BRSPX R1 have no 2023 row; UIVIX I / MCBCX C have no "
         "2021 row; MNWTX R3 still unpublished for 2021. Unpublished leftover "
-        "years stay unmatched."
+        "years stay unmatched. "
+        "Mass Z leftover year finals (2026-09-16): official shareCode Excel "
+        "fills leftover calendar years that still blocked 5y — MEGBX / MEGRX / "
+        "MFEHX / MFEJX / MFELX 2022 YE LT $1.39190; MIGBX / MIGKX / MIGMX / "
+        "MIRGX 2023 YE LT $1.38597 (class-level OI/ST where printed). Does not "
+        "redo #186 mid-year events. MEMBX B 2022 / BRSPX R1 2023 / MNWTX R3 "
+        "2021 still unpublished."
     )
     live_limitations = (
         "Estimates are PDF percent-of-NAV ranges. Paid history is the official "
@@ -720,6 +726,18 @@ class MfsSource(HtmlTableSource):
                     "&roleCode=usinv&locationCode=us&locale=en_US"
                 ),
                 fixture="remaining_share_class_paid_year_end.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
+            ),
+            PageSpec(
+                name="leftover_share_class_year_finals_mass_z",
+                url=(
+                    "https://www.mfs.com/MFSServices/products/v1/product/MEGBX/"
+                    "10YearsDistribution/download?shareCode=B&productLineCode=WEB_FAMILYFUNDS"
+                    "&roleCode=usinv&locationCode=us&locale=en_US"
+                ),
+                fixture="leftover_share_class_year_finals_mass_z.html",
                 live=False,
                 role="history",
                 large_aum_only=False,

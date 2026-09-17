@@ -299,7 +299,13 @@ class HartfordSource(HtmlTableSource):
         "(2014–2024) for 2021–2024 fund-level Class A / name-keyed amounts "
         "(IHGIX 2021 LT $1.50586 / 2022 LT $1.29738; HAIAX 2021 LT $1.08029 / "
         "2022 LT $1.11577). Share-class I/C/F/R/Y amounts are not copied. "
-        "Official printed $0.00000 stored. Sibling 2021–2023 equity PDFs remain HTML."
+        "Official printed $0.00000 stored. Sibling 2021–2023 equity PDFs remain HTML. "
+        "Mass Z leftover (2026-09-16): I/C/F/R/Y 2021–2024 still unpublished "
+        "(historical PDF is Class A / name-keyed only — never copied onto "
+        "HDGIX / HFMIX / IHOIX). Product-page HTML truncates to latest ~5 "
+        "rows (2025–2026). HDBAX Dynamic Bond is 4y (2022–2025 official $0 / "
+        "$0.08342; 2021 row unpublished / pre-inception). IHOAX Class A has "
+        "2025 only — historical name-key did not print IHOAX."
     )
     live_limitations = (
         "Estimate and final books are PDF. Share-class product pages are HTML; "
