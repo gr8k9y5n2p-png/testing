@@ -5909,6 +5909,45 @@ def test_dws_xtrackers_fixtures() -> None:
         for r in dws_ncsr
     )
 
+    dws_ncsr_bi = parse_distribution_html(
+        (ROOT / "dws" / "leftover_ncsr_2021_2024_wave_bi.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url=(
+            "https://www.sec.gov/Archives/edgar/data/88048/"
+            "000008805325001134/ar103125dstf.htm"
+        ),
+        fund_family="DWS / Xtrackers",
+    )
+    ktcax_2024 = next(
+        r
+        for r in dws_ncsr_bi
+        if r.ticker == "KTCAX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and r.as_of
+        and str(r.as_of) == "2024-10-31"
+    )
+    assert ktcax_2024.amount == Decimal("3.60")
+    assert ktcax_2024.publication_stage == PublicationStage.final
+    ktcax_2021 = next(
+        r
+        for r in dws_ncsr_bi
+        if r.ticker == "KTCAX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and r.as_of
+        and str(r.as_of) == "2021-10-31"
+    )
+    assert ktcax_2021.amount == Decimal("2.43")
+    assert {r.ticker for r in dws_ncsr_bi} == {"KTCAX"}
+    assert not any(
+        r.ticker in {"KTCCX", "KTCIX", "KTCSX", "BTIEX", "SXPAX"}
+        for r in dws_ncsr_bi
+    )
+    assert not any(
+        r.ticker == "KTCAX" and r.estimate_type == EstimateType.ordinary_income
+        for r in dws_ncsr_bi
+    )
+
 
 def test_catalyst_annual_distribution_fixtures() -> None:
     catalyst = parse_distribution_html(

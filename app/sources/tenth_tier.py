@@ -125,8 +125,13 @@ class WestwoodSource(HtmlTableSource):
         "Official 5y parallel W leftover: Institutional paid history "
         "https://westwoodgroup.com/assets/distribution-history/ "
         "(WHGLX 2025 LT $2.4094 / 2021 ST $0.3881 / LT $1.8895). A / C / Ultra "
-        "siblings are not in-book leftovers. WWMCX 2021–2022 and WQAIX 2025 paid "
-        "unpublished on the Institutional history."
+        "siblings are not in-book leftovers. WWMCX 2021–2022 unpublished on the "
+        "Institutional history (inception 11/30/2021; 2022 N-CSR OI dash — "
+        "never invent $0). Official 5y WAVE BI leftover remasure: WQAIX 2025 "
+        "N-CSR FYE Oct 31 reprints already-booked December 2024 paid amounts "
+        "(OI $0.16 / CG $0.45); the 2025 AllCap final line is blank and "
+        "subsequent events omit AllCap after 97.5% redemptions. Ultra sibling "
+        "WQAUX never copied. WQAIX leftover 2025 stays unmatched."
     )
     live_limitations = (
         "Estimate book is PDF. Fixture transcribes public Institutional identifiers. "
