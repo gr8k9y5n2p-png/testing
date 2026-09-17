@@ -863,21 +863,30 @@ class AmundiSource(HtmlTableSource):
         "income; net realized gain is unsplit total capital gains; 2021 CG dash "
         "omitted. Pioneer Mid Cap Value N-CSR "
         "https://www.sec.gov/Archives/edgar/data/863334/000119312524001432/"
-        "d580043dncsr.htm (0001193125-24-001432). Fundamental Growth PIGFX FYE "
+        "d580043dncsr.htm (0001193125-24-001432). Official 5y WAVE BX leftover "
+        "(existing in-book only): Pioneer Mid Cap Value FYE October 31 N-CSR "
+        "Financial Highlights unlock leftover 2021–2024 on the 2025 paid "
+        "Class C / Y / K book (PCCGX / PYCGX / PMCKX). Calendar-safe as_of "
+        "10/31. Class-level — never sibling-copied onto Class A (PCGRX; WAVE "
+        "BU). Income is ordinary income; net realized gain is unsplit total "
+        "capital gains; 2021 CG dash omitted. Pioneer Mid Cap Value N-CSR "
+        "https://www.sec.gov/Archives/edgar/data/863334/000119312525002061/"
+        "d881649dncsr.htm (0001193125-25-002061). Fundamental Growth PIGFX FYE "
         "March 31, Disciplined Value CVFCX / Global Equity GLOSX FYE August 31, "
-        "and International Equity PIIFX stay unmatched. WAVE BT Federated SVD "
-        "Oct 31, WAVE BS Equity Income PEQIX, WAVE BQ Dec 31, WAVE BR Grandeur "
-        "Peak, WAVE BP GHQIX-family, WAVE BO KTRAX, WAVE BN KGDAX, WAVE BM "
-        "Baird, WAVE BL Thrivent, WAVE BK TOLLX, WAVE BI KTCAX, WAVE BJ "
-        "RiverPark, WAVE BH TCW, WAVE BG DWS Dec 31, and prior BD–BF books "
-        "stay on their leftover pages — not re-emitted here. Alger leftovers "
-        "stay reserved / disjoint. WAVE BQ / BS / BU leftover N-CSR paid "
-        "history is fixture-only."
+        "and International Equity PIIFX stay unmatched. WAVE BW Rainier RAIIX, "
+        "WAVE BV Hartford MidCap HMDCX, WAVE BT Federated SVD Oct 31, WAVE BS "
+        "Equity Income PEQIX, WAVE BQ Dec 31, WAVE BR Grandeur Peak, WAVE BP "
+        "GHQIX-family, WAVE BO KTRAX, WAVE BN KGDAX, WAVE BM Baird, WAVE BL "
+        "Thrivent, WAVE BK TOLLX, WAVE BI KTCAX, WAVE BJ RiverPark, WAVE BH "
+        "TCW, WAVE BG DWS Dec 31, and prior BD–BF books stay on their leftover "
+        "pages — not re-emitted here. Alger leftovers stay reserved / "
+        "disjoint. WAVE BQ / BS / BU / BX leftover N-CSR paid history is "
+        "fixture-only."
     )
     live_limitations = (
         "Pioneer/Victory tax hubs are HTML shells; estimate/final books are PDF. "
         "Weekly walk is no-op success on empty/PDF-bytes pages; fixtures transcribe the official tables. "
-        "Leftover 2021–2022 Pioneer Dec 31 / Oct 31 N-CSR paid history is fixture-only."
+        "Leftover 2021–2024 Pioneer Dec 31 / Oct 31 N-CSR paid history is fixture-only."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -1006,6 +1015,16 @@ class AmundiSource(HtmlTableSource):
                     "000119312524001432/d580043dncsr.htm"
                 ),
                 fixture="leftover_ncsr_pcgrx_2021_2022_wave_bu.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="leftover_ncsr_pccgx_pycgx_pmckx_2021_2024_wave_bx",
+                url=(
+                    "https://www.sec.gov/Archives/edgar/data/863334/"
+                    "000119312525002061/d881649dncsr.htm"
+                ),
+                fixture="leftover_ncsr_pccgx_pycgx_pmckx_2021_2024_wave_bx.html",
                 live=False,
                 role="history",
             ),
