@@ -315,11 +315,21 @@ class AmericanCenturySource(HtmlTableSource):
         "Official 5y parallel M leftover: Wayback product-page Total Paid for "
         "in-book TWCGX Investor 2023-12-19 $2.335 and 2024-12-17 $3.4579 "
         "(snapshots 20240420040820 / 20250328055254). No ST/LT split — stored as "
-        "total capital gains. 2021 paid is unpublished on live and Wayback "
-        "product pages / sibling PDFs. 20230911181326 Wayback HTML is a JS shell "
-        "without a printed 2022 total — unmatched, not invented. Still 3y, not 5y."
+        "total capital gains. 2021 product-page Wayback nearest snapshots replay "
+        "later books without 2021 dates — unmatched on the product page. "
+        "Official 5y leftover WAVE X: American Century Mutual Funds, Inc. N-CSR "
+        "Financial Highlights (years ended October 31) Investor leftovers only "
+        "https://www.sec.gov/Archives/edgar/data/100334/000010033425000090/ck0000100334-20251031.htm "
+        "— TWCGX 2021–2022 unsplit CG $1.56 / $6.32; AFDIX / TWCIX / TWCUX "
+        "2021–2025 fiscal totals; TWHIX skips 2023 dashes (4y); ANOIX skips "
+        "2023–2024 dashes (3y). Income is ordinary income; net realized gain is "
+        "unsplit total capital gains. Sibling I / A / C / R / R6 are not copied "
+        "from Investor."
     )
-    live_limitations = "Family HTML grid is JavaScript-rendered; the retail PDF is the parseable book."
+    live_limitations = (
+        "Family HTML grid is JavaScript-rendered; the retail PDF is the parseable book. "
+        "Investor leftover 2021–2025 N-CSR paid history is fixture-only."
+    )
 
     def pages(self) -> list[PageSpec]:
         return [
@@ -388,6 +398,14 @@ class AmericanCenturySource(HtmlTableSource):
                 fixture="leftover_twcgx_paid_2023_2024.html",
                 live=False,
                 role="history",
+            ),
+            PageSpec(
+                name="leftover_ncsr_investor_2021_2025",
+                url="https://www.sec.gov/Archives/edgar/data/100334/000010033425000090/ck0000100334-20251031.htm",
+                fixture="leftover_ncsr_investor_2021_2025.html",
+                live=False,
+                role="history",
+                large_aum_only=True,
             ),
         ]
 

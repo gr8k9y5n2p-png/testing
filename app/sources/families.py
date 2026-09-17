@@ -461,6 +461,15 @@ class FidelitySource(HtmlTableSource):
         "$0.08 / $0.08 and net realized gain $1.36 / $0.61) stored as "
         "ordinary_income + total_capital_gains — ST/LT not published, not "
         "invented. No QDI % columns. "
+        "Official 5y leftover WAVE X (existing Advisor Class I leftovers only): "
+        "unfiltered DPL2 Wayback paid books 2022–2024 keep every printed "
+        "midyear + YE event with official OI/ST/LT (including printed "
+        "$0.00000). ShareClassId-filtered Wayback URLs 404; the 2021 DPL2 "
+        "snapshot is Class A name-only (0 tickers) — Class I 2021 is unpublished "
+        "except Fidelity Advisor Mega Cap Stock I (FTRIX) Hastings Street Trust "
+        "N-CSR Financial Highlights (year ended June 30 2021: income $0.29 / "
+        "net realized gain $1.00 unsplit). Retail DPL6 2022–2023 remains "
+        "unpublished in CDX (HPDY SPA). No sibling copy onto A/C/M/Z or retail. "
         "Hub: https://www.fidelity.com/mutual-funds/information/overview. "
         "Wave 10 share-class densify: Fidelity Advisor Funds are a separate "
         "official DPL (not on retail FIIS_SP52/SP10_DPL6). Full A/C/M/I/Z "
@@ -492,6 +501,9 @@ class FidelitySource(HtmlTableSource):
         "Combined 485BPOS fiscal-year tables are not a class-safe 2022–23 retail archive. "
         "Advisor A/C/M/I/Z requires the shareClassId query; without it the "
         "live table is Class I-heavy. "
+        "Advisor DPL2 2022–2024 leftover history is fixture-only (Wayback "
+        "unfiltered Class I); 2021 Class I DPL2 unpublished; FTRIX 2021 is "
+        "N-CSR fixture-only. "
         "Estimate + paid DPL omit Record Date; ETF Annual-Distribution-Calendar "
         "PDF prints Record but is not this mutual-fund estimate book."
     )
@@ -553,6 +565,25 @@ class FidelitySource(HtmlTableSource):
                 url="https://institutional.fidelity.com/app/funds-and-products/22/fidelity-contrafund-fcntx.html",
                 fixture="financial_highlights_2022_2023.html",
                 live=False,
+            ),
+            PageSpec(
+                name="leftover_dpl2_class_i_2022_2024",
+                url=(
+                    "https://institutional.fidelity.com/app/tabbed/products/"
+                    "FIIS_SP10_DPL2_DSC1.html?navId=320"
+                ),
+                fixture="leftover_dpl2_class_i_2022_2024.html",
+                live=False,
+                role="history",
+                large_aum_only=True,
+            ),
+            PageSpec(
+                name="leftover_ftrix_ncsr_2021",
+                url="https://www.sec.gov/Archives/edgar/data/35348/000003534823000091/filing6692.htm",
+                fixture="leftover_ftrix_ncsr_2021.html",
+                live=False,
+                role="history",
+                large_aum_only=True,
             ),
         ]
 
@@ -687,9 +718,23 @@ class JPMorganSource(HtmlTableSource):
         "(JEPI 2025 $4.67 / 2024 $4.16 / 2023 $6.04 / 2022 $4.96 / 2021 $4.85; "
         "JEPQ 2025 $6.11 / 2024 $4.86 / 2023 $5.64 / 2022 commencement stub $0.38). "
         "Those are full-year paid totals, not a single December payable. "
-        "AU/CA JEPI unit amounts are a different share class — not used."
+        "AU/CA JEPI unit amounts are a different share class — not used. "
+        "Official 5y leftover WAVE X (existing Trust II Class A leftovers + "
+        "Large Cap Growth R6 JLGMX): fiscal-year per-share paid totals from "
+        "the J.P. Morgan Trust II N-CSR Financial Highlights (years ended "
+        "June 30). 2021–2023 for the 2y leftover Class A book; 2024 N-CSR "
+        "only for JICAX / OGEAX / VSCOX that still lacked 2024 paid/final. "
+        "Income is ordinary income; net realized gain is unsplit total "
+        "capital gains (ST/LT not published, not invented). Printed dashes "
+        "omitted, not stored as $0. Existing 2024 Section 19a leftovers keep "
+        "that book. UBVAX is a different trust — unmatched. PGSGX 2024 both "
+        "columns dashed — 2024 unmatched. JEPQ 2021 remains a commencement "
+        "wall. No sibling copy."
     )
-    live_limitations = "No scrapeable HTML grid; 19a books are PDF. Fixture / partner ingest only."
+    live_limitations = (
+        "No scrapeable HTML grid; 19a books are PDF. Fixture / partner ingest only. "
+        "Trust II leftover Class A / JLGMX 2021–2024 paid history is N-CSR fixture-only."
+    )
 
     def pages(self) -> list[PageSpec]:
         notices = (
@@ -717,6 +762,14 @@ class JPMorganSource(HtmlTableSource):
                 fixture="jepi_ncsr_financial_highlights.html",
                 live=False,
             ),
+            PageSpec(
+                name="leftover_ncsr_class_a_2021_2024",
+                url="https://www.sec.gov/Archives/edgar/data/763852/000119312524214952/d880089dncsr.htm",
+                fixture="leftover_ncsr_class_a_2021_2024.html",
+                live=False,
+                role="history",
+                large_aum_only=True,
+            ),
         ]
 
 
@@ -733,10 +786,23 @@ class GoldmanSachsSource(HtmlTableSource):
         "walks the hub anyway. Estimates are typically Q4 PDFs. Fixture parser uses the GSAM "
         "table layout plus the public 2025 year-end distribution for Large Cap Growth Insights "
         "(GLCGX). Parallel E leftover re-probe (2026-09-13): advisor tax center still "
-        "403; no official paid 2021–2024 ST/LT $/share book for GLCGX / GCGIX — "
-        "those years stay unmatched, not invented. Third-party history unused."
+        "403. Official 5y leftover WAVE X: Large Cap Growth Insights Class A "
+        "(GLCGX) and Institutional (GCGIX) fiscal-year per-share paid totals "
+        "from Goldman Sachs Trust N-CSR Financial Highlights (years ended "
+        "October 31) 2021–2024 — "
+        "https://www.sec.gov/Archives/edgar/data/822977/000119312525001448/d907373dncsr.htm "
+        "(verified against 0001193125-24-002318 / d536551dncsr.htm and "
+        "0001193125-22-000509 / d173829dncsr.htm). Income is ordinary income; "
+        "net realized gain is unsplit total capital gains. Printed dashes "
+        "omitted. 2025 calendar YE stays on the existing year-end sample "
+        "(GLCGX / GCGIX LT $2.74 ex 2025-12-11). Class-level only — no sibling "
+        "copy. Third-party history unused."
     )
-    live_limitations = "Advisor tax center is login/403-walled (including historical packs). Use fixtures or POST /ingest/distributions."
+    live_limitations = (
+        "Advisor tax center is login/403-walled (including historical packs). "
+        "Insights leftover 2021–2024 paid history is N-CSR fixture-only. "
+        "Use fixtures or POST /ingest/distributions."
+    )
 
     def pages(self) -> list[PageSpec]:
         return [
@@ -747,7 +813,15 @@ class GoldmanSachsSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
-            )
+            ),
+            PageSpec(
+                name="leftover_ncsr_insights_2021_2024",
+                url="https://www.sec.gov/Archives/edgar/data/822977/000119312525001448/d907373dncsr.htm",
+                fixture="leftover_ncsr_insights_2021_2024.html",
+                live=False,
+                role="history",
+                large_aum_only=True,
+            ),
         ]
 
 
