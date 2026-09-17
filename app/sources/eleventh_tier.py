@@ -347,9 +347,32 @@ class LocorrSource(HtmlTableSource):
         "Most funds record 12/8/2025 / ex 12/9/2025; "
         "Dynamic Opportunity record 12/30/2025 / ex 12/31/2025. "
         "WAVE AJ leftover re-probe: no recoverable official prior-year "
-        "$/share book for in-book Class I leftovers."
+        "$/share product-page book for in-book Class I leftovers. "
+        "Official 5y WAVE BD leftover (existing in-book only): LoCorr "
+        "Investment Trust FYE December 31 N-CSR Financial Highlights unlock "
+        "leftover 2021–2024 on the 2025 paid annual-distributions book "
+        "(Macro LFMIX, Long/Short Commodities LCSIX, Market Trend LOTIX, "
+        "Dynamic Opportunity LEQIX). Hedged Core LHEIX 2024 is official "
+        "year-depth only (commencement 7/10/2024). Strategic Allocation "
+        "LSAIX commenced 1/8/2025 and has no 2021–2024 row. Calendar-safe "
+        "as_of 12/31. Class-level Class I — never sibling-copied onto "
+        "Class A / C. Spectrum Income LSPIX is not on the 2025 paid book "
+        "and is not an in-book leftover. Income is ordinary income; capital "
+        "gains are unsplit total capital gains. Issuer dashes and printed "
+        "$0.00 less-than / rounded footnotes omitted (LCSIX 2023 ROC less "
+        "than $0.005; LEQIX 2021–2022 OI dashes). Official printed return "
+        "of capital $0.01 stored (LFMIX / LCSIX 2024). 2025 stays on the "
+        "existing paid annual-distributions book (LFMIX OI $0.2444 is not "
+        "overwritten by N-CSR OI $0.24). N-CSR "
+        "https://www.sec.gov/Archives/edgar/data/1506768/000113322826003096/"
+        "lit-efp22581_ncsr.htm verified against 2024 issuer PDF "
+        "EFP-14022 and 2023 N-CSR 0001398344-24-005727. WAVE BD leftover "
+        "N-CSR paid history is fixture-only."
     )
-    live_limitations = "Year-end book is PDF. Fixture transcribes public Class I rows."
+    live_limitations = (
+        "Year-end book is PDF. Fixture transcribes public Class I rows. "
+        "Leftover 2021–2024 N-CSR paid history is fixture-only."
+    )
 
     def pages(self) -> list[PageSpec]:
         return [
@@ -363,7 +386,17 @@ class LocorrSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
-            )
+            ),
+            PageSpec(
+                name="leftover_ncsr_2021_2024_wave_bd",
+                url=(
+                    "https://www.sec.gov/Archives/edgar/data/1506768/"
+                    "000113322826003096/lit-efp22581_ncsr.htm"
+                ),
+                fixture="leftover_ncsr_2021_2024_wave_bd.html",
+                live=False,
+                role="history",
+            ),
         ]
 
 
