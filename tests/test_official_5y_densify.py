@@ -17199,9 +17199,15 @@ def test_wave_bg_leftover_walls_stay_unmatched() -> None:
         and WAVE_BG_NCSR_ACCESSION in row.source_url
     ]
     assert ncsr_siblings == []
-    # KTCAX FYE Oct 31 not claimed on this Dec 31 leftover page.
-    assert 2021 not in _paid_lookback_years(dws, "KTCAX")
-    assert 2022 not in _paid_lookback_years(dws, "KTCAX")
+    # KTCAX FYE Oct 31 is not claimed on this Dec 31 leftover page.
+    ktcax_bg = [
+        row
+        for row in dws
+        if row.ticker == "KTCAX"
+        and row.source_url
+        and WAVE_BG_NCSR_ACCESSION in row.source_url
+    ]
+    assert ktcax_bg == []
     # SUWAX / SDGAX FYE September 30 are not calendar-safe.
     assert 2021 not in _paid_lookback_years(dws, "SUWAX")
     assert 2021 not in _paid_lookback_years(dws, "SDGAX")
