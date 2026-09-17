@@ -1751,8 +1751,38 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # not re-emitted.
     # Honest pin remasured on WAVE CX tip 32f9aefb: 4314 → 4318 (+4 MF; ETF 5y
     # unchanged at 758).
-    assert digest.funds_with_5y == 4318
-    assert digest.funds_with_5y_mf == 3560
+    # WAVE CZ leftover (existing in-book only): official Fidelity Institutional
+    # fundHistoricalDistributions JSON unlock leftover FPURX / FTBFX 2021–2023
+    # and FBALX / FEQIX / FLPSX / FSMAX / FSPSX 2022–2023 on the paid DPL6
+    # books. Calendar-safe ex / pay dates. Class-level retail balanced /
+    # income / index only — never sibling-copied onto CY growth / income
+    # FDGRX / FBGRX / FMAGX / FAGIX, CX equity-index FXAIX / FSKAX, ZERO
+    # FZROX / bond FXNAX (not in this distribution book), Advisor DPL2, or
+    # WAVE AO Class I. Empty official ST / LT / OI cells omitted — never
+    # invent $0. Concord Street FYE February 28 and Puritan Aug 31 /
+    # Magellan Mar 31 N-CSR highlights are not calendar-safe and are not
+    # used. FCNTX already 5y (highlights) not redone. FUMBX Short-Term
+    # Treasury Bond Index fundNo unresolved — dropped. Does not redo AF–CY
+    # (especially CY FDGRX / FBGRX / FMAGX / FAGIX, CX FXAIX / FSKAX, CU
+    # ALAFX / ALGRX / ALGYX / ALZFX, CT ALARX / ACARX / ACAYX / ACIZX, CS
+    # ALCCX / ACAZX, CP PZFVX, CO JHJAX, CN FIDAX / FRBAX, CL SVBAX /
+    # JDIBX / JEMQX / JDJAX, CM JEEBX, CK TAGRX / JCCAX, CJ Alger Growth
+    # & Income ALBAX / ALBCX / AGIZX, CI Federated SVD R6 SVALX, CH
+    # Harding Loevner HLEMX / HLGZX / HLIZX / HLFZX, CG Lazard Real Assets
+    # RALIX / RALOX, CF Alger Responsible Investing SPEGX / AGFCX / AGIFX /
+    # ALGZX, CC Pioneer Class R PIORX / PQIRX, CD Lazard R6, CB Open, BY
+    # Institutional, BZ Pioneer EI C/Y/K, CA Pioneer Fund / Core Equity
+    # C/Y/K, BX Pioneer MCV C/Y/K, BW Rainier RAIIX, BV HMDCX, BU PCGRX,
+    # BT Federated SVD A/C/I, BS PEQIX, BR Grandeur Peak, BQ Pioneer Dec
+    # 31 Class A). Sister WAVE CY growth / income, WAVE CX equity-index,
+    # and WAVE CU Focus Equity stay on their leftover pages / not
+    # re-emitted. WAVE CW Alger Mid Cap / JH Oct 31 / Pioneer
+    # calendar-unsafe / Lazard-Harding commencement walls stay unmatched /
+    # not re-emitted.
+    # Honest pin remasured on WAVE CY tip 47add04e: 4318 → 4325 (+7 MF; ETF 5y
+    # unchanged at 758).
+    assert digest.funds_with_5y == 4325
+    assert digest.funds_with_5y_mf == 3567
     assert digest.funds_with_5y_etf == 758
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
@@ -33642,3 +33672,454 @@ def test_wave_cy_heroes_are_searchable(client: TestClient) -> None:
             if row.get("ticker") == ticker and _wave_cy_source_match(row.get("source_url"))
         ]
         assert on_cy == [], ticker
+
+
+WAVE_CZ_FIDELITY_LEFTOVER_5Y = (
+    "FPURX",
+    "FBALX",
+    "FEQIX",
+    "FTBFX",
+    "FLPSX",
+    "FSMAX",
+    "FSPSX",
+)
+WAVE_CZ_MISSING_YEARS = {
+    "FPURX": {2021, 2022, 2023},
+    "FBALX": {2022, 2023},
+    "FEQIX": {2022, 2023},
+    "FTBFX": {2021, 2022, 2023},
+    "FLPSX": {2022, 2023},
+    "FSMAX": {2022, 2023},
+    "FSPSX": {2022, 2023},
+}
+WAVE_CZ_CY_DISJOINT = WAVE_CY_FIDELITY_LEFTOVER_5Y
+WAVE_CZ_CX_DISJOINT = WAVE_CX_FIDELITY_LEFTOVER_5Y
+WAVE_CZ_CU_DISJOINT = WAVE_CU_ALGER_LEFTOVER_5Y
+WAVE_CZ_CT_DISJOINT = WAVE_CY_CT_DISJOINT
+WAVE_CZ_CS_DISJOINT = WAVE_CY_CS_DISJOINT
+WAVE_CZ_EXCLUDED_FIDELITY = ("FDGRX", "FBGRX", "FMAGX", "FAGIX", "FXAIX", "FSKAX", "FZROX", "FXNAX", "FCNTX")
+WAVE_CZ_WALLS = WAVE_CY_WALLS + ("FUMBX",)
+WAVE_CZ_LEFTOVER_URL = "leftover_fpurx_fbalx_feqix_ftbfx_flpsx_fsmax_fspsx_2021_2023_wave_cz"
+
+
+def _wave_cz_source_match(source_url: str | None) -> bool:
+    if not source_url:
+        return False
+    return WAVE_CZ_LEFTOVER_URL in source_url or source_url.endswith("#balanced-income")
+
+
+def _wave_cz_leftover_rows(records: list[NormalizedRecord]) -> list[NormalizedRecord]:
+    return [
+        row
+        for row in records
+        if row.ticker in WAVE_CZ_FIDELITY_LEFTOVER_5Y
+        and _wave_cz_source_match(row.source_url)
+        and row.ex_date
+        and row.ex_date.year in WAVE_CZ_MISSING_YEARS[row.ticker]
+    ]
+
+
+def test_wave_cz_fidelity_balanced_income_index_leftover_fills_5y() -> None:
+    records = FidelitySource().fetch(mode="fixture").records
+    leftover = _wave_cz_leftover_rows(records)
+
+    expected = {
+        ("FPURX", "2021-04-05", "2021-04-06", EstimateType.ordinary_income, Decimal("0.061")),
+        ("FPURX", "2021-07-02", "2021-07-06", EstimateType.ordinary_income, Decimal("0.052")),
+        ("FPURX", "2021-10-08", "2021-10-11", EstimateType.ordinary_income, Decimal("0.079")),
+        ("FPURX", "2021-10-08", "2021-10-11", EstimateType.short_term_capital_gains, Decimal("0.614")),
+        ("FPURX", "2021-10-08", "2021-10-11", EstimateType.long_term_capital_gains, Decimal("2.323")),
+        ("FPURX", "2021-12-17", "2021-12-20", EstimateType.ordinary_income, Decimal("0.082")),
+        ("FPURX", "2021-12-17", "2021-12-20", EstimateType.short_term_capital_gains, Decimal("0.061")),
+        ("FPURX", "2021-12-17", "2021-12-20", EstimateType.long_term_capital_gains, Decimal("0.291")),
+        ("FPURX", "2022-04-01", "2022-04-04", EstimateType.ordinary_income, Decimal("0.068")),
+        ("FPURX", "2022-07-01", "2022-07-05", EstimateType.ordinary_income, Decimal("0.1")),
+        ("FPURX", "2022-10-14", "2022-10-17", EstimateType.ordinary_income, Decimal("0.091")),
+        ("FPURX", "2022-10-14", "2022-10-17", EstimateType.long_term_capital_gains, Decimal("1.591")),
+        ("FPURX", "2022-12-16", "2022-12-19", EstimateType.ordinary_income, Decimal("0.073")),
+        ("FPURX", "2023-04-05", "2023-04-06", EstimateType.ordinary_income, Decimal("0.092")),
+        ("FPURX", "2023-07-07", "2023-07-10", EstimateType.ordinary_income, Decimal("0.095")),
+        ("FPURX", "2023-10-13", "2023-10-16", EstimateType.ordinary_income, Decimal("0.099")),
+        ("FPURX", "2023-10-13", "2023-10-16", EstimateType.long_term_capital_gains, Decimal("0.708")),
+        ("FPURX", "2023-12-15", "2023-12-18", EstimateType.ordinary_income, Decimal("0.112")),
+        ("FPURX", "2023-12-15", "2023-12-18", EstimateType.long_term_capital_gains, Decimal("0.139")),
+        ("FBALX", "2022-04-01", "2022-04-04", EstimateType.ordinary_income, Decimal("0.06")),
+        ("FBALX", "2022-07-01", "2022-07-05", EstimateType.ordinary_income, Decimal("0.078")),
+        ("FBALX", "2022-10-14", "2022-10-17", EstimateType.ordinary_income, Decimal("0.094")),
+        ("FBALX", "2022-10-14", "2022-10-17", EstimateType.long_term_capital_gains, Decimal("1.511")),
+        ("FBALX", "2022-12-22", "2022-12-23", EstimateType.ordinary_income, Decimal("0.105")),
+        ("FBALX", "2023-04-05", "2023-04-06", EstimateType.ordinary_income, Decimal("0.089")),
+        ("FBALX", "2023-07-07", "2023-07-10", EstimateType.ordinary_income, Decimal("0.119")),
+        ("FBALX", "2023-10-13", "2023-10-16", EstimateType.ordinary_income, Decimal("0.116")),
+        ("FBALX", "2023-10-13", "2023-10-16", EstimateType.long_term_capital_gains, Decimal("0.267")),
+        ("FBALX", "2023-12-21", "2023-12-22", EstimateType.ordinary_income, Decimal("0.134")),
+        ("FBALX", "2023-12-21", "2023-12-22", EstimateType.long_term_capital_gains, Decimal("0.157")),
+        ("FEQIX", "2022-04-01", "2022-04-04", EstimateType.ordinary_income, Decimal("0.264")),
+        ("FEQIX", "2022-07-01", "2022-07-05", EstimateType.ordinary_income, Decimal("0.305")),
+        ("FEQIX", "2022-10-07", "2022-10-10", EstimateType.ordinary_income, Decimal("0.298")),
+        ("FEQIX", "2022-12-09", "2022-12-12", EstimateType.ordinary_income, Decimal("0.366")),
+        ("FEQIX", "2022-12-09", "2022-12-12", EstimateType.long_term_capital_gains, Decimal("1.674")),
+        ("FEQIX", "2023-03-10", "2023-03-13", EstimateType.long_term_capital_gains, Decimal("0.022")),
+        ("FEQIX", "2023-04-05", "2023-04-06", EstimateType.ordinary_income, Decimal("0.303")),
+        ("FEQIX", "2023-07-07", "2023-07-10", EstimateType.ordinary_income, Decimal("0.292")),
+        ("FEQIX", "2023-10-06", "2023-10-09", EstimateType.ordinary_income, Decimal("0.293")),
+        ("FEQIX", "2023-12-08", "2023-12-11", EstimateType.ordinary_income, Decimal("0.311")),
+        ("FEQIX", "2023-12-08", "2023-12-11", EstimateType.long_term_capital_gains, Decimal("1.565")),
+        ("FEQIX", "2023-12-27", "2023-12-28", EstimateType.long_term_capital_gains, Decimal("0.089")),
+        ("FTBFX", "2021-12-03", "2021-12-06", EstimateType.long_term_capital_gains, Decimal("0.005")),
+        ("FTBFX", "2021-12-22", "2021-12-23", EstimateType.ordinary_income, Decimal("0.013")),
+        ("FTBFX", "2022-12-22", "2022-12-23", EstimateType.ordinary_income, Decimal("0.014")),
+        ("FTBFX", "2023-12-21", "2023-12-22", EstimateType.ordinary_income, Decimal("0.003")),
+        ("FLPSX", "2022-09-09", "2022-09-12", EstimateType.ordinary_income, Decimal("0.293")),
+        ("FLPSX", "2022-09-09", "2022-09-12", EstimateType.long_term_capital_gains, Decimal("3.107")),
+        ("FLPSX", "2022-12-09", "2022-12-12", EstimateType.ordinary_income, Decimal("0.259")),
+        ("FLPSX", "2022-12-09", "2022-12-12", EstimateType.long_term_capital_gains, Decimal("0.707")),
+        ("FLPSX", "2023-09-08", "2023-09-11", EstimateType.ordinary_income, Decimal("0.576")),
+        ("FLPSX", "2023-09-08", "2023-09-11", EstimateType.long_term_capital_gains, Decimal("5.801")),
+        ("FLPSX", "2023-12-08", "2023-12-11", EstimateType.ordinary_income, Decimal("0.315")),
+        ("FLPSX", "2023-12-08", "2023-12-11", EstimateType.short_term_capital_gains, Decimal("0.016")),
+        ("FLPSX", "2023-12-08", "2023-12-11", EstimateType.long_term_capital_gains, Decimal("1.352")),
+        ("FSMAX", "2022-04-08", "2022-04-11", EstimateType.ordinary_income, Decimal("0.028")),
+        ("FSMAX", "2022-04-08", "2022-04-11", EstimateType.long_term_capital_gains, Decimal("0.328")),
+        ("FSMAX", "2022-12-16", "2022-12-19", EstimateType.ordinary_income, Decimal("0.844")),
+        ("FSMAX", "2023-04-14", "2023-04-17", EstimateType.ordinary_income, Decimal("0.086")),
+        ("FSMAX", "2023-12-15", "2023-12-18", EstimateType.ordinary_income, Decimal("0.83")),
+        ("FSPSX", "2022-12-09", "2022-12-12", EstimateType.ordinary_income, Decimal("1.076")),
+        ("FSPSX", "2022-12-28", "2022-12-29", EstimateType.ordinary_income, Decimal("0.02")),
+        ("FSPSX", "2023-12-08", "2023-12-11", EstimateType.ordinary_income, Decimal("1.322")),
+    }
+    got = {
+        (
+            row.ticker,
+            str(row.ex_date),
+            str(row.payable_date),
+            row.estimate_type,
+            row.amount,
+        )
+        for row in leftover
+        if row.amount is not None and row.publication_stage == PublicationStage.final
+    }
+    assert got == expected
+
+    leftover_total = [
+        row
+        for row in leftover
+        if row.estimate_type == EstimateType.total_capital_gains
+    ]
+    assert leftover_total == []
+
+    leftover_zero = [row for row in leftover if row.amount == Decimal("0")]
+    assert leftover_zero == []
+
+    dpl_years_on_cz = [
+        row
+        for row in records
+        if row.ticker in WAVE_CZ_FIDELITY_LEFTOVER_5Y
+        and _wave_cz_source_match(row.source_url)
+        and row.ex_date
+        and row.ex_date.year not in WAVE_CZ_MISSING_YEARS[row.ticker]
+    ]
+    assert dpl_years_on_cz == []
+
+    leftover_tickers = {row.ticker for row in leftover}
+    assert leftover_tickers == set(WAVE_CZ_FIDELITY_LEFTOVER_5Y)
+    assert WAVE_CZ_LEFTOVER_URL in leftover[0].source_url or leftover[0].source_url.endswith(
+        "#balanced-income"
+    )
+
+    sisters_on_cz = [
+        row
+        for row in records
+        if row.ticker
+        in WAVE_CZ_CY_DISJOINT
+        + WAVE_CZ_CX_DISJOINT
+        + WAVE_CZ_CU_DISJOINT
+        + WAVE_CZ_CT_DISJOINT
+        + WAVE_CZ_CS_DISJOINT
+        + WAVE_CZ_EXCLUDED_FIDELITY
+        + WAVE_CZ_WALLS
+        + WAVE_CU_ALGER_RESERVED
+        + WAVE_CU_SIBLING_WALLS
+        and _wave_cz_source_match(row.source_url)
+    ]
+    assert sisters_on_cz == []
+
+    for ticker in WAVE_CZ_FIDELITY_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(records, ticker), ticker
+    for ticker in WAVE_CZ_CY_DISJOINT + WAVE_CZ_CX_DISJOINT:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(records, ticker), ticker
+        on_cz = [
+            row
+            for row in records
+            if row.ticker == ticker and _wave_cz_source_match(row.source_url)
+        ]
+        assert on_cz == [], ticker
+    for ticker in ("FZROX", "FXNAX", "FUMBX"):
+        assert ticker not in leftover_tickers
+        assert not set(LOOKBACK_YEARS) <= _paid_lookback_years(records, ticker), ticker
+
+    alger = AlgerSource().fetch(mode="fixture").records
+    for ticker in WAVE_CZ_CU_DISJOINT:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(alger, ticker), ticker
+        on_cz = [
+            row
+            for row in records
+            if row.ticker == ticker and _wave_cz_source_match(row.source_url)
+        ]
+        assert on_cz == [], ticker
+
+
+def test_wave_cz_leftover_walls_stay_unmatched() -> None:
+    fidelity = FidelitySource().fetch(mode="fixture").records
+    leftover = _wave_cz_leftover_rows(fidelity)
+    leftover_tickers = {row.ticker for row in leftover}
+    assert leftover_tickers == set(WAVE_CZ_FIDELITY_LEFTOVER_5Y)
+
+    for ticker in WAVE_CZ_EXCLUDED_FIDELITY:
+        on_cz = [
+            row
+            for row in fidelity
+            if row.ticker == ticker and _wave_cz_source_match(row.source_url)
+        ]
+        assert on_cz == [], ticker
+    assert not set(LOOKBACK_YEARS) <= _paid_lookback_years(fidelity, "FZROX")
+    assert not set(LOOKBACK_YEARS) <= _paid_lookback_years(fidelity, "FXNAX")
+    assert not set(LOOKBACK_YEARS) <= _paid_lookback_years(fidelity, "FUMBX")
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(fidelity, "FCNTX")
+
+    alger = AlgerSource().fetch(mode="fixture").records
+    for ticker in WAVE_CU_ALGER_RESERVED + WAVE_CU_SIBLING_WALLS + ("SPECX",):
+        assert not set(LOOKBACK_YEARS) <= _paid_lookback_years(alger, ticker), ticker
+        on_cz = [
+            row
+            for row in alger
+            if row.ticker == ticker and _wave_cz_source_match(row.source_url)
+        ]
+        assert on_cz == [], ticker
+    for ticker in WAVE_CZ_CU_DISJOINT + WAVE_CZ_CT_DISJOINT + WAVE_CZ_CS_DISJOINT:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(alger, ticker), ticker
+        on_cz = [
+            row
+            for row in alger
+            if row.ticker == ticker and _wave_cz_source_match(row.source_url)
+        ]
+        assert on_cz == [], ticker
+
+    jh = JohnHancockSource().fetch(mode="fixture").records
+    for ticker in ("USGLX", "JVLAX", "JBGAX", "JABZX", "JIJAX", "JHNBX", "TAUSX"):
+        assert not set(LOOKBACK_YEARS) <= _paid_lookback_years(jh, ticker), ticker
+        on_cz = [
+            row
+            for row in jh
+            if row.ticker == ticker and _wave_cz_source_match(row.source_url)
+        ]
+        assert on_cz == [], ticker
+
+    harding = HardingLoevnerSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(harding, "HLIDX")
+    assert 2021 not in _paid_lookback_years(harding, "HLRZX")
+    for ticker in ("HLIDX", "HLRZX"):
+        on_cz = [
+            row
+            for row in harding
+            if row.ticker == ticker and _wave_cz_source_match(row.source_url)
+        ]
+        assert on_cz == [], ticker
+
+    lazard = LazardSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(lazard, "RALYX")
+    for ticker in ("CONIX", "CONOX", "READX", "RCMPX"):
+        assert not set(LOOKBACK_YEARS) <= _paid_lookback_years(lazard, ticker), ticker
+        on_cz = [
+            row
+            for row in lazard
+            if row.ticker == ticker and _wave_cz_source_match(row.source_url)
+        ]
+        assert on_cz == [], ticker
+
+    pioneer = AmundiSource().fetch(mode="fixture").records
+    for ticker in ("AOBLX", "PINDX", "PGOFX"):
+        assert not set(LOOKBACK_YEARS) <= _paid_lookback_years(pioneer, ticker), ticker
+
+    vanguard = VanguardSource().fetch(mode="fixture").records
+    assert not set(LOOKBACK_YEARS) <= _paid_lookback_years(vanguard, "VBILX")
+
+    assert not leftover_tickers & set(WAVE_CZ_CY_DISJOINT)
+    assert not leftover_tickers & set(WAVE_CZ_CX_DISJOINT)
+    assert not leftover_tickers & set(WAVE_CZ_CU_DISJOINT)
+    assert not leftover_tickers & set(WAVE_CZ_EXCLUDED_FIDELITY)
+    assert not leftover_tickers & set(WAVE_CZ_WALLS)
+
+
+def test_wave_cz_heroes_are_searchable(client: TestClient) -> None:
+    fetched = client.post(
+        "/ingest/fetch", json={"fund_family": "fidelity", "mode": "fixture"}
+    )
+    assert fetched.status_code == 200, fetched.text
+    assert fetched.json()["created"] > 0
+
+    for ticker in WAVE_CZ_FIDELITY_LEFTOVER_5Y:
+        body = client.get("/funds", params={"q": ticker}).json()
+        tickers = [item["ticker"] for item in body["items"]]
+        assert ticker in tickers, f"{ticker} missing from GET /funds?q={ticker}: {tickers[:8]}"
+
+    fpurx = client.get(
+        "/distributions",
+        params={"ticker": "FPURX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    fpurx_2021_lt = [
+        Decimal(row["amount"])
+        for row in fpurx["items"]
+        if row.get("ticker") == "FPURX"
+        and row.get("estimate_type") == "long_term_capital_gains"
+        and str(row.get("ex_date") or "").startswith("2021-10-08")
+    ]
+    assert Decimal("2.323") in fpurx_2021_lt
+
+    fbalx = client.get(
+        "/distributions",
+        params={"ticker": "FBALX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    fbalx_2022_lt = [
+        Decimal(row["amount"])
+        for row in fbalx["items"]
+        if row.get("ticker") == "FBALX"
+        and row.get("estimate_type") == "long_term_capital_gains"
+        and str(row.get("ex_date") or "").startswith("2022-10-14")
+    ]
+    assert Decimal("1.511") in fbalx_2022_lt
+    fbalx_leftover_st = [
+        row
+        for row in fbalx["items"]
+        if row.get("ticker") == "FBALX"
+        and row.get("estimate_type") == "short_term_capital_gains"
+        and str(row.get("ex_date") or "").startswith(("2022-", "2023-"))
+        and _wave_cz_source_match(row.get("source_url"))
+    ]
+    assert fbalx_leftover_st == []
+
+    feqix = client.get(
+        "/distributions",
+        params={"ticker": "FEQIX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    feqix_2022_lt = [
+        Decimal(row["amount"])
+        for row in feqix["items"]
+        if row.get("ticker") == "FEQIX"
+        and row.get("estimate_type") == "long_term_capital_gains"
+        and str(row.get("ex_date") or "").startswith("2022-12-09")
+    ]
+    assert Decimal("1.674") in feqix_2022_lt
+
+    ftbfx = client.get(
+        "/distributions",
+        params={"ticker": "FTBFX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    ftbfx_2022_oi = [
+        Decimal(row["amount"])
+        for row in ftbfx["items"]
+        if row.get("ticker") == "FTBFX"
+        and row.get("estimate_type") == "ordinary_income"
+        and str(row.get("ex_date") or "").startswith("2022-12-22")
+    ]
+    assert Decimal("0.014") in ftbfx_2022_oi
+
+    flpsx = client.get(
+        "/distributions",
+        params={"ticker": "FLPSX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    flpsx_2023_lt = [
+        Decimal(row["amount"])
+        for row in flpsx["items"]
+        if row.get("ticker") == "FLPSX"
+        and row.get("estimate_type") == "long_term_capital_gains"
+        and str(row.get("ex_date") or "").startswith("2023-09-08")
+    ]
+    assert Decimal("5.801") in flpsx_2023_lt
+
+    fsmax = client.get(
+        "/distributions",
+        params={"ticker": "FSMAX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    fsmax_2022_oi = [
+        Decimal(row["amount"])
+        for row in fsmax["items"]
+        if row.get("ticker") == "FSMAX"
+        and row.get("estimate_type") == "ordinary_income"
+        and str(row.get("ex_date") or "").startswith("2022-12-16")
+    ]
+    assert Decimal("0.844") in fsmax_2022_oi
+
+    fspsx = client.get(
+        "/distributions",
+        params={"ticker": "FSPSX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    fspsx_2022_oi = [
+        Decimal(row["amount"])
+        for row in fspsx["items"]
+        if row.get("ticker") == "FSPSX"
+        and row.get("estimate_type") == "ordinary_income"
+        and str(row.get("ex_date") or "").startswith("2022-12-09")
+    ]
+    assert Decimal("1.076") in fspsx_2022_oi
+
+    for ticker in WAVE_CZ_FIDELITY_LEFTOVER_5Y:
+        body = client.get(
+            "/distributions",
+            params={"ticker": ticker, "publication_stage": "final", "page_size": 200},
+        ).json()
+        years = {
+            str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[
+                :4
+            ]
+            for row in body["items"]
+            if row.get("ticker") == ticker and row.get("amount") is not None
+        }
+        assert {"2021", "2022", "2023", "2024", "2025"} <= years, ticker
+
+    for ticker in WAVE_CZ_CY_DISJOINT + WAVE_CZ_CX_DISJOINT:
+        body = client.get(
+            "/distributions",
+            params={"ticker": ticker, "publication_stage": "final", "page_size": 200},
+        ).json()
+        years = {
+            str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[
+                :4
+            ]
+            for row in body["items"]
+            if row.get("ticker") == ticker and row.get("amount") is not None
+        }
+        assert {"2021", "2022", "2023", "2024", "2025"} <= years, ticker
+        on_cz = [
+            row
+            for row in body["items"]
+            if row.get("ticker") == ticker and _wave_cz_source_match(row.get("source_url"))
+        ]
+        assert on_cz == [], ticker
+
+    alger_fetched = client.post(
+        "/ingest/fetch", json={"fund_family": "alger", "mode": "fixture"}
+    )
+    assert alger_fetched.status_code == 200, alger_fetched.text
+    for ticker in WAVE_CZ_CU_DISJOINT:
+        body = client.get("/funds", params={"q": ticker}).json()
+        tickers = [item["ticker"] for item in body["items"]]
+        assert ticker in tickers, ticker
+        dist = client.get(
+            "/distributions",
+            params={"ticker": ticker, "publication_stage": "final", "page_size": 200},
+        ).json()
+        years = {
+            str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[
+                :4
+            ]
+            for row in dist["items"]
+            if row.get("ticker") == ticker and row.get("amount") is not None
+        }
+        assert {"2021", "2022", "2023", "2024", "2025"} <= years, ticker
+        on_cz = [
+            row
+            for row in dist["items"]
+            if row.get("ticker") == ticker and _wave_cz_source_match(row.get("source_url"))
+        ]
+        assert on_cz == [], ticker
