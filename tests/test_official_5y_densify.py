@@ -758,9 +758,16 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # ETF 2021–2023, and PGIM (no in-book tickers) stay walls.
     # Honest pin remasured after rebase onto #201 tip: 3729 + AD +8
     # (7 MF / 1 ETF) → 3737.
-    assert digest.funds_with_5y == 3737
+    # WAVE AE leftover (existing in-book only): Invesco ETF Tax Center ICI
+    # Primary 2021–2025 leftover December YE for estimate-table identities
+    # +5 ETF (PIN / PSCI / IDMO / IVRA / PBP). SSGA / First Trust /
+    # WisdomTree leftover re-probes stay walls. Invesco MF Investor A
+    # belongs to Y #194 — not redone. Year-depth only: HIYS 2023–2025,
+    # BSJW 2024–2025, BSJX / GTOC / IQSZ / MTRA 2025. Honest pin =
+    # tip 3737 + AE +5 ETF → 3742. No new identities.
+    assert digest.funds_with_5y == 3742
     assert digest.funds_with_5y_mf == 2984
-    assert digest.funds_with_5y_etf == 753
+    assert digest.funds_with_5y_etf == 758
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
 
@@ -9278,3 +9285,207 @@ def test_parallel_ad_heroes_are_searchable(client: TestClient) -> None:
         if row.get("ticker") == "EOI" and row.get("amount") is not None
     }
     assert {"2021", "2022", "2023", "2024", "2025"} <= eoi_years
+
+
+def test_wave_ae_invesco_etf_leftover_ici_fills_5y() -> None:
+    records = InvescoSource().fetch(mode="fixture").records
+    pin_2021_lt = next(
+        row
+        for row in records
+        if row.ticker == "PIN"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount
+    )
+    assert pin_2021_lt.amount == Decimal("1.31763")
+    assert str(pin_2021_lt.ex_date) == "2021-12-20"
+    assert pin_2021_lt.publication_stage == PublicationStage.final
+    pin_2022_lt = next(
+        row
+        for row in records
+        if row.ticker == "PIN"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and row.ex_date.year == 2022
+        and row.amount
+    )
+    assert pin_2022_lt.amount == Decimal("2.99469")
+    idmo_2021 = next(
+        row
+        for row in records
+        if row.ticker == "IDMO"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount
+    )
+    assert idmo_2021.amount == Decimal("0.218")
+    ivra_2021_st = next(
+        row
+        for row in records
+        if row.ticker == "IVRA"
+        and row.estimate_type == EstimateType.short_term_capital_gains
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount
+    )
+    assert ivra_2021_st.amount == Decimal("0.36875")
+    pbp_2021_st = next(
+        row
+        for row in records
+        if row.ticker == "PBP"
+        and row.estimate_type == EstimateType.short_term_capital_gains
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount
+    )
+    assert pbp_2021_st.amount == Decimal("1.24053")
+    psci_2021 = next(
+        row
+        for row in records
+        if row.ticker == "PSCI"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and row.ex_date.year == 2021
+        and row.amount
+    )
+    assert psci_2021.amount == Decimal("0.18503")
+    for ticker in ("PIN", "PSCI", "IDMO", "IVRA", "PBP"):
+        years = {
+            _year_for_row(row.as_of, row.ex_date, row.payable_date)
+            for row in records
+            if row.ticker == ticker
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        }
+        years.discard(None)
+        assert set(LOOKBACK_YEARS) <= years, ticker
+
+
+def test_wave_ae_leftover_walls_stay_unmatched() -> None:
+    ssga = StateStreetSource().fetch(mode="fixture").records
+    hybl_2021 = [
+        row
+        for row in ssga
+        if row.ticker == "HYBL"
+        and _year_for_row(row.as_of, row.ex_date, row.payable_date) == 2021
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert hybl_2021 == []
+    spdg_early = [
+        row
+        for row in ssga
+        if row.ticker == "SPDG"
+        and _year_for_row(row.as_of, row.ex_date, row.payable_date) in {2021, 2022}
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert spdg_early == []
+
+    first_trust = FirstTrustSource().fetch(mode="fixture").records
+    for ticker, year in (("FNY", 2021), ("ARVR", 2021), ("CRPT", 2023)):
+        rows = [
+            row
+            for row in first_trust
+            if row.ticker == ticker
+            and _year_for_row(row.as_of, row.ex_date, row.payable_date) == year
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        ]
+        assert rows == [], f"{ticker} {year} should stay unmatched"
+
+    wisdomtree = WisdomtreeSource().fetch(mode="fixture").records
+    cew_2023 = [
+        row
+        for row in wisdomtree
+        if row.ticker == "CEW"
+        and _year_for_row(row.as_of, row.ex_date, row.payable_date) == 2023
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert cew_2023 == []
+    aivi_2021 = [
+        row
+        for row in wisdomtree
+        if row.ticker == "AIVI"
+        and _year_for_row(row.as_of, row.ex_date, row.payable_date) == 2021
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert aivi_2021 == []
+
+    invesco = InvescoSource().fetch(mode="fixture").records
+    vafax_early = [
+        row
+        for row in invesco
+        if row.ticker == "VAFAX"
+        and row.ex_date
+        and row.ex_date.year in {2021, 2022}
+        and row.amount is not None
+    ]
+    assert vafax_early == []
+    hiys_years = {
+        _year_for_row(row.as_of, row.ex_date, row.payable_date)
+        for row in invesco
+        if row.ticker == "HIYS"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    hiys_years.discard(None)
+    assert hiys_years == {2023, 2024, 2025}
+    bsjw_years = {
+        _year_for_row(row.as_of, row.ex_date, row.payable_date)
+        for row in invesco
+        if row.ticker == "BSJW"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    bsjw_years.discard(None)
+    assert bsjw_years == {2024, 2025}
+
+
+def test_wave_ae_heroes_are_searchable(client: TestClient) -> None:
+    fetched = client.post(
+        "/ingest/fetch", json={"fund_family": "invesco", "mode": "fixture"}
+    )
+    assert fetched.status_code == 200, fetched.text
+    assert fetched.json()["created"] > 0
+
+    for ticker in ("PIN", "PSCI", "IDMO", "IVRA", "PBP"):
+        body = client.get("/funds", params={"q": ticker}).json()
+        tickers = [item["ticker"] for item in body["items"]]
+        assert ticker in tickers, f"{ticker} missing from GET /funds?q={ticker}: {tickers[:8]}"
+
+    pin = client.get(
+        "/distributions",
+        params={"ticker": "PIN", "publication_stage": "final", "page_size": 200},
+    ).json()
+    pin_2021 = [
+        Decimal(row["amount"])
+        for row in pin["items"]
+        if row.get("ticker") == "PIN"
+        and row.get("estimate_type") == "long_term_capital_gains"
+        and str(row.get("ex_date") or "").startswith("2021-12-20")
+    ]
+    assert Decimal("1.31763") in pin_2021
+    pin_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in pin["items"]
+        if row.get("ticker") == "PIN" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= pin_years
+
+    idmo = client.get(
+        "/distributions",
+        params={"ticker": "IDMO", "publication_stage": "final", "page_size": 200},
+    ).json()
+    idmo_2021 = [
+        Decimal(row["amount"])
+        for row in idmo["items"]
+        if row.get("ticker") == "IDMO"
+        and row.get("estimate_type") == "ordinary_income"
+        and str(row.get("ex_date") or "").startswith("2021-12-20")
+    ]
+    assert Decimal("0.218") in idmo_2021

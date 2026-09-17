@@ -471,7 +471,13 @@ class WisdomtreeSource(HtmlTableSource):
         "(DGRW $0.15525), 2022 (DGRW $0.23017), 2021 (DGRW $0.20349). "
         "December 2023 income sibling still 404 — unmatched. Official 2023 "
         "final CG PDF adds printed payers only (AGZD ST $0.50744; WTAI ST "
-        "$0.02126; dashed no-CG rows omitted). Growth of $X added for XC."
+        "$0.02126; dashed no-CG rows omitted). Growth of $X added for XC. "
+        "WAVE AE leftover re-probe (2026-09-17): December 2023 income sibling "
+        "and January–November 2021 monthly PDFs still 404. 2023 monthlies still "
+        "omit CEW / USDU / WCBR / WCLD / WDNA / QGRW. Official 2021 December "
+        "income PDF prints DOO / DTN / QSY — those are strategy restructures "
+        "to AIVI / AIVL / WTV; leftover years are never copied from old "
+        "tickers. Unmatched / not invented."
     )
     live_limitations = (
         "Family books are PDF. Weekly walk uses the 2025 estimate hub, "
@@ -650,7 +656,13 @@ class FirstTrustSource(HtmlTableSource):
         "2021–2022; CAAA/EMOT/FDND/FTCE/SCIO 2021–2023; FAI/RND 2021–2023+2025) "
         "print “No distributions were paid during the selected year.” "
         "RFEU/EFIX/FBZ Print=Y is terminated; MARB/ECLN fund-not-found. "
-        "Those leftover years stay unmatched — no new identities."
+        "Those leftover years stay unmatched — no new identities. "
+        "WAVE AE leftover re-probe (2026-09-17): leftover Print=Y years still "
+        "print “No distributions were paid during the selected year.” "
+        "(ARVR/BGLD/EIPX/FNY/FTC/FTGS/FXH/MISL/RDVI 2021; CRPT 2023; "
+        "FSGS 2025; BNGE 2021+2024; FBT empty years). Fiscal Jul-31 N-CSR "
+        "highlights are not calendar-safe next to those empty Print=Y years. "
+        "Unmatched / not invented."
     )
     live_limitations = (
         "Family 19(a) and declaration PDFs. Weekly walk uses the ContentGUID notice "

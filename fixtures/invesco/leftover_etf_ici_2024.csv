@@ -1,0 +1,8 @@
+as_of,fund_name,cusip,ticker,record_date,ex_dividend_date,payable_date,income_dividends,short_term_capital_gain,total_capital_gain_distribution
+2024-12-31,Invesco BulletShares 2032 High Yield Corporate Bond ETF,46139W775,BSJW,12/23/2024,12/23/2024,12/27/2024,0.14992,0.115,
+2024-12-31,Invesco High Yield Select ETF,46090A754,HIYS,12/23/2024,12/23/2024,12/27/2024,0.13935,,
+2024-12-31,Invesco S&P International Developed Momentum ETF,46138E222,IDMO,12/23/2024,12/23/2024,12/27/2024,0.09648,,
+2024-12-31,Invesco Real Assets ESG ETF,46090A788,IVRA,12/23/2024,12/23/2024,12/27/2024,0.06587,0.17945,
+2024-12-31,Invesco S&P 500 BuyWrite ETF,46137V399,PBP,12/23/2024,12/23/2024,12/27/2024,0.14843614,,
+2024-12-31,Invesco India ETF,46137R109,PIN,12/23/2024,12/23/2024,12/27/2024,,,2.18584
+2024-12-31,Invesco S&P SmallCap Industrials ETF,46138E123,PSCI,12/23/2024,12/23/2024,12/27/2024,0.23731,,
