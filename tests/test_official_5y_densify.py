@@ -840,8 +840,14 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # Nuveen NSBRX 2021 / Schwab MM stay walls. Honest pin remasured
     # after additive rebase onto #209 tip e5cbe71d: 3850 → 3862 (+12 MF;
     # ETF 5y unchanged at 758).
-    assert digest.funds_with_5y == 3862
-    assert digest.funds_with_5y_mf == 3104
+    # WAVE AN leftover (existing in-book only): Hartford leftover I/C/F/R/Y
+    # + leftover Class A IHOAX Oct 31 N-CSR 2021–2024 +126 MF; Artisan Mid /
+    # Small / Focus / Discovery 2023 N-CSR OI +10 MF. Does not redo AF–AM.
+    # MFS leftover Excel / Lord LAGWX July 31 / Dodge Class X 2021 / Oakmark
+    # Bond 2023 stay walls. Honest pin remasured on #210 tip 51e2b28b:
+    # 3862 → 3998 (+136 MF; ETF 5y unchanged at 758).
+    assert digest.funds_with_5y == 3998
+    assert digest.funds_with_5y_mf == 3240
     assert digest.funds_with_5y_etf == 758
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
@@ -3248,8 +3254,8 @@ def test_parallel_ab_leftover_walls_stay_unmatched() -> None:
 
     artisan = ArtisanSource().fetch(mode="fixture").records
     for ticker, year in (
-        ("ARTMX", 2023),
-        ("ARTSX", 2023),
+        ("APFDX", 2023),
+        ("APDDX", 2023),
         ("ARTRX", 2022),
         ("APDRX", 2022),
         ("APHRX", 2022),
@@ -10951,12 +10957,8 @@ def test_wave_am_leftover_walls_stay_unmatched() -> None:
 
     hartford = HartfordSource().fetch(mode="fixture").records
     assert 2021 not in _paid_lookback_years(hartford, "HDBAX")
-    for ticker in ("IHOAX", "HDGIX"):
-        years = _paid_lookback_years(hartford, ticker)
-        assert 2021 not in years, ticker
-        assert 2022 not in years, ticker
-        assert 2023 not in years, ticker
-        assert 2024 not in years, ticker
+    # WAVE AN fills leftover I/C/F/R/Y + IHOAX 2021–2024 from Oct 31 N-CSR.
+    # HDBAX 2021 stays unpublished / pre-inception on those books.
 
     mfs = MfsSource().fetch(mode="fixture").records
     assert 2022 not in _paid_lookback_years(mfs, "MEMBX")
@@ -10966,8 +10968,10 @@ def test_wave_am_leftover_walls_stay_unmatched() -> None:
     assert 2021 not in _paid_lookback_years(mfs, "UIVIX")
 
     artisan = ArtisanSource().fetch(mode="fixture").records
-    for ticker in ("ARTMX", "ARTSX", "ARTTX", "APFDX"):
-        assert 2023 not in _paid_lookback_years(artisan, ticker), ticker
+    # WAVE AN fills Mid / Small / Focus / Discovery 2023 N-CSR OI.
+    # APFDX / APDDX 2023 N-CSR dashes stay unmatched.
+    assert 2023 not in _paid_lookback_years(artisan, "APFDX")
+    assert 2023 not in _paid_lookback_years(artisan, "APDDX")
 
     dodge = DodgeCoxSource().fetch(mode="fixture").records
     assert 2021 not in _paid_lookback_years(dodge, "DOXGX")
@@ -11060,3 +11064,405 @@ def test_wave_am_heroes_are_searchable(client: TestClient) -> None:
         and row.get("publication_stage") == "final"
     ]
     assert lbsax_2021 == []
+
+
+WAVE_AN_HARTFORD_LEFTOVER_5Y = (
+    "HDGIX",
+    "IHOAX",
+    "HFMIX",
+    "HGIIX",
+    "ITHIX",
+)
+
+WAVE_AN_ARTISAN_LEFTOVER_5Y = (
+    "ARTMX",
+    "APDMX",
+    "APHMX",
+    "ARTSX",
+    "APDSX",
+    "APHSX",
+    "ARTTX",
+    "APDTX",
+    "APHTX",
+    "APHDX",
+)
+
+
+def test_wave_an_hartford_leftover_ncsr_fills_5y() -> None:
+    records = HartfordSource().fetch(mode="fixture").records
+    hdgix_2021_oi = next(
+        row
+        for row in records
+        if row.ticker == "HDGIX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2021-10-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert hdgix_2021_oi.amount == Decimal("0.41")
+    hdgix_2021_cg = next(
+        row
+        for row in records
+        if row.ticker == "HDGIX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2021-10-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert hdgix_2021_cg.amount == Decimal("0.57")
+    hdgix_2022_cg = next(
+        row
+        for row in records
+        if row.ticker == "HDGIX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2022-10-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert hdgix_2022_cg.amount == Decimal("1.62")
+    hdgix_2023_oi = next(
+        row
+        for row in records
+        if row.ticker == "HDGIX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2023-10-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert hdgix_2023_oi.amount == Decimal("0.47")
+    hdgix_2023_cg = next(
+        row
+        for row in records
+        if row.ticker == "HDGIX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2023-10-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert hdgix_2023_cg.amount == Decimal("1.37")
+    hdgix_2024_oi = next(
+        row
+        for row in records
+        if row.ticker == "HDGIX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2024-10-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert hdgix_2024_oi.amount == Decimal("0.58")
+    hdgix_2024_cg = next(
+        row
+        for row in records
+        if row.ticker == "HDGIX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2024-10-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert hdgix_2024_cg.amount == Decimal("0.11")
+    ihoax_2021_oi = next(
+        row
+        for row in records
+        if row.ticker == "IHOAX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2021-10-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert ihoax_2021_oi.amount == Decimal("0.07")
+    ihoax_2022_oi = next(
+        row
+        for row in records
+        if row.ticker == "IHOAX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2022-10-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert ihoax_2022_oi.amount == Decimal("0.25")
+    ihoax_2022_cg = next(
+        row
+        for row in records
+        if row.ticker == "IHOAX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2022-10-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert ihoax_2022_cg.amount == Decimal("1.75")
+    ihoax_2023_oi = next(
+        row
+        for row in records
+        if row.ticker == "IHOAX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2023-10-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert ihoax_2023_oi.amount == Decimal("0.09")
+    ihoax_2024_oi = next(
+        row
+        for row in records
+        if row.ticker == "IHOAX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2024-10-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert ihoax_2024_oi.amount == Decimal("0.24")
+    # Class-level — never sibling-copy Class A historical PDF onto HDGIX
+    # (IHGIX 2023 calendar PDF is not HDGIX N-CSR $1.37).
+    ihgix_2023_ncsr = [
+        row.amount
+        for row in records
+        if row.ticker == "IHGIX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2023-10-31"
+        and row.amount is not None
+    ]
+    assert ihgix_2023_ncsr == []
+    for ticker in WAVE_AN_HARTFORD_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(records, ticker), ticker
+
+
+def test_wave_an_artisan_leftover_ncsr_fills_5y() -> None:
+    records = ArtisanSource().fetch(mode="fixture").records
+    artmx_2023 = next(
+        row
+        for row in records
+        if row.ticker == "ARTMX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2023-09-30"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert artmx_2023.amount == Decimal("0.08")
+    aphmx_2023 = next(
+        row
+        for row in records
+        if row.ticker == "APHMX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2023-09-30"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert aphmx_2023.amount == Decimal("0.16")
+    artsx_2023 = next(
+        row
+        for row in records
+        if row.ticker == "ARTSX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2023-09-30"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert artsx_2023.amount == Decimal("0.08")
+    arttx_2023 = next(
+        row
+        for row in records
+        if row.ticker == "ARTTX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2023-09-30"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert arttx_2023.amount == Decimal("0.05")
+    aphdX_2023 = next(
+        row
+        for row in records
+        if row.ticker == "APHDX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2023-09-30"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert aphdX_2023.amount == Decimal("0.02")
+    # Class-level — never sibling-copy Institutional APHMX onto Investor ARTMX.
+    assert artmx_2023.amount != aphmx_2023.amount
+    for ticker in WAVE_AN_ARTISAN_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(records, ticker), ticker
+
+
+def test_wave_an_leftover_walls_stay_unmatched() -> None:
+    hartford = HartfordSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(hartford, "HDBAX")
+    assert {2022, 2023, 2024, 2025} <= _paid_lookback_years(hartford, "HDBAX")
+    # Class Y leftovers whose N-CSR books omit Y — never copy Class I.
+    assert 2021 not in _paid_lookback_years(hartford, "HBAIX")
+    assert 2021 not in _paid_lookback_years(hartford, "HCKIX")
+    assert _paid_lookback_years(hartford, "HBAIX") == {2025}
+    assert _paid_lookback_years(hartford, "HCKIX") == {2025}
+
+    mfs = MfsSource().fetch(mode="fixture").records
+    assert 2022 not in _paid_lookback_years(mfs, "MEMBX")
+    assert 2023 not in _paid_lookback_years(mfs, "BRSPX")
+    assert 2023 not in _paid_lookback_years(mfs, "BRSHX")
+    assert 2021 not in _paid_lookback_years(mfs, "MNWTX")
+    assert 2021 not in _paid_lookback_years(mfs, "UIVIX")
+
+    artisan = ArtisanSource().fetch(mode="fixture").records
+    assert 2023 not in _paid_lookback_years(artisan, "APFDX")
+    assert 2023 not in _paid_lookback_years(artisan, "APDDX")
+    assert {2021, 2022, 2024, 2025} <= _paid_lookback_years(artisan, "APFDX")
+
+    dodge = DodgeCoxSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(dodge, "DOXGX")
+    assert {2022, 2023, 2024, 2025} <= _paid_lookback_years(dodge, "DOXGX")
+
+    oakmark = OakmarkSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(oakmark, "OAKCX")
+    assert 2023 not in _paid_lookback_years(oakmark, "OAKCX")
+
+    lord = LordAbbettSource().fetch(mode="fixture").records
+    assert 2022 not in _paid_lookback_years(lord, "LAGWX")
+    assert 2023 not in _paid_lookback_years(lord, "LAGWX")
+
+    # Do not redo WAVE AM Columbia leftover years / Class A 2021 wall.
+    columbia = ColumbiaThreadneedleSource().fetch(mode="fixture").records
+    lbsax_2021 = [
+        row
+        for row in columbia
+        if row.ticker == "LBSAX"
+        and row.publication_stage in {PublicationStage.final, PublicationStage.paid}
+        and row.amount is not None
+        and _year_for_row(row.as_of, row.ex_date, row.payable_date) == 2021
+    ]
+    assert lbsax_2021 == []
+
+    # WAVE AL wall — do not redo T. Rowe Advisor/R/Inst leftovers.
+    trowe = TRowePriceSource().fetch(mode="fixture").records
+    assert 2024 not in _paid_lookback_years(trowe, "RRCOX")
+
+
+def test_wave_an_heroes_are_searchable(client: TestClient) -> None:
+    for family in ("hartford", "artisan"):
+        fetched = client.post(
+            "/ingest/fetch", json={"fund_family": family, "mode": "fixture"}
+        )
+        assert fetched.status_code == 200, fetched.text
+        assert fetched.json()["created"] > 0
+
+    for ticker in (
+        "HDGIX",
+        "IHOAX",
+        "HFMIX",
+        "HGIIX",
+        "ARTMX",
+        "ARTSX",
+        "ARTTX",
+        "APHDX",
+        "HDBAX",
+        "APFDX",
+    ):
+        body = client.get("/funds", params={"q": ticker}).json()
+        tickers = [item["ticker"] for item in body["items"]]
+        assert ticker in tickers, f"{ticker} missing from GET /funds?q={ticker}: {tickers[:8]}"
+
+    hdgix = client.get(
+        "/distributions",
+        params={"ticker": "HDGIX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    hdgix_2023 = [
+        Decimal(row["amount"])
+        for row in hdgix["items"]
+        if row.get("ticker") == "HDGIX"
+        and row.get("estimate_type") == "total_capital_gains"
+        and str(row.get("as_of") or "").startswith("2023-10-31")
+    ]
+    assert Decimal("1.37") in hdgix_2023
+    hdgix_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in hdgix["items"]
+        if row.get("ticker") == "HDGIX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= hdgix_years
+
+    ihoax = client.get(
+        "/distributions",
+        params={"ticker": "IHOAX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    ihoax_2022 = [
+        Decimal(row["amount"])
+        for row in ihoax["items"]
+        if row.get("ticker") == "IHOAX"
+        and row.get("estimate_type") == "total_capital_gains"
+        and str(row.get("as_of") or "").startswith("2022-10-31")
+    ]
+    assert Decimal("1.75") in ihoax_2022
+    ihoax_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in ihoax["items"]
+        if row.get("ticker") == "IHOAX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= ihoax_years
+
+    artmx = client.get(
+        "/distributions",
+        params={"ticker": "ARTMX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    artmx_2023 = [
+        Decimal(row["amount"])
+        for row in artmx["items"]
+        if row.get("ticker") == "ARTMX"
+        and row.get("estimate_type") == "ordinary_income"
+        and str(row.get("as_of") or "").startswith("2023-09-30")
+    ]
+    assert Decimal("0.08") in artmx_2023
+    artmx_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in artmx["items"]
+        if row.get("ticker") == "ARTMX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= artmx_years
+
+    hdbax = client.get(
+        "/distributions",
+        params={"ticker": "HDBAX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    hdbax_2021 = [
+        row
+        for row in hdbax["items"]
+        if row.get("ticker") == "HDBAX"
+        and str(row.get("as_of") or row.get("ex_date") or "").startswith("2021")
+        and row.get("amount") is not None
+        and row.get("publication_stage") == "final"
+    ]
+    assert hdbax_2021 == []
+
+    apfdx = client.get(
+        "/distributions",
+        params={"ticker": "APFDX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    apfdx_2023_ncsr = [
+        row
+        for row in apfdx["items"]
+        if row.get("ticker") == "APFDX"
+        and str(row.get("as_of") or "").startswith("2023-09-30")
+        and row.get("amount") is not None
+        and row.get("publication_stage") == "final"
+    ]
+    assert apfdx_2023_ncsr == []
+    apfdx_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in apfdx["items"]
+        if row.get("ticker") == "APFDX" and row.get("amount") is not None
+    }
+    assert "2023" not in apfdx_years

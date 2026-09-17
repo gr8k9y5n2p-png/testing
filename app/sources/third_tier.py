@@ -459,6 +459,9 @@ class DodgeCoxSource(HtmlTableSource):
         "years start 2022. Worldwide / DOAA* tickers are not in-book. "
         "Official 5y WAVE AM leftover re-probe (2026-09-17): Class X 2021 remains "
         "the May 2022 inception wall — never copy Class I 2021 onto DOXGX / "
+        "DOXBX / DOXIX / DOXFX / DOXWX / DOXLX. "
+        "Official 5y WAVE AN leftover re-probe (2026-09-17): Class X 2021 remains "
+        "the May 2022 inception wall — never copy Class I 2021 onto DOXGX / "
         "DOXBX / DOXIX / DOXFX / DOXWX / DOXLX."
     )
     live_limitations = "Estimates and the tax letter are PDF. Fixtures transcribe those public tables."
@@ -595,7 +598,12 @@ class MfsSource(HtmlTableSource):
         "BRWRX R1 / MRSGX R1; MEMBX B still has no 2022 row; MNWTX R3 / MNWSX R2 "
         "still have no 2021 row; MCBCX C / MCBFX I / UIVIX I still have no 2021 "
         "row. Unpublished leftover years stay unmatched. MFEGX mid-year #186 "
-        "not redone."
+        "not redone. "
+        "Official 5y WAVE AN leftover re-probe (2026-09-17): official leftover "
+        "shareCode Excel still has no 2023 row for BRSPX R1 / BRSHX C / BRSBX B / "
+        "BRWRX R1 / MRSGX R1; MEMBX B still has no 2022 row; MNWTX R3 / MNWSX R2 / "
+        "MCBCX C / MCBFX I / UIVIX I still have no 2021 row. Unpublished leftover "
+        "years stay unmatched. MFEGX mid-year #186 not redone."
     )
     live_limitations = (
         "Estimates are PDF percent-of-NAV ranges. Paid history is the official "
@@ -817,7 +825,12 @@ class LordAbbettSource(HtmlTableSource):
         "absent from the product-page year dropdown. Lord ICI still 404. "
         "Official 5y WAVE AM leftover re-probe (2026-09-17): LAGWX 2022/2023 / "
         "LTRAX 2022–2024 / LBNDX 2021+2023+2024 still unpublished on the "
-        "product-page year dropdown; Daily AJAX year selector still 404."
+        "product-page year dropdown; Daily AJAX year selector still 404. "
+        "Official 5y WAVE AN leftover re-probe (2026-09-17): LAGWX 2022/2023 "
+        "still unpublished on the product-page year dropdown; Developing Growth "
+        "N-CSR FYE July 31 is not calendar-safe next to November/December "
+        "product-page years (2022 FYE $3.34 is the already-booked 2021 calendar "
+        "LT; 2023 FYE distribution dashed). Daily AJAX year selector still 404."
     )
     live_limitations = (
         "HTML hub has no table. The public PDF lists funds expected to pay $0, "
