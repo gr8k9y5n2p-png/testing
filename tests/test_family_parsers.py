@@ -3072,6 +3072,82 @@ def test_fourth_tier_fixtures() -> None:
         for r in jh_ncsr_cn
     )
 
+    jh_ncsr_co = parse_distribution_html(
+        (ROOT / "john_hancock" / "leftover_ncsr_jhjax_2021_2025_wave_co.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url=(
+            "https://www.sec.gov/Archives/edgar/data/22370/"
+            "000119312525327166/8de3f25f2c247e5.htm#jhjax"
+        ),
+        fund_family="John Hancock / Manulife",
+    )
+    jhjax_2025_oi = next(
+        r
+        for r in jh_ncsr_co
+        if r.ticker == "JHJAX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.as_of
+        and str(r.as_of) == "2025-10-31"
+    )
+    assert jhjax_2025_oi.amount == Decimal("0.02")
+    assert jhjax_2025_oi.publication_stage == PublicationStage.final
+    jhjax_2025_cg = next(
+        r
+        for r in jh_ncsr_co
+        if r.ticker == "JHJAX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and str(r.as_of) == "2025-10-31"
+    )
+    assert jhjax_2025_cg.amount == Decimal("2.18")
+    jhjax_2022_cg = next(
+        r
+        for r in jh_ncsr_co
+        if r.ticker == "JHJAX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and str(r.as_of) == "2022-10-31"
+    )
+    assert jhjax_2022_cg.amount == Decimal("0.65")
+    assert {r.ticker for r in jh_ncsr_co} == {"JHJAX"}
+    assert not any(
+        r.ticker
+        in {
+            "FIDAX",
+            "FRBAX",
+            "SVBAX",
+            "JDIBX",
+            "JEMQX",
+            "JDJAX",
+            "JEEBX",
+            "TAGRX",
+            "JCCAX",
+            "JABZX",
+            "JIJAX",
+            "JHJCX",
+            "JHJIX",
+            "JHJRX",
+            "JVLAX",
+            "JBGAX",
+            "ALBAX",
+            "SVALX",
+        }
+        for r in jh_ncsr_co
+    )
+    assert not any(
+        r.ticker == "JHJAX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and r.as_of
+        and r.as_of.year in {2023, 2024}
+        for r in jh_ncsr_co
+    )
+    assert not any(
+        r.ticker == "JHJAX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.as_of
+        and r.as_of.year == 2022
+        for r in jh_ncsr_co
+    )
+
     hartford_final = parse_distribution_html(
         (ROOT / "hartford" / "2025_final_capital_gains.html").read_text(encoding="utf-8"),
         source_url="fixture://hartford-2025-final",

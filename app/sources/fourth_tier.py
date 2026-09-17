@@ -67,7 +67,21 @@ class JohnHancockSource(HtmlTableSource):
         "RALOX, CF SPEGX / AGFCX / AGIFX / ALGZX, CC PIORX / PQIRX, CD "
         "Lazard R6, CB Open, BY Institutional, BZ/CA/BX Pioneer C/Y/K, "
         "BW RAIIX, BT SVAAX / SVACX / SVAIX, or reserved Alger CHUSX / "
-        "ALGAX / ALSRX / ACAAX."
+        "ALGAX / ALSRX / ACAAX. Official 5y WAVE CO leftover (2026-09-17): "
+        "John Hancock Investment Trust FYE October 31 2025 N-CSR "
+        "(accession 0001193125-25-327166) Financial Highlights unlock "
+        "leftover Class A JHJAX ESG Large Cap Core 2021–2025 on the "
+        "estimate-only in-book identity. Calendar-safe as_of 10/31. "
+        "Class-level A — never sibling-copied onto JHJCX / JHJIX / "
+        "JHJRX. Issuer dashes and less-than-$0.005 footnotes omitted — "
+        "never invent $0 (JHJAX 2024 / 2023 CG; 2022 OI). Estimate "
+        "press-release PDFs stay estimates. Does not redo WAVE CN "
+        "FIDAX / FRBAX, WAVE CL SVBAX / JDIBX / JEMQX / JDJAX, WAVE CM "
+        "JEEBX, or WAVE CK TAGRX / JCCAX. JABZX 2021 commencement / "
+        "2021–2024 official CG dashes and JIJAX 2025 / 2024 official "
+        "dashes stay unmatched — not 5y. JVLAX Funds III FYE March 31 "
+        "and JBGAX Funds II FYE August 31 stay unmatched — "
+        "calendar-unsafe."
     )
     live_limitations = (
         "Family book is a PDF (press-release HTML is a viewer/shell). Fixture transcribes public A-share ranges."
@@ -145,6 +159,16 @@ class JohnHancockSource(HtmlTableSource):
                     "000119312525327168/8de3f291bd0df34.htm#fidax-frbax"
                 ),
                 fixture="leftover_ncsr_fidax_frbax_2021_2025_wave_cn.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="leftover_ncsr_jhjax_2021_2025_wave_co",
+                url=(
+                    "https://www.sec.gov/Archives/edgar/data/22370/"
+                    "000119312525327166/8de3f25f2c247e5.htm#jhjax"
+                ),
+                fixture="leftover_ncsr_jhjax_2021_2025_wave_co.html",
                 live=False,
                 role="history",
             ),
