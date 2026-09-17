@@ -3011,6 +3011,67 @@ def test_fourth_tier_fixtures() -> None:
         for r in jh_ncsr_cl
     )
 
+    jh_ncsr_cn = parse_distribution_html(
+        (ROOT / "john_hancock" / "leftover_ncsr_fidax_frbax_2021_2025_wave_cn.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url=(
+            "https://www.sec.gov/Archives/edgar/data/743861/"
+            "000119312525327168/8de3f291bd0df34.htm#fidax-frbax"
+        ),
+        fund_family="John Hancock / Manulife",
+    )
+    fidax_2025_oi = next(
+        r
+        for r in jh_ncsr_cn
+        if r.ticker == "FIDAX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.as_of
+        and str(r.as_of) == "2025-10-31"
+    )
+    assert fidax_2025_oi.amount == Decimal("0.22")
+    assert fidax_2025_oi.publication_stage == PublicationStage.final
+    frbax_2025_cg = next(
+        r
+        for r in jh_ncsr_cn
+        if r.ticker == "FRBAX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and str(r.as_of) == "2025-10-31"
+    )
+    assert frbax_2025_cg.amount == Decimal("2.24")
+    fidax_2022_cg = next(
+        r
+        for r in jh_ncsr_cn
+        if r.ticker == "FIDAX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and str(r.as_of) == "2022-10-31"
+    )
+    assert fidax_2022_cg.amount == Decimal("4.03")
+    assert {r.ticker for r in jh_ncsr_cn} == {"FIDAX", "FRBAX"}
+    assert not any(
+        r.ticker
+        in {
+            "TAGRX",
+            "JCCAX",
+            "JEEBX",
+            "SVBAX",
+            "JDIBX",
+            "JEMQX",
+            "JDJAX",
+            "JVLAX",
+            "JBGAX",
+            "FIDCX",
+            "JFIFX",
+            "JFDRX",
+            "FRBCX",
+            "JRBFX",
+            "JRGRX",
+            "ALBAX",
+            "SVALX",
+        }
+        for r in jh_ncsr_cn
+    )
+
     hartford_final = parse_distribution_html(
         (ROOT / "hartford" / "2025_final_capital_gains.html").read_text(encoding="utf-8"),
         source_url="fixture://hartford-2025-final",
