@@ -5948,6 +5948,41 @@ def test_dws_xtrackers_fixtures() -> None:
         for r in dws_ncsr_bi
     )
 
+    dws_ncsr_bk = parse_distribution_html(
+        (ROOT / "dws" / "leftover_ncsr_2021_2024_wave_bk.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url=(
+            "https://www.sec.gov/Archives/edgar/data/793597/"
+            "000008805326000211/ar123125drgif.htm"
+        ),
+        fund_family="DWS / Xtrackers",
+    )
+    tollx_2024 = next(
+        r
+        for r in dws_ncsr_bk
+        if r.ticker == "TOLLX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.as_of
+        and str(r.as_of) == "2024-12-31"
+    )
+    assert tollx_2024.amount == Decimal("0.39")
+    assert tollx_2024.publication_stage == PublicationStage.final
+    tollx_2021_cg = next(
+        r
+        for r in dws_ncsr_bk
+        if r.ticker == "TOLLX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and r.as_of
+        and str(r.as_of) == "2021-12-31"
+    )
+    assert tollx_2021_cg.amount == Decimal("0.86")
+    assert {r.ticker for r in dws_ncsr_bk} == {"TOLLX"}
+    assert not any(
+        r.ticker in {"TOLCX", "TOLSX", "TOLIX", "TOLZX", "BTIEX", "SXPAX", "KTCAX"}
+        for r in dws_ncsr_bk
+    )
+
 
 def test_catalyst_annual_distribution_fixtures() -> None:
     catalyst = parse_distribution_html(
