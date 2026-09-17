@@ -4319,6 +4319,45 @@ def test_sixth_tier_fixtures() -> None:
     assert {r.ticker for r in harding_ncsr_ch} == {"HLEMX", "HLGZX", "HLIZX", "HLFZX"}
     assert not any(r.ticker in {"HLMGX", "HLMVX", "HLIDX", "HLRZX", "RALIX"} for r in harding_ncsr_ch)
 
+    alger_ncsr_cj = parse_distribution_html(
+        (ROOT / "alger" / "leftover_ncsr_albax_2021_2024_wave_cj.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url=(
+            "https://www.sec.gov/Archives/edgar/data/3521/"
+            "000113322824011659/tgf-efp13340_ncsr.htm#growth-income"
+        ),
+        fund_family="Alger / Fred Alger",
+    )
+    albax_2024_oi = next(
+        r
+        for r in alger_ncsr_cj
+        if r.ticker == "ALBAX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and str(r.as_of) == "2024-10-31"
+    )
+    assert albax_2024_oi.amount == Decimal("0.80")
+    assert albax_2024_oi.publication_stage == PublicationStage.final
+    albax_2021_cg = next(
+        r
+        for r in alger_ncsr_cj
+        if r.ticker == "ALBAX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and str(r.as_of) == "2021-10-31"
+    )
+    assert albax_2021_cg.amount == Decimal("0.67")
+    assert {r.ticker for r in alger_ncsr_cj} == {"ALBAX", "ALBCX", "AGIZX"}
+    assert not any(
+        r.ticker in {"CHUSX", "ALGAX", "ALSRX", "ACAAX", "SPEGX", "SPECX", "HLEMX"}
+        for r in alger_ncsr_cj
+    )
+    assert not any(
+        r.estimate_type == EstimateType.total_capital_gains
+        and r.as_of
+        and r.as_of.year in {2023, 2024}
+        for r in alger_ncsr_cj
+    )
+
     matthews = parse_distribution_html(
         (ROOT / "matthews_asia" / "2025_year_end_distributions.html").read_text(
             encoding="utf-8"
