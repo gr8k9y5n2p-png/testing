@@ -300,5 +300,8 @@ def test_fixture_book_lookback_stays_official_only() -> None:
     # + Artisan Mid/Small/Focus/Discovery 2023 N-CSR +136 MF. Honest pin
     # remasured on #210 tip 51e2b28b: 3862 → 3998 (+136 MF; ETF 5y
     # unchanged at 758).
-    assert digest.funds_with_5y == 3998
+    # WAVE AO leftover: Fidelity Advisor leftover Class I December 2021
+    # N-CSR pay tables +9 MF. Honest pin remasured on WAVE AN tip
+    # 9fb7db5: 3998 → 4007 (+9 MF; ETF 5y unchanged at 758).
+    assert digest.funds_with_5y == 4007
     assert digest.book_funds >= 7200
