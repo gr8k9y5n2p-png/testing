@@ -9924,6 +9924,7 @@ def test_wave_ah_heroes_are_searchable(client: TestClient) -> None:
     }
     assert {"2021", "2022", "2023", "2024", "2025"} <= dmcvx_years
 
+
 def test_wave_aj_value_line_leftover_paid_fills_5y() -> None:
     records = ValueLineSource().fetch(mode="fixture").records
     vleox_2021 = next(

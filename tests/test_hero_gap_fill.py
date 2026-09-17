@@ -283,5 +283,8 @@ def test_fixture_book_lookback_stays_official_only() -> None:
     # WAVE AJ leftover: Value Line + Permanent Portfolio + Kopernik +
     # Tocqueville leftover paid YE +18 MF. Honest pin remasured after
     # rebase onto #205 tip f6bb49ef: 3762 → 3780 (+18 MF).
-    assert digest.funds_with_5y == 3780
+    # WAVE AI leftover: Gabelli Class AAA FYE Dec 31 N-CSR +3 MF
+    # (GABAX / GABBX / GICPX). Honest pin remasured after additive rebase
+    # onto #207 tip 70b8d77a: 3780 → 3783 (+3 MF; no overlap with AF/AD/AE/AG/AH/AJ).
+    assert digest.funds_with_5y == 3783
     assert digest.book_funds >= 7200
