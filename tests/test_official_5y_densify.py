@@ -13,7 +13,10 @@ from app.sources.american_funds import AmericanFundsSource
 from app.sources.aum import filter_large_aum
 from app.sources.families import (
     BlackRockSource,
+    FidelitySource,
+    GoldmanSachsSource,
     InvescoSource,
+    JPMorganSource,
     PimcoSource,
     StateStreetSource,
     TRowePriceSource,
@@ -730,6 +733,15 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # finals +9 MF. T. Rowe Advisor/R 2023+2025 is year-depth only
     # (2024 wall). Hartford leftover years stay unmatched. Additive on
     # tip fills — no double-count. Honest pin = tip 3660 + Z +33.
+    # WAVE X leftover (existing in-book only): Fidelity Advisor Class I DPL2
+    # 2022–2024 + FTRIX 2021 N-CSR (+1 MF), American Century Investor N-CSR
+    # (+4 MF: TWCGX / AFDIX / TWCIX / TWCUX), JPMorgan Trust II Class A N-CSR
+    # (+21 MF), Goldman Sachs Insights Class A / Institutional N-CSR (+2 MF).
+    # Year-depth only: Fidelity Advisor Class I leftovers stay 4y (2021 DPL2
+    # Class A name-only), TWHIX 4y / ANOIX 3y (N-CSR dashes), PGSGX 4y (2024
+    # dashed), JEPQ 4y (2021 commencement), retail DPL6 2022–2023 unpublished.
+    # Honest pin remasured after rebase onto #192 tip.
+    # ETF 5y unchanged. No new identities.
     assert digest.funds_with_5y == 3693
     assert digest.funds_with_5y_mf == 2941
     assert digest.funds_with_5y_etf == 752
@@ -4458,7 +4470,7 @@ def test_parallel_m_aci_twcgx_leftover_paid_year_depth() -> None:
         and row.amount
     )
     assert twcgx_2024.amount == Decimal("3.4579")
-    twcgx_years = {
+    twcgx_ex_years = {
         row.ex_date.year
         for row in records
         if row.ticker == "TWCGX"
@@ -4466,9 +4478,30 @@ def test_parallel_m_aci_twcgx_leftover_paid_year_depth() -> None:
         and row.publication_stage == PublicationStage.final
         and row.amount is not None
     }
-    assert {2023, 2024, 2025} <= twcgx_years
-    assert 2021 not in twcgx_years
-    assert 2022 not in twcgx_years
+    assert {2023, 2024, 2025} <= twcgx_ex_years
+    # Product-page calendar rows stay 2023–2025; 2021–2022 are N-CSR as_of.
+    assert 2021 not in twcgx_ex_years
+    assert 2022 not in twcgx_ex_years
+    twcgx_ncsr_2021 = next(
+        row
+        for row in records
+        if row.ticker == "TWCGX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2021-10-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert twcgx_ncsr_2021.amount == Decimal("1.56")
+    twcgx_years = {
+        _year_for_row(row.as_of, row.ex_date, row.payable_date)
+        for row in records
+        if row.ticker == "TWCGX"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    twcgx_years.discard(None)
+    assert set(LOOKBACK_YEARS) <= twcgx_years
 
 
 def test_parallel_m_leftover_walls_stay_unmatched() -> None:
@@ -8346,3 +8379,445 @@ def test_mass_z_heroes_are_searchable(client: TestClient) -> None:
         and str(row.get("ex_date") or "").startswith("2022-12-13")
     ]
     assert Decimal("1.39190") in megbx_2022
+
+
+def test_parallel_x_fidelity_leftover_fills() -> None:
+    records = FidelitySource().fetch(mode="fixture").records
+    ftrix_2021_oi = next(
+        row
+        for row in records
+        if row.ticker == "FTRIX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2021-06-30"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert ftrix_2021_oi.amount == Decimal("0.29")
+    ftrix_2021_cg = next(
+        row
+        for row in records
+        if row.ticker == "FTRIX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2021-06-30"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert ftrix_2021_cg.amount == Decimal("1.00")
+    ftrix_2022_mid_lt = next(
+        row
+        for row in records
+        if row.ticker == "FTRIX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2022-08-05"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert ftrix_2022_mid_lt.amount == Decimal("0.45700")
+    ftrix_2022_ye_lt = next(
+        row
+        for row in records
+        if row.ticker == "FTRIX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2022-12-09"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert ftrix_2022_ye_lt.amount == Decimal("0.05600")
+    eqpgx_2022_lt = next(
+        row
+        for row in records
+        if row.ticker == "EQPGX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2022-12-27"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert eqpgx_2022_lt.amount == Decimal("0.28700")
+    eqpgx_2024_lt = next(
+        row
+        for row in records
+        if row.ticker == "EQPGX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2024-12-26"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert eqpgx_2024_lt.amount == Decimal("2.48300")
+    ftrix_years = {
+        _year_for_row(row.as_of, row.ex_date, row.payable_date)
+        for row in records
+        if row.ticker == "FTRIX"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    ftrix_years.discard(None)
+    assert set(LOOKBACK_YEARS) <= ftrix_years
+    eqpgx_years = {
+        _year_for_row(row.as_of, row.ex_date, row.payable_date)
+        for row in records
+        if row.ticker == "EQPGX"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    eqpgx_years.discard(None)
+    assert eqpgx_years == {2022, 2023, 2024, 2025}
+
+
+def test_parallel_x_aci_leftover_fills() -> None:
+    records = AmericanCenturySource().fetch(mode="fixture").records
+    afdix_2021_oi = next(
+        row
+        for row in records
+        if row.ticker == "AFDIX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2021-10-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert afdix_2021_oi.amount == Decimal("0.16")
+    twcix_2025_cg = next(
+        row
+        for row in records
+        if row.ticker == "TWCIX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2025-10-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert twcix_2025_cg.amount == Decimal("4.47")
+    twcux_2022_cg = next(
+        row
+        for row in records
+        if row.ticker == "TWCUX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2022-10-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert twcux_2022_cg.amount == Decimal("5.94")
+    for ticker in ("TWCGX", "AFDIX", "TWCIX", "TWCUX"):
+        years = {
+            _year_for_row(row.as_of, row.ex_date, row.payable_date)
+            for row in records
+            if row.ticker == ticker
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        }
+        years.discard(None)
+        assert set(LOOKBACK_YEARS) <= years, ticker
+    twhix_years = {
+        _year_for_row(row.as_of, row.ex_date, row.payable_date)
+        for row in records
+        if row.ticker == "TWHIX"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    twhix_years.discard(None)
+    assert twhix_years == {2021, 2022, 2024, 2025}
+    anoix_years = {
+        _year_for_row(row.as_of, row.ex_date, row.payable_date)
+        for row in records
+        if row.ticker == "ANOIX"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    anoix_years.discard(None)
+    assert anoix_years == {2021, 2022, 2025}
+
+
+def test_parallel_x_jpm_leftover_fills() -> None:
+    records = JPMorganSource().fetch(mode="fixture").records
+    oieix_2023_oi = next(
+        row
+        for row in records
+        if row.ticker == "OIEIX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2023-06-30"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert oieix_2023_oi.amount == Decimal("0.42")
+    seegx_2023_cg = next(
+        row
+        for row in records
+        if row.ticker == "SEEGX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2023-06-30"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert seegx_2023_cg.amount == Decimal("1.35")
+    jlgmx_2021_cg = next(
+        row
+        for row in records
+        if row.ticker == "JLGMX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2021-06-30"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert jlgmx_2021_cg.amount == Decimal("3.14")
+    for ticker in (
+        "OIEIX",
+        "SEEGX",
+        "JLGMX",
+        "JICAX",
+        "OGEAX",
+        "VSCOX",
+        "JAMCX",
+        "JCMAX",
+        "JDEAX",
+        "JIGAX",
+        "JLCAX",
+        "JTUAX",
+        "JUEAX",
+        "JVAAX",
+        "OLVAX",
+        "OSGIX",
+        "PECAX",
+        "PSOAX",
+        "VGRIX",
+        "VHIAX",
+        "VSEAX",
+    ):
+        years = {
+            _year_for_row(row.as_of, row.ex_date, row.payable_date)
+            for row in records
+            if row.ticker == ticker
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        }
+        years.discard(None)
+        assert set(LOOKBACK_YEARS) <= years, ticker
+    pgsgx_years = {
+        _year_for_row(row.as_of, row.ex_date, row.payable_date)
+        for row in records
+        if row.ticker == "PGSGX"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    pgsgx_years.discard(None)
+    assert pgsgx_years == {2021, 2022, 2023, 2025}
+
+
+def test_parallel_x_gs_leftover_fills() -> None:
+    records = GoldmanSachsSource().fetch(mode="fixture").records
+    glcgx_2021_cg = next(
+        row
+        for row in records
+        if row.ticker == "GLCGX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2021-10-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert glcgx_2021_cg.amount == Decimal("3.80")
+    gcgix_2021_oi = next(
+        row
+        for row in records
+        if row.ticker == "GCGIX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2021-10-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert gcgix_2021_oi.amount == Decimal("0.11")
+    gcgix_2024_cg = next(
+        row
+        for row in records
+        if row.ticker == "GCGIX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2024-10-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert gcgix_2024_cg.amount == Decimal("1.94")
+    for ticker in ("GLCGX", "GCGIX"):
+        years = {
+            _year_for_row(row.as_of, row.ex_date, row.payable_date)
+            for row in records
+            if row.ticker == ticker
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        }
+        years.discard(None)
+        assert set(LOOKBACK_YEARS) <= years, ticker
+    # Class-level — 2021 Class A income stayed dashed; Institutional is not copied.
+    glcgx_2021_oi = [
+        row
+        for row in records
+        if row.ticker == "GLCGX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2021-10-31"
+        and row.amount is not None
+    ]
+    assert glcgx_2021_oi == []
+
+
+def test_parallel_x_leftover_walls_stay_unmatched() -> None:
+    fidelity = FidelitySource().fetch(mode="fixture").records
+    fbgrx_mid = {
+        _year_for_row(row.as_of, row.ex_date, row.payable_date)
+        for row in fidelity
+        if row.ticker == "FBGRX"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    }
+    fbgrx_mid.discard(None)
+    assert 2022 not in fbgrx_mid
+    assert 2023 not in fbgrx_mid
+    eqpgx_2021 = [
+        row
+        for row in fidelity
+        if row.ticker == "EQPGX"
+        and _year_for_row(row.as_of, row.ex_date, row.payable_date) == 2021
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert eqpgx_2021 == []
+
+    jpm = JPMorganSource().fetch(mode="fixture").records
+    jepq_2021 = [
+        row
+        for row in jpm
+        if row.ticker == "JEPQ"
+        and _year_for_row(row.as_of, row.ex_date, row.payable_date) == 2021
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert jepq_2021 == []
+    ubvax_early = [
+        row
+        for row in jpm
+        if row.ticker == "UBVAX"
+        and _year_for_row(row.as_of, row.ex_date, row.payable_date) in {2021, 2022, 2023}
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert ubvax_early == []
+    pgsgx_2024 = [
+        row
+        for row in jpm
+        if row.ticker == "PGSGX"
+        and _year_for_row(row.as_of, row.ex_date, row.payable_date) == 2024
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert pgsgx_2024 == []
+
+    aci = AmericanCenturySource().fetch(mode="fixture").records
+    twhix_2023 = [
+        row
+        for row in aci
+        if row.ticker == "TWHIX"
+        and _year_for_row(row.as_of, row.ex_date, row.payable_date) == 2023
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert twhix_2023 == []
+    anoix_mid = [
+        row
+        for row in aci
+        if row.ticker == "ANOIX"
+        and _year_for_row(row.as_of, row.ex_date, row.payable_date) in {2023, 2024}
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert anoix_mid == []
+
+
+def test_parallel_x_heroes_are_searchable(client: TestClient) -> None:
+    for slug in ("fidelity", "american_century", "jpmorgan", "goldman_sachs"):
+        fetched = client.post(
+            "/ingest/fetch", json={"fund_family": slug, "mode": "fixture"}
+        )
+        assert fetched.status_code == 200, fetched.text
+        assert fetched.json()["created"] > 0
+
+    for ticker in (
+        "FTRIX",
+        "EQPGX",
+        "TWCGX",
+        "AFDIX",
+        "OIEIX",
+        "SEEGX",
+        "GLCGX",
+        "GCGIX",
+    ):
+        body = client.get("/funds", params={"q": ticker}).json()
+        tickers = [item["ticker"] for item in body["items"]]
+        assert ticker in tickers, f"{ticker} missing from GET /funds?q={ticker}: {tickers[:8]}"
+
+    ftrix = client.get(
+        "/distributions",
+        params={"ticker": "FTRIX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    ftrix_2021 = [
+        Decimal(row["amount"])
+        for row in ftrix["items"]
+        if row.get("ticker") == "FTRIX"
+        and row.get("estimate_type") == "ordinary_income"
+        and str(row.get("as_of") or "").startswith("2021-06-30")
+    ]
+    assert Decimal("0.29") in ftrix_2021
+    ftrix_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in ftrix["items"]
+        if row.get("ticker") == "FTRIX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= ftrix_years
+
+    twcgx = client.get(
+        "/distributions",
+        params={"ticker": "TWCGX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    twcgx_2021 = [
+        Decimal(row["amount"])
+        for row in twcgx["items"]
+        if row.get("ticker") == "TWCGX"
+        and row.get("estimate_type") == "total_capital_gains"
+        and str(row.get("as_of") or "").startswith("2021-10-31")
+    ]
+    assert Decimal("1.56") in twcgx_2021
+
+    oieix = client.get(
+        "/distributions",
+        params={"ticker": "OIEIX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    oieix_2023 = [
+        Decimal(row["amount"])
+        for row in oieix["items"]
+        if row.get("ticker") == "OIEIX"
+        and row.get("estimate_type") == "ordinary_income"
+        and str(row.get("as_of") or "").startswith("2023-06-30")
+    ]
+    assert Decimal("0.42") in oieix_2023
+
+    glcgx = client.get(
+        "/distributions",
+        params={"ticker": "GLCGX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    glcgx_2021 = [
+        Decimal(row["amount"])
+        for row in glcgx["items"]
+        if row.get("ticker") == "GLCGX"
+        and row.get("estimate_type") == "total_capital_gains"
+        and str(row.get("as_of") or "").startswith("2021-10-31")
+    ]
+    assert Decimal("3.80") in glcgx_2021

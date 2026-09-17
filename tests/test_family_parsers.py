@@ -4540,6 +4540,128 @@ def test_parallel_w_leftover_paid_fixtures() -> None:
     assert lsvex_2024_lt.publication_stage == PublicationStage.final
 
 
+def test_parallel_x_leftover_paid_fixtures() -> None:
+    dpl2 = parse_distribution_html(
+        (ROOT / "fidelity" / "leftover_dpl2_class_i_2022_2024.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://fidelity-leftover-x-dpl2",
+        fund_family="Fidelity",
+    )
+    ftrix_2022_mid = next(
+        r
+        for r in dpl2
+        if r.ticker == "FTRIX"
+        and r.estimate_type == EstimateType.long_term_capital_gains
+        and str(r.ex_date) == "2022-08-05"
+    )
+    assert ftrix_2022_mid.amount == Decimal("0.45700")
+    assert ftrix_2022_mid.publication_stage == PublicationStage.final
+    ftrix_2022_ye = next(
+        r
+        for r in dpl2
+        if r.ticker == "FTRIX"
+        and r.estimate_type == EstimateType.long_term_capital_gains
+        and str(r.ex_date) == "2022-12-09"
+    )
+    assert ftrix_2022_ye.amount == Decimal("0.05600")
+    eqpgx_2024 = next(
+        r
+        for r in dpl2
+        if r.ticker == "EQPGX"
+        and r.estimate_type == EstimateType.long_term_capital_gains
+        and str(r.ex_date) == "2024-12-26"
+    )
+    assert eqpgx_2024.amount == Decimal("2.48300")
+    assert {r.ex_date.year for r in dpl2 if r.ticker == "EQPGX" and r.ex_date} == {
+        2022,
+        2023,
+        2024,
+    }
+
+    ftrix_ncsr = parse_distribution_html(
+        (ROOT / "fidelity" / "leftover_ftrix_ncsr_2021.html").read_text(encoding="utf-8"),
+        source_url="fixture://fidelity-leftover-x-ftrix",
+        fund_family="Fidelity",
+    )
+    ftrix_2021_oi = next(
+        r
+        for r in ftrix_ncsr
+        if r.ticker == "FTRIX" and r.estimate_type == EstimateType.ordinary_income
+    )
+    assert ftrix_2021_oi.amount == Decimal("0.29")
+    assert str(ftrix_2021_oi.as_of) == "2021-06-30"
+    assert ftrix_2021_oi.publication_stage == PublicationStage.final
+    assert {r.ticker for r in ftrix_ncsr} == {"FTRIX"}
+
+    aci = parse_distribution_html(
+        (ROOT / "american_century" / "leftover_ncsr_investor_2021_2025.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://aci-leftover-x",
+        fund_family="American Century",
+    )
+    twcgx_2021 = next(
+        r
+        for r in aci
+        if r.ticker == "TWCGX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and str(r.as_of) == "2021-10-31"
+    )
+    assert twcgx_2021.amount == Decimal("1.56")
+    assert twcgx_2021.publication_stage == PublicationStage.final
+    assert {r.ticker for r in aci} == {
+        "TWCGX",
+        "AFDIX",
+        "TWCIX",
+        "TWCUX",
+        "TWHIX",
+        "ANOIX",
+    }
+    assert not any(
+        r.ticker == "TWHIX" and r.as_of and r.as_of.year == 2023 for r in aci
+    )
+
+    jpm = parse_distribution_html(
+        (ROOT / "jpmorgan" / "leftover_ncsr_class_a_2021_2024.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://jpm-leftover-x",
+        fund_family="J.P. Morgan Asset Management",
+    )
+    oieix_2023 = next(
+        r
+        for r in jpm
+        if r.ticker == "OIEIX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and str(r.as_of) == "2023-06-30"
+    )
+    assert oieix_2023.amount == Decimal("0.42")
+    assert oieix_2023.publication_stage == PublicationStage.final
+    assert "UBVAX" not in {r.ticker for r in jpm}
+    assert not any(
+        r.ticker == "PGSGX" and r.as_of and r.as_of.year == 2024 for r in jpm
+    )
+
+    gs = parse_distribution_html(
+        (ROOT / "goldman_sachs" / "leftover_ncsr_insights_2021_2024.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="fixture://gs-leftover-x",
+        fund_family="Goldman Sachs Asset Management",
+    )
+    glcgx_2021 = next(
+        r
+        for r in gs
+        if r.ticker == "GLCGX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and str(r.as_of) == "2021-10-31"
+    )
+    assert glcgx_2021.amount == Decimal("3.80")
+    assert glcgx_2021.publication_stage == PublicationStage.final
+    assert {r.ticker for r in gs} == {"GLCGX", "GCGIX"}
+
+
 def test_eleventh_tier_fixtures() -> None:
     amg = parse_distribution_html(
         (ROOT / "amg" / "2025_year_end_distributions.html").read_text(encoding="utf-8"),
