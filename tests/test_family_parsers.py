@@ -5979,8 +5979,73 @@ def test_dws_xtrackers_fixtures() -> None:
     assert tollx_2021_cg.amount == Decimal("0.86")
     assert {r.ticker for r in dws_ncsr_bk} == {"TOLLX"}
     assert not any(
-        r.ticker in {"TOLCX", "TOLSX", "TOLIX", "TOLZX", "BTIEX", "SXPAX", "KTCAX"}
+        r.ticker in {"TOLCX", "TOLSX", "TOLIX", "TOLZX", "BTIEX", "SXPAX", "KTCAX", "KGDAX"}
         for r in dws_ncsr_bk
+    )
+
+    dws_ncsr_bn = parse_distribution_html(
+        (ROOT / "dws" / "leftover_ncsr_2021_2024_wave_bn.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url=(
+            "https://www.sec.gov/Archives/edgar/data/793597/"
+            "000008805325001132/ar103125dgsc.htm"
+        ),
+        fund_family="DWS / Xtrackers",
+    )
+    kgdax_2024_oi = next(
+        r
+        for r in dws_ncsr_bn
+        if r.ticker == "KGDAX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.as_of
+        and str(r.as_of) == "2024-10-31"
+    )
+    assert kgdax_2024_oi.amount == Decimal("0.20")
+    assert kgdax_2024_oi.publication_stage == PublicationStage.final
+    kgdax_2024_cg = next(
+        r
+        for r in dws_ncsr_bn
+        if r.ticker == "KGDAX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and r.as_of
+        and str(r.as_of) == "2024-10-31"
+    )
+    assert kgdax_2024_cg.amount == Decimal("1.26")
+    kgdax_2021_cg = next(
+        r
+        for r in dws_ncsr_bn
+        if r.ticker == "KGDAX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and r.as_of
+        and str(r.as_of) == "2021-10-31"
+    )
+    assert kgdax_2021_cg.amount == Decimal("0.13")
+    assert {r.ticker for r in dws_ncsr_bn} == {"KGDAX"}
+    assert not any(
+        r.ticker
+        in {
+            "KGDCX",
+            "SGSCX",
+            "KGDIX",
+            "KGDZX",
+            "TOLLX",
+            "KTCAX",
+            "BTIEX",
+            "SXPAX",
+            "CCGIX",
+            "CCGSX",
+            "CCWIX",
+            "CCWSX",
+        }
+        for r in dws_ncsr_bn
+    )
+    assert not any(
+        r.ticker == "KGDAX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.as_of
+        and r.as_of.year in {2021, 2023}
+        for r in dws_ncsr_bn
     )
 
     baird_ncsr_bm = parse_distribution_html(
