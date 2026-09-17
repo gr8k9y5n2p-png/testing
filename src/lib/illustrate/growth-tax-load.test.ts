@@ -449,6 +449,9 @@ describe("3-fund Compare Growth & Tax", () => {
     assert.match(load, /prefetchCoversAll/);
     assert.match(load, /preferYoy/);
     assert.match(moduleSource, /preferYoy:\s*lockToSeed/);
+    assert.match(moduleSource, /loaders:\s*browserGrowthTaxLoaders/);
+    assert.match(moduleSource, /fetchPerformanceIfAvailable/);
+    assert.match(moduleSource, /postIllustrateCompare/);
     assert.match(moduleSource, /settledKey !== fetchKey && rows == null/);
     assert.match(moduleSource, /if \(controller\.signal\.aborted\) return/);
     assert.match(moduleSource, /holdingDollars:\s*principal/);

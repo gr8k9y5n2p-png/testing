@@ -19,6 +19,7 @@ import {
   buildGrowthTaxByTypeModel,
   type GrowthTaxValueMode,
 } from "@/lib/illustrate/growth-tax-by-type";
+import { postIllustrateCompare } from "@/lib/illustrate/compare-client";
 import {
   annualizedFromRows,
   applyGrowthTaxRowUpdate,
@@ -26,9 +27,16 @@ import {
   growthLinesFromRows,
   loadGrowthAndTaxDrag,
   type GrowthFundInput,
+  type GrowthTaxLoaders,
   type GrowthTaxPrefetch,
   type LoadedGrowthFund,
 } from "@/lib/illustrate/growth-tax-load";
+import { fetchPerformanceIfAvailable } from "@/lib/performance/client";
+
+const browserGrowthTaxLoaders: GrowthTaxLoaders = {
+  loadPerformance: fetchPerformanceIfAvailable,
+  loadCompare: postIllustrateCompare,
+};
 import { lockedTaxRates, UI_DEFAULT_TAX_RATES, type TaxRates } from "@/lib/illustrate/types";
 import {
   PERFORMANCE_UNAVAILABLE_HINT,
@@ -116,7 +124,12 @@ export function GrowthAndTaxDragModule({
     const seeds = JSON.parse(seedKey) as GrowthFundInput[];
     if (lockToSeed) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- Compare slots own the series
-      setSelected(seeds.slice(0, MAX_GROWTH_FUNDS));
+      setSelected((current) => {
+        const next = seeds.slice(0, MAX_GROWTH_FUNDS);
+        return JSON.stringify(current.map(fundKey)) === JSON.stringify(next.map(fundKey))
+          ? current
+          : next;
+      });
       return;
     }
     if (seeds.length === 0) return;
@@ -158,6 +171,7 @@ export function GrowthAndTaxDragModule({
         periods,
         controller.signal,
         {
+          loaders: browserGrowthTaxLoaders,
           taxRates: next.taxRates,
           combineStateWithFederal: next.combineStateWithFederal,
           prefetchTax,
@@ -229,7 +243,7 @@ export function GrowthAndTaxDragModule({
       }
       return next;
     });
-  }, [prefetchKey, prefetchTax]);
+  }, [prefetchKey]);
 
   const years = useMemo(
     () => calendarYearsFromRows(rows, "tax_dollars"),

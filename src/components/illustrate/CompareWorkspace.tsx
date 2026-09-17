@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { FundEstimateView } from "@/data/types";
 import {
   GrowthAndTaxDragModule,
@@ -79,6 +79,8 @@ export function CompareWorkspace({
   );
   const filledTickers = filledCompareTickers(slots);
   const filledKey = filledTickers.join(",");
+  const fundsRef = useRef(funds);
+  fundsRef.current = funds;
   const [loaded, setLoaded] = useState<{
     holdingDollars: number;
     taxRates: TaxRates;
@@ -121,7 +123,7 @@ export function CompareWorkspace({
     const timer = window.setTimeout(() => {
       void Promise.all(
         tickers.map(async (ticker) => {
-          const fund = resolveFundView(funds, ticker) ?? null;
+          const fund = resolveFundView(fundsRef.current, ticker) ?? null;
           let row: CompareLoadedTicker;
           try {
             const tax = await postIllustrateCompare(
@@ -176,7 +178,7 @@ export function CompareWorkspace({
       controller.abort();
       window.clearTimeout(timer);
     };
-  }, [filledKey, funds, holdingDollars, navOverrides, taxRates, combineState]);
+  }, [filledKey, holdingDollars, navOverrides, taxRates, combineState]);
 
   const historyMatchesInputs = compareInputsMatch(
     loaded,
