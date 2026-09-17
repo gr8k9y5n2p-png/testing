@@ -10748,17 +10748,10 @@ def test_wave_al_leftover_walls_stay_unmatched() -> None:
     trowe = TRowePriceSource().fetch(mode="fixture").records
     assert 2024 not in _paid_lookback_years(trowe, "RRCOX")
     assert {2021, 2022, 2023, 2025} <= _paid_lookback_years(trowe, "RRCOX")
-    # Retirement / Target leftovers stay 4y — May 31 FYE not calendar-safe
-    # and FAI 2024 Year-End all-class XLSX/PDF still unpublished.
-    trlax_2024 = [
-        row
-        for row in trowe
-        if row.ticker == "TRLAX"
-        and _year_for_row(row.as_of, row.ex_date, row.payable_date) == 2024
-        and row.publication_stage in {PublicationStage.final, PublicationStage.paid}
-        and row.amount is not None
-    ]
-    assert trlax_2024 == []
+    # Retirement leftovers stay 4y — May 31 FYE not calendar-safe and the
+    # FAI 2024 Year-End all-class XLSX/PDF still unpublished.
+    assert 2024 not in _paid_lookback_years(trowe, "PARIX")
+    assert {2021, 2022, 2023, 2025} <= _paid_lookback_years(trowe, "PARIX")
 
     fidelity = FidelitySource().fetch(mode="fixture").records
     fbgrx_years = _paid_lookback_years(fidelity, "FBGRX")
@@ -10783,7 +10776,7 @@ def test_wave_al_heroes_are_searchable(client: TestClient) -> None:
     assert fetched.status_code == 200, fetched.text
     assert fetched.json()["created"] > 0
 
-    for ticker in ("PABGX", "RRBGX", "PACLX", "PAFDX", "PMEGX", "IEMFX", "RRCOX"):
+    for ticker in ("PABGX", "RRBGX", "PACLX", "PAFDX", "PMEGX", "IEMFX", "RRCOX", "PARIX"):
         body = client.get("/funds", params={"q": ticker}).json()
         tickers = [item["ticker"] for item in body["items"]]
         assert ticker in tickers, f"{ticker} missing from GET /funds?q={ticker}: {tickers[:8]}"
