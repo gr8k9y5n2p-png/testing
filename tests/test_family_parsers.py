@@ -3971,6 +3971,42 @@ def test_seventh_tier_fixtures() -> None:
     )
     assert tgdix.amount == Decimal("3.4797")
 
+    tcw_ncsr = parse_distribution_html(
+        (ROOT / "tcw" / "leftover_ncsr_2021_2024_wave_bh.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url=(
+            "https://www.sec.gov/Archives/edgar/data/892071/"
+            "000119312525000202/d911056dncsr.htm"
+        ),
+        fund_family="TCW",
+    )
+    tgdix_2024 = next(
+        r
+        for r in tcw_ncsr
+        if r.ticker == "TGDIX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.as_of
+        and str(r.as_of) == "2024-10-31"
+    )
+    assert tgdix_2024.amount == Decimal("0.20")
+    assert tgdix_2024.publication_stage == PublicationStage.final
+    tgpcx_2023_cg = next(
+        r
+        for r in tcw_ncsr
+        if r.ticker == "TGPCX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and r.as_of
+        and str(r.as_of) == "2023-10-31"
+    )
+    assert tgpcx_2023_cg.amount == Decimal("0.28")
+    assert {r.ticker for r in tcw_ncsr} == {"TGDIX", "TGVOX", "TGCEX", "TGPCX"}
+    assert not any(r.ticker in {"TGDVX", "TGVNX", "TGCNX", "TGPNX"} for r in tcw_ncsr)
+    assert not any(
+        r.ticker == "TGCEX" and r.estimate_type == EstimateType.ordinary_income
+        for r in tcw_ncsr
+    )
+
     bridgeway = parse_distribution_html(
         (ROOT / "bridgeway" / "2025_estimated_distributions.html").read_text(
             encoding="utf-8"
