@@ -49,7 +49,10 @@ async function fetchFundPage(query: {
   if (!query.filters.query && query.filters.category) {
     params.set("category", query.filters.category);
   }
-  if (query.filters.year) params.set("year", String(query.filters.year));
+  // Year is Paid History only. Upcoming is the unpaid announced set.
+  if (query.paidHistory && query.filters.year) {
+    params.set("year", String(query.filters.year));
+  }
 
   const response = await fetch(`/api/funds?${params.toString()}`);
   if (!response.ok) {
@@ -90,7 +93,6 @@ function pageRequestKey(
     query: filters.query ?? "",
     family: filters.family ?? "",
     category: filters.category ?? "",
-    year: filters.year ?? "",
     sort,
     direction,
     offset,
@@ -357,9 +359,21 @@ export function Dashboard({
         </p>
       </div>
       <SearchToolbar
-        filters={filters}
-        facets={toolbarFacets}
-        onChange={applyFilters}
+        filters={{
+          family: filters.family,
+          category: filters.category,
+        }}
+        facets={{
+          families: toolbarFacets.families,
+          categories: toolbarFacets.categories,
+        }}
+        onChange={(next) =>
+          applyFilters({
+            family: next.family,
+            category: next.category,
+            year: filters.year,
+          })
+        }
       />
       <div className={isPending ? "opacity-70 transition-opacity" : ""}>
         <ResultsTable
