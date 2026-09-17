@@ -1075,15 +1075,47 @@ class AlgerSource(HtmlTableSource):
         "CD / CB / BY Lazard, WAVE BZ / CA / BX Pioneer C/Y/K, WAVE BW RAIIX, "
         "WAVE BV HMDCX, WAVE BT Federated SVD, and prior leftover pages stay "
         "unmatched / not re-emitted here. WAVE CT leftover N-CSR paid history "
-        "is fixture-only."
+        "is fixture-only. "
+        "Official 5y WAVE CU leftover (existing in-book only): Alger "
+        "Institutional Funds Focus Equity FYE October 31 N-CSR Financial "
+        "Highlights unlock leftover 2021 / 2023 / 2024 on the 2022+2025 paid "
+        "Class A / I / Y / Z book (ALAFX / ALGRX / ALGYX / ALZFX). "
+        "Calendar-safe as_of 10/31. Class-level — never sibling-copied onto "
+        "Class C ALCFX (2023 official dashes), WAVE CS Capital Appreciation "
+        "C/Z ALCCX / ACAZX, WAVE CT Capital Appreciation Institutional "
+        "ALARX / ACARX / ACAYX / ACIZX, reserved Alger CHUSX / ALGAX / ALSRX "
+        "/ ACAAX, WAVE CF Responsible Investing SPEGX / AGFCX / AGIFX / "
+        "ALGZX, WAVE CJ Growth & Income ALBAX / ALBCX / AGIZX, or Spectra "
+        "SPECX. Income is ordinary income; net realized gain is unsplit total "
+        "capital gains. Official 2024 / 2023 / 2025 CG dashes, Class A 2021 "
+        "OI dash, and Class I 2021 OI footnote (b) less than $0.005 omitted "
+        "— never invent $0. 2022 and 2025 stay on the existing paid "
+        "Distrib_FUNDS.pdf books (2025 ST $4.6563 / LT $3.4288; 2022 class-"
+        "level OI / printed $0.00 ST/LT — not overwritten by N-CSR 2022 CG "
+        "highlight $7.96). Alger Institutional Funds "
+        "2025 N-CSR https://www.sec.gov/Archives/edgar/data/911415/"
+        "000113322825014265/aif-efp21607_ncsr.htm (0001133228-25-014265) and "
+        "matching 2024 N-CSR https://www.sec.gov/Archives/edgar/data/911415/"
+        "000113322824011663/taif-efp13342_ncsr.htm (0001133228-24-011663). "
+        "Sister WAVE CT Capital Appreciation Institutional, WAVE CS Capital "
+        "Appreciation C/Z, WAVE CP PZFVX, WAVE CO JHJAX, WAVE CN FIDAX / "
+        "FRBAX, WAVE CL SVBAX / JDIBX / JEMQX / JDJAX, WAVE CM JEEBX, WAVE "
+        "CK TAGRX / JCCAX, WAVE CJ Growth & Income, WAVE CI Federated SVALX "
+        "/ NYLI Class I, WAVE CH Harding Loevner, WAVE CG Lazard Real "
+        "Assets, WAVE CF Responsible Investing, WAVE CC Pioneer Class R, "
+        "WAVE CD / CB / BY Lazard, WAVE BZ / CA / BX Pioneer C/Y/K, WAVE BW "
+        "RAIIX, WAVE BV HMDCX, WAVE BT Federated SVD, and prior leftover "
+        "pages stay unmatched / not re-emitted here. Lazard RALYX / CONIX / "
+        "CONOX / READX / RCMPX commencement walls stay unmatched. WAVE CU "
+        "leftover N-CSR paid history is fixture-only."
     )
     live_limitations = (
         "Year-end book is PDF. Weekly walk uses the DividendsDistributions hub + 2025 "
         "MF/ETF PDFs; empty/PDF-bytes pages are no-op success. 2023/2024 MF official "
         "URLs missing. WAVE CF leftover Responsible Investing, WAVE CJ leftover "
-        "Growth & Income, WAVE CS leftover Capital Appreciation C/Z Oct 31, and "
-        "WAVE CT leftover Capital Appreciation Institutional Oct 31 N-CSR paid "
-        "history are fixture-only."
+        "Growth & Income, WAVE CS leftover Capital Appreciation C/Z Oct 31, "
+        "WAVE CT leftover Capital Appreciation Institutional Oct 31, and WAVE CU "
+        "leftover Focus Equity A/I/Y/Z Oct 31 N-CSR paid history are fixture-only."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -1171,6 +1203,16 @@ class AlgerSource(HtmlTableSource):
                     "#capital-appreciation-institutional"
                 ),
                 fixture="leftover_ncsr_alarx_acarx_acayx_acizx_2021_2024_wave_ct.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="leftover_ncsr_alafx_2021_2024_wave_cu",
+                url=(
+                    "https://www.sec.gov/Archives/edgar/data/911415/"
+                    "000113322825014265/aif-efp21607_ncsr.htm#focus-equity"
+                ),
+                fixture="leftover_ncsr_alafx_2021_2024_wave_cu.html",
                 live=False,
                 role="history",
             ),
