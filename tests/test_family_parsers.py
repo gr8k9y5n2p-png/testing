@@ -1598,6 +1598,56 @@ def test_third_tier_fixtures() -> None:
     assert klcax_paid.publication_stage == PublicationStage.final
     assert "QRLGX" not in {r.ticker for r in federated_leftover}
 
+    federated_ncsr = parse_distribution_html(
+        (ROOT / "federated_hermes" / "leftover_ncsr_kaufmann_sdg_2021_2022_wave_aw.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url=(
+            "https://www.sec.gov/Archives/edgar/data/745968/"
+            "000162363222001593/fef632-form.htm"
+        ),
+        fund_family="Federated Hermes",
+    )
+    kauax_ncsr = next(
+        r
+        for r in federated_ncsr
+        if r.ticker == "KAUAX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and r.as_of
+        and str(r.as_of) == "2022-10-31"
+    )
+    assert kauax_ncsr.amount == Decimal("0.65")
+    assert kauax_ncsr.publication_stage == PublicationStage.final
+    fkasx_ncsr = next(
+        r
+        for r in federated_ncsr
+        if r.ticker == "FKASX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and r.as_of
+        and str(r.as_of) == "2022-10-31"
+    )
+    assert fkasx_ncsr.amount == Decimal("4.93")
+    fheqx_ncsr = next(
+        r
+        for r in federated_ncsr
+        if r.ticker == "FHEQX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.as_of
+        and str(r.as_of) == "2021-10-31"
+    )
+    assert fheqx_ncsr.amount == Decimal("0.11")
+    assert {r.ticker for r in federated_ncsr} == {
+        "KAUAX",
+        "KAUCX",
+        "KAUFX",
+        "KAUIX",
+        "FKASX",
+        "FKCSX",
+        "FKAIX",
+        "FHEQX",
+        "FHESX",
+    }
+
     virtus = parse_distribution_html(
         (ROOT / "virtus" / "2026_june_capital_gain_estimates.html").read_text(encoding="utf-8"),
         source_url="fixture://virtus",
@@ -3707,6 +3757,28 @@ def test_sixth_tier_fixtures() -> None:
         "HLMIX",
         "HLMVX",
     }
+
+    harding_ncsr = parse_distribution_html(
+        (ROOT / "harding_loevner" / "leftover_ncsr_global_equity_2022_wave_aw.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url=(
+            "https://www.sec.gov/Archives/edgar/data/1018170/"
+            "000119312523002209/d363948dncsr.htm"
+        ),
+        fund_family="Harding Loevner",
+    )
+    hlmgx_ncsr = next(
+        r
+        for r in harding_ncsr
+        if r.ticker == "HLMGX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and r.as_of
+        and str(r.as_of) == "2022-10-31"
+    )
+    assert hlmgx_ncsr.amount == Decimal("7.41")
+    assert hlmgx_ncsr.publication_stage == PublicationStage.final
+    assert {r.ticker for r in harding_ncsr} == {"HLMGX", "HLMVX", "HLGZX"}
 
     matthews = parse_distribution_html(
         (ROOT / "matthews_asia" / "2025_year_end_distributions.html").read_text(

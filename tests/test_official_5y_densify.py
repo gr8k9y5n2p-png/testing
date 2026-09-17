@@ -955,8 +955,21 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # WisdomTree leftover 2021 ticker restructures remasured as walls.
     # Honest pin remasured on WAVE AV tip ddef182: 4109 → 4114 (+5 MF; ETF
     # 5y unchanged at 758).
-    assert digest.funds_with_5y == 4114
-    assert digest.funds_with_5y_mf == 3356
+    # WAVE AW leftover (existing in-book only): Federated Kaufmann / Kaufmann
+    # Small Cap Oct 31 2022 N-CSR + SDG Engagement Oct 31 2021 N-CSR +9 MF
+    # (KAUAX / KAUCX / KAUFX / KAUIX / FKASX / FKCSX / FKAIX / FHEQX / FHESX)
+    # and Harding Loevner Global Equity Oct 31 2022 N-CSR +2 MF (HLMGX /
+    # HLMVX). HLGZX 2022 is official year-depth only (2024 unpublished).
+    # Does not redo AF–AX (especially AX FAM / Fenimore Dec 31, AV Third
+    # Avenue Institutional Oct 31, AU LSV I/Investor Oct 31, AT AMG
+    # Frontier / GW&K SMID, AQ Victory I/II, AS Virtus Asset Trust, AR
+    # Homestead). Preferred Principal Blue Chip 2023 FYE Aug 31, MDT
+    # Balanced FYE July 31, American Beacon leftover all-dash years, and
+    # Harding leftover 2024 HLEMX / HLIZX / HLIDX remasured as walls.
+    # Honest pin remasured on WAVE AX tip b195629: 4114 → 4125 (+11 MF;
+    # ETF 5y unchanged at 758).
+    assert digest.funds_with_5y == 4125
+    assert digest.funds_with_5y_mf == 3367
     assert digest.funds_with_5y_etf == 758
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
@@ -2345,7 +2358,9 @@ def test_harding_loevner_leftover_amg_json_fills_5y() -> None:
         and row.amount is not None
     }
     assert set(LOOKBACK_YEARS) <= hlmnx_years
-    # Global Equity leftover still has no issuer 2022 YE — unmatched, not $0.
+    # Global Equity leftover still has no issuer 2022 YE PDF / AMG JSON
+    # ex_date — unmatched on those books. WAVE AW later fills 2022 via
+    # official Oct 31 N-CSR as_of (no invented ex_date).
     hlmgx_2022 = [
         row
         for row in records
@@ -10432,16 +10447,14 @@ def test_wave_ai_leftover_walls_stay_unmatched() -> None:
         assert [row for row in gabelli if row.ticker == ticker] == [], ticker
 
     federated = FederatedHermesSource().fetch(mode="fixture").records
-    for ticker in ("KAUAX", "FKASX", "FKAIX"):
-        years = _paid_lookback_years(federated, ticker)
-        assert 2022 not in years, ticker
-        assert {2021, 2023, 2024, 2025} <= years, ticker
+    # WAVE AW later unlocks Kaufmann / Small Cap 2022 and SDG 2021 via
+    # official Oct 31 N-CSR. WAVE AI API-unpublished remasure stays for
+    # MDT Balanced FYE July 31 leftover 2023.
+    for ticker in ("KAUAX", "FKASX", "FKAIX", "FHEQX", "FHESX"):
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(federated, ticker), ticker
     for ticker in ("QABGX", "QCBGX", "QIBGX"):
         years = _paid_lookback_years(federated, ticker)
         assert 2023 not in years, ticker
-    for ticker in ("FHEQX", "FHESX"):
-        years = _paid_lookback_years(federated, ticker)
-        assert 2021 not in years, ticker
 
     allspring = AllspringSource().fetch(mode="fixture").records
     for ticker, missing in (
@@ -13612,4 +13625,289 @@ def test_wave_ax_heroes_are_searchable(client: TestClient) -> None:
         and row.get("publication_stage") == "final"
     ]
     assert wisnx_2022 == []
+
+
+WAVE_AW_FEDERATED_LEFTOVER_5Y = (
+    "KAUAX",
+    "KAUCX",
+    "KAUFX",
+    "KAUIX",
+    "FKASX",
+    "FKCSX",
+    "FKAIX",
+    "FHEQX",
+    "FHESX",
+)
+WAVE_AW_HARDING_LEFTOVER_5Y = ("HLMGX", "HLMVX")
+
+
+def test_wave_aw_federated_kaufmann_sdg_leftover_oct31_fills_5y() -> None:
+    records = FederatedHermesSource().fetch(mode="fixture").records
+    kauax_2022_cg = next(
+        row
+        for row in records
+        if row.ticker == "KAUAX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2022-10-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert kauax_2022_cg.amount == Decimal("0.65")
+    kauix_2022_cg = next(
+        row
+        for row in records
+        if row.ticker == "KAUIX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2022-10-31"
+        and row.amount is not None
+    )
+    assert kauix_2022_cg.amount == Decimal("0.65")
+    fkasx_2022_cg = next(
+        row
+        for row in records
+        if row.ticker == "FKASX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2022-10-31"
+        and row.amount is not None
+    )
+    assert fkasx_2022_cg.amount == Decimal("4.93")
+    fheqx_2021_oi = next(
+        row
+        for row in records
+        if row.ticker == "FHEQX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2021-10-31"
+        and row.amount is not None
+    )
+    assert fheqx_2021_oi.amount == Decimal("0.11")
+    fhesx_2021_oi = next(
+        row
+        for row in records
+        if row.ticker == "FHESX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2021-10-31"
+        and row.amount is not None
+    )
+    assert fhesx_2021_oi.amount == Decimal("0.11")
+    # Class-level — Kaufmann Class A is not copied from Institutional.
+    assert kauax_2022_cg.ticker != kauix_2022_cg.ticker
+    ncsr_other_years = [
+        row
+        for row in records
+        if row.ticker in WAVE_AW_FEDERATED_LEFTOVER_5Y
+        and row.as_of
+        and row.as_of.year not in {2021, 2022}
+        and row.source_url
+        and "fef632-form" in row.source_url
+    ]
+    assert ncsr_other_years == []
+    for ticker in WAVE_AW_FEDERATED_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(records, ticker), ticker
+
+
+def test_wave_aw_harding_global_equity_leftover_oct31_2022_fills_5y() -> None:
+    records = HardingLoevnerSource().fetch(mode="fixture").records
+    hlmgx_2022_cg = next(
+        row
+        for row in records
+        if row.ticker == "HLMGX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2022-10-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert hlmgx_2022_cg.amount == Decimal("7.41")
+    hlmvx_2022_cg = next(
+        row
+        for row in records
+        if row.ticker == "HLMVX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2022-10-31"
+        and row.amount is not None
+    )
+    assert hlmvx_2022_cg.amount == Decimal("7.41")
+    hlgzx_2022_cg = next(
+        row
+        for row in records
+        if row.ticker == "HLGZX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2022-10-31"
+        and row.amount is not None
+    )
+    assert hlgzx_2022_cg.amount == Decimal("7.41")
+    # Class-level — Advisor HLMGX is not copied from Institutional HLMVX.
+    assert hlmgx_2022_cg.ticker != hlmvx_2022_cg.ticker
+    for ticker in WAVE_AW_HARDING_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(records, ticker), ticker
+    # Institutional Z 2022 is official year-depth only (2024 unpublished).
+    assert 2024 not in _paid_lookback_years(records, "HLGZX")
+
+
+def test_wave_aw_leftover_walls_stay_unmatched() -> None:
+    federated = FederatedHermesSource().fetch(mode="fixture").records
+    # Kaufmann 2022 ordinary-income highlights are official dashes.
+    kauax_2022_oi = [
+        row
+        for row in federated
+        if row.ticker == "KAUAX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2022-10-31"
+        and row.amount is not None
+    ]
+    assert kauax_2022_oi == []
+    # MDT Balanced FYE July 31 leftover 2023 is not calendar-safe.
+    assert 2023 not in _paid_lookback_years(federated, "QABGX")
+    assert 2023 not in _paid_lookback_years(federated, "QCBGX")
+    assert 2023 not in _paid_lookback_years(federated, "QIBGX")
+
+    principal = PrincipalSource().fetch(mode="fixture").records
+    # Blue Chip / SmallCap Growth leftover 2023 product pages unpublished;
+    # FYE Aug 31 2023 N-CSR is not calendar-safe next to December YE.
+    assert 2023 not in _paid_lookback_years(principal, "PBLCX")
+    assert 2023 not in _paid_lookback_years(principal, "PBCKX")
+    assert 2023 not in _paid_lookback_years(principal, "PBLAX")
+    assert 2023 not in _paid_lookback_years(principal, "PGBGX")
+
+    harding = HardingLoevnerSource().fetch(mode="fixture").records
+    # Leftover 2024 Emerging Markets / International Z stay unpublished.
+    assert 2024 not in _paid_lookback_years(harding, "HLEMX")
+    assert 2024 not in _paid_lookback_years(harding, "HLIZX")
+    assert 2024 not in _paid_lookback_years(harding, "HLIDX")
+    # Global Equity 2022 ordinary-income highlights are official dashes.
+    hlmgx_2022_oi = [
+        row
+        for row in harding
+        if row.ticker == "HLMGX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2022-10-31"
+        and row.amount is not None
+    ]
+    assert hlmgx_2022_oi == []
+
+    beacon = AmericanBeaconSource().fetch(mode="fixture").records
+    # Official all-dash leftover years stay unmatched.
+    assert 2023 not in _paid_lookback_years(beacon, "SFMIX")
+    assert 2024 not in _paid_lookback_years(beacon, "SSIJX")
+    assert 2025 not in _paid_lookback_years(beacon, "SPFYX")
+
+    # William Blair leftover walls stay unmatched (AV/AX did not invent them).
+    william_blair = WilliamBlairSource().fetch(mode="fixture").records
+    assert 2023 not in _paid_lookback_years(william_blair, "LCGFX")
+    assert 2024 not in _paid_lookback_years(william_blair, "WESNX")
+    # Do not drop sister WAVE AV Third Avenue — TAVFX stays 5y on tip.
+    third_avenue = ThirdAvenueSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(third_avenue, "TAVFX")
+    # Do not drop sister WAVE AX FAM / Fenimore — FAMVX stays 5y on tip.
+    fam = FamSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(fam, "FAMVX")
+
+    # Documented walls stay unmatched.
+    allspring = AllspringSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(allspring, "WDSAX")
+    first_eagle = FirstEagleSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(first_eagle, "FERAX")
+    calamos = CalamosSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(calamos, "CAISX")
+
+    # Do not redo WAVE AU LSV I/Investor — LSVEX stays 5y on tip.
+    lsv = LsvSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(lsv, "LSVEX")
+    # Do not redo WAVE AT AMG Frontier / GW&K SMID — YACKX stays 5y.
+    amg = AmgSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(amg, "YACKX")
+    # Do not redo WAVE AQ Victory I/II — VETAX stays 5y.
+    victory = VictorySource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(victory, "VETAX")
+    # Do not redo WAVE AS Virtus Asset Trust — STVTX stays 5y.
+    virtus = VirtusSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(virtus, "STVTX")
+    # Do not redo WAVE AR Homestead — HOVLX stays 5y.
+    homestead = HomesteadSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(homestead, "HOVLX")
+
+
+def test_wave_aw_heroes_are_searchable(client: TestClient) -> None:
+    fetched = client.post(
+        "/ingest/fetch", json={"fund_family": "federated_hermes", "mode": "fixture"}
+    )
+    assert fetched.status_code == 200, fetched.text
+    assert fetched.json()["created"] > 0
+
+    for ticker in ("KAUAX", "FKASX", "FHEQX", "FHESX"):
+        body = client.get("/funds", params={"q": ticker}).json()
+        tickers = [item["ticker"] for item in body["items"]]
+        assert ticker in tickers, f"{ticker} missing from GET /funds?q={ticker}: {tickers[:8]}"
+
+    kauax = client.get(
+        "/distributions",
+        params={"ticker": "KAUAX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    kauax_2022 = [
+        Decimal(row["amount"])
+        for row in kauax["items"]
+        if row.get("ticker") == "KAUAX"
+        and row.get("estimate_type") == "total_capital_gains"
+        and str(row.get("as_of") or "").startswith("2022-10-31")
+    ]
+    assert Decimal("0.65") in kauax_2022
+    kauax_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in kauax["items"]
+        if row.get("ticker") == "KAUAX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= kauax_years
+
+    harding = client.post(
+        "/ingest/fetch", json={"fund_family": "harding_loevner", "mode": "fixture"}
+    )
+    assert harding.status_code == 200, harding.text
+    hlmgx = client.get(
+        "/distributions",
+        params={"ticker": "HLMGX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    hlmgx_2022 = [
+        Decimal(row["amount"])
+        for row in hlmgx["items"]
+        if row.get("ticker") == "HLMGX"
+        and row.get("estimate_type") == "total_capital_gains"
+        and str(row.get("as_of") or "").startswith("2022-10-31")
+    ]
+    assert Decimal("7.41") in hlmgx_2022
+    hlmgx_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in hlmgx["items"]
+        if row.get("ticker") == "HLMGX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= hlmgx_years
+
+    # Sister WAVE AV William Blair leftovers stay unmatched.
+    william_blair = client.post(
+        "/ingest/fetch", json={"fund_family": "william_blair", "mode": "fixture"}
+    )
+    assert william_blair.status_code == 200, william_blair.text
+    lcgfx = client.get(
+        "/distributions",
+        params={"ticker": "LCGFX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    lcgfx_2023 = [
+        row
+        for row in lcgfx["items"]
+        if row.get("ticker") == "LCGFX"
+        and str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "").startswith(
+            "2023"
+        )
+        and row.get("amount") is not None
+        and row.get("publication_stage") == "final"
+    ]
+    assert lcgfx_2023 == []
 

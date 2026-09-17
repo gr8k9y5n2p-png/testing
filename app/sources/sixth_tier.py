@@ -1069,11 +1069,24 @@ class HardingLoevnerSource(HtmlTableSource):
         "HLF-Distributions-2022.pdf (20230317075511) fill leftover HLEMX "
         "2021+2022 / HLGZX 2021 / HLIZX 2021+2022 / HLIDX 2022. Global Equity "
         "2022 printed dashes stay unmatched. HLFZX / HLRZX 2021–2022 unpublished "
-        "under those tickers. 2024 leftover Z / HLEMX / HLIDX still 404."
+        "under those tickers. 2024 leftover Z / HLEMX / HLIDX still 404. "
+        "Official 5y WAVE AW leftover (existing in-book only): Global Equity "
+        "FYE October 31 2022 N-CSR Financial Highlights unlock leftover 2022 "
+        "on the 2021/2023–2025 AMG JSON + issuer PDF book (HLMGX / HLMVX CG "
+        "$7.41 complete 5y; HLGZX CG $7.41 is official year-depth only — 2024 "
+        "still unpublished). Calendar-safe as_of 10/31. Class-level Advisor / "
+        "Institutional / Institutional Z — never sibling-copied. Income is "
+        "ordinary income; net realized gain is unsplit total capital gains. "
+        "Issuer 2022 OI dashes omitted. 2022 N-CSR "
+        "https://www.sec.gov/Archives/edgar/data/1018170/000119312523002209/"
+        "d363948dncsr.htm. Leftover 2024 Emerging Markets / International Z / "
+        "International Developed (HLEMX / HLIZX / HLIDX) stay unmatched. "
+        "WAVE AW leftover N-CSR paid history is fixture-only."
     )
     live_limitations = (
         "Year-end book is PDF. Weekly walk uses the official media.hardingloevner.com PDF; "
-        "empty/PDF-bytes pages are no-op success. Leftover 2021–2024 is AMG JSON / Wayback PDF."
+        "empty/PDF-bytes pages are no-op success. Leftover 2021–2024 is AMG JSON / Wayback PDF. "
+        "Leftover Global Equity 2022 N-CSR paid history is fixture-only."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -1112,6 +1125,13 @@ class HardingLoevnerSource(HtmlTableSource):
                 live=False,
                 role="history",
                 large_aum_only=False,
+            ),
+            PageSpec(
+                name="leftover_ncsr_global_equity_2022_wave_aw",
+                url="https://www.sec.gov/Archives/edgar/data/1018170/000119312523002209/d363948dncsr.htm",
+                fixture="leftover_ncsr_global_equity_2022_wave_aw.html",
+                live=False,
+                role="history",
             ),
         ]
 
