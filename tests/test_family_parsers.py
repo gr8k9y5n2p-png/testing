@@ -1205,6 +1205,82 @@ def test_next_tier_fixtures() -> None:
     assert lbsax_2022.publication_stage == PublicationStage.final
     assert len({r.ticker for r in columbia_2022 if r.ticker}) >= 30
 
+    columbia_wave_am = parse_distribution_html(
+        (ROOT / "columbia_threadneedle" / "leftover_paid_year_end_wave_am.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url=(
+            "https://www.columbiathreadneedleus.com/binaries/content/assets/"
+            "cti/public/2022_cap_gains_year_end.pdf"
+        ),
+        fund_family="Columbia Threadneedle",
+    )
+    umlgx_2022_lt = next(
+        r
+        for r in columbia_wave_am
+        if r.ticker == "UMLGX"
+        and r.estimate_type == EstimateType.long_term_capital_gains
+        and r.ex_date
+        and str(r.ex_date) == "2022-12-08"
+    )
+    assert umlgx_2022_lt.amount == Decimal("0.00")
+    assert umlgx_2022_lt.publication_stage == PublicationStage.final
+    creax_2021_cg = next(
+        r
+        for r in columbia_wave_am
+        if r.ticker == "CREAX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and r.as_of
+        and str(r.as_of) == "2021-12-31"
+    )
+    assert creax_2021_cg.amount == Decimal("0.84")
+    creax_2021_oi = next(
+        r
+        for r in columbia_wave_am
+        if r.ticker == "CREAX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.as_of
+        and str(r.as_of) == "2021-12-31"
+    )
+    assert creax_2021_oi.amount == Decimal("0.17")
+    crrvx_2021_cg = next(
+        r
+        for r in columbia_wave_am
+        if r.ticker == "CRRVX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and r.as_of
+        and str(r.as_of) == "2021-12-31"
+    )
+    assert crrvx_2021_cg.amount == Decimal("0.84")
+    creyx_2021_oi = next(
+        r
+        for r in columbia_wave_am
+        if r.ticker == "CREYX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.as_of
+        and str(r.as_of) == "2021-12-31"
+    )
+    assert creyx_2021_oi.amount == Decimal("0.23")
+    assert {r.ticker for r in columbia_wave_am if r.ticker} >= {
+        "UMLGX",
+        "CSVFX",
+        "CREEX",
+        "CREAX",
+        "CRRVX",
+        "CREYX",
+        "CGEZX",
+        "NSEPX",
+        "CSCZX",
+        "CBALX",
+        "CBMZX",
+        "CZMGX",
+    }
+    # Class-level — WAVE Z Institutional CREEX 2021 is not re-emitted here.
+    assert not any(
+        r.ticker == "CREEX" and r.as_of and str(r.as_of) == "2021-12-31"
+        for r in columbia_wave_am
+    )
+
     bny_2021 = parse_distribution_html(
         (ROOT / "bny_mellon" / "2021_paid_year_end.html").read_text(encoding="utf-8"),
         source_url="fixture://bny-2021",

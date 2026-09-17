@@ -88,7 +88,10 @@ class FranklinTempletonSource(HtmlTableSource):
         "Official 5y WAVE AG leftover: Franklin/Putnam CEF DIST-SUMM-2021–2024 "
         "walls from Y stay walls (HTTP 204). Putnam open-end MF share classes "
         "(PEYAX / PNOPX) are not in the frozen 10056-ticker book — no new "
-        "identities. Unmatched / not invented."
+        "identities. Unmatched / not invented. "
+        "Official 5y WAVE AM leftover re-probe (2026-09-17): DIST-SUMM-2021–2024 "
+        "walls from Y / AG stay walls. No new Putnam / Franklin open-end "
+        "identities."
     )
     live_limitations = (
         "Open-end December estimate tool is JavaScript-rendered. "
@@ -289,7 +292,10 @@ class NuveenSource(HtmlTableSource):
         "Parallel AA leftover re-probe (2026-09-16): tax-hub uniqueId letters "
         "are 2024/2025 QDI / tax-character / state notices — not ST/LT $/share. "
         "No 2021–2024 paid YE book on the live hub. Leftover Class A / C / R6 "
-        "years stay unmatched."
+        "years stay unmatched. "
+        "Official 5y WAVE AM leftover re-probe (2026-09-17): NSBRX 2021 still "
+        "unpublished on the printed Institutional table; leftover Class A / C / "
+        "R6 years stay unmatched."
     )
     live_limitations = (
         "Estimate book is a PDF viewer, not scrapeable HTML. Fixture transcribes "
@@ -523,7 +529,10 @@ class SchwabSource(HtmlTableSource):
         "Parallel AA leftover re-probe (2026-09-16): live tax-resource hub still "
         "lists 2025 Actual Annual Distributions only; 2021–2024 family annual "
         "PDF siblings unpublished. Money-market leftovers stay daily NII. "
-        "Target-date / MarketTrack / Monthly Income leftover years stay unmatched."
+        "Target-date / MarketTrack / Monthly Income leftover years stay unmatched. "
+        "Official 5y WAVE AM leftover re-probe (2026-09-17): live tax-resource "
+        "hub still lists 2025 Actual Annual Distributions only; money-market / "
+        "target-date / MarketTrack leftover years stay unmatched."
     )
     live_limitations = (
         "Family annual grid is JavaScript-rendered. Product pages mix performance "
@@ -633,7 +642,10 @@ class DimensionalSource(HtmlTableSource):
         "lists 2023/2024/2025 sheets only (0 mentions of 2021 or 2022). 2023 "
         "and 2025 ETF tax sheets are year-depth for 1y ETF leftovers — they "
         "cannot complete 5y without unpublished 2021–2022. Wayback CDX was "
-        "offline this session. Tax center: https://www.dimensional.com/us-en/tax"
+        "offline this session. "
+        "Official 5y WAVE AM leftover re-probe (2026-09-17): live tax center "
+        "still lists 2023/2024/2025 sheets only; 2021–2022 stay unmatched "
+        "(year-alias trap). Tax center: https://www.dimensional.com/us-en/tax"
     )
     live_limitations = "Year-end book is PDF. Fixture transcribes public paid/estimate rows."
 
@@ -704,12 +716,23 @@ class ColumbiaThreadneedleSource(HtmlTableSource):
         "ST skipped when unsafe. Published $0 omitted. No public filled ICI file. "
         "The 2025 mid-year all-funds PDF is wrap-unsafe (share-class % ranges "
         "interleaved with $0.00 fund headers) — not a column-safe full extract. "
-        "Investor hub: https://www.columbiathreadneedleus.com/investor"
+        "Official 5y WAVE AM leftover (2026-09-17, in-book only): official YE "
+        "PDFs print all-share-class $0.00 for leftover years WAVE Z omitted — "
+        "stored as class-level paid $0 (never copied from a paying sibling). "
+        "Completes 5y: UMLGX / CSVFX / CREEX / CGEZX / NSEPX / CSCZX 2022; "
+        "CBALX 2023; CBMZX / CZMGX 2025. Real Estate Equity leftover CREAX / "
+        "CRRVX / CREYX 2021 class-level N-CSR Financial Highlights (FYE Dec 31) "
+        "plus the same 2022 all-class $0 complete those 3y leftovers. Walls: "
+        "Class A / C / R 2021 $ still unpublished on the Institutional-only "
+        "2021 YE PDF (percent-of-NAV only); Series Trust / Trust II Jan 31 "
+        "N-CSR is not calendar-safe next to December YE. Investor hub: "
+        "https://www.columbiathreadneedleus.com/investor"
     )
     live_limitations = (
         "Estimate and YE books are PDF. Fixture transcribes the public mid-year ranges "
         "and 2021 Institutional / 2022 leftover / 2023 leftover / 2024 / 2025 "
-        "YE December share-class rows."
+        "YE December share-class rows. WAVE AM leftover official $0 / Real Estate "
+        "N-CSR 2021 is fixture-only."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -750,6 +773,14 @@ class ColumbiaThreadneedleSource(HtmlTableSource):
                 name="leftover_paid_year_end_mass_z",
                 url=f"{cti}/2021_cap_gain_yearend_distributions.pdf",
                 fixture="leftover_paid_year_end_mass_z.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
+            ),
+            PageSpec(
+                name="leftover_paid_year_end_wave_am",
+                url=f"{cti}/2022_cap_gains_year_end.pdf",
+                fixture="leftover_paid_year_end_wave_am.html",
                 live=False,
                 role="history",
                 large_aum_only=False,

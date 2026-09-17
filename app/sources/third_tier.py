@@ -456,7 +456,10 @@ class DodgeCoxSource(HtmlTableSource):
         "onto DOXGX / DOXBX / DOXIX / DOXFX / DOXWX / DOXLX. "
         "Official 5y parallel AB leftover re-probe of "
         "https://api-v1.dodgeandcox.com/api/funds-distribution confirms Class X "
-        "years start 2022. Worldwide / DOAA* tickers are not in-book."
+        "years start 2022. Worldwide / DOAA* tickers are not in-book. "
+        "Official 5y WAVE AM leftover re-probe (2026-09-17): Class X 2021 remains "
+        "the May 2022 inception wall — never copy Class I 2021 onto DOXGX / "
+        "DOXBX / DOXIX / DOXFX / DOXWX / DOXLX."
     )
     live_limitations = "Estimates and the tax letter are PDF. Fixtures transcribe those public tables."
 
@@ -586,7 +589,13 @@ class MfsSource(HtmlTableSource):
         "MFEHX / MFEJX / MFELX 2022 YE LT $1.39190; MIGBX / MIGKX / MIGMX / "
         "MIRGX 2023 YE LT $1.38597 (class-level OI/ST where printed). Does not "
         "redo #186 mid-year events. MEMBX B 2022 / BRSPX R1 2023 / MNWTX R3 "
-        "2021 still unpublished."
+        "2021 still unpublished. "
+        "Official 5y WAVE AM leftover re-probe (2026-09-17): official leftover "
+        "shareCode Excel still has no 2023 row for BRSPX R1 / BRSHX C / BRSBX B / "
+        "BRWRX R1 / MRSGX R1; MEMBX B still has no 2022 row; MNWTX R3 / MNWSX R2 "
+        "still have no 2021 row; MCBCX C / MCBFX I / UIVIX I still have no 2021 "
+        "row. Unpublished leftover years stay unmatched. MFEGX mid-year #186 "
+        "not redone."
     )
     live_limitations = (
         "Estimates are PDF percent-of-NAV ranges. Paid history is the official "
@@ -805,7 +814,10 @@ class LordAbbettSource(HtmlTableSource):
         "Total Return 2021 LT $0.0629 (record 12/16/2021, payable 12/17/2021) — "
         "year-depth only. Daily 2021–2025 income year selector AJAX "
         "dividendpayments.data.class-a.date-YYYY.html is 404; LAGWX 2022/2023 "
-        "absent from the product-page year dropdown. Lord ICI still 404."
+        "absent from the product-page year dropdown. Lord ICI still 404. "
+        "Official 5y WAVE AM leftover re-probe (2026-09-17): LAGWX 2022/2023 / "
+        "LTRAX 2022–2024 / LBNDX 2021+2023+2024 still unpublished on the "
+        "product-page year dropdown; Daily AJAX year selector still 404."
     )
     live_limitations = (
         "HTML hub has no table. The public PDF lists funds expected to pay $0, "
