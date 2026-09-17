@@ -1030,6 +1030,91 @@ def test_next_tier_fixtures() -> None:
         for r in amundi_ncsr_bs
     )
 
+    amundi_ncsr_ca_fund = parse_distribution_html(
+        (ROOT / "amundi" / "leftover_ncsr_pcodx_pyodx_piokx_2021_2024_wave_ca.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url=(
+            "https://www.sec.gov/Archives/edgar/data/78713/"
+            "000119312525040547/d908634dncsr.htm"
+        ),
+        fund_family="Amundi US / Pioneer",
+    )
+    pcodx_2024_oi = next(
+        r
+        for r in amundi_ncsr_ca_fund
+        if r.ticker == "PCODX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.as_of
+        and str(r.as_of) == "2024-12-31"
+    )
+    assert pcodx_2024_oi.amount == Decimal("0.01")
+    assert pcodx_2024_oi.publication_stage == PublicationStage.final
+    pcodx_2021_cg = next(
+        r
+        for r in amundi_ncsr_ca_fund
+        if r.ticker == "PCODX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and r.as_of
+        and str(r.as_of) == "2021-12-31"
+    )
+    assert pcodx_2021_cg.amount == Decimal("6.07")
+    assert not any(
+        r.ticker == "PCODX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.as_of
+        and str(r.as_of) == "2021-12-31"
+        for r in amundi_ncsr_ca_fund
+    )
+    assert {r.ticker for r in amundi_ncsr_ca_fund} == {"PCODX", "PYODX", "PIOKX"}
+    assert not any(
+        r.ticker
+        in {
+            "PIODX",
+            "PIORX",
+            "PCEQX",
+            "PYEQX",
+            "PEQKX",
+            "PCCGX",
+            "GLIFX",
+        }
+        for r in amundi_ncsr_ca_fund
+    )
+
+    amundi_ncsr_ca_core = parse_distribution_html(
+        (ROOT / "amundi" / "leftover_ncsr_pcotx_pvfyx_pcekx_2021_2024_wave_ca.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url=(
+            "https://www.sec.gov/Archives/edgar/data/78758/"
+            "000119312525040555/d921606dncsr.htm"
+        ),
+        fund_family="Amundi US / Pioneer",
+    )
+    pcotx_2024_oi = next(
+        r
+        for r in amundi_ncsr_ca_core
+        if r.ticker == "PCOTX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.as_of
+        and str(r.as_of) == "2024-12-31"
+    )
+    assert pcotx_2024_oi.amount == Decimal("0.08")
+    pcekx_2021_oi = next(
+        r
+        for r in amundi_ncsr_ca_core
+        if r.ticker == "PCEKX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.as_of
+        and str(r.as_of) == "2021-12-31"
+    )
+    assert pcekx_2021_oi.amount == Decimal("0.19")
+    assert {r.ticker for r in amundi_ncsr_ca_core} == {"PCOTX", "PVFYX", "PCEKX"}
+    assert not any(
+        r.ticker in {"PIOTX", "CERPX", "PCEQX", "PIODX", "PCODX"}
+        for r in amundi_ncsr_ca_core
+    )
+
     ft_2024 = parse_distribution_html(
         (ROOT / "franklin_templeton" / "2024_section_19a.html").read_text(encoding="utf-8"),
         source_url="fixture://ft-2024",

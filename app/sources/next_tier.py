@@ -871,17 +871,32 @@ class AmundiSource(HtmlTableSource):
         "BU). Income is ordinary income; net realized gain is unsplit total "
         "capital gains; 2021 CG dash omitted. Pioneer Mid Cap Value N-CSR "
         "https://www.sec.gov/Archives/edgar/data/863334/000119312525002061/"
-        "d881649dncsr.htm (0001193125-25-002061). Fundamental Growth PIGFX FYE "
-        "March 31, Disciplined Value CVFCX / Global Equity GLOSX FYE August 31, "
-        "and International Equity PIIFX stay unmatched. WAVE BW Rainier RAIIX, "
-        "WAVE BV Hartford MidCap HMDCX, WAVE BT Federated SVD Oct 31, WAVE BS "
-        "Equity Income PEQIX, WAVE BQ Dec 31, WAVE BR Grandeur Peak, WAVE BP "
-        "GHQIX-family, WAVE BO KTRAX, WAVE BN KGDAX, WAVE BM Baird, WAVE BL "
-        "Thrivent, WAVE BK TOLLX, WAVE BI KTCAX, WAVE BJ RiverPark, WAVE BH "
-        "TCW, WAVE BG DWS Dec 31, and prior BD–BF books stay on their leftover "
-        "pages — not re-emitted here. Alger leftovers stay reserved / "
-        "disjoint. WAVE BQ / BS / BU / BX leftover N-CSR paid history is "
-        "fixture-only."
+        "d881649dncsr.htm (0001193125-25-002061). Official 5y WAVE CA leftover "
+        "(existing in-book only): Pioneer Fund and Pioneer Core Equity FYE "
+        "December 31 N-CSR Financial Highlights unlock leftover 2021–2024 on "
+        "the 2025 paid Class C / Y / K book (PCODX / PYODX / PIOKX / PCOTX / "
+        "PVFYX / PCEKX). Calendar-safe as_of 12/31. Class-level — never "
+        "sibling-copied onto Class A (PIODX / PIOTX; WAVE BQ) or Class R "
+        "(PIORX / CERPX). Income is ordinary income; net realized gain is "
+        "unsplit total capital gains; 2021 Class C OI dashes omitted. Pioneer "
+        "Fund N-CSR "
+        "https://www.sec.gov/Archives/edgar/data/78713/000119312525040547/"
+        "d908634dncsr.htm (0001193125-25-040547) and Pioneer Series Trust XI "
+        "https://www.sec.gov/Archives/edgar/data/78758/000119312525040555/"
+        "d921606dncsr.htm (0001193125-25-040555). Sister WAVE BZ Pioneer "
+        "Equity Income Oct 31 PCEQX / PYEQX / PEQKX stay on that leftover "
+        "page — not re-emitted here. Fundamental Growth PIGFX FYE March 31, "
+        "Disciplined Value CVFCX / Global Equity GLOSX FYE August 31, and "
+        "International Equity PIIFX stay unmatched. WAVE BY Lazard "
+        "Institutional, WAVE BX Mid Cap Value C/Y/K, WAVE BW Rainier RAIIX, "
+        "WAVE BV Hartford MidCap HMDCX, WAVE BT Federated SVD Oct 31, WAVE "
+        "BS Equity Income PEQIX, WAVE BQ Dec 31 Class A, WAVE BR Grandeur "
+        "Peak, WAVE BP GHQIX-family, WAVE BO KTRAX, WAVE BN KGDAX, WAVE BM "
+        "Baird, WAVE BL Thrivent, WAVE BK TOLLX, WAVE BI KTCAX, WAVE BJ "
+        "RiverPark, WAVE BH TCW, WAVE BG DWS Dec 31, and prior BD–BF books "
+        "stay on their leftover pages — not re-emitted here. Alger leftovers "
+        "stay reserved / disjoint. WAVE BQ / BS / BU / BX / CA leftover "
+        "N-CSR paid history is fixture-only."
     )
     live_limitations = (
         "Pioneer/Victory tax hubs are HTML shells; estimate/final books are PDF. "
@@ -1025,6 +1040,26 @@ class AmundiSource(HtmlTableSource):
                     "000119312525002061/d881649dncsr.htm"
                 ),
                 fixture="leftover_ncsr_pccgx_pycgx_pmckx_2021_2024_wave_bx.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="leftover_ncsr_pcodx_pyodx_piokx_2021_2024_wave_ca",
+                url=(
+                    "https://www.sec.gov/Archives/edgar/data/78713/"
+                    "000119312525040547/d908634dncsr.htm"
+                ),
+                fixture="leftover_ncsr_pcodx_pyodx_piokx_2021_2024_wave_ca.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="leftover_ncsr_pcotx_pvfyx_pcekx_2021_2024_wave_ca",
+                url=(
+                    "https://www.sec.gov/Archives/edgar/data/78758/"
+                    "000119312525040555/d921606dncsr.htm"
+                ),
+                fixture="leftover_ncsr_pcotx_pvfyx_pcekx_2021_2024_wave_ca.html",
                 live=False,
                 role="history",
             ),
