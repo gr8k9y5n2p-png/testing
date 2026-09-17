@@ -5017,6 +5017,50 @@ def test_tenth_tier_fixtures() -> None:
     )
     assert rpxix.amount == Decimal("2.6688")
 
+    riverpark_leftover = parse_distribution_html(
+        (ROOT / "riverpark" / "leftover_paid_year_end_2021_2024_wave_bj.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url=(
+            "https://www.riverparkfunds.com/assets/pdfs/news/"
+            "Year_End_Final_Distribution_Information_2021.pdf"
+        ),
+        fund_family="RiverPark",
+    )
+    rwgix_2021_lt = next(
+        r
+        for r in riverpark_leftover
+        if r.ticker == "RWGIX"
+        and r.estimate_type == EstimateType.long_term_capital_gains
+        and str(r.ex_date) == "2021-12-15"
+    )
+    assert rwgix_2021_lt.amount == Decimal("0.6912")
+    assert rwgix_2021_lt.publication_stage == PublicationStage.final
+    rpxix_2022_oi = next(
+        r
+        for r in riverpark_leftover
+        if r.ticker == "RPXIX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and str(r.ex_date) == "2022-12-29"
+    )
+    assert rpxix_2022_oi.amount == Decimal("0.0011")
+    assert {r.ticker for r in riverpark_leftover} == {
+        "RWGIX",
+        "RWGFX",
+        "RPXIX",
+        "RPXFX",
+    }
+    assert not any(
+        r.ticker in {"RPNLX", "RPNRX", "RLSIX", "RPHIX", "RPNIX", "RPNCX"}
+        for r in riverpark_leftover
+    )
+    assert not any(
+        r.ticker == "RPXIX"
+        and r.ex_date
+        and r.ex_date.year == 2023
+        for r in riverpark_leftover
+    )
+
 
 def test_parallel_w_leftover_paid_fixtures() -> None:
     manning = parse_distribution_html(
