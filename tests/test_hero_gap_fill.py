@@ -331,5 +331,8 @@ def test_fixture_book_lookback_stays_official_only() -> None:
     # + SDG Engagement Oct 31 2021 N-CSR + Harding Global Equity Oct 31
     # 2022 N-CSR +11 MF. Honest pin remasured on WAVE AX tip b195629:
     # 4114 → 4125 (+11 MF; ETF 5y unchanged at 758).
-    assert digest.funds_with_5y == 4125
+    # WAVE AY leftover: Hennessy leftover Investor / Institutional Oct 31
+    # 2021–2024 N-CSR +16 MF. Honest pin remasured on WAVE AW tip
+    # 0e3f805: 4125 → 4141 (+16 MF; ETF 5y unchanged at 758).
+    assert digest.funds_with_5y == 4141
     assert digest.book_funds >= 7200
