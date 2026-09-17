@@ -1115,6 +1115,74 @@ def test_next_tier_fixtures() -> None:
         for r in amundi_ncsr_ca_core
     )
 
+    amundi_ncsr_bz = parse_distribution_html(
+        (ROOT / "amundi" / "leftover_ncsr_pceqx_pyeqx_peqkx_2021_2024_wave_bz.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url=(
+            "https://www.sec.gov/Archives/edgar/data/869356/"
+            "000119312525002069/d869528dncsr.htm"
+        ),
+        fund_family="Amundi US / Pioneer",
+    )
+    pceqx_2024_oi = next(
+        r
+        for r in amundi_ncsr_bz
+        if r.ticker == "PCEQX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.as_of
+        and str(r.as_of) == "2024-10-31"
+    )
+    assert pceqx_2024_oi.amount == Decimal("0.38")
+    assert pceqx_2024_oi.publication_stage == PublicationStage.final
+    pyeqx_2023_cg = next(
+        r
+        for r in amundi_ncsr_bz
+        if r.ticker == "PYEQX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and r.as_of
+        and str(r.as_of) == "2023-10-31"
+    )
+    assert pyeqx_2023_cg.amount == Decimal("3.55")
+    peqkx_2021_oi = next(
+        r
+        for r in amundi_ncsr_bz
+        if r.ticker == "PEQKX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.as_of
+        and str(r.as_of) == "2021-10-31"
+    )
+    assert peqkx_2021_oi.amount == Decimal("0.66")
+    # 2021 CG is an official dash — never invent $0.
+    assert not any(
+        r.estimate_type == EstimateType.total_capital_gains
+        and r.as_of
+        and str(r.as_of) == "2021-10-31"
+        for r in amundi_ncsr_bz
+    )
+    assert {r.ticker for r in amundi_ncsr_bz} == {"PCEQX", "PYEQX", "PEQKX"}
+    assert not any(
+        r.ticker
+        in {
+            "PEQIX",
+            "PQIRX",
+            "PCCGX",
+            "PYCGX",
+            "PMCKX",
+            "LZIEX",
+            "GLIFX",
+            "RAIIX",
+            "HMDCX",
+            "PCODX",
+            "PYODX",
+            "PIOKX",
+            "PCOTX",
+            "PVFYX",
+            "PCEKX",
+        }
+        for r in amundi_ncsr_bz
+    )
+
     ft_2024 = parse_distribution_html(
         (ROOT / "franklin_templeton" / "2024_section_19a.html").read_text(encoding="utf-8"),
         source_url="fixture://ft-2024",

@@ -883,20 +883,31 @@ class AmundiSource(HtmlTableSource):
         "https://www.sec.gov/Archives/edgar/data/78713/000119312525040547/"
         "d908634dncsr.htm (0001193125-25-040547) and Pioneer Series Trust XI "
         "https://www.sec.gov/Archives/edgar/data/78758/000119312525040555/"
-        "d921606dncsr.htm (0001193125-25-040555). Sister WAVE BZ Pioneer "
-        "Equity Income Oct 31 PCEQX / PYEQX / PEQKX stay on that leftover "
-        "page — not re-emitted here. Fundamental Growth PIGFX FYE March 31, "
-        "Disciplined Value CVFCX / Global Equity GLOSX FYE August 31, and "
-        "International Equity PIIFX stay unmatched. WAVE BY Lazard "
-        "Institutional, WAVE BX Mid Cap Value C/Y/K, WAVE BW Rainier RAIIX, "
-        "WAVE BV Hartford MidCap HMDCX, WAVE BT Federated SVD Oct 31, WAVE "
-        "BS Equity Income PEQIX, WAVE BQ Dec 31 Class A, WAVE BR Grandeur "
-        "Peak, WAVE BP GHQIX-family, WAVE BO KTRAX, WAVE BN KGDAX, WAVE BM "
-        "Baird, WAVE BL Thrivent, WAVE BK TOLLX, WAVE BI KTCAX, WAVE BJ "
-        "RiverPark, WAVE BH TCW, WAVE BG DWS Dec 31, and prior BD–BF books "
-        "stay on their leftover pages — not re-emitted here. Alger leftovers "
-        "stay reserved / disjoint. WAVE BQ / BS / BU / BX / CA leftover "
-        "N-CSR paid history is fixture-only."
+        "d921606dncsr.htm (0001193125-25-040555). Official 5y WAVE BZ leftover "
+        "(existing in-book only): Pioneer Equity Income FYE October 31 N-CSR "
+        "Financial Highlights unlock leftover 2021–2024 on the 2025 paid "
+        "Class C / Y / K book (PCEQX / PYEQX / PEQKX). Calendar-safe as_of "
+        "10/31. Class-level — never sibling-copied onto Class A (PEQIX; WAVE "
+        "BS) or Class R (PQIRX). Income is ordinary income; net realized gain "
+        "is unsplit total capital gains; 2021 CG dash omitted. Pioneer Equity "
+        "Income N-CSR "
+        "https://www.sec.gov/Archives/edgar/data/869356/000119312525002069/"
+        "d869528dncsr.htm (0001193125-25-002069). WAVE CA Pioneer Fund / Core "
+        "Equity Dec 31 C/Y/K (PCODX / PYODX / PIOKX / PCOTX / PVFYX / PCEKX) "
+        "stay on those leftover pages — not re-emitted here. Fundamental Growth "
+        "PIGFX FYE March 31, Disciplined Value CVFCX / Global Equity GLOSX FYE "
+        "August 31, and International Equity PIIFX stay unmatched. WAVE BY "
+        "Lazard Institutional Dec 31 (GLIFX / ICMPX / LCAIX / LDMIX / LEAIX / "
+        "LEOIX / LISIX / LZCOX / LZEMX / LZESX / LZFIX / LZIEX / LZISX / "
+        "LZUSX), WAVE BX Pioneer Mid Cap Value C/Y/K, WAVE BW Rainier RAIIX, "
+        "WAVE BV Hartford MidCap HMDCX, WAVE BT Federated SVD Oct 31, WAVE BS "
+        "Equity Income PEQIX, WAVE BQ Dec 31 Class A, WAVE BR Grandeur Peak, "
+        "WAVE BP GHQIX-family, WAVE BO KTRAX, WAVE BN KGDAX, WAVE BM Baird, "
+        "WAVE BL Thrivent, WAVE BK TOLLX, WAVE BI KTCAX, WAVE BJ RiverPark, "
+        "WAVE BH TCW, WAVE BG DWS Dec 31, and prior BD–BF books stay on their "
+        "leftover pages — not re-emitted here. Alger leftovers stay reserved / "
+        "disjoint. WAVE BQ / BS / BU / BX / CA / BZ leftover N-CSR paid "
+        "history is fixture-only."
     )
     live_limitations = (
         "Pioneer/Victory tax hubs are HTML shells; estimate/final books are PDF. "
@@ -1060,6 +1071,16 @@ class AmundiSource(HtmlTableSource):
                     "000119312525040555/d921606dncsr.htm"
                 ),
                 fixture="leftover_ncsr_pcotx_pvfyx_pcekx_2021_2024_wave_ca.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="leftover_ncsr_pceqx_pyeqx_peqkx_2021_2024_wave_bz",
+                url=(
+                    "https://www.sec.gov/Archives/edgar/data/869356/"
+                    "000119312525002069/d869528dncsr.htm"
+                ),
+                fixture="leftover_ncsr_pceqx_pyeqx_peqkx_2021_2024_wave_bz.html",
                 live=False,
                 role="history",
             ),
