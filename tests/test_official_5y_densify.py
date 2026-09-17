@@ -6852,7 +6852,9 @@ def test_parallel_r_heroes_are_searchable(client: TestClient) -> None:
     tgdix_years = {
         str(row.get("ex_date") or "")[:4]
         for row in tgdix["items"]
-        if row.get("ticker") == "TGDIX" and row.get("amount") is not None
+        if row.get("ticker") == "TGDIX"
+        and row.get("amount") is not None
+        and row.get("ex_date")
     }
     assert tgdix_years == {"2025"}
 
@@ -16950,7 +16952,9 @@ def test_wave_bh_heroes_are_searchable(client: TestClient) -> None:
     tgdix_ex_years = {
         str(row.get("ex_date") or "")[:4]
         for row in tgdix["items"]
-        if row.get("ticker") == "TGDIX" and row.get("amount") is not None
+        if row.get("ticker") == "TGDIX"
+        and row.get("amount") is not None
+        and row.get("ex_date")
     }
     assert tgdix_ex_years == {"2025"}
 
