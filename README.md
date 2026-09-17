@@ -50,7 +50,7 @@ For first public staging:
 
 - `AFTERTAX_PUBLIC_URL=https://staging.getaftertax.com`
 - Optional: `NEXT_PUBLIC_DATA_API_URL` to point at the PR #2 Data API
-- **Do not set** `STRIPE_SECRET_KEY`. Search + illustrate is enough; freemium/Checkout can stay stubbed.
+- Stripe (optional until charge-ready): `STRIPE_SECRET_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_PRICE_ID`, `STRIPE_WEBHOOK_SECRET`. Without them, search + illustrate still work and the Unlock CTA says billing is not configured.
 - Friends beta: set `FRIENDS_BETA_PASSWORD` (see below). Do not buy Vercel Pro Password Protection.
 
 Staging is `noindex`. Switch `AFTERTAX_PUBLIC_URL` to `https://getaftertax.com` when ads are green-lit.
@@ -62,10 +62,10 @@ Staging is `noindex`. Switch `AFTERTAX_PUBLIC_URL` to `https://getaftertax.com` 
 - **Compare** on `/compare`: four empty ticker slots (user-added; **one ticker is enough** — empty slots ignored) plus one shared **Dollars invested** input (default $10,000) that scales Growth starting dollars, tax-drag $ / taxable amounts, calendar-year tax $ / dist $, and upcoming taxable $. Filled tickers then flow through `GrowthAndTaxDragModule`, a ticker × calendar-year tax $ / dist $ table from live `POST /illustrate/compare` `mode: "yoy"` (unmatched = N/A, never fake $0), then Upcoming / announced (unpaid announced only; in-universe empty = **Awaiting Estimate**, not-in-universe = **Add to universe** via `requestTicker` — never invented from paid history). `?tickers=AGTHX` (comma-separated or repeated) still prefills Compare slots; `?left=` / `?right=` / `?ticker=` still work. Search-page ticker clicks no longer navigate here. A plain `/compare` visit starts empty. The Compare tab does not show FundTaxDeltaCompare as the main layout, the fund-search hero, dollar illustration, portfolio books, or highlights. Historical tax drag and Upcoming stay separate. The `/fund-compare` demo still mounts the reusable `FundTaxDeltaCompare` card.
 - **Portfolio comparison** on `/portfolio` (and `/portfolio-compare`): Current vs Proposed Allocation start empty — add tickers with **+ Add holding**. Book default $1M + state 0.05. Upcoming / announced (every fund; in-universe empty = **Awaiting Estimate**, not-in-universe = **Add to universe**, never $0), ticker × calendar-year tax $ (2021–2025; unmatched / uncovered = N/A), tax drag %, more/less tax Δ. The Portfolios tab does not show Growth of $X, fund-search hero, dollar illustration, FundCompareRail, or highlights. Export calls `exportToPdf` (freemium gate stubbed).
 - **Growth of $X + tax drag** (`GrowthAndTaxDragModule`) is not mounted on Search. The component stays exported for Compare and the standalone demo at `/growth-tax`.
-- Soft counter is **temporarily unlocked for beta** (`NEXT_PUBLIC_FREEMIUM_DISABLED`, default on). Set that env to `false` to restore `3 of 3 free searches left` → paywall after 3 unique tickers.
+- Soft wall is **on** (10 searches / 3 compare reports / 3 portfolio reviews). Over-limit modules blur with an Unlock CTA; the search box, Request a fund, and ticker slots stay usable. `NEXT_PUBLIC_FREEMIUM_DISABLED=true` bypasses counters for an internal demo.
 - Highlights + estimates table sit below the fold as the live Data API universe — not a landing feature grid.
 - Live Data API banner. Search / Sample Estimates never merge `seed.ts`. Uncovered or missing values stay empty, N/A, or Undisclosed. Capital Group / American Funds is treated as live ingest; other families show a **coverage gap**.
-- Checkout is stubbed (`POST /api/checkout` → 501) until Stripe test mode. Price id `price_1UD6C0RqA7bY5N5qVleZso0d`. Return URLs: `/?checkout=success` stays in this flow; `/?checkout=cancel` reopens the paywall. No onboarding tour.
+- Checkout is live when Stripe env is set (`POST /api/checkout` → subscription Checkout Session). Price id `price_1UD6C0RqA7bY5N5qVleZso0d`. Return URLs: `/?checkout=success&session_id={CHECKOUT_SESSION_ID}` stays in this flow; `/?checkout=cancel` is a notice only (no homepage hard block). Manage / cancel is Customer Portal (`POST /api/billing/portal`) with cancel-at-period-end. Without keys the routes return 501.
 
 ## Disclaimer (QA-final unless Eric edits)
 
@@ -167,22 +167,42 @@ Search, Sample Estimates, and homepage highlights load `GET /distributions` only
 ## Funnel (this UI)
 
 1. Land → search a fund (primary). Compare and Portfolios are AppNav tabs (`/compare`, `/portfolio`) — not Search-page shortcut buttons.
-2. Instant dollar illustration. Beta: searches are unlimited (soft-wall off).
-3. After 3 unique fund searches → paywall (`$39 / user / month`) **only when** `NEXT_PUBLIC_FREEMIUM_DISABLED=false`.
-4. Checkout stub returns to the same flow (`?checkout=success`) or paywall (`?checkout=cancel`). No onboarding tour. Beta unlock also suppresses the cancel paywall.
+2. Instant dollar illustration. Each completed Search load counts toward 10 free searches.
+3. After 10 searches / 3 compare reports / 3 portfolio reviews → soft blur + Unlock CTA (`$39 / user / month`). Homepage search box and Request a fund stay usable.
+4. Checkout (signed-in Account) returns to the same flow (`?checkout=success`) or a cancel notice (`?checkout=cancel`). No onboarding tour. Cancel at period end from Account → Manage billing.
 
 Highlights and the full estimates table sit below the illustration as the live Data API universe — not a landing feature grid.
 
 ## Freemium / Stripe (website owns Checkout)
 
-The Aftertax **website** creates Stripe Checkout Sessions server-side (`POST /api/checkout` → `src/lib/stripe/checkout.ts`).
+The Aftertax **website** creates Stripe Checkout Sessions server-side (`POST /api/checkout` → `src/lib/stripe/checkout.ts`) and Customer Portal sessions (`POST /api/billing/portal`). Webhooks: `POST /api/stripe/webhook`.
 
 - Price `price_1UD6C0RqA7bY5N5qVleZso0d` (product `prod_VDXGeprN4QkxsM`, account `acct_1UD66TRqA7bY5N5q`)
 - `success_url` / `cancel_url` default to **https://staging.getaftertax.com** until ads are green-lit (`AFTERTAX_PUBLIC_URL` overrides)
-- **Test mode later. Do not block on live keys.** Without `STRIPE_SECRET_KEY`, Unlock Aftertax is stubbed (501) and search + illustrate still work.
-- When test-mode keys exist: set `STRIPE_SECRET_KEY` and optional `STRIPE_PRICE_ID` / `AFTERTAX_PUBLIC_URL`.
+- **Do not invent keys.** Without `STRIPE_SECRET_KEY`, Unlock Aftertax is stubbed (501) and search + illustrate still work. The CTA says billing is not configured.
+- When test-mode keys exist: set the Vercel env below.
 
-Paywall copy is locked in `src/lib/copy.ts`. 3 free unique fund searches use client `localStorage` for this demo.
+### Vercel env (Production + Preview)
+
+| Var | Required to charge | Notes |
+| --- | --- | --- |
+| `STRIPE_SECRET_KEY` | yes | Restricted key preferred (`rk_`). Never commit. Mark Sensitive in Vercel. |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | yes | `pk_test_…` / `pk_live_…` |
+| `STRIPE_PRICE_ID` | no | Defaults to `price_1UD6C0RqA7bY5N5qVleZso0d` |
+| `STRIPE_WEBHOOK_SECRET` | yes, for webhooks | Signing secret from the webhook endpoint |
+| `STRIPE_PRODUCT_ID` | no | Defaults to `prod_VDXGeprN4QkxsM` |
+| `AFTERTAX_PUBLIC_URL` | recommended | Checkout return origin |
+
+Webhook URL: `https://<host>/api/stripe/webhook`. Events: `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, optional `invoice.paid`. In Stripe Dashboard → Customer portal, set cancellation to **at period end**.
+
+### Smoke (test mode)
+
+1. Set the Vercel env above with **test** keys. Deploy. Confirm `GET /api/billing/entitlement` returns `{ configured: true, subscribed: false }` (no crash when keys are missing — `configured: false` and Unlock says billing is not configured).
+2. **Checkout:** Create an Account (homepage sign-in panel) → Unlock Aftertax or Account → Unlock Aftertax. Complete Stripe Checkout test card `4242…`. Land on `/?checkout=success`. Account shows Plan · $39 / user / month · active. Manage billing opens Customer Portal. Cancel there — status becomes cancel-at-period-end; access stays until period end.
+3. **Soft wall (signed out or unsubscribed):** DevTools → Application → Local Storage → `aftertax.freemium.v2` = `{"searches":10,"compareKeys":["A","B","C"],"portfolioKeys":["1","2","3"]}`. Reload. Search a fund — Dollar Ill / Upcoming / Paid History are blurred with Unlock; search box + Request a fund still work. `/compare` ticker slots stay editable; modules blur. `/portfolio` allocation slots stay editable; modules blur.
+4. Webhook: Stripe CLI `stripe listen --forward-to localhost:3000/api/stripe/webhook` or the Vercel URL. Trigger `checkout.session.completed` — `stripeCustomerId` appears on the account.
+
+Paywall copy is locked in `src/lib/copy.ts`. Anonymous counters use `aftertax.freemium.v2` + cookie `aftertax_freemium`. Signed-in counters + subscription status live on the Account row and merge (max / union) on login.
 
 ### Friends-beta password gate
 
@@ -195,16 +215,14 @@ In-app shared password so Production can stay off Vercel Pro Deployment Protecti
 
 `/terms` and `/privacy` stay public. Same-origin `/api/*` mocks and Render `NEXT_PUBLIC_DATA_API_URL` calls are not gated. Contact remains `operations@getaftertax.com`.
 
-### Temporary beta unlock (revert before launch)
+### Soft-wall bypass (internal only)
 
-`NEXT_PUBLIC_FREEMIUM_DISABLED` short-circuits every free-tier check and the soft-wall overlay (`src/lib/freemium.ts`). **Default is on** when the env var is unset so production/staging do not need a Vercel setting for Eric’s beta. Stored `aftertax.freemium.v1` counters are ignored while unlocked.
+`NEXT_PUBLIC_FREEMIUM_DISABLED` short-circuits every free-tier check and the soft-wall overlay (`src/lib/freemium.ts` / `src/lib/billing/limits.ts`). **Default is off** (wall on).
 
 | Value | Behavior |
 | --- | --- |
-| unset / `true` / `1` | Unlimited searches; Import never opens the paywall |
-| `false` / `0` / `off` | Restore 3-search counter + Upgrade overlay |
-
-Revert this default (or delete the bypass) before the freemium sprint / public launch. Do not treat this as the long-term billing path. Stripe Checkout is still stubbed.
+| unset / `false` / `0` / `off` | 10 searches / 3 compares / 3 portfolio reviews, then blur + CTA |
+| `true` / `1` / `on` | Unlimited; counters ignored |
 
 ## Saved lists and portfolios (account-scoped)
 
@@ -245,7 +263,7 @@ Until DNS + `RESEND_API_KEY` are in place, Forgot Password is honest: same 200 f
 
 **Auth root cause (login always “wrong password”):** Account rows lived in a process-local JSON snapshot. Sign-up wrote one serverless instance; sign-in read another and treated a miss as a bad password. The file store now reloads from disk on every read/write. Pin `AFTERTAX_ACCOUNTS_PATH` to a persistent disk in production (Vercel `/tmp` is still ephemeral across instances). Session cookies now honor `x-forwarded-proto` so `Secure` is set behind the HTTPS proxy. Hash compare is still scrypt + timing-safe equal — no bypass.
 
-**Stripe Checkout later (Eric holding Stripe):** create/link a Customer on the **same account email** and set `stripeCustomerId`. Soft-wall / Checkout stay off.
+**Stripe Checkout:** create/link a Customer on the **same account email** and set `stripeCustomerId`. Subscription status updates from the webhook. Soft-wall still applies until the account is entitled (`active` / `trialing` / `past_due`, or canceled with time left). Save/Open is not gated on Checkout.
 
 **Persistence:** JSON file via `SavedAssetStore` — local `.data/saved-assets.json`, Vercel `/tmp/aftertax-saved-assets.json` (ephemeral filesystem). Override with `SAVED_ASSETS_PATH`. No new cloud vendor. Swap the store for Neon/Postgres later without changing the HTTP contract.
 

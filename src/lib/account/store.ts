@@ -1,7 +1,8 @@
 /**
  * Email/password accounts. JSON file — same persistence pattern as
- * saved-assets. `stripeCustomerId` is reserved for later Checkout link
- * by email. Do not enable billing here.
+ * saved-assets. Stripe Checkout links `stripeCustomerId` (`cus_…`) on
+ * the same account email. Usage + subscription status live here so
+ * logged-in counters survive devices.
  *
  * The file store reloads from disk on every read/write so sign-in and
  * sign-up (separate Vercel functions, or two Node processes on a shared
@@ -11,15 +12,38 @@
 
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
+import {
+  emptyUsage,
+  isSubscriptionEntitled,
+  mergeUsage,
+  normalizeUsage,
+  type DeviceUsage,
+} from "../billing/limits.ts";
 import { timingSafeEqualHex } from "./passwords.ts";
 import { newAccountId } from "./session.ts";
+
+export type AccountUsage = DeviceUsage;
+
+export type AccountBillingPatch = {
+  stripeCustomerId?: string | null;
+  stripeSubscriptionId?: string | null;
+  subscriptionStatus?: string | null;
+  cancelAtPeriodEnd?: boolean;
+  currentPeriodEnd?: string | null;
+  usage?: DeviceUsage;
+};
 
 export type AccountRecord = {
   id: string;
   email: string;
   passwordHash: string;
-  /** Reserved. Stripe Checkout later sets `cus_…` on this same email. */
+  /** Stripe Customer id (`cus_…`) linked to this same email. */
   stripeCustomerId: string | null;
+  stripeSubscriptionId: string | null;
+  subscriptionStatus: string | null;
+  cancelAtPeriodEnd: boolean;
+  currentPeriodEnd: string | null;
+  usage: DeviceUsage;
   createdAt: string;
   updatedAt: string;
   passwordResetTokenHash?: string | null;
@@ -30,6 +54,10 @@ export type PublicAccount = {
   id: string;
   email: string;
   stripeCustomerId: string | null;
+  subscribed: boolean;
+  subscriptionStatus: string | null;
+  cancelAtPeriodEnd: boolean;
+  currentPeriodEnd: string | null;
 };
 
 export function toPublicAccount(row: AccountRecord): PublicAccount {
@@ -37,16 +65,29 @@ export function toPublicAccount(row: AccountRecord): PublicAccount {
     id: row.id,
     email: row.email,
     stripeCustomerId: row.stripeCustomerId,
+    subscribed: isSubscriptionEntitled(row),
+    subscriptionStatus: row.subscriptionStatus,
+    cancelAtPeriodEnd: row.cancelAtPeriodEnd,
+    currentPeriodEnd: row.currentPeriodEnd,
   };
 }
 
 export interface AccountStore {
   findByEmail(email: string): Promise<AccountRecord | null>;
   findById(id: string): Promise<AccountRecord | null>;
+  findByStripeCustomerId(customerId: string): Promise<AccountRecord | null>;
   create(input: {
     email: string;
     passwordHash: string;
   }): Promise<AccountRecord>;
+  updateBilling(
+    id: string,
+    patch: AccountBillingPatch,
+  ): Promise<AccountRecord | null>;
+  mergeDeviceUsage(
+    id: string,
+    device: DeviceUsage,
+  ): Promise<AccountRecord | null>;
   updatePasswordHash(id: string, passwordHash: string): Promise<AccountRecord | null>;
   setPasswordReset(
     id: string,
@@ -89,12 +130,62 @@ export class MemoryAccountStore implements AccountStore {
       email: emailKey(input.email),
       passwordHash: input.passwordHash,
       stripeCustomerId: null,
+      stripeSubscriptionId: null,
+      subscriptionStatus: null,
+      cancelAtPeriodEnd: false,
+      currentPeriodEnd: null,
+      usage: emptyUsage(),
       createdAt: stamp,
       updatedAt: stamp,
       passwordResetTokenHash: null,
       passwordResetExpiresAt: null,
     };
     this.records.push(row);
+    return row;
+  }
+
+  async findByStripeCustomerId(customerId: string): Promise<AccountRecord | null> {
+    const key = customerId.trim();
+    if (!key) return null;
+    return this.records.find((row) => row.stripeCustomerId === key) ?? null;
+  }
+
+  async updateBilling(
+    id: string,
+    patch: AccountBillingPatch,
+  ): Promise<AccountRecord | null> {
+    const row = await this.findById(id);
+    if (!row) return null;
+    if (patch.stripeCustomerId !== undefined) {
+      row.stripeCustomerId = patch.stripeCustomerId;
+    }
+    if (patch.stripeSubscriptionId !== undefined) {
+      row.stripeSubscriptionId = patch.stripeSubscriptionId;
+    }
+    if (patch.subscriptionStatus !== undefined) {
+      row.subscriptionStatus = patch.subscriptionStatus;
+    }
+    if (patch.cancelAtPeriodEnd !== undefined) {
+      row.cancelAtPeriodEnd = patch.cancelAtPeriodEnd;
+    }
+    if (patch.currentPeriodEnd !== undefined) {
+      row.currentPeriodEnd = patch.currentPeriodEnd;
+    }
+    if (patch.usage) {
+      row.usage = normalizeUsage(patch.usage);
+    }
+    row.updatedAt = new Date().toISOString();
+    return row;
+  }
+
+  async mergeDeviceUsage(
+    id: string,
+    device: DeviceUsage,
+  ): Promise<AccountRecord | null> {
+    const row = await this.findById(id);
+    if (!row) return null;
+    row.usage = mergeUsage(row.usage, normalizeUsage(device));
+    row.updatedAt = new Date().toISOString();
     return row;
   }
 
@@ -182,6 +273,33 @@ export class JsonFileAccountStore extends MemoryAccountStore {
     return super.findById(id);
   }
 
+  override async findByStripeCustomerId(
+    customerId: string,
+  ): Promise<AccountRecord | null> {
+    this.hydrate();
+    return super.findByStripeCustomerId(customerId);
+  }
+
+  override async updateBilling(
+    id: string,
+    patch: AccountBillingPatch,
+  ): Promise<AccountRecord | null> {
+    this.hydrate();
+    const row = await super.updateBilling(id, patch);
+    if (row) this.persist();
+    return row;
+  }
+
+  override async mergeDeviceUsage(
+    id: string,
+    device: DeviceUsage,
+  ): Promise<AccountRecord | null> {
+    this.hydrate();
+    const row = await super.mergeDeviceUsage(id, device);
+    if (row) this.persist();
+    return row;
+  }
+
   override async create(input: {
     email: string;
     passwordHash: string;
@@ -243,10 +361,28 @@ function loadAccounts(filePath: string): AccountRecord[] {
   try {
     const parsed = JSON.parse(readFileSync(filePath, "utf8")) as unknown;
     if (!Array.isArray(parsed)) return [];
-    return parsed.filter(isAccountRecord);
+    return parsed.filter(isAccountRecord).map(hydrateAccountRecord);
   } catch {
     return [];
   }
+}
+
+function hydrateAccountRecord(value: AccountRecord): AccountRecord {
+  return {
+    ...value,
+    stripeCustomerId:
+      typeof value.stripeCustomerId === "string" ? value.stripeCustomerId : null,
+    stripeSubscriptionId:
+      typeof value.stripeSubscriptionId === "string"
+        ? value.stripeSubscriptionId
+        : null,
+    subscriptionStatus:
+      typeof value.subscriptionStatus === "string" ? value.subscriptionStatus : null,
+    cancelAtPeriodEnd: Boolean(value.cancelAtPeriodEnd),
+    currentPeriodEnd:
+      typeof value.currentPeriodEnd === "string" ? value.currentPeriodEnd : null,
+    usage: normalizeUsage(value.usage),
+  };
 }
 
 function isAccountRecord(value: unknown): value is AccountRecord {

@@ -4,10 +4,10 @@ import { createCustomerPortalSession } from "@/lib/stripe/billing";
 export const dynamic = "force-dynamic";
 
 /**
- * Stripe Customer Portal stub. Friends beta keeps Checkout off —
- * this always returns 501 until billing is enabled.
+ * Stripe Customer Portal for manage / cancel-at-period-end.
+ * Soft-fails without STRIPE_SECRET_KEY (501). Requires Account session.
  */
-export async function POST() {
-  const { result, status } = await createCustomerPortalSession();
+export async function POST(request: Request) {
+  const { result, status } = await createCustomerPortalSession(request);
   return NextResponse.json(result, { status });
 }

@@ -5,6 +5,7 @@ import { IBM_Plex_Mono, Source_Sans_3, Source_Serif_4 } from "next/font/google";
 import { AppHeader } from "@/components/AppHeader";
 import { AppFooter } from "@/components/AppFooter";
 import { AccountSessionProvider } from "@/components/AccountSession";
+import { BillingProvider } from "@/components/BillingProvider";
 import { FriendsBetaBanner } from "@/components/FriendsBetaBanner";
 import { ACCOUNT_COOKIE, verifyAccountCookie } from "@/lib/account/session";
 import { getAccountStore, toPublicAccount } from "@/lib/account/store";
@@ -68,10 +69,12 @@ export default async function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-paper text-ink font-sans">
         <AccountSessionProvider initialAccount={initialAccount}>
-          <AppHeader />
-          <FriendsBetaBanner />
-          <div className="flex-1">{children}</div>
-          <AppFooter />
+          <BillingProvider>
+            <AppHeader />
+            <FriendsBetaBanner />
+            <div className="flex-1">{children}</div>
+            <AppFooter />
+          </BillingProvider>
         </AccountSessionProvider>
       </body>
     </html>

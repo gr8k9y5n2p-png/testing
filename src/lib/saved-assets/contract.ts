@@ -5,11 +5,11 @@
  *
  * Auth required: email/password Account session cookie `aftertax_account`
  * (`acct_<uuid>.<hmac>`), issued on sign-up / sign-in. Saved-assets
- * requests without a session are 401. Stripe Checkout later sets
+ * requests without a session are 401. Stripe Checkout sets
  * `stripeCustomerId` (`cus_…`) on the same account email.
  *
  * Every row is scoped to that account id. Cross-account get/update/delete
- * is 404 (no existence leak). Soft-wall / Checkout stay off.
+ * is 404 (no existence leak). Soft-wall / Checkout do not gate Save/Open.
  */
 
 export const SAVED_ASSETS_API_PATH = "/api/saved-assets" as const;
@@ -91,5 +91,5 @@ export const SAVED_ASSETS_CONTRACT = {
   portfolioPayloadVersion: PORTFOLIO_PAYLOAD_VERSION,
   accountCookie: "aftertax_account",
   auth:
-    "Email/password Account session required. Cookie aftertax_account. stripeCustomerId reserved for Checkout link by email.",
+    "Email/password Account session required. Cookie aftertax_account. stripeCustomerId linked by Checkout on the same email.",
 } as const;

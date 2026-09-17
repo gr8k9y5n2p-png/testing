@@ -1,5 +1,19 @@
-import { STRIPE } from "@/lib/copy";
-import { checkoutUrls } from "@/lib/data-api/config";
+import { checkoutUrls } from "../data-api/config.ts";
+import { readAccountIdFromRequest } from "../account/session.ts";
+import { getAccountStore } from "../account/store.ts";
+import {
+  BILLING_NOT_CONFIGURED,
+  BILLING_SIGN_IN,
+} from "./billing-copy.ts";
+import { createStripeClient } from "./client.ts";
+import {
+  STRIPE_DEFAULTS,
+  checkoutIntegrationId,
+  stripePriceId,
+  stripeProductId,
+} from "./config.ts";
+import { ensureStripeCustomer } from "./customers.ts";
+import { applyCheckoutCompleted } from "./webhook.ts";
 
 export type CheckoutStub = {
   stub: true;
@@ -10,6 +24,7 @@ export type CheckoutStub = {
   account_id: string;
   success_url: string;
   cancel_url: string;
+  needs_account?: boolean;
 };
 
 export type CheckoutLive = {
@@ -23,80 +38,134 @@ export type CheckoutLive = {
 
 export type CheckoutResult = CheckoutStub | CheckoutLive;
 
+function urlsWithSession(): { success_url: string; cancel_url: string } {
+  const urls = checkoutUrls();
+  const joiner = urls.success_url.includes("?") ? "&" : "?";
+  return {
+    success_url: `${urls.success_url}${joiner}session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: urls.cancel_url,
+  };
+}
+
+function stubResult(
+  detail: string,
+  extra: Partial<CheckoutStub> = {},
+): CheckoutStub {
+  return {
+    stub: true,
+    detail,
+    price_id: stripePriceId(),
+    product_id: stripeProductId(),
+    account_id: STRIPE_DEFAULTS.accountId,
+    ...urlsWithSession(),
+    ...extra,
+  };
+}
+
 /**
  * Aftertax website owns Checkout Session creation (server-side).
- * Test mode comes later — do not block on live keys. Without STRIPE_SECRET_KEY
- * the funnel still works and this returns a stub.
+ * Without STRIPE_SECRET_KEY this returns 501 and the funnel still works.
  */
-export async function createCheckoutSession(): Promise<{
+export async function createCheckoutSession(
+  request?: Request,
+): Promise<{
   result: CheckoutResult;
   status: number;
 }> {
-  const priceId = process.env.STRIPE_PRICE_ID?.trim() || STRIPE.priceId;
-  const secret = process.env.STRIPE_SECRET_KEY?.trim();
-  const urls = checkoutUrls();
+  const priceId = stripePriceId();
+  const urls = urlsWithSession();
+  const stripe = createStripeClient();
 
-  if (!secret) {
+  if (!stripe) {
     return {
       status: 501,
-      result: {
-        stub: true,
-        detail:
-          "Stripe Checkout is not configured. Test mode comes later; the funnel works without live keys.",
-        price_id: priceId,
-        product_id: STRIPE.productId,
-        account_id: STRIPE.accountId,
-        ...urls,
-      },
+      result: stubResult(BILLING_NOT_CONFIGURED),
     };
   }
 
-  const body = new URLSearchParams();
-  body.set("mode", "subscription");
-  body.set("line_items[0][price]", priceId);
-  body.set("line_items[0][quantity]", "1");
-  body.set("success_url", urls.success_url);
-  body.set("cancel_url", urls.cancel_url);
+  if (!request) {
+    return {
+      status: 401,
+      result: stubResult(BILLING_SIGN_IN, { needs_account: true }),
+    };
+  }
 
-  const response = await fetch("https://api.stripe.com/v1/checkout/sessions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${secret}`,
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body,
-  });
+  const accountId = readAccountIdFromRequest(request);
+  const store = getAccountStore();
+  const account = accountId ? await store.findById(accountId) : null;
+  if (!account) {
+    return {
+      status: 401,
+      result: stubResult(BILLING_SIGN_IN, { needs_account: true }),
+    };
+  }
 
-  const payload = (await response.json()) as {
-    id?: string;
-    url?: string;
-    error?: { message?: string };
-  };
+  try {
+    const customerId = await ensureStripeCustomer(stripe, store, account);
+    const session = await stripe.checkout.sessions.create({
+      mode: "subscription",
+      customer: customerId,
+      client_reference_id: account.id,
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: urls.success_url,
+      cancel_url: urls.cancel_url,
+      metadata: { accountId: account.id },
+      subscription_data: { metadata: { accountId: account.id } },
+      integration_identifier: checkoutIntegrationId(),
+    });
 
-  if (!response.ok || !payload.url || !payload.id) {
+    if (!session.url || !session.id) {
+      return {
+        status: 502,
+        result: stubResult(
+          "Stripe Checkout Session creation failed. Search and illustrate still work.",
+        ),
+      };
+    }
+
+    return {
+      status: 200,
+      result: {
+        stub: false,
+        url: session.url,
+        session_id: session.id,
+        price_id: priceId,
+        ...urls,
+      },
+    };
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Stripe Checkout Session creation failed.";
     return {
       status: 502,
-      result: {
-        stub: true,
-        detail:
-          payload.error?.message ??
-          "Stripe Checkout Session creation failed. The mocked demo can still run without a live session.",
-        price_id: priceId,
-        product_id: STRIPE.productId,
-        account_id: STRIPE.accountId,
-        ...urls,
-      },
+      result: stubResult(message),
     };
   }
+}
 
-  return {
-    status: 200,
-    result: {
-      stub: false,
-      url: payload.url,
-      session_id: payload.id,
-      price_id: priceId,
-      ...urls,
-    },
-  };
+export async function confirmCheckoutSession(
+  request: Request,
+  sessionId: string,
+): Promise<{ ok: boolean; detail: string; status: number }> {
+  const stripe = createStripeClient();
+  if (!stripe) {
+    return { ok: false, detail: BILLING_NOT_CONFIGURED, status: 501 };
+  }
+  const id = sessionId.trim();
+  if (!id.startsWith("cs_")) {
+    return { ok: false, detail: "Missing Checkout Session id.", status: 400 };
+  }
+  try {
+    const session = await stripe.checkout.sessions.retrieve(id, {
+      expand: ["subscription", "customer"],
+    });
+    await applyCheckoutCompleted(getAccountStore(), session);
+    return { ok: true, detail: "Subscription confirmed.", status: 200 };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Could not confirm Checkout.";
+    return { ok: false, detail: message, status: 502 };
+  }
 }

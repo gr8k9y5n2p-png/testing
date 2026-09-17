@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getHighlights } from "@/data/queries";
 import { mergeFundLists, overlayWeeklyNav } from "@/data/hydrate-funds";
@@ -10,14 +10,14 @@ import { DemoBanner } from "@/components/DemoBanner";
 import { HighlightsSection } from "@/components/HighlightsSection";
 import { Hero } from "@/components/landing/Hero";
 import { IllustratePanel } from "@/components/illustrate/IllustratePanel";
-import { PaywallDialog } from "@/components/paywall/PaywallDialog";
+import { SoftWall } from "@/components/paywall/SoftWall";
 import { CoverageProvider, useCoverage } from "@/components/coverage/CoverageProvider";
 import { Disclaimer } from "@/components/Disclaimer";
 import { NoticeToast } from "@/components/NoticeToast";
+import { useBilling } from "@/components/BillingProvider";
 import { STRIPE } from "@/lib/copy";
 import type { FundFamilyCoverage } from "@/lib/coverage";
 import { reportCoverageGap } from "@/lib/coverage";
-import { isFreemiumDisabled, useFreemium } from "@/lib/freemium";
 import {
   FUND_HISTORY_HASH,
   resolveFundView,
@@ -39,7 +39,10 @@ function scrollToId(id: string) {
 
 export type CheckoutReturn = "success" | "cancel" | null;
 
-const CHECKOUT_SUCCESS_MESSAGE = `Checkout is not live yet. Test mode comes later (price ${STRIPE.priceId}). You’ll stay in this search flow.`;
+const CHECKOUT_SUCCESS_MESSAGE =
+  "Confirming your Aftertax subscription. You’ll stay in this search flow.";
+const CHECKOUT_CANCEL_MESSAGE =
+  "Checkout canceled. Search, Compare, and Request a fund still work.";
 
 export function AftertaxApp({
   funds,
@@ -47,6 +50,7 @@ export function AftertaxApp({
   facets,
   coverageFamilies,
   checkout = null,
+  checkoutSessionId = null,
   ticker = null,
 }: {
   funds: FundEstimateView[];
@@ -54,6 +58,7 @@ export function AftertaxApp({
   facets: Facets;
   coverageFamilies: FundFamilyCoverage[];
   checkout?: CheckoutReturn;
+  checkoutSessionId?: string | null;
   /** Portfolio review drill-in. Preselects this ticker's Upcoming + dollar illustration. */
   ticker?: string | null;
 }) {
@@ -64,6 +69,7 @@ export function AftertaxApp({
         highlights={highlights}
         facets={facets}
         checkout={checkout}
+        checkoutSessionId={checkoutSessionId}
         ticker={ticker}
       />
     </CoverageProvider>
@@ -75,12 +81,14 @@ function AftertaxAppInner({
   highlights,
   facets,
   checkout = null,
+  checkoutSessionId = null,
   ticker = null,
 }: {
   funds: FundEstimateView[];
   highlights: HighlightSets;
   facets: Facets;
   checkout?: CheckoutReturn;
+  checkoutSessionId?: string | null;
   ticker?: string | null;
 }) {
   const router = useRouter();
@@ -97,11 +105,12 @@ function AftertaxAppInner({
     undefined,
   );
   const selected = picked !== undefined ? picked : focusedFund;
-  const [paywallOpen, setPaywallOpen] = useState(
-    checkout === "cancel" && !isFreemiumDisabled(),
-  );
   const [notice, setNotice] = useState<string | null>(
-    checkout === "success" ? CHECKOUT_SUCCESS_MESSAGE : null,
+    checkout === "success"
+      ? CHECKOUT_SUCCESS_MESSAGE
+      : checkout === "cancel"
+        ? CHECKOUT_CANCEL_MESSAGE
+        : null,
   );
   const onNotice = useCallback((message: string) => {
     setNotice(message);
@@ -109,8 +118,9 @@ function AftertaxAppInner({
   const dismissNotice = useCallback(() => {
     setNotice(null);
   }, []);
-  const freemium = useFreemium();
+  const billing = useBilling();
   const coverage = useCoverage();
+  const recordedUrlTicker = useRef<string | null>(null);
 
   useEffect(() => {
     const id = window.location.hash.replace(/^#/, "");
@@ -186,12 +196,42 @@ function AftertaxAppInner({
     scrollToId("illustrate");
   }, [coverage, focusedFund, ticker]);
 
+  useEffect(() => {
+    if (checkout !== "success" || !checkoutSessionId) return;
+    let cancelled = false;
+    void fetch("/api/checkout", {
+      method: "PUT",
+      credentials: "same-origin",
+      headers: { "content-type": "application/json", accept: "application/json" },
+      body: JSON.stringify({ session_id: checkoutSessionId }),
+    })
+      .then((response) => response.json())
+      .then((body: { ok?: boolean; detail?: string }) => {
+        if (cancelled) return;
+        void billing.refresh();
+        setNotice(
+          body.ok
+            ? "You’re subscribed. Manage or cancel from Account."
+            : `${body.detail ?? CHECKOUT_SUCCESS_MESSAGE} Price ${STRIPE.priceId}.`,
+        );
+      })
+      .catch(() => {
+        if (!cancelled) void billing.refresh();
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [billing, checkout, checkoutSessionId]);
+
+  useEffect(() => {
+    if (!ticker || !focusedFund) return;
+    if (recordedUrlTicker.current === focusedFund.ticker) return;
+    recordedUrlTicker.current = focusedFund.ticker;
+    billing.recordSearch();
+  }, [billing, focusedFund, ticker]);
+
   function selectFund(fund: FundEstimateView) {
-    const result = freemium.trySearch(fund.ticker);
-    if (!result.allowed) {
-      setPaywallOpen(true);
-      return;
-    }
+    billing.recordSearch();
     const catalog = book.find(
       (row) =>
         row.ticker.trim().toUpperCase() === fund.ticker.trim().toUpperCase(),
@@ -214,43 +254,22 @@ function AftertaxAppInner({
     setPicked(null);
   }
 
-  async function unlock() {
-    try {
-      const response = await fetch("/api/checkout", { method: "POST" });
-      const body = (await response.json()) as {
-        url?: string;
-        detail?: string;
-        price_id?: string;
-      };
-      if (body.url) {
-        window.location.assign(body.url);
-        return;
-      }
-      setPaywallOpen(false);
-      setNotice(
-        `${body.detail ?? "Checkout is stubbed."} Price ${body.price_id ?? STRIPE.priceId}.`,
-      );
-    } catch {
-      setNotice("Checkout is unavailable in this demo.");
-    }
-  }
-
   return (
     <>
       <Hero
         funds={book}
         selected={selected}
-        remaining={freemium.remaining}
-        unlimited={freemium.unlimited}
+        remaining={billing.remaining.searches}
+        unlimited={billing.unlimited}
         onSelect={selectFund}
         onClear={clearFund}
         onNotice={onNotice}
       />
 
       {selected ? (
-        <div className="mb-10">
+        <SoftWall active={billing.walls.search} surface="search" className="mb-10">
           <IllustratePanel selected={selected} />
-        </div>
+        </SoftWall>
       ) : null}
 
       <section
@@ -282,25 +301,19 @@ function AftertaxAppInner({
             highlights={liveUpcoming.length ? getHighlights(book, 5) : highlights}
             onSelect={selectFund}
           />
-          <Dashboard
-            funds={book}
-            facets={facets}
-            onIllustrate={selectFund}
-            onNotice={onNotice}
-            ticker={selected?.ticker}
-          />
+          <SoftWall active={billing.walls.search} surface="search">
+            <Dashboard
+              funds={book}
+              facets={facets}
+              onIllustrate={selectFund}
+              onNotice={onNotice}
+              ticker={selected?.ticker}
+            />
+          </SoftWall>
         </div>
       </section>
 
       <Disclaimer className="mt-8 text-xs leading-relaxed text-muted" />
-      <PaywallDialog
-        open={paywallOpen && !freemium.bypass}
-        remaining={freemium.remaining}
-        onClose={() => setPaywallOpen(false)}
-        onUnlock={() => {
-          void unlock();
-        }}
-      />
       <NoticeToast message={notice} onDismiss={dismissNotice} />
     </>
   );

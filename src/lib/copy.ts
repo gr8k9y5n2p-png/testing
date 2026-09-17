@@ -2,7 +2,7 @@
  * Locked GTM copy for Aftertax. Do not paraphrase in the UI.
  * Disclaimer and legal chrome are user-facing. Do not paraphrase.
  */
-export { HOST, PRODUCTION_HOST, STAGING_HOST } from "@/lib/hosts";
+export { HOST, PRODUCTION_HOST, STAGING_HOST } from "./hosts.ts";
 export { CONTACT_EMAIL } from "./legal-copy";
 
 import {
@@ -119,15 +119,30 @@ export const ACCOUNT_HOMEPAGE_LOGIN_TITLE = "Sign in";
 export const ACCOUNT_HOMEPAGE_LOGIN_DETAIL =
   "Email and password. Save lists and portfolios to this account.";
 export const ACCOUNT_STRIPE_RESERVE =
-  "Stripe Checkout later links a Customer to this same email. Billing stays off.";
+  "Stripe Checkout links a Customer to this same account email. Cancel at period end from Manage billing.";
 
-export { TICKER_REQUEST } from "@/lib/data-api/request-ticker";
+export { TICKER_REQUEST } from "./data-api/request-ticker.ts";
 
-export const FREE_SEARCH_LIMIT = 3;
+export {
+  FREE_COMPARE_LIMIT,
+  FREE_PORTFOLIO_LIMIT,
+  FREE_SEARCH_LIMIT,
+} from "./billing/limits.ts";
 
 export function freeSearchLabel(remaining: number): string {
   if (remaining <= 0) return "0 free searches left";
-  if (remaining === 1) return "1 of 3 free searches left";
-  if (remaining === 2) return "2 of 3 free searches left";
-  return `${remaining} of 3 free searches left`;
+  if (remaining === 1) return "1 of 10 free searches left";
+  return `${remaining} of 10 free searches left`;
+}
+
+export function freeCompareLabel(remaining: number): string {
+  if (remaining <= 0) return "0 free compare reports left";
+  if (remaining === 1) return "1 of 3 free compare reports left";
+  return `${remaining} of 3 free compare reports left`;
+}
+
+export function freePortfolioLabel(remaining: number): string {
+  if (remaining <= 0) return "0 free portfolio reviews left";
+  if (remaining === 1) return "1 of 3 free portfolio reviews left";
+  return `${remaining} of 3 free portfolio reviews left`;
 }

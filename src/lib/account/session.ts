@@ -8,9 +8,8 @@
  *
  * Issued on sign-up / sign-in only. Not minted anonymously.
  *
- * Stripe Checkout later (Eric / website billing — do not implement here):
- * persist `stripeCustomerId` on the same account email (`cus_…`). Do not
- * gate Save/Open on Checkout. Soft-wall stays off.
+ * Stripe Checkout links `stripeCustomerId` on the same account email
+ * (`cus_…`). Do not gate Save/Open on Checkout. Soft-wall is usage-based.
  */
 
 import { createHmac, timingSafeEqual } from "node:crypto";

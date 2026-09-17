@@ -1,6 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState, type MutableRefObject, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type MutableRefObject, type ReactNode } from "react";
+import { SoftWallCta } from "@/components/paywall/SoftWall";
+import { useBilling } from "@/components/BillingProvider";
+import { freePortfolioLabel } from "@/lib/copy";
+import { portfolioReviewKey } from "@/lib/billing/limits";
 import { CompactDisclaimer } from "@/components/CompactDisclaimer";
 import { NoticeToast, useNoticeToast } from "@/components/NoticeToast";
 import { AllocationColumn } from "@/components/illustrate/portfolio-compare/AllocationColumn";
@@ -141,6 +145,8 @@ export function PortfolioCompare({
   const [navNeeded, setNavNeeded] = useState(false);
   const [loading, setLoading] = useState(true);
   const { notice, onNotice, dismissNotice } = useNoticeToast();
+  const billing = useBilling();
+  const recordedReview = useRef<string | null>(null);
 
   useEffect(() => {
     if (!booksApiRef) return;
@@ -281,6 +287,18 @@ export function PortfolioCompare({
     };
   }, [canFetch, requestKey]);
 
+  const reviewKey = portfolioReviewKey(
+    current.map((holding) => holding.ticker),
+    proposed.map((holding) => holding.ticker),
+  );
+
+  useEffect(() => {
+    if (!result || !canFetch || !reviewKey) return;
+    if (recordedReview.current === reviewKey) return;
+    recordedReview.current = reviewKey;
+    billing.recordPortfolio(reviewKey);
+  }, [billing, canFetch, result, reviewKey]);
+
   const navByTicker = Object.fromEntries(
     [...current, ...proposed]
       .filter((holding) => holding.ticker.trim() && holding.nav != null && holding.nav > 0)
@@ -313,8 +331,11 @@ export function PortfolioCompare({
         )
     : [];
 
+  const wall = billing.walls.portfolio;
+  const moduleBlur = wall ? "pointer-events-none select-none blur-sm" : "";
+
   return (
-    <article className={`portfolio-compare w-full ${className}`}>
+    <article className={`portfolio-compare relative w-full ${className}`}>
       <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-faint">
@@ -324,6 +345,11 @@ export function PortfolioCompare({
           <Heading className="mt-1 font-serif text-3xl tracking-tight text-ink">
             Portfolios
           </Heading>
+          <p className="mt-2 font-mono text-xs text-faint" aria-live="polite">
+            {billing.unlimited
+              ? "Unlimited portfolio reviews"
+              : freePortfolioLabel(billing.remaining.portfolios)}
+          </p>
         </div>
         <div className="flex flex-wrap items-end gap-3">
           {headerActions}
@@ -400,7 +426,7 @@ export function PortfolioCompare({
           rows: currentUpcomingHoldings,
           headingId: "upcoming-current",
           sideLabel: "Current",
-          gridAreaClass: "lg:[grid-area:upcoming-c]",
+          gridAreaClass: `lg:[grid-area:upcoming-c] ${moduleBlur}`,
           loadingLabel: "Loading current upcoming distributions",
           taxRates: appliedTaxRates,
         })}
@@ -425,13 +451,13 @@ export function PortfolioCompare({
           rows: proposedUpcomingHoldings,
           headingId: "upcoming-proposed",
           sideLabel: "Proposed",
-          gridAreaClass: "lg:[grid-area:upcoming-p]",
+          gridAreaClass: `lg:[grid-area:upcoming-p] ${moduleBlur}`,
           loadingLabel: "Loading proposed upcoming distributions",
           taxRates: appliedTaxRates,
         })}
       </div>
 
-      <div className="mt-4">
+      <div className={`mt-4 ${moduleBlur}`}>
         {!canFetch ? null : loading && !result ? (
           <div
             className="h-56 animate-pulse rounded-2xl border border-line bg-surface"
@@ -443,7 +469,7 @@ export function PortfolioCompare({
         ) : null}
       </div>
 
-      <div className="mt-4">
+      <div className={`mt-4 ${moduleBlur}`}>
         {!canFetch ? (
           <p className="rounded-2xl border border-dashed border-line-strong bg-surface px-5 py-4 text-sm text-muted">
             Add at least one weighted holding with + Add holding.
@@ -473,6 +499,7 @@ export function PortfolioCompare({
         ) : null}
       </div>
 
+      {wall ? <SoftWallCta surface="portfolio" /> : null}
       <p className="mt-5 text-center text-[10px] leading-relaxed text-faint">
         Weights × Portfolio Value → dollars. Missing or uncovered values stay
         N/A, Awaiting Estimate, or Add to universe.
