@@ -85,6 +85,7 @@ from app.sources.ninth_tier import (
     BrandesSource,
     FamSource,
     HennessySource,
+    KineticsSource,
 )
 from app.sources.third_tier import (
     AllianceBernsteinSource,
@@ -985,8 +986,23 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # Honest pin remasured on WAVE AW tip 0e3f805: 4125 → 4141 (+16 MF; ETF
     # 5y unchanged at 758). Still +16 MF vs the previous 4114 → 4130 pin;
     # the extra +11 on tip is AW Kaufmann/Harding, not new AY content.
-    assert digest.funds_with_5y == 4141
-    assert digest.funds_with_5y_mf == 3383
+    # WAVE AZ leftover (existing in-book only): Kinetics leftover No Load /
+    # Advisor A / Advisor C / Institutional Dec 31 2021–2024 N-CSR Financial
+    # Highlights unlock leftover WWWFX / KINAX / KINCX / WWWEX / KGLAX /
+    # KGLCX / WWNPX / KNPAX / KNPCX / KNPYX / KMKNX / KMKAX / KMKCX / KMKYX /
+    # KMDNX / LSHEX / LSHAX / LSHCX / LSHUX already on the 2025 Q4 final paid
+    # PDF. Small Cap KSCOX / KSOAX / KSOCX / KSCYX 2022 is official year-depth
+    # only (issuer both-dash). Does not redo AF–AY (especially AY Hennessy
+    # Oct 31, AW Federated Kaufmann / SDG + Harding, AX FAM / Fenimore, AV
+    # Third Avenue, AU LSV, AT AMG Frontier / GW&K, AQ Victory I/II, AS
+    # Virtus Asset Trust, AR Homestead). Preferred William Blair leftover
+    # beyond remasured walls, Allspring leftover FYE July 31, First Eagle
+    # GRA-Smid 2021, Calamos CAISX 2021 inception, GuideStone index 2021,
+    # Beacon leftover all-dash years, and Boston Partners FYE Aug 31
+    # remasured as walls. Honest pin remasured on WAVE AY tip d0d7b3b:
+    # 4141 → 4160 (+19 MF; ETF 5y unchanged at 758).
+    assert digest.funds_with_5y == 4160
+    assert digest.funds_with_5y_mf == 3402
     assert digest.funds_with_5y_etf == 758
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
@@ -14201,3 +14217,291 @@ def test_wave_ay_heroes_are_searchable(client: TestClient) -> None:
     ]
     assert wisnx_2022 == []
 
+
+WAVE_AZ_KINETICS_LEFTOVER_5Y = (
+    "WWWFX",
+    "KINAX",
+    "KINCX",
+    "WWWEX",
+    "KGLAX",
+    "KGLCX",
+    "WWNPX",
+    "KNPAX",
+    "KNPCX",
+    "KNPYX",
+    "KMKNX",
+    "KMKAX",
+    "KMKCX",
+    "KMKYX",
+    "KMDNX",
+    "LSHEX",
+    "LSHAX",
+    "LSHCX",
+    "LSHUX",
+)
+WAVE_AZ_KINETICS_YEAR_DEPTH = ("KSCOX", "KSOAX", "KSOCX", "KSCYX")
+
+
+def test_wave_az_kinetics_leftover_dec31_2021_2024_fills_5y() -> None:
+    records = KineticsSource().fetch(mode="fixture").records
+    wwwfx_2024_oi = next(
+        row
+        for row in records
+        if row.ticker == "WWWFX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2024-12-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert wwwfx_2024_oi.amount == Decimal("0.21")
+    wwwfx_2021_cg = next(
+        row
+        for row in records
+        if row.ticker == "WWWFX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2021-12-31"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    )
+    assert wwwfx_2021_cg.amount == Decimal("0.52")
+    wwnpx_2024_oi = next(
+        row
+        for row in records
+        if row.ticker == "WWNPX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2024-12-31"
+        and row.amount is not None
+    )
+    assert wwnpx_2024_oi.amount == Decimal("0.09")
+    knpax_2024_oi = [
+        row
+        for row in records
+        if row.ticker == "KNPAX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2024-12-31"
+        and row.amount is not None
+    ]
+    assert knpax_2024_oi == []
+    knpyx_2024_oi = next(
+        row
+        for row in records
+        if row.ticker == "KNPYX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2024-12-31"
+        and row.amount is not None
+    )
+    assert knpyx_2024_oi.amount == Decimal("0.29")
+    kglax_2024_oi = next(
+        row
+        for row in records
+        if row.ticker == "KGLAX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2024-12-31"
+        and row.amount is not None
+    )
+    assert kglax_2024_oi.amount == Decimal("0.12")
+    kglcx_2024_oi = next(
+        row
+        for row in records
+        if row.ticker == "KGLCX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2024-12-31"
+        and row.amount is not None
+    )
+    assert kglcx_2024_oi.amount == Decimal("0.05")
+    # Class-level — Global Advisor A is not copied from Advisor C.
+    assert kglax_2024_oi.amount != kglcx_2024_oi.amount
+    lshex_2023_cg = next(
+        row
+        for row in records
+        if row.ticker == "LSHEX"
+        and row.estimate_type == EstimateType.total_capital_gains
+        and row.as_of
+        and str(row.as_of) == "2023-12-31"
+        and row.amount is not None
+    )
+    assert lshex_2023_cg.amount == Decimal("1.71")
+    kmdnx_2021_oi = next(
+        row
+        for row in records
+        if row.ticker == "KMDNX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.as_of
+        and str(row.as_of) == "2021-12-31"
+        and row.amount is not None
+    )
+    assert kmdnx_2021_oi.amount == Decimal("0.17")
+    # 2025 stays on the existing Q4 final PDF — not re-emitted from N-CSR.
+    ncsr_late = [
+        row
+        for row in records
+        if row.ticker in WAVE_AZ_KINETICS_LEFTOVER_5Y + WAVE_AZ_KINETICS_YEAR_DEPTH
+        and row.as_of
+        and row.as_of.year == 2025
+        and row.source_url
+        and "annual-report" in row.source_url
+    ]
+    assert ncsr_late == []
+    for ticker in WAVE_AZ_KINETICS_LEFTOVER_5Y:
+        assert set(LOOKBACK_YEARS) <= _paid_lookback_years(records, ticker), ticker
+
+
+def test_wave_az_leftover_walls_stay_unmatched() -> None:
+    kinetics = KineticsSource().fetch(mode="fixture").records
+    # Small Cap leftover 2022 highlights are official dashes on all four classes.
+    for ticker in WAVE_AZ_KINETICS_YEAR_DEPTH:
+        leftover_2022 = [
+            row
+            for row in kinetics
+            if row.ticker == ticker
+            and row.as_of
+            and str(row.as_of) == "2022-12-31"
+            and row.amount is not None
+        ]
+        assert leftover_2022 == [], ticker
+        assert _paid_lookback_years(kinetics, ticker) == {2021, 2023, 2024, 2025}, ticker
+    # Internet leftover 2023–2021 ordinary-income highlights are official dashes.
+    for ticker in ("WWWFX", "KINAX", "KINCX"):
+        leftover_oi = [
+            row
+            for row in kinetics
+            if row.ticker == ticker
+            and row.estimate_type == EstimateType.ordinary_income
+            and row.as_of
+            and row.as_of.year in {2021, 2022, 2023}
+            and row.source_url
+            and "annual-report" in row.source_url
+            and row.amount is not None
+        ]
+        assert leftover_oi == [], ticker
+
+    # Keep sister WAVE AY Hennessy — HFCSX / HFLGX / HFCVX stay 5y on tip.
+    hennessy = HennessySource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(hennessy, "HFCSX")
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(hennessy, "HFLGX")
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(hennessy, "HFCVX")
+    # Do not drop sister WAVE AW Federated Kaufmann — KAUAX stays 5y on tip.
+    federated = FederatedHermesSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(federated, "KAUAX")
+    # Do not drop sister WAVE AX FAM / Fenimore — FAMVX stays 5y on tip.
+    fam = FamSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(fam, "FAMVX")
+    # Do not drop sister WAVE AV Third Avenue — TAVFX stays 5y on tip.
+    third_avenue = ThirdAvenueSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(third_avenue, "TAVFX")
+    # Do not redo WAVE AU LSV I/Investor — LSVEX stays 5y on tip.
+    lsv = LsvSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(lsv, "LSVEX")
+    # Do not redo WAVE AT AMG Frontier / GW&K SMID — YACKX stays 5y.
+    amg = AmgSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(amg, "YACKX")
+    # Do not redo WAVE AQ Victory I/II — VETAX stays 5y.
+    victory = VictorySource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(victory, "VETAX")
+    # Do not redo WAVE AS Virtus Asset Trust — STVTX stays 5y.
+    virtus = VirtusSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(virtus, "STVTX")
+    # Do not redo WAVE AR Homestead — HOVLX stays 5y.
+    homestead = HomesteadSource().fetch(mode="fixture").records
+    assert set(LOOKBACK_YEARS) <= _paid_lookback_years(homestead, "HOVLX")
+
+    # Preferred leftover walls stay unmatched (not invented).
+    william_blair = WilliamBlairSource().fetch(mode="fixture").records
+    assert 2023 not in _paid_lookback_years(william_blair, "LCGFX")
+    assert 2024 not in _paid_lookback_years(william_blair, "WESNX")
+    allspring = AllspringSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(allspring, "WDSAX")
+    first_eagle = FirstEagleSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(first_eagle, "FERAX")
+    calamos = CalamosSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(calamos, "CAISX")
+    guidestone = GuidestoneSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(guidestone, "GEIZX")
+    beacon = AmericanBeaconSource().fetch(mode="fixture").records
+    assert 2023 not in _paid_lookback_years(beacon, "SFMIX")
+    assert 2024 not in _paid_lookback_years(beacon, "SSIJX")
+    assert 2025 not in _paid_lookback_years(beacon, "SPFYX")
+    boston = BostonPartnersSource().fetch(mode="fixture").records
+    assert 2021 not in _paid_lookback_years(boston, "BPAIX")
+
+
+def test_wave_az_heroes_are_searchable(client: TestClient) -> None:
+    fetched = client.post(
+        "/ingest/fetch", json={"fund_family": "kinetics", "mode": "fixture"}
+    )
+    assert fetched.status_code == 200, fetched.text
+    assert fetched.json()["created"] > 0
+
+    for ticker in ("WWWFX", "WWNPX", "LSHEX", "KMDNX"):
+        body = client.get("/funds", params={"q": ticker}).json()
+        tickers = [item["ticker"] for item in body["items"]]
+        assert ticker in tickers, f"{ticker} missing from GET /funds?q={ticker}: {tickers[:8]}"
+
+    wwwfx = client.get(
+        "/distributions",
+        params={"ticker": "WWWFX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    wwwfx_2024 = [
+        Decimal(row["amount"])
+        for row in wwwfx["items"]
+        if row.get("ticker") == "WWWFX"
+        and row.get("estimate_type") == "ordinary_income"
+        and str(row.get("as_of") or "").startswith("2024-12-31")
+    ]
+    assert Decimal("0.21") in wwwfx_2024
+    wwwfx_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in wwwfx["items"]
+        if row.get("ticker") == "WWWFX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= wwwfx_years
+
+    wwnpx = client.get(
+        "/distributions",
+        params={"ticker": "WWNPX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    wwnpx_2024 = [
+        Decimal(row["amount"])
+        for row in wwnpx["items"]
+        if row.get("ticker") == "WWNPX"
+        and row.get("estimate_type") == "total_capital_gains"
+        and str(row.get("as_of") or "").startswith("2024-12-31")
+    ]
+    assert Decimal("3.86") in wwnpx_2024
+    wwnpx_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in wwnpx["items"]
+        if row.get("ticker") == "WWNPX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= wwnpx_years
+
+    # Keep sister WAVE AY Hennessy searchable after the additive rebase.
+    hennessy = client.post(
+        "/ingest/fetch", json={"fund_family": "hennessy", "mode": "fixture"}
+    )
+    assert hennessy.status_code == 200, hennessy.text
+    hfcsx = client.get(
+        "/distributions",
+        params={"ticker": "HFCSX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    hfcsx_2021 = [
+        Decimal(row["amount"])
+        for row in hfcsx["items"]
+        if row.get("ticker") == "HFCSX"
+        and row.get("estimate_type") == "total_capital_gains"
+        and str(row.get("as_of") or "").startswith("2021-10-31")
+    ]
+    assert Decimal("22.03") in hfcsx_2021
+    hfcsx_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in hfcsx["items"]
+        if row.get("ticker") == "HFCSX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= hfcsx_years

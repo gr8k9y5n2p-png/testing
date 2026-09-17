@@ -334,5 +334,9 @@ def test_fixture_book_lookback_stays_official_only() -> None:
     # WAVE AY leftover: Hennessy leftover Investor / Institutional Oct 31
     # 2021–2024 N-CSR +16 MF. Honest pin remasured on WAVE AW tip
     # 0e3f805: 4125 → 4141 (+16 MF; ETF 5y unchanged at 758).
-    assert digest.funds_with_5y == 4141
+    # WAVE AZ leftover: Kinetics leftover No Load / Advisor A / Advisor C /
+    # Institutional Dec 31 2021–2024 N-CSR +19 MF. Small Cap 2022 official
+    # both-dash stays 4y. Honest pin remasured on WAVE AY tip d0d7b3b:
+    # 4141 → 4160 (+19 MF; ETF 5y unchanged at 758).
+    assert digest.funds_with_5y == 4160
     assert digest.book_funds >= 7200

@@ -4688,6 +4688,38 @@ def test_ninth_tier_fixtures() -> None:
     )
     assert wwnpx.amount == Decimal("8.68572")
 
+    leftover = parse_distribution_html(
+        (ROOT / "kinetics" / "leftover_ncsr_2021_2024_wave_az.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url="https://kineticsfunds.com/files/annual-report",
+        fund_family="Kinetics",
+    )
+    leftover_wwwfx_2024 = next(
+        r
+        for r in leftover
+        if r.ticker == "WWWFX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.as_of
+        and str(r.as_of) == "2024-12-31"
+    )
+    assert leftover_wwwfx_2024.amount == Decimal("0.21")
+    leftover_wwnpx_2024 = next(
+        r
+        for r in leftover
+        if r.ticker == "WWNPX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and r.as_of
+        and str(r.as_of) == "2024-12-31"
+    )
+    assert leftover_wwnpx_2024.amount == Decimal("3.86")
+    leftover_2025 = [
+        r
+        for r in leftover
+        if r.as_of and r.as_of.year == 2025
+    ]
+    assert leftover_2025 == []
+
 
 def test_tenth_tier_fixtures() -> None:
     lazard = parse_distribution_html(

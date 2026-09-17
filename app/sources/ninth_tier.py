@@ -470,11 +470,25 @@ class KineticsSource(HtmlTableSource):
         "Internet No Load WWWFX ST $0.02951 / LT $1.62421; "
         "Spin-Off and Corporate Restructuring No Load LSHEX LT $2.64639). "
         "Record 12/29/2025; ex/pay 12/30/2025. Full printed share-class book. "
-        "Published $0.00 stored."
+        "Published $0.00 stored. "
+        "Official 5y WAVE AZ leftover (existing in-book only): Kinetics Mutual "
+        "Funds, Inc. FYE December 31 N-CSR Financial Highlights unlock leftover "
+        "2021–2024 on the 2025 Q4 final paid book (WWWFX / KINAX / KINCX / WWWEX "
+        "/ KGLAX / KGLCX / WWNPX / KNPAX / KNPCX / KNPYX / KSCOX / KSOAX / "
+        "KSOCX / KSCYX / KMKNX / KMKAX / KMKCX / KMKYX / KMDNX / LSHEX / LSHAX "
+        "/ LSHCX / LSHUX). Calendar-safe as_of 12/31. Class-level No Load / "
+        "Advisor A / Advisor C / Institutional — never sibling-copied. Income is "
+        "ordinary income; net realized gain is unsplit total capital gains. "
+        "Issuer dashes omitted (Internet 2023–2021 OI; Paradigm Advisor A/C OI; "
+        "Small Cap 2022 both-dash years stay 4y; Market Opportunities 2023 CG; "
+        "Spin-Off 2021 CG). 2025 stays on the existing Q4 final PDF. Issuer "
+        "annual report https://kineticsfunds.com/files/annual-report. WAVE AZ "
+        "leftover N-CSR paid history is fixture-only."
     )
     live_limitations = (
         "Year-end book is PDF. Fixture transcribes the official full share-class book. "
-        "Weekly walk hits the family hub (empty/403/PDF-bytes = no-op success)."
+        "Weekly walk hits the family hub (empty/403/PDF-bytes = no-op success). "
+        "Leftover 2021–2024 N-CSR paid history is fixture-only."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -497,5 +511,12 @@ class KineticsSource(HtmlTableSource):
                 live=True,
                 role="estimate",
                 empty_ok=True,
-            )
+            ),
+            PageSpec(
+                name="leftover_ncsr_2021_2024_wave_az",
+                url="https://kineticsfunds.com/files/annual-report",
+                fixture="leftover_ncsr_2021_2024_wave_az.html",
+                live=False,
+                role="history",
+            ),
         ]
