@@ -2046,7 +2046,20 @@ def test_third_tier_fixtures() -> None:
     )
     assert {r.ticker for r in federated_ncsr_ci} == {"SVALX"}
     assert not any(
-        r.ticker in {"SVAAX", "SVACX", "SVAIX", "HLEMX", "HLGZX", "HLIZX", "HLFZX", "RALIX"}
+        r.ticker
+        in {
+            "SVAAX",
+            "SVACX",
+            "SVAIX",
+            "HLEMX",
+            "HLGZX",
+            "HLIZX",
+            "HLFZX",
+            "RALIX",
+            "ALBAX",
+            "ALBCX",
+            "AGIZX",
+        }
         for r in federated_ncsr_ci
     )
 

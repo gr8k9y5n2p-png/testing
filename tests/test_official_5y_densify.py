@@ -1476,10 +1476,11 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # Class R PIORX / PQIRX, CD Lazard R6, CB Open, BY Institutional, BZ
     # Pioneer EI C/Y/K, CA Pioneer Fund / Core Equity C/Y/K, BX Pioneer MCV
     # C/Y/K, BW Rainier RAIIX, BV HMDCX, BU PCGRX, BT Federated SVD A/C/I,
-    # BS PEQIX, BR Grandeur Peak, BQ Pioneer Dec 31 Class A). HLIDX / HLRZX
-    # walls, RALYX, reserved Alger CHUSX / ALGAX / ALSRX / ACAAX, MDT
-    # Balanced FYE July 31, and calendar-unsafe Pioneer leftovers stay
-    # unmatched.
+    # BS PEQIX, BR Grandeur Peak, BQ Pioneer Dec 31 Class A). Sister WAVE CJ
+    # Alger Growth & Income ALBAX / ALBCX / AGIZX stays unmatched / not
+    # re-emitted. HLIDX / HLRZX walls, RALYX, reserved Alger CHUSX / ALGAX /
+    # ALSRX / ACAAX, MDT Balanced FYE July 31, and calendar-unsafe Pioneer
+    # leftovers stay unmatched.
     # Honest pin remasured on WAVE CH tip bd11dd82: 4287 → 4288 (+1 MF; ETF 5y
     # unchanged at 758).
     assert digest.funds_with_5y == 4288
@@ -27056,6 +27057,7 @@ WAVE_CI_BS_DISJOINT = WAVE_BS_PIONEER_LEFTOVER_5Y
 WAVE_CI_BR_DISJOINT = WAVE_BS_BR_DISJOINT
 WAVE_CI_BQ_DISJOINT = WAVE_BQ_PIONEER_LEFTOVER_5Y
 WAVE_CI_AW_HARDING = WAVE_AW_HARDING_LEFTOVER_5Y
+WAVE_CI_CJ_DISJOINT = ("ALBAX", "ALBCX", "AGIZX")
 WAVE_CI_WALLS = ("HLIDX", "HLRZX", "RALYX", "CHUSX", "ALGAX", "ALSRX", "ACAAX")
 WAVE_CI_ALGER_RESERVED = WAVE_BH_ALGER_RESERVED
 WAVE_CI_MDT_JULY31_WALLS = WAVE_BT_MDT_JULY31_WALLS
@@ -27156,6 +27158,7 @@ def test_wave_ci_federated_svalx_leftover_oct31_fills_5y() -> None:
         + WAVE_CI_BY_DISJOINT
         + WAVE_CI_BT_DISJOINT
         + WAVE_CI_AW_HARDING
+        + WAVE_CI_CJ_DISJOINT
         + WAVE_CI_WALLS
         + WAVE_CI_ALGER_RESERVED
         and _wave_ci_source_match(row.source_url)
@@ -27195,6 +27198,7 @@ def test_wave_ci_federated_svalx_leftover_oct31_fills_5y() -> None:
         + WAVE_BG_DWS_LEFTOVER_5Y
         + WAVE_BH_TCW_LEFTOVER_5Y
         + WAVE_CI_ALGER_RESERVED
+        + WAVE_CI_CJ_DISJOINT
         + WAVE_CI_WALLS
         + WAVE_CI_MDT_JULY31_WALLS
     ]
@@ -27291,6 +27295,14 @@ def test_wave_ci_leftover_walls_stay_unmatched() -> None:
             if row.ticker == ticker and _wave_ci_source_match(row.source_url)
         ]
         assert on_ci == [], ticker
+    for ticker in WAVE_CI_CJ_DISJOINT:
+        assert not set(LOOKBACK_YEARS) <= _paid_lookback_years(alger, ticker), ticker
+        on_ci = [
+            row
+            for row in alger
+            if row.ticker == ticker and _wave_ci_source_match(row.source_url)
+        ]
+        assert on_ci == [], ticker
 
     pioneer = AmundiSource().fetch(mode="fixture").records
     for ticker in (
@@ -27331,6 +27343,7 @@ def test_wave_ci_leftover_walls_stay_unmatched() -> None:
     assert not federated_ci & set(WAVE_CI_CD_DISJOINT)
     assert not federated_ci & set(WAVE_CI_BT_DISJOINT)
     assert not federated_ci & set(WAVE_CI_AW_HARDING)
+    assert not federated_ci & set(WAVE_CI_CJ_DISJOINT)
     assert not federated_ci & set(WAVE_CI_WALLS)
     assert not federated_ci & set(WAVE_CI_ALGER_RESERVED)
 

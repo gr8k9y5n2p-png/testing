@@ -1033,9 +1033,10 @@ class FederatedHermesSource(HtmlTableSource):
         "https://www.sec.gov/Archives/edgar/data/745968/000162363224002069/"
         "fef1369-form.htm and 2023 N-CSR form1383.htm. MDT Balanced FYE July 31 "
         "leftover 2023 stays unmatched. Sister WAVE CH Harding Loevner HLEMX / "
-        "HLGZX / HLIZX / HLFZX, WAVE CG Lazard Real Assets RALIX / RALOX, WAVE "
-        "CF Alger Responsible Investing, WAVE CC Pioneer Class R, WAVE CD / CB / "
-        "BY Lazard, and prior leftover pages stay unmatched / not re-emitted "
+        "HLGZX / HLIZX / HLFZX, WAVE CJ Alger Growth & Income ALBAX / ALBCX / "
+        "AGIZX, WAVE CG Lazard Real Assets RALIX / RALOX, WAVE CF Alger "
+        "Responsible Investing, WAVE CC Pioneer Class R, WAVE CD / CB / BY "
+        "Lazard, and prior leftover pages stay unmatched / not re-emitted "
         "here. WAVE CI leftover N-CSR paid history is fixture-only."
     )
     live_limitations = (
