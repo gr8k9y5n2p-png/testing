@@ -221,7 +221,11 @@ Shared backbone: `GET|POST /api/saved-assets` and `GET|PATCH|DELETE /api/saved-a
 
 Every row is scoped to `accountId`. User A cannot read user B.
 
-**Account:** email/password sign-up and sign-in on Account / `/account`. Signed httpOnly `aftertax_account` cookie. Friends-beta shared password stays separate. Saved-assets without a session is **401**.
+**Account:** email/password sign-up and sign-in on the homepage right-hand panel (signed-out only), Account menu, and `/account`. Signed httpOnly `aftertax_account` cookie. Friends-beta shared password stays separate — the `/beta` field is `friends-beta-password` with `autocomplete=off` so it cannot steal Account login. Saved-assets without a session is **401**.
+
+**Forgot password:** `/account/forgot` and `/account/reset?token=`. `POST /api/account/forgot` always returns the same 200 copy for a valid email. The server stores `sha256(token)` + 1-hour expiry on the account row. `POST /api/account/reset` verifies the token, writes a new scrypt hash, and sets the session cookie. Production email: set `RESEND_API_KEY` and `AFTERTAX_MAIL_FROM`. Until those are set, the full token path still runs; staging logs the reset URL and the UI tells the user to check email or contact `operations@getaftertax.com`.
+
+**Auth root cause (login always “wrong password”):** Account rows lived in a process-local JSON snapshot. Sign-up wrote one serverless instance; sign-in read another and treated a miss as a bad password. The file store now reloads from disk on every read/write. Pin `AFTERTAX_ACCOUNTS_PATH` to a persistent disk in production (Vercel `/tmp` is still ephemeral across instances). Session cookies now honor `x-forwarded-proto` so `Secure` is set behind the HTTPS proxy. Hash compare is still scrypt + timing-safe equal — no bypass.
 
 **Stripe Checkout later (Eric holding Stripe):** create/link a Customer on the **same account email** and set `stripeCustomerId`. Soft-wall / Checkout stay off.
 

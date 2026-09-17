@@ -1,10 +1,17 @@
-import { AccountAuthError, signInAccount, signUpAccount } from "./auth.ts";
+import {
+  AccountAuthError,
+  requestPasswordReset,
+  resetAccountPassword,
+  signInAccount,
+  signUpAccount,
+} from "./auth.ts";
 import {
   isHttpsRequest,
   readAccountIdFromRequest,
   serializeAccountCookie,
   serializeClearedAccountCookie,
 } from "./session.ts";
+import { publicOrigin } from "../hosts.ts";
 import { getAccountStore, toPublicAccount, type AccountStore } from "./store.ts";
 
 function json(
@@ -22,6 +29,14 @@ async function readJson(request: Request): Promise<unknown> {
     return await request.json();
   } catch {
     throw new AccountAuthError(400, "Invalid JSON body.");
+  }
+}
+
+function requestOrigin(request: Request): string | undefined {
+  try {
+    return new URL(request.url).origin;
+  } catch {
+    return undefined;
   }
 }
 
@@ -82,4 +97,40 @@ export async function handleAccountMe(
   const row = await store.findById(accountId);
   if (!row) return json({ account: null }, 200);
   return json({ account: toPublicAccount(row) }, 200);
+}
+
+export async function handleAccountForgot(
+  request: Request,
+  store: AccountStore = getAccountStore(),
+): Promise<Response> {
+  try {
+    const result = await requestPasswordReset(store, await readJson(request), {
+      origin: process.env.AFTERTAX_PUBLIC_URL?.replace(/\/$/, "") || requestOrigin(request) || publicOrigin(),
+    });
+    return json(result, 200);
+  } catch (error) {
+    if (error instanceof AccountAuthError) {
+      return json({ detail: error.detail }, error.status);
+    }
+    return json({ detail: "Couldn’t start a password reset." }, 500);
+  }
+}
+
+export async function handleAccountReset(
+  request: Request,
+  store: AccountStore = getAccountStore(),
+): Promise<Response> {
+  try {
+    const account = await resetAccountPassword(store, await readJson(request));
+    return json(
+      { account },
+      200,
+      serializeAccountCookie(account.id, isHttpsRequest(request)),
+    );
+  } catch (error) {
+    if (error instanceof AccountAuthError) {
+      return json({ detail: error.detail }, error.status);
+    }
+    return json({ detail: "Couldn’t reset that password." }, 500);
+  }
 }

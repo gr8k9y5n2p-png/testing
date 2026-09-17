@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   FRIENDS_BETA_COOKIE,
+  FRIENDS_BETA_PASSWORD_FIELD,
   FRIENDS_BETA_PATH,
   friendsBetaCookieOptions,
   friendsBetaPassword,
@@ -13,7 +14,9 @@ export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   const form = await request.formData();
-  const submitted = String(form.get("password") ?? "");
+  const submitted = String(
+    form.get(FRIENDS_BETA_PASSWORD_FIELD) ?? form.get("password") ?? "",
+  );
   const next = safeNextPath(String(form.get("next") ?? "/"));
   const expected = friendsBetaPassword();
 

@@ -84,6 +84,9 @@ describe("friends-beta public paths and next", () => {
     assert.equal(isFriendsBetaPublicPath("/portfolio"), false);
     assert.equal(isFriendsBetaPublicPath("/compare"), false);
     assert.equal(isFriendsBetaPublicPath("/lists"), false);
+    assert.equal(isFriendsBetaPublicPath("/account"), false);
+    assert.equal(isFriendsBetaPublicPath("/account/forgot"), true);
+    assert.equal(isFriendsBetaPublicPath("/account/reset"), true);
   });
 
   it("rejects open redirects", () => {
@@ -130,7 +133,7 @@ describe("friends-beta gate decision", () => {
     );
   });
 
-  it("does not challenge /api Data mocks or legal pages", () => {
+  it("does not challenge /api Data mocks, legal pages, or password-reset", () => {
     assert.deepEqual(
       friendsBetaGateDecision({
         password: "secret",
@@ -141,6 +144,18 @@ describe("friends-beta gate decision", () => {
     assert.deepEqual(
       friendsBetaGateDecision({ password: "secret", pathname: "/terms" }),
       { action: "next" },
+    );
+    assert.deepEqual(
+      friendsBetaGateDecision({ password: "secret", pathname: "/account/forgot" }),
+      { action: "next" },
+    );
+    assert.deepEqual(
+      friendsBetaGateDecision({ password: "secret", pathname: "/account/reset" }),
+      { action: "next" },
+    );
+    assert.deepEqual(
+      friendsBetaGateDecision({ password: "secret", pathname: "/account" }),
+      { action: "redirect", next: "/account" },
     );
     assert.equal(FRIENDS_BETA_PATH, "/beta");
   });

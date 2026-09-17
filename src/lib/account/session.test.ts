@@ -7,6 +7,7 @@ import {
   newAccountId,
   readAccountIdFromRequest,
   resolveAccountSession,
+  isHttpsRequest,
   serializeAccountCookie,
   signAccountId,
   verifyAccountCookie,
@@ -45,5 +46,13 @@ describe("account session", () => {
     const request = new Request("http://localhost/api/saved-assets");
     assert.equal(resolveAccountSession(request), null);
     assert.match(serializeAccountCookie(newAccountId(), false), new RegExp(ACCOUNT_COOKIE));
+  });
+
+  it("sets Secure from x-forwarded-proto, not the internal http URL", () => {
+    const request = new Request("http://127.0.0.1/api/account/me", {
+      headers: { "x-forwarded-proto": "https, http" },
+    });
+    assert.equal(isHttpsRequest(request), true);
+    assert.match(serializeAccountCookie(newAccountId(), true), /Secure/);
   });
 });

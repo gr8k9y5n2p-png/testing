@@ -82,8 +82,12 @@ overwrite Compare’s holding. Soft-wall / Checkout stay off.
 | POST | `/api/account/signin` | `{ email, password }` |
 | POST | `/api/account/signout` | — |
 | GET | `/api/account/me` | — |
+| POST | `/api/account/forgot` | `{ email }` |
+| POST | `/api/account/reset` | `{ token, password }` |
 
 Public account: `{ id, email, stripeCustomerId }` (`stripeCustomerId` is `null` until Checkout).
+
+Forgot password always returns 200 for a valid email (no account-existence leak). Reset tokens are stored as SHA-256 hashes and expire in one hour. Friends-beta shared password stays a separate site gate (`/account/forgot` and `/account/reset` stay reachable so the emailed link works).
 
 ## Persistence
 

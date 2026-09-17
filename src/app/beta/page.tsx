@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { CONTACT_EMAIL } from "@/lib/copy";
 import {
   FRIENDS_BETA_COOKIE,
+  FRIENDS_BETA_PASSWORD_FIELD,
   friendsBetaPassword,
   isFriendsBetaGateEnabled,
   isFriendsBetaSessionValid,
@@ -70,9 +71,11 @@ export default async function FriendsBetaGatePage({
             Password
           </span>
           <input
-            name="password"
+            name={FRIENDS_BETA_PASSWORD_FIELD}
             type="password"
-            autoComplete="current-password"
+            autoComplete="off"
+            data-1p-ignore
+            data-lpignore="true"
             required
             autoFocus
             className="h-10 w-full rounded-md border border-line bg-paper px-3 text-sm text-ink"

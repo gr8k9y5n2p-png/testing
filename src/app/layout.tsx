@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { IBM_Plex_Mono, Source_Sans_3, Source_Serif_4 } from "next/font/google";
 import { AppHeader } from "@/components/AppHeader";
 import { AppFooter } from "@/components/AppFooter";
+import { AccountSessionProvider } from "@/components/AccountSession";
 import { FriendsBetaBanner } from "@/components/FriendsBetaBanner";
 import { COPY } from "@/lib/copy";
 import { publicOrigin } from "@/lib/hosts";
@@ -58,10 +59,12 @@ export default function RootLayout({
       className={`${sourceSans.variable} ${sourceSerif.variable} ${plexMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-paper text-ink font-sans">
-        <AppHeader />
-        <FriendsBetaBanner />
-        <div className="flex-1">{children}</div>
-        <AppFooter />
+        <AccountSessionProvider>
+          <AppHeader />
+          <FriendsBetaBanner />
+          <div className="flex-1">{children}</div>
+          <AppFooter />
+        </AccountSessionProvider>
       </body>
     </html>
   );

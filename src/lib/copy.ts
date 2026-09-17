@@ -106,6 +106,18 @@ export const ACCOUNT_SIGN_IN = "Sign in";
 export const ACCOUNT_SIGN_UP = "Create account";
 export const ACCOUNT_SIGN_OUT = "Sign out";
 export const ACCOUNT_PASSWORD_HINT = "At least 8 characters.";
+export const ACCOUNT_FORGOT_PASSWORD = "Forgot password";
+export const ACCOUNT_FORGOT_TITLE = "Forgot password";
+export const ACCOUNT_FORGOT_DETAIL =
+  "Enter the email on your Aftertax account. We will send a reset link if that account exists.";
+export const ACCOUNT_FORGOT_SUBMIT = "Send reset link";
+export const ACCOUNT_RESET_TITLE = "Choose a new password";
+export const ACCOUNT_RESET_SUBMIT = "Update password";
+export const ACCOUNT_RESET_MISSING =
+  "This reset link is missing or invalid. Request a new link from Forgot password.";
+export const ACCOUNT_HOMEPAGE_LOGIN_TITLE = "Sign in";
+export const ACCOUNT_HOMEPAGE_LOGIN_DETAIL =
+  "Email and password. Save lists and portfolios to this account.";
 export const ACCOUNT_STRIPE_RESERVE =
   "Stripe Checkout later links a Customer to this same email. Billing stays off.";
 

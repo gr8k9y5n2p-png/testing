@@ -34,5 +34,7 @@ describe("Sample Estimates empty copy", () => {
     assert.match(source, /PORTFOLIO_OPEN_EMPTY = "No saved portfolios yet."/);
     assert.match(source, /never invented from paid history/);
     assert.doesNotMatch(source, /in this sample/);
+    assert.match(source, /ACCOUNT_FORGOT_PASSWORD = "Forgot password"/);
+    assert.match(source, /ACCOUNT_HOMEPAGE_LOGIN_TITLE = "Sign in"/);
   });
 });
