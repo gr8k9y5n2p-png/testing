@@ -4693,6 +4693,52 @@ def test_tenth_tier_fixtures() -> None:
     )
     assert lsvex.amount == Decimal("4.4395")
 
+    lsv_ncsr = parse_distribution_html(
+        (ROOT / "lsv" / "leftover_ncsr_2021_2023_wave_au.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url=(
+            "https://www.sec.gov/Archives/edgar/data/878719/"
+            "000119312524005240/d676331dncsr.htm"
+        ),
+        fund_family="LSV",
+    )
+    lsvex_ncsr = next(
+        r
+        for r in lsv_ncsr
+        if r.ticker == "LSVEX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.as_of
+        and str(r.as_of) == "2021-10-31"
+    )
+    assert lsvex_ncsr.amount == Decimal("0.62")
+    assert lsvex_ncsr.publication_stage == PublicationStage.final
+    lvaex_ncsr = next(
+        r
+        for r in lsv_ncsr
+        if r.ticker == "LVAEX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.as_of
+        and str(r.as_of) == "2021-10-31"
+    )
+    assert lvaex_ncsr.amount == Decimal("0.58")
+    assert {r.ticker for r in lsv_ncsr} == {
+        "LSVEX",
+        "LVAEX",
+        "LSVVX",
+        "LVAVX",
+        "LSVQX",
+        "LVAQX",
+        "LSVMX",
+        "LVAMX",
+        "LSVZX",
+        "LVAZX",
+        "LSVFX",
+        "LVAFX",
+        "LSVGX",
+        "LVAGX",
+    }
+
     lkcm = parse_distribution_html(
         (ROOT / "lkcm" / "2025_estimated_year_end_distributions.html").read_text(
             encoding="utf-8"

@@ -324,12 +324,24 @@ class LsvSource(HtmlTableSource):
         "Official 5y parallel W leftover: 2024 paid "
         "https://www.lsvasset.com/pdf/fund-docs/2024-Distributions.pdf "
         "(LSVEX ST $0.0152 / LT $1.6848; income $0.5666). 2021–2023 year-end PDFs "
-        "404; fiscal October 31 annual-report totals are not calendar YE with printed "
-        "dates — leftover years stay unmatched."
+        "404. Official 5y WAVE AU leftover (existing in-book only): Advisors' "
+        "Inner Circle Fund FYE October 31 N-CSR Financial Highlights unlock "
+        "leftover 2021–2023 on the 2024–2025 Institutional / Investor paid book "
+        "(LSVEX / LVAEX / LSVVX / LVAVX / LSVQX / LVAQX / LSVMX / LVAMX / "
+        "LSVZX / LVAZX / LSVFX / LVAFX / LSVGX / LVAGX). Calendar-safe as_of "
+        "10/31. Class-level Institutional / Investor — never sibling-copied. "
+        "2023 Value Equity N-CSR "
+        "https://www.sec.gov/Archives/edgar/data/878719/000119312524005240/d676331dncsr.htm "
+        "verified against Conservative Value / Small Cap Value / U.S. Managed "
+        "Volatility / Emerging Markets / Global Managed Volatility / Global Value "
+        "2023 N-CSR siblings. Income is ordinary income; net realized gain is "
+        "unsplit total capital gains. Issuer dashes omitted (LSVQX 2021–2023 CG; "
+        "LSVZX 2023 CG; LSVVX 2021 CG; LSVFX 2021–2022 CG; LSVGX 2021 CG; "
+        "LVAGX 2023 OI). WAVE AU leftover N-CSR paid history is fixture-only."
     )
     live_limitations = (
         "Year-end book is PDF. Fixture transcribes public Institutional + Investor identifiers. "
-        "2021–2023 year-end PDFs 404."
+        "2021–2023 year-end PDFs 404. Leftover 2021–2023 N-CSR paid history is fixture-only."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -346,6 +358,13 @@ class LsvSource(HtmlTableSource):
                 name="leftover_paid_year_end_parallel_w",
                 url="https://www.lsvasset.com/pdf/fund-docs/2024-Distributions.pdf",
                 fixture="leftover_paid_year_end_parallel_w.html",
+                live=False,
+                role="history",
+            ),
+            PageSpec(
+                name="leftover_ncsr_2021_2023_wave_au",
+                url="https://www.sec.gov/Archives/edgar/data/878719/000119312524005240/d676331dncsr.htm",
+                fixture="leftover_ncsr_2021_2023_wave_au.html",
                 live=False,
                 role="history",
             ),
