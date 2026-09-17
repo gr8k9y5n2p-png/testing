@@ -22,6 +22,7 @@ from app.sources.families import (
     TRowePriceSource,
     VanguardSource,
 )
+from app.sources.ark import ArkSource
 from app.sources.dws import DwsSource
 from app.sources.eighth_tier import (
     ArielSource,
@@ -774,8 +775,15 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # 2022–2023, and USAA FYE March 31 stay walls. Advisor DPL2 / FTRIX not
     # redone. Honest pin remasured after rebase onto #203 tip ba30980:
     # 3742 → 3758 (+16 MF; ETF 5y unchanged at 758). No overlap with AF/AD/AE.
-    assert digest.funds_with_5y == 3758
-    assert digest.funds_with_5y_mf == 3000
+    # WAVE AH leftover (existing in-book only): BNY renamed Midcap Value
+    # Class A DMCVX + Investor MIBLX / MIMSX / MISCX product-page paid YE
+    # +4 MF. VanEck leftover N-CSR dashes, Royce 2023 dashes, Brown
+    # estimate-only, ARK 2022 no-distribution FINAL, GMO ETF estimate-stage,
+    # Tweedy / PRIMECAP / Ariel already 5y stay walls / unchanged.
+    # Honest pin remasured after rebase onto #204 tip 5b1ffa45:
+    # 3758 → 3762 (+4 MF; ETF 5y unchanged at 758). No overlap with AF/AD/AE/AG.
+    assert digest.funds_with_5y == 3762
+    assert digest.funds_with_5y_mf == 3004
     assert digest.funds_with_5y_etf == 758
     assert digest.book_funds >= 7200
     assert "never invented" in " ".join(digest.notes).lower()
@@ -5034,16 +5042,6 @@ def test_parallel_l_royce_rdvix_november_2025_completes_5y() -> None:
 
 def test_parallel_l_leftover_walls_stay_unmatched() -> None:
     bny = BnyMellonSource().fetch(mode="fixture").records
-    for ticker in ("DMCVX", "MIBLX", "MIMSX", "MISCX"):
-        paid = [
-            row
-            for row in bny
-            if row.ticker == ticker
-            and row.ex_date
-            and row.publication_stage == PublicationStage.final
-            and row.amount is not None
-        ]
-        assert paid == [], ticker
     dtgrx_mid = [
         row
         for row in bny
@@ -9725,3 +9723,172 @@ def test_wave_ag_heroes_are_searchable(client: TestClient) -> None:
         and str(row.get("ex_date") or "").startswith("2024-12-13")
     ]
     assert Decimal("0.130481") in getgx_2024
+
+
+def test_wave_ah_bny_leftover_paid_fills_5y() -> None:
+    records = BnyMellonSource().fetch(mode="fixture").records
+    dmcvx_2025_lt = next(
+        row
+        for row in records
+        if row.ticker == "DMCVX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-10"
+        and row.publication_stage == PublicationStage.final
+        and row.amount
+    )
+    assert dmcvx_2025_lt.amount == Decimal("3.8546")
+    dmcvx_2025_oi = next(
+        row
+        for row in records
+        if row.ticker == "DMCVX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-10"
+        and row.amount
+    )
+    assert dmcvx_2025_oi.amount == Decimal("0.1850")
+    miblx_2025_oi = next(
+        row
+        for row in records
+        if row.ticker == "MIBLX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-31"
+        and row.amount
+    )
+    assert miblx_2025_oi.amount == Decimal("0.3130")
+    mimsx_2025_lt = next(
+        row
+        for row in records
+        if row.ticker == "MIMSX"
+        and row.estimate_type == EstimateType.long_term_capital_gains
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-16"
+        and row.amount
+    )
+    assert mimsx_2025_lt.amount == Decimal("12.5997")
+    miscx_2025_oi = next(
+        row
+        for row in records
+        if row.ticker == "MISCX"
+        and row.estimate_type == EstimateType.ordinary_income
+        and row.ex_date
+        and str(row.ex_date) == "2025-12-17"
+        and row.amount
+    )
+    assert miscx_2025_oi.amount == Decimal("0.0561")
+    for ticker in ("DMCVX", "MIBLX", "MIMSX", "MISCX"):
+        years = {
+            row.ex_date.year
+            for row in records
+            if row.ticker == ticker
+            and row.ex_date
+            and row.publication_stage == PublicationStage.final
+            and row.amount is not None
+        }
+        assert set(LOOKBACK_YEARS) <= years, ticker
+    for sibling in ("DVLIX", "DMCYX", "MPBLX", "MPMCX", "MPSSX"):
+        sibling_rows = [row for row in records if row.ticker == sibling]
+        assert sibling_rows == [], sibling
+
+
+def test_wave_ah_leftover_walls_stay_unmatched() -> None:
+    vaneck = VaneckSource().fetch(mode="fixture").records
+    for ticker, year in (
+        ("AFK", 2024),
+        ("VNM", 2024),
+        ("REMX", 2023),
+        ("GLIN", 2021),
+        ("GMET", 2021),
+        ("INIVX", 2022),
+        ("MOTE", 2025),
+        ("GHACX", 2025),
+    ):
+        rows = [
+            row
+            for row in vaneck
+            if row.ticker == ticker
+            and row.ex_date
+            and row.ex_date.year == year
+            and row.amount is not None
+        ]
+        assert rows == [], f"{ticker} {year}"
+
+    royce = RoyceSource().fetch(mode="fixture").records
+    for ticker in ("RVPHX", "RVPIX", "RYVPX"):
+        y2023 = [
+            row
+            for row in royce
+            if row.ticker == ticker
+            and row.ex_date
+            and row.ex_date.year == 2023
+            and row.amount is not None
+        ]
+        assert y2023 == [], ticker
+
+    brown = BrownAdvisorySource().fetch(mode="fixture").records
+    baffx_paid = [
+        row
+        for row in brown
+        if row.ticker == "BAFFX"
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert baffx_paid == []
+
+    ark = ArkSource().fetch(mode="fixture").records
+    arkk_later = [
+        row
+        for row in ark
+        if row.ticker == "ARKK"
+        and row.ex_date
+        and row.ex_date.year in {2022, 2023, 2024, 2025}
+        and row.publication_stage == PublicationStage.final
+        and row.amount is not None
+    ]
+    assert arkk_later == []
+
+    bny = BnyMellonSource().fetch(mode="fixture").records
+    dtgrx_mid = [
+        row
+        for row in bny
+        if row.ticker == "DTGRX"
+        and row.ex_date
+        and row.ex_date.year in {2022, 2023}
+        and row.amount is not None
+    ]
+    assert dtgrx_mid == []
+
+
+def test_wave_ah_heroes_are_searchable(client: TestClient) -> None:
+    for slug in ("bny_mellon", "vaneck", "royce", "brown_advisory"):
+        fetched = client.post(
+            "/ingest/fetch", json={"fund_family": slug, "mode": "fixture"}
+        )
+        assert fetched.status_code == 200, fetched.text
+        assert fetched.json()["created"] > 0
+
+    for ticker in ("DMCVX", "MIBLX", "MIMSX", "MISCX", "AFK", "RVPHX", "BAFFX"):
+        body = client.get("/funds", params={"q": ticker}).json()
+        tickers = [item["ticker"] for item in body["items"]]
+        assert ticker in tickers, f"{ticker} missing from GET /funds?q={ticker}: {tickers[:8]}"
+
+    dmcvx = client.get(
+        "/distributions",
+        params={"ticker": "DMCVX", "publication_stage": "final", "page_size": 200},
+    ).json()
+    dmcvx_2025 = [
+        Decimal(row["amount"])
+        for row in dmcvx["items"]
+        if row.get("ticker") == "DMCVX"
+        and row.get("estimate_type") == "long_term_capital_gains"
+        and str(row.get("ex_date") or "").startswith("2025-12-10")
+    ]
+    assert Decimal("3.8546") in dmcvx_2025
+    dmcvx_years = {
+        str(row.get("ex_date") or row.get("payable_date") or row.get("as_of") or "")[:4]
+        for row in dmcvx["items"]
+        if row.get("ticker") == "DMCVX" and row.get("amount") is not None
+    }
+    assert {"2021", "2022", "2023", "2024", "2025"} <= dmcvx_years

@@ -158,9 +158,16 @@ class BnyMellonSource(HtmlTableSource):
         "NQ+Q ST; published $0 omitted). Heroes: DEQAX 2025-12-16 OI $0.0313 / "
         "ST $0.0392 / LT $1.3603; DQIAX 2025-12-10 LT $0.6838; DWOAX 2025-12-08 "
         "LT $2.0710 (Class A page — not copied from DREQX); BKLC 2025-12-29 OI "
-        "$0.3923. Class-level leftover tickers only. DMCVX / MIBLX / MIMSX / "
-        "MISCX product URLs 404. DTGRX / DCPAX / DBMAX 2022–2023 unpublished. "
-        "BKCI / BKGI 2021 unpublished; BKDV 2021–2023 unpublished."
+        "$0.3923. Class-level leftover tickers only. WAVE AH leftover: renamed "
+        "Midcap Value Class A DMCVX product page plus Investor share-class "
+        "pages for MIBLX / MIMSX / MISCX (December YE; OI is published NQ+Q; "
+        "ST is published NQ+Q ST; published $0 omitted). Heroes: DMCVX "
+        "2025-12-10 OI $0.1850 / LT $3.8546; MIBLX 2025-12-31 OI $0.3130 / "
+        "LT $0.4501; MIMSX 2025-12-16 OI $0.0321 / ST $0.4992 / LT $12.5997; "
+        "MISCX 2025-12-17 OI $0.0561 / ST $0.3396 / LT $6.1679. Never copy "
+        "onto Class M MPMCX / MPSSX / MPBLX or Midcap Value I/Y. DTGRX / "
+        "DCPAX / DBMAX 2022–2023 unpublished. BKCI / BKGI 2021 unpublished; "
+        "BKDV 2021–2023 unpublished."
     )
     live_limitations = "Estimates are PDF, not an HTML grid. Fixture transcribes the public PDF / product table."
 
@@ -236,6 +243,17 @@ class BnyMellonSource(HtmlTableSource):
                     "fund/bny-mellon-global-equity-income-fund.html"
                 ),
                 fixture="leftover_paid_year_end_parallel_l.html",
+                live=False,
+                role="history",
+                large_aum_only=False,
+            ),
+            PageSpec(
+                name="leftover_paid_year_end_wave_ah",
+                url=(
+                    "https://www.bny.com/investments/us/en/intermediary/products/lt/"
+                    "fund/bny-mellon-midcap-value-fund.html"
+                ),
+                fixture="leftover_paid_year_end_wave_ah.html",
                 live=False,
                 role="history",
                 large_aum_only=False,

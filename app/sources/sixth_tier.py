@@ -291,7 +291,12 @@ class VaneckSource(HtmlTableSource):
         "LT $0.0279; CLOB 2025-12-29 OI $0.2630 / ST $0.0641; CMCI 2025-12-30 "
         "$2.3700). Tax-guide monthly CLOI/CLOB annual totals without a printed "
         "calendar day omitted. AFK/VNM 2024, REMX 2023, GLIN/GMET 2021, "
-        "MOTE/GHACX 2025 stay unpublished. Hub: "
+        "MOTE/GHACX 2025 stay unpublished. WAVE AH leftover re-probe "
+        "(2026-09-17): VanEck ETF Trust FYE Dec 31 2024 N-CSR Financial "
+        "Highlights print dashes for leftover missing years (AFK / VNM 2024; "
+        "REMX 2023; GLIN / GMET 2021; RSX / RSXJ 2022). INIVX Class A 2022 "
+        "N-CSR dash. 2025 paid YE PDFs still omit EGPT / MOTE / GHACX "
+        "(printed None / absent). Hub: "
         "https://www.vaneck.com/us/en/resources/etf-distributions/"
     )
     live_limitations = (

@@ -22,6 +22,9 @@ class ArkSource(HtmlTableSource):
         "2022 official FINAL states the sponsor does not expect distributions "
         "across the ETFs — no invented $0 rows. "
         "2023–2025 sibling PDFs were not on the ARK distribution library this wave. "
+        "WAVE AH leftover re-probe (2026-09-17): 2022 FINAL "
+        "ARKETFs_12.23.22_Handout still prints no expected distributions; "
+        "2023 dated handout is estimated-only; 2024–2025 dated siblings 404. "
         "Hub: https://www.ark-funds.com/"
     )
     live_limitations = (

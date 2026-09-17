@@ -277,5 +277,8 @@ def test_fixture_book_lookback_stays_official_only() -> None:
     # WAVE AG leftover: Victory RS FYE Dec 31 2021 N-CSR unlocks +16 MF.
     # Honest pin remasured after rebase onto #203 tip ba30980: 3742 → 3758
     # (+16 MF; no overlap with AF/AD/AE).
-    assert digest.funds_with_5y == 3758
+    # WAVE AH leftover: BNY leftover Class A / Investor product-page paid YE
+    # +4 MF (DMCVX / MIBLX / MIMSX / MISCX). Honest pin remasured after
+    # rebase onto #204 tip 5b1ffa45: 3758 → 3762 (+4 MF).
+    assert digest.funds_with_5y == 3762
     assert digest.book_funds >= 7200
