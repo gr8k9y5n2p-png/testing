@@ -9,9 +9,14 @@ import {
   validatePassword,
   verifyPassword,
 } from "./passwords.ts";
-import { PASSWORD_RESET_TTL_MS, passwordResetUrl, sendPasswordResetEmail } from "./mail.ts";
-import { publicOrigin } from "../hosts.ts";
-import { CONTACT_EMAIL } from "../legal-copy.ts";
+import {
+  PASSWORD_RESET_TTL_MS,
+  passwordResetUrl,
+  passwordResetUserDetail,
+  resetEmailConfigured,
+  resetLinkOrigin,
+  sendPasswordResetEmail,
+} from "./mail.ts";
 import type { AccountStore, PublicAccount } from "./store.ts";
 import { toPublicAccount } from "./store.ts";
 
@@ -53,16 +58,18 @@ export async function signInAccount(
   return toPublicAccount(row);
 }
 
-export const PASSWORD_RESET_REQUESTED = `If an account exists for that email, we sent a reset link. Check your email. If a message does not arrive, contact ${CONTACT_EMAIL}.`;
+export const PASSWORD_RESET_REQUESTED = passwordResetUserDetail(true);
+export const PASSWORD_RESET_MAIL_UNAVAILABLE = passwordResetUserDetail(false);
 
 export async function requestPasswordReset(
   store: AccountStore,
   body: unknown,
   options: {
     origin?: string;
+    env?: NodeJS.ProcessEnv;
     sendMail?: typeof sendPasswordResetEmail;
   } = {},
-): Promise<{ ok: true; detail: string }> {
+): Promise<{ ok: true; detail: string; mailConfigured: boolean }> {
   if (!body || typeof body !== "object") {
     throw new AccountAuthError(400, "Invalid JSON body.");
   }
@@ -70,16 +77,23 @@ export async function requestPasswordReset(
   if (!isEmail(email)) {
     throw new AccountAuthError(400, "Enter a valid email.");
   }
+  const env = options.env ?? process.env;
+  const configured = resetEmailConfigured(env);
   const row = await store.findByEmail(email);
+  const token = newPasswordResetToken();
+  const tokenHash = hashPasswordResetToken(token);
   if (row) {
-    const token = newPasswordResetToken();
     const expiresAt = new Date(Date.now() + PASSWORD_RESET_TTL_MS).toISOString();
-    await store.setPasswordReset(row.id, hashPasswordResetToken(token), expiresAt);
-    const origin = options.origin ?? publicOrigin();
+    await store.setPasswordReset(row.id, tokenHash, expiresAt);
+    const origin = resetLinkOrigin(env, options.origin);
     const sendMail = options.sendMail ?? sendPasswordResetEmail;
-    await sendMail({ to: row.email, resetUrl: passwordResetUrl(origin, token) });
+    await sendMail({ to: row.email, resetUrl: passwordResetUrl(origin, token) }, env);
   }
-  return { ok: true, detail: PASSWORD_RESET_REQUESTED };
+  return {
+    ok: true,
+    detail: passwordResetUserDetail(configured),
+    mailConfigured: configured,
+  };
 }
 
 export async function resetAccountPassword(

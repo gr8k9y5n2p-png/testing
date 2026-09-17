@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
   AccountAuthError,
+  PASSWORD_RESET_MAIL_UNAVAILABLE,
   PASSWORD_RESET_REQUESTED,
   requestPasswordReset,
   resetAccountPassword,
@@ -178,14 +179,17 @@ describe("email/password account auth", () => {
       store,
       { email: "Ada@Example.com" },
       {
-        origin: "https://staging.getaftertax.com",
+        origin: "https://getaftertax.com",
+        env: { RESEND_API_KEY: "re_test" },
         sendMail: async ({ resetUrl: url }) => {
           resetUrl = url;
-          return true;
+          return { configured: true, sent: true };
         },
       },
     );
     assert.equal(result.detail, PASSWORD_RESET_REQUESTED);
+    assert.equal(result.mailConfigured, true);
+    assert.match(resetUrl, /^https:\/\/getaftertax\.com\/account\/reset\?token=/);
     const token = new URL(resetUrl).searchParams.get("token") ?? "";
     assert.match(token, /^[0-9a-f]{64}$/i);
 
@@ -193,12 +197,14 @@ describe("email/password account auth", () => {
       store,
       { email: "missing@example.com" },
       {
+        env: { RESEND_API_KEY: "re_test" },
         sendMail: async () => {
           throw new Error("must not send mail for an unknown email");
         },
       },
     );
     assert.equal(unknown.detail, PASSWORD_RESET_REQUESTED);
+    assert.equal(unknown.mailConfigured, true);
 
     const reset = await resetAccountPassword(store, {
       token,
@@ -246,8 +252,17 @@ describe("email/password account auth", () => {
       store,
     );
     assert.equal(forgot.status, 200);
-    const forgotBody = (await forgot.json()) as { detail: string };
-    assert.equal(forgotBody.detail, PASSWORD_RESET_REQUESTED);
+    const forgotBody = (await forgot.json()) as {
+      detail: string;
+      mailConfigured: boolean;
+    };
+    assert.equal(forgotBody.mailConfigured, Boolean(process.env.RESEND_API_KEY?.trim()));
+    assert.equal(
+      forgotBody.detail,
+      forgotBody.mailConfigured
+        ? PASSWORD_RESET_REQUESTED
+        : PASSWORD_RESET_MAIL_UNAVAILABLE,
+    );
 
     const reset = await handleAccountReset(
       new Request("https://staging.getaftertax.com/api/account/reset", {
@@ -260,6 +275,28 @@ describe("email/password account auth", () => {
     assert.equal(reset.status, 200);
     assert.match(reset.headers.get("set-cookie") ?? "", /aftertax_account=/);
     assert.match(reset.headers.get("set-cookie") ?? "", /Secure/);
+  });
+
+  it("returns the same forgot copy for known and unknown emails when mail is off", async () => {
+    const store = new MemoryAccountStore();
+    await signUpAccount(store, {
+      email: "ada@example.com",
+      password: "wholesaler",
+    });
+    const known = await requestPasswordReset(
+      store,
+      { email: "ada@example.com" },
+      { env: {} },
+    );
+    const unknown = await requestPasswordReset(
+      store,
+      { email: "missing@example.com" },
+      { env: {} },
+    );
+    assert.equal(known.detail, unknown.detail);
+    assert.equal(known.mailConfigured, false);
+    assert.equal(known.detail, PASSWORD_RESET_MAIL_UNAVAILABLE);
+    assert.doesNotMatch(known.detail, /we sent a reset link/);
   });
 
   it("hashes and verifies passwords without accepting a swapped hash", () => {

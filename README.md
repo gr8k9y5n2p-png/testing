@@ -223,7 +223,15 @@ Every row is scoped to `accountId`. User A cannot read user B.
 
 **Account:** email/password sign-up and sign-in on the homepage right-hand panel (signed-out only), Account menu, and `/account`. Signed httpOnly `aftertax_account` cookie. Friends-beta shared password stays separate — the `/beta` field is `friends-beta-password` with `autocomplete=off` so it cannot steal Account login. Saved-assets without a session is **401**.
 
-**Forgot password:** `/account/forgot` and `/account/reset?token=`. `POST /api/account/forgot` always returns the same 200 copy for a valid email. The server stores `sha256(token)` + 1-hour expiry on the account row. `POST /api/account/reset` verifies the token, writes a new scrypt hash, and sets the session cookie. Production email: set `RESEND_API_KEY` and `AFTERTAX_MAIL_FROM`. Until those are set, the full token path still runs; staging logs the reset URL and the UI tells the user to check email or contact `operations@getaftertax.com`.
+**Forgot password:** `/account/forgot` → hashed one-time token (1 hour, single use) → Resend transactional mail from **`noreply@getaftertax.com`** with `https://getaftertax.com/account/reset?token=…` → `POST /api/account/reset` sets the new scrypt hash, invalidates the token, and signs in. Not Gmail. `POST /api/account/forgot` always returns 200 for a valid email (no account-existence leak). The user-facing copy depends only on whether mail is configured — it does **not** say a message was sent when `RESEND_API_KEY` is unset. Non-prod logs the reset URL; production does not.
+
+**Production email env (Vercel):**
+
+| Var | Required | Notes |
+| --- | --- | --- |
+| `RESEND_API_KEY` | yes, to actually send | Resend API key. Verify the `getaftertax.com` domain in Resend and add `noreply@getaftertax.com`. |
+| `AFTERTAX_MAIL_FROM` | no | Defaults to `Aftertax <noreply@getaftertax.com>`. |
+| `AFTERTAX_PUBLIC_URL` | recommended | Reset link origin. Production should be `https://getaftertax.com`. |
 
 **Auth root cause (login always “wrong password”):** Account rows lived in a process-local JSON snapshot. Sign-up wrote one serverless instance; sign-in read another and treated a miss as a bad password. The file store now reloads from disk on every read/write. Pin `AFTERTAX_ACCOUNTS_PATH` to a persistent disk in production (Vercel `/tmp` is still ephemeral across instances). Session cookies now honor `x-forwarded-proto` so `Secure` is set behind the HTTPS proxy. Hash compare is still scrypt + timing-safe equal — no bypass.
 

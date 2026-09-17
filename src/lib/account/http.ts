@@ -11,7 +11,6 @@ import {
   serializeAccountCookie,
   serializeClearedAccountCookie,
 } from "./session.ts";
-import { publicOrigin } from "../hosts.ts";
 import { getAccountStore, toPublicAccount, type AccountStore } from "./store.ts";
 
 function json(
@@ -105,7 +104,7 @@ export async function handleAccountForgot(
 ): Promise<Response> {
   try {
     const result = await requestPasswordReset(store, await readJson(request), {
-      origin: process.env.AFTERTAX_PUBLIC_URL?.replace(/\/$/, "") || requestOrigin(request) || publicOrigin(),
+      origin: requestOrigin(request),
     });
     return json(result, 200);
   } catch (error) {

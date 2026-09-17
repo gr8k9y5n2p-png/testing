@@ -62,11 +62,14 @@ export async function signOutAccountClient(): Promise<void> {
 
 export async function requestPasswordResetClient(
   email: string,
-): Promise<{ ok: true; detail: string }> {
-  return requestJson<{ ok: true; detail: string }>("/api/account/forgot", {
-    method: "POST",
-    body: JSON.stringify({ email }),
-  });
+): Promise<{ ok: true; detail: string; mailConfigured: boolean }> {
+  return requestJson<{ ok: true; detail: string; mailConfigured: boolean }>(
+    "/api/account/forgot",
+    {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    },
+  );
 }
 
 export async function resetAccountPasswordClient(

@@ -109,7 +109,7 @@ export const ACCOUNT_PASSWORD_HINT = "At least 8 characters.";
 export const ACCOUNT_FORGOT_PASSWORD = "Forgot password";
 export const ACCOUNT_FORGOT_TITLE = "Forgot password";
 export const ACCOUNT_FORGOT_DETAIL =
-  "Enter the email on your Aftertax account. We will send a reset link if that account exists.";
+  "Enter the email on your Aftertax account. If mail is configured, we send a one-time Resend link from noreply@getaftertax.com.";
 export const ACCOUNT_FORGOT_SUBMIT = "Send reset link";
 export const ACCOUNT_RESET_TITLE = "Choose a new password";
 export const ACCOUNT_RESET_SUBMIT = "Update password";
