@@ -118,10 +118,38 @@ class BairdSource(HtmlTableSource):
         "Institutional + Investor equity rows with amounts. "
         "Leftover paid capital-gains PDFs 2021–2024 for in-book equity leftovers only "
         "(BSVIX / BSVSX / BMDIX / BMDSX / CCGIX / CCGSX / CCWIX / CCWSX). "
-        "Printed None omitted (not invented $0). Dividend-schedule PDFs are calendars only — unused."
+        "Printed None omitted (not invented $0). Dividend-schedule PDFs are calendars only — unused. "
+        "Official 5y WAVE BM leftover (existing in-book only): Baird Funds, Inc. "
+        "equity series FYE December 31 N-CSR Financial Highlights unlock leftover "
+        "Chautauqua Institutional / Investor ordinary-income years on the 2025 "
+        "paid final-capital-gains book (CCGIX / CCGSX 2021+2023+2024 OI; "
+        "CCWIX / CCWSX 2021+2023+2024 OI). Calendar-safe as_of 12/31. "
+        "Class-level Institutional / Investor — never sibling-copied "
+        "(CCGIX 2023 OI $0.09 is not copied onto CCGSX $0.04; CCWIX 2024 "
+        "OI $0.12 is not copied onto CCWSX $0.08). Income is ordinary "
+        "income. Issuer dashes and footnote amounts less than $0.005 "
+        "omitted (BSVIX / BSVSX 2023 CG dash and Institutional 2023 OI "
+        "less-than-$0.005 stay unmatched — never invent $0). Mid Cap "
+        "Growth already 5y and Small/Mid Cap Growth / bond sleeves stay "
+        "off this leftover page. 2025 stays on the existing paid final "
+        "PDF (CCGIX ST $0.11209 / LT $0.69980 and CCWIX ST $0.20676 / "
+        "LT $0.03358 are not overwritten by N-CSR 2-decimal highlights). "
+        "Years already booked on the official paid CG PDFs stay on those "
+        "pages. N-CSR "
+        "https://www.sec.gov/Archives/edgar/data/1282693/000113322826002879/"
+        "bf-efp22201_ncsr.htm (0001133228-26-002879) verified against the "
+        "issuer Core Financial Statements "
+        "https://www.bairdassetmanagement.com/siteassets/pdfs/annual-report/"
+        "equity-funds-financial-other-annual-.pdf. WAVE BL Thrivent TMAIX / "
+        "TMCVX / TSCSX / TCAIX / IBBFX / TWAIX, WAVE BK DWS RREEF TOLLX, "
+        "WAVE BI DWS Sci&Tech KTCAX, WAVE BJ RiverPark RWGIX / RWGFX, "
+        "WAVE BG DWS Dec 31 BTIEX / SXPAX, WAVE BH TCW, and prior BD–BF "
+        "books stay on their leftover pages. Alger leftovers stay reserved / "
+        "disjoint. WAVE BM leftover N-CSR paid history is fixture-only."
     )
     live_limitations = (
-        "Year-end book is PDF. Fixture transcribes public Institutional + Investor equity rows."
+        "Year-end book is PDF. Fixture transcribes public Institutional + Investor equity rows. "
+        "Leftover 2021–2024 N-CSR paid history is fixture-only."
     )
 
     def pages(self) -> list[PageSpec]:
@@ -147,6 +175,16 @@ class BairdSource(HtmlTableSource):
                 live=False,
                 role="history",
                 large_aum_only=False,
+            ),
+            PageSpec(
+                name="leftover_ncsr_2021_2024_wave_bm",
+                url=(
+                    "https://www.sec.gov/Archives/edgar/data/1282693/"
+                    "000113322826002879/bf-efp22201_ncsr.htm"
+                ),
+                fixture="leftover_ncsr_2021_2024_wave_bm.html",
+                live=False,
+                role="history",
             ),
         ]
 
