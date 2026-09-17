@@ -6103,6 +6103,41 @@ def test_parallel_v_leftover_paid_fixtures() -> None:
     assert {r.ticker for r in baillie} == {"BGAKX", "BINSX", "BGESX", "BSGPX"}
     assert not any(r.ticker == "BGCSX" for r in baillie)
 
+    baillie_ncsr = parse_distribution_html(
+        (ROOT / "baillie_gifford" / "leftover_ncsr_2021_2024_wave_bf.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url=(
+            "https://www.sec.gov/Archives/edgar/data/1120543/"
+            "000110465925020192/tm251686d1_ncsr.htm"
+        ),
+        fund_family="Baillie Gifford",
+    )
+    bgakx_2024 = next(
+        r
+        for r in baillie_ncsr
+        if r.ticker == "BGAKX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.as_of
+        and str(r.as_of) == "2024-12-31"
+    )
+    assert bgakx_2024.amount == Decimal("0.26")
+    assert bgakx_2024.publication_stage == PublicationStage.final
+    bsgpx_2022_cg = next(
+        r
+        for r in baillie_ncsr
+        if r.ticker == "BSGPX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and r.as_of
+        and str(r.as_of) == "2022-12-31"
+    )
+    assert bsgpx_2022_cg.amount == Decimal("0.11")
+    assert {r.ticker for r in baillie_ncsr} == {"BGAKX", "BINSX", "BGESX", "BSGPX"}
+    assert not any(r.ticker == "BGCSX" for r in baillie_ncsr)
+    assert not any(
+        r.ticker in {"BGIKX", "BGEKX", "BGPKX"} for r in baillie_ncsr
+    )
+
 
 def test_wave_ag_victory_leftover_paid_fixtures() -> None:
     ncsr = parse_distribution_html(

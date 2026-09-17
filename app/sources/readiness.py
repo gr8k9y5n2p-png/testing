@@ -214,7 +214,7 @@ HISTORY_YEARS: dict[str, tuple[int, ...]] = {
     "fmi": (2021, 2022, 2023, 2024, 2025),
     "impax": (2021, 2022, 2023, 2024, 2025),
     "american_beacon": (2021, 2022, 2023, 2024, 2025),
-    "baillie_gifford": (2025,),
+    "baillie_gifford": (2021, 2022, 2023, 2024, 2025),
     "brandes": (2021, 2022, 2023, 2024, 2025),
     "mairs_power": (2025,),
     "boston_trust": (2021, 2022, 2023, 2024, 2025),
