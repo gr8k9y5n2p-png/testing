@@ -772,7 +772,8 @@ def test_fixture_book_5y_lookback_after_official_densify() -> None:
     # I/II Class R/Member/R6 is year-depth (2021 I/II still 404). Touchstone
     # leftover JSON years, Putnam CEF DIST-SUMM 204, Fidelity retail DPL6
     # 2022–2023, and USAA FYE March 31 stay walls. Advisor DPL2 / FTRIX not
-    # redone. Honest pin = tip 3742 + AG +16 (no overlap with AF/AD/AE).
+    # redone. Honest pin remasured after rebase onto #203 tip ba30980:
+    # 3742 → 3758 (+16 MF; ETF 5y unchanged at 758). No overlap with AF/AD/AE.
     assert digest.funds_with_5y == 3758
     assert digest.funds_with_5y_mf == 3000
     assert digest.funds_with_5y_etf == 758

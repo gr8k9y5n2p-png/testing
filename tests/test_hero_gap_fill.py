@@ -275,6 +275,7 @@ def test_fixture_book_lookback_stays_official_only() -> None:
     # WAVE AE leftover: Invesco ETF Tax Center ICI leftover December YE
     # +5 ETF (PIN / PSCI / IDMO / IVRA / PBP). Honest pin = tip 3737 + 5 → 3742.
     # WAVE AG leftover: Victory RS FYE Dec 31 2021 N-CSR unlocks +16 MF.
-    # Honest pin = tip 3742 + AG +16 (no overlap with AF/AD/AE).
+    # Honest pin remasured after rebase onto #203 tip ba30980: 3742 → 3758
+    # (+16 MF; no overlap with AF/AD/AE).
     assert digest.funds_with_5y == 3758
     assert digest.book_funds >= 7200
