@@ -2829,6 +2829,59 @@ def test_fourth_tier_fixtures() -> None:
     assert tagrx_2022.amount_min == Decimal("3.00")
     assert tagrx_2022.amount_max == Decimal("3.60")
 
+    jh_ncsr_ck = parse_distribution_html(
+        (ROOT / "john_hancock" / "leftover_ncsr_tagrx_jccax_2021_2025_wave_ck.html").read_text(
+            encoding="utf-8"
+        ),
+        source_url=(
+            "https://www.sec.gov/Archives/edgar/data/22370/"
+            "000119312525327165/8de3f22fa35613b.htm#tagrx-jccax"
+        ),
+        fund_family="John Hancock / Manulife",
+    )
+    tagrx_2025_oi = next(
+        r
+        for r in jh_ncsr_ck
+        if r.ticker == "TAGRX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.as_of
+        and str(r.as_of) == "2025-10-31"
+    )
+    assert tagrx_2025_oi.amount == Decimal("0.23")
+    assert tagrx_2025_oi.publication_stage == PublicationStage.final
+    tagrx_2025_cg = next(
+        r
+        for r in jh_ncsr_ck
+        if r.ticker == "TAGRX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and str(r.as_of) == "2025-10-31"
+    )
+    assert tagrx_2025_cg.amount == Decimal("8.47")
+    jccax_2025_cg = next(
+        r
+        for r in jh_ncsr_ck
+        if r.ticker == "JCCAX"
+        and r.estimate_type == EstimateType.total_capital_gains
+        and str(r.as_of) == "2025-10-31"
+    )
+    assert jccax_2025_cg.amount == Decimal("0.15")
+    assert {r.ticker for r in jh_ncsr_ck} == {"TAGRX", "JCCAX"}
+    assert not any(
+        r.ticker in {"JVLAX", "JEEBX", "JHLVX", "JLVIX", "JCCIX", "ALBAX", "SVALX"}
+        for r in jh_ncsr_ck
+    )
+    assert not any(
+        r.ticker == "TAGRX"
+        and r.estimate_type == EstimateType.ordinary_income
+        and r.as_of
+        and r.as_of.year == 2022
+        for r in jh_ncsr_ck
+    )
+    assert not any(
+        r.ticker == "JCCAX" and r.estimate_type == EstimateType.ordinary_income
+        for r in jh_ncsr_ck
+    )
+
     hartford_final = parse_distribution_html(
         (ROOT / "hartford" / "2025_final_capital_gains.html").read_text(encoding="utf-8"),
         source_url="fixture://hartford-2025-final",

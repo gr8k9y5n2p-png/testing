@@ -26,8 +26,21 @@ class JohnHancockSource(HtmlTableSource):
         "Official 5y parallel AC leftover (2026-09-16): tax-center HTML listed "
         "ICI Primary Open-End xlsx for 2024/2025; live GET returned 403 (hub "
         "later 403). Wayback CDX offline this session. Product pages still 404. "
-        "JVLAX / TAGRX leftovers stay 0y paid — never invent finals from "
-        "estimate ranges."
+        "JVLAX leftovers stay 0y paid — never invent finals from "
+        "estimate ranges. Official 5y WAVE CK leftover (2026-09-17): John "
+        "Hancock Investment Trust FYE October 31 2025 N-CSR Financial "
+        "Highlights unlock leftover Class A TAGRX / JCCAX 2021–2025 on the "
+        "estimate-only in-book identities. Calendar-safe as_of 10/31. "
+        "Class-level A — never sibling-copied onto JHLVX / JLVIX / JCCIX. "
+        "Issuer dashes omitted — never invent $0 (TAGRX 2022 OI / 2021 CG; "
+        "JCCAX printed no OI). Estimate press-release PDFs stay estimates. "
+        "JEEBX Infrastructure and JVLAX stay unmatched. Does not redo "
+        "WAVE CJ Alger ALBAX / ALBCX / AGIZX, CI Federated SVALX, CH "
+        "Harding HLEMX / HLGZX / HLIZX / HLFZX, CG RALIX / RALOX, CF "
+        "SPEGX / AGFCX / AGIFX / ALGZX, CC PIORX / PQIRX, CD Lazard R6, "
+        "CB Open, BY Institutional, BZ/CA/BX Pioneer C/Y/K, BW RAIIX, "
+        "BT SVAAX / SVACX / SVAIX, or reserved Alger CHUSX / ALGAX / "
+        "ALSRX / ACAAX."
     )
     live_limitations = (
         "Family book is a PDF (press-release HTML is a viewer/shell). Fixture transcribes public A-share ranges."
@@ -67,6 +80,16 @@ class JohnHancockSource(HtmlTableSource):
                 fixture="2022_estimated_capital_gains.html",
                 live=False,
                 large_aum_only=True,
+            ),
+            PageSpec(
+                name="leftover_ncsr_tagrx_jccax_2021_2025_wave_ck",
+                url=(
+                    "https://www.sec.gov/Archives/edgar/data/22370/"
+                    "000119312525327165/8de3f22fa35613b.htm#tagrx-jccax"
+                ),
+                fixture="leftover_ncsr_tagrx_jccax_2021_2025_wave_ck.html",
+                live=False,
+                role="history",
             ),
         ]
 
