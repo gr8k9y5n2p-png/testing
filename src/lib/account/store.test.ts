@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { signInAccount, signUpAccount } from "./auth.ts";
 import { InMemoryJsonSnapshot } from "./json-snapshot.ts";
 import { hashPassword, verifyPassword } from "./passwords.ts";
@@ -242,6 +243,23 @@ describe("ephemeral Vercel account HTTP", () => {
       if (priorKind == null) delete process.env.AFTERTAX_ACCOUNT_STORE;
       else process.env.AFTERTAX_ACCOUNT_STORE = priorKind;
     }
+  });
+});
+
+describe("account store docs", () => {
+  it("documents Blob and Redis env vars and the /tmp root cause", () => {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const readme = readFileSync(join(here, "../../../README.md"), "utf8");
+    const env = readFileSync(join(here, "../../../.env.example"), "utf8");
+    for (const source of [readme, env]) {
+      assert.match(source, /BLOB_READ_WRITE_TOKEN/);
+      assert.match(source, /BLOB_STORE_ID/);
+      assert.match(source, /UPSTASH_REDIS_REST_URL/);
+      assert.match(source, /UPSTASH_REDIS_REST_TOKEN/);
+      assert.match(source, /\/tmp/);
+    }
+    assert.match(readme, /useCache: false/);
+    assert.match(readme, /cannot be recovered/);
   });
 });
 
