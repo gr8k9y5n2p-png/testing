@@ -2,7 +2,9 @@ import { LISTS_UNLOCK_PREVIEW_ALT } from "@/lib/copy";
 
 /**
  * Modules Lists Unlock Access underlay.
- * Swap `LISTS_UNLOCK_PREVIEW_SRC` (or pass `src`) if the asset path changes.
+ * Ticker chips and the ticker column are strongly blurred in the asset
+ * so symbols are not readable. Swap `LISTS_UNLOCK_PREVIEW_SRC` (or pass `src`)
+ * if the asset path changes.
  */
 export const LISTS_UNLOCK_PREVIEW_SRC = "/marketing/lists-unlock-preview.png";
 export const LISTS_UNLOCK_PREVIEW_WEBP = "/marketing/lists-unlock-preview.webp";
