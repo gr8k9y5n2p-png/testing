@@ -360,6 +360,7 @@ export function createBlobJsonSnapshot(
       const deadline = new Deadline(timeoutMs);
       if (!lastRead || lastRead.raw !== expected) {
         lastMatch = null;
+        let listedGeneration = 0;
         const current = await deadline.race(
           readBlobSnapshot(
             pathname,
@@ -368,14 +369,14 @@ export function createBlobJsonSnapshot(
             deadline,
             () => null,
             (row) => {
-              rememberMatch(row);
+              listedGeneration = rememberMatch(row).generation;
             },
           ),
           BLOB_SNAPSHOT_TIMEOUT_MESSAGE,
         );
         lastRead = {
           raw: current,
-          generation: lastMatch?.generation ?? 0,
+          generation: listedGeneration,
         };
         if (current !== expected) return false;
       }
