@@ -147,7 +147,7 @@ describe("Blob account snapshot", () => {
           return new Promise(() => {});
         },
         async put() {
-          return {};
+          return new Promise(() => {});
         },
         async list() {
           return new Promise(() => {});
