@@ -1,6 +1,8 @@
 import { publicOrigin } from "../hosts.ts";
 import { readAccountIdFromRequest } from "../account/session.ts";
 import { getAccountStore } from "../account/store.ts";
+import { withTimeout } from "../with-timeout.ts";
+import { CHECKOUT_TIMEOUT_MESSAGE, checkoutBudgetMs } from "./checkout.ts";
 import {
   BILLING_NOT_CONFIGURED,
   BILLING_SIGN_IN,
@@ -81,43 +83,48 @@ export async function createCustomerPortalSession(
   }
 
   const accountId = readAccountIdFromRequest(request);
-  const store = getAccountStore();
-  let account = null;
-  try {
-    account = accountId ? await store.findById(accountId) : null;
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Account store read failed.";
-    return { status: 502, result: stubPortal(message) };
-  }
-  if (!account) {
+  if (!accountId) {
     return {
       status: 401,
       result: stubPortal(BILLING_SIGN_IN, { needs_account: true }),
     };
   }
 
+  const store = getAccountStore();
   try {
-    const customerId = await ensureStripeCustomer(stripe, store, account);
-    const session = await stripe.billingPortal.sessions.create({
-      customer: customerId,
-      return_url: portalReturnUrl(),
-    });
-    if (!session.url) {
-      return {
-        status: 502,
-        result: stubPortal(BILLING_STUB_NOTE),
-      };
-    }
-    return {
-      status: 200,
-      result: {
-        stub: false,
-        url: session.url,
-        price_id: stripePriceId(),
-        return_url: portalReturnUrl(),
-      },
-    };
+    return await withTimeout(
+      (async () => {
+        const account = await store.findById(accountId);
+        if (!account) {
+          return {
+            status: 401,
+            result: stubPortal(BILLING_SIGN_IN, { needs_account: true }),
+          };
+        }
+        const customerId = await ensureStripeCustomer(stripe, store, account);
+        const session = await stripe.billingPortal.sessions.create({
+          customer: customerId,
+          return_url: portalReturnUrl(),
+        });
+        if (!session.url) {
+          return {
+            status: 502,
+            result: stubPortal(BILLING_STUB_NOTE),
+          };
+        }
+        return {
+          status: 200,
+          result: {
+            stub: false,
+            url: session.url,
+            price_id: stripePriceId(),
+            return_url: portalReturnUrl(),
+          },
+        };
+      })(),
+      checkoutBudgetMs(),
+      CHECKOUT_TIMEOUT_MESSAGE,
+    );
   } catch (error) {
     const message =
       error instanceof Error ? error.message : BILLING_STUB_NOTE;

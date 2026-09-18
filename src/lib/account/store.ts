@@ -338,11 +338,15 @@ export function loadAccountsFromFile(filePath: string): AccountRecord[] {
   }
 }
 
+/** Skip a Blob round-trip when this isolate just read or wrote. */
+export const HYDRATE_CACHE_MS = 2_500;
+
 export class SharedJsonAccountStore extends MemoryAccountStore {
   private snapshot: JsonSnapshot;
   private legacyFilePath: string | null;
   private migrated = false;
   private chain: Promise<unknown> = Promise.resolve();
+  private cache: { raw: string; at: number } | null = null;
 
   constructor(
     snapshot: JsonSnapshot,
@@ -363,7 +367,14 @@ export class SharedJsonAccountStore extends MemoryAccountStore {
   }
 
   private async hydrate(): Promise<void> {
-    let records = parseAccountRecords(await this.snapshot.read());
+    const cached = this.cache;
+    if (cached && Date.now() - cached.at < HYDRATE_CACHE_MS) {
+      this.records = parseAccountRecords(cached.raw);
+      return;
+    }
+    const raw = await this.snapshot.read();
+    let records = parseAccountRecords(raw);
+    this.cache = { raw: raw ?? "[]\n", at: Date.now() };
     if (!this.migrated) {
       this.migrated = true;
       if (this.legacyFilePath) {
@@ -373,7 +384,9 @@ export class SharedJsonAccountStore extends MemoryAccountStore {
         );
         if (merged.added > 0) {
           records = merged.records;
-          await this.snapshot.write(serializeAccountRecords(records));
+          const serialized = serializeAccountRecords(records);
+          await this.snapshot.write(serialized);
+          this.cache = { raw: serialized, at: Date.now() };
           console.info(
             `[account] Migrated ${merged.added} account(s) from the file store into the durable store.`,
           );
@@ -384,7 +397,9 @@ export class SharedJsonAccountStore extends MemoryAccountStore {
   }
 
   private async persist(): Promise<void> {
-    await this.snapshot.write(serializeAccountRecords(this.records));
+    const serialized = serializeAccountRecords(this.records);
+    await this.snapshot.write(serialized);
+    this.cache = { raw: serialized, at: Date.now() };
   }
 
   override async findByEmail(email: string): Promise<AccountRecord | null> {

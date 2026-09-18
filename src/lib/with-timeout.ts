@@ -30,3 +30,22 @@ export async function withTimeout<T>(
     if (timer) clearTimeout(timer);
   }
 }
+
+/** One wall-clock budget for a chain of Blob / Stripe calls. */
+export class Deadline {
+  private readonly end: number;
+
+  constructor(ms: number) {
+    this.end = Date.now() + Math.max(1, ms);
+  }
+
+  remaining(): number {
+    return Math.max(0, this.end - Date.now());
+  }
+
+  async race<T>(work: Promise<T>, message: string): Promise<T> {
+    const left = this.remaining();
+    if (left <= 0) throw new Error(message);
+    return withTimeout(work, left, message);
+  }
+}

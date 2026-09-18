@@ -102,21 +102,20 @@ describe("Blob account snapshot", () => {
     assert.equal(await snapshot.read(), null);
   });
 
-  it("reads via list + get(url) when pathname get 404s after put", async () => {
+  it("reads via list + authenticated fetch when pathname get 404s after put", async () => {
     const stored = '[{"email":"ada@example.com"}]\n';
     const blobUrl =
       "https://store.private.blob.vercel-storage.com/aftertax/accounts.json";
+    let getCalls = 0;
     const snapshot = createBlobJsonSnapshot(
       { BLOB_READ_WRITE_TOKEN: "vercel_blob_rw_x" },
       {
-        async get(ref) {
-          if (ref === blobUrl) {
-            return { statusCode: 200, stream: new Blob([stored]).stream() };
-          }
+        async get() {
+          getCalls += 1;
           return { statusCode: 404 };
         },
         async put() {
-          return {};
+          return { url: blobUrl, downloadUrl: blobUrl };
         },
         async list() {
           return {
@@ -129,14 +128,81 @@ describe("Blob account snapshot", () => {
               {
                 pathname: "aftertax/accounts.json",
                 url: blobUrl,
+                downloadUrl: blobUrl,
                 uploadedAt: "2026-01-02T00:00:00.000Z",
               },
             ],
           };
         },
+        fetchImpl: async (input) => {
+          const url = String(input);
+          if (url === blobUrl || url.startsWith(`${blobUrl}?`)) {
+            return new Response(stored, { status: 200 });
+          }
+          return new Response("missing", { status: 404 });
+        },
       },
     );
     assert.match((await snapshot.read()) ?? "", /ada@example.com/);
+    assert.equal(getCalls, 0);
+  });
+
+  it("reuses the put URL so the next read skips list and get", async () => {
+    const stored = '[{"email":"ada@example.com"}]\n';
+    const blobUrl =
+      "https://store.private.blob.vercel-storage.com/aftertax/accounts.json";
+    let getCalls = 0;
+    let listCalls = 0;
+    let fetchCalls = 0;
+    const snapshot = createBlobJsonSnapshot(
+      { BLOB_READ_WRITE_TOKEN: "vercel_blob_rw_x" },
+      {
+        async get() {
+          getCalls += 1;
+          return { statusCode: 404 };
+        },
+        async put() {
+          return { url: blobUrl, downloadUrl: blobUrl };
+        },
+        async list() {
+          listCalls += 1;
+          return { blobs: [] };
+        },
+        fetchImpl: async (input, init) => {
+          fetchCalls += 1;
+          const headers = new Headers(init?.headers);
+          assert.equal(headers.get("authorization"), "Bearer vercel_blob_rw_x");
+          assert.equal(String(input), blobUrl);
+          return new Response(stored, { status: 200 });
+        },
+      },
+    );
+    await snapshot.write(stored);
+    assert.match((await snapshot.read()) ?? "", /ada@example.com/);
+    assert.equal(getCalls, 0);
+    assert.equal(listCalls, 0);
+    assert.equal(fetchCalls, 1);
+  });
+
+  it("uses one wall-clock budget so stacked slow list+get cannot reach 20s", async () => {
+    const started = Date.now();
+    const snapshot = createBlobJsonSnapshot(
+      { BLOB_READ_WRITE_TOKEN: "vercel_blob_rw_x" },
+      {
+        async get() {
+          return new Promise(() => {});
+        },
+        async put() {
+          return new Promise(() => {});
+        },
+        async list() {
+          return new Promise(() => {});
+        },
+      },
+      { timeoutMs: 50 },
+    );
+    await assert.rejects(() => snapshot.read(), /timed out/);
+    assert.ok(Date.now() - started < 200, "read must fail on the overall budget");
   });
 
   it("times out a hanging blob get instead of waiting forever", async () => {

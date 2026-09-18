@@ -5,7 +5,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { serializeAccountCookie } from "../account/session.ts";
 import { hashPassword } from "../account/passwords.ts";
-import { createCheckoutSession } from "./checkout.ts";
+import { CHECKOUT_TIMEOUT_MESSAGE, createCheckoutSession } from "./checkout.ts";
 import { BILLING_NOT_CONFIGURED, BILLING_SIGN_IN } from "./billing-copy.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -116,6 +116,45 @@ describe("Checkout Session", () => {
       store.findById = original;
       if (prior == null) delete process.env.STRIPE_SECRET_KEY;
       else process.env.STRIPE_SECRET_KEY = prior;
+      resetAccountStoreForTests();
+    }
+  });
+
+  it("returns 502 within the checkout budget when the store hangs", async () => {
+    const prior = process.env.STRIPE_SECRET_KEY;
+    const priorBudget = process.env.AFTERTAX_CHECKOUT_TIMEOUT_MS;
+    process.env.STRIPE_SECRET_KEY = "sk_test_dummy_not_a_real_key";
+    process.env.AFTERTAX_CHECKOUT_TIMEOUT_MS = "80";
+    const { getAccountStore, resetAccountStoreForTests } = await import(
+      "../account/store.ts"
+    );
+    resetAccountStoreForTests();
+    const store = getAccountStore();
+    const original = store.findById.bind(store);
+    store.findById = () => new Promise(() => {});
+    const started = Date.now();
+    try {
+      const { result, status } = await createCheckoutSession(
+        new Request("http://localhost/api/checkout", {
+          method: "POST",
+          headers: {
+            cookie: serializeAccountCookie(
+              "acct_11111111-1111-1111-1111-111111111111",
+              false,
+            ),
+          },
+        }),
+      );
+      assert.equal(status, 502);
+      assert.equal(result.stub, true);
+      assert.equal(result.detail, CHECKOUT_TIMEOUT_MESSAGE);
+      assert.ok(Date.now() - started < 400, "must not wait for the platform kill");
+    } finally {
+      store.findById = original;
+      if (prior == null) delete process.env.STRIPE_SECRET_KEY;
+      else process.env.STRIPE_SECRET_KEY = prior;
+      if (priorBudget == null) delete process.env.AFTERTAX_CHECKOUT_TIMEOUT_MS;
+      else process.env.AFTERTAX_CHECKOUT_TIMEOUT_MS = priorBudget;
       resetAccountStoreForTests();
     }
   });
