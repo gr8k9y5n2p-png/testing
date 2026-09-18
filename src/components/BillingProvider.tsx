@@ -6,7 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useState,
+  useSyncExternalStore,
   type ReactNode,
 } from "react";
 import { useAccountSession } from "@/components/AccountSession";
@@ -20,13 +20,13 @@ import {
   remainingFromUsage,
   usageWalls,
   type DeviceUsage,
+  type Entitlement,
   type UsageKind,
 } from "@/lib/billing/limits";
 import {
   ENTITLEMENT_API_PATH,
   USAGE_API_PATH,
 } from "@/lib/stripe/billing-copy";
-import type { Entitlement } from "@/lib/billing/limits";
 import { startCheckout, startCustomerPortal } from "@/lib/stripe/client-actions";
 
 type BillingContextValue = {
@@ -47,34 +47,94 @@ type BillingContextValue = {
 
 const BillingContext = createContext<BillingContextValue | null>(null);
 
+const listeners = new Set<() => void>();
+let cachedRaw: string | null | undefined;
+let cachedUsage: DeviceUsage = EMPTY_USAGE;
+
+function emit() {
+  listeners.forEach((listener) => listener());
+}
+
 function readDeviceUsage(): DeviceUsage {
-  if (typeof window === "undefined") return { ...EMPTY_USAGE };
-  try {
-    const raw = window.localStorage.getItem(FREEMIUM_STORAGE_KEY);
-    return raw ? normalizeUsage(JSON.parse(raw)) : { ...EMPTY_USAGE };
-  } catch {
-    return { ...EMPTY_USAGE };
+  if (typeof window === "undefined") return EMPTY_USAGE;
+  const raw = window.localStorage.getItem(FREEMIUM_STORAGE_KEY);
+  if (raw === cachedRaw) return cachedUsage;
+  cachedRaw = raw;
+  if (!raw) {
+    cachedUsage = EMPTY_USAGE;
+    return cachedUsage;
   }
+  try {
+    cachedUsage = normalizeUsage(JSON.parse(raw));
+  } catch {
+    cachedUsage = EMPTY_USAGE;
+  }
+  return cachedUsage;
 }
 
 function writeDeviceUsage(usage: DeviceUsage) {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(FREEMIUM_STORAGE_KEY, JSON.stringify(usage));
+  const raw = JSON.stringify(usage);
+  window.localStorage.setItem(FREEMIUM_STORAGE_KEY, raw);
+  cachedRaw = raw;
+  cachedUsage = usage;
+  emit();
 }
 
-function localEntitlement(usage: DeviceUsage, subscribed: boolean): Entitlement {
-  const bypass = isFreemiumDisabled();
+function subscribe(listener: () => void) {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
+type RemoteBilling = Pick<
+  Entitlement,
+  | "configured"
+  | "subscribed"
+  | "subscriptionStatus"
+  | "cancelAtPeriodEnd"
+  | "currentPeriodEnd"
+  | "signedIn"
+  | "bypass"
+  | "detail"
+>;
+
+const emptyRemote: RemoteBilling = {
+  configured: false,
+  subscribed: false,
+  subscriptionStatus: null,
+  cancelAtPeriodEnd: false,
+  currentPeriodEnd: null,
+  signedIn: false,
+  bypass: isFreemiumDisabled(),
+  detail: "Billing is not configured. Add Stripe keys in Vercel to enable Checkout.",
+};
+
+let remoteBilling: RemoteBilling = emptyRemote;
+const remoteListeners = new Set<() => void>();
+
+function setRemoteBilling(next: RemoteBilling) {
+  remoteBilling = next;
+  remoteListeners.forEach((listener) => listener());
+}
+
+function subscribeRemote(listener: () => void) {
+  remoteListeners.add(listener);
+  return () => remoteListeners.delete(listener);
+}
+
+function entitlementOf(usage: DeviceUsage, remote: RemoteBilling): Entitlement {
+  const bypass = remote.bypass || isFreemiumDisabled();
+  const unlimited = bypass || remote.subscribed;
   const remaining = remainingFromUsage(usage);
   const walls = usageWalls(usage);
-  const unlimited = bypass || subscribed;
   return {
-    configured: Boolean(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?.trim()),
+    configured: remote.configured,
     secretConfigured: false,
-    subscribed,
-    subscriptionStatus: null,
-    cancelAtPeriodEnd: false,
-    currentPeriodEnd: null,
-    signedIn: subscribed,
+    subscribed: remote.subscribed,
+    subscriptionStatus: remote.subscriptionStatus,
+    cancelAtPeriodEnd: remote.cancelAtPeriodEnd,
+    currentPeriodEnd: remote.currentPeriodEnd,
+    signedIn: remote.signedIn,
     bypass,
     usage,
     remaining,
@@ -83,35 +143,33 @@ function localEntitlement(usage: DeviceUsage, subscribed: boolean): Entitlement 
       compare: unlimited ? false : walls.compare,
       portfolio: unlimited ? false : walls.portfolio,
     },
-    detail: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?.trim()
-      ? null
-      : "Billing is not configured. Add Stripe keys in Vercel to enable Checkout.",
+    detail: remote.detail,
   };
+}
+
+function applyRemote(next: Entitlement) {
+  const usage = mergeUsage(readDeviceUsage(), next.usage);
+  writeDeviceUsage(usage);
+  setRemoteBilling({
+    configured: next.configured,
+    subscribed: next.subscribed,
+    subscriptionStatus: next.subscriptionStatus,
+    cancelAtPeriodEnd: next.cancelAtPeriodEnd,
+    currentPeriodEnd: next.currentPeriodEnd,
+    signedIn: next.signedIn,
+    bypass: next.bypass,
+    detail: next.detail,
+  });
 }
 
 export function BillingProvider({ children }: { children: ReactNode }) {
   const { account } = useAccountSession();
-  const [entitlement, setEntitlement] = useState<Entitlement>(() =>
-    localEntitlement(readDeviceUsage(), Boolean(account?.subscribed)),
+  const usage = useSyncExternalStore(subscribe, readDeviceUsage, () => EMPTY_USAGE);
+  const remote = useSyncExternalStore(
+    subscribeRemote,
+    () => remoteBilling,
+    () => emptyRemote,
   );
-  const apply = useCallback((next: Entitlement) => {
-    const usage = mergeUsage(readDeviceUsage(), next.usage);
-    const remaining = remainingFromUsage(usage);
-    const walls = usageWalls(usage);
-    const unlimited = next.bypass || next.subscribed;
-    const merged: Entitlement = {
-      ...next,
-      usage,
-      remaining,
-      walls: {
-        search: unlimited ? false : walls.search,
-        compare: unlimited ? false : walls.compare,
-        portfolio: unlimited ? false : walls.portfolio,
-      },
-    };
-    setEntitlement(merged);
-    writeDeviceUsage(usage);
-  }, []);
 
   const refresh = useCallback(async () => {
     try {
@@ -120,12 +178,11 @@ export function BillingProvider({ children }: { children: ReactNode }) {
         headers: { accept: "application/json" },
       });
       if (!response.ok) return;
-      const body = (await response.json()) as Entitlement;
-      apply(body);
+      applyRemote((await response.json()) as Entitlement);
     } catch {
       /* keep local snapshot */
     }
-  }, [apply]);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -147,7 +204,7 @@ export function BillingProvider({ children }: { children: ReactNode }) {
       void load
         .then((response) => (response.ok ? response.json() : null))
         .then((body: Entitlement | null) => {
-          if (!cancelled && body) apply(body);
+          if (!cancelled && body) applyRemote(body);
         })
         .catch(() => {
           /* keep local snapshot */
@@ -157,35 +214,27 @@ export function BillingProvider({ children }: { children: ReactNode }) {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [account?.id, apply]);
+  }, [account?.id, account?.subscribed]);
 
-  const postKind = useCallback(
-    (kind: UsageKind, key?: string) => {
-      const next = incrementUsage(readDeviceUsage(), kind, key);
-      writeDeviceUsage(next);
-      setEntitlement((current) => {
-        const usage = mergeUsage(current.usage, next);
-        return localEntitlement(usage, current.subscribed || Boolean(account?.subscribed));
-      });
-      void fetch(USAGE_API_PATH, {
-        method: "POST",
-        credentials: "same-origin",
-        headers: {
-          accept: "application/json",
-          "content-type": "application/json",
-        },
-        body: JSON.stringify({ kind, key }),
+  const postKind = useCallback((kind: UsageKind, key?: string) => {
+    writeDeviceUsage(incrementUsage(readDeviceUsage(), kind, key));
+    void fetch(USAGE_API_PATH, {
+      method: "POST",
+      credentials: "same-origin",
+      headers: {
+        accept: "application/json",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ kind, key }),
+    })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((body: Entitlement | null) => {
+        if (body) applyRemote(body);
       })
-        .then((response) => (response.ok ? response.json() : null))
-        .then((body: Entitlement | null) => {
-          if (body) apply(body);
-        })
-        .catch(() => {
-          /* local increment already applied */
-        });
-    },
-    [account?.subscribed, apply],
-  );
+      .catch(() => {
+        /* local increment already applied */
+      });
+  }, []);
 
   const recordSearch = useCallback(() => {
     postKind("search");
@@ -216,15 +265,20 @@ export function BillingProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const manageBilling = useCallback(async () => {
-    const result = entitlement.subscribed
+    const result = remote.subscribed
       ? await startCustomerPortal()
       : await startCheckout();
     if (result.url) {
       window.location.assign(result.url);
     }
     return result;
-  }, [entitlement.subscribed]);
+  }, [remote.subscribed]);
 
+  const entitlement = entitlementOf(usage, {
+    ...remote,
+    signedIn: Boolean(account) || remote.signedIn,
+    subscribed: Boolean(account?.subscribed) || remote.subscribed,
+  });
   const unlimited = entitlement.bypass || entitlement.subscribed;
   const value = useMemo<BillingContextValue>(
     () => ({
@@ -234,7 +288,7 @@ export function BillingProvider({ children }: { children: ReactNode }) {
       unlimited,
       configured: entitlement.configured,
       subscribed: entitlement.subscribed,
-      signedIn: Boolean(account) || entitlement.signedIn,
+      signedIn: entitlement.signedIn,
       recordSearch,
       recordCompare,
       recordPortfolio,
@@ -243,7 +297,6 @@ export function BillingProvider({ children }: { children: ReactNode }) {
       refresh,
     }),
     [
-      account,
       entitlement,
       manageBilling,
       recordCompare,
