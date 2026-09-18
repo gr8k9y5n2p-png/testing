@@ -348,5 +348,5 @@ export const TAX_DRAG_CARD_DETAIL = "compare totals · not Upcoming";
 export const TAX_IMPACT_DELTA_DETAIL = "proposed − current · not Upcoming";
 export const YEAR_TAX_HEADING = "Calendar-year tax";
 export const YEAR_TAX_DETAIL =
-  "historical tax $ · 2025–2021 · not Upcoming";
+  "historical tax $ · 2021–2025 · not Upcoming";
 export const YEAR_TAX_EMPTY = "No calendar-year tax for these holdings.";

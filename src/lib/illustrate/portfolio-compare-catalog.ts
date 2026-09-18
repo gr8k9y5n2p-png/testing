@@ -217,3 +217,8 @@ export function lookupFund(
   const key = ticker.trim().toUpperCase();
   return funds.find((fund) => fund.ticker.toUpperCase() === key);
 }
+
+export {
+  mergePortfolioFundOptions,
+  universeTickersFromHoldings,
+} from "./portfolio-compare-identity.ts";

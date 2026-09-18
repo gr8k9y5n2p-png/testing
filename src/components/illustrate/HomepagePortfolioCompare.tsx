@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useRef } from "react";
-import type { FundEstimateView } from "@/data/types";
+import { useRef } from "react";
 import { PortfolioCompare, type PortfolioCompareHandle } from "@/components/illustrate/PortfolioCompare";
 import { PortfolioSaveOpenActions } from "@/components/illustrate/PortfolioSaveOpenActions";
 import { NoticeToast, useNoticeToast } from "@/components/NoticeToast";
+import { catalogFunds } from "@/lib/illustrate/portfolio-compare-catalog";
+import { universeTickersFromHoldings } from "@/lib/illustrate/portfolio-compare-identity";
 import {
   exportToPdf,
   toPortfolioCompareExportModel,
@@ -15,28 +16,13 @@ import { UI_DEFAULT_TAX_RATES } from "@/lib/illustrate/types";
 
 const HOMEPAGE_TAX_RATES = UI_DEFAULT_TAX_RATES;
 
-export function HomepagePortfolioCompare({
-  funds,
-}: {
-  funds: FundEstimateView[];
-}) {
+export function HomepagePortfolioCompare() {
   const booksApiRef = useRef<PortfolioCompareHandle | null>(null);
   const { notice, onNotice, dismissNotice } = useNoticeToast();
-  const catalog = useMemo(
-    () =>
-      funds.map((fund) => ({
-        ticker: fund.ticker,
-        fundName: fund.fundName,
-        family: fund.family,
-        nav: fund.nav > 0 ? fund.nav : null,
-      })),
-    [funds],
-  );
 
   return (
     <section id="portfolio-compare" aria-label="Portfolios">
       <PortfolioCompare
-        funds={catalog}
         bookDollars={PORTFOLIO_COMPARE_BOOK_DOLLARS}
         taxRates={HOMEPAGE_TAX_RATES}
         current={WEBSITE_PORTFOLIO_HOLDINGS}
@@ -51,11 +37,15 @@ export function HomepagePortfolioCompare({
         }
         onExport={(result, bookDollars) => {
           // Export stays available; the soft-wall blurs painted modules.
+          const books = booksApiRef.current?.getBooks();
           exportToPdf(
             toPortfolioCompareExportModel(
               result,
               bookDollars,
-              new Set(catalog.map((fund) => fund.ticker.toUpperCase())),
+              universeTickersFromHoldings(
+                [...(books?.current ?? []), ...(books?.proposed ?? [])],
+                catalogFunds().map((fund) => fund.ticker),
+              ),
             ),
           );
         }}

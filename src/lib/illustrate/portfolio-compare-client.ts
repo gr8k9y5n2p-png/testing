@@ -3,6 +3,10 @@ import {
   readRuntimeEnv,
   sameOriginApiUrl,
 } from "@/lib/data-api/config";
+import {
+  COMPARE_CACHE_TTL_MS,
+  createInflightCache,
+} from "@/lib/data-api/inflight-cache";
 import { IllustrateRequestError } from "@/lib/illustrate/client";
 import { userFacingIllustrateError } from "@/lib/illustrate/illustrate-error";
 import {
@@ -33,6 +37,47 @@ import type {
   PortfolioUpcoming,
 } from "@/lib/illustrate/portfolio-compare-types";
 import { userFacingNotes } from "@/lib/illustrate/user-facing-notes";
+
+/** Slot confirm is already committed — keep this short so modules start together. */
+export const PORTFOLIO_FETCH_DEBOUNCE_MS = 50;
+
+const portfolioCompareCache = createInflightCache<PortfolioCompareResponse>(
+  COMPARE_CACHE_TTL_MS,
+);
+
+export function resetPortfolioCompareCache(): void {
+  portfolioCompareCache.clear();
+}
+
+/** Stable key for Current/Proposed books. Labels are display-only. */
+export function portfolioCompareRequestCacheKey(
+  request: PortfolioCompareRequest,
+): string {
+  const body = toPortfolioCompareRequestBody(request);
+  const current = body.current as PortfolioCompareSideIn;
+  const proposed = body.proposed as PortfolioCompareSideIn;
+  return JSON.stringify({
+    current: sideCacheKey(current),
+    proposed: sideCacheKey(proposed),
+    rates: body.tax_rates ?? null,
+    combine: body.combine_state_with_federal !== false,
+    periods: body.periods ?? null,
+  });
+}
+
+function sideCacheKey(side: PortfolioCompareSideIn) {
+  return {
+    book: side.book_dollars ?? null,
+    holdings: side.holdings.map((holding) => ({
+      ticker: (holding.ticker ?? holding.fund_identifier ?? "")
+        .trim()
+        .toUpperCase(),
+      weight: holding.weight_pct ?? null,
+      dollars: holding.holding_dollars ?? null,
+      nav: holding.nav_per_share ?? null,
+    })),
+  };
+}
 
 export function getPortfolioCompareEndpoint(): string {
   // Browser POSTs must stay same-origin. The live Data API does not send
@@ -488,23 +533,32 @@ export async function postIllustratePortfolioCompare(
   request: PortfolioCompareRequest,
   init?: { signal?: AbortSignal },
 ): Promise<PortfolioCompareResponse> {
+  return portfolioCompareCache.remember(
+    portfolioCompareRequestCacheKey(request),
+    () => postIllustratePortfolioCompareUncached(request),
+    init?.signal,
+  );
+}
+
+async function postIllustratePortfolioCompareUncached(
+  request: PortfolioCompareRequest,
+): Promise<PortfolioCompareResponse> {
   const endpoint = getPortfolioCompareEndpoint();
   const remote = !allowDemoEngine();
 
   let response: Response | undefined;
   try {
-    response = await jsonPost(endpoint, toPortfolioCompareRequestBody(request), init?.signal);
+    response = await jsonPost(endpoint, toPortfolioCompareRequestBody(request));
     if (remote && (response.status >= 500 || response.status === 404)) {
       response = undefined;
     }
-  } catch (error) {
+  } catch {
     if (!remote) {
       return normalizePortfolioCompareResponse(
         mockPortfolioCompareResponse(request) as unknown as Record<string, unknown>,
         "mock",
       );
     }
-    if (init?.signal?.aborted) throw error;
     response = undefined;
   }
 
@@ -540,7 +594,6 @@ export async function postIllustratePortfolioCompare(
             request.current,
             request.tax_rates,
             request.combine_state_with_federal,
-            init?.signal,
           )
         : Promise.resolve(
             allowDemoEngine()
@@ -555,7 +608,6 @@ export async function postIllustratePortfolioCompare(
             request.proposed,
             request.tax_rates,
             request.combine_state_with_federal,
-            init?.signal,
           )
         : Promise.resolve(
             allowDemoEngine()
@@ -569,8 +621,8 @@ export async function postIllustratePortfolioCompare(
     if (current && proposed && (current.holdings.length > 0 || proposed.holdings.length > 0)) {
       return synthesizePortfolioCompare(current, proposed, remote ? "live" : "mock");
     }
-  } catch (error) {
-    if (init?.signal?.aborted) throw error;
+  } catch {
+    /* fall through to mock / unavailable */
   }
 
   if (!remote) {
