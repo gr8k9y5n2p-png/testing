@@ -1,5 +1,7 @@
-import { LISTS_PAYWALL_LEAD } from "../copy.ts";
 import { isListsEntitled, type Entitlement } from "./entitlement.ts";
+
+/** Keep in lockstep with `LISTS_PAYWALL_LEAD` in copy.ts — do not import copy here (legal-copy). */
+export const LISTS_LOCKED_DETAIL = "Lists is included with Aftertax access.";
 
 export type ListsApiDenial = {
   items: [];
@@ -15,7 +17,7 @@ export function listsApiDenial(tickers: string[]): ListsApiDenial {
     tickers,
     count: 0,
     entitled: false,
-    detail: LISTS_PAYWALL_LEAD,
+    detail: LISTS_LOCKED_DETAIL,
   };
 }
 

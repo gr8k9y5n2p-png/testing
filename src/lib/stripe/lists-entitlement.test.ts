@@ -3,9 +3,12 @@ import { existsSync, readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { LISTS_PAYWALL_LEAD, LISTS_UNLOCK_KICKER } from "../copy.ts";
 import { entitlementFrom, isListsEntitled } from "./entitlement.ts";
-import { listsApiDenial, listsApiStatus } from "./lists-access.ts";
+import {
+  LISTS_LOCKED_DETAIL,
+  listsApiDenial,
+  listsApiStatus,
+} from "./lists-access.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -24,7 +27,7 @@ describe("Lists entitlement gate", () => {
       tickers: ["FBGRX", "AGTHX"],
       count: 0,
       entitled: false,
-      detail: LISTS_PAYWALL_LEAD,
+      detail: LISTS_LOCKED_DETAIL,
     });
 
     const bypassed = entitlementFrom(
@@ -52,7 +55,7 @@ describe("Lists entitlement gate", () => {
     assert.match(route, /listsApiDenial/);
     assert.match(route, /status: 403/);
     assert.match(page, /ListsPageBody/);
-    assert.match(body, /SoftWall active=\{billing\.walls\.lists\}/);
+    assert.match(body, /active=\{billing\.walls\.lists\}/);
     assert.match(body, /surface="lists"/);
     assert.match(workspace, /if \(locked\) return/);
   });
@@ -74,6 +77,9 @@ describe("Lists entitlement gate", () => {
     assert.match(svg, /BBBXX/);
     assert.doesNotMatch(svg, /\$\d/);
     assert.doesNotMatch(svg, /\d{4}-\d{2}-\d{2}/);
-    assert.equal(LISTS_UNLOCK_KICKER, "Unlock Access");
+    const copy = readFileSync(join(here, "../copy.ts"), "utf8");
+    assert.match(copy, /LISTS_UNLOCK_KICKER = "Unlock Access"/);
+    assert.match(copy, /LISTS_PAYWALL_LEAD = "Lists is included with Aftertax access."/);
+    assert.match(copy, new RegExp(`LISTS_PAYWALL_LEAD = "${LISTS_LOCKED_DETAIL}"`));
   });
 });

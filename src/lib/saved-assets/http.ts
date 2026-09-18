@@ -1,5 +1,5 @@
-import { LISTS_PAYWALL_LEAD } from "../copy.ts";
 import { resolveAccountSession } from "../account/session.ts";
+import { LISTS_LOCKED_DETAIL } from "../stripe/lists-access.ts";
 import {
   getSavedAssetForAccount,
   listSavedAssetsForAccount,
@@ -21,7 +21,7 @@ export type SavedAssetAccess = {
 
 function requireListsEntitled(access: SavedAssetAccess): void {
   if (access.listsEntitled === false) {
-    throw new SavedAssetRequestError(403, LISTS_PAYWALL_LEAD);
+    throw new SavedAssetRequestError(403, LISTS_LOCKED_DETAIL);
   }
 }
 

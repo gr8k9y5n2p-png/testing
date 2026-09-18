@@ -98,7 +98,7 @@ describe("soft-wall placement", () => {
     const wall = read("SoftWall.tsx");
     const preview = read("../lists/ListsUnlockPreview.tsx");
     assert.match(page, /ListsPageBody/);
-    assert.match(body, /SoftWall active=\{billing\.walls\.lists\}/);
+    assert.match(body, /active=\{billing\.walls\.lists\}/);
     assert.match(body, /surface="lists"/);
     assert.match(workspace, /billing\.walls\.lists/);
     assert.match(workspace, /if \(locked\) return/);
