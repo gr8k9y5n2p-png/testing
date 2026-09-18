@@ -4,6 +4,10 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+  mergePortfolioFundOptions,
+  universeTickersFromHoldings,
+} from "./portfolio-compare-identity.ts";
+import {
   SMOKE_CURRENT_TICKERS,
   SMOKE_PROPOSED_TICKERS,
   SMOKE_WEIGHT_PCT,
@@ -95,5 +99,31 @@ describe("PortfolioCompare smoke books", () => {
     assert.match(catalog, /AGTHX:\s*\{[\s\S]*?fundName:\s*"The Growth Fund of America"/);
     assert.match(seed, /fundName:\s*"The Growth Fund of America"[\s\S]*?ticker:\s*"AGTHX"/);
     assert.doesNotMatch(catalog, /American Funds Growth Fund of America/);
+  });
+});
+
+describe("portfolio fund identity merge", () => {
+  it("keeps earlier NAV and fills name from a later confirm", () => {
+    const merged = mergePortfolioFundOptions(
+      [{ ticker: "agthx", fundName: "", nav: 62.1 }],
+      [{ ticker: "AGTHX", fundName: "The Growth Fund of America", family: "American Funds" }],
+    );
+    assert.equal(merged.length, 1);
+    assert.equal(merged[0]?.ticker, "AGTHX");
+    assert.equal(merged[0]?.fundName, "The Growth Fund of America");
+    assert.equal(merged[0]?.nav, 62.1);
+    assert.equal(merged[0]?.family, "American Funds");
+  });
+
+  it("treats named or NAV-backed holdings as in-universe", () => {
+    const tickers = universeTickersFromHoldings(
+      [
+        { ticker: "AGTHX", fundName: "The Growth Fund of America", nav: null },
+        { ticker: "ZZZZZ", fundName: "", nav: null },
+        { ticker: "CGHM", fundName: "", nav: 25.18 },
+      ],
+      ["DODIX"],
+    );
+    assert.deepEqual([...tickers].sort(), ["AGTHX", "CGHM", "DODIX"]);
   });
 });

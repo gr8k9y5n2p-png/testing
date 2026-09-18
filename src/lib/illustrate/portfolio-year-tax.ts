@@ -33,14 +33,16 @@ export type YearTaxTableModel = {
 };
 
 /**
- * Always 2025 … 2021 (newest first), even when Data only returns 2021–2024.
- * Extra period years stay off the grid so the module does not grow a sixth column.
+ * Always 2021 … 2025 (oldest left → newest right), even when Data only
+ * returns 2021–2024. Extra period years stay off the grid so the module
+ * does not grow a sixth column. Callers that pass a different window keep
+ * chronological L→R order.
  */
 export function calendarYearColumns(
   _periods?: PortfolioComparePeriodOut[] | null,
   fallback: readonly number[] = PORTFOLIO_COMPARE_YEARS,
 ): number[] {
-  return [...fallback].sort((a, b) => b - a);
+  return [...fallback].sort((a, b) => a - b);
 }
 
 type PeriodTaxLookup = {

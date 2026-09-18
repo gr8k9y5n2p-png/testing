@@ -35,6 +35,7 @@ describe("Website PortfolioCompare mounts", () => {
     assert.match(actions, /portfolioBooksAreSavable/);
     assert.match(actions, /parsePortfolioBooksPayload/);
     assert.match(page, /Aftertax — Portfolios/);
+    assert.doesNotMatch(page, /getDistributionRepository/);
   });
 
   it("does not inject smoke tickers from Website mounts", () => {

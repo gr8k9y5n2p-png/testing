@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { PortfolioCompareDemoMount } from "@/components/illustrate/PortfolioCompareDemoMount";
-import { getDistributionRepository } from "@/data";
 import { COPY } from "@/lib/copy";
 
 export const metadata: Metadata = {
@@ -10,14 +9,9 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default async function PortfolioCompareDemoPage() {
-  const repository = await getDistributionRepository();
-  const funds = (await repository.search()).map((fund) => ({
-    ticker: fund.ticker,
-    fundName: fund.fundName,
-    family: fund.family,
-  }));
-
+export default function PortfolioCompareDemoPage() {
+  // Do not wait on the unpaid-announce catalog dump. Same first-paint
+  // rule as /portfolio and /compare — identity hydrates per ticker.
   return (
     <main className="mx-auto w-full max-w-7xl px-4 pb-16 pt-8 sm:px-6 lg:px-8">
       <p
@@ -37,13 +31,13 @@ export default async function PortfolioCompareDemoPage() {
         Current and Proposed start empty — add tickers with + Add holding.
         Website mounts start Current / Proposed empty ($1M book stays).
         POSTs periods for calendar years 2021 through 2025. Calendar-year tax
-        is the ticker × year matrix (2025–2021; unmatched / uncovered = N/A,
+        is the ticker × year matrix (2021–2025; unmatched / uncovered = N/A,
         never $0). Upcoming stays unpaid-announced. Paid History is not shown
         as a chronological list — historical tax lives in Calendar-year tax.
       </p>
 
       <div className="mt-8">
-        <PortfolioCompareDemoMount funds={funds} />
+        <PortfolioCompareDemoMount />
       </div>
 
       <pre
@@ -74,7 +68,6 @@ exportToPdf(toPortfolioCompareExportModel(result, bookDollars));
 <PortfolioCompare
   bookDollars={1_000_000}
   taxRates={UI_DEFAULT_TAX_RATES}
-  funds={funds}
   current={WEBSITE_PORTFOLIO_HOLDINGS}
   proposed={WEBSITE_PORTFOLIO_HOLDINGS}
 />`}

@@ -12,17 +12,23 @@ import { CalendarYearTaxTable } from "@/components/illustrate/portfolio-compare/
 import { SummaryStrip } from "@/components/illustrate/portfolio-compare/SummaryStrip";
 import { NeedFundPricePrompt } from "@/components/illustrate/NeedFundPricePrompt";
 import { UpcomingTable } from "@/components/illustrate/portfolio-compare/UpcomingTable";
+import { fetchFundLookup } from "@/lib/data-api/funds-client";
 import { navFromFundMetadata } from "@/lib/illustrate/compare-request";
 import {
   isMissingNavError,
   NEED_FUND_PRICE_COPY,
 } from "@/lib/illustrate/illustrate-error";
-import { catalogFunds } from "@/lib/illustrate/portfolio-compare-catalog";
 import {
+  catalogFunds,
   smokeCurrentHoldings,
   smokeProposedHoldings,
 } from "@/lib/illustrate/portfolio-compare-catalog";
-import { postIllustratePortfolioCompare } from "@/lib/illustrate/portfolio-compare-client";
+import { mergePortfolioFundOptions } from "@/lib/illustrate/portfolio-compare-identity";
+import {
+  PORTFOLIO_FETCH_DEBOUNCE_MS,
+  postIllustratePortfolioCompare,
+} from "@/lib/illustrate/portfolio-compare-client";
+import { toTickerFieldOption } from "@/components/illustrate/portfolio-compare/ticker-field-search";
 import {
   upcomingHoldingsForSide,
   withUpcomingNav,
@@ -110,6 +116,41 @@ function formatBookInput(value: number): string {
   return value.toLocaleString("en-US");
 }
 
+function filledPortfolioTickers(
+  current: PortfolioHoldingDraft[],
+  proposed: PortfolioHoldingDraft[],
+): string[] {
+  const seen = new Set<string>();
+  const tickers: string[] = [];
+  for (const holding of [...current, ...proposed]) {
+    const ticker = holding.ticker.trim().toUpperCase();
+    if (!ticker || seen.has(ticker)) continue;
+    seen.add(ticker);
+    tickers.push(ticker);
+  }
+  return tickers;
+}
+
+function applyFundIdentity(
+  holdings: PortfolioHoldingDraft[],
+  fund: { ticker: string; fundName: string; family?: string; nav?: number | null },
+): PortfolioHoldingDraft[] {
+  let changed = false;
+  const next = holdings.map((holding) => {
+    if (holding.ticker.trim().toUpperCase() !== fund.ticker) return holding;
+    const nav =
+      holding.nav != null && holding.nav > 0 ? holding.nav : fund.nav ?? holding.nav;
+    const fundName = holding.fundName || fund.fundName;
+    const family = holding.family || fund.family;
+    if (nav === holding.nav && fundName === holding.fundName && family === holding.family) {
+      return holding;
+    }
+    changed = true;
+    return { ...holding, fundName, family, nav };
+  });
+  return changed ? next : holdings;
+}
+
 export function PortfolioCompare({
   bookDollars: bookDollarsProp = PORTFOLIO_COMPARE_BOOK_DOLLARS,
   current: currentProp,
@@ -124,11 +165,14 @@ export function PortfolioCompare({
   booksApiRef,
   onBooksChange,
 }: PortfolioCompareProps) {
-  const funds = useMemo(() => catalogFunds(fundsProp ?? []), [fundsProp]);
+  const [knownFunds, setKnownFunds] = useState(() => fundsProp ?? []);
+  const funds = useMemo(() => catalogFunds(knownFunds), [knownFunds]);
   const universeTickers = useMemo(
     () => new Set(funds.map((fund) => fund.ticker.trim().toUpperCase()).filter(Boolean)),
     [funds],
   );
+  const knownFundsRef = useRef(knownFunds);
+  knownFundsRef.current = knownFunds;
   const [bookDollars, setBookDollars] = useState(bookDollarsProp);
   const [bookInput, setBookInput] = useState(formatBookInput(bookDollarsProp));
   const [currentUnit, setCurrentUnit] = useState<AllocationUnit>("pct");
@@ -227,6 +271,46 @@ export function PortfolioCompare({
     periods: defaultPortfolioComparePeriods(),
     retry,
   });
+  const filledTickersKey = filledPortfolioTickers(current, proposed).join(",");
+
+  useEffect(() => {
+    const extras = [...current, ...proposed]
+      .filter((holding) => holding.ticker.trim() && (holding.fundName || (holding.nav != null && holding.nav > 0)))
+      .map((holding) => ({
+        ticker: holding.ticker.trim().toUpperCase(),
+        fundName: holding.fundName,
+        family: holding.family,
+        nav: holding.nav ?? null,
+      }));
+    if (extras.length === 0) return;
+    setKnownFunds((prev) => mergePortfolioFundOptions(prev, extras));
+  }, [current, proposed]);
+
+  useEffect(() => {
+    const tickers = filledTickersKey ? filledTickersKey.split(",") : [];
+    if (tickers.length === 0) return;
+    let cancelled = false;
+    void Promise.all(
+      tickers.map(async (ticker) => {
+        const existing = knownFundsRef.current.find(
+          (fund) => fund.ticker.trim().toUpperCase() === ticker,
+        );
+        if (existing?.fundName && existing.nav != null && existing.nav > 0) return;
+        const page = await fetchFundLookup(ticker);
+        if (cancelled) return;
+        const option = page.items
+          .map(toTickerFieldOption)
+          .find((row) => row?.ticker === ticker);
+        if (!option) return;
+        setKnownFunds((prev) => mergePortfolioFundOptions(prev, [option]));
+        setCurrent((holdings) => applyFundIdentity(holdings, option));
+        setProposed((holdings) => applyFundIdentity(holdings, option));
+      }),
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [filledTickersKey]);
 
   useEffect(() => {
     if (!canFetch) return;
@@ -279,7 +363,7 @@ export function PortfolioCompare({
           setError(caught instanceof Error ? caught.message : "Portfolio compare failed");
           setLoading(false);
         });
-    }, 250);
+    }, PORTFOLIO_FETCH_DEBOUNCE_MS);
 
     return () => {
       controller.abort();

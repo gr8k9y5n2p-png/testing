@@ -170,6 +170,17 @@ describe("portfolio compare periods wiring", () => {
   });
 });
 
+describe("portfolio compare short-TTL cache", () => {
+  it("keys Current/Proposed books without display labels and wraps the POST", () => {
+    const client = readFileSync(join(here, "portfolio-compare-client.ts"), "utf8");
+    assert.match(client, /portfolioCompareCache\.remember/);
+    assert.match(client, /portfolioCompareRequestCacheKey/);
+    assert.match(client, /postIllustratePortfolioCompareUncached/);
+    assert.match(client, /COMPARE_CACHE_TTL_MS/);
+    assert.match(client, /Labels are display-only/);
+  });
+});
+
 describe("portfolio compare tax_rates + same-origin proxy", () => {
   it("maps rate-strip aliases and posts same-origin so CORS cannot hide 422s", () => {
     const client = readFileSync(join(here, "portfolio-compare-client.ts"), "utf8");

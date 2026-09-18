@@ -8,6 +8,7 @@ import type {
 } from "./portfolio-compare-types.ts";
 import { PORTFOLIO_COMPARE_YEARS, portfolioYearTaxRate } from "./portfolio-compare-years.ts";
 import {
+  calendarYearColumns,
   calendarYearTaxTable,
   defaultPortfolioComparePeriods,
   ensurePortfolioComparePeriods,
@@ -163,6 +164,18 @@ describe("portfolioYearTaxRate smoke coverage", () => {
 });
 
 describe("calendar-year tax table", () => {
+  it("orders columns oldest left → newest right", () => {
+    assert.deepEqual(calendarYearColumns(), [2021, 2022, 2023, 2024, 2025]);
+    assert.deepEqual(
+      calendarYearColumns([{ year: 2024, current: [], proposed: [] }], [2025, 2021, 2023]),
+      [2021, 2023, 2025],
+    );
+    assert.deepEqual(
+      calendarYearColumns(undefined, [2025, 2024, 2023, 2022, 2021]),
+      [2021, 2022, 2023, 2024, 2025],
+    );
+  });
+
   it("sends 2021–2025 periods by default and fills a missing 2025", () => {
     assert.deepEqual(
       defaultPortfolioComparePeriods().map((period) => period.year),
@@ -178,7 +191,7 @@ describe("calendar-year tax table", () => {
 
   it("fills AGTHX/AMCAP/AMCPX/DODGX and DODIX 2021–2025; CGHM is N/A", () => {
     const model = calendarYearTaxTable(resultForSmoke());
-    assert.deepEqual(model.years, [2025, 2024, 2023, 2022, 2021]);
+    assert.deepEqual(model.years, [2021, 2022, 2023, 2024, 2025]);
     assert.equal(hasCalendarYearTax(model), true);
 
     const byTicker = (side: "current" | "proposed", ticker: string) =>
@@ -208,8 +221,8 @@ describe("calendar-year tax table", () => {
     ];
     const model = calendarYearTaxTable(book);
     const agthx = model.current.find((row) => row.ticker === "AGTHX");
-    assert.deepEqual(model.years, [2025, 2024, 2023, 2022, 2021]);
-    assert.deepEqual(agthx?.cells, [null, 2400, null, null, null]);
+    assert.deepEqual(model.years, [2021, 2022, 2023, 2024, 2025]);
+    assert.deepEqual(agthx?.cells, [null, null, null, 2400, null]);
     assert.equal(agthx?.cells.includes(0), false);
   });
 
@@ -217,11 +230,11 @@ describe("calendar-year tax table", () => {
     const book = resultForSmoke();
     book.periods = (book.periods ?? []).filter((period) => period.year !== 2025);
     const model = calendarYearTaxTable(book);
-    assert.deepEqual(model.years, [2025, 2024, 2023, 2022, 2021]);
+    assert.deepEqual(model.years, [2021, 2022, 2023, 2024, 2025]);
     const agthx = model.current.find((row) => row.ticker === "AGTHX");
     assert.equal(agthx?.cells.length, 5);
-    assert.equal(agthx?.cells[0], null);
-    assert.ok(agthx?.cells.slice(1).every((cell) => cell != null && cell > 0));
+    assert.equal(agthx?.cells[4], null);
+    assert.ok(agthx?.cells.slice(0, 4).every((cell) => cell != null && cell > 0));
   });
 
   it("keeps one row per ticker even when the book repeats a holding", () => {
