@@ -40,5 +40,10 @@ describe("Sample Estimates empty copy", () => {
     assert.match(source, /ACCOUNT_SIGN_UP = "Create account"/);
     assert.match(source, /ACCOUNT_HAVE_ACCOUNT = "Already have an account\? Sign in"/);
     assert.match(source, /ACCOUNT_UNLOCK_DETAIL/);
+    assert.match(source, /\$\{remaining\} Comparisons Left/);
+    assert.match(source, /0 Comparisons Left/);
+    assert.doesNotMatch(source, /free compare reports left/);
+    assert.match(source, /free searches left/);
+    assert.match(source, /free portfolio reviews left/);
   });
 });

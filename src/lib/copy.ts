@@ -140,9 +140,8 @@ export function freeSearchLabel(remaining: number): string {
 }
 
 export function freeCompareLabel(remaining: number): string {
-  if (remaining <= 0) return "0 free compare reports left";
-  if (remaining === 1) return "1 of 3 free compare reports left";
-  return `${remaining} of 3 free compare reports left`;
+  if (remaining <= 0) return "0 Comparisons Left";
+  return `${remaining} Comparisons Left`;
 }
 
 export function freePortfolioLabel(remaining: number): string {
