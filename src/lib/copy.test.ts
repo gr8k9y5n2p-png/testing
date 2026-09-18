@@ -30,6 +30,10 @@ describe("Sample Estimates empty copy", () => {
     assert.match(source, /LISTS_OPEN = "Open"/);
     assert.match(source, /LISTS_UNLOCK_KICKER = "Unlock Access"/);
     assert.match(source, /LISTS_PAYWALL_LEAD = "Lists is included with Aftertax access."/);
+    assert.match(
+      source,
+      /LISTS_UNLOCK_PREVIEW_ALT =\s*"Illustrative Lists layout — not live estimates"/,
+    );
     assert.doesNotMatch(source, /Upgrade \$39/);
     assert.match(source, /PORTFOLIO_SAVE = "Save"/);
     assert.match(source, /PORTFOLIO_OPEN = "Open"/);

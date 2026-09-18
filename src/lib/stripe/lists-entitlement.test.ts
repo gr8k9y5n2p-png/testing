@@ -60,31 +60,26 @@ describe("Lists entitlement gate", () => {
     assert.match(workspace, /if \(locked\) return/);
   });
 
-  it("keeps the Unlock Access preview as a swappable public asset without invented dist numbers", () => {
+  it("uses the Modules Lists Unlock underlay as a swappable public asset", () => {
     const preview = readFileSync(
       join(here, "../../components/lists/ListsUnlockPreview.tsx"),
       "utf8",
     );
-    const svgPath = join(here, "../../../public/lists-unlock-preview.svg");
-    assert.equal(existsSync(svgPath), true);
-    const svg = readFileSync(svgPath, "utf8");
-    assert.match(preview, /LISTS_UNLOCK_PREVIEW_SRC = "\/lists-unlock-preview.svg"/);
-    assert.match(preview, /src = LISTS_UNLOCK_PREVIEW_SRC/);
-    assert.match(svg, />Lists</);
-    assert.match(svg, />Save</);
-    assert.match(svg, />Open</);
-    assert.match(svg, /AAAXX/);
-    assert.match(svg, /BBBXX/);
-    assert.doesNotMatch(svg, /\$\d/);
-    assert.doesNotMatch(svg, /\d{4}-\d{2}-\d{2}/);
-    assert.equal(
-      /[\u0000-\u0008\u000B\u000C\u000E-\u001F]/.test(svg),
-      false,
-      "preview SVG must be valid XML (no control characters)",
+    const marketing = join(here, "../../../public/marketing");
+    assert.equal(existsSync(join(marketing, "lists-unlock-preview.png")), true);
+    assert.equal(existsSync(join(marketing, "lists-unlock-preview.webp")), true);
+    assert.equal(existsSync(join(marketing, "lists-unlock-preview@2x.png")), true);
+    assert.equal(existsSync(join(here, "../../../public/lists-unlock-preview.svg")), false);
+    assert.match(
+      preview,
+      /LISTS_UNLOCK_PREVIEW_SRC = "\/marketing\/lists-unlock-preview.png"/,
     );
+    assert.match(preview, /src = LISTS_UNLOCK_PREVIEW_SRC/);
+    assert.match(preview, /LISTS_UNLOCK_PREVIEW_ALT/);
     const copy = readFileSync(join(here, "../copy.ts"), "utf8");
     assert.match(copy, /LISTS_UNLOCK_KICKER = "Unlock Access"/);
     assert.match(copy, /LISTS_PAYWALL_LEAD = "Lists is included with Aftertax access."/);
+    assert.match(copy, /Illustrative Lists layout — not live estimates/);
     assert.match(copy, new RegExp(`LISTS_PAYWALL_LEAD = "${LISTS_LOCKED_DETAIL}"`));
   });
 });

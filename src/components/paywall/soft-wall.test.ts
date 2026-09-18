@@ -107,7 +107,12 @@ describe("soft-wall placement", () => {
     assert.match(wall, /ListsUnlockPreview/);
     assert.match(wall, /UnlockAccountModal/);
     assert.match(wall, /startOrCheckout/);
-    assert.match(preview, /LISTS_UNLOCK_PREVIEW_SRC/);
+    assert.match(
+      preview,
+      /LISTS_UNLOCK_PREVIEW_SRC = "\/marketing\/lists-unlock-preview.png"/,
+    );
+    assert.match(preview, /LISTS_UNLOCK_PREVIEW_WEBP/);
+    assert.match(preview, /LISTS_UNLOCK_PREVIEW_ALT/);
     assert.match(preview, /src = LISTS_UNLOCK_PREVIEW_SRC/);
     assert.doesNotMatch(wall, /Upgrade/);
     assert.doesNotMatch(wall, /scrollIntoView/);

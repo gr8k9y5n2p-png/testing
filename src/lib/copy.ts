@@ -89,6 +89,9 @@ export const LISTS_OPENED = "List opened.";
 export const LISTS_UNLOCK_KICKER = "Unlock Access";
 /** Lists has no free quota — same entitlement as other Unlock Access walls. */
 export const LISTS_PAYWALL_LEAD = "Lists is included with Aftertax access.";
+/** Alt for the Modules Lists Unlock underlay. Footer marks sample layout. */
+export const LISTS_UNLOCK_PREVIEW_ALT =
+  "Illustrative Lists layout — not live estimates";
 export const PORTFOLIO_SAVE = "Save";
 export const PORTFOLIO_OPEN = "Open";
 export const PORTFOLIO_SAVE_TITLE = "Save portfolio";

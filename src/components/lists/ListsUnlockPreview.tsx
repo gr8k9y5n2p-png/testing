@@ -1,9 +1,13 @@
+import { LISTS_UNLOCK_PREVIEW_ALT } from "@/lib/copy";
+
 /**
- * Placeholder Lists preview for the Unlock Access module.
- * Modules’ final asset is a drop-in path swap — change
- * `LISTS_UNLOCK_PREVIEW_SRC` (or pass `src`) when it lands.
+ * Modules Lists Unlock Access underlay.
+ * Swap `LISTS_UNLOCK_PREVIEW_SRC` (or pass `src`) if the asset path changes.
  */
-export const LISTS_UNLOCK_PREVIEW_SRC = "/lists-unlock-preview.svg";
+export const LISTS_UNLOCK_PREVIEW_SRC = "/marketing/lists-unlock-preview.png";
+export const LISTS_UNLOCK_PREVIEW_WEBP = "/marketing/lists-unlock-preview.webp";
+export const LISTS_UNLOCK_PREVIEW_SRC_2X =
+  "/marketing/lists-unlock-preview@2x.png";
 
 export function ListsUnlockPreview({
   src = LISTS_UNLOCK_PREVIEW_SRC,
@@ -12,16 +16,30 @@ export function ListsUnlockPreview({
   src?: string;
   className?: string;
 }) {
+  const swapped = src !== LISTS_UNLOCK_PREVIEW_SRC;
   return (
     <div className={`overflow-hidden rounded-md border border-line bg-paper ${className}`}>
-      {/* Plain img so a path swap (SVG or PNG) paints without next/image. */}
-      <img
-        src={src}
-        alt="Lists preview — ticker paste, Upcoming-style rows, Save and Open"
-        width={800}
-        height={480}
-        className="h-auto w-full"
-      />
+      {swapped ? (
+        <img
+          src={src}
+          alt={LISTS_UNLOCK_PREVIEW_ALT}
+          width={1200}
+          height={878}
+          className="h-auto w-full"
+        />
+      ) : (
+        <picture>
+          <source type="image/webp" srcSet={LISTS_UNLOCK_PREVIEW_WEBP} />
+          <img
+            src={LISTS_UNLOCK_PREVIEW_SRC}
+            srcSet={`${LISTS_UNLOCK_PREVIEW_SRC} 1x, ${LISTS_UNLOCK_PREVIEW_SRC_2X} 2x`}
+            alt={LISTS_UNLOCK_PREVIEW_ALT}
+            width={1200}
+            height={878}
+            className="h-auto w-full"
+          />
+        </picture>
+      )}
     </div>
   );
 }
