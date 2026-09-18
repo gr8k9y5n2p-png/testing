@@ -11,16 +11,23 @@ function read(relative: string): string {
 }
 
 describe("homepage Account login panel", () => {
-  it("sits to the right of Search a fund and unmounts for a signed-in session", () => {
+  it("sits to the right of Search a fund and keeps Unlock in that rail", () => {
     const hero = read("landing/Hero.tsx");
     const panel = read("HomepageLoginPanel.tsx");
     const form = read("AccountAuthForm.tsx");
     assert.match(hero, /HomepageLoginPanel/);
     assert.match(hero, /lg:grid-cols-\[minmax\(0,40rem\)_minmax\(18rem,24rem\)\]/);
-    assert.match(panel, /account !== null/);
+    assert.match(panel, /account === undefined/);
     assert.match(panel, /return null/);
     assert.match(panel, /id="account"/);
     assert.match(panel, /AccountAuthForm/);
+    assert.match(panel, /HOMEPAGE_UNLOCK_ACCESS/);
+    assert.match(panel, /UNLOCK_BILLING_LABEL/);
+    assert.match(panel, /useUnlockAccountFlow/);
+    assert.match(panel, /startOrCheckout/);
+    assert.match(panel, /UnlockAccountModal/);
+    assert.match(panel, /billing\.subscribed \|\| billing\.unlimited/);
+    assert.doesNotMatch(panel, /MANAGE_BILLING_LABEL/);
     assert.match(form, /ACCOUNT_FORGOT_PASSWORD/);
     assert.match(form, /href="\/account\/forgot"/);
     assert.match(form, /autoComplete="username"/);

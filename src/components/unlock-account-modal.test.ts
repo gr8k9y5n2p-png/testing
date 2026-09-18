@@ -40,6 +40,9 @@ describe("Unlock Access create-account modal", () => {
     assert.match(modal, /finally \{\s*setBusy\(false\)/);
     assert.match(wall, /onAuthenticated=\{continueAfterAuth\}/);
     assert.match(menu, /onAuthenticated=\{continueAfterAuth\}/);
+    const homepage = read("HomepageLoginPanel.tsx");
+    assert.match(homepage, /onAuthenticated=\{continueAfterAuth\}/);
+    assert.match(homepage, /HOMEPAGE_UNLOCK_ACCESS/);
     assert.match(checkout, /CHECKOUT_API_PATH/);
     assert.match(billingCopy, /CHECKOUT_API_PATH = "\/api\/checkout"/);
   });

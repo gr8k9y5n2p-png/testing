@@ -122,6 +122,7 @@ export const ACCOUNT_RESET_MISSING =
 export const ACCOUNT_HOMEPAGE_LOGIN_TITLE = "Sign in";
 export const ACCOUNT_HOMEPAGE_LOGIN_DETAIL =
   "Email and password. Save lists and portfolios to this account.";
+export const HOMEPAGE_UNLOCK_ACCESS = "Unlock Access";
 export const ACCOUNT_STRIPE_RESERVE =
   "Stripe Checkout links a Customer to this same account email. Cancel at period end from Manage billing.";
 
