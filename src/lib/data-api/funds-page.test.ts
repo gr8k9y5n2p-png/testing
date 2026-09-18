@@ -67,6 +67,21 @@ describe("Search / Sample Estimates fund page", () => {
     assert.match(app, /upcoming=1|upcoming", "1"/);
     const lists = readFileSync(join(here, "../../app/api/lists/route.ts"), "utf8");
     assert.doesNotMatch(lists, /getDistributionRepository/);
+    const fundsRoute = readFileSync(join(here, "../../app/api/funds/route.ts"), "utf8");
+    const lookup = readFileSync(
+      join(here, "../../app/api/funds/lookup/route.ts"),
+      "utf8",
+    );
+    assert.match(fundsPage, /loadThinFundSearchFromDataApi/);
+    assert.match(fundsRoute, /loadThinFundSearchFromDataApi/);
+    assert.match(fundsRoute, /thinPicker/);
+    assert.match(lookup, /\/funds\/lookup\?ticker=/);
+    assert.match(lookup, /not_in_universe/);
+    assert.doesNotMatch(lookup, /getDistributionRepository/);
+    assert.doesNotMatch(lookup, /loadDistributionsForFundPage/);
+    assert.doesNotMatch(lookup, /`\/funds\?ticker=`/);
+    assert.doesNotMatch(lookup, /fetchDataApi\(\s*`\/funds\?ticker=/);
+    assert.doesNotMatch(fundsPage, /params\.set\("ticker"/);
   });
 
   it("keeps paid/final history off the has_estimate Upcoming gate", () => {

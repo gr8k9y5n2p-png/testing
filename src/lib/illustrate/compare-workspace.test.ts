@@ -736,8 +736,9 @@ describe("compare page first paint", () => {
     assert.doesNotMatch(page, /getDistributionRepository/);
     assert.doesNotMatch(page, /repository\.search/);
     assert.match(page, /loadCoverageSnapshot/);
-    assert.match(workspace, /fetchFundsSearch/);
-    assert.match(workspace, /navOnly: false/);
+    assert.match(workspace, /fetchFundLookup/);
+    assert.doesNotMatch(workspace, /navOnly: false/);
+    assert.doesNotMatch(workspace, /fetchFundsSearch/);
     assert.match(workspace, /pickFundViewFromSearch/);
   });
 });

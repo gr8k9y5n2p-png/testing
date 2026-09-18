@@ -13,8 +13,13 @@ const fundsSearchCache = createInflightCache<FundsApiClientResult<unknown>>(
   FUNDS_SEARCH_CACHE_TTL_MS,
 );
 
+const fundsLookupCache = createInflightCache<FundsApiClientResult<unknown>>(
+  FUNDS_SEARCH_CACHE_TTL_MS,
+);
+
 export function resetFundsSearchCache(): void {
   fundsSearchCache.clear();
+  fundsLookupCache.clear();
 }
 
 export type FundsApiClientResult<T = unknown> = {
@@ -97,6 +102,8 @@ export function parseFundsApiResponse<T = unknown>(
 
 /** Same-origin Website BFF. Search / Compare / Portfolio share this path. */
 export const FUNDS_SEARCH_PATH = "/api/funds";
+/** Exact confirm. Data /funds/lookup?ticker= — never /funds?ticker=. */
+export const FUNDS_LOOKUP_PATH = "/api/funds/lookup";
 
 /**
  * Autocomplete query for apex GET /api/funds.
@@ -106,7 +113,7 @@ export const FUNDS_SEARCH_PATH = "/api/funds";
  */
 export function fundsSearchParams(
   query: string,
-  limit = 20,
+  limit = 10,
   options?: { navOnly?: boolean },
 ): URLSearchParams {
   const params = new URLSearchParams();
@@ -132,9 +139,15 @@ export function fundsSearchNotInUniverse(
   return looksLikeExactTicker(query);
 }
 
+export function fundsLookupParams(ticker: string): URLSearchParams {
+  const params = new URLSearchParams();
+  params.set("ticker", ticker.trim().toUpperCase());
+  return params;
+}
+
 export async function fetchFundsSearch<T = unknown>(
   query: string,
-  limit = 20,
+  limit = 10,
   options?: { navOnly?: boolean },
 ): Promise<FundsApiClientResult<T>> {
   const q = query.trim();
@@ -161,6 +174,43 @@ async function fetchFundsSearchUncached<T>(
     if (page.unavailable) return page;
     if (!fundsSearchNotInUniverse(page.items, query)) return page;
     return { items: page.items, unavailable: false, notInUniverse: true };
+  } catch {
+    return { items: [], unavailable: true };
+  }
+}
+
+/**
+ * Exact ticker confirm. Thin apex → Data GET /funds/lookup?ticker=.
+ * 404 is not_in_universe. Never hydrates /distributions.
+ */
+export async function fetchFundLookup<T = unknown>(
+  ticker: string,
+): Promise<FundsApiClientResult<T>> {
+  const key = ticker.trim().toUpperCase();
+  if (!looksLikeExactTicker(key)) return { items: [], unavailable: false };
+  return fundsLookupCache.remember(`lookup:${key}`, () =>
+    fetchFundLookupUncached<T>(key),
+  ) as Promise<FundsApiClientResult<T>>;
+}
+
+async function fetchFundLookupUncached<T>(
+  ticker: string,
+): Promise<FundsApiClientResult<T>> {
+  try {
+    const response = await fetch(
+      `${FUNDS_LOOKUP_PATH}?${fundsLookupParams(ticker).toString()}`,
+      { cache: "no-store" },
+    );
+    const body = await response.json().catch(() => null);
+    if (response.status === 404) {
+      return { items: [], unavailable: false, notInUniverse: true };
+    }
+    const page = parseFundsApiResponse<T>(response.ok, body);
+    if (page.unavailable) return page;
+    if (!page.items.length) {
+      return { items: [], unavailable: false, notInUniverse: true };
+    }
+    return page;
   } catch {
     return { items: [], unavailable: true };
   }

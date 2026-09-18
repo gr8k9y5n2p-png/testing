@@ -11,7 +11,7 @@ import { TaxRateFields } from "@/components/illustrate/TaxRateFields";
 import { UpcomingTable } from "@/components/illustrate/portfolio-compare/UpcomingTable";
 import { NoticeToast, useNoticeToast } from "@/components/NoticeToast";
 import { SavedAssetActions } from "@/components/saved-assets/SavedAssetActions";
-import { fetchFundsSearch } from "@/lib/data-api/funds-client";
+import { fetchFundLookup } from "@/lib/data-api/funds-client";
 import { postIllustrateCompare } from "@/lib/illustrate/compare-client";
 import {
   trailingCalendarPeriods,
@@ -206,9 +206,7 @@ export function CompareWorkspace({
     void Promise.all(
       tickers.map(async (ticker) => {
         if (resolveFundView(fundsRef.current, ticker)) return;
-        const page = await fetchFundsSearch<FundEstimateView>(ticker, 5, {
-          navOnly: false,
-        });
+        const page = await fetchFundLookup<FundEstimateView>(ticker);
         if (cancelled) return;
         const fund = pickFundViewFromSearch(page.items, ticker);
         if (!fund) return;
