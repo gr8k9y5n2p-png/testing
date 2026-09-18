@@ -58,6 +58,13 @@ describe("Lists entitlement gate", () => {
     assert.match(body, /active=\{billing\.walls\.lists\}/);
     assert.match(body, /surface="lists"/);
     assert.match(workspace, /if \(locked\) return/);
+    const wall = readFileSync(
+      join(here, "../../components/paywall/SoftWall.tsx"),
+      "utf8",
+    );
+    assert.match(wall, /UnlockAccountModal/);
+    assert.match(wall, /startOrCheckout/);
+    assert.doesNotMatch(wall, /accountLoginHref/);
   });
 
   it("uses the Modules Lists Unlock underlay as a swappable public asset", () => {

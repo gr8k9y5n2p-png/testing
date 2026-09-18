@@ -33,5 +33,10 @@ describe("Lists Save / Open chrome", () => {
     assert.match(source, /if \(locked\) return/);
     assert.match(source, /\[locked, tickers\]/);
     assert.doesNotMatch(source, /FRIENDS_BETA_PASSWORD/);
+    const wall = readFileSync(join(here, "../paywall/SoftWall.tsx"), "utf8");
+    assert.match(wall, /UnlockAccountModal/);
+    assert.match(wall, /startOrCheckout/);
+    assert.doesNotMatch(wall, /scrollIntoView/);
+    assert.doesNotMatch(wall, /accountLoginHref/);
   });
 });
