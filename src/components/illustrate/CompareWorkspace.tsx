@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { SoftWall } from "@/components/paywall/SoftWall";
+import { useBilling } from "@/components/BillingProvider";
+import { freeCompareLabel } from "@/lib/copy";
 import type { FundEstimateView } from "@/data/types";
 import {
   GrowthAndTaxDragModule,
@@ -113,6 +116,8 @@ export function CompareWorkspace({
   });
   const [navOverrides, setNavOverrides] = useState<Record<string, number>>({});
   const [navNeededTickers, setNavNeededTickers] = useState<string[]>([]);
+  const billing = useBilling();
+  const recordedCompare = useRef<string | null>(null);
 
   useEffect(() => {
     const tickers = filledKey ? filledKey.split(",") : [];
@@ -254,6 +259,13 @@ export function CompareWorkspace({
       ),
     [activeLoaded, filledTickers, knownFunds, holdingDollars, navOverrides],
   );
+  useEffect(() => {
+    if (!filledKey || activeLoaded.length === 0) return;
+    if (recordedCompare.current === filledKey) return;
+    recordedCompare.current = filledKey;
+    billing.recordCompare(filledKey);
+  }, [activeLoaded.length, billing, filledKey]);
+
   const prefetchTax = useMemo(
     () =>
       historyMatchesInputs
@@ -290,6 +302,11 @@ export function CompareWorkspace({
             Dollars invested and tax rates are shared — Tax $ and tax-drag
             recompute from the same holding and rates. Upcoming is never filled
             from paid history.
+          </p>
+          <p className="mt-2 font-mono text-xs text-faint" aria-live="polite">
+            {billing.unlimited
+              ? "Unlimited compare reports"
+              : freeCompareLabel(billing.remaining.compares)}
           </p>
         </div>
         <div className="flex shrink-0 flex-col items-stretch gap-3 sm:items-end">
@@ -398,49 +415,51 @@ export function CompareWorkspace({
         />
       </div>
 
-      <section
-        id="growth-and-tax"
-        aria-label="Growth of dollars and tax drag"
-        className="mt-10 w-full scroll-mt-20"
-      >
-        <GrowthAndTaxDragModule
-          funds={growthFunds}
-          seedFunds={growthFunds}
-          lockToSeed
-          allowAddFund={false}
-          editablePrincipal={false}
-          startDollars={holdingDollars}
-          taxRates={taxRates}
-          combineStateWithFederal={combineState}
-          prefetchTax={prefetchTax}
-        />
-      </section>
-
-      <div className="mt-10 w-full">
-        {navNeededTickers.length > 0 ? (
-          <NeedFundPricePrompt
-            className="mb-4"
-            holdings={navNeededTickers.map((ticker) => ({
-              key: ticker,
-              ticker,
-              nav: navOverrides[ticker] ?? resolveFundView(knownFunds, ticker)?.nav ?? null,
-            }))}
-            onNavChange={(key, nav) => {
-              if (nav == null) return;
-              setNavOverrides((current) => ({ ...current, [key]: nav }));
-              setNavNeededTickers((current) =>
-                current.filter((ticker) => ticker !== key),
-              );
-            }}
+      <SoftWall active={billing.walls.compare} surface="compare">
+        <section
+          id="growth-and-tax"
+          aria-label="Growth of dollars and tax drag"
+          className="mt-10 w-full scroll-mt-20"
+        >
+          <GrowthAndTaxDragModule
+            funds={growthFunds}
+            seedFunds={growthFunds}
+            lockToSeed
+            allowAddFund={false}
+            editablePrincipal={false}
+            startDollars={holdingDollars}
+            taxRates={taxRates}
+            combineStateWithFederal={combineState}
+            prefetchTax={prefetchTax}
           />
-        ) : null}
-        <UpcomingTable
-          rows={upcomingRows}
-          headingId="compare-upcoming"
-          taxRates={taxRates}
-          combineStateWithFederal={combineState}
-        />
-      </div>
+        </section>
+
+        <div className="mt-10 w-full">
+          {navNeededTickers.length > 0 ? (
+            <NeedFundPricePrompt
+              className="mb-4"
+              holdings={navNeededTickers.map((ticker) => ({
+                key: ticker,
+                ticker,
+                nav: navOverrides[ticker] ?? resolveFundView(knownFunds, ticker)?.nav ?? null,
+              }))}
+              onNavChange={(key, nav) => {
+                if (nav == null) return;
+                setNavOverrides((current) => ({ ...current, [key]: nav }));
+                setNavNeededTickers((current) =>
+                  current.filter((ticker) => ticker !== key),
+                );
+              }}
+            />
+          ) : null}
+          <UpcomingTable
+            rows={upcomingRows}
+            headingId="compare-upcoming"
+            taxRates={taxRates}
+            combineStateWithFederal={combineState}
+          />
+        </div>
+      </SoftWall>
       <NoticeToast message={notice} onDismiss={dismissNotice} />
     </section>
   );

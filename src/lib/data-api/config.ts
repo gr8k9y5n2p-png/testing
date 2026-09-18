@@ -1,4 +1,4 @@
-import { PRODUCTION_ORIGIN, publicOrigin } from "@/lib/hosts";
+import { PRODUCTION_ORIGIN, publicOrigin } from "../hosts.ts";
 import { allowDemoEngine, readRuntimeEnv } from "./runtime-env.ts";
 
 export {

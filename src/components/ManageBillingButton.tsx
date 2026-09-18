@@ -1,35 +1,54 @@
 "use client";
 
+import { useState } from "react";
+import { useAccountSession } from "@/components/AccountSession";
+import { useBilling } from "@/components/BillingProvider";
 import {
-  CHECKOUT_API_PATH,
+  BILLING_NOT_CONFIGURED,
+  BILLING_SIGN_IN,
   MANAGE_BILLING_LABEL,
-  PORTAL_API_PATH,
-  isBillingEnabled,
+  UNLOCK_BILLING_LABEL,
 } from "@/lib/stripe/billing-copy";
 
-/**
- * Friends beta: disabled. Do not POST while Checkout is off.
- *
- * When NEXT_PUBLIC_BILLING_ENABLED is on:
- * - new subscriber → POST CHECKOUT_API_PATH → redirect to session.url
- * - existing customer → POST PORTAL_API_PATH → redirect to portal url
- */
 export function ManageBillingButton() {
-  const live = isBillingEnabled();
+  const { account } = useAccountSession();
+  const billing = useBilling();
+  const [busy, setBusy] = useState(false);
+  const [detail, setDetail] = useState<string | null>(null);
+  const label = billing.subscribed ? MANAGE_BILLING_LABEL : UNLOCK_BILLING_LABEL;
+
+  async function onClick() {
+    setBusy(true);
+    setDetail(null);
+    const result = await billing.manageBilling();
+    if (result.url) return;
+    if (!account) {
+      setDetail(BILLING_SIGN_IN);
+    } else if (!billing.configured) {
+      setDetail(BILLING_NOT_CONFIGURED);
+    } else {
+      setDetail(result.detail || BILLING_NOT_CONFIGURED);
+    }
+    setBusy(false);
+  }
 
   return (
-    <button
-      type="button"
-      disabled
-      aria-disabled="true"
-      title={
-        live
-          ? `Ready to wire: POST ${CHECKOUT_API_PATH} or ${PORTAL_API_PATH}`
-          : MANAGE_BILLING_LABEL
-      }
-      className="mt-3 inline-flex h-9 items-center rounded-md border border-line bg-notice px-3 text-sm text-muted"
-    >
-      {MANAGE_BILLING_LABEL}
-    </button>
+    <div>
+      <button
+        type="button"
+        disabled={busy}
+        onClick={() => {
+          void onClick();
+        }}
+        className="mt-3 inline-flex h-9 items-center rounded-md border border-line bg-notice px-3 text-sm text-ink hover:border-line-strong disabled:opacity-50"
+      >
+        {label}
+      </button>
+      {detail ? (
+        <p className="mt-2 text-xs text-muted" role="status">
+          {detail}
+        </p>
+      ) : null}
+    </div>
   );
 }

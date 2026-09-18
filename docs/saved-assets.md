@@ -7,9 +7,9 @@ Auth is required. Email/password sign-up and sign-in (Account menu / `/account`)
 set a signed httpOnly `aftertax_account` cookie. Saved-assets calls without a
 session return **401**. Friends-beta shared password stays a separate site gate.
 
-Stripe Checkout later (held off) creates/links a Stripe Customer on the **same
-account email** and stores `stripeCustomerId` (`cus_…`) on the account record.
-Do not enable Checkout or the soft-wall here.
+Stripe Checkout creates/links a Stripe Customer on the **same account email**
+and stores `stripeCustomerId` (`cus_…`) on the account record. Saved-assets
+are not gated on Checkout or the soft-wall.
 
 ## Endpoints
 
@@ -72,7 +72,7 @@ Modules UI helpers (`@/lib/illustrate/portfolio-save-open` or `@/components/illu
 
 Compare snapshots filled slots only. Extra books keys `compareSlots` and
 `compareHoldingDollars` restore Compare dollars; a Portfolio $1M book does not
-overwrite Compare’s holding. Soft-wall / Checkout stay off.
+overwrite Compare’s holding. Soft-wall / Checkout do not gate Save/Open.
 
 ## Account
 
@@ -85,7 +85,7 @@ overwrite Compare’s holding. Soft-wall / Checkout stay off.
 | POST | `/api/account/forgot` | `{ email }` |
 | POST | `/api/account/reset` | `{ token, password }` |
 
-Public account: `{ id, email, stripeCustomerId }` (`stripeCustomerId` is `null` until Checkout).
+Public account: `{ id, email, stripeCustomerId, subscribed, subscriptionStatus, cancelAtPeriodEnd, currentPeriodEnd }` (`stripeCustomerId` is `null` until Checkout).
 
 Forgot password always returns 200 for a valid email (no account-existence leak). Reset tokens are stored as SHA-256 hashes, expire in one hour, and are single-use. Mail is Resend from `noreply@getaftertax.com` when `RESEND_API_KEY` is set. Production also needs the Resend DKIM + SPF records on `getaftertax.com` (copy from the Resend Domains dashboard). The response does not claim a message was sent when the key or domain is missing. Friends-beta shared password stays a separate site gate (`/account/forgot` and `/account/reset` stay reachable so the emailed link works).
 

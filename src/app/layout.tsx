@@ -5,9 +5,15 @@ import { IBM_Plex_Mono, Source_Sans_3, Source_Serif_4 } from "next/font/google";
 import { AppHeader } from "@/components/AppHeader";
 import { AppFooter } from "@/components/AppFooter";
 import { AccountSessionProvider } from "@/components/AccountSession";
+import { BillingProvider } from "@/components/BillingProvider";
 import { FriendsBetaBanner } from "@/components/FriendsBetaBanner";
 import { ACCOUNT_COOKIE, verifyAccountCookie } from "@/lib/account/session";
 import { getAccountStore, toPublicAccount } from "@/lib/account/store";
+import {
+  FREEMIUM_COOKIE,
+  mergeUsage,
+  usageFromCookieValue,
+} from "@/lib/billing/limits";
 import { COPY } from "@/lib/copy";
 import { publicOrigin } from "@/lib/hosts";
 import "./globals.css";
@@ -56,10 +62,13 @@ export default async function RootLayout({
 }: Readonly<{
   children: ReactNode;
 }>) {
-  const raw = (await cookies()).get(ACCOUNT_COOKIE)?.value;
+  const jar = await cookies();
+  const raw = jar.get(ACCOUNT_COOKIE)?.value;
   const accountId = verifyAccountCookie(raw);
   const row = accountId ? await getAccountStore().findById(accountId) : null;
   const initialAccount = row ? toPublicAccount(row) : null;
+  const cookieUsage = usageFromCookieValue(jar.get(FREEMIUM_COOKIE)?.value);
+  const initialUsage = row ? mergeUsage(row.usage, cookieUsage) : cookieUsage;
 
   return (
     <html
@@ -68,10 +77,12 @@ export default async function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-paper text-ink font-sans">
         <AccountSessionProvider initialAccount={initialAccount}>
-          <AppHeader />
-          <FriendsBetaBanner />
-          <div className="flex-1">{children}</div>
-          <AppFooter />
+          <BillingProvider initialUsage={initialUsage}>
+            <AppHeader />
+            <FriendsBetaBanner />
+            <div className="flex-1">{children}</div>
+            <AppFooter />
+          </BillingProvider>
         </AccountSessionProvider>
       </body>
     </html>

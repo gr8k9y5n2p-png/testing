@@ -1,0 +1,62 @@
+import assert from "node:assert/strict";
+import { describe, it } from "node:test";
+import { FREEMIUM_COOKIE } from "../billing/limits.ts";
+import { MemoryAccountStore } from "../account/store.ts";
+import { hashPassword } from "../account/passwords.ts";
+import {
+  entitlementFrom,
+  parseDeviceUsageCookie,
+  serializeUsageCookie,
+} from "./entitlement.ts";
+
+describe("billing entitlement", () => {
+  it("reads and writes the device usage cookie", () => {
+    const cookie = serializeUsageCookie(
+      { searches: 4, compareKeys: ["AGTHX"], portfolioKeys: [] },
+      false,
+    );
+    assert.match(cookie, new RegExp(FREEMIUM_COOKIE));
+    const usage = parseDeviceUsageCookie(cookie);
+    assert.equal(usage.searches, 4);
+    assert.deepEqual(usage.compareKeys, ["AGTHX"]);
+  });
+
+  it("does not raise walls for a subscribed account", async () => {
+    const store = new MemoryAccountStore();
+    const account = await store.create({
+      email: "ada@aftertax.com",
+      passwordHash: hashPassword("wholesaler"),
+    });
+    await store.updateBilling(account.id, {
+      subscriptionStatus: "active",
+      usage: {
+        searches: 40,
+        compareKeys: ["a", "b", "c"],
+        portfolioKeys: ["1", "2", "3"],
+      },
+    });
+    const row = await store.findById(account.id);
+    const entitlement = entitlementFrom(row, {
+      searches: 10,
+      compareKeys: [],
+      portfolioKeys: [],
+    });
+    assert.equal(entitlement.subscribed, true);
+    assert.deepEqual(entitlement.walls, {
+      search: false,
+      compare: false,
+      portfolio: false,
+    });
+  });
+
+  it("raises the search wall after 10 anonymous loads", () => {
+    const entitlement = entitlementFrom(null, {
+      searches: 10,
+      compareKeys: [],
+      portfolioKeys: [],
+    });
+    assert.equal(entitlement.walls.search, true);
+    assert.equal(entitlement.remaining.searches, 0);
+    assert.equal(entitlement.signedIn, false);
+  });
+});

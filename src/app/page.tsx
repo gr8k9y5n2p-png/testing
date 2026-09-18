@@ -37,6 +37,7 @@ export default async function Home({
 }: {
   searchParams: Promise<{
     checkout?: string | string[];
+    session_id?: string | string[];
     tab?: string | string[];
     ticker?: string | string[];
     tickers?: string | string[];
@@ -103,6 +104,7 @@ export default async function Home({
         facets={{ families, categories, years }}
         coverageFamilies={coverage.families}
         checkout={checkoutFromSearchParams(params.checkout)}
+        checkoutSessionId={firstParam(params.session_id) ?? null}
         ticker={ticker}
       />
     </main>

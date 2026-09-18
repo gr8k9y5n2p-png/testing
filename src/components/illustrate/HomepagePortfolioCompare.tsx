@@ -50,7 +50,7 @@ export function HomepagePortfolioCompare({
           />
         }
         onExport={(result, bookDollars) => {
-          // Freemium gate stays stubbed on beta — export is available.
+          // Export stays available; the soft-wall blurs painted modules.
           exportToPdf(
             toPortfolioCompareExportModel(
               result,

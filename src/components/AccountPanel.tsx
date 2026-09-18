@@ -9,7 +9,12 @@ import {
   ACCOUNT_STRIPE_RESERVE,
 } from "@/lib/copy";
 import { signOutAccountClient } from "@/lib/account/client";
-import { BILLING_PLAN_LABEL, BILLING_STUB_NOTE } from "@/lib/stripe/billing-copy";
+import {
+  BILLING_CANCEL_NOTE,
+  BILLING_NOT_CONFIGURED,
+  BILLING_PLAN_LABEL,
+} from "@/lib/stripe/billing-copy";
+import { useBilling } from "@/components/BillingProvider";
 import { useState } from "react";
 
 const buttonClass =
@@ -17,6 +22,7 @@ const buttonClass =
 
 export function AccountPanel({ compact = false }: { compact?: boolean }) {
   const { account, setAccount } = useAccountSession();
+  const billing = useBilling();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -67,9 +73,15 @@ export function AccountPanel({ compact = false }: { compact?: boolean }) {
       )}
 
       <div>
-        <p className="text-sm text-ink">Plan · {BILLING_PLAN_LABEL}</p>
+        <p className="text-sm text-ink">
+          Plan · {BILLING_PLAN_LABEL}
+          {billing.subscribed ? " · active" : ""}
+          {billing.entitlement.cancelAtPeriodEnd ? " · cancels at period end" : ""}
+        </p>
         <ManageBillingButton />
-        <p className="mt-2 text-xs leading-relaxed text-faint">{BILLING_STUB_NOTE}</p>
+        <p className="mt-2 text-xs leading-relaxed text-faint">
+          {billing.configured ? BILLING_CANCEL_NOTE : BILLING_NOT_CONFIGURED}
+        </p>
       </div>
 
       <p className="border-t border-line pt-4 text-sm">
