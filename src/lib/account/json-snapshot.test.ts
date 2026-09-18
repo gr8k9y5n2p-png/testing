@@ -2,7 +2,9 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   BLOB_SNAPSHOT_TIMEOUT_MESSAGE,
+  REDIS_CAS_SCRIPT,
   accountsBlobListPrefix,
+  accountsBlobVersionPath,
   createBlobJsonSnapshot,
   createRedisJsonSnapshot,
   pickNewestAccountBlob,
@@ -47,6 +49,55 @@ describe("Redis account snapshot", () => {
       })?.url,
       "https://kv.example",
     );
+  });
+
+  it("compare-and-swap uses EVAL so a stale SET cannot clobber", async () => {
+    let stored: string | null = '[{"email":"round@example.com"}]';
+    const snapshot = createRedisJsonSnapshot(
+      {
+        UPSTASH_REDIS_REST_URL: "https://example.upstash.io",
+        UPSTASH_REDIS_REST_TOKEN: "token",
+      },
+      {
+        fetchImpl: async (_url, init) => {
+          const command = JSON.parse(String(init?.body ?? "[]")) as unknown[];
+          if (command[0] === "EVAL") {
+            assert.equal(command[1], REDIS_CAS_SCRIPT);
+            const expected = String(command[4] ?? "");
+            const next = String(command[5] ?? "");
+            if ((stored ?? "") !== expected) {
+              return new Response(JSON.stringify({ result: 0 }), {
+                status: 200,
+                headers: { "content-type": "application/json" },
+              });
+            }
+            stored = next;
+            return new Response(JSON.stringify({ result: 1 }), {
+              status: 200,
+              headers: { "content-type": "application/json" },
+            });
+          }
+          return new Response(JSON.stringify({ error: "unknown" }), { status: 400 });
+        },
+      },
+    );
+    assert.equal(
+      await snapshot.compareAndSwap(
+        '[{"email":"stale@example.com"}]',
+        '[{"email":"stale@example.com"},{"email":"new@example.com"}]',
+      ),
+      false,
+    );
+    assert.match(stored ?? "", /round@example.com/);
+    assert.equal(
+      await snapshot.compareAndSwap(
+        stored,
+        '[{"email":"round@example.com"},{"email":"new@example.com"}]',
+      ),
+      true,
+    );
+    assert.match(stored ?? "", /new@example.com/);
+    assert.match(stored ?? "", /round@example.com/);
   });
 });
 
@@ -248,6 +299,89 @@ describe("Blob account snapshot", () => {
       "aftertax/accounts.json",
     );
     assert.equal(newest?.url, "https://example/new");
+  });
+
+  it("prefers a higher generation over a newer unversioned accounts.json", () => {
+    const newest = pickNewestAccountBlob(
+      [
+        {
+          pathname: "aftertax/accounts.json",
+          url: "https://example/unversioned",
+          uploadedAt: "2026-04-01T00:00:00.000Z",
+        },
+        {
+          pathname: "aftertax/accounts.v2.json",
+          url: "https://example/v2",
+          uploadedAt: "2026-01-01T00:00:00.000Z",
+        },
+      ],
+      "aftertax/accounts.json",
+    );
+    assert.equal(newest?.url, "https://example/v2");
+    assert.equal(accountsBlobVersionPath("aftertax/accounts.json", 2), "aftertax/accounts.v2.json");
+  });
+
+  it("compare-and-swap writes the next generation and rejects a stale put", async () => {
+    const blobs = new Map<string, string>();
+    const snapshot = createBlobJsonSnapshot(
+      { BLOB_READ_WRITE_TOKEN: "vercel_blob_rw_x" },
+      {
+        async get() {
+          return { statusCode: 404 };
+        },
+        async put(pathname, payload, options) {
+          if (!options.allowOverwrite && blobs.has(pathname)) {
+            const error = new Error("already exists");
+            (error as { status?: number }).status = 409;
+            throw error;
+          }
+          blobs.set(pathname, payload);
+          return {
+            url: `https://store.private.blob.vercel-storage.com/${pathname}`,
+            downloadUrl: `https://store.private.blob.vercel-storage.com/${pathname}`,
+          };
+        },
+        async list() {
+          return {
+            blobs: [...blobs.entries()].map(([pathname, _payload], index) => ({
+              pathname,
+              url: `https://store.private.blob.vercel-storage.com/${pathname}`,
+              downloadUrl: `https://store.private.blob.vercel-storage.com/${pathname}`,
+              uploadedAt: new Date(Date.UTC(2026, 0, index + 1)).toISOString(),
+            })),
+          };
+        },
+        fetchImpl: async (input) => {
+          const url = String(input);
+          const pathname = url.replace("https://store.private.blob.vercel-storage.com/", "");
+          const body = blobs.get(pathname);
+          if (!body) return new Response("missing", { status: 404 });
+          return new Response(body, { status: 200 });
+        },
+      },
+    );
+    assert.equal(
+      await snapshot.compareAndSwap(null, '[{"email":"round@example.com"}]\n'),
+      true,
+    );
+    assert.equal(blobs.has("aftertax/accounts.v1.json"), true);
+    assert.equal(
+      await snapshot.compareAndSwap(
+        '[{"email":"stale@example.com"}]\n',
+        '[{"email":"stale@example.com"}]\n',
+      ),
+      false,
+    );
+    assert.match((await snapshot.read({ fresh: true })) ?? "", /round@example.com/);
+    assert.equal(
+      await snapshot.compareAndSwap(
+        '[{"email":"round@example.com"}]\n',
+        '[{"email":"round@example.com"},{"email":"persist@example.com"}]\n',
+      ),
+      true,
+    );
+    assert.equal(blobs.has("aftertax/accounts.v2.json"), true);
+    assert.match((await snapshot.read({ fresh: true })) ?? "", /persist@example.com/);
   });
 });
 

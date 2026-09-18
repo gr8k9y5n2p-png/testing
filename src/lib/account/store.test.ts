@@ -8,6 +8,7 @@ import { signInAccount, signUpAccount } from "./auth.ts";
 import { InMemoryJsonSnapshot } from "./json-snapshot.ts";
 import { hashPassword, verifyPassword } from "./passwords.ts";
 import {
+  ACCOUNT_NOT_DURABLE,
   ACCOUNT_STORE_NOT_CONFIGURED,
   SharedJsonAccountStore,
   createAccountStoreFromEnv,
@@ -18,6 +19,7 @@ import {
   MemoryAccountStore,
   resolveAccountStoreKind,
   serializeAccountRecords,
+  type AccountRecord,
 } from "./store.ts";
 import { handleAccountSignIn, handleAccountSignUp } from "./http.ts";
 
@@ -154,14 +156,14 @@ describe("shared durable account JSON", () => {
       email: "ada@example.com",
       passwordHash: "scrypt$aa$bb",
     });
-    assert.equal(reads, 1);
+    assert.equal(reads, 2, "hydrate + durable read-back; mutators must not re-enter findById");
     assert.equal((await store.findById(row.id))?.email, "ada@example.com");
-    assert.equal(reads, 1);
+    assert.equal(reads, 2);
     const billed = await store.updateBilling(row.id, {
       stripeCustomerId: "cus_cached",
     });
     assert.equal(billed?.stripeCustomerId, "cus_cached");
-    assert.equal(reads, 1);
+    assert.equal(reads, 2);
     assert.ok(Date.now() - started < 200, "findById + updateBilling must not deadlock");
   });
 
@@ -203,7 +205,155 @@ describe("shared durable account JSON", () => {
     assert.equal(merged.added, 0);
     assert.equal(merged.records[0].passwordHash, durableHash);
   });
+
+  it("retries CAS so a stale hydrate cannot drop a concurrent signup", async () => {
+    const round = sampleAccount("round-lost@example.com");
+    const box = { raw: serializeAccountRecords([round]) as string | null };
+    const storeA = new SharedJsonAccountStore({
+      async read() {
+        return box.raw;
+      },
+      async write(payload) {
+        box.raw = payload;
+      },
+      async compareAndSwap(expected, next) {
+        if ((box.raw ?? null) !== (expected ?? null)) return false;
+        box.raw = next;
+        return true;
+      },
+    });
+    let stale = true;
+    const storeB = new SharedJsonAccountStore({
+      async read() {
+        if (stale) {
+          stale = false;
+          return serializeAccountRecords([round]);
+        }
+        return box.raw;
+      },
+      async write(payload) {
+        box.raw = payload;
+      },
+      async compareAndSwap(expected, next) {
+        if ((box.raw ?? null) !== (expected ?? null)) return false;
+        box.raw = next;
+        return true;
+      },
+    });
+
+    assert.equal((await storeB.findByEmail(round.email))?.email, round.email);
+    await storeA.create({
+      email: "persist-visible@example.com",
+      passwordHash: "scrypt$aa$bb",
+    });
+    await storeB.create({
+      email: "smoke-keep@example.com",
+      passwordHash: "scrypt$cc$dd",
+    });
+    await storeA.updateBilling(
+      (await storeA.findByEmail("persist-visible@example.com"))!.id,
+      { stripeCustomerId: "cus_kept" },
+    );
+
+    const emails = parseAccountRecords(box.raw)
+      .map((row) => row.email)
+      .sort();
+    assert.deepEqual(emails, [
+      "persist-visible@example.com",
+      "round-lost@example.com",
+      "smoke-keep@example.com",
+    ]);
+    assert.equal(
+      parseAccountRecords(box.raw).find((row) => row.email === "persist-visible@example.com")
+        ?.stripeCustomerId,
+      "cus_kept",
+    );
+  });
+
+  it("does not finish create until a fresh durable read-back contains the email", async () => {
+    let stored: string | null = null;
+    let hideFresh = 1;
+    const store = new SharedJsonAccountStore({
+      async read(options) {
+        if (options?.fresh && hideFresh > 0) {
+          hideFresh -= 1;
+          return null;
+        }
+        return stored;
+      },
+      async write(payload) {
+        stored = payload;
+      },
+      async compareAndSwap(_expected, next) {
+        stored = next;
+        return true;
+      },
+    });
+    const row = await store.create({
+      email: "persist-visible@example.com",
+      passwordHash: "scrypt$aa$bb",
+    });
+    assert.equal(row.email, "persist-visible@example.com");
+    assert.equal(hideFresh, 0);
+    assert.match(stored ?? "", /persist-visible@example.com/);
+  });
+
+  it("signup is not 201 when the durable store cannot read the email back", async () => {
+    const store = new MemoryAccountStore();
+    store.create = async () => ({
+      id: "acct_11111111-1111-1111-1111-111111111111",
+      email: "ghost@example.com",
+      passwordHash: "scrypt$aa$bb",
+      stripeCustomerId: null,
+      stripeSubscriptionId: null,
+      subscriptionStatus: null,
+      cancelAtPeriodEnd: false,
+      currentPeriodEnd: null,
+      usage: { searches: 0, compareKeys: [], portfolioKeys: [] },
+      createdAt: "2026-01-01T00:00:00.000Z",
+      updatedAt: "2026-01-01T00:00:00.000Z",
+    });
+    store.findByEmail = async () => null;
+    await assert.rejects(
+      () =>
+        signUpAccount(store, {
+          email: "ghost@example.com",
+          password: "wholesaler",
+        }),
+      (error: unknown) =>
+        error instanceof Error &&
+        error.message === ACCOUNT_NOT_DURABLE,
+    );
+    const response = await handleAccountSignUp(
+      new Request("http://localhost/api/account/signup", {
+        method: "POST",
+        body: JSON.stringify({
+          email: "ghost@example.com",
+          password: "wholesaler",
+        }),
+      }),
+      store,
+    );
+    assert.equal(response.status, 503);
+    assert.notEqual(response.status, 201);
+  });
 });
+
+function sampleAccount(email: string): AccountRecord {
+  return {
+    id: "acct_11111111-1111-1111-1111-111111111111",
+    email,
+    passwordHash: "scrypt$aa$bb",
+    stripeCustomerId: null,
+    stripeSubscriptionId: null,
+    subscriptionStatus: null,
+    cancelAtPeriodEnd: false,
+    currentPeriodEnd: null,
+    usage: { searches: 0, compareKeys: [], portfolioKeys: [] },
+    createdAt: "2026-01-01T00:00:00.000Z",
+    updatedAt: "2026-01-01T00:00:00.000Z",
+  };
+}
 
 describe("ephemeral Vercel account HTTP", () => {
   it("refuses sign-up and sign-in instead of writing a /tmp row that other instances cannot see", async () => {
@@ -290,7 +440,11 @@ describe("account store docs", () => {
     assert.match(readme, /cannot be recovered/);
     assert.match(readme, /2\.5s wall-clock budget/);
     assert.match(readme, /8s overall budget/);
+    assert.match(readme, /compare-and-swap/);
+    assert.match(readme, /accounts\.vN\.json/);
     assert.match(env, /AFTERTAX_CHECKOUT_TIMEOUT_MS/);
+    assert.match(env, /compare-and-swap/);
+    assert.match(env, /accounts\.vN\.json/);
   });
 });
 

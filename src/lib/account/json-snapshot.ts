@@ -2,11 +2,15 @@
  * Shared JSON snapshots for the account store.
  *
  * Vercel serverless instances do not share `/tmp`. Production uses Redis
- * (preferred, one REST GET/SET) or private Blob. Private `get(pathname)`
- * can 404 or hang after `put`; reads therefore list the prefix and fetch
- * the newest blob URL with a Bearer token. One wall-clock budget covers
- * the whole read or write — stacked per-call 8s timeouts were how
- * signup/checkout hit the 20–45s client TimeoutError after #281.
+ * (preferred: REST GET + EVAL compare-and-swap) or private Blob. A stale
+ * unconditional PUT used to clobber newer signups (lost update). Writes
+ * therefore CAS: Redis Lua SET-if-GET-matches; Blob `accounts.vN.json`
+ * with allowOverwrite false so a stale put cannot replace a newer gen.
+ *
+ * Private `get(pathname)` can 404 or hang after `put`; reads list the
+ * prefix (highest generation wins) and fetch that URL with a Bearer token.
+ * Isolate last-URL reuse expires in 2.5s so another instance's write is
+ * visible. One wall-clock budget covers the whole read or write.
  *
  * A miss is an empty document (`null`). Budget overruns throw — they must
  * not look like empty, or the next write would wipe hashes.
@@ -19,17 +23,52 @@ import {
   withTimeout,
 } from "../with-timeout.ts";
 
-export type JsonSnapshot = {
-  read(): Promise<string | null>;
-  write(payload: string): Promise<void>;
+export type JsonSnapshotReadOptions = {
+  /** Skip isolate last-URL reuse and list the newest durable document. */
+  fresh?: boolean;
 };
+
+export type JsonSnapshot = {
+  read(options?: JsonSnapshotReadOptions): Promise<string | null>;
+  write(payload: string): Promise<void>;
+  /**
+   * Atomic replace if `expected` still is the durable document (`null` = missing).
+   * Returns false on conflict so the caller can hydrate and retry.
+   */
+  compareAndSwap?(expected: string | null, next: string): Promise<boolean>;
+};
+
+export async function compareAndSwapSnapshot(
+  snapshot: JsonSnapshot,
+  expected: string | null,
+  next: string,
+): Promise<boolean> {
+  if (snapshot.compareAndSwap) {
+    return snapshot.compareAndSwap(expected, next);
+  }
+  await snapshot.write(next);
+  return true;
+}
 
 export const DEFAULT_ACCOUNTS_BLOB_PATH = "aftertax/accounts.json";
 export const DEFAULT_ACCOUNTS_REDIS_KEY = "aftertax:accounts";
 /** Whole read or write — not per SDK call. Signup = read + write ≤ ~5s. */
 export const BLOB_SNAPSHOT_TIMEOUT_MS = 2_500;
+export const BLOB_LAST_MATCH_MS = 2_500;
 export const BLOB_SNAPSHOT_TIMEOUT_MESSAGE =
   "Account storage timed out. Try again.";
+/** Lua: SET only when GET still matches the expected document (missing = ""). */
+export const REDIS_CAS_SCRIPT = [
+  "local current = redis.call('GET', KEYS[1])",
+  "if current == false then",
+  "  current = ''",
+  "end",
+  "if current == ARGV[1] then",
+  "  redis.call('SET', KEYS[1], ARGV[2])",
+  "  return 1",
+  "end",
+  "return 0",
+].join("\n");
 
 export type RedisRestConfig = {
   url: string;
@@ -72,6 +111,12 @@ export class InMemoryJsonSnapshot implements JsonSnapshot {
   async write(payload: string): Promise<void> {
     this.box.raw = payload;
   }
+
+  async compareAndSwap(expected: string | null, next: string): Promise<boolean> {
+    if ((this.box.raw ?? null) !== (expected ?? null)) return false;
+    this.box.raw = next;
+    return true;
+  }
 }
 
 type BlobGetResult = {
@@ -99,7 +144,7 @@ export type BlobGetOptions = {
 export type BlobPutOptions = {
   access: "private";
   addRandomSuffix: false;
-  allowOverwrite: true;
+  allowOverwrite: boolean;
   cacheControlMaxAge: number;
   contentType: string;
   abortSignal?: AbortSignal;
@@ -123,6 +168,7 @@ export type BlobSnapshotDeps = {
     limit: number;
     abortSignal?: AbortSignal;
   }) => Promise<BlobListResult>;
+  del?: (urlOrPathname: string | string[]) => Promise<void>;
   fetchImpl?: typeof fetch;
 };
 
@@ -141,9 +187,34 @@ export function accountsBlobListPrefix(pathname: string): string {
   return pathname.replace(/\.json$/i, "");
 }
 
+export function accountsBlobVersionPath(
+  pathname: string,
+  generation: number,
+): string {
+  if (generation <= 0) return pathname;
+  return `${accountsBlobListPrefix(pathname)}.v${generation}.json`;
+}
+
+export function accountsBlobGeneration(
+  blobPathname: string,
+  basePathname: string,
+): number | null {
+  if (blobPathname === basePathname) return 0;
+  const prefix = accountsBlobListPrefix(basePathname);
+  const escaped = prefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = blobPathname.match(new RegExp(`^${escaped}\\.v(\\d+)\\.json$`, "i"));
+  return match ? Number(match[1]) : null;
+}
+
+function blobGenerationRank(blobPathname: string, basePathname: string): number {
+  const generation = accountsBlobGeneration(blobPathname, basePathname);
+  if (generation != null) return generation;
+  return blobPathname === basePathname ? 0 : -1;
+}
+
 /**
- * Prefer the exact pathname. If the store has duplicates (same pathname or
- * random-suffix siblings), take the newest `uploadedAt`.
+ * Prefer the highest generation (`accounts.json` = 0, `accounts.vN.json` = N).
+ * Same generation: newest `uploadedAt`. Random-suffix siblings rank below.
  */
 export function pickNewestAccountBlob(
   blobs: BlobListRow[],
@@ -159,16 +230,19 @@ export function pickNewestAccountBlob(
       row.pathname.startsWith(`${prefix}.`),
   );
   if (matches.length === 0) return null;
-  const exact = matches.filter((row) => row.pathname === pathname);
-  const pool = exact.length > 0 ? exact : matches;
   return (
-    pool.slice().sort((a, b) => {
+    matches.slice().sort((a, b) => {
+      const ga = blobGenerationRank(a.pathname, pathname);
+      const gb = blobGenerationRank(b.pathname, pathname);
+      if (ga !== gb) return gb - ga;
       const ta = a.uploadedAt ? Date.parse(String(a.uploadedAt)) : 0;
       const tb = b.uploadedAt ? Date.parse(String(b.uploadedAt)) : 0;
       return tb - ta;
     })[0] ?? null
   );
 }
+
+type CachedBlobMatch = BlobListRow & { generation: number; at: number };
 
 export function createBlobJsonSnapshot(
   env: NodeJS.ProcessEnv = process.env,
@@ -177,47 +251,148 @@ export function createBlobJsonSnapshot(
 ): JsonSnapshot {
   const pathname = accountsBlobPath(env);
   const timeoutMs = options.timeoutMs ?? BLOB_SNAPSHOT_TIMEOUT_MS;
-  let lastMatch: BlobListRow | null = null;
-  return {
-    async read() {
-      const deadline = new Deadline(timeoutMs);
-      return deadline.race(
-        readBlobSnapshot(pathname, env, deps, deadline, () => lastMatch, (row) => {
-          lastMatch = row;
+  let lastMatch: CachedBlobMatch | null = null;
+  let lastRead: { raw: string | null; generation: number } | null = null;
+
+  const rememberMatch = (row: BlobListRow, generation?: number): CachedBlobMatch => {
+    const gen = generation ?? accountsBlobGeneration(row.pathname, pathname) ?? 0;
+    const cached = { ...row, generation: gen, at: Date.now() };
+    lastMatch = cached;
+    return cached;
+  };
+
+  const putPayload = async (
+    target: string,
+    payload: string,
+    allowOverwrite: boolean,
+    deadline: Deadline,
+  ): Promise<BlobPutResult | unknown> => {
+    const putFn = deps?.put ?? (await loadBlobSdk()).put;
+    return deadline.race(
+      Promise.resolve(
+        putFn(target, payload, {
+          access: "private",
+          addRandomSuffix: false,
+          allowOverwrite,
+          cacheControlMaxAge: 60,
+          contentType: "application/json",
+          abortSignal: abortSignalTimeout(deadline.remaining()),
         }),
-        BLOB_SNAPSHOT_TIMEOUT_MESSAGE,
+      ),
+      BLOB_SNAPSHOT_TIMEOUT_MESSAGE,
+    );
+  };
+
+  const rememberPut = (
+    target: string,
+    generation: number,
+    payload: string,
+    result: BlobPutResult | unknown,
+  ): void => {
+    const url =
+      result && typeof result === "object" && "url" in result
+        ? String((result as BlobPutResult).url ?? "")
+        : "";
+    const downloadUrl =
+      result && typeof result === "object" && "downloadUrl" in result
+        ? String((result as BlobPutResult).downloadUrl ?? "")
+        : "";
+    lastRead = { raw: payload, generation };
+    if (url) {
+      rememberMatch(
+        {
+          pathname: target,
+          url,
+          downloadUrl: downloadUrl || undefined,
+        },
+        generation,
       );
-    },
-    async write(payload: string) {
+    } else {
+      rememberMatch({ pathname: target, url: target }, generation);
+    }
+  };
+
+  const deleteSuperseded = async (generation: number): Promise<void> => {
+    const delFn = deps ? deps.del : (await loadBlobSdk()).del;
+    if (!delFn) return;
+    const stale = [accountsBlobVersionPath(pathname, generation - 1)];
+    if (generation > 0) stale.push(pathname);
+    try {
+      await delFn(stale);
+    } catch {
+      /* best-effort — leftover gens are ignored when listing */
+    }
+  };
+
+  return {
+    async read(readOptions?: JsonSnapshotReadOptions) {
       const deadline = new Deadline(timeoutMs);
-      const putFn = deps?.put ?? (await loadBlobSdk()).put;
-      const result = await deadline.race(
-        Promise.resolve(
-          putFn(pathname, payload, {
-            access: "private",
-            addRandomSuffix: false,
-            allowOverwrite: true,
-            cacheControlMaxAge: 60,
-            contentType: "application/json",
-            abortSignal: abortSignalTimeout(deadline.remaining()),
-          }),
+      if (readOptions?.fresh) {
+        lastMatch = null;
+      } else if (lastMatch && Date.now() - lastMatch.at >= BLOB_LAST_MATCH_MS) {
+        lastMatch = null;
+      }
+      const raw = await deadline.race(
+        readBlobSnapshot(
+          pathname,
+          env,
+          deps,
+          deadline,
+          () => lastMatch,
+          (row) => {
+            rememberMatch(row);
+          },
         ),
         BLOB_SNAPSHOT_TIMEOUT_MESSAGE,
       );
-      const url =
-        result && typeof result === "object" && "url" in result
-          ? String((result as BlobPutResult).url ?? "")
-          : "";
-      if (url) {
-        const downloadUrl =
-          result && typeof result === "object" && "downloadUrl" in result
-            ? String((result as BlobPutResult).downloadUrl ?? "")
-            : "";
-        lastMatch = {
-          pathname,
-          url,
-          downloadUrl: downloadUrl || undefined,
+      lastRead = {
+        raw,
+        generation: lastMatch?.generation ?? 0,
+      };
+      return raw;
+    },
+    async write(payload: string) {
+      const deadline = new Deadline(timeoutMs);
+      const result = await putPayload(pathname, payload, true, deadline);
+      rememberPut(pathname, 0, payload, result);
+    },
+    async compareAndSwap(expected: string | null, next: string) {
+      const deadline = new Deadline(timeoutMs);
+      if (!lastRead || lastRead.raw !== expected) {
+        lastMatch = null;
+        const current = await deadline.race(
+          readBlobSnapshot(
+            pathname,
+            env,
+            deps,
+            deadline,
+            () => null,
+            (row) => {
+              rememberMatch(row);
+            },
+          ),
+          BLOB_SNAPSHOT_TIMEOUT_MESSAGE,
+        );
+        lastRead = {
+          raw: current,
+          generation: lastMatch?.generation ?? 0,
         };
+        if (current !== expected) return false;
+      }
+      const nextGeneration = (lastRead.generation ?? 0) + 1;
+      const target = accountsBlobVersionPath(pathname, nextGeneration);
+      try {
+        const result = await putPayload(target, next, false, deadline);
+        rememberPut(target, nextGeneration, next, result);
+        void deleteSuperseded(nextGeneration);
+        return true;
+      } catch (error) {
+        if (isBlobAlreadyExists(error)) {
+          lastMatch = null;
+          lastRead = null;
+          return false;
+        }
+        throw error;
       }
     },
   };
@@ -267,7 +442,7 @@ async function tryListAccountBlobs(
     const { blobs } = await deadline.race(
       listFn({
         prefix: accountsBlobListPrefix(pathname),
-        limit: 20,
+        limit: 100,
         abortSignal: abortSignalTimeout(deadline.remaining()),
       }),
       BLOB_SNAPSHOT_TIMEOUT_MESSAGE,
@@ -361,6 +536,7 @@ type BlobSdk = {
   get: BlobSnapshotDeps["get"];
   put: BlobSnapshotDeps["put"];
   list: NonNullable<BlobSnapshotDeps["list"]>;
+  del?: BlobSnapshotDeps["del"];
 };
 
 async function loadBlobSdk(): Promise<BlobSdk> {
@@ -377,6 +553,21 @@ function isMissingBlob(error: unknown): boolean {
         ? Number((error as { statusCode?: unknown }).statusCode)
         : NaN;
   return status === 404;
+}
+
+export function isBlobAlreadyExists(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const status =
+    "status" in error
+      ? Number((error as { status?: unknown }).status)
+      : "statusCode" in error
+        ? Number((error as { statusCode?: unknown }).statusCode)
+        : NaN;
+  if (status === 409 || status === 412) return true;
+  const code =
+    "code" in error ? String((error as { code?: unknown }).code) : "";
+  if (/already.?exist/i.test(code)) return true;
+  return error instanceof Error && /already.?exist/i.test(error.message);
 }
 
 export type RedisSnapshotDeps = {
@@ -404,6 +595,17 @@ export function createRedisJsonSnapshot(
     },
     async write(payload: string) {
       await redisCommand(cfg, fetchImpl, ["SET", cfg.key, payload]);
+    },
+    async compareAndSwap(expected: string | null, next: string) {
+      const result = await redisCommand(cfg, fetchImpl, [
+        "EVAL",
+        REDIS_CAS_SCRIPT,
+        1,
+        cfg.key,
+        expected ?? "",
+        next,
+      ]);
+      return result === 1 || result === "1" || result === true;
     },
   };
 }
