@@ -279,6 +279,8 @@ Accounts now persist to a durable shared store:
 
 **Authenticated Checkout / Portal:** `POST /api/checkout` (and Portal) use an **8s overall budget** (`AFTERTAX_CHECKOUT_TIMEOUT_MS`). Stripe SDK calls use 8s and zero retries. Persisting `stripeCustomerId` after Customer create is best-effort — Checkout still returns the live `url` if the Blob write fails. A hang becomes **502** `Checkout timed out. Try again.` instead of waiting for the platform kill. Signed-out Checkout still returns 401 `needs_account` without touching the store.
 
+The durable store serializes read/write on one exclusive chain. Mutators look up rows in memory after hydrate — they must not call public `findById` / `findByEmail` (those re-enter the chain and deadlock). That re-entrancy is why authenticated Checkout could hang 25–45s after Stripe had already created the Customer.
+
 **Migration:** leftover file-store rows (including `/tmp` on the current instance) are merged into the durable store once when it is empty-of-that-email. Durable hashes win on email collision. Accounts that only existed on now-dead instances **cannot be recovered** — those users must Create account again (Forgot Password cannot find a missing row). We do not invent or reset passwords.
 
 On Vercel without Blob or Redis, sign-up / sign-in / forgot / reset return **503** (`Account storage is not configured…`) instead of writing a `/tmp` row that other instances will treat as a wrong password.

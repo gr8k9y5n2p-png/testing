@@ -127,13 +127,22 @@ export class MemoryAccountStore implements AccountStore {
     this.records = records;
   }
 
-  async findByEmail(email: string): Promise<AccountRecord | null> {
+  /** Direct lookup — do not call public find* from mutators (exclusive-chain deadlock). */
+  protected rowById(id: string): AccountRecord | null {
+    return this.records.find((row) => row.id === id) ?? null;
+  }
+
+  protected rowByEmail(email: string): AccountRecord | null {
     const key = emailKey(email);
     return this.records.find((row) => row.email === key) ?? null;
   }
 
+  async findByEmail(email: string): Promise<AccountRecord | null> {
+    return this.rowByEmail(email);
+  }
+
   async findById(id: string): Promise<AccountRecord | null> {
-    return this.records.find((row) => row.id === id) ?? null;
+    return this.rowById(id);
   }
 
   async create(input: {
@@ -170,7 +179,7 @@ export class MemoryAccountStore implements AccountStore {
     id: string,
     patch: AccountBillingPatch,
   ): Promise<AccountRecord | null> {
-    const row = await this.findById(id);
+    const row = this.rowById(id);
     if (!row) return null;
     if (patch.stripeCustomerId !== undefined) {
       row.stripeCustomerId = patch.stripeCustomerId;
@@ -198,7 +207,7 @@ export class MemoryAccountStore implements AccountStore {
     id: string,
     device: DeviceUsage,
   ): Promise<AccountRecord | null> {
-    const row = await this.findById(id);
+    const row = this.rowById(id);
     if (!row) return null;
     row.usage = mergeUsage(row.usage, normalizeUsage(device));
     row.updatedAt = new Date().toISOString();
@@ -209,7 +218,7 @@ export class MemoryAccountStore implements AccountStore {
     id: string,
     passwordHash: string,
   ): Promise<AccountRecord | null> {
-    const row = await this.findById(id);
+    const row = this.rowById(id);
     if (!row) return null;
     row.passwordHash = passwordHash;
     row.passwordResetTokenHash = null;
@@ -223,7 +232,7 @@ export class MemoryAccountStore implements AccountStore {
     tokenHash: string,
     expiresAt: string,
   ): Promise<AccountRecord | null> {
-    const row = await this.findById(id);
+    const row = this.rowById(id);
     if (!row) return null;
     row.passwordResetTokenHash = tokenHash;
     row.passwordResetExpiresAt = expiresAt;

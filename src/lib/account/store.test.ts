@@ -137,7 +137,7 @@ describe("shared durable account JSON", () => {
     assert.equal(durable[0].passwordHash, hash);
   });
 
-  it("reuses a fresh hydrate cache so checkout updateBilling does not re-read Blob", async () => {
+  it("reuses a fresh hydrate cache so checkout updateBilling does not re-read or deadlock", async () => {
     let reads = 0;
     const box = { raw: null as string | null };
     const store = new SharedJsonAccountStore({
@@ -149,9 +149,10 @@ describe("shared durable account JSON", () => {
         box.raw = payload;
       },
     });
+    const started = Date.now();
     const row = await store.create({
       email: "ada@example.com",
-      passwordHash: hashPassword("wholesaler"),
+      passwordHash: "scrypt$aa$bb",
     });
     assert.equal(reads, 1);
     assert.equal((await store.findById(row.id))?.email, "ada@example.com");
@@ -161,6 +162,7 @@ describe("shared durable account JSON", () => {
     });
     assert.equal(billed?.stripeCustomerId, "cus_cached");
     assert.equal(reads, 1);
+    assert.ok(Date.now() - started < 200, "findById + updateBilling must not deadlock");
   });
 
   it("keeps durable hashes when the same email exists in the leftover file", () => {
