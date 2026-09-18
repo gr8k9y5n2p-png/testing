@@ -43,4 +43,9 @@ describe("Unlock Access create-account modal", () => {
     assert.match(checkout, /CHECKOUT_API_PATH/);
     assert.match(billingCopy, /CHECKOUT_API_PATH = "\/api\/checkout"/);
   });
+
+  it("does not close the Account menu when the Unlock dialog is clicked", () => {
+    const menu = read("AccountMenu.tsx");
+    assert.match(menu, /closest\('\[role="dialog"\]'\)/);
+  });
 });
