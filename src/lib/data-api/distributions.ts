@@ -6,6 +6,10 @@ import { withPeerContext } from "@/data/queries";
 import type { FundEstimateView } from "@/data/types";
 import { looksLikeExactTicker, normalizeTickerSymbol } from "@/lib/data-api/request-ticker";
 import { fetchDataApi } from "@/lib/data-api/fetch";
+import {
+  CATALOG_CACHE_TTL_MS,
+  createInflightCache,
+} from "@/lib/data-api/inflight-cache";
 
 export type { DataDistribution } from "@/data/aggregate-distributions";
 export { aggregateDistributions } from "@/data/aggregate-distributions";
@@ -378,20 +382,40 @@ async function attachWeeklyNavBestEffort(
   ]).catch(() => funds);
 }
 
+const upcomingAnnouncedCache = createInflightCache<FundEstimateView[]>(
+  CATALOG_CACHE_TTL_MS,
+);
+
+export function resetUpcomingAnnouncedCache(): void {
+  upcomingAnnouncedCache.clear();
+}
+
 export async function loadUpcomingAnnouncedFromDataApi(
   today = chicagoTodayIso(),
 ): Promise<FundEstimateView[]> {
+  const key = `upcoming:${today}`;
+  const loaded = await upcomingAnnouncedCache.remember(key, () =>
+    loadUpcomingAnnouncedUncached(today),
+  );
+  if (!loaded.length) upcomingAnnouncedCache.remove(key);
+  return loaded;
+}
+
+async function loadUpcomingAnnouncedUncached(
+  today: string,
+): Promise<FundEstimateView[]> {
   try {
-    const rows = dedupeRows([
-      ...(await loadDistributionRows({
+    const [preliminary, updated] = await Promise.all([
+      loadDistributionRows({
         publicationStage: "preliminary_estimate",
         exDateFrom: today,
-      })),
-      ...(await loadDistributionRows({
+      }),
+      loadDistributionRows({
         publicationStage: "updated_estimate",
         exDateFrom: today,
-      })),
+      }),
     ]);
+    const rows = dedupeRows([...preliminary, ...updated]);
     if (!rows.length) return [];
     const upcoming = withPeerContext(aggregateDistributions(rows, today)).filter(
       (fund) => isUpcomingFund({ ...fund, hasEstimate: true }, today),

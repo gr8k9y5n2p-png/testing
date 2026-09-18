@@ -1,5 +1,6 @@
 import type { FundEstimateView } from "../../data/types.ts";
 import { MAX_GROWTH_FUNDS } from "../charts/series-colors.ts";
+import type { CompareResponse } from "./compare-types.ts";
 import { UI_DEFAULT_TAX_RATES, type TaxRates } from "./types.ts";
 import {
   upcomingDistDollarsFromPerShare,
@@ -53,6 +54,84 @@ export function parseCompareHoldingDollars(
 export const COMPARE_DEFAULT_TAX_RATES: TaxRates = UI_DEFAULT_TAX_RATES;
 
 export const COMPARE_DEFAULT_COMBINE_STATE = true;
+
+/** Slot confirm is already committed — keep this short so modules start together. */
+export const COMPARE_FETCH_DEBOUNCE_MS = 50;
+
+export type CompareLoadedTicker = {
+  ticker: string;
+  fund: FundEstimateView | null;
+  tax: CompareResponse | null;
+  needsNav?: boolean;
+};
+
+/** Keep already-filled tickers on screen while a new slot loads. */
+export function keepFreshCompareRows(
+  current: CompareLoadedTicker[],
+  tickers: string[],
+): CompareLoadedTicker[] {
+  const want = new Set(tickers);
+  return current.filter((row) => want.has(row.ticker));
+}
+
+/** Progressive Upcoming / prefetch: merge one ticker without dropping the others. */
+export function mergeCompareLoadedRows(
+  current: CompareLoadedTicker[],
+  incoming: CompareLoadedTicker,
+  order: string[],
+): CompareLoadedTicker[] {
+  const byTicker = new Map(current.map((row) => [row.ticker, row]));
+  byTicker.set(incoming.ticker, incoming);
+  return order
+    .map((ticker) => byTicker.get(ticker))
+    .filter((row): row is CompareLoadedTicker => Boolean(row));
+}
+
+function fundViewTicker(fund: FundEstimateView): string {
+  return fund.ticker.trim().toUpperCase();
+}
+
+/** Merge per-ticker identity / unpaid hydrate without dropping other slots. */
+export function mergeCompareFundViews(
+  current: FundEstimateView[],
+  incoming: FundEstimateView,
+  order: string[] = [],
+): FundEstimateView[] {
+  const key = fundViewTicker(incoming);
+  if (!key) return current;
+  const byTicker = new Map(
+    current.map((fund) => [fundViewTicker(fund), fund]),
+  );
+  byTicker.set(key, incoming);
+  const keys = order.length ? order : [...byTicker.keys()];
+  const seen = new Set<string>();
+  const next: FundEstimateView[] = [];
+  for (const raw of keys) {
+    const ticker = raw.trim().toUpperCase();
+    if (!ticker || seen.has(ticker)) continue;
+    seen.add(ticker);
+    const fund = byTicker.get(ticker);
+    if (fund) next.push(fund);
+  }
+  return next;
+}
+
+/** Exact ticker hit from `/api/funds`. Null when the page has no identity row. */
+export function pickFundViewFromSearch(
+  items: unknown[],
+  ticker: string,
+): FundEstimateView | null {
+  const key = ticker.trim().toUpperCase();
+  if (!key) return null;
+  for (const item of items) {
+    if (!item || typeof item !== "object") continue;
+    const row = item as Partial<FundEstimateView>;
+    if (String(row.ticker ?? "").trim().toUpperCase() !== key) continue;
+    if (!row.fundName && !row.id) continue;
+    return row as FundEstimateView;
+  }
+  return null;
+}
 
 export function taxRatesEqual(left: TaxRates, right: TaxRates): boolean {
   return (

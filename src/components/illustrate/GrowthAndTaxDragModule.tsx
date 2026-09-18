@@ -19,15 +19,24 @@ import {
   buildGrowthTaxByTypeModel,
   type GrowthTaxValueMode,
 } from "@/lib/illustrate/growth-tax-by-type";
+import { postIllustrateCompare } from "@/lib/illustrate/compare-client";
 import {
   annualizedFromRows,
+  applyGrowthTaxRowUpdate,
   calendarYearsFromRows,
   growthLinesFromRows,
   loadGrowthAndTaxDrag,
   type GrowthFundInput,
+  type GrowthTaxLoaders,
   type GrowthTaxPrefetch,
   type LoadedGrowthFund,
 } from "@/lib/illustrate/growth-tax-load";
+import { fetchPerformanceIfAvailable } from "@/lib/performance/client";
+
+const browserGrowthTaxLoaders: GrowthTaxLoaders = {
+  loadPerformance: fetchPerformanceIfAvailable,
+  loadCompare: postIllustrateCompare,
+};
 import { lockedTaxRates, UI_DEFAULT_TAX_RATES, type TaxRates } from "@/lib/illustrate/types";
 import {
   PERFORMANCE_UNAVAILABLE_HINT,
@@ -96,6 +105,8 @@ export function GrowthAndTaxDragModule({
       row.tax?.summary?.periods_compared ?? null,
     ]),
   );
+  // Prefetch must not live in requestKey — that remounts/refetches performance
+  // when Compare's YoY lands. Merge tax in separately.
   const requestKey = JSON.stringify({
     funds: selected.map((fund) => fundKey(fund)),
     principal,
@@ -103,17 +114,22 @@ export function GrowthAndTaxDragModule({
     periods: periods ?? null,
     taxRates: rates,
     combineStateWithFederal,
-    prefetchKey,
   });
   const fetchKey = `${requestKey}:${retry}`;
   const loading = selected.length > 0 && settledKey !== fetchKey && rows == null;
   const seedKey = JSON.stringify((seedFunds ?? []).map(fundKey));
+  const selectedOrder = selected.map((fund) => fund.ticker.trim().toUpperCase());
 
   useEffect(() => {
     const seeds = JSON.parse(seedKey) as GrowthFundInput[];
     if (lockToSeed) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- Compare slots own the series
-      setSelected(seeds.slice(0, MAX_GROWTH_FUNDS));
+      setSelected((current) => {
+        const next = seeds.slice(0, MAX_GROWTH_FUNDS);
+        return JSON.stringify(current.map(fundKey)) === JSON.stringify(next.map(fundKey))
+          ? current
+          : next;
+      });
       return;
     }
     if (seeds.length === 0) return;
@@ -155,9 +171,17 @@ export function GrowthAndTaxDragModule({
         periods,
         controller.signal,
         {
+          loaders: browserGrowthTaxLoaders,
           taxRates: next.taxRates,
           combineStateWithFederal: next.combineStateWithFederal,
           prefetchTax,
+          preferYoy: lockToSeed,
+          onRow: (update) => {
+            if (controller.signal.aborted) return;
+            setRows((current) =>
+              applyGrowthTaxRowUpdate(current, update, selectedOrder),
+            );
+          },
         },
       )
         .then((loaded) => {
@@ -176,13 +200,50 @@ export function GrowthAndTaxDragModule({
           setError(caught instanceof Error ? caught.message : "Growth chart failed");
           setSettledKey(fetchKey);
         });
-    }, 250);
+    }, 50);
 
     return () => {
       controller.abort();
       window.clearTimeout(timer);
     };
-  }, [requestKey, fetchKey, periods, prefetchKey]);
+  }, [requestKey, fetchKey, periods]);
+
+  useEffect(() => {
+    if (!prefetchTax?.length) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- merge Compare YoY without refetching performance
+    setRows((current) => {
+      if (!current?.length) return current;
+      const order = current.map((row) => row.input.ticker.trim().toUpperCase());
+      let next = current;
+      for (const row of prefetchTax) {
+        const ticker = row.ticker.trim().toUpperCase();
+        const existing = next.find(
+          (item) => item.input.ticker.trim().toUpperCase() === ticker,
+        );
+        if (!existing) continue;
+        if (!Object.prototype.hasOwnProperty.call(row, "tax")) continue;
+        if (
+          existing.tax === row.tax &&
+          (row.taxSide ?? existing.taxSide) === existing.taxSide
+        ) {
+          continue;
+        }
+        next = applyGrowthTaxRowUpdate(
+          next,
+          {
+            input: existing.input,
+            color: existing.color,
+            index: 0,
+            tax: row.tax,
+            taxSide: row.taxSide ?? existing.taxSide,
+            navPerShare: existing.navPerShare ?? null,
+          },
+          order,
+        );
+      }
+      return next;
+    });
+  }, [prefetchKey]);
 
   const years = useMemo(
     () => calendarYearsFromRows(rows, "tax_dollars"),

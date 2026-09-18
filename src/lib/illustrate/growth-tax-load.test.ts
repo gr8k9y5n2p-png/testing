@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { buildGrowthTaxByTypeModel } from "./growth-tax-by-type.ts";
-import { loadGrowthAndTaxDrag } from "./growth-tax-load.ts";
+import {
+  applyGrowthTaxRowUpdate,
+  loadGrowthAndTaxDrag,
+} from "./growth-tax-load.ts";
 import {
   annualizedFromRows,
   calendarYearsFromRows,
@@ -437,12 +440,141 @@ describe("3-fund Compare Growth & Tax", () => {
       "utf8",
     );
     assert.match(workspace, /prefetchTax=\{prefetchTax\}/);
+    assert.match(workspace, /mergeCompareLoadedRows/);
+    assert.match(workspace, /COMPARE_FETCH_DEBOUNCE_MS/);
+    assert.doesNotMatch(workspace, /key=\{filledKey/);
     assert.match(load, /prefetchTax/);
     assert.match(load, /preferLiveWeeklyNav/);
+    assert.match(load, /onRow/);
+    assert.match(load, /prefetchCoversAll/);
+    assert.match(load, /preferYoy/);
+    assert.match(moduleSource, /preferYoy:\s*lockToSeed/);
+    assert.match(moduleSource, /loaders:\s*browserGrowthTaxLoaders/);
+    assert.match(moduleSource, /fetchPerformanceIfAvailable/);
+    assert.match(moduleSource, /postIllustrateCompare/);
     assert.match(moduleSource, /settledKey !== fetchKey && rows == null/);
     assert.match(moduleSource, /if \(controller\.signal\.aborted\) return/);
     assert.match(moduleSource, /holdingDollars:\s*principal/);
     assert.match(moduleSource, /navPerShare:\s*row\.navPerShare/);
+    assert.match(moduleSource, /applyGrowthTaxRowUpdate/);
+    assert.doesNotMatch(moduleSource, /combineStateWithFederal,\s*prefetchKey/);
+  });
+
+  it("starts performance and YoY compare in parallel per ticker", async () => {
+    let perfStarted = 0;
+    let compareStarted = 0;
+    let resolvePerf!: () => void;
+    const perfGate = new Promise<void>((resolve) => {
+      resolvePerf = resolve;
+    });
+    const events: string[] = [];
+
+    const pending = loadGrowthAndTaxDrag(
+      [fundInput("AGTHX")],
+      10_000,
+      null,
+      undefined,
+      new AbortController().signal,
+      {
+        onRow(update) {
+          if ("tax" in update) events.push("tax");
+          if ("performance" in update) events.push("perf");
+        },
+        loaders: {
+          async loadPerformance() {
+            perfStarted += 1;
+            await perfGate;
+            return pack("AGTHX");
+          },
+          async loadCompare() {
+            compareStarted += 1;
+            return yoyTax("AGTHX");
+          },
+        },
+      },
+    );
+
+    await new Promise((resolve) => setTimeout(resolve, 15));
+    assert.equal(perfStarted, 1);
+    assert.equal(compareStarted, 1);
+    assert.ok(events.includes("tax"));
+    assert.equal(events.includes("perf"), false);
+    resolvePerf();
+    const result = await pending;
+    assert.ok(result.rows[0]?.tax);
+    assert.ok(result.rows[0]?.performance);
+    assert.ok(events.includes("perf"));
+  });
+
+  it("does not call loadCompare when prefetchTax already has the ticker", async () => {
+    let compares = 0;
+    const result = await loadGrowthAndTaxDrag(
+      [fundInput("AGTHX")],
+      10_000,
+      null,
+      undefined,
+      new AbortController().signal,
+      {
+        prefetchTax: [{ ticker: "AGTHX", tax: yoyTax("AGTHX") }],
+        loaders: {
+          async loadPerformance() {
+            return pack("AGTHX");
+          },
+          async loadCompare() {
+            compares += 1;
+            return yoyTax("AGTHX");
+          },
+        },
+      },
+    );
+    assert.equal(compares, 0);
+    assert.ok(result.rows[0]?.tax);
+  });
+
+  it("skips fund_vs_fund when prefetch covers both tickers", async () => {
+    const modes: Array<string | null | undefined> = [];
+    await loadGrowthAndTaxDrag(
+      [fundInput("AGTHX"), fundInput("AMCPX")],
+      10_000,
+      null,
+      undefined,
+      new AbortController().signal,
+      {
+        prefetchTax: [
+          { ticker: "AGTHX", tax: yoyTax("AGTHX") },
+          { ticker: "AMCPX", tax: yoyTax("AMCPX") },
+        ],
+        loaders: {
+          async loadPerformance(request) {
+            return pack(request.ticker ?? "AGTHX");
+          },
+          async loadCompare(request) {
+            modes.push(request.mode);
+            return yoyTax(request.selectors?.ticker ?? "AGTHX");
+          },
+        },
+      },
+    );
+    assert.deepEqual(modes, []);
+  });
+
+  it("merges a tax-only update without dropping an earlier performance pack", () => {
+    const seeded = [
+      row("AGTHX", pack("AGTHX"), null),
+    ];
+    const merged = applyGrowthTaxRowUpdate(
+      seeded,
+      {
+        input: fundInput("AGTHX"),
+        color: "#1b7a72",
+        index: 0,
+        tax: yoyTax("AGTHX"),
+        taxSide: "auto",
+      },
+      ["AGTHX"],
+    );
+    assert.ok(merged[0]?.performance);
+    assert.ok(merged[0]?.tax);
   });
 });
 

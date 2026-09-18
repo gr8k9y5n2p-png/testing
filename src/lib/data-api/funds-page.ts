@@ -57,6 +57,50 @@ function isFundsApiItem(row: unknown): row is FundsApiItem {
   );
 }
 
+/**
+ * Autocomplete / Compare picker. Data GET /funds?q=&limit= only —
+ * identity + NAV + coverage. Never `ticker=`, never /distributions.
+ */
+export async function loadThinFundSearchFromDataApi(
+  query: FundPageQuery,
+): Promise<FundPageResult | null> {
+  if (!isRemoteDataApi()) return null;
+  const q = query.query?.trim();
+  if (!q) return null;
+  const limit = clampPageSize(query.limit);
+  const offset = clampOffset(query.offset);
+  const params = new URLSearchParams();
+  params.set("q", q);
+  params.set("limit", String(limit));
+  params.set("offset", String(offset));
+  try {
+    const response = await fetchDataApi(`/funds?${params.toString()}`);
+    if (!response.ok) return null;
+    const payload = (await response.json()) as PagePayload;
+    const raw = Array.isArray(payload.items)
+      ? payload.items
+      : Array.isArray(payload.data)
+        ? payload.data
+        : [];
+    const items = raw.filter(isFundsApiItem).map((row) => mapFundsApiItem(row));
+    const total =
+      typeof payload.total === "number"
+        ? payload.total
+        : typeof payload.count === "number"
+          ? payload.count
+          : items.length;
+    return {
+      items,
+      total,
+      limit: clampPageSize(payload.limit ?? limit),
+      offset: clampOffset(payload.offset ?? offset),
+      years: [],
+    };
+  } catch {
+    return null;
+  }
+}
+
 export async function loadFundPageFromDataApi(
   query: FundPageQuery = {},
 ): Promise<FundPageResult | null> {

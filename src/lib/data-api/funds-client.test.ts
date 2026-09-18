@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  FUNDS_LOOKUP_PATH,
   FUNDS_SEARCH_PATH,
+  fundsLookupParams,
   fundsPageHasExactTicker,
   fundsSearchNotInUniverse,
   fundsSearchParams,
@@ -117,7 +119,7 @@ describe("GET /api/funds client parse", () => {
     const params = fundsSearchParams("AGTHX");
     assert.equal(FUNDS_SEARCH_PATH, "/api/funds");
     assert.equal(params.get("q"), "AGTHX");
-    assert.equal(params.get("limit"), "20");
+    assert.equal(params.get("limit"), "10");
     assert.equal(params.get("offset"), "0");
     assert.equal(params.get("nav_only"), "1");
     assert.equal(params.get("upcoming"), null);
@@ -146,5 +148,12 @@ describe("GET /api/funds client parse", () => {
       false,
     );
     assert.equal(fundsSearchNotInUniverse([], "BlackRock"), false);
+  });
+
+  it("exact confirm uses /api/funds/lookup?ticker= and never /funds?ticker=", () => {
+    const params = fundsLookupParams("agthx");
+    assert.equal(FUNDS_LOOKUP_PATH, "/api/funds/lookup");
+    assert.equal(params.get("ticker"), "AGTHX");
+    assert.equal(params.get("q"), null);
   });
 });

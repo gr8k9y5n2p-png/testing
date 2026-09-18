@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { FundEstimateView } from "@/data/types";
 import {
   GrowthAndTaxDragModule,
@@ -11,25 +11,31 @@ import { TaxRateFields } from "@/components/illustrate/TaxRateFields";
 import { UpcomingTable } from "@/components/illustrate/portfolio-compare/UpcomingTable";
 import { NoticeToast, useNoticeToast } from "@/components/NoticeToast";
 import { SavedAssetActions } from "@/components/saved-assets/SavedAssetActions";
+import { fetchFundLookup } from "@/lib/data-api/funds-client";
 import { postIllustrateCompare } from "@/lib/illustrate/compare-client";
 import {
   trailingCalendarPeriods,
   yoyTaxDragCompareRequest,
 } from "@/lib/illustrate/compare-request";
-import type { CompareResponse } from "@/lib/illustrate/compare-types";
 import {
   COMPARE_DEFAULT_COMBINE_STATE,
   COMPARE_DEFAULT_HOLDING_DOLLARS,
   COMPARE_DEFAULT_TAX_RATES,
+  COMPARE_FETCH_DEBOUNCE_MS,
   COMPARE_SLOT_COUNT,
   compareInputsMatch,
   compareSlotPlaceholder,
   filledCompareTickers,
-  growthFundsFromSlots,
+  keepFreshCompareRows,
+  mergeCompareFundViews,
+  mergeCompareLoadedRows,
   padCompareSlots,
   parseCompareHoldingDollars,
+  pickFundViewFromSearch,
   setCompareSlot,
   upcomingRowsFromCompareTickers,
+  type CompareGrowthFund,
+  type CompareLoadedTicker,
 } from "@/lib/illustrate/compare-workspace";
 import {
   compareWorkspaceIsSavable,
@@ -43,19 +49,12 @@ import { toUpcomingSummary } from "@/lib/illustrate/tax-drag-chart";
 import type { TaxRates } from "@/lib/illustrate/types";
 import type { PortfolioFundOption } from "@/lib/illustrate/portfolio-compare-types";
 
-type LoadedTicker = {
-  ticker: string;
-  fund: FundEstimateView | null;
-  tax: CompareResponse | null;
-  needsNav?: boolean;
-};
-
 export function CompareWorkspace({
-  funds,
+  funds = [],
   initialTickers = [],
   headingAs: Heading = "h1",
 }: {
-  funds: FundEstimateView[];
+  funds?: FundEstimateView[];
   initialTickers?: Array<string | undefined | null>;
   headingAs?: "h1" | "h2";
 }) {
@@ -67,27 +66,45 @@ export function CompareWorkspace({
   );
   const [taxRates, setTaxRates] = useState<TaxRates>(COMPARE_DEFAULT_TAX_RATES);
   const [combineState, setCombineState] = useState(COMPARE_DEFAULT_COMBINE_STATE);
+  const [knownFunds, setKnownFunds] = useState<FundEstimateView[]>(funds);
+  const [confirmHints, setConfirmHints] = useState<
+    Record<string, CompareGrowthFund>
+  >({});
   const catalog = useMemo<PortfolioFundOption[]>(
     () =>
-      funds.map((fund) => ({
+      knownFunds.map((fund) => ({
         ticker: fund.ticker,
         fundName: fund.fundName,
         family: fund.family,
         nav: fund.nav > 0 ? fund.nav : null,
       })),
-    [funds],
-  );
-  const growthFunds = useMemo(
-    () => growthFundsFromSlots(slots, funds),
-    [slots, funds],
+    [knownFunds],
   );
   const filledTickers = filledCompareTickers(slots);
   const filledKey = filledTickers.join(",");
+  // Ticker + confirm-time hint only. Later hydrate must not change Growth keys.
+  const growthFunds = useMemo(
+    () =>
+      filledTickers.map((ticker) => {
+        const hint = confirmHints[ticker];
+        return {
+          ticker,
+          label: ticker,
+          fundIdentifier: hint?.fundIdentifier ?? ticker,
+          fundFamily: hint?.fundFamily,
+          fundName: hint?.fundName,
+          navPerShare: hint?.navPerShare,
+        };
+      }),
+    [confirmHints, filledTickers],
+  );
+  const fundsRef = useRef(knownFunds);
+  fundsRef.current = knownFunds;
   const [loaded, setLoaded] = useState<{
     holdingDollars: number;
     taxRates: TaxRates;
     combine: boolean;
-    rows: LoadedTicker[];
+    rows: CompareLoadedTicker[];
   }>({
     holdingDollars: COMPARE_DEFAULT_HOLDING_DOLLARS,
     taxRates: COMPARE_DEFAULT_TAX_RATES,
@@ -100,15 +117,33 @@ export function CompareWorkspace({
   useEffect(() => {
     const tickers = filledKey ? filledKey.split(",") : [];
     if (tickers.length === 0) {
+      setLoaded((current) => ({
+        holdingDollars,
+        taxRates,
+        combine: combineState,
+        rows: keepFreshCompareRows(current.rows, []),
+      }));
+      setNavNeededTickers([]);
       return;
     }
+
+    // Keep already-confirmed tickers on screen while a new slot loads.
+    setLoaded((current) => ({
+      holdingDollars,
+      taxRates,
+      combine: combineState,
+      rows: compareInputsMatch(current, holdingDollars, taxRates, combineState)
+        ? keepFreshCompareRows(current.rows, tickers)
+        : [],
+    }));
 
     const controller = new AbortController();
     const periods = trailingCalendarPeriods();
     const timer = window.setTimeout(() => {
       void Promise.all(
         tickers.map(async (ticker) => {
-          const fund = resolveFundView(funds, ticker) ?? null;
+          const fund = resolveFundView(fundsRef.current, ticker) ?? null;
+          let row: CompareLoadedTicker;
           try {
             const tax = await postIllustrateCompare(
               yoyTaxDragCompareRequest({
@@ -127,46 +162,61 @@ export function CompareWorkspace({
               }),
               { signal: controller.signal },
             );
-            return { ticker, fund, tax, needsNav: false };
+            row = { ticker, fund, tax, needsNav: false };
           } catch (caught) {
             if (caught instanceof DOMException && caught.name === "AbortError") {
-              throw caught;
+              return;
             }
-            return {
+            row = {
               ticker,
               fund,
               tax: null,
               needsNav: isMissingNavError(caught),
             };
           }
-        }),
-      )
-        .then((rows) => {
-          setLoaded({ holdingDollars, taxRates, combine: combineState, rows });
-          setNavNeededTickers(
-            rows.filter((row) => row.needsNav).map((row) => row.ticker),
-          );
-        })
-        .catch((caught: unknown) => {
-          if (caught instanceof DOMException && caught.name === "AbortError") return;
-          setLoaded({
+          if (controller.signal.aborted) return;
+          setLoaded((current) => ({
             holdingDollars,
             taxRates,
             combine: combineState,
-            rows: tickers.map((ticker) => ({
-              ticker,
-              fund: resolveFundView(funds, ticker) ?? null,
-              tax: null,
-            })),
+            rows: mergeCompareLoadedRows(current.rows, row, tickers),
+          }));
+          setNavNeededTickers((current) => {
+            if (row.needsNav) {
+              return current.includes(ticker) ? current : [...current, ticker];
+            }
+            return current.filter((item) => item !== ticker);
           });
-        });
-    }, 250);
+        }),
+      ).catch((caught: unknown) => {
+        if (caught instanceof DOMException && caught.name === "AbortError") return;
+      });
+    }, COMPARE_FETCH_DEBOUNCE_MS);
 
     return () => {
       controller.abort();
       window.clearTimeout(timer);
     };
-  }, [filledKey, funds, holdingDollars, navOverrides, taxRates, combineState]);
+  }, [filledKey, holdingDollars, navOverrides, taxRates, combineState]);
+
+  useEffect(() => {
+    const tickers = filledKey ? filledKey.split(",") : [];
+    if (tickers.length === 0) return;
+    let cancelled = false;
+    void Promise.all(
+      tickers.map(async (ticker) => {
+        if (resolveFundView(fundsRef.current, ticker)) return;
+        const page = await fetchFundLookup<FundEstimateView>(ticker);
+        if (cancelled) return;
+        const fund = pickFundViewFromSearch(page.items, ticker);
+        if (!fund) return;
+        setKnownFunds((current) => mergeCompareFundViews(current, fund, tickers));
+      }),
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [filledKey]);
 
   const historyMatchesInputs = compareInputsMatch(
     loaded,
@@ -184,7 +234,7 @@ export function CompareWorkspace({
         filledTickers.map((ticker, index) => {
           const loadedRow = activeLoaded.find((item) => item.ticker === ticker);
           const fund =
-            resolveFundView(funds, ticker) ?? loadedRow?.fund ?? null;
+            resolveFundView(knownFunds, ticker) ?? loadedRow?.fund ?? null;
           return {
             ticker,
             fund,
@@ -202,7 +252,7 @@ export function CompareWorkspace({
           };
         }),
       ),
-    [activeLoaded, filledTickers, funds, holdingDollars, navOverrides],
+    [activeLoaded, filledTickers, knownFunds, holdingDollars, navOverrides],
   );
   const prefetchTax = useMemo(
     () =>
@@ -302,7 +352,7 @@ export function CompareWorkspace({
 
       <div className="grid w-full grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         {slots.map((ticker, index) => {
-          const selected = ticker ? resolveFundView(funds, ticker) : null;
+          const selected = ticker ? resolveFundView(knownFunds, ticker) : null;
           return (
             <div key={`compare-slot-${index}`} className="min-w-0">
               <TickerField
@@ -315,6 +365,21 @@ export function CompareWorkspace({
                 allowEmpty
                 onNotice={onNotice}
                 onSelect={(fund) => {
+                  const nextTicker = fund.ticker.trim().toUpperCase();
+                  if (nextTicker) {
+                    setConfirmHints((current) => ({
+                      ...current,
+                      [nextTicker]: {
+                        ticker: nextTicker,
+                        label: nextTicker,
+                        fundIdentifier: nextTicker,
+                        fundFamily: fund.family,
+                        fundName: fund.fundName || undefined,
+                        navPerShare:
+                          fund.nav != null && fund.nav > 0 ? fund.nav : undefined,
+                      },
+                    }));
+                  }
                   setSlots((current) => setCompareSlot(current, index, fund.ticker));
                 }}
               />
@@ -339,7 +404,6 @@ export function CompareWorkspace({
         className="mt-10 w-full scroll-mt-20"
       >
         <GrowthAndTaxDragModule
-          key={filledKey || "empty"}
           funds={growthFunds}
           seedFunds={growthFunds}
           lockToSeed
@@ -359,7 +423,7 @@ export function CompareWorkspace({
             holdings={navNeededTickers.map((ticker) => ({
               key: ticker,
               ticker,
-              nav: navOverrides[ticker] ?? resolveFundView(funds, ticker)?.nav ?? null,
+              nav: navOverrides[ticker] ?? resolveFundView(knownFunds, ticker)?.nav ?? null,
             }))}
             onNavChange={(key, nav) => {
               if (nav == null) return;

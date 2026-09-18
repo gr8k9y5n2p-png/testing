@@ -1,5 +1,4 @@
 import { fundSeriesColor } from "../charts/series-colors.ts";
-import { yearEndGrowth } from "../charts/shared-axis.ts";
 import {
   compareSideFromFund,
   compareTaxRequestFields,
@@ -84,13 +83,70 @@ export type GrowthTaxPrefetch = {
   taxSide?: LoadedGrowthFund["taxSide"];
 };
 
+export type GrowthTaxRowUpdate = {
+  input: GrowthFundInput;
+  color: string;
+  index: number;
+  performance?: PerformanceResponse | null;
+  tax?: CompareResponse | null;
+  taxSide?: LoadedGrowthFund["taxSide"];
+  navPerShare?: number | null;
+};
+
 export type GrowthTaxLoadOptions = {
   loaders?: GrowthTaxLoaders;
   taxRates?: TaxRates;
   combineStateWithFederal?: boolean;
   /** Compare workspace YoY rows — skip a second compare storm when present. */
   prefetchTax?: GrowthTaxPrefetch[];
+  /** Progressive fill: tax can land before performance for the same ticker. */
+  onRow?: (update: GrowthTaxRowUpdate) => void;
+  /**
+   * Compare slots use per-ticker YoY (shared with Upcoming). Homepage 2-fund
+   * still issues one fund_vs_fund when prefetch is empty.
+   */
+  preferYoy?: boolean;
 };
+
+export function applyGrowthTaxRowUpdate(
+  current: LoadedGrowthFund[] | null,
+  update: GrowthTaxRowUpdate,
+  order: string[],
+): LoadedGrowthFund[] {
+  const byTicker = new Map(
+    (current ?? []).map((row) => [row.input.ticker.trim().toUpperCase(), row]),
+  );
+  const key = update.input.ticker.trim().toUpperCase();
+  const prev = byTicker.get(key);
+  const next: LoadedGrowthFund = {
+    input: update.input,
+    color: update.color,
+    performance:
+      "performance" in update
+        ? (update.performance ?? null)
+        : (prev?.performance ?? null),
+    tax: "tax" in update ? (update.tax ?? null) : (prev?.tax ?? null),
+    taxSide: update.taxSide ?? prev?.taxSide ?? "auto",
+    navPerShare:
+      update.navPerShare !== undefined
+        ? update.navPerShare
+        : (prev?.navPerShare ?? null),
+  };
+  byTicker.set(key, next);
+  return order
+    .map((ticker) => byTicker.get(ticker.trim().toUpperCase()))
+    .filter((row): row is LoadedGrowthFund => Boolean(row));
+}
+
+function prefetchHasTax(
+  prefetchByTicker: Map<string, GrowthTaxPrefetch>,
+  ticker: string,
+): boolean {
+  const prefetched = prefetchByTicker.get(ticker);
+  return Boolean(
+    prefetched && Object.prototype.hasOwnProperty.call(prefetched, "tax"),
+  );
+}
 
 export async function loadGrowthAndTaxDrag(
   funds: GrowthFundInput[],
@@ -111,60 +167,25 @@ export async function loadGrowthAndTaxDrag(
       row,
     ]),
   );
-  const mapped = await mapFundsWithOptionalPerformance(
-    funds,
-    async (input) => {
-      const ticker = input.ticker.trim().toUpperCase();
-      const usePost = principal !== DEFAULT_START_DOLLARS;
-      const request: PerformanceQuery = {
-        ticker,
-        fund_identifier: input.fundIdentifier ?? ticker,
-        benchmark,
-        start_dollars: principal,
-        mode: defaultPerformanceMode(),
-      };
-      return loaders.loadPerformance(request, {
-        signal,
-        method: usePost ? "POST" : "GET",
-      });
-    },
-    signal,
-  );
-
-  const prepared = mapped.map(({ fund: input, performance }, index) => {
+  const prepared = funds.map((input, index) => {
     const ticker = input.ticker.trim().toUpperCase();
-    const lastClose =
-      performance?.fund.points[performance.fund.points.length - 1]?.adj_close;
     const nav = preferLiveWeeklyNav({
       ticker,
       catalogNav: input.navPerShare,
-      weeklyNav: lastClose,
     });
-    return { input, index, ticker, performance, nav };
+    return { input, index, ticker, nav };
   });
-
-  const yearSet = new Set<number>();
-  for (const row of prepared) {
-    if (!row.performance) continue;
-    for (const point of yearEndGrowth(row.performance.fund.points)) {
-      yearSet.add(point.year);
-    }
-  }
-  for (const period of trailingCalendarPeriods()) yearSet.add(period.year);
-  const taxPeriods =
-    periods && periods.length > 0
-      ? periods
-      : [...yearSet]
-          .sort((a, b) => a - b)
-          .map((year) => ({ year }));
+  const prefetchCoversAll = prepared.every((row) =>
+    prefetchHasTax(prefetchByTicker, row.ticker),
+  );
   const usablePeriods =
-    taxPeriods.length >= 2 ? taxPeriods : trailingCalendarPeriods();
+    periods && periods.length >= 2 ? periods : trailingCalendarPeriods();
 
-  let pair: CompareResponse | null = null;
-  if (prepared.length === 2) {
+  let pairPromise: Promise<CompareResponse | null> | null = null;
+  if (prepared.length === 2 && !prefetchCoversAll && !options.preferYoy) {
     const [left, right] = prepared;
-    try {
-      pair = await loaders.loadCompare(
+    pairPromise = loaders
+      .loadCompare(
         {
           mode: "fund_vs_fund",
           holding_dollars: principal,
@@ -196,31 +217,93 @@ export async function loadGrowthAndTaxDrag(
           periods: usablePeriods,
         },
         { signal },
-      );
-    } catch {
-      pair = null;
-    }
+      )
+      .catch((error) => {
+        if (signal.aborted) throw error;
+        return null;
+      });
   }
 
   const rows: LoadedGrowthFund[] = await Promise.all(
     prepared.map(async (row) => {
+      const color = fundSeriesColor(row.index);
       const prefetched = prefetchByTicker.get(row.ticker);
-      if (prefetched && Object.prototype.hasOwnProperty.call(prefetched, "tax")) {
-        return {
+      const emit = (update: GrowthTaxRowUpdate) => {
+        if (signal.aborted) return;
+        options.onRow?.(update);
+      };
+
+      const usePost = principal !== DEFAULT_START_DOLLARS;
+      const performancePromise = mapFundsWithOptionalPerformance(
+        [row.input],
+        async (input) => {
+          const ticker = input.ticker.trim().toUpperCase();
+          const request: PerformanceQuery = {
+            ticker,
+            fund_identifier: input.fundIdentifier ?? ticker,
+            benchmark,
+            start_dollars: principal,
+            mode: defaultPerformanceMode(),
+          };
+          return loaders.loadPerformance(request, {
+            signal,
+            method: usePost ? "POST" : "GET",
+          });
+        },
+        signal,
+      ).then((mapped) => {
+        const performance = mapped[0]?.performance ?? null;
+        const lastClose =
+          performance?.fund.points[performance.fund.points.length - 1]
+            ?.adj_close;
+        const nav = preferLiveWeeklyNav({
+          ticker: row.ticker,
+          catalogNav: row.input.navPerShare,
+          weeklyNav: lastClose,
+        });
+        emit({
           input: row.input,
-          color: fundSeriesColor(row.index),
-          performance: row.performance,
-          tax: prefetched.tax,
-          taxSide: prefetched.taxSide ?? "auto",
+          color,
+          index: row.index,
+          performance,
+          navPerShare: nav ?? null,
+        });
+        return { performance, nav };
+      });
+
+      let taxPromise: Promise<{
+        tax: CompareResponse | null;
+        taxSide: LoadedGrowthFund["taxSide"];
+      }>;
+      if (prefetched && Object.prototype.hasOwnProperty.call(prefetched, "tax")) {
+        const tax = prefetched.tax;
+        const taxSide = prefetched.taxSide ?? "auto";
+        emit({
+          input: row.input,
+          color,
+          index: row.index,
+          tax,
+          taxSide,
           navPerShare: row.nav ?? null,
-        };
-      }
-      let tax: CompareResponse | null = pair;
-      let taxSide: LoadedGrowthFund["taxSide"] =
-        pair == null ? "auto" : row.index === 0 ? "left" : "right";
-      if (!tax) {
-        try {
-          tax = await loaders.loadCompare(
+        });
+        taxPromise = Promise.resolve({ tax, taxSide });
+      } else if (pairPromise) {
+        taxPromise = pairPromise.then((tax) => {
+          const taxSide: LoadedGrowthFund["taxSide"] =
+            tax == null ? "auto" : row.index === 0 ? "left" : "right";
+          emit({
+            input: row.input,
+            color,
+            index: row.index,
+            tax,
+            taxSide,
+            navPerShare: row.nav ?? null,
+          });
+          return { tax, taxSide };
+        });
+      } else {
+        taxPromise = loaders
+          .loadCompare(
             yoyTaxDragCompareRequest({
               ticker: row.ticker,
               label: row.input.label ?? row.ticker,
@@ -234,20 +317,43 @@ export async function loadGrowthAndTaxDrag(
               combineStateWithFederal: taxFields.combine_state_with_federal,
             }),
             { signal },
-          );
-        } catch (error) {
-          if (signal.aborted) throw error;
-          tax = null;
-        }
-        taxSide = "auto";
+          )
+          .then((tax) => {
+            emit({
+              input: row.input,
+              color,
+              index: row.index,
+              tax,
+              taxSide: "auto",
+              navPerShare: row.nav ?? null,
+            });
+            return { tax, taxSide: "auto" as const };
+          })
+          .catch((error) => {
+            if (signal.aborted) throw error;
+            emit({
+              input: row.input,
+              color,
+              index: row.index,
+              tax: null,
+              taxSide: "auto",
+              navPerShare: row.nav ?? null,
+            });
+            return { tax: null, taxSide: "auto" as const };
+          });
       }
+
+      const [perf, taxResult] = await Promise.all([
+        performancePromise,
+        taxPromise,
+      ]);
       return {
         input: row.input,
-        color: fundSeriesColor(row.index),
-        performance: row.performance,
-        tax,
-        taxSide,
-        navPerShare: row.nav ?? null,
+        color,
+        performance: perf.performance,
+        tax: taxResult.tax,
+        taxSide: taxResult.taxSide,
+        navPerShare: perf.nav ?? row.nav ?? null,
       };
     }),
   );
