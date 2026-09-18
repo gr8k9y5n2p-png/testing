@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Aftertax — Compare",
-  description: `${COPY.sub} Growth, tax drag, and upcoming for up to six tickers.`,
+  description: `${COPY.sub} Growth, tax drag, and upcoming for up to four tickers.`,
 };
 
 export default async function ComparePage({

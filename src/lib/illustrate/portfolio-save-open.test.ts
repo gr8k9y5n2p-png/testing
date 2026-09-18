@@ -130,7 +130,7 @@ describe("portfolio Save/Open helpers", () => {
     assert.equal(fromPortfolio.holdingDollars, COMPARE_DEFAULT_HOLDING_DOLLARS);
   });
 
-  it("caps Compare open at six unique tickers and skips empty payload", () => {
+  it("caps Compare open at four unique tickers and skips empty payload", () => {
     const many = portfolioBooksToCompareWorkspace(
       {
         current: ["AA", "BB", "CC", "DD", "EE", "FF", "GG"].map((ticker) => ({
@@ -140,7 +140,7 @@ describe("portfolio Save/Open helpers", () => {
       },
       10_000,
     );
-    assert.deepEqual(many.tickers, ["AA", "BB", "CC", "DD", "EE", "FF"]);
+    assert.deepEqual(many.tickers, ["AA", "BB", "CC", "DD"]);
     assert.deepEqual(
       portfolioBooksToCompareWorkspace(null, 10_000),
       { tickers: [], holdingDollars: 10_000 },

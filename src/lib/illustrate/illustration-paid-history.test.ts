@@ -386,7 +386,7 @@ describe("Dollar Illustration prior-year Paid History", () => {
       FUND_CARD_TYPE_LABELS.qualified_dividend,
       "Qualified dividend (QDI)",
     );
-    assert.equal(paidHistoryTypeColor("long_term_capital_gains"), "#b42318");
+    assert.equal(paidHistoryTypeColor("long_term_capital_gains"), "#C0392B");
     assert.equal(paidHistoryEmptyCellLabel(false), "—");
     assert.equal(paidHistoryEmptyCellLabel(true), "Awaiting");
     assert.equal(

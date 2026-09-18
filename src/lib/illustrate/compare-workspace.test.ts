@@ -66,14 +66,15 @@ function view(
 }
 
 describe("compare workspace slots", () => {
-  it("starts with six empty slots", () => {
-    assert.deepEqual(emptyCompareSlots(), ["", "", "", "", "", ""]);
+  it("starts with four empty slots", () => {
+    assert.equal(COMPARE_SLOT_COUNT, 4);
+    assert.deepEqual(emptyCompareSlots(), ["", "", "", ""]);
   });
 
   it("numbers placeholders from Ticker 1 with no extra chrome", () => {
     assert.equal(compareSlotPlaceholder(0), "Ticker 1");
     assert.equal(compareSlotPlaceholder(1), "Ticker 2");
-    assert.equal(compareSlotPlaceholder(COMPARE_SLOT_COUNT - 1), "Ticker 6");
+    assert.equal(compareSlotPlaceholder(COMPARE_SLOT_COUNT - 1), "Ticker 4");
   });
 
   it("prefills unique tickers into the first slots only", () => {
@@ -82,9 +83,26 @@ describe("compare workspace slots", () => {
       "AGTHX",
       "",
       "",
-      "",
-      "",
     ]);
+  });
+
+  it("caps Compare at four unique tickers", () => {
+    assert.deepEqual(
+      parseCompareQueryTickers({
+        tickers: "FCNTX,AGTHX,FBGRX,FGRIX,VFIAX,DODIX",
+      }),
+      ["FCNTX", "AGTHX", "FBGRX", "FGRIX"],
+    );
+    assert.deepEqual(
+      padCompareSlots(["FCNTX", "AGTHX", "FBGRX", "FGRIX", "VFIAX"]),
+      ["FCNTX", "AGTHX", "FBGRX", "FGRIX"],
+    );
+    assert.deepEqual(
+      filledCompareTickers(["FCNTX", "AGTHX", "FBGRX", "FGRIX", "VFIAX"]),
+      ["FCNTX", "AGTHX", "FBGRX", "FGRIX"],
+    );
+    assert.equal(COMPARE_SLOT_COUNT, 4);
+    assert.notEqual(COMPARE_SLOT_COUNT, 6);
   });
 
   it("rejects a duplicate ticker in another slot", () => {
@@ -190,7 +208,7 @@ describe("compare workspace slots (filled)", () => {
   it("one filled slot is enough; empty slots are ignored", () => {
     const slots = padCompareSlots(["amcpx"]);
     assert.deepEqual(filledCompareTickers(slots), ["AMCPX"]);
-    assert.equal(slots.filter((slot) => slot === "").length, 5);
+    assert.equal(slots.filter((slot) => slot === "").length, 3);
 
     const growth = growthFundsFromSlots(slots, [view("AMCPX")]);
     assert.equal(growth.length, 1);
@@ -680,6 +698,9 @@ describe("Compare workspace Upcoming + NAV soft path", () => {
     assert.match(workspace, /GrowthAndTaxDragModule/);
     assert.match(workspace, /UpcomingTable/);
     assert.doesNotMatch(barrel, /CompareDeltaStrip/);
+    assert.match(workspace, /md:grid-cols-4/);
+    assert.doesNotMatch(workspace, /lg:grid-cols-6/);
+    assert.doesNotMatch(workspace, /sm:grid-cols-3/);
   });
 });
 

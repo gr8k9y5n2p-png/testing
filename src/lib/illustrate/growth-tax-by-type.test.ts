@@ -614,8 +614,12 @@ describe("Growth & Tax chrome locks", () => {
     assert.match(seriesSource, /compareInceptionFromYear/);
     assert.match(seriesSource, /compareInceptionToYear/);
     assert.doesNotMatch(chart, /strokeDasharray=\{row\.dashed/);
-    assert.equal(GROWTH_TAX_TYPE_COLORS.long_term_capital_gains, "#b42318");
-    assert.equal(GROWTH_TAX_TYPE_COLORS.ordinary_income, "#1b7a72");
+    assert.equal(GROWTH_TAX_TYPE_COLORS.ordinary_income, "#2F6BFF");
+    assert.equal(GROWTH_TAX_TYPE_COLORS.short_term_capital_gains, "#FF8A1A");
+    assert.equal(GROWTH_TAX_TYPE_COLORS.long_term_capital_gains, "#C0392B");
+    assert.equal(GROWTH_TAX_TYPE_COLORS.qualified_dividend, "#8B5CF6");
+    assert.equal(GROWTH_TAX_TYPE_COLORS.special_dividend, "#0f7a4b");
+    assert.equal(GROWTH_TAX_TYPE_COLORS.return_of_capital, "#a8b0aa");
     const byType = readFileSync(join(here, "growth-tax-by-type.ts"), "utf8");
     const load = readFileSync(join(here, "growth-tax-load.ts"), "utf8");
     assert.match(byType, /upcomingDistDollars/);

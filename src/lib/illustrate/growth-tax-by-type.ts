@@ -36,12 +36,12 @@ export const GROWTH_TAX_TYPE_LABELS: Record<GrowthTaxEstimateType, string> = {
   return_of_capital: "ROC",
 };
 
-/** Muted Ledger Light stacks — not neon. LTCG is tax-more red. */
+/** Option B estimate-type palette — brighter stacks, locked 2026-09-17. */
 export const GROWTH_TAX_TYPE_COLORS: Record<GrowthTaxEstimateType, string> = {
-  ordinary_income: "#1b7a72",
-  short_term_capital_gains: "#8a6a4a",
-  long_term_capital_gains: "#b42318",
-  qualified_dividend: "#4a5d6b",
+  ordinary_income: "#2F6BFF",
+  short_term_capital_gains: "#FF8A1A",
+  long_term_capital_gains: "#C0392B",
+  qualified_dividend: "#8B5CF6",
   special_dividend: "#0f7a4b",
   return_of_capital: "#a8b0aa",
 };

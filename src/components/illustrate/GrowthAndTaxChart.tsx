@@ -512,7 +512,7 @@ export function GrowthTaxTypeLegend({ className = "" }: { className?: string }) 
           aria-hidden
           className="inline-block size-2.5 rounded-[2px]"
           style={{
-            background: lightenHex("#1b7a72"),
+            background: lightenHex(GROWTH_TAX_TYPE_COLORS.ordinary_income),
             backgroundImage:
               "repeating-linear-gradient(135deg, rgba(255,255,255,0.55) 0 1px, transparent 1px 3px)",
           }}

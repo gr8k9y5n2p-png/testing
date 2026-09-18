@@ -40,7 +40,9 @@ export type YearLayout = {
  * One x-scale for both charts.
  * Each year owns a slot. Bars are centered in that slot with a gutter on
  * both sides so year groups never touch. Every fund bar has the same width
- * and a fixed gap — the group is shrunk to fit, never allowed to overflow.
+ * and a fixed gap — equally spaced inside the year cluster, never a leftover
+ * hole between the 2nd and 3rd fund. The group is shrunk to fit, never
+ * allowed to overflow.
  */
 export function yearLayout(
   years: number[],
