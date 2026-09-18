@@ -1,5 +1,3 @@
-import Image from "next/image";
-
 /**
  * Placeholder Lists preview for the Unlock Access module.
  * Modules’ final asset is a drop-in path swap — change
@@ -16,13 +14,13 @@ export function ListsUnlockPreview({
 }) {
   return (
     <div className={`overflow-hidden rounded-md border border-line bg-paper ${className}`}>
-      <Image
+      {/* Plain img so a path swap (SVG or PNG) paints without next/image. */}
+      <img
         src={src}
         alt="Lists preview — ticker paste, Upcoming-style rows, Save and Open"
         width={800}
         height={480}
         className="h-auto w-full"
-        unoptimized
       />
     </div>
   );

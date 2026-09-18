@@ -2,7 +2,7 @@
   <title>Lists preview</title>
   <rect width="800" height="480" fill="#f7f8f6"/>
   <rect x="16" y="16" width="768" height="448" rx="12" fill="#ffffff" stroke="#e6e9e4"/>
-  <text x="36" y="48" fill="#8b958c" font-family="ui-sans-serif, system-ui, sans-serif" font-size="10" font-weight="700" letter-spacing="1.6">UNPAID ANNOUNCED · NOT PAID HISTORY</text>
+  <text x="36" y="48" fill="#8b958c" font-family="ui-sans-serif, system-ui, sans-serif" font-size="10" font-weight="700" letter-spacing="1.6">UNPAID ANNOUNCED - NOT PAID HISTORY</text>
   <text x="36" y="78" fill="#1a1d1a" font-family="ui-serif, Georgia, serif" font-size="28">Lists</text>
   <rect x="36" y="96" width="56" height="28" rx="6" fill="#ffffff" stroke="#e6e9e4"/>
   <text x="64" y="115" text-anchor="middle" fill="#1a1d1a" font-family="ui-sans-serif, system-ui, sans-serif" font-size="12">Save</text>
@@ -25,29 +25,29 @@
   <g font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="13" fill="#1a1d1a">
     <rect x="48" y="240" width="72" height="28" rx="5" fill="#ffffff" stroke="#0f7a4b" stroke-width="2"/>
     <text x="58" y="258">AAAXX</text>
-    <text x="168" y="258" fill="#8b958c"></text>
-    <text x="278" y="258" fill="#8b958c"></text>
-    <text x="396" y="258" fill="#8b958c"></text>
-    <text x="476" y="258" fill="#8b958c"></text>
-    <text x="582" y="258" fill="#8b958c"></text>
-    <text x="688" y="258" fill="#8b958c"></text>
+    <text x="168" y="258" fill="#8b958c">-</text>
+    <text x="278" y="258" fill="#8b958c">-</text>
+    <text x="396" y="258" fill="#8b958c">-</text>
+    <text x="476" y="258" fill="#8b958c">-</text>
+    <text x="582" y="258" fill="#8b958c">-</text>
+    <text x="688" y="258" fill="#8b958c">-</text>
     <line x1="36" y1="284" x2="764" y2="284" stroke="#e6e9e4"/>
     <rect x="48" y="300" width="72" height="28" rx="5" fill="#ffffff" stroke="#0f7a4b" stroke-width="2"/>
     <text x="58" y="318">BBBXX</text>
-    <text x="168" y="318" fill="#8b958c"></text>
-    <text x="278" y="318" fill="#8b958c"></text>
-    <text x="396" y="318" fill="#8b958c"></text>
-    <text x="476" y="318" fill="#8b958c"></text>
-    <text x="582" y="318" fill="#8b958c"></text>
-    <text x="688" y="318" fill="#8b958c"></text>
+    <text x="168" y="318" fill="#8b958c">-</text>
+    <text x="278" y="318" fill="#8b958c">-</text>
+    <text x="396" y="318" fill="#8b958c">-</text>
+    <text x="476" y="318" fill="#8b958c">-</text>
+    <text x="582" y="318" fill="#8b958c">-</text>
+    <text x="688" y="318" fill="#8b958c">-</text>
     <line x1="36" y1="344" x2="764" y2="344" stroke="#e6e9e4"/>
     <rect x="48" y="360" width="72" height="28" rx="5" fill="#ffffff" stroke="#0f7a4b" stroke-width="2"/>
     <text x="58" y="378">CCCXX</text>
-    <text x="168" y="378" fill="#8b958c"></text>
-    <text x="278" y="378" fill="#8b958c"></text>
-    <text x="396" y="378" fill="#8b958c"></text>
-    <text x="476" y="378" fill="#8b958c"></text>
-    <text x="582" y="378" fill="#8b958c"></text>
-    <text x="688" y="378" fill="#8b958c"></text>
+    <text x="168" y="378" fill="#8b958c">-</text>
+    <text x="278" y="378" fill="#8b958c">-</text>
+    <text x="396" y="378" fill="#8b958c">-</text>
+    <text x="476" y="378" fill="#8b958c">-</text>
+    <text x="582" y="378" fill="#8b958c">-</text>
+    <text x="688" y="378" fill="#8b958c">-</text>
   </g>
 </svg>

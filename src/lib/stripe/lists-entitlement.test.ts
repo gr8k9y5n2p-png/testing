@@ -77,6 +77,11 @@ describe("Lists entitlement gate", () => {
     assert.match(svg, /BBBXX/);
     assert.doesNotMatch(svg, /\$\d/);
     assert.doesNotMatch(svg, /\d{4}-\d{2}-\d{2}/);
+    assert.equal(
+      /[\u0000-\u0008\u000B\u000C\u000E-\u001F]/.test(svg),
+      false,
+      "preview SVG must be valid XML (no control characters)",
+    );
     const copy = readFileSync(join(here, "../copy.ts"), "utf8");
     assert.match(copy, /LISTS_UNLOCK_KICKER = "Unlock Access"/);
     assert.match(copy, /LISTS_PAYWALL_LEAD = "Lists is included with Aftertax access."/);
