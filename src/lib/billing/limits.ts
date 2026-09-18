@@ -69,6 +69,27 @@ export function emptyUsage(): DeviceUsage {
   };
 }
 
+/** Parse `aftertax_freemium` (raw JSON or URI-encoded). */
+export function usageFromCookieValue(
+  raw: string | null | undefined,
+): DeviceUsage {
+  if (raw == null || raw.trim() === "") return emptyUsage();
+  const attempts = [raw];
+  try {
+    attempts.push(decodeURIComponent(raw));
+  } catch {
+    /* keep raw only */
+  }
+  for (const attempt of attempts) {
+    try {
+      return normalizeUsage(JSON.parse(attempt));
+    } catch {
+      /* try next encoding */
+    }
+  }
+  return emptyUsage();
+}
+
 export function normalizeUsage(value: unknown): DeviceUsage {
   if (!value || typeof value !== "object") return emptyUsage();
   const raw = value as Partial<DeviceUsage>;

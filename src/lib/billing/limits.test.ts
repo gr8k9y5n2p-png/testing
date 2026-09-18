@@ -12,6 +12,7 @@ import {
   normalizeUsage,
   portfolioReviewKey,
   remainingFromUsage,
+  usageFromCookieValue,
   usageWalls,
 } from "./limits.ts";
 
@@ -50,6 +51,24 @@ describe("freemium limits", () => {
     assert.equal(merged.searches, 8);
     assert.deepEqual(merged.compareKeys, ["A", "B"]);
     assert.deepEqual(merged.portfolioKeys, ["X"]);
+  });
+
+  it("parses raw and URI-encoded freemium cookies", () => {
+    const spent = {
+      searches: 10,
+      compareKeys: ["A", "B", "C"],
+      portfolioKeys: ["1", "2", "3"],
+    };
+    assert.deepEqual(usageFromCookieValue(JSON.stringify(spent)), spent);
+    assert.deepEqual(
+      usageFromCookieValue(encodeURIComponent(JSON.stringify(spent))),
+      spent,
+    );
+    assert.deepEqual(usageFromCookieValue("not-json"), {
+      searches: 0,
+      compareKeys: [],
+      portfolioKeys: [],
+    });
   });
 
   it("raises walls at the locked limits", () => {

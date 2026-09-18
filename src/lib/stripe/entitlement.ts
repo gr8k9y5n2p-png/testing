@@ -1,7 +1,6 @@
 import { readAccountIdFromRequest, readCookie } from "../account/session.ts";
 import { getAccountStore, type AccountRecord } from "../account/store.ts";
 import {
-  EMPTY_USAGE,
   FREEMIUM_COOKIE,
   FREEMIUM_COOKIE_MAX_AGE_SEC,
   incrementUsage,
@@ -10,6 +9,7 @@ import {
   mergeUsage,
   normalizeUsage,
   remainingFromUsage,
+  usageFromCookieValue,
   usageWalls,
   type DeviceUsage,
   type Entitlement,
@@ -23,13 +23,7 @@ export type { Entitlement };
 export function parseDeviceUsageCookie(
   header: string | null | undefined,
 ): DeviceUsage {
-  const raw = readCookie(header, FREEMIUM_COOKIE);
-  if (!raw) return { ...EMPTY_USAGE };
-  try {
-    return normalizeUsage(JSON.parse(raw));
-  } catch {
-    return { ...EMPTY_USAGE };
-  }
+  return usageFromCookieValue(readCookie(header, FREEMIUM_COOKIE));
 }
 
 export function serializeUsageCookie(

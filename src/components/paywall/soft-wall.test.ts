@@ -38,6 +38,19 @@ describe("soft-wall placement", () => {
     assert.match(portfolio, /SoftWallCta surface="portfolio"/);
     assert.match(portfolio, /AllocationColumn/);
     assert.match(portfolio, /pointer-events-none select-none blur-sm/);
+    assert.match(portfolio, /relative z-20 h-full lg:\[grid-area:holdings-c\]/);
+    assert.match(portfolio, /relative z-20 h-full lg:\[grid-area:holdings-p\]/);
+  });
+
+  it("seeds BillingProvider from the aftertax_freemium cookie on the server", () => {
+    const layout = read("../../app/layout.tsx");
+    const provider = read("../BillingProvider.tsx");
+    assert.match(layout, /initialUsage=\{initialUsage\}/);
+    assert.match(layout, /FREEMIUM_COOKIE/);
+    assert.match(layout, /usageFromCookieValue/);
+    assert.match(provider, /initialUsage/);
+    assert.match(provider, /writeBrowserUsage/);
+    assert.match(provider, /readBrowserUsage/);
   });
 
   it("does not enable the friends-beta invite gate", () => {

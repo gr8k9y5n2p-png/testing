@@ -336,7 +336,7 @@ export function PortfolioCompare({
 
   return (
     <article className={`portfolio-compare relative w-full ${className}`}>
-      <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
+      <header className="relative z-20 mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-faint">
             <span aria-hidden className="inline-block size-1.5 rounded-full bg-tax-less" />
@@ -416,7 +416,7 @@ export function PortfolioCompare({
           onUnitChange={setCurrentUnit}
           onChange={setCurrent}
           onNotice={onNotice}
-          className="h-full lg:[grid-area:holdings-c]"
+          className="relative z-20 h-full lg:[grid-area:holdings-c]"
         />
         {upcomingPanel({
           canFetch,
@@ -441,7 +441,7 @@ export function PortfolioCompare({
           onUnitChange={setProposedUnit}
           onChange={setProposed}
           onNotice={onNotice}
-          className="h-full lg:[grid-area:holdings-p]"
+          className="relative z-20 h-full lg:[grid-area:holdings-p]"
         />
         {upcomingPanel({
           canFetch,

@@ -11,8 +11,11 @@ import {
 } from "react";
 import { useAccountSession } from "@/components/AccountSession";
 import {
+  readBrowserUsage,
+  writeBrowserUsage,
+} from "@/lib/billing/device-usage";
+import {
   EMPTY_USAGE,
-  FREEMIUM_STORAGE_KEY,
   incrementUsage,
   isFreemiumDisabled,
   mergeUsage,
@@ -55,32 +58,6 @@ function emit() {
   listeners.forEach((listener) => listener());
 }
 
-function readDeviceUsage(): DeviceUsage {
-  if (typeof window === "undefined") return EMPTY_USAGE;
-  const raw = window.localStorage.getItem(FREEMIUM_STORAGE_KEY) ?? "";
-  if (raw === cachedKey) return cachedUsage;
-  cachedKey = raw;
-  if (!raw) {
-    cachedUsage = EMPTY_USAGE;
-    return cachedUsage;
-  }
-  try {
-    cachedUsage = normalizeUsage(JSON.parse(raw));
-  } catch {
-    cachedUsage = EMPTY_USAGE;
-  }
-  return cachedUsage;
-}
-
-function writeDeviceUsage(usage: DeviceUsage) {
-  if (typeof window === "undefined") return;
-  const raw = JSON.stringify(usage);
-  window.localStorage.setItem(FREEMIUM_STORAGE_KEY, raw);
-  cachedKey = raw;
-  cachedUsage = usage;
-  emit();
-}
-
 function subscribe(listener: () => void) {
   listeners.add(listener);
   if (typeof window !== "undefined") {
@@ -92,6 +69,35 @@ function subscribe(listener: () => void) {
       window.removeEventListener("storage", emit);
     }
   };
+}
+
+function subscribeNoop() {
+  return () => {};
+}
+
+function clientTrue() {
+  return true;
+}
+
+function serverFalse() {
+  return false;
+}
+
+function snapshotUsage(seed: DeviceUsage): DeviceUsage {
+  const merged = readBrowserUsage(seed);
+  const raw = JSON.stringify(merged);
+  if (raw === cachedKey) return cachedUsage;
+  cachedKey = raw;
+  cachedUsage = merged;
+  return cachedUsage;
+}
+
+function writeDeviceUsage(usage: DeviceUsage) {
+  const next = normalizeUsage(usage);
+  writeBrowserUsage(next);
+  cachedKey = JSON.stringify(next);
+  cachedUsage = next;
+  emit();
 }
 
 type RemoteBilling = Pick<
@@ -155,8 +161,8 @@ function entitlementOf(usage: DeviceUsage, remote: RemoteBilling): Entitlement {
   };
 }
 
-function applyRemote(next: Entitlement) {
-  const usage = mergeUsage(readDeviceUsage(), next.usage);
+function applyRemote(next: Entitlement, seed: DeviceUsage) {
+  const usage = mergeUsage(snapshotUsage(seed), next.usage);
   writeDeviceUsage(usage);
   setRemoteBilling({
     configured: next.configured,
@@ -170,9 +176,28 @@ function applyRemote(next: Entitlement) {
   });
 }
 
-export function BillingProvider({ children }: { children: ReactNode }) {
+export function BillingProvider({
+  children,
+  initialUsage = EMPTY_USAGE,
+}: {
+  children: ReactNode;
+  initialUsage?: DeviceUsage;
+}) {
   const { account } = useAccountSession();
-  const usage = useSyncExternalStore(subscribe, readDeviceUsage, () => EMPTY_USAGE);
+  const seedKey = JSON.stringify(normalizeUsage(initialUsage));
+  const seed = useMemo(
+    () => normalizeUsage(JSON.parse(seedKey) as DeviceUsage),
+    [seedKey],
+  );
+  const getServerSnapshot = useCallback(() => seed, [seed]);
+  const getClientSnapshot = useCallback(() => snapshotUsage(seed), [seed]);
+  const mounted = useSyncExternalStore(subscribeNoop, clientTrue, serverFalse);
+  const liveUsage = useSyncExternalStore(
+    subscribe,
+    getClientSnapshot,
+    getServerSnapshot,
+  );
+  const usage = mounted ? liveUsage : seed;
   const remote = useSyncExternalStore(
     subscribeRemote,
     () => remoteBilling,
@@ -186,35 +211,29 @@ export function BillingProvider({ children }: { children: ReactNode }) {
         headers: { accept: "application/json" },
       });
       if (!response.ok) return;
-      applyRemote((await response.json()) as Entitlement);
+      applyRemote((await response.json()) as Entitlement, seed);
     } catch {
       /* keep local snapshot */
     }
-  }, []);
+  }, [seed]);
 
   useEffect(() => {
     cachedKey = "__unset__";
     emit();
     let cancelled = false;
     const timer = window.setTimeout(() => {
-      const load = account?.id
-        ? fetch(USAGE_API_PATH, {
-            method: "POST",
-            credentials: "same-origin",
-            headers: {
-              accept: "application/json",
-              "content-type": "application/json",
-            },
-            body: JSON.stringify({ merge: readDeviceUsage() }),
-          })
-        : fetch(ENTITLEMENT_API_PATH, {
-            credentials: "same-origin",
-            headers: { accept: "application/json" },
-          });
-      void load
+      void fetch(USAGE_API_PATH, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+          accept: "application/json",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ merge: snapshotUsage(seed) }),
+      })
         .then((response) => (response.ok ? response.json() : null))
         .then((body: Entitlement | null) => {
-          if (!cancelled && body) applyRemote(body);
+          if (!cancelled && body) applyRemote(body, seed);
         })
         .catch(() => {
           /* keep local snapshot */
@@ -224,27 +243,30 @@ export function BillingProvider({ children }: { children: ReactNode }) {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [account?.id, account?.subscribed]);
+  }, [account?.id, account?.subscribed, seed]);
 
-  const postKind = useCallback((kind: UsageKind, key?: string) => {
-    writeDeviceUsage(incrementUsage(readDeviceUsage(), kind, key));
-    void fetch(USAGE_API_PATH, {
-      method: "POST",
-      credentials: "same-origin",
-      headers: {
-        accept: "application/json",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({ kind, key }),
-    })
-      .then((response) => (response.ok ? response.json() : null))
-      .then((body: Entitlement | null) => {
-        if (body) applyRemote(body);
+  const postKind = useCallback(
+    (kind: UsageKind, key?: string) => {
+      writeDeviceUsage(incrementUsage(snapshotUsage(seed), kind, key));
+      void fetch(USAGE_API_PATH, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+          accept: "application/json",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ kind, key }),
       })
-      .catch(() => {
-        /* local increment already applied */
-      });
-  }, []);
+        .then((response) => (response.ok ? response.json() : null))
+        .then((body: Entitlement | null) => {
+          if (body) applyRemote(body, seed);
+        })
+        .catch(() => {
+          /* local increment already applied */
+        });
+    },
+    [seed],
+  );
 
   const recordSearch = useCallback(() => {
     postKind("search");
