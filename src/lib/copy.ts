@@ -104,6 +104,10 @@ export const ACCOUNT_EMAIL_LABEL = "Email";
 export const ACCOUNT_PASSWORD_LABEL = "Password";
 export const ACCOUNT_SIGN_IN = "Sign in";
 export const ACCOUNT_SIGN_UP = "Create account";
+export const ACCOUNT_HAVE_ACCOUNT = "Already have an account? Sign in";
+export const ACCOUNT_NEED_ACCOUNT = "Need an account? Create account";
+export const ACCOUNT_UNLOCK_DETAIL =
+  "Email and password. Checkout links a Customer to this same account email.";
 export const ACCOUNT_SIGN_OUT = "Sign out";
 export const ACCOUNT_PASSWORD_HINT = "At least 8 characters.";
 export const ACCOUNT_FORGOT_PASSWORD = "Forgot password";

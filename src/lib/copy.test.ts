@@ -37,5 +37,8 @@ describe("Sample Estimates empty copy", () => {
     assert.match(source, /ACCOUNT_FORGOT_PASSWORD = "Forgot password"/);
     assert.match(source, /noreply@getaftertax\.com/);
     assert.match(source, /ACCOUNT_HOMEPAGE_LOGIN_TITLE = "Sign in"/);
+    assert.match(source, /ACCOUNT_SIGN_UP = "Create account"/);
+    assert.match(source, /ACCOUNT_HAVE_ACCOUNT = "Already have an account\? Sign in"/);
+    assert.match(source, /ACCOUNT_UNLOCK_DETAIL/);
   });
 });

@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { BILLING_NOT_CONFIGURED, BILLING_SIGN_IN } from "./billing-copy.ts";
+import {
+  BILLING_CREATE_ACCOUNT,
+  BILLING_NOT_CONFIGURED,
+  BILLING_SIGN_IN,
+} from "./billing-copy.ts";
 import {
   ACCOUNT_LOGIN_HREF,
   HOMEPAGE_LOGIN_HREF,
@@ -25,7 +29,7 @@ describe("SoftWall unlock status", () => {
       false,
     );
     assert.equal(status.kind, "sign_in");
-    assert.equal(status.detail, BILLING_SIGN_IN);
+    assert.equal(status.detail, BILLING_CREATE_ACCOUNT);
     assert.equal(HOMEPAGE_LOGIN_HREF, "/#account");
     assert.equal(ACCOUNT_LOGIN_HREF, "/account");
   });
@@ -36,7 +40,7 @@ describe("SoftWall unlock status", () => {
       false,
     );
     assert.equal(status.kind, "sign_in");
-    assert.equal(status.detail, BILLING_SIGN_IN);
+    assert.equal(status.detail, BILLING_CREATE_ACCOUNT);
   });
 
   it("surfaces Stripe / not-configured errors for a signed-in account", () => {
@@ -55,7 +59,7 @@ describe("SoftWall unlock status", () => {
   it("previews sign-in chrome for signed-out visitors before they click", () => {
     assert.deepEqual(unlockCtaPreview(false), {
       kind: "sign_in",
-      detail: BILLING_SIGN_IN,
+      detail: BILLING_CREATE_ACCOUNT,
     });
     assert.equal(unlockCtaPreview(true), null);
     assert.equal(accountLoginHref("/"), HOMEPAGE_LOGIN_HREF);
