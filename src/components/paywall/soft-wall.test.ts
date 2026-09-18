@@ -53,6 +53,18 @@ describe("soft-wall placement", () => {
     assert.match(provider, /readBrowserUsage/);
   });
 
+  it("uses Unlock full access — never Upgrade — on soft-wall CTAs", () => {
+    const copy = read("../../lib/copy.ts");
+    const billing = read("../../lib/stripe/billing-copy.ts");
+    const wall = read("SoftWall.tsx");
+    assert.match(copy, /paywallCta: "Unlock full access"/);
+    assert.match(billing, /UNLOCK_BILLING_LABEL = "Unlock full access"/);
+    assert.match(wall, /Unlock full access/);
+    assert.doesNotMatch(copy, /Upgrade/);
+    assert.doesNotMatch(billing, /Upgrade/);
+    assert.doesNotMatch(wall, /Upgrade/);
+  });
+
   it("does not enable the friends-beta invite gate", () => {
     const friends = read("../../lib/friends-beta.ts");
     assert.match(friends, /FRIENDS_BETA_PASSWORD/);

@@ -64,7 +64,7 @@ export function SoftWallCta({
       <div
         className="w-full max-w-md rounded-lg border border-line bg-surface p-6 shadow-xl"
         role="region"
-        aria-label="Unlock Aftertax"
+        aria-label="Unlock full access"
       >
         <h2 className="font-serif text-2xl tracking-tight text-ink">
           {COPY.paywallHeadline}

@@ -23,7 +23,7 @@ export const COPY = {
   paywallBody:
     "Unlimited fund searches plus portfolio aggregation — see dollar taxable impact across the full book.",
   paywallPrice: "$39 / user / month. Cancel anytime.",
-  paywallCta: "Unlock Aftertax",
+  paywallCta: "Unlock full access",
   continueFree: "Continue with free searches",
   disclaimer: LEGAL_DISCLAIMER,
   compactDisclaimer: LEGAL_COMPACT,

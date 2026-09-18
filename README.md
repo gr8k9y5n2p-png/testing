@@ -179,7 +179,7 @@ The Aftertax **website** creates Stripe Checkout Sessions server-side (`POST /ap
 
 - Price `price_1UD6C0RqA7bY5N5qVleZso0d` (product `prod_VDXGeprN4QkxsM`, account `acct_1UD66TRqA7bY5N5q`)
 - `success_url` / `cancel_url` default to **https://staging.getaftertax.com** until ads are green-lit (`AFTERTAX_PUBLIC_URL` overrides)
-- **Do not invent keys.** Without `STRIPE_SECRET_KEY`, Unlock Aftertax is stubbed (501) and search + illustrate still work. The CTA says billing is not configured.
+- **Do not invent keys.** Without `STRIPE_SECRET_KEY`, Unlock full access is stubbed (501) and search + illustrate still work. The CTA says billing is not configured.
 - When test-mode keys exist: set the Vercel env below.
 
 ### Vercel env (Production + Preview)
@@ -198,7 +198,7 @@ Webhook URL: `https://<host>/api/stripe/webhook`. Events: `checkout.session.comp
 ### Smoke (test mode)
 
 1. Set the Vercel env above with **test** keys. Deploy. Confirm `GET /api/billing/entitlement` returns `{ configured: true, subscribed: false }` (no crash when keys are missing — `configured: false` and Unlock says billing is not configured).
-2. **Checkout:** Create an Account (homepage sign-in panel) → Unlock Aftertax or Account → Unlock Aftertax. Complete Stripe Checkout test card `4242…`. Land on `/?checkout=success`. Account shows Plan · $39 / user / month · active. Manage billing opens Customer Portal. Cancel there — status becomes cancel-at-period-end; access stays until period end.
+2. **Checkout:** Create an Account (homepage sign-in panel) → Unlock full access or Account → Unlock full access. Complete Stripe Checkout test card `4242…`. Land on `/?checkout=success`. Account shows Plan · $39 / user / month · active. Manage billing opens Customer Portal. Cancel there — status becomes cancel-at-period-end; access stays until period end.
 3. **Soft wall (signed out or unsubscribed):** In DevTools set cookie `aftertax_freemium` **and** Local Storage `aftertax.freemium.v2` to `{"searches":10,"compareKeys":["A","B","C"],"portfolioKeys":["1","2","3"]}`, then reload. Layout reads the cookie so the first paint already shows `0 free searches left`. Search a fund — Dollar Ill / Upcoming / Paid History are blurred with Unlock; search box + Request a fund still work. `/compare` ticker slots stay editable; modules blur. `/portfolio` allocation slots stay editable; modules blur. Without Stripe env the CTA says billing is not configured (no crash).
 4. Webhook: Stripe CLI `stripe listen --forward-to localhost:3000/api/stripe/webhook` or the Vercel URL. Trigger `checkout.session.completed` — `stripeCustomerId` appears on the account.
 

@@ -6,7 +6,7 @@ export const ENTITLEMENT_API_PATH = "/api/billing/entitlement";
 export const USAGE_API_PATH = "/api/billing/usage";
 export const BILLING_PLAN_LABEL = "$39 / user / month";
 export const MANAGE_BILLING_LABEL = "Manage billing";
-export const UNLOCK_BILLING_LABEL = "Unlock Aftertax";
+export const UNLOCK_BILLING_LABEL = "Unlock full access";
 export const BILLING_NOT_CONFIGURED =
   "Billing is not configured. Add Stripe keys in Vercel to enable Checkout.";
 export const BILLING_SIGN_IN = "Sign in to subscribe. Checkout links a Customer to this account email.";
