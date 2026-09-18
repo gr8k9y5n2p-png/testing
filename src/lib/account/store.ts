@@ -4,14 +4,16 @@
  * here so logged-in counters survive devices.
  *
  * Persistence:
- *   1. Upstash Redis / Vercel KV when REST URL + token are set
+ *   1. Upstash Redis / Vercel KV when REST URL + token are set (CAS via EVAL)
  *   2. Private Vercel Blob when BLOB_READ_WRITE_TOKEN or BLOB_STORE_ID is set
+ *      (versioned puts; stale overwrite is rejected and retried)
  *   3. JSON file for local/CI (`AFTERTAX_ACCOUNTS_PATH`, else `.data/accounts.json`)
  *
  * #277 reloads the file on every read/write, but Vercel `/tmp` is still
  * per-instance. Production sign-in then treated a miss as a wrong
  * password. Durable backends share one JSON document (same scrypt hashes)
- * across instances. Leftover file rows are merged in once.
+ * across instances. Leftover file rows are merged in once. Concurrent
+ * isolate writes CAS + retry so a stale hydrate cannot drop accounts.
  */
 
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -25,6 +27,7 @@ import {
 } from "../billing/limits.ts";
 import {
   blobConfigured,
+  compareAndSwapSnapshot,
   createBlobJsonSnapshot,
   createRedisJsonSnapshot,
   redisRestConfig,
@@ -34,7 +37,11 @@ import { timingSafeEqualHex } from "./passwords.ts";
 import { newAccountId } from "./session.ts";
 
 export const ACCOUNT_STORE_NOT_CONFIGURED =
-  "Account storage is not configured. Set BLOB_READ_WRITE_TOKEN or Upstash Redis on this deployment.";
+  "Account storage is not configured. Set UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN (or KV_REST_API_*) or BLOB_READ_WRITE_TOKEN on this deployment.";
+export const ACCOUNT_EMAIL_EXISTS = "An account with that email already exists.";
+export const ACCOUNT_NOT_DURABLE = "Account could not be saved. Try again.";
+export const ACCOUNT_CAS_CONFLICT = "Account storage conflict. Try again.";
+export const ACCOUNT_CAS_ATTEMPTS = 8;
 
 export type AccountStoreKind = "redis" | "blob" | "file";
 
@@ -356,6 +363,8 @@ export class SharedJsonAccountStore extends MemoryAccountStore {
   private migrated = false;
   private chain: Promise<unknown> = Promise.resolve();
   private cache: { raw: string; at: number } | null = null;
+  /** Exact durable payload from the last snapshot read or successful CAS. */
+  private hydratedRaw: string | null | undefined = undefined;
 
   constructor(
     snapshot: JsonSnapshot,
@@ -375,13 +384,20 @@ export class SharedJsonAccountStore extends MemoryAccountStore {
     return next;
   }
 
-  private async hydrate(): Promise<void> {
+  private async hydrate(options: { fresh?: boolean } = {}): Promise<void> {
     const cached = this.cache;
-    if (cached && Date.now() - cached.at < HYDRATE_CACHE_MS) {
+    if (
+      !options.fresh &&
+      cached &&
+      Date.now() - cached.at < HYDRATE_CACHE_MS
+    ) {
       this.records = parseAccountRecords(cached.raw);
       return;
     }
-    const raw = await this.snapshot.read();
+    const raw = await this.snapshot.read(
+      options.fresh ? { fresh: true } : undefined,
+    );
+    this.hydratedRaw = raw;
     let records = parseAccountRecords(raw);
     this.cache = { raw: raw ?? "[]\n", at: Date.now() };
     if (!this.migrated) {
@@ -394,21 +410,71 @@ export class SharedJsonAccountStore extends MemoryAccountStore {
         if (merged.added > 0) {
           records = merged.records;
           const serialized = serializeAccountRecords(records);
-          await this.snapshot.write(serialized);
-          this.cache = { raw: serialized, at: Date.now() };
-          console.info(
-            `[account] Migrated ${merged.added} account(s) from the file store into the durable store.`,
-          );
+          const ok = await compareAndSwapSnapshot(this.snapshot, raw, serialized);
+          if (ok) {
+            this.cache = { raw: serialized, at: Date.now() };
+            this.hydratedRaw = serialized;
+            console.info(
+              `[account] Migrated ${merged.added} account(s) from the file store into the durable store.`,
+            );
+          } else {
+            this.migrated = false;
+            this.cache = null;
+          }
         }
       }
     }
     this.records = records;
   }
 
-  private async persist(): Promise<void> {
+  private invalidateHydrate(): void {
+    this.cache = null;
+    this.hydratedRaw = undefined;
+  }
+
+  private async commitRecords(): Promise<boolean> {
     const serialized = serializeAccountRecords(this.records);
-    await this.snapshot.write(serialized);
-    this.cache = { raw: serialized, at: Date.now() };
+    const ok = await compareAndSwapSnapshot(
+      this.snapshot,
+      this.hydratedRaw ?? null,
+      serialized,
+    );
+    if (ok) {
+      this.cache = { raw: serialized, at: Date.now() };
+      this.hydratedRaw = serialized;
+      return true;
+    }
+    this.invalidateHydrate();
+    return false;
+  }
+
+  /**
+   * Hydrate → mutate in memory → CAS. On conflict, drop the isolate cache
+   * and retry. Mutators must use rowBy* — public find* re-enters the chain.
+   */
+  private async runMutator<T>(
+    fn: () => Promise<{ value: T; dirty: boolean }>,
+  ): Promise<T> {
+    return this.runExclusive(async () => {
+      for (let attempt = 0; attempt < ACCOUNT_CAS_ATTEMPTS; attempt++) {
+        await this.hydrate({ fresh: attempt > 0 });
+        const { value, dirty } = await fn();
+        if (!dirty) return value;
+        if (await this.commitRecords()) return value;
+      }
+      throw new Error(ACCOUNT_CAS_CONFLICT);
+    });
+  }
+
+  /** Fresh snapshot read — not public findByEmail (exclusive-chain deadlock). */
+  private async confirmPersistedEmail(
+    email: string,
+  ): Promise<AccountRecord | null> {
+    const raw = await this.snapshot.read({ fresh: true });
+    this.hydratedRaw = raw;
+    this.records = parseAccountRecords(raw);
+    this.cache = { raw: raw ?? "[]\n", at: Date.now() };
+    return this.rowByEmail(email);
   }
 
   override async findByEmail(email: string): Promise<AccountRecord | null> {
@@ -438,11 +504,9 @@ export class SharedJsonAccountStore extends MemoryAccountStore {
     id: string,
     patch: AccountBillingPatch,
   ): Promise<AccountRecord | null> {
-    return this.runExclusive(async () => {
-      await this.hydrate();
+    return this.runMutator(async () => {
       const row = await super.updateBilling(id, patch);
-      if (row) await this.persist();
-      return row;
+      return { value: row, dirty: row != null };
     });
   }
 
@@ -450,11 +514,9 @@ export class SharedJsonAccountStore extends MemoryAccountStore {
     id: string,
     device: DeviceUsage,
   ): Promise<AccountRecord | null> {
-    return this.runExclusive(async () => {
-      await this.hydrate();
+    return this.runMutator(async () => {
       const row = await super.mergeDeviceUsage(id, device);
-      if (row) await this.persist();
-      return row;
+      return { value: row, dirty: row != null };
     });
   }
 
@@ -463,10 +525,27 @@ export class SharedJsonAccountStore extends MemoryAccountStore {
     passwordHash: string;
   }): Promise<AccountRecord> {
     return this.runExclusive(async () => {
-      await this.hydrate();
-      const row = await super.create(input);
-      await this.persist();
-      return row;
+      let created: AccountRecord | undefined;
+      for (let attempt = 0; attempt < ACCOUNT_CAS_ATTEMPTS; attempt++) {
+        await this.hydrate({ fresh: attempt > 0 });
+        const existing = this.rowByEmail(input.email);
+        if (existing) {
+          if (created && existing.id === created.id) {
+            const confirmed = await this.confirmPersistedEmail(created.email);
+            if (confirmed) return confirmed;
+          } else {
+            throw new Error(ACCOUNT_EMAIL_EXISTS);
+          }
+        } else {
+          created = await super.create(input);
+        }
+        if (!(await this.commitRecords())) continue;
+        if (!created) throw new Error(ACCOUNT_NOT_DURABLE);
+        const confirmed = await this.confirmPersistedEmail(created.email);
+        if (confirmed) return confirmed;
+        this.invalidateHydrate();
+      }
+      throw new Error(ACCOUNT_NOT_DURABLE);
     });
   }
 
@@ -474,11 +553,9 @@ export class SharedJsonAccountStore extends MemoryAccountStore {
     id: string,
     passwordHash: string,
   ): Promise<AccountRecord | null> {
-    return this.runExclusive(async () => {
-      await this.hydrate();
+    return this.runMutator(async () => {
       const row = await super.updatePasswordHash(id, passwordHash);
-      if (row) await this.persist();
-      return row;
+      return { value: row, dirty: row != null };
     });
   }
 
@@ -487,11 +564,9 @@ export class SharedJsonAccountStore extends MemoryAccountStore {
     tokenHash: string,
     expiresAt: string,
   ): Promise<AccountRecord | null> {
-    return this.runExclusive(async () => {
-      await this.hydrate();
+    return this.runMutator(async () => {
       const row = await super.setPasswordReset(id, tokenHash, expiresAt);
-      if (row) await this.persist();
-      return row;
+      return { value: row, dirty: row != null };
     });
   }
 
@@ -499,8 +574,7 @@ export class SharedJsonAccountStore extends MemoryAccountStore {
     tokenHash: string,
     passwordHash: string,
   ): Promise<AccountRecord | null> {
-    return this.runExclusive(async () => {
-      await this.hydrate();
+    return this.runMutator(async () => {
       const before = this.records.map((row) => ({
         id: row.id,
         passwordHash: row.passwordHash,
@@ -508,7 +582,7 @@ export class SharedJsonAccountStore extends MemoryAccountStore {
         updatedAt: row.updatedAt,
       }));
       const row = await super.consumePasswordReset(tokenHash, passwordHash);
-      const changed = this.records.some((current, index) => {
+      const dirty = this.records.some((current, index) => {
         const previous = before[index];
         return (
           !previous ||
@@ -518,8 +592,7 @@ export class SharedJsonAccountStore extends MemoryAccountStore {
           current.updatedAt !== previous.updatedAt
         );
       });
-      if (changed) await this.persist();
-      return row;
+      return { value: row, dirty };
     });
   }
 }
@@ -675,7 +748,7 @@ export function createAccountStoreFromEnv(
     if (isEphemeralVercelAccountStore(env) && !warnedEphemeral) {
       warnedEphemeral = true;
       console.warn(
-        "[account] Vercel /tmp is ephemeral and not shared across instances. Sign-in will miss accounts written elsewhere. Connect Vercel Blob (BLOB_READ_WRITE_TOKEN or BLOB_STORE_ID) or Upstash Redis (UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN).",
+        "[account] Vercel /tmp is ephemeral and not shared across instances. Sign-in will miss accounts written elsewhere. Set UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN (preferred) or Vercel Blob (BLOB_READ_WRITE_TOKEN or BLOB_STORE_ID).",
       );
     }
     return new JsonFileAccountStore(defaultAccountsPath(env));

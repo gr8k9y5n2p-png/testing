@@ -3,44 +3,51 @@
 import { useState } from "react";
 import { useAccountSession } from "@/components/AccountSession";
 import { useBilling } from "@/components/BillingProvider";
-import { ACCOUNT_SIGN_IN } from "@/lib/copy";
+import { UnlockAccountModal, useUnlockAccountFlow } from "@/components/UnlockAccountModal";
 import {
   BILLING_NOT_CONFIGURED,
   MANAGE_BILLING_LABEL,
   UNLOCK_BILLING_LABEL,
 } from "@/lib/stripe/billing-copy";
-import {
-  ACCOUNT_LOGIN_HREF,
-  HOMEPAGE_LOGIN_HREF,
-  unlockCtaStatus,
-} from "@/lib/stripe/unlock-cta";
-import Link from "next/link";
+import { unlockCtaStatus } from "@/lib/stripe/unlock-cta";
 
 export function ManageBillingButton() {
   const { account } = useAccountSession();
   const billing = useBilling();
-  const [busy, setBusy] = useState(false);
-  const [detail, setDetail] = useState<string | null>(null);
-  const [needsLogin, setNeedsLogin] = useState(false);
+  const {
+    modalOpen,
+    setModalOpen,
+    busy: unlockBusy,
+    detail: unlockDetail,
+    startOrCheckout,
+    continueAfterAuth,
+  } = useUnlockAccountFlow();
+  const [portalBusy, setPortalBusy] = useState(false);
+  const [portalDetail, setPortalDetail] = useState<string | null>(null);
   const label = billing.subscribed ? MANAGE_BILLING_LABEL : UNLOCK_BILLING_LABEL;
+  const busy = unlockBusy || portalBusy;
+  const detail = unlockDetail ?? portalDetail;
 
   async function onClick() {
-    setBusy(true);
-    setDetail(null);
-    setNeedsLogin(false);
-    try {
-      const result = await billing.manageBilling();
-      const status = unlockCtaStatus(result, Boolean(account));
-      if (status.kind === "redirect") return;
-      setDetail(status.detail);
-      setNeedsLogin(status.kind === "sign_in");
-    } catch (caught) {
-      setDetail(
-        caught instanceof Error ? caught.message : BILLING_NOT_CONFIGURED,
-      );
-    } finally {
-      setBusy(false);
+    if (billing.subscribed) {
+      setPortalBusy(true);
+      setPortalDetail(null);
+      try {
+        const result = await billing.manageBilling();
+        const status = unlockCtaStatus(result, Boolean(account));
+        if (status.kind === "redirect") return;
+        setPortalDetail(status.detail);
+        if (status.kind === "sign_in") setModalOpen(true);
+      } catch (caught) {
+        setPortalDetail(
+          caught instanceof Error ? caught.message : BILLING_NOT_CONFIGURED,
+        );
+      } finally {
+        setPortalBusy(false);
+      }
+      return;
     }
+    await startOrCheckout();
   }
 
   return (
@@ -60,23 +67,11 @@ export function ManageBillingButton() {
           {detail}
         </p>
       ) : null}
-      {needsLogin ? (
-        <p className="mt-2 text-xs">
-          <Link
-            href={HOMEPAGE_LOGIN_HREF}
-            className="text-ink underline decoration-line underline-offset-2 hover:decoration-ink"
-          >
-            {ACCOUNT_SIGN_IN}
-          </Link>
-          {" · "}
-          <Link
-            href={ACCOUNT_LOGIN_HREF}
-            className="text-ink underline decoration-line underline-offset-2 hover:decoration-ink"
-          >
-            Account
-          </Link>
-        </p>
-      ) : null}
+      <UnlockAccountModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onAuthenticated={continueAfterAuth}
+      />
     </div>
   );
 }

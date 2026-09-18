@@ -17,7 +17,14 @@ export function AccountMenu() {
 
     function onPointerDown(event: PointerEvent) {
       const root = rootRef.current;
-      if (root && !root.contains(event.target as Node)) {
+      const target = event.target;
+      if (
+        target instanceof Element &&
+        target.closest('[role="dialog"]')
+      ) {
+        return;
+      }
+      if (root && !root.contains(target as Node)) {
         setMenuPath(null);
       }
     }

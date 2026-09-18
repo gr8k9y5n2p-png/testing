@@ -1,4 +1,8 @@
-import { BILLING_NOT_CONFIGURED, BILLING_SIGN_IN } from "./billing-copy.ts";
+import {
+  BILLING_CREATE_ACCOUNT,
+  BILLING_NOT_CONFIGURED,
+  BILLING_SIGN_IN,
+} from "./billing-copy.ts";
 
 /** Homepage login panel (`HomepageLoginPanel` id="account"). */
 export const HOMEPAGE_LOGIN_HREF = "/#account";
@@ -19,7 +23,10 @@ export function unlockCtaStatus(
 ): { kind: UnlockCtaKind; detail: string } {
   if (result.url) return { kind: "redirect", detail: "" };
   if (result.needsAccount || !signedIn) {
-    return { kind: "sign_in", detail: BILLING_SIGN_IN };
+    return {
+      kind: "sign_in",
+      detail: signedIn ? BILLING_SIGN_IN : BILLING_CREATE_ACCOUNT,
+    };
   }
   return {
     kind: "error",
@@ -33,7 +40,7 @@ export function unlockCtaPreview(signedIn: boolean): {
   detail: string;
 } | null {
   if (signedIn) return null;
-  return { kind: "sign_in", detail: BILLING_SIGN_IN };
+  return { kind: "sign_in", detail: BILLING_CREATE_ACCOUNT };
 }
 
 export function accountLoginHref(pathname: string): string {

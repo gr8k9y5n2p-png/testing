@@ -18,7 +18,11 @@ import {
   sendPasswordResetEmail,
 } from "./mail.ts";
 import type { AccountStore, PublicAccount } from "./store.ts";
-import { toPublicAccount } from "./store.ts";
+import {
+  ACCOUNT_EMAIL_EXISTS,
+  ACCOUNT_NOT_DURABLE,
+  toPublicAccount,
+} from "./store.ts";
 
 export class AccountAuthError extends Error {
   readonly status: number;
@@ -37,13 +41,27 @@ export async function signUpAccount(
 ): Promise<PublicAccount> {
   const { email, password } = readCredentials(body);
   if (await store.findByEmail(email)) {
-    throw new AccountAuthError(409, "An account with that email already exists.");
+    throw new AccountAuthError(409, ACCOUNT_EMAIL_EXISTS);
   }
-  const row = await store.create({
-    email,
-    passwordHash: hashPassword(password),
-  });
-  return toPublicAccount(row);
+  try {
+    await store.create({
+      email,
+      passwordHash: hashPassword(password),
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message === ACCOUNT_EMAIL_EXISTS) {
+      throw new AccountAuthError(409, ACCOUNT_EMAIL_EXISTS);
+    }
+    if (error instanceof Error && error.message === ACCOUNT_NOT_DURABLE) {
+      throw new AccountAuthError(503, ACCOUNT_NOT_DURABLE);
+    }
+    throw error;
+  }
+  const persisted = await store.findByEmail(email);
+  if (!persisted) {
+    throw new AccountAuthError(503, ACCOUNT_NOT_DURABLE);
+  }
+  return toPublicAccount(persisted);
 }
 
 export async function signInAccount(

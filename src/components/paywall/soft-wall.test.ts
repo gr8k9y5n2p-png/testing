@@ -65,16 +65,30 @@ describe("soft-wall placement", () => {
     assert.doesNotMatch(wall, /Upgrade/);
   });
 
-  it("always re-enables Unlock and points needs_account at homepage / Account login", () => {
+  it("always re-enables Unlock and opens the Create account modal when signed out", () => {
     const wall = read("SoftWall.tsx");
-    assert.match(wall, /try \{/);
-    assert.match(wall, /finally \{\s*setBusy\(false\)/);
-    assert.match(wall, /unlockCtaStatus/);
+    const modal = read("../UnlockAccountModal.tsx");
+    const menu = read("../ManageBillingButton.tsx");
+    const form = read("../AccountAuthForm.tsx");
+    assert.match(modal, /try \{/);
+    assert.match(modal, /finally \{\s*setBusy\(false\)/);
     assert.match(wall, /unlockCtaPreview/);
-    assert.match(wall, /accountLoginHref/);
-    assert.match(wall, /HOMEPAGE_LOGIN_HREF/);
-    assert.match(wall, /ACCOUNT_LOGIN_HREF/);
+    assert.match(wall, /UnlockAccountModal/);
+    assert.match(wall, /startOrCheckout/);
+    assert.match(wall, /continueAfterAuth/);
     assert.match(wall, /role="status"/);
+    assert.doesNotMatch(wall, /scrollIntoView/);
+    assert.doesNotMatch(wall, /accountLoginHref/);
+    assert.doesNotMatch(wall, /HOMEPAGE_LOGIN_HREF/);
+    assert.match(modal, /variant="unlock"/);
+    assert.match(modal, /initialAction="signup"/);
+    assert.match(modal, /ACCOUNT_SIGN_UP/);
+    assert.match(modal, /billing\.unlock/);
+    assert.match(modal, /createPortal/);
+    assert.match(form, /ACCOUNT_HAVE_ACCOUNT/);
+    assert.match(menu, /UnlockAccountModal/);
+    assert.match(menu, /startOrCheckout/);
+    assert.match(menu, /finally \{\s*setPortalBusy\(false\)/);
   });
 
   it("does not enable the friends-beta invite gate", () => {

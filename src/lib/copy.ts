@@ -104,6 +104,10 @@ export const ACCOUNT_EMAIL_LABEL = "Email";
 export const ACCOUNT_PASSWORD_LABEL = "Password";
 export const ACCOUNT_SIGN_IN = "Sign in";
 export const ACCOUNT_SIGN_UP = "Create account";
+export const ACCOUNT_HAVE_ACCOUNT = "Already have an account? Sign in";
+export const ACCOUNT_NEED_ACCOUNT = "Need an account? Create account";
+export const ACCOUNT_UNLOCK_DETAIL =
+  "Email and password. Checkout links a Customer to this same account email.";
 export const ACCOUNT_SIGN_OUT = "Sign out";
 export const ACCOUNT_PASSWORD_HINT = "At least 8 characters.";
 export const ACCOUNT_FORGOT_PASSWORD = "Forgot password";
@@ -118,6 +122,7 @@ export const ACCOUNT_RESET_MISSING =
 export const ACCOUNT_HOMEPAGE_LOGIN_TITLE = "Sign in";
 export const ACCOUNT_HOMEPAGE_LOGIN_DETAIL =
   "Email and password. Save lists and portfolios to this account.";
+export const HOMEPAGE_UNLOCK_ACCESS = "Unlock Access";
 export const ACCOUNT_STRIPE_RESERVE =
   "Stripe Checkout links a Customer to this same account email. Cancel at period end from Manage billing.";
 
@@ -136,9 +141,8 @@ export function freeSearchLabel(remaining: number): string {
 }
 
 export function freeCompareLabel(remaining: number): string {
-  if (remaining <= 0) return "0 free compare reports left";
-  if (remaining === 1) return "1 of 3 free compare reports left";
-  return `${remaining} of 3 free compare reports left`;
+  if (remaining <= 0) return "0 Comparisons Left";
+  return `${remaining} Comparisons Left`;
 }
 
 export function freePortfolioLabel(remaining: number): string {

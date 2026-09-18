@@ -10,6 +10,8 @@ export const UNLOCK_BILLING_LABEL = "Unlock full access";
 export const BILLING_NOT_CONFIGURED =
   "Billing is not configured. Add Stripe keys in Vercel to enable Checkout.";
 export const BILLING_SIGN_IN = "Sign in to subscribe. Checkout links a Customer to this account email.";
+export const BILLING_CREATE_ACCOUNT =
+  "Create an account to subscribe. Checkout links a Customer to this account email.";
 export const BILLING_CANCEL_NOTE =
   "Cancel anytime in the Customer Portal. Cancellation takes effect at period end.";
 export const BILLING_STUB_NOTE = BILLING_NOT_CONFIGURED;
