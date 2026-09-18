@@ -48,7 +48,7 @@ type BillingContextValue = {
 const BillingContext = createContext<BillingContextValue | null>(null);
 
 const listeners = new Set<() => void>();
-let cachedRaw: string | null | undefined;
+let cachedKey = "__unset__";
 let cachedUsage: DeviceUsage = EMPTY_USAGE;
 
 function emit() {
@@ -57,9 +57,9 @@ function emit() {
 
 function readDeviceUsage(): DeviceUsage {
   if (typeof window === "undefined") return EMPTY_USAGE;
-  const raw = window.localStorage.getItem(FREEMIUM_STORAGE_KEY);
-  if (raw === cachedRaw) return cachedUsage;
-  cachedRaw = raw;
+  const raw = window.localStorage.getItem(FREEMIUM_STORAGE_KEY) ?? "";
+  if (raw === cachedKey) return cachedUsage;
+  cachedKey = raw;
   if (!raw) {
     cachedUsage = EMPTY_USAGE;
     return cachedUsage;
@@ -76,14 +76,22 @@ function writeDeviceUsage(usage: DeviceUsage) {
   if (typeof window === "undefined") return;
   const raw = JSON.stringify(usage);
   window.localStorage.setItem(FREEMIUM_STORAGE_KEY, raw);
-  cachedRaw = raw;
+  cachedKey = raw;
   cachedUsage = usage;
   emit();
 }
 
 function subscribe(listener: () => void) {
   listeners.add(listener);
-  return () => listeners.delete(listener);
+  if (typeof window !== "undefined") {
+    window.addEventListener("storage", emit);
+  }
+  return () => {
+    listeners.delete(listener);
+    if (listeners.size === 0 && typeof window !== "undefined") {
+      window.removeEventListener("storage", emit);
+    }
+  };
 }
 
 type RemoteBilling = Pick<
@@ -185,6 +193,8 @@ export function BillingProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    cachedKey = "__unset__";
+    emit();
     let cancelled = false;
     const timer = window.setTimeout(() => {
       const load = account?.id
