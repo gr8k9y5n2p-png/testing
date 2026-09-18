@@ -1,8 +1,11 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  BLOB_SNAPSHOT_TIMEOUT_MESSAGE,
+  accountsBlobListPrefix,
   createBlobJsonSnapshot,
   createRedisJsonSnapshot,
+  pickNewestAccountBlob,
   redisRestConfig,
 } from "./json-snapshot.ts";
 
@@ -79,5 +82,111 @@ describe("Blob account snapshot", () => {
     assert.equal(lastPutOptions?.access, "private");
     assert.equal(lastPutOptions?.allowOverwrite, true);
     assert.equal(lastPutOptions?.cacheControlMaxAge, 60);
+  });
+
+  it("treats a missing private blob as empty when get 404s and list is empty", async () => {
+    const snapshot = createBlobJsonSnapshot(
+      { BLOB_READ_WRITE_TOKEN: "vercel_blob_rw_x" },
+      {
+        async get() {
+          return { statusCode: 404 };
+        },
+        async put() {
+          return {};
+        },
+        async list() {
+          return { blobs: [] };
+        },
+      },
+    );
+    assert.equal(await snapshot.read(), null);
+  });
+
+  it("reads via list + get(url) when pathname get 404s after put", async () => {
+    const stored = '[{"email":"ada@example.com"}]\n';
+    const blobUrl =
+      "https://store.private.blob.vercel-storage.com/aftertax/accounts.json";
+    const snapshot = createBlobJsonSnapshot(
+      { BLOB_READ_WRITE_TOKEN: "vercel_blob_rw_x" },
+      {
+        async get(ref) {
+          if (ref === blobUrl) {
+            return { statusCode: 200, stream: new Blob([stored]).stream() };
+          }
+          return { statusCode: 404 };
+        },
+        async put() {
+          return {};
+        },
+        async list() {
+          return {
+            blobs: [
+              {
+                pathname: "aftertax/accounts.json",
+                url: `${blobUrl}?stale=1`,
+                uploadedAt: "2026-01-01T00:00:00.000Z",
+              },
+              {
+                pathname: "aftertax/accounts.json",
+                url: blobUrl,
+                uploadedAt: "2026-01-02T00:00:00.000Z",
+              },
+            ],
+          };
+        },
+      },
+    );
+    assert.match((await snapshot.read()) ?? "", /ada@example.com/);
+  });
+
+  it("times out a hanging blob get instead of waiting forever", async () => {
+    const snapshot = createBlobJsonSnapshot(
+      { BLOB_READ_WRITE_TOKEN: "vercel_blob_rw_x" },
+      {
+        async get() {
+          return new Promise(() => {});
+        },
+        async put() {
+          return {};
+        },
+        async list() {
+          return new Promise(() => {});
+        },
+      },
+      { timeoutMs: 40 },
+    );
+    await assert.rejects(() => snapshot.read(), /timed out/);
+    await assert.rejects(() => snapshot.write("[]\n"), /timed out/);
+  });
+
+  it("picks the newest exact pathname when the list has duplicates", () => {
+    assert.equal(accountsBlobListPrefix("aftertax/accounts.json"), "aftertax/accounts");
+    const newest = pickNewestAccountBlob(
+      [
+        {
+          pathname: "aftertax/accounts.json",
+          url: "https://example/old",
+          uploadedAt: "2026-01-01T00:00:00.000Z",
+        },
+        {
+          pathname: "aftertax/accounts.json",
+          url: "https://example/new",
+          uploadedAt: "2026-03-01T00:00:00.000Z",
+        },
+        {
+          pathname: "aftertax/accounts-suffix.json",
+          url: "https://example/suffix",
+          uploadedAt: "2026-04-01T00:00:00.000Z",
+        },
+      ],
+      "aftertax/accounts.json",
+    );
+    assert.equal(newest?.url, "https://example/new");
+  });
+});
+
+describe("blob timeout copy", () => {
+  it("uses a user-visible timeout message", () => {
+    assert.match(BLOB_SNAPSHOT_TIMEOUT_MESSAGE, /timed out/);
   });
 });

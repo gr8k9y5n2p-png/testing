@@ -14,6 +14,7 @@ export function HomepageLoginPanel() {
 
   return (
     <aside
+      id="account"
       aria-label="Account sign in"
       className="rounded-lg border border-line bg-surface p-5 shadow-[0_1px_2px_rgba(26,29,26,0.04)]"
     >

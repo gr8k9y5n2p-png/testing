@@ -1,9 +1,15 @@
 "use client";
 
+import Link from "next/link";
 import { Disclaimer } from "@/components/Disclaimer";
 import { useBilling } from "@/components/BillingProvider";
-import { COPY } from "@/lib/copy";
-import { BILLING_NOT_CONFIGURED, BILLING_SIGN_IN } from "@/lib/stripe/billing-copy";
+import { ACCOUNT_SIGN_IN, COPY } from "@/lib/copy";
+import { BILLING_NOT_CONFIGURED } from "@/lib/stripe/billing-copy";
+import {
+  ACCOUNT_LOGIN_HREF,
+  HOMEPAGE_LOGIN_HREF,
+  unlockCtaStatus,
+} from "@/lib/stripe/unlock-cta";
 import { useState, type ReactNode } from "react";
 
 export function SoftWall({
@@ -38,6 +44,7 @@ export function SoftWallCta({
   const billing = useBilling();
   const [busy, setBusy] = useState(false);
   const [detail, setDetail] = useState<string | null>(null);
+  const [needsLogin, setNeedsLogin] = useState(false);
 
   const limitCopy =
     surface === "search"
@@ -49,14 +56,20 @@ export function SoftWallCta({
   async function unlock() {
     setBusy(true);
     setDetail(null);
-    const result = await billing.unlock();
-    if (result.url) return;
-    if (result.needsAccount || !billing.signedIn) {
-      setDetail(BILLING_SIGN_IN);
-    } else {
-      setDetail(result.detail || BILLING_NOT_CONFIGURED);
+    setNeedsLogin(false);
+    try {
+      const result = await billing.unlock();
+      const status = unlockCtaStatus(result, billing.signedIn);
+      if (status.kind === "redirect") return;
+      setDetail(status.detail);
+      setNeedsLogin(status.kind === "sign_in");
+    } catch (caught) {
+      setDetail(
+        caught instanceof Error ? caught.message : BILLING_NOT_CONFIGURED,
+      );
+    } finally {
+      setBusy(false);
     }
-    setBusy(false);
   }
 
   return (
@@ -79,6 +92,23 @@ export function SoftWallCta({
         {detail ? (
           <p className="mt-2 text-xs text-muted" role="status">
             {detail}
+          </p>
+        ) : null}
+        {needsLogin ? (
+          <p className="mt-2 text-xs">
+            <Link
+              href={HOMEPAGE_LOGIN_HREF}
+              className="text-ink underline decoration-line underline-offset-2 hover:decoration-ink"
+            >
+              {ACCOUNT_SIGN_IN}
+            </Link>
+            {" · "}
+            <Link
+              href={ACCOUNT_LOGIN_HREF}
+              className="text-ink underline decoration-line underline-offset-2 hover:decoration-ink"
+            >
+              Account
+            </Link>
           </p>
         ) : null}
         <Disclaimer className="mt-4 text-xs leading-relaxed text-muted" />

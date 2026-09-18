@@ -263,6 +263,28 @@ describe("account store docs", () => {
   });
 });
 
+describe("account HTTP store timeout", () => {
+  it("returns 504 with the timeout detail instead of hanging", async () => {
+    const store = new MemoryAccountStore();
+    store.create = async () => {
+      throw new Error("Account storage timed out. Try again.");
+    };
+    const signup = await handleAccountSignUp(
+      new Request("http://localhost/api/account/signup", {
+        method: "POST",
+        body: JSON.stringify({
+          email: "ada@aftertax.com",
+          password: "password1",
+        }),
+      }),
+      store,
+    );
+    assert.equal(signup.status, 504);
+    const body = (await signup.json()) as { detail: string };
+    assert.match(body.detail, /timed out/);
+  });
+});
+
 describe("createAccountStoreFromEnv", () => {
   it("builds a file store for local tests when AFTERTAX_ACCOUNTS_PATH is set", async () => {
     const dir = mkdtempSync(join(tmpdir(), "aftertax-accounts-"));

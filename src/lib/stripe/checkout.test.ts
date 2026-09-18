@@ -84,6 +84,42 @@ describe("Checkout Session", () => {
     }
   });
 
+  it("soft-fails when the account store throws instead of hanging", async () => {
+    const prior = process.env.STRIPE_SECRET_KEY;
+    process.env.STRIPE_SECRET_KEY = "sk_test_dummy_not_a_real_key";
+    const { serializeAccountCookie } = await import("../account/session.ts");
+    const { getAccountStore, resetAccountStoreForTests } = await import(
+      "../account/store.ts"
+    );
+    resetAccountStoreForTests();
+    const store = getAccountStore();
+    const original = store.findById.bind(store);
+    store.findById = async () => {
+      throw new Error("Account storage timed out. Try again.");
+    };
+    try {
+      const { result, status } = await createCheckoutSession(
+        new Request("http://localhost/api/checkout", {
+          method: "POST",
+          headers: {
+            cookie: serializeAccountCookie(
+              "acct_11111111-1111-1111-1111-111111111111",
+              false,
+            ),
+          },
+        }),
+      );
+      assert.equal(status, 502);
+      assert.equal(result.stub, true);
+      assert.match(result.detail, /timed out/);
+    } finally {
+      store.findById = original;
+      if (prior == null) delete process.env.STRIPE_SECRET_KEY;
+      else process.env.STRIPE_SECRET_KEY = prior;
+      resetAccountStoreForTests();
+    }
+  });
+
   it("never hard-codes a Stripe secret or publishable key", () => {
     const source = readFileSync(join(here, "checkout.ts"), "utf8");
     assert.doesNotMatch(source, /sk_live_|sk_test_[A-Za-z0-9]{10,}|pk_live_|pk_test_[A-Za-z0-9]{10,}/);
