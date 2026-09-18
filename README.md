@@ -52,6 +52,7 @@ For first public staging:
 - Optional: `NEXT_PUBLIC_DATA_API_URL` to point at the PR #2 Data API
 - Stripe (optional until charge-ready): `STRIPE_SECRET_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_PRICE_ID`, `STRIPE_WEBHOOK_SECRET`. Without them, search + illustrate still work and the Unlock CTA says billing is not configured.
 - Friends beta: set `FRIENDS_BETA_PASSWORD` (see below). Do not buy Vercel Pro Password Protection.
+- **Account store (required for Production login):** connect a private **Vercel Blob** store (or set Upstash Redis REST URL + token). Do not use `/tmp` / `AFTERTAX_ACCOUNTS_PATH` on Vercel Functions — that is why login still said the password was wrong after #277.
 
 Staging is `noindex`. Switch `AFTERTAX_PUBLIC_URL` to `https://getaftertax.com` when ads are green-lit.
 
@@ -261,7 +262,26 @@ Every row is scoped to `accountId`. User A cannot read user B.
 
 Until DNS + `RESEND_API_KEY` are in place, Forgot Password is honest: same 200 for known/unknown emails, copy says mail is not configured, non-prod logs the reset URL.
 
-**Auth root cause (login always “wrong password”):** Account rows lived in a process-local JSON snapshot. Sign-up wrote one serverless instance; sign-in read another and treated a miss as a bad password. The file store now reloads from disk on every read/write. Pin `AFTERTAX_ACCOUNTS_PATH` to a persistent disk in production (Vercel `/tmp` is still ephemeral across instances). Session cookies now honor `x-forwarded-proto` so `Secure` is set behind the HTTPS proxy. Hash compare is still scrypt + timing-safe equal — no bypass.
+**Auth root cause (login always “wrong password”):** Two separate bugs stacked.
+
+1. **#277 (fixed, not enough):** Account rows lived in a process-local JSON snapshot. The file store now reloads on every read/write, and session cookies honor `x-forwarded-proto`. Friends-beta stays on `friends-beta-password`. scrypt + timing-safe equal is unchanged.
+2. **Production after #277 (this fix):** Vercel serverless still defaulted to `/tmp/aftertax-accounts.json`. `/tmp` is ephemeral and **not shared across instances**. Sign-up on instance A wrote a hash; sign-in on instance B found no row and returned “Email or password is wrong.” Pinning `AFTERTAX_ACCOUNTS_PATH` was never done — there is no persistent disk on Vercel Functions.
+
+Accounts now persist to a durable shared store:
+
+| Priority | Backend | Env |
+| --- | --- | --- |
+| 1 | Upstash Redis / Vercel KV | `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` (aliases `KV_REST_API_URL` / `KV_REST_API_TOKEN`) |
+| 2 | Private Vercel Blob | `BLOB_READ_WRITE_TOKEN` or `BLOB_STORE_ID` (OIDC on Vercel). Optional `AFTERTAX_ACCOUNTS_BLOB_PATH` |
+| 3 | JSON file | Local/CI. `AFTERTAX_ACCOUNTS_PATH` or `.data/accounts.json`. Force with `AFTERTAX_ACCOUNT_STORE=file` |
+
+**Production setup (do this before relying on login):** Vercel → Storage → Create Database → **Blob** (Private) → connect to this project (Production + Preview). Redeploy so `BLOB_READ_WRITE_TOKEN` / `BLOB_STORE_ID` are present. The JSON document is private (`get(..., { useCache: false })`) and keeps existing scrypt hashes. Redis is used automatically if those REST vars are already present.
+
+**Migration:** leftover file-store rows (including `/tmp` on the current instance) are merged into the durable store once when it is empty-of-that-email. Durable hashes win on email collision. Accounts that only existed on now-dead instances **cannot be recovered** — those users must Create account again (Forgot Password cannot find a missing row). We do not invent or reset passwords.
+
+On Vercel without Blob or Redis, sign-up / sign-in / forgot / reset return **503** (`Account storage is not configured…`) instead of writing a `/tmp` row that other instances will treat as a wrong password.
+
+Session cookies still honor `x-forwarded-proto`. Hash compare is still scrypt + timing-safe equal — no bypass. Plaintext passwords are not logged.
 
 **Stripe Checkout:** create/link a Customer on the **same account email** and set `stripeCustomerId`. Subscription status updates from the webhook. Soft-wall still applies until the account is entitled (`active` / `trialing` / `past_due`, or canceled with time left). Save/Open is not gated on Checkout.
 

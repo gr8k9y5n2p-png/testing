@@ -11,7 +11,13 @@ import {
   serializeAccountCookie,
   serializeClearedAccountCookie,
 } from "./session.ts";
-import { getAccountStore, toPublicAccount, type AccountStore } from "./store.ts";
+import {
+  ACCOUNT_STORE_NOT_CONFIGURED,
+  getAccountStore,
+  isEphemeralVercelAccountStore,
+  toPublicAccount,
+  type AccountStore,
+} from "./store.ts";
 
 function json(
   body: unknown,
@@ -39,11 +45,18 @@ function requestOrigin(request: Request): string | undefined {
   }
 }
 
+function rejectEphemeralVercelStore(): void {
+  if (isEphemeralVercelAccountStore()) {
+    throw new AccountAuthError(503, ACCOUNT_STORE_NOT_CONFIGURED);
+  }
+}
+
 export async function handleAccountSignUp(
   request: Request,
   store: AccountStore = getAccountStore(),
 ): Promise<Response> {
   try {
+    rejectEphemeralVercelStore();
     const account = await signUpAccount(store, await readJson(request));
     return json(
       { account },
@@ -63,6 +76,7 @@ export async function handleAccountSignIn(
   store: AccountStore = getAccountStore(),
 ): Promise<Response> {
   try {
+    rejectEphemeralVercelStore();
     const account = await signInAccount(store, await readJson(request));
     return json(
       { account },
@@ -103,6 +117,7 @@ export async function handleAccountForgot(
   store: AccountStore = getAccountStore(),
 ): Promise<Response> {
   try {
+    rejectEphemeralVercelStore();
     const result = await requestPasswordReset(store, await readJson(request), {
       origin: requestOrigin(request),
     });
@@ -120,6 +135,7 @@ export async function handleAccountReset(
   store: AccountStore = getAccountStore(),
 ): Promise<Response> {
   try {
+    rejectEphemeralVercelStore();
     const account = await resetAccountPassword(store, await readJson(request));
     return json(
       { account },
