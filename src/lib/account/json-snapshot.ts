@@ -1,18 +1,19 @@
 /**
  * Shared JSON snapshots for the account store.
  *
- * Vercel serverless instances do not share `/tmp`. #277 reloads the file on
- * every read, but Production still missed rows written on another instance.
- * These backends keep the same scrypt hashes and JSON shape, and they are
- * visible to every instance immediately.
+ * Vercel serverless instances do not share `/tmp`. Production uses Redis
+ * (preferred, one REST GET/SET) or private Blob. Private `get(pathname)`
+ * can 404 or hang after `put`; reads therefore list the prefix and fetch
+ * the newest blob URL with a Bearer token. One wall-clock budget covers
+ * the whole read or write — stacked per-call 8s timeouts were how
+ * signup/checkout hit the 20–45s client TimeoutError after #281.
  *
- * Private Blob `get(pathname)` can 404 (or hang) even after a successful
- * `put`. Reads list first, pick the newest matching blob, then `get(url)`.
- * A miss is an empty document (`null`). Timeouts throw — they must not be
- * treated as empty, or the next write would wipe hashes.
+ * A miss is an empty document (`null`). Budget overruns throw — they must
+ * not look like empty, or the next write would wipe hashes.
  */
 
 import {
+  Deadline,
   abortSignalTimeout,
   isAbortOrTimeoutError,
   withTimeout,
@@ -25,7 +26,8 @@ export type JsonSnapshot = {
 
 export const DEFAULT_ACCOUNTS_BLOB_PATH = "aftertax/accounts.json";
 export const DEFAULT_ACCOUNTS_REDIS_KEY = "aftertax:accounts";
-export const BLOB_SNAPSHOT_TIMEOUT_MS = 8_000;
+/** Whole read or write — not per SDK call. Signup = read + write ≤ ~5s. */
+export const BLOB_SNAPSHOT_TIMEOUT_MS = 2_500;
 export const BLOB_SNAPSHOT_TIMEOUT_MESSAGE =
   "Account storage timed out. Try again.";
 
@@ -103,18 +105,25 @@ export type BlobPutOptions = {
   abortSignal?: AbortSignal;
 };
 
+export type BlobPutResult = {
+  url?: string;
+  downloadUrl?: string;
+  pathname?: string;
+};
+
 export type BlobSnapshotDeps = {
   get: (pathname: string, options: BlobGetOptions) => Promise<BlobGetResult>;
   put: (
     pathname: string,
     payload: string,
     options: BlobPutOptions,
-  ) => Promise<unknown>;
+  ) => Promise<BlobPutResult | unknown>;
   list?: (options: {
     prefix: string;
     limit: number;
     abortSignal?: AbortSignal;
   }) => Promise<BlobListResult>;
+  fetchImpl?: typeof fetch;
 };
 
 export type BlobSnapshotOptions = {
@@ -168,17 +177,21 @@ export function createBlobJsonSnapshot(
 ): JsonSnapshot {
   const pathname = accountsBlobPath(env);
   const timeoutMs = options.timeoutMs ?? BLOB_SNAPSHOT_TIMEOUT_MS;
+  let lastMatch: BlobListRow | null = null;
   return {
     async read() {
-      return withTimeout(
-        readBlobSnapshot(pathname, env, deps, timeoutMs),
-        timeoutMs,
+      const deadline = new Deadline(timeoutMs);
+      return deadline.race(
+        readBlobSnapshot(pathname, env, deps, deadline, () => lastMatch, (row) => {
+          lastMatch = row;
+        }),
         BLOB_SNAPSHOT_TIMEOUT_MESSAGE,
       );
     },
     async write(payload: string) {
+      const deadline = new Deadline(timeoutMs);
       const putFn = deps?.put ?? (await loadBlobSdk()).put;
-      await withTimeout(
+      const result = await deadline.race(
         Promise.resolve(
           putFn(pathname, payload, {
             access: "private",
@@ -186,12 +199,26 @@ export function createBlobJsonSnapshot(
             allowOverwrite: true,
             cacheControlMaxAge: 60,
             contentType: "application/json",
-            abortSignal: abortSignalTimeout(timeoutMs),
+            abortSignal: abortSignalTimeout(deadline.remaining()),
           }),
         ),
-        timeoutMs,
         BLOB_SNAPSHOT_TIMEOUT_MESSAGE,
       );
+      const url =
+        result && typeof result === "object" && "url" in result
+          ? String((result as BlobPutResult).url ?? "")
+          : "";
+      if (url) {
+        const downloadUrl =
+          result && typeof result === "object" && "downloadUrl" in result
+            ? String((result as BlobPutResult).downloadUrl ?? "")
+            : "";
+        lastMatch = {
+          pathname,
+          url,
+          downloadUrl: downloadUrl || undefined,
+        };
+      }
     },
   };
 }
@@ -200,41 +227,49 @@ async function readBlobSnapshot(
   pathname: string,
   env: NodeJS.ProcessEnv,
   deps: BlobSnapshotDeps | undefined,
-  timeoutMs: number,
+  deadline: Deadline,
+  getLastMatch: () => BlobListRow | null,
+  setLastMatch: (row: BlobListRow) => void,
 ): Promise<string | null> {
   const sdk = deps ?? (await loadBlobSdk());
-  const listed = await tryListAccountBlobs(sdk, pathname, timeoutMs);
+  const fetchImpl = deps?.fetchImpl ?? fetch;
+
+  const cached = getLastMatch();
+  if (cached) {
+    const fromCache = await tryFetchPrivateBlob(cached, env, deadline, fetchImpl);
+    if (fromCache !== undefined) return fromCache;
+  }
+
+  const listed = await tryListAccountBlobs(sdk, pathname, deadline);
   if (listed) {
     const match = pickNewestAccountBlob(listed, pathname);
     if (!match) return null;
-    const fromUrl = await tryGetBlobText(sdk.get, match.url, timeoutMs);
-    if (fromUrl !== undefined) return fromUrl;
-    const fetched = await tryFetchPrivateBlob(match, env, timeoutMs);
+    setLastMatch(match);
+    const fetched = await tryFetchPrivateBlob(match, env, deadline, fetchImpl);
     if (fetched !== undefined) return fetched;
-    const fromPath = await tryGetBlobText(sdk.get, pathname, timeoutMs);
-    if (fromPath !== undefined) return fromPath;
+    const fromUrl = await tryGetBlobText(sdk.get, match.url, deadline);
+    if (fromUrl !== undefined) return fromUrl;
     throw new Error("Blob account store read failed.");
   }
 
-  const fromPath = await tryGetBlobText(sdk.get, pathname, timeoutMs);
+  const fromPath = await tryGetBlobText(sdk.get, pathname, deadline);
   return fromPath ?? null;
 }
 
 async function tryListAccountBlobs(
   sdk: BlobSnapshotDeps,
   pathname: string,
-  timeoutMs: number,
+  deadline: Deadline,
 ): Promise<BlobListRow[] | null> {
   const listFn = sdk.list;
   if (!listFn) return null;
   try {
-    const { blobs } = await withTimeout(
+    const { blobs } = await deadline.race(
       listFn({
         prefix: accountsBlobListPrefix(pathname),
         limit: 20,
-        abortSignal: abortSignalTimeout(timeoutMs),
+        abortSignal: abortSignalTimeout(deadline.remaining()),
       }),
-      timeoutMs,
       BLOB_SNAPSHOT_TIMEOUT_MESSAGE,
     );
     return blobs ?? [];
@@ -251,22 +286,27 @@ async function tryListAccountBlobs(
 async function tryGetBlobText(
   getFn: BlobSnapshotDeps["get"],
   ref: string,
-  timeoutMs: number,
+  deadline: Deadline,
 ): Promise<string | undefined> {
+  if (deadline.remaining() <= 0) {
+    throw new Error(BLOB_SNAPSHOT_TIMEOUT_MESSAGE);
+  }
   try {
-    const result = await withTimeout(
+    const result = await deadline.race(
       getFn(ref, {
         access: "private",
         useCache: false,
-        abortSignal: abortSignalTimeout(timeoutMs),
+        abortSignal: abortSignalTimeout(deadline.remaining()),
       }),
-      timeoutMs,
       BLOB_SNAPSHOT_TIMEOUT_MESSAGE,
     );
     if (!result || result.statusCode === 404) return undefined;
     if (result.statusCode && result.statusCode !== 200) return undefined;
     if (!result.stream) return undefined;
-    return await new Response(result.stream).text();
+    return await deadline.race(
+      new Response(result.stream).text(),
+      BLOB_SNAPSHOT_TIMEOUT_MESSAGE,
+    );
   } catch (error) {
     if (isMissingBlob(error)) return undefined;
     if (isAbortOrTimeoutError(error) || isTimeoutMessage(error)) {
@@ -281,29 +321,35 @@ async function tryGetBlobText(
 async function tryFetchPrivateBlob(
   match: BlobListRow,
   env: NodeJS.ProcessEnv,
-  timeoutMs: number,
+  deadline: Deadline,
+  fetchImpl: typeof fetch,
 ): Promise<string | undefined> {
   const token = env.BLOB_READ_WRITE_TOKEN?.trim();
   const url = match.downloadUrl ?? match.url;
   if (!url) return undefined;
+  if (deadline.remaining() <= 0) {
+    throw new Error(BLOB_SNAPSHOT_TIMEOUT_MESSAGE);
+  }
   try {
-    const response = await withTimeout(
-      fetch(url, {
+    const response = await deadline.race(
+      fetchImpl(url, {
         cache: "no-store",
-        signal: abortSignalTimeout(timeoutMs),
+        signal: abortSignalTimeout(deadline.remaining()),
         headers: token ? { authorization: `Bearer ${token}` } : undefined,
       }),
-      timeoutMs,
       BLOB_SNAPSHOT_TIMEOUT_MESSAGE,
     );
     if (response.status === 404) return undefined;
-    if (!response.ok) {
-      throw new Error(`Blob account store read failed (${response.status}).`);
-    }
-    return await response.text();
+    if (!response.ok) return undefined;
+    return await deadline.race(response.text(), BLOB_SNAPSHOT_TIMEOUT_MESSAGE);
   } catch (error) {
     if (isMissingBlob(error)) return undefined;
-    throw error;
+    if (isAbortOrTimeoutError(error) || isTimeoutMessage(error)) {
+      throw error instanceof Error
+        ? error
+        : new Error(BLOB_SNAPSHOT_TIMEOUT_MESSAGE);
+    }
+    return undefined;
   }
 }
 
@@ -318,8 +364,8 @@ type BlobSdk = {
 };
 
 async function loadBlobSdk(): Promise<BlobSdk> {
-  const mod = (await import("@vercel/blob")) as BlobSdk;
-  return mod;
+  const modLib = (await import("@vercel/blob")) as BlobSdk;
+  return modLib;
 }
 
 function isMissingBlob(error: unknown): boolean {

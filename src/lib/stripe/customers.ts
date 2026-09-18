@@ -19,6 +19,13 @@ export async function ensureStripeCustomer(
       metadata: { accountId: account.id },
     }));
 
-  await store.updateBilling(account.id, { stripeCustomerId: customer.id });
+  try {
+    await store.updateBilling(account.id, { stripeCustomerId: customer.id });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "account store";
+    console.warn(
+      `[billing] Could not persist stripeCustomerId after Customer create (${message}). Checkout continues.`,
+    );
+  }
   return customer.id;
 }

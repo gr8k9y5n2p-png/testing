@@ -1,6 +1,7 @@
 import { checkoutUrls } from "../data-api/config.ts";
 import { readAccountIdFromRequest } from "../account/session.ts";
 import { getAccountStore } from "../account/store.ts";
+import { withTimeout } from "../with-timeout.ts";
 import {
   BILLING_NOT_CONFIGURED,
   BILLING_SIGN_IN,
@@ -37,6 +38,15 @@ export type CheckoutLive = {
 };
 
 export type CheckoutResult = CheckoutStub | CheckoutLive;
+
+export const CHECKOUT_TIMEOUT_MESSAGE = "Checkout timed out. Try again.";
+
+export function checkoutBudgetMs(
+  env: NodeJS.ProcessEnv = process.env,
+): number {
+  const raw = Number(env.AFTERTAX_CHECKOUT_TIMEOUT_MS);
+  return Number.isFinite(raw) && raw > 0 ? raw : 8_000;
+}
 
 function urlsWithSession(): { success_url: string; cancel_url: string } {
   const urls = checkoutUrls();
@@ -91,15 +101,35 @@ export async function createCheckoutSession(
   }
 
   const accountId = readAccountIdFromRequest(request);
+  if (!accountId) {
+    return {
+      status: 401,
+      result: stubResult(BILLING_SIGN_IN, { needs_account: true }),
+    };
+  }
+
   const store = getAccountStore();
-  let account = null;
   try {
-    account = accountId ? await store.findById(accountId) : null;
+    return await withTimeout(
+      runAuthenticatedCheckout(stripe, store, accountId, priceId, urls),
+      checkoutBudgetMs(),
+      CHECKOUT_TIMEOUT_MESSAGE,
+    );
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "Account store read failed.";
+      error instanceof Error ? error.message : CHECKOUT_TIMEOUT_MESSAGE;
     return { status: 502, result: stubResult(message) };
   }
+}
+
+async function runAuthenticatedCheckout(
+  stripe: NonNullable<ReturnType<typeof createStripeClient>>,
+  store: ReturnType<typeof getAccountStore>,
+  accountId: string,
+  priceId: string,
+  urls: { success_url: string; cancel_url: string },
+): Promise<{ result: CheckoutResult; status: number }> {
+  const account = await store.findById(accountId);
   if (!account) {
     return {
       status: 401,
@@ -107,49 +137,38 @@ export async function createCheckoutSession(
     };
   }
 
-  try {
-    const customerId = await ensureStripeCustomer(stripe, store, account);
-    const session = await stripe.checkout.sessions.create({
-      mode: "subscription",
-      customer: customerId,
-      client_reference_id: account.id,
-      line_items: [{ price: priceId, quantity: 1 }],
-      success_url: urls.success_url,
-      cancel_url: urls.cancel_url,
-      metadata: { accountId: account.id },
-      subscription_data: { metadata: { accountId: account.id } },
-      integration_identifier: checkoutIntegrationId(),
-    });
+  const customerId = await ensureStripeCustomer(stripe, store, account);
+  const session = await stripe.checkout.sessions.create({
+    mode: "subscription",
+    customer: customerId,
+    client_reference_id: account.id,
+    line_items: [{ price: priceId, quantity: 1 }],
+    success_url: urls.success_url,
+    cancel_url: urls.cancel_url,
+    metadata: { accountId: account.id },
+    subscription_data: { metadata: { accountId: account.id } },
+    integration_identifier: checkoutIntegrationId(),
+  });
 
-    if (!session.url || !session.id) {
-      return {
-        status: 502,
-        result: stubResult(
-          "Stripe Checkout Session creation failed. Search and illustrate still work.",
-        ),
-      };
-    }
-
-    return {
-      status: 200,
-      result: {
-        stub: false,
-        url: session.url,
-        session_id: session.id,
-        price_id: priceId,
-        ...urls,
-      },
-    };
-  } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Stripe Checkout Session creation failed.";
+  if (!session.url || !session.id) {
     return {
       status: 502,
-      result: stubResult(message),
+      result: stubResult(
+        "Stripe Checkout Session creation failed. Search and illustrate still work.",
+      ),
     };
   }
+
+  return {
+    status: 200,
+    result: {
+      stub: false,
+      url: session.url,
+      session_id: session.id,
+      price_id: priceId,
+      ...urls,
+    },
+  };
 }
 
 export async function confirmCheckoutSession(

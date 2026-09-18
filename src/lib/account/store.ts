@@ -127,13 +127,22 @@ export class MemoryAccountStore implements AccountStore {
     this.records = records;
   }
 
-  async findByEmail(email: string): Promise<AccountRecord | null> {
+  /** Direct lookup — do not call public find* from mutators (exclusive-chain deadlock). */
+  protected rowById(id: string): AccountRecord | null {
+    return this.records.find((row) => row.id === id) ?? null;
+  }
+
+  protected rowByEmail(email: string): AccountRecord | null {
     const key = emailKey(email);
     return this.records.find((row) => row.email === key) ?? null;
   }
 
+  async findByEmail(email: string): Promise<AccountRecord | null> {
+    return this.rowByEmail(email);
+  }
+
   async findById(id: string): Promise<AccountRecord | null> {
-    return this.records.find((row) => row.id === id) ?? null;
+    return this.rowById(id);
   }
 
   async create(input: {
@@ -170,7 +179,7 @@ export class MemoryAccountStore implements AccountStore {
     id: string,
     patch: AccountBillingPatch,
   ): Promise<AccountRecord | null> {
-    const row = await this.findById(id);
+    const row = this.rowById(id);
     if (!row) return null;
     if (patch.stripeCustomerId !== undefined) {
       row.stripeCustomerId = patch.stripeCustomerId;
@@ -198,7 +207,7 @@ export class MemoryAccountStore implements AccountStore {
     id: string,
     device: DeviceUsage,
   ): Promise<AccountRecord | null> {
-    const row = await this.findById(id);
+    const row = this.rowById(id);
     if (!row) return null;
     row.usage = mergeUsage(row.usage, normalizeUsage(device));
     row.updatedAt = new Date().toISOString();
@@ -209,7 +218,7 @@ export class MemoryAccountStore implements AccountStore {
     id: string,
     passwordHash: string,
   ): Promise<AccountRecord | null> {
-    const row = await this.findById(id);
+    const row = this.rowById(id);
     if (!row) return null;
     row.passwordHash = passwordHash;
     row.passwordResetTokenHash = null;
@@ -223,7 +232,7 @@ export class MemoryAccountStore implements AccountStore {
     tokenHash: string,
     expiresAt: string,
   ): Promise<AccountRecord | null> {
-    const row = await this.findById(id);
+    const row = this.rowById(id);
     if (!row) return null;
     row.passwordResetTokenHash = tokenHash;
     row.passwordResetExpiresAt = expiresAt;
@@ -338,11 +347,15 @@ export function loadAccountsFromFile(filePath: string): AccountRecord[] {
   }
 }
 
+/** Skip a Blob round-trip when this isolate just read or wrote. */
+export const HYDRATE_CACHE_MS = 2_500;
+
 export class SharedJsonAccountStore extends MemoryAccountStore {
   private snapshot: JsonSnapshot;
   private legacyFilePath: string | null;
   private migrated = false;
   private chain: Promise<unknown> = Promise.resolve();
+  private cache: { raw: string; at: number } | null = null;
 
   constructor(
     snapshot: JsonSnapshot,
@@ -363,7 +376,14 @@ export class SharedJsonAccountStore extends MemoryAccountStore {
   }
 
   private async hydrate(): Promise<void> {
-    let records = parseAccountRecords(await this.snapshot.read());
+    const cached = this.cache;
+    if (cached && Date.now() - cached.at < HYDRATE_CACHE_MS) {
+      this.records = parseAccountRecords(cached.raw);
+      return;
+    }
+    const raw = await this.snapshot.read();
+    let records = parseAccountRecords(raw);
+    this.cache = { raw: raw ?? "[]\n", at: Date.now() };
     if (!this.migrated) {
       this.migrated = true;
       if (this.legacyFilePath) {
@@ -373,7 +393,9 @@ export class SharedJsonAccountStore extends MemoryAccountStore {
         );
         if (merged.added > 0) {
           records = merged.records;
-          await this.snapshot.write(serializeAccountRecords(records));
+          const serialized = serializeAccountRecords(records);
+          await this.snapshot.write(serialized);
+          this.cache = { raw: serialized, at: Date.now() };
           console.info(
             `[account] Migrated ${merged.added} account(s) from the file store into the durable store.`,
           );
@@ -384,7 +406,9 @@ export class SharedJsonAccountStore extends MemoryAccountStore {
   }
 
   private async persist(): Promise<void> {
-    await this.snapshot.write(serializeAccountRecords(this.records));
+    const serialized = serializeAccountRecords(this.records);
+    await this.snapshot.write(serialized);
+    this.cache = { raw: serialized, at: Date.now() };
   }
 
   override async findByEmail(email: string): Promise<AccountRecord | null> {

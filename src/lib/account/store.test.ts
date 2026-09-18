@@ -137,6 +137,34 @@ describe("shared durable account JSON", () => {
     assert.equal(durable[0].passwordHash, hash);
   });
 
+  it("reuses a fresh hydrate cache so checkout updateBilling does not re-read or deadlock", async () => {
+    let reads = 0;
+    const box = { raw: null as string | null };
+    const store = new SharedJsonAccountStore({
+      async read() {
+        reads += 1;
+        return box.raw;
+      },
+      async write(payload) {
+        box.raw = payload;
+      },
+    });
+    const started = Date.now();
+    const row = await store.create({
+      email: "ada@example.com",
+      passwordHash: "scrypt$aa$bb",
+    });
+    assert.equal(reads, 1);
+    assert.equal((await store.findById(row.id))?.email, "ada@example.com");
+    assert.equal(reads, 1);
+    const billed = await store.updateBilling(row.id, {
+      stripeCustomerId: "cus_cached",
+    });
+    assert.equal(billed?.stripeCustomerId, "cus_cached");
+    assert.equal(reads, 1);
+    assert.ok(Date.now() - started < 200, "findById + updateBilling must not deadlock");
+  });
+
   it("keeps durable hashes when the same email exists in the leftover file", () => {
     const durableHash = hashPassword("durable-pass");
     const fileHash = hashPassword("file-pass");
@@ -260,6 +288,9 @@ describe("account store docs", () => {
     }
     assert.match(readme, /useCache: false/);
     assert.match(readme, /cannot be recovered/);
+    assert.match(readme, /2\.5s wall-clock budget/);
+    assert.match(readme, /8s overall budget/);
+    assert.match(env, /AFTERTAX_CHECKOUT_TIMEOUT_MS/);
   });
 });
 
