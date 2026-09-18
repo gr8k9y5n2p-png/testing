@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import {
   AccountAuthError,
   PASSWORD_RESET_MAIL_UNAVAILABLE,
@@ -304,6 +305,25 @@ describe("email/password account auth", () => {
     assert.equal(verifyPassword("wholesaler", stored), true);
     assert.equal(verifyPassword("wholesalers", stored), false);
     assert.equal(verifyPassword("wholesaler", ""), false);
+  });
+
+  it("does not log plaintext passwords from the account library", () => {
+    const here = dirname(fileURLToPath(import.meta.url));
+    for (const name of [
+      "auth.ts",
+      "http.ts",
+      "store.ts",
+      "json-snapshot.ts",
+      "mail.ts",
+      "session.ts",
+      "passwords.ts",
+      "client.ts",
+    ]) {
+      const source = readFileSync(join(here, name), "utf8");
+      assert.doesNotMatch(source, /console\.\w+\(\s*password\s*[,)]/);
+      assert.doesNotMatch(source, /console\.\w+\([^)]*raw\.password/);
+      assert.doesNotMatch(source, /console\.\w+\([^)]*passwordHash/);
+    }
   });
 });
 
