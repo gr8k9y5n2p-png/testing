@@ -92,7 +92,14 @@ export async function createCheckoutSession(
 
   const accountId = readAccountIdFromRequest(request);
   const store = getAccountStore();
-  const account = accountId ? await store.findById(accountId) : null;
+  let account = null;
+  try {
+    account = accountId ? await store.findById(accountId) : null;
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Account store read failed.";
+    return { status: 502, result: stubResult(message) };
+  }
   if (!account) {
     return {
       status: 401,

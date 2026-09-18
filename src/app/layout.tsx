@@ -65,7 +65,12 @@ export default async function RootLayout({
   const jar = await cookies();
   const raw = jar.get(ACCOUNT_COOKIE)?.value;
   const accountId = verifyAccountCookie(raw);
-  const row = accountId ? await getAccountStore().findById(accountId) : null;
+  let row = null;
+  try {
+    row = accountId ? await getAccountStore().findById(accountId) : null;
+  } catch {
+    row = null;
+  }
   const initialAccount = row ? toPublicAccount(row) : null;
   const cookieUsage = usageFromCookieValue(jar.get(FREEMIUM_COOKIE)?.value);
   const initialUsage = row ? mergeUsage(row.usage, cookieUsage) : cookieUsage;

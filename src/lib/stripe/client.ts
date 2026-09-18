@@ -10,5 +10,8 @@ export function createStripeClient(
 ): Stripe | null {
   const secret = stripeSecretKey(env);
   if (!secret) return null;
-  return new Stripe(secret);
+  return new Stripe(secret, {
+    timeout: 20_000,
+    maxNetworkRetries: 1,
+  });
 }

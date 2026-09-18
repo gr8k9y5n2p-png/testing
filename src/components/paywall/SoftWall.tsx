@@ -1,10 +1,21 @@
 "use client";
 
+import Link from "next/link";
 import { Disclaimer } from "@/components/Disclaimer";
 import { useBilling } from "@/components/BillingProvider";
-import { COPY } from "@/lib/copy";
-import { BILLING_NOT_CONFIGURED, BILLING_SIGN_IN } from "@/lib/stripe/billing-copy";
-import { useState, type ReactNode } from "react";
+import { ACCOUNT_SIGN_IN, COPY } from "@/lib/copy";
+import {
+  BILLING_NOT_CONFIGURED,
+  BILLING_SIGN_IN,
+} from "@/lib/stripe/billing-copy";
+import {
+  ACCOUNT_LOGIN_HREF,
+  HOMEPAGE_LOGIN_HREF,
+  accountLoginHref,
+  unlockCtaPreview,
+  unlockCtaStatus,
+} from "@/lib/stripe/unlock-cta";
+import { useEffect, useState, type ReactNode } from "react";
 
 export function SoftWall({
   active,
@@ -36,8 +47,21 @@ export function SoftWallCta({
   surface: "search" | "compare" | "portfolio";
 }) {
   const billing = useBilling();
+  const preview = unlockCtaPreview(billing.signedIn);
   const [busy, setBusy] = useState(false);
-  const [detail, setDetail] = useState<string | null>(null);
+  const [detail, setDetail] = useState<string | null>(preview?.detail ?? null);
+  const [needsLogin, setNeedsLogin] = useState(preview?.kind === "sign_in");
+
+  useEffect(() => {
+    const next = unlockCtaPreview(billing.signedIn);
+    if (next) {
+      setDetail((current) => current ?? next.detail);
+      setNeedsLogin(true);
+    } else {
+      setNeedsLogin(false);
+      setDetail((current) => (current === BILLING_SIGN_IN ? null : current));
+    }
+  }, [billing.signedIn]);
 
   const limitCopy =
     surface === "search"
@@ -48,15 +72,39 @@ export function SoftWallCta({
 
   async function unlock() {
     setBusy(true);
-    setDetail(null);
-    const result = await billing.unlock();
-    if (result.url) return;
-    if (result.needsAccount || !billing.signedIn) {
-      setDetail(BILLING_SIGN_IN);
-    } else {
-      setDetail(result.detail || BILLING_NOT_CONFIGURED);
+    try {
+      if (!billing.signedIn) {
+        const status = unlockCtaStatus(
+          { detail: BILLING_SIGN_IN, needsAccount: true },
+          false,
+        );
+        setDetail(status.detail);
+        setNeedsLogin(true);
+        const pathname =
+          typeof window !== "undefined" ? window.location.pathname : "/";
+        const href = accountLoginHref(pathname);
+        if (href.startsWith("/#") && pathname === "/") {
+          const id = href.slice(2);
+          document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+          window.location.hash = id;
+        } else {
+          window.location.assign(href);
+        }
+        return;
+      }
+      const result = await billing.unlock();
+      const status = unlockCtaStatus(result, billing.signedIn);
+      if (status.kind === "redirect") return;
+      setDetail(status.detail);
+      setNeedsLogin(status.kind === "sign_in");
+    } catch (caught) {
+      setDetail(
+        caught instanceof Error ? caught.message : BILLING_NOT_CONFIGURED,
+      );
+      setNeedsLogin(!billing.signedIn);
+    } finally {
+      setBusy(false);
     }
-    setBusy(false);
   }
 
   return (
@@ -79,6 +127,23 @@ export function SoftWallCta({
         {detail ? (
           <p className="mt-2 text-xs text-muted" role="status">
             {detail}
+          </p>
+        ) : null}
+        {needsLogin ? (
+          <p className="mt-2 text-xs">
+            <Link
+              href={HOMEPAGE_LOGIN_HREF}
+              className="text-ink underline decoration-line underline-offset-2 hover:decoration-ink"
+            >
+              {ACCOUNT_SIGN_IN}
+            </Link>
+            {" · "}
+            <Link
+              href={ACCOUNT_LOGIN_HREF}
+              className="text-ink underline decoration-line underline-offset-2 hover:decoration-ink"
+            >
+              Account
+            </Link>
           </p>
         ) : null}
         <Disclaimer className="mt-4 text-xs leading-relaxed text-muted" />

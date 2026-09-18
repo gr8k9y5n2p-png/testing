@@ -1,4 +1,12 @@
+import {
+  abortSignalTimeout,
+  isAbortOrTimeoutError,
+} from "../with-timeout.ts";
 import type { PublicAccount } from "./store.ts";
+
+export const ACCOUNT_FETCH_TIMEOUT_MS = 15_000;
+export const ACCOUNT_FETCH_TIMEOUT_MESSAGE =
+  "Account storage timed out. Try again.";
 
 export type AccountMeResponse = { account: PublicAccount | null };
 
@@ -16,17 +24,25 @@ async function parseError(response: Response): Promise<Error> {
 }
 
 async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(path, {
-    credentials: "same-origin",
-    ...init,
-    headers: {
-      accept: "application/json",
-      ...(init?.body ? { "content-type": "application/json" } : {}),
-      ...init?.headers,
-    },
-  });
-  if (!response.ok) throw await parseError(response);
-  return (await response.json()) as T;
+  try {
+    const response = await fetch(path, {
+      credentials: "same-origin",
+      ...init,
+      signal: init?.signal ?? abortSignalTimeout(ACCOUNT_FETCH_TIMEOUT_MS),
+      headers: {
+        accept: "application/json",
+        ...(init?.body ? { "content-type": "application/json" } : {}),
+        ...init?.headers,
+      },
+    });
+    if (!response.ok) throw await parseError(response);
+    return (await response.json()) as T;
+  } catch (error) {
+    if (isAbortOrTimeoutError(error)) {
+      throw new Error(ACCOUNT_FETCH_TIMEOUT_MESSAGE);
+    }
+    throw error;
+  }
 }
 
 export async function fetchAccountMe(): Promise<PublicAccount | null> {

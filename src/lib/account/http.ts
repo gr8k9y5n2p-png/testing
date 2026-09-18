@@ -67,6 +67,9 @@ export async function handleAccountSignUp(
     if (error instanceof AccountAuthError) {
       return json({ detail: error.detail }, error.status);
     }
+    if (isStoreTimeout(error)) {
+      return json({ detail: storeTimeoutDetail(error) }, 504);
+    }
     return json({ detail: "Couldn’t create that account." }, 500);
   }
 }
@@ -86,6 +89,9 @@ export async function handleAccountSignIn(
   } catch (error) {
     if (error instanceof AccountAuthError) {
       return json({ detail: error.detail }, error.status);
+    }
+    if (isStoreTimeout(error)) {
+      return json({ detail: storeTimeoutDetail(error) }, 504);
     }
     return json({ detail: "Couldn’t sign in." }, 500);
   }
@@ -107,9 +113,16 @@ export async function handleAccountMe(
   if (!accountId) {
     return json({ account: null }, 200);
   }
-  const row = await store.findById(accountId);
-  if (!row) return json({ account: null }, 200);
-  return json({ account: toPublicAccount(row) }, 200);
+  try {
+    const row = await store.findById(accountId);
+    if (!row) return json({ account: null }, 200);
+    return json({ account: toPublicAccount(row) }, 200);
+  } catch (error) {
+    if (isStoreTimeout(error)) {
+      return json({ detail: storeTimeoutDetail(error) }, 504);
+    }
+    return json({ detail: "Couldn’t load that account." }, 500);
+  }
 }
 
 export async function handleAccountForgot(
@@ -125,6 +138,9 @@ export async function handleAccountForgot(
   } catch (error) {
     if (error instanceof AccountAuthError) {
       return json({ detail: error.detail }, error.status);
+    }
+    if (isStoreTimeout(error)) {
+      return json({ detail: storeTimeoutDetail(error) }, 504);
     }
     return json({ detail: "Couldn’t start a password reset." }, 500);
   }
@@ -146,6 +162,19 @@ export async function handleAccountReset(
     if (error instanceof AccountAuthError) {
       return json({ detail: error.detail }, error.status);
     }
+    if (isStoreTimeout(error)) {
+      return json({ detail: storeTimeoutDetail(error) }, 504);
+    }
     return json({ detail: "Couldn’t reset that password." }, 500);
   }
+}
+
+function isStoreTimeout(error: unknown): boolean {
+  return error instanceof Error && /timed out/i.test(error.message);
+}
+
+function storeTimeoutDetail(error: unknown): string {
+  return error instanceof Error
+    ? error.message
+    : "Account storage timed out. Try again.";
 }

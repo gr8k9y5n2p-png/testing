@@ -65,6 +65,18 @@ describe("soft-wall placement", () => {
     assert.doesNotMatch(wall, /Upgrade/);
   });
 
+  it("always re-enables Unlock and points needs_account at homepage / Account login", () => {
+    const wall = read("SoftWall.tsx");
+    assert.match(wall, /try \{/);
+    assert.match(wall, /finally \{\s*setBusy\(false\)/);
+    assert.match(wall, /unlockCtaStatus/);
+    assert.match(wall, /unlockCtaPreview/);
+    assert.match(wall, /accountLoginHref/);
+    assert.match(wall, /HOMEPAGE_LOGIN_HREF/);
+    assert.match(wall, /ACCOUNT_LOGIN_HREF/);
+    assert.match(wall, /role="status"/);
+  });
+
   it("does not enable the friends-beta invite gate", () => {
     const friends = read("../../lib/friends-beta.ts");
     assert.match(friends, /FRIENDS_BETA_PASSWORD/);

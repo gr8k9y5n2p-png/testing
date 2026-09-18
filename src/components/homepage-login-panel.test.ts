@@ -19,6 +19,7 @@ describe("homepage Account login panel", () => {
     assert.match(hero, /lg:grid-cols-\[minmax\(0,40rem\)_minmax\(18rem,24rem\)\]/);
     assert.match(panel, /account !== null/);
     assert.match(panel, /return null/);
+    assert.match(panel, /id="account"/);
     assert.match(panel, /AccountAuthForm/);
     assert.match(form, /ACCOUNT_FORGOT_PASSWORD/);
     assert.match(form, /href="\/account\/forgot"/);

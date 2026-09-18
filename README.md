@@ -275,7 +275,7 @@ Accounts now persist to a durable shared store:
 | 2 | Private Vercel Blob | `BLOB_READ_WRITE_TOKEN` or `BLOB_STORE_ID` (OIDC on Vercel). Optional `AFTERTAX_ACCOUNTS_BLOB_PATH` |
 | 3 | JSON file | Local/CI. `AFTERTAX_ACCOUNTS_PATH` or `.data/accounts.json`. Force with `AFTERTAX_ACCOUNT_STORE=file` |
 
-**Production setup (do this before relying on login):** Vercel → Storage → Create Database → **Blob** (Private) → connect to this project (Production + Preview). Redeploy so `BLOB_READ_WRITE_TOKEN` / `BLOB_STORE_ID` are present. The JSON document is private (`get(..., { useCache: false })`) and keeps existing scrypt hashes. Redis is used automatically if those REST vars are already present.
+**Production setup (do this before relying on login):** Vercel → Storage → Create Database → **Blob** (Private) → connect to this project (Production + Preview). Redeploy so `BLOB_READ_WRITE_TOKEN` / `BLOB_STORE_ID` are present. The JSON document is private. Reads `list` the prefix (newest pathname wins — `get(pathname)` can 404 after `put`), then `get(url, { useCache: false })`. A missing blob is an empty array. Every Blob call times out instead of hanging. Hashes stay scrypt. Redis is used automatically if those REST vars are already present.
 
 **Migration:** leftover file-store rows (including `/tmp` on the current instance) are merged into the durable store once when it is empty-of-that-email. Durable hashes win on email collision. Accounts that only existed on now-dead instances **cannot be recovered** — those users must Create account again (Forgot Password cannot find a missing row). We do not invent or reset passwords.
 

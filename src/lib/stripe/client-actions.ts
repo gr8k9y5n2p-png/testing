@@ -1,9 +1,16 @@
 import {
+  abortSignalTimeout,
+  isAbortOrTimeoutError,
+} from "../with-timeout.ts";
+import {
   BILLING_NOT_CONFIGURED,
   BILLING_SIGN_IN,
   CHECKOUT_API_PATH,
   PORTAL_API_PATH,
 } from "./billing-copy.ts";
+
+export const BILLING_FETCH_TIMEOUT_MS = 12_000;
+export const BILLING_FETCH_TIMEOUT_MESSAGE = "Checkout timed out. Try again.";
 
 export type BillingActionResult = {
   url?: string;
@@ -18,6 +25,7 @@ async function postBilling(path: string): Promise<BillingActionResult> {
       method: "POST",
       credentials: "same-origin",
       headers: { accept: "application/json" },
+      signal: abortSignalTimeout(BILLING_FETCH_TIMEOUT_MS),
     });
     const body = (await response.json()) as {
       url?: string;
@@ -32,7 +40,10 @@ async function postBilling(path: string): Promise<BillingActionResult> {
       needsAccount: Boolean(body.needs_account) || response.status === 401,
       configured: response.status !== 501,
     };
-  } catch {
+  } catch (error) {
+    if (isAbortOrTimeoutError(error)) {
+      return { detail: BILLING_FETCH_TIMEOUT_MESSAGE, configured: true };
+    }
     return { detail: BILLING_NOT_CONFIGURED, configured: false };
   }
 }
