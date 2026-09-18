@@ -4,6 +4,8 @@ import { BILLING_NOT_CONFIGURED, BILLING_SIGN_IN } from "./billing-copy.ts";
 import {
   ACCOUNT_LOGIN_HREF,
   HOMEPAGE_LOGIN_HREF,
+  accountLoginHref,
+  unlockCtaPreview,
   unlockCtaStatus,
 } from "./unlock-cta.ts";
 
@@ -48,5 +50,15 @@ describe("SoftWall unlock status", () => {
     const missing = unlockCtaStatus({ detail: "" }, true);
     assert.equal(missing.kind, "error");
     assert.equal(missing.detail, BILLING_NOT_CONFIGURED);
+  });
+
+  it("previews sign-in chrome for signed-out visitors before they click", () => {
+    assert.deepEqual(unlockCtaPreview(false), {
+      kind: "sign_in",
+      detail: BILLING_SIGN_IN,
+    });
+    assert.equal(unlockCtaPreview(true), null);
+    assert.equal(accountLoginHref("/"), HOMEPAGE_LOGIN_HREF);
+    assert.equal(accountLoginHref("/compare"), ACCOUNT_LOGIN_HREF);
   });
 });

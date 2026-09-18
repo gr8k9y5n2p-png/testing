@@ -26,3 +26,16 @@ export function unlockCtaStatus(
     detail: result.detail || BILLING_NOT_CONFIGURED,
   };
 }
+
+/** Soft-wall chrome before / after Unlock: signed-out is never a dead end. */
+export function unlockCtaPreview(signedIn: boolean): {
+  kind: UnlockCtaKind;
+  detail: string;
+} | null {
+  if (signedIn) return null;
+  return { kind: "sign_in", detail: BILLING_SIGN_IN };
+}
+
+export function accountLoginHref(pathname: string): string {
+  return pathname === "/" ? HOMEPAGE_LOGIN_HREF : ACCOUNT_LOGIN_HREF;
+}

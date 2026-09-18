@@ -70,6 +70,8 @@ describe("soft-wall placement", () => {
     assert.match(wall, /try \{/);
     assert.match(wall, /finally \{\s*setBusy\(false\)/);
     assert.match(wall, /unlockCtaStatus/);
+    assert.match(wall, /unlockCtaPreview/);
+    assert.match(wall, /accountLoginHref/);
     assert.match(wall, /HOMEPAGE_LOGIN_HREF/);
     assert.match(wall, /ACCOUNT_LOGIN_HREF/);
     assert.match(wall, /role="status"/);
