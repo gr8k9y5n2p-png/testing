@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { FundEstimateView } from "@/data/types";
 import { tickerSlotBorderClass } from "@/components/illustrate/ticker-slot-border";
 import { NoticeToast, useNoticeToast } from "@/components/NoticeToast";
+import { useBilling } from "@/components/BillingProvider";
 import { SavedAssetActions } from "@/components/saved-assets/SavedAssetActions";
 import { parseListPayload } from "@/lib/saved-assets/payloads";
 import {
@@ -119,6 +120,8 @@ export function ListsWorkspace({
   initialTickers?: string[];
   initialRows?: ListRow[];
 }) {
+  const billing = useBilling();
+  const locked = billing.walls.lists;
   const [draft, setDraft] = useState("");
   const [tickers, setTickers] = useState<string[]>(initialTickers);
   const [rowsByTicker, setRowsByTicker] = useState<Record<string, ListRow>>(() => {
@@ -148,6 +151,7 @@ export function ListsWorkspace({
   }, [tickers]);
 
   useEffect(() => {
+    if (locked) return;
     const missing = tickers.filter(
       (ticker) =>
         !rowsByTickerRef.current[ticker] && !inflight.current.has(ticker),
@@ -162,7 +166,7 @@ export function ListsWorkspace({
       });
       for (const ticker of missing) inflight.current.delete(ticker);
     });
-  }, [tickers]);
+  }, [locked, tickers]);
 
   function commitDraft(raw = draft) {
     const next = mergeTickerLists(tickers, raw);

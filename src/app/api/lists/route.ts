@@ -1,5 +1,7 @@
 import { loadListRowsFromDataApi } from "@/lib/data-api/lists-page";
 import { parseTickerList } from "@/lib/lists/parse-tickers";
+import { listsApiDenial, listsApiStatus } from "@/lib/stripe/lists-access";
+import { readEntitlement } from "@/lib/stripe/entitlement";
 
 export const dynamic = "force-dynamic";
 
@@ -10,10 +12,15 @@ export async function GET(request: Request) {
       .filter(Boolean)
       .join(","),
   );
+  const { entitlement } = await readEntitlement(request);
+  if (listsApiStatus(entitlement) === 403) {
+    return Response.json(listsApiDenial(tickers), { status: 403 });
+  }
   const items = await loadListRowsFromDataApi({ tickers });
   return Response.json({
     items,
     tickers,
     count: items.length,
+    entitled: true,
   });
 }

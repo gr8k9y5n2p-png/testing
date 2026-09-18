@@ -46,6 +46,7 @@ describe("billing entitlement", () => {
       search: false,
       compare: false,
       portfolio: false,
+      lists: false,
     });
   });
 
@@ -58,5 +59,23 @@ describe("billing entitlement", () => {
     assert.equal(entitlement.walls.search, true);
     assert.equal(entitlement.remaining.searches, 0);
     assert.equal(entitlement.signedIn, false);
+  });
+
+  it("walls Lists for freemium / signed-out / not entitled, never for subscribers", () => {
+    const signedOut = entitlementFrom(null, {
+      searches: 0,
+      compareKeys: [],
+      portfolioKeys: [],
+    });
+    assert.equal(signedOut.walls.lists, true);
+    assert.equal(signedOut.subscribed, false);
+
+    const bypass = entitlementFrom(
+      null,
+      { searches: 0, compareKeys: [], portfolioKeys: [] },
+      { NEXT_PUBLIC_FREEMIUM_DISABLED: "true" },
+    );
+    assert.equal(bypass.walls.lists, false);
+    assert.equal(bypass.bypass, true);
   });
 });

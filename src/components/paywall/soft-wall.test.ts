@@ -91,6 +91,29 @@ describe("soft-wall placement", () => {
     assert.match(menu, /finally \{\s*setPortalBusy\(false\)/);
   });
 
+  it("paywalls the entire Lists tab with Unlock Access + a swappable preview", () => {
+    const page = read("../../app/lists/page.tsx");
+    const body = read("../lists/ListsPageBody.tsx");
+    const workspace = read("../lists/ListsWorkspace.tsx");
+    const wall = read("SoftWall.tsx");
+    const preview = read("../lists/ListsUnlockPreview.tsx");
+    assert.match(page, /ListsPageBody/);
+    assert.match(body, /SoftWall active=\{billing\.walls\.lists\}/);
+    assert.match(body, /surface="lists"/);
+    assert.match(workspace, /billing\.walls\.lists/);
+    assert.match(workspace, /if \(locked\) return/);
+    assert.match(wall, /surface === "lists"/);
+    assert.match(wall, /LISTS_UNLOCK_KICKER/);
+    assert.match(wall, /ListsUnlockPreview/);
+    assert.match(wall, /UnlockAccountModal/);
+    assert.match(wall, /startOrCheckout/);
+    assert.match(preview, /LISTS_UNLOCK_PREVIEW_SRC/);
+    assert.match(preview, /src = LISTS_UNLOCK_PREVIEW_SRC/);
+    assert.doesNotMatch(wall, /Upgrade/);
+    assert.doesNotMatch(wall, /scrollIntoView/);
+    assert.doesNotMatch(wall, /accountLoginHref/);
+  });
+
   it("does not enable the friends-beta invite gate", () => {
     const friends = read("../../lib/friends-beta.ts");
     assert.match(friends, /FRIENDS_BETA_PASSWORD/);

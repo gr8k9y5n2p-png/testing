@@ -28,6 +28,9 @@ describe("Sample Estimates empty copy", () => {
     assert.match(source, /LISTS_DIST_COLUMN = "Estimated \$ Distribution\/share"/);
     assert.match(source, /LISTS_SAVE = "Save"/);
     assert.match(source, /LISTS_OPEN = "Open"/);
+    assert.match(source, /LISTS_UNLOCK_KICKER = "Unlock Access"/);
+    assert.match(source, /LISTS_PAYWALL_LEAD = "Lists is included with Aftertax access."/);
+    assert.doesNotMatch(source, /Upgrade \$39/);
     assert.match(source, /PORTFOLIO_SAVE = "Save"/);
     assert.match(source, /PORTFOLIO_OPEN = "Open"/);
     assert.match(source, /PORTFOLIO_SAVE_EMPTY = "Add holdings before saving."/);

@@ -38,6 +38,8 @@ export type Entitlement = {
     search: boolean;
     compare: boolean;
     portfolio: boolean;
+    /** Entire Lists tab — not usage-counted. True unless subscribed or bypass. */
+    lists: boolean;
   };
   detail: string | null;
 };

@@ -1,3 +1,4 @@
+import { LISTS_PAYWALL_LEAD } from "../copy.ts";
 import { resolveAccountSession } from "../account/session.ts";
 import {
   getSavedAssetForAccount,
@@ -12,6 +13,17 @@ import type { SavedAssetStore } from "./store.ts";
 import { isSavedAssetType, type SavedAssetType } from "./types.ts";
 
 const SIGN_IN_DETAIL = "Sign in to save lists and portfolios.";
+
+export type SavedAssetAccess = {
+  /** Default true so unit tests keep session-only coverage. Routes pass entitlement. */
+  listsEntitled?: boolean;
+};
+
+function requireListsEntitled(access: SavedAssetAccess): void {
+  if (access.listsEntitled === false) {
+    throw new SavedAssetRequestError(403, LISTS_PAYWALL_LEAD);
+  }
+}
 
 function json(body: unknown, status: number): Response {
   return new Response(JSON.stringify(body), {
@@ -57,16 +69,23 @@ function requireSession(request: Request): string {
 export async function handleSavedAssetsCollection(
   request: Request,
   store: SavedAssetStore,
+  access: SavedAssetAccess = {},
 ): Promise<Response> {
   try {
     const accountId = requireSession(request);
     if (request.method === "GET") {
       const type = queryType(request);
+      if (type === "list") requireListsEntitled(access);
       const items = await listSavedAssetsForAccount(store, accountId, type);
-      return json({ items, count: items.length }, 200);
+      const visible =
+        access.listsEntitled === false
+          ? items.filter((item) => item.type !== "list")
+          : items;
+      return json({ items: visible, count: visible.length }, 200);
     }
     if (request.method === "POST") {
       const input = parseWriteBody(await readJson(request));
+      if (input.type === "list") requireListsEntitled(access);
       const { asset, created } = await saveSavedAssetForAccount(
         store,
         accountId,
@@ -85,6 +104,7 @@ export async function handleSavedAssetItem(
   request: Request,
   id: string,
   store: SavedAssetStore,
+  access: SavedAssetAccess = {},
 ): Promise<Response> {
   try {
     const accountId = requireSession(request);
@@ -93,9 +113,12 @@ export async function handleSavedAssetItem(
     }
     if (request.method === "GET") {
       const item = await getSavedAssetForAccount(store, accountId, id);
+      if (item.type === "list") requireListsEntitled(access);
       return json({ item }, 200);
     }
     if (request.method === "PATCH") {
+      const existing = await getSavedAssetForAccount(store, accountId, id);
+      if (existing.type === "list") requireListsEntitled(access);
       const item = await updateSavedAssetForAccount(
         store,
         accountId,
@@ -105,6 +128,8 @@ export async function handleSavedAssetItem(
       return json({ item }, 200);
     }
     if (request.method === "DELETE") {
+      const existing = await getSavedAssetForAccount(store, accountId, id);
+      if (existing.type === "list") requireListsEntitled(access);
       await deleteSavedAssetForAccount(store, accountId, id);
       return json({ ok: true }, 200);
     }
