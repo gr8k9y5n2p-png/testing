@@ -1,5 +1,4 @@
 import type { FundEstimateView } from "../../data/types.ts";
-import { MAX_GROWTH_FUNDS } from "../charts/series-colors.ts";
 import type { CompareResponse } from "./compare-types.ts";
 import { UI_DEFAULT_TAX_RATES, type TaxRates } from "./types.ts";
 import {
@@ -30,7 +29,8 @@ export type CompareUpcomingHint = {
   publicationStage?: string | null;
 };
 
-export const COMPARE_SLOT_COUNT = MAX_GROWTH_FUNDS;
+/** Eric lock 2026-09-17: Compare caps at 4 tickers. Portfolio holdings stay separate. */
+export const COMPARE_SLOT_COUNT = 4;
 
 /** Visible placeholder for Compare slot N (0-based). First box is "Ticker 1". */
 export function compareSlotPlaceholder(index: number): string {
@@ -189,7 +189,7 @@ export function splitCompareTickerList(
 
 /**
  * Deep-link tickers for Compare slots.
- * Prefers `tickers` / `ticker`, then legacy `left` / `right`. Unique, max 6.
+ * Prefers `tickers` / `ticker`, then legacy `left` / `right`. Unique, max 4.
  */
 export function parseCompareQueryTickers(params: CompareQueryParams = {}): string[] {
   return filledCompareTickers([
@@ -235,6 +235,7 @@ export function filledCompareTickers(slots: string[]): string[] {
     if (!ticker || seen.has(ticker)) continue;
     seen.add(ticker);
     next.push(ticker);
+    if (next.length >= COMPARE_SLOT_COUNT) break;
   }
   return next;
 }

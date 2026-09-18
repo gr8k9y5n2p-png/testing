@@ -350,7 +350,7 @@ export function CompareWorkspace({
         </div>
       </header>
 
-      <div className="grid w-full grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+      <div className="grid w-full grid-cols-2 gap-3 md:grid-cols-4">
         {slots.map((ticker, index) => {
           const selected = ticker ? resolveFundView(knownFunds, ticker) : null;
           return (

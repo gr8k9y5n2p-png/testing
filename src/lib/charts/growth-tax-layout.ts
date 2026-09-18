@@ -36,7 +36,7 @@ export function growthTaxBarCenter(barX: number, barW: number): number {
   return barX + barW / 2;
 }
 
-/** Centered under-bar ticker. Truncates only when the bar is too narrow (4–6 funds). */
+/** Centered under-bar ticker. Truncates only when the bar is too narrow (5–6 funds). */
 export function underBarTickerLabel(
   ticker: string,
   barW: number,
@@ -173,7 +173,8 @@ export type GrowthTaxTableLayout = {
 
 /**
  * Flattened year-slot grid that mirrors `yearLayout` bar geometry.
- * Fund count is `seriesCount` (1–6), never a hardcoded 2 or 3.
+ * Fund count is `seriesCount` (1–6 on the demo module; Compare caps at 4).
+ * Never a hardcoded 2 or 3 — bars stay equally spaced in each year cluster.
  */
 export function growthTaxTableLayout(
   years: number[],

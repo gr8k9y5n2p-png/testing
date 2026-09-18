@@ -184,6 +184,8 @@ describe("Growth & Tax layout chrome", () => {
     assert.match(chart, /data-year-label/);
     assert.match(chart, /growthTaxBarWidth/);
     assert.match(chart, /growthTaxBarCenter/);
+    assert.match(chart, /GROWTH_TAX_TYPE_COLORS\.ordinary_income/);
+    assert.doesNotMatch(chart, /lightenHex\("#1b7a72"\)/);
     assert.doesNotMatch(chart, /<circle[\s\S]{0,120}data-bar-ticker/);
     assert.match(table, /sr-only/);
     assert.doesNotMatch(
@@ -216,6 +218,50 @@ describe("growthTaxBarWidth slims inverted stacks", () => {
           const tickerX = growthTaxBarCenter(left, axis.barW);
           assert.ok(Math.abs(tickerX - (visualX + visualW / 2)) < 0.05);
         }
+      }
+    }
+  });
+
+  it("spaces 4-fund inverted stacks equally and ticker-centers each bar", () => {
+    const years = [2022, 2023, 2024, 2025];
+    const funds = 4;
+    const pad = growthTaxChartPad(10_000);
+    const axis = yearLayout(years, funds, SHARED_CHART_WIDTH, pad);
+    const table = growthTaxTableLayout(years, funds, SHARED_CHART_WIDTH, pad, axis);
+
+    for (let yearIndex = 0; yearIndex < years.length; yearIndex += 1) {
+      const centers: number[] = [];
+      const visualGaps: number[] = [];
+      let prevRight: number | null = null;
+      for (let seriesIndex = 0; seriesIndex < funds; seriesIndex += 1) {
+        const left = axis.barX(yearIndex, seriesIndex);
+        const visualX = growthTaxBarX(left, axis.barW);
+        const visualW = growthTaxBarWidth(axis.barW);
+        const tickerX = growthTaxBarCenter(left, axis.barW);
+        assert.ok(
+          Math.abs(tickerX - (visualX + visualW / 2)) < 0.05,
+          `year=${years[yearIndex]} series=${seriesIndex} ticker must sit on the bar`,
+        );
+        assert.ok(
+          Math.abs(table.tickerCenters[yearIndex][seriesIndex] - tickerX) < 0.05,
+          "table ticker column must share the bar center",
+        );
+        centers.push(tickerX);
+        if (prevRight != null) {
+          visualGaps.push(visualX - prevRight);
+        }
+        prevRight = visualX + visualW;
+      }
+      const steps = centers.slice(1).map((center, index) => center - centers[index]);
+      for (const step of steps) {
+        assert.ok(Math.abs(step - steps[0]) < 0.05, "bar centers must be equally spaced");
+      }
+      for (const gap of visualGaps) {
+        assert.ok(gap > 0.5, "bars must not touch");
+        assert.ok(
+          Math.abs(gap - visualGaps[0]) < 0.05,
+          "no uneven gap between adjacent funds (AGTHX–FBGRX)",
+        );
       }
     }
   });
