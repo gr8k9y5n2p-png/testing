@@ -96,6 +96,8 @@ export function ResultsTable({
   paidCategory,
   onPaidFamily,
   onPaidCategory,
+  showUpcoming = true,
+  showPaidHistory = true,
 }: {
   funds: FundEstimateView[];
   onIllustrate?: (fund: FundEstimateView) => void;
@@ -118,6 +120,9 @@ export function ResultsTable({
   paidCategory?: string;
   onPaidFamily?: (family: string | undefined) => void;
   onPaidCategory?: (category: string | undefined) => void;
+  /** Homepage SoftWall split — Upcoming vs Paid History are not one wall. */
+  showUpcoming?: boolean;
+  showPaidHistory?: boolean;
 }) {
   const [localSortKey, setLocalSortKey] = useState<SortKey>("fundName");
   const [localSortDirection, setLocalSortDirection] = useState<SortDirection>("asc");
@@ -168,50 +173,54 @@ export function ResultsTable({
 
   return (
     <div className="space-y-6">
-      <FundSection
-        title={SEARCH_UPCOMING_HEADING}
-        description={SEARCH_UPCOMING_DETAIL}
-        kicker={SEARCH_UPCOMING_KICKER}
-        wellClassName="bg-surface"
-        funds={upcomingRows}
-        sortKey={sortKey}
-        sortDirection={sortDirection}
-        onSort={toggleSort}
-        onIllustrate={onIllustrate ? illustrate : undefined}
-        coverage={coverage}
-        emptyHeadline={UPCOMING_UNAVAILABLE_HEADLINE}
-        empty={UPCOMING_UNAVAILABLE_DETAIL}
-        showPayable
-        showAnnounced
-        page={page}
-        highlightedTicker={highlightedTicker}
-      />
-      <FundSection
-        title={SEARCH_PAID_HISTORY_HEADING}
-        description={SEARCH_PAID_HISTORY_DETAIL}
-        kicker={SEARCH_PAID_HISTORY_KICKER}
-        wellClassName="bg-paper"
-        funds={paid}
-        sortKey={sortKey}
-        sortDirection={sortDirection}
-        onSort={toggleSort}
-        onIllustrate={onIllustrate ? illustrate : undefined}
-        coverage={coverage}
-        empty={PAID_HISTORY_EMPTY}
-        showPayable
-        showAnnounced={false}
-        showHeading
-        highlightedTicker={highlightedTicker}
-        year={year}
-        years={years}
-        onYear={onYear}
-        page={paidPage}
-        paidFacets={paidFacets}
-        paidFamily={paidFamily}
-        paidCategory={paidCategory}
-        onPaidFamily={onPaidFamily}
-        onPaidCategory={onPaidCategory}
-      />
+      {showUpcoming ? (
+        <FundSection
+          title={SEARCH_UPCOMING_HEADING}
+          description={SEARCH_UPCOMING_DETAIL}
+          kicker={SEARCH_UPCOMING_KICKER}
+          wellClassName="bg-surface"
+          funds={upcomingRows}
+          sortKey={sortKey}
+          sortDirection={sortDirection}
+          onSort={toggleSort}
+          onIllustrate={onIllustrate ? illustrate : undefined}
+          coverage={coverage}
+          emptyHeadline={UPCOMING_UNAVAILABLE_HEADLINE}
+          empty={UPCOMING_UNAVAILABLE_DETAIL}
+          showPayable
+          showAnnounced
+          page={page}
+          highlightedTicker={highlightedTicker}
+        />
+      ) : null}
+      {showPaidHistory ? (
+        <FundSection
+          title={SEARCH_PAID_HISTORY_HEADING}
+          description={SEARCH_PAID_HISTORY_DETAIL}
+          kicker={SEARCH_PAID_HISTORY_KICKER}
+          wellClassName="bg-paper"
+          funds={paid}
+          sortKey={sortKey}
+          sortDirection={sortDirection}
+          onSort={toggleSort}
+          onIllustrate={onIllustrate ? illustrate : undefined}
+          coverage={coverage}
+          empty={PAID_HISTORY_EMPTY}
+          showPayable
+          showAnnounced={false}
+          showHeading
+          highlightedTicker={highlightedTicker}
+          year={year}
+          years={years}
+          onYear={onYear}
+          page={paidPage}
+          paidFacets={paidFacets}
+          paidFamily={paidFamily}
+          paidCategory={paidCategory}
+          onPaidFamily={onPaidFamily}
+          onPaidCategory={onPaidCategory}
+        />
+      ) : null}
     </div>
   );
 }

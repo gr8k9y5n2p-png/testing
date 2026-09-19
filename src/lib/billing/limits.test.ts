@@ -17,8 +17,8 @@ import {
 } from "./limits.ts";
 
 describe("freemium limits", () => {
-  it("locks 10 / 3 / 3", () => {
-    assert.equal(FREE_SEARCH_LIMIT, 10);
+  it("locks 5 / 3 / 3", () => {
+    assert.equal(FREE_SEARCH_LIMIT, 5);
     assert.equal(FREE_COMPARE_LIMIT, 3);
     assert.equal(FREE_PORTFOLIO_LIMIT, 3);
   });
@@ -55,7 +55,7 @@ describe("freemium limits", () => {
 
   it("parses raw and URI-encoded freemium cookies", () => {
     const spent = {
-      searches: 10,
+      searches: 5,
       compareKeys: ["A", "B", "C"],
       portfolioKeys: ["1", "2", "3"],
     };
@@ -73,13 +73,13 @@ describe("freemium limits", () => {
 
   it("raises walls at the locked limits", () => {
     const walls = usageWalls({
-      searches: 10,
+      searches: 5,
       compareKeys: ["a", "b", "c"],
       portfolioKeys: ["1", "2", "3"],
     });
     assert.deepEqual(walls, { search: true, compare: true, portfolio: true });
     assert.deepEqual(
-      remainingFromUsage({ searches: 7, compareKeys: ["a"], portfolioKeys: [] }),
+      remainingFromUsage({ searches: 2, compareKeys: ["a"], portfolioKeys: [] }),
       { searches: 3, compares: 2, portfolios: 3 },
     );
   });
