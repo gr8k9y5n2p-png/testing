@@ -84,6 +84,9 @@ describe("Lists entitlement gate", () => {
     assert.match(preview, /src = LISTS_UNLOCK_PREVIEW_SRC/);
     assert.match(preview, /LISTS_UNLOCK_PREVIEW_ALT/);
     assert.match(preview, /Ticker chips and the ticker column are strongly blurred/);
+    assert.match(preview, /NAV · Estimated \$/);
+    assert.match(preview, /LTCG · STCG · Ordinary/);
+    assert.match(preview, /Announced Date · Record Date · Ex-Date/);
     const copy = readFileSync(join(here, "../copy.ts"), "utf8");
     assert.match(copy, /LISTS_UNLOCK_KICKER = "Unlock Access"/);
     assert.match(copy, /LISTS_PAYWALL_LEAD = "Lists is included with Aftertax access."/);
