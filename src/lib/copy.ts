@@ -89,6 +89,12 @@ export const LISTS_OPENED = "List opened.";
 export const LISTS_UNLOCK_KICKER = "Unlock Access";
 /** Lists has no free quota — same entitlement as other Unlock Access walls. */
 export const LISTS_PAYWALL_LEAD = "Lists is included with Aftertax access.";
+/** Homepage Highlights — no free quota. */
+export const HIGHLIGHTS_PAYWALL_LEAD =
+  "Highlights are included with Aftertax access.";
+/** Homepage Upcoming / Announced universe — no free quota. Not Paid History. */
+export const UPCOMING_PAYWALL_LEAD =
+  "Upcoming / Announced estimates are included with Aftertax access.";
 /** Alt for the Modules Lists Unlock underlay. Footer marks sample layout. */
 export const LISTS_UNLOCK_PREVIEW_ALT =
   "Illustrative Lists layout — not live estimates";
@@ -135,16 +141,18 @@ export const ACCOUNT_STRIPE_RESERVE =
 
 export { TICKER_REQUEST } from "./data-api/request-ticker.ts";
 
-export {
+import {
   FREE_COMPARE_LIMIT,
   FREE_PORTFOLIO_LIMIT,
   FREE_SEARCH_LIMIT,
 } from "./billing/limits.ts";
 
+export { FREE_COMPARE_LIMIT, FREE_PORTFOLIO_LIMIT, FREE_SEARCH_LIMIT };
+
 export function freeSearchLabel(remaining: number): string {
   if (remaining <= 0) return "0 free searches left";
-  if (remaining === 1) return "1 of 10 free searches left";
-  return `${remaining} of 10 free searches left`;
+  if (remaining === 1) return `1 of ${FREE_SEARCH_LIMIT} free searches left`;
+  return `${remaining} of ${FREE_SEARCH_LIMIT} free searches left`;
 }
 
 export function freeCompareLabel(remaining: number): string {

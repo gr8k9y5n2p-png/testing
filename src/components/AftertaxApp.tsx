@@ -297,19 +297,19 @@ function AftertaxAppInner({
           <DemoBanner />
         </div>
         <div className="mt-8">
-          <HighlightsSection
-            highlights={liveUpcoming.length ? getHighlights(book, 5) : highlights}
-            onSelect={selectFund}
-          />
-          <SoftWall active={billing.walls.search} surface="search">
-            <Dashboard
-              funds={book}
-              facets={facets}
-              onIllustrate={selectFund}
-              onNotice={onNotice}
-              ticker={selected?.ticker}
+          <SoftWall active={billing.walls.highlights} surface="highlights">
+            <HighlightsSection
+              highlights={liveUpcoming.length ? getHighlights(book, 5) : highlights}
+              onSelect={selectFund}
             />
           </SoftWall>
+          <Dashboard
+            funds={book}
+            facets={facets}
+            onIllustrate={selectFund}
+            onNotice={onNotice}
+            ticker={selected?.ticker}
+          />
         </div>
       </section>
 

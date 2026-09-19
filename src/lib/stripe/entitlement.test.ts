@@ -47,12 +47,14 @@ describe("billing entitlement", () => {
       compare: false,
       portfolio: false,
       lists: false,
+      highlights: false,
+      upcoming: false,
     });
   });
 
-  it("raises the search wall after 10 anonymous loads", () => {
+  it("raises the search wall after 5 anonymous loads", () => {
     const entitlement = entitlementFrom(null, {
-      searches: 10,
+      searches: 5,
       compareKeys: [],
       portfolioKeys: [],
     });
@@ -68,6 +70,9 @@ describe("billing entitlement", () => {
       portfolioKeys: [],
     });
     assert.equal(signedOut.walls.lists, true);
+    assert.equal(signedOut.walls.highlights, true);
+    assert.equal(signedOut.walls.upcoming, true);
+    assert.equal(signedOut.walls.search, false);
     assert.equal(signedOut.subscribed, false);
 
     const bypass = entitlementFrom(
@@ -76,6 +81,8 @@ describe("billing entitlement", () => {
       { NEXT_PUBLIC_FREEMIUM_DISABLED: "true" },
     );
     assert.equal(bypass.walls.lists, false);
+    assert.equal(bypass.walls.highlights, false);
+    assert.equal(bypass.walls.upcoming, false);
     assert.equal(bypass.bypass, true);
   });
 });

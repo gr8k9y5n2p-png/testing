@@ -32,6 +32,14 @@ describe("Sample Estimates empty copy", () => {
     assert.match(source, /LISTS_PAYWALL_LEAD = "Lists is included with Aftertax access."/);
     assert.match(
       source,
+      /HIGHLIGHTS_PAYWALL_LEAD =\s*"Highlights are included with Aftertax access."/,
+    );
+    assert.match(
+      source,
+      /UPCOMING_PAYWALL_LEAD =\s*"Upcoming \/ Announced estimates are included with Aftertax access."/,
+    );
+    assert.match(
+      source,
       /LISTS_UNLOCK_PREVIEW_ALT =\s*"Illustrative Lists layout — not live estimates"/,
     );
     assert.doesNotMatch(source, /Upgrade \$39/);
@@ -51,6 +59,7 @@ describe("Sample Estimates empty copy", () => {
     assert.match(source, /\$\{remaining\} Comparisons Left/);
     assert.match(source, /0 Comparisons Left/);
     assert.doesNotMatch(source, /free compare reports left/);
+    assert.match(source, /of \$\{FREE_SEARCH_LIMIT\} free searches left/);
     assert.match(source, /free searches left/);
     assert.match(source, /free portfolio reviews left/);
   });

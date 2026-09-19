@@ -68,6 +68,8 @@ export function entitlementFrom(
       compare: unlimited ? false : walls.compare,
       portfolio: unlimited ? false : walls.portfolio,
       lists: !unlimited,
+      highlights: !unlimited,
+      upcoming: !unlimited,
     },
     detail: configured ? null : BILLING_NOT_CONFIGURED,
   };
