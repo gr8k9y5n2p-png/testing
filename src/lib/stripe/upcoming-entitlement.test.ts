@@ -4,7 +4,6 @@ import { describe, it } from "node:test";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { entitlementFrom, isUpcomingEntitled } from "./entitlement.ts";
-import { SEARCH_UPCOMING_PAYWALL_LEAD } from "../copy.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -88,9 +87,11 @@ describe("Upcoming / Announced entitlement gate", () => {
 
     assert.match(app, /<IllustratePanel/);
     assert.match(app, /<Dashboard/);
+    const dashboardAt = app.indexOf("<Dashboard");
+    assert.ok(dashboardAt > 0);
     assert.doesNotMatch(
-      app,
-      /SoftWall active=\{billing\.walls\.search\}[\s\S]*<Dashboard/,
+      app.slice(Math.max(0, dashboardAt - 240), dashboardAt),
+      /<SoftWall/,
     );
 
     assert.match(wall, /surface === "upcoming"/);
@@ -101,12 +102,7 @@ describe("Upcoming / Announced entitlement gate", () => {
     assert.doesNotMatch(wall, /accountLoginHref/);
     assert.match(
       copy,
-      new RegExp(
-        `SEARCH_UPCOMING_PAYWALL_LEAD =\\s*"${SEARCH_UPCOMING_PAYWALL_LEAD.replace(
-          /[.*+?^${}()|[\]\\]/g,
-          "\\$&",
-        )}"`,
-      ),
+      /SEARCH_UPCOMING_PAYWALL_LEAD =\s*"Upcoming \/ Announced is included with Aftertax access."/,
     );
   });
 });

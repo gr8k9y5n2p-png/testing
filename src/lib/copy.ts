@@ -11,6 +11,11 @@ import {
   LEGAL_COMPACT,
   LEGAL_DISCLAIMER,
 } from "./legal-copy";
+import {
+  FREE_COMPARE_LIMIT,
+  FREE_PORTFOLIO_LIMIT,
+  FREE_SEARCH_LIMIT,
+} from "./billing/limits.ts";
 
 export const COPY = {
   hero: "See the taxable impact in dollars — before the meeting ends.",
@@ -142,7 +147,7 @@ export {
   FREE_COMPARE_LIMIT,
   FREE_PORTFOLIO_LIMIT,
   FREE_SEARCH_LIMIT,
-} from "./billing/limits.ts";
+};
 
 export function freeSearchLabel(remaining: number): string {
   if (remaining <= 0) return "0 free searches left";
