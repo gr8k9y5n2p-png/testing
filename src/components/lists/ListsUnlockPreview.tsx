@@ -27,8 +27,8 @@ export function ListsUnlockPreview({
         <img
           src={src}
           alt={LISTS_UNLOCK_PREVIEW_ALT}
-          width={1600}
-          height={700}
+          width={1200}
+          height={870}
           className="h-auto w-full"
         />
       ) : (
@@ -38,8 +38,8 @@ export function ListsUnlockPreview({
             src={LISTS_UNLOCK_PREVIEW_SRC}
             srcSet={`${LISTS_UNLOCK_PREVIEW_SRC} 1x, ${LISTS_UNLOCK_PREVIEW_SRC_2X} 2x`}
             alt={LISTS_UNLOCK_PREVIEW_ALT}
-            width={1600}
-            height={700}
+            width={1200}
+            height={870}
             className="h-auto w-full"
           />
         </picture>
