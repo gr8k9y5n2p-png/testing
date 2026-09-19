@@ -141,11 +141,13 @@ export const ACCOUNT_STRIPE_RESERVE =
 
 export { TICKER_REQUEST } from "./data-api/request-ticker.ts";
 
-export {
+import {
   FREE_COMPARE_LIMIT,
   FREE_PORTFOLIO_LIMIT,
   FREE_SEARCH_LIMIT,
 } from "./billing/limits.ts";
+
+export { FREE_COMPARE_LIMIT, FREE_PORTFOLIO_LIMIT, FREE_SEARCH_LIMIT };
 
 export function freeSearchLabel(remaining: number): string {
   if (remaining <= 0) return "0 free searches left";
