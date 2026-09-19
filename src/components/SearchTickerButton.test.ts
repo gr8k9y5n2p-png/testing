@@ -49,6 +49,7 @@ describe("Search-page ticker clicks select into Search a fund", () => {
       /compareTickersPath|\/compare\?tickers=/,
     );
 
-    assert.match(dashboard, /onIllustrate=\{onIllustrate\}/);
+    assert.match(dashboard, /onIllustrate,/);
+    assert.match(dashboard, /<ResultsTable \{\.\.\.tableProps\}/);
   });
 });

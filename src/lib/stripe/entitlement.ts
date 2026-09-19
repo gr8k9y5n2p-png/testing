@@ -68,6 +68,7 @@ export function entitlementFrom(
       compare: unlimited ? false : walls.compare,
       portfolio: unlimited ? false : walls.portfolio,
       lists: !unlimited,
+      upcoming: !unlimited,
     },
     detail: configured ? null : BILLING_NOT_CONFIGURED,
   };
@@ -110,6 +111,13 @@ export async function recordUsage(
 /** Lists is a paid surface: subscribed or freemium-bypass only. */
 export function isListsEntitled(entitlement: Pick<Entitlement, "walls">): boolean {
   return !entitlement.walls.lists;
+}
+
+/** Homepage Upcoming / Announced: subscribed or freemium-bypass only. */
+export function isUpcomingEntitled(
+  entitlement: Pick<Entitlement, "walls">,
+): boolean {
+  return !entitlement.walls.upcoming;
 }
 
 export async function mergeSignedInUsage(

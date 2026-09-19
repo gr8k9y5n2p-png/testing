@@ -11,7 +11,7 @@ function read(relative: string): string {
 }
 
 describe("soft-wall placement", () => {
-  it("blurs Search dollar illustration and Upcoming / Paid History without blocking the search box", () => {
+  it("blurs Search dollar illustration without blocking the search box", () => {
     const app = read("../AftertaxApp.tsx");
     const hero = read("../landing/Hero.tsx");
     assert.match(app, /SoftWall active=\{billing\.walls\.search\}/);
@@ -22,6 +22,25 @@ describe("soft-wall placement", () => {
     assert.match(hero, /FundPicker/);
     assert.match(hero, /RequestFundForm/);
     assert.doesNotMatch(hero, /SoftWall/);
+  });
+
+  it("paywalls homepage Upcoming / Announced unless subscribed, separately from Paid History", () => {
+    const dashboard = read("../Dashboard.tsx");
+    const wall = read("SoftWall.tsx");
+    assert.match(dashboard, /active=\{billing\.walls\.upcoming\}/);
+    assert.match(dashboard, /surface="upcoming"/);
+    assert.match(dashboard, /showPaidHistory=\{false\}/);
+    assert.match(dashboard, /active=\{billing\.walls\.search\}/);
+    assert.match(dashboard, /showUpcoming=\{false\}/);
+    const upcomingWall = dashboard.indexOf('surface="upcoming"');
+    const paidWall = dashboard.lastIndexOf('surface="search"');
+    assert.ok(upcomingWall >= 0 && paidWall > upcomingWall);
+    assert.match(wall, /surface === "upcoming"/);
+    assert.match(wall, /SEARCH_UPCOMING_PAYWALL_LEAD/);
+    assert.match(wall, /HOMEPAGE_UNLOCK_ACCESS/);
+    assert.match(wall, /UnlockAccountModal/);
+    assert.match(wall, /startOrCheckout/);
+    assert.doesNotMatch(wall, /You’ve used 10 free fund searches/);
   });
 
   it("blurs Compare modules while leaving ticker slots editable", () => {
