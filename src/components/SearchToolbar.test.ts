@@ -54,11 +54,11 @@ describe("Search Upcoming / Announced module chrome", () => {
     assert.match(dashboard, /setPaidOffset\(0\)/);
     assert.match(
       dashboard,
-      /onPaidFamily=\{\(family\) => applyFilters\(\{ \.\.\.filters, family \}\)\}/,
+      /onPaidFamily: \(family: string \| undefined\) =>\s*applyFilters\(\{ \.\.\.filters, family \}\)/,
     );
     assert.match(
       dashboard,
-      /onPaidCategory=\{\(category\) => applyFilters\(\{ \.\.\.filters, category \}\)\}/,
+      /onPaidCategory: \(category: string \| undefined\) =>\s*applyFilters\(\{ \.\.\.filters, category \}\)/,
     );
     const apply = dashboard.slice(
       dashboard.indexOf("function applyFilters"),

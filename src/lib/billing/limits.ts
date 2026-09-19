@@ -1,9 +1,10 @@
 /**
- * Charge-ready freemium limits (locked 2026-09-17).
+ * Charge-ready freemium limits (locked 2026-09-19).
  * Soft wall after these — blur + CTA, not a homepage hard block.
+ * Homepage Upcoming / Announced is subscription-gated (not usage-counted).
  */
 
-export const FREE_SEARCH_LIMIT = 10;
+export const FREE_SEARCH_LIMIT = 5;
 export const FREE_COMPARE_LIMIT = 3;
 export const FREE_PORTFOLIO_LIMIT = 3;
 
@@ -40,6 +41,8 @@ export type Entitlement = {
     portfolio: boolean;
     /** Entire Lists tab — not usage-counted. True unless subscribed or bypass. */
     lists: boolean;
+    /** Homepage Upcoming / Announced — not usage-counted. True unless subscribed or bypass. */
+    upcoming: boolean;
   };
   detail: string | null;
 };

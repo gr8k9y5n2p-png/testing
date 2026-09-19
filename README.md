@@ -168,8 +168,8 @@ Search, Sample Estimates, and homepage highlights load `GET /distributions` only
 ## Funnel (this UI)
 
 1. Land → search a fund (primary). Compare, Portfolios, and Lists are AppNav tabs (`/compare`, `/portfolio`, `/lists`) — not Search-page shortcut buttons.
-2. Instant dollar illustration. Each completed Search load counts toward 10 free searches.
-3. After 10 searches / 3 compare reports / 3 portfolio reviews → soft blur + Unlock CTA (`$39 / user / month`). Homepage search box and Request a fund stay usable. Lists has no free quota — the whole tab is Unlock Access unless subscribed.
+2. Instant dollar illustration. Each completed Search load counts toward 5 free searches.
+3. After 5 searches / 3 compare reports / 3 portfolio reviews → soft blur + Unlock CTA (`$39 / user / month`). Homepage search box and Request a fund stay usable. Homepage Upcoming / Announced and Lists have no free quota — Unlock Access unless subscribed.
 4. Checkout (signed-in Account) returns to the same flow (`?checkout=success`) or a cancel notice (`?checkout=cancel`). No onboarding tour. Cancel at period end from Account → Manage billing.
 
 Highlights and the full estimates table sit below the illustration as the live Data API universe — not a landing feature grid.
@@ -200,7 +200,7 @@ Webhook URL: `https://<host>/api/stripe/webhook`. Events: `checkout.session.comp
 
 1. Set the Vercel env above with **test** keys. Deploy. Confirm `GET /api/billing/entitlement` returns `{ configured: true, subscribed: false }` (no crash when keys are missing — `configured: false` and Unlock says billing is not configured).
 2. **Checkout:** Create an Account (homepage sign-in panel) → Unlock full access or Account → Unlock full access. Complete Stripe Checkout test card `4242…`. Land on `/?checkout=success`. Account shows Plan · $39 / user / month · active. Manage billing opens Customer Portal. Cancel there — status becomes cancel-at-period-end; access stays until period end.
-3. **Soft wall (signed out or unsubscribed):** In DevTools set cookie `aftertax_freemium` **and** Local Storage `aftertax.freemium.v2` to `{"searches":10,"compareKeys":["A","B","C"],"portfolioKeys":["1","2","3"]}`, then reload. Layout reads the cookie so the first paint already shows `0 free searches left`. Search a fund — Dollar Ill / Upcoming / Paid History are blurred with Unlock; search box + Request a fund still work. `/compare` ticker slots stay editable; modules blur. `/portfolio` allocation slots stay editable; modules blur. Without Stripe env the CTA says billing is not configured (no crash).
+3. **Soft wall (signed out or unsubscribed):** Homepage Upcoming / Announced is Unlock Access immediately (no free quota). In DevTools set cookie `aftertax_freemium` **and** Local Storage `aftertax.freemium.v2` to `{"searches":5,"compareKeys":["A","B","C"],"portfolioKeys":["1","2","3"]}`, then reload. Layout reads the cookie so the first paint already shows `0 free searches left`. Search a fund — Dollar Ill / Paid History are also blurred with Unlock; search box + Request a fund still work. `/compare` ticker slots stay editable; modules blur. `/portfolio` allocation slots stay editable; modules blur. Without Stripe env the CTA says billing is not configured (no crash).
 4. Webhook: Stripe CLI `stripe listen --forward-to localhost:3000/api/stripe/webhook` or the Vercel URL. Trigger `checkout.session.completed` — `stripeCustomerId` appears on the account.
 
 Paywall copy is locked in `src/lib/copy.ts`. Anonymous counters use `aftertax.freemium.v2` + cookie `aftertax_freemium`. Signed-in counters + subscription status live on the Account row and merge (max / union) on login.

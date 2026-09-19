@@ -47,18 +47,30 @@ describe("billing entitlement", () => {
       compare: false,
       portfolio: false,
       lists: false,
+      upcoming: false,
     });
   });
 
-  it("raises the search wall after 10 anonymous loads", () => {
+  it("raises the search wall after 5 anonymous loads", () => {
     const entitlement = entitlementFrom(null, {
-      searches: 10,
+      searches: 5,
       compareKeys: [],
       portfolioKeys: [],
     });
     assert.equal(entitlement.walls.search, true);
     assert.equal(entitlement.remaining.searches, 0);
     assert.equal(entitlement.signedIn, false);
+  });
+
+  it("walls Upcoming for freemium visitors even before search quota is spent", () => {
+    const mid = entitlementFrom(null, {
+      searches: 2,
+      compareKeys: [],
+      portfolioKeys: [],
+    });
+    assert.equal(mid.walls.search, false);
+    assert.equal(mid.walls.upcoming, true);
+    assert.equal(mid.remaining.searches, 3);
   });
 
   it("walls Lists for freemium / signed-out / not entitled, never for subscribers", () => {

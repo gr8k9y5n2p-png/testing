@@ -301,15 +301,13 @@ function AftertaxAppInner({
             highlights={liveUpcoming.length ? getHighlights(book, 5) : highlights}
             onSelect={selectFund}
           />
-          <SoftWall active={billing.walls.search} surface="search">
-            <Dashboard
-              funds={book}
-              facets={facets}
-              onIllustrate={selectFund}
-              onNotice={onNotice}
-              ticker={selected?.ticker}
-            />
-          </SoftWall>
+          <Dashboard
+            funds={book}
+            facets={facets}
+            onIllustrate={selectFund}
+            onNotice={onNotice}
+            ticker={selected?.ticker}
+          />
         </div>
       </section>
 

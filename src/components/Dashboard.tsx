@@ -20,6 +20,8 @@ import { collectTaxYearsFromFunds, mergeTaxYears } from "@/data/tax-years";
 import type { Facets, FundEstimateView, SearchFilters } from "@/data/types";
 import { ResultsTable } from "@/components/ResultsTable";
 import { SearchToolbar } from "@/components/SearchToolbar";
+import { SoftWall } from "@/components/paywall/SoftWall";
+import { useBilling } from "@/components/BillingProvider";
 import type { SortDirection, SortKey } from "@/lib/format";
 import {
   SEARCH_UPCOMING_DETAIL,
@@ -112,6 +114,7 @@ export function Dashboard({
   /** Selected Search ticker — highlight / hydrate in place. Never shrinks Upcoming. */
   ticker?: string | null;
 }) {
+  const billing = useBilling();
   const [filters, setFilters] = useState<SearchFilters>(() => ({
     year: currentPaidHistoryYear(),
   }));
@@ -342,81 +345,89 @@ export function Dashboard({
     if (paidHistoryDataSortKey(key)) setPaidOffset(0);
   }
 
+  const tableProps = {
+    funds: tableFunds,
+    paidFunds,
+    onIllustrate,
+    sortKey,
+    sortDirection,
+    onSort: toggleSort,
+    year: paidYear,
+    years: mergeTaxYears(toolbarFacets.years, [paidYear]),
+    onYear: (nextYear: number) => applyFilters({ ...filters, year: nextYear }),
+    paidFacets: {
+      families: toolbarFacets.families,
+      categories: toolbarFacets.categories,
+    },
+    paidFamily: filters.family,
+    paidCategory: filters.category,
+    onPaidFamily: (family: string | undefined) =>
+      applyFilters({ ...filters, family }),
+    onPaidCategory: (category: string | undefined) =>
+      applyFilters({ ...filters, category }),
+    highlightedTicker: scopedTicker,
+    page:
+      upcomingCount > FUND_PAGE_SIZE
+        ? {
+            total: upcomingCount,
+            limit: FUND_PAGE_SIZE,
+            offset,
+            onOffset: setOffset,
+          }
+        : undefined,
+    paidPage: {
+      total: paidPage.total,
+      limit: paidPage.limit,
+      offset: paidPage.offset,
+      hasMore: paidPage.hasMore,
+      onOffset: setPaidOffset,
+      onLimit: applyPaidLimit,
+      limitOptions: PAID_HISTORY_PAGE_SIZES,
+    },
+  };
+
   return (
     <section aria-labelledby="results-heading">
-      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h2
-            id="results-heading"
-            className="font-serif text-xl tracking-tight text-ink"
-          >
-            {SEARCH_UPCOMING_HEADING}
-          </h2>
-          <p className="mt-1 text-sm text-muted">{SEARCH_UPCOMING_DETAIL}</p>
+      <SoftWall active={billing.walls.upcoming} surface="upcoming">
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h2
+              id="results-heading"
+              className="font-serif text-xl tracking-tight text-ink"
+            >
+              {SEARCH_UPCOMING_HEADING}
+            </h2>
+            <p className="mt-1 text-sm text-muted">{SEARCH_UPCOMING_DETAIL}</p>
+          </div>
+          <p className="font-mono text-xs text-faint" aria-live="polite">
+            {isPending ? "Updating…" : rangeLabel}
+          </p>
         </div>
-        <p className="font-mono text-xs text-faint" aria-live="polite">
-          {isPending ? "Updating…" : rangeLabel}
-        </p>
-      </div>
-      <SearchToolbar
-        filters={{
-          family: filters.family,
-          category: filters.category,
-        }}
-        facets={{
-          families: toolbarFacets.families,
-          categories: toolbarFacets.categories,
-        }}
-        onChange={(next) =>
-          applyFilters({
-            family: next.family,
-            category: next.category,
-            year: filters.year,
-          })
-        }
-      />
-      <div className={isPending ? "opacity-70 transition-opacity" : ""}>
-        <ResultsTable
-          funds={tableFunds}
-          paidFunds={paidFunds}
-          onIllustrate={onIllustrate}
-          sortKey={sortKey}
-          sortDirection={sortDirection}
-          onSort={toggleSort}
-          year={paidYear}
-          years={mergeTaxYears(toolbarFacets.years, [paidYear])}
-          onYear={(nextYear) =>
-            applyFilters({ ...filters, year: nextYear })
-          }
-          paidFacets={{
+        <SearchToolbar
+          filters={{
+            family: filters.family,
+            category: filters.category,
+          }}
+          facets={{
             families: toolbarFacets.families,
             categories: toolbarFacets.categories,
           }}
-          paidFamily={filters.family}
-          paidCategory={filters.category}
-          onPaidFamily={(family) => applyFilters({ ...filters, family })}
-          onPaidCategory={(category) => applyFilters({ ...filters, category })}
-          highlightedTicker={scopedTicker}
-          page={
-            upcomingCount > FUND_PAGE_SIZE
-              ? {
-                  total: upcomingCount,
-                  limit: FUND_PAGE_SIZE,
-                  offset,
-                  onOffset: setOffset,
-                }
-              : undefined
+          onChange={(next) =>
+            applyFilters({
+              family: next.family,
+              category: next.category,
+              year: filters.year,
+            })
           }
-          paidPage={{
-            total: paidPage.total,
-            limit: paidPage.limit,
-            offset: paidPage.offset,
-            hasMore: paidPage.hasMore,
-            onOffset: setPaidOffset,
-            onLimit: applyPaidLimit,
-            limitOptions: PAID_HISTORY_PAGE_SIZES,
-          }}
         />
+        <div className={isPending ? "opacity-70 transition-opacity" : ""}>
+          <ResultsTable {...tableProps} showPaidHistory={false} />
+        </div>
+      </SoftWall>
+      <div className={`mt-6 ${isPending ? "opacity-70 transition-opacity" : ""}`}>
+        <SoftWall active={billing.walls.search} surface="search">
+          <ResultsTable {...tableProps} showUpcoming={false} />
+        </SoftWall>
       </div>
     </section>
   );
