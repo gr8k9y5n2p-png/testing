@@ -64,5 +64,6 @@ describe("SoftWall unlock status", () => {
     assert.equal(unlockCtaPreview(true), null);
     assert.equal(accountLoginHref("/"), HOMEPAGE_LOGIN_HREF);
     assert.equal(accountLoginHref("/compare"), ACCOUNT_LOGIN_HREF);
+    assert.equal(accountLoginHref("/lists"), ACCOUNT_LOGIN_HREF);
   });
 });

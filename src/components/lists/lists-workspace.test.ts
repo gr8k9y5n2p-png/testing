@@ -20,4 +20,23 @@ describe("Lists Save / Open chrome", () => {
     assert.doesNotMatch(source, /NEXT_PUBLIC_FREEMIUM/);
     assert.doesNotMatch(source, /PaywallDialog/);
   });
+
+  it("gates Lists fetches when the entitlement wall is up", () => {
+    const source = readFileSync(join(here, "ListsWorkspace.tsx"), "utf8");
+    const body = readFileSync(join(here, "ListsPageBody.tsx"), "utf8");
+    const page = readFileSync(join(here, "../../app/lists/page.tsx"), "utf8");
+    assert.match(body, /billing\.walls\.lists/);
+    assert.match(body, /surface="lists"/);
+    assert.match(page, /ListsPageBody/);
+    assert.match(source, /useBilling/);
+    assert.match(source, /const locked = billing\.walls\.lists/);
+    assert.match(source, /if \(locked\) return/);
+    assert.match(source, /\[locked, tickers\]/);
+    assert.doesNotMatch(source, /FRIENDS_BETA_PASSWORD/);
+    const wall = readFileSync(join(here, "../paywall/SoftWall.tsx"), "utf8");
+    assert.match(wall, /UnlockAccountModal/);
+    assert.match(wall, /startOrCheckout/);
+    assert.doesNotMatch(wall, /scrollIntoView/);
+    assert.doesNotMatch(wall, /accountLoginHref/);
+  });
 });

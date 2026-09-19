@@ -67,6 +67,7 @@ export function entitlementFrom(
       search: unlimited ? false : walls.search,
       compare: unlimited ? false : walls.compare,
       portfolio: unlimited ? false : walls.portfolio,
+      lists: !unlimited,
     },
     detail: configured ? null : BILLING_NOT_CONFIGURED,
   };
@@ -104,6 +105,11 @@ export async function recordUsage(
     entitlement: entitlementFrom(account, device),
     usage: account ? mergeUsage(account.usage, device) : device,
   };
+}
+
+/** Lists is a paid surface: subscribed or freemium-bypass only. */
+export function isListsEntitled(entitlement: Pick<Entitlement, "walls">): boolean {
+  return !entitlement.walls.lists;
 }
 
 export async function mergeSignedInUsage(

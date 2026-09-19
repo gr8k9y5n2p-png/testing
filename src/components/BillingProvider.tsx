@@ -156,6 +156,7 @@ function entitlementOf(usage: DeviceUsage, remote: RemoteBilling): Entitlement {
       search: unlimited ? false : walls.search,
       compare: unlimited ? false : walls.compare,
       portfolio: unlimited ? false : walls.portfolio,
+      lists: !unlimited,
     },
     detail: remote.detail,
   };

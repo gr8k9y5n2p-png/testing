@@ -165,6 +165,54 @@ describe("saved-assets HTTP account scoping", () => {
     assert.equal(missing.status, 404);
   });
 
+  it("refuses list Save / Open when Lists is not entitled", async () => {
+    const store = new MemorySavedAssetStore();
+    const userA = newAccountId();
+    const denied = await handleSavedAssetsCollection(
+      request("http://localhost/api/saved-assets", {
+        method: "POST",
+        accountId: userA,
+        body: JSON.stringify({
+          type: "list",
+          name: "Blocked",
+          payload: { tickers: ["AAAXX"] },
+        }),
+      }),
+      store,
+      { listsEntitled: false },
+    );
+    assert.equal(denied.status, 403);
+    const deniedBody = await json(denied);
+    assert.match(String(deniedBody.detail), /Lists is included with Aftertax access/);
+
+    const created = await handleSavedAssetsCollection(
+      request("http://localhost/api/saved-assets", {
+        method: "POST",
+        accountId: userA,
+        body: JSON.stringify({
+          type: "list",
+          name: "Allowed first",
+          payload: { tickers: ["AAAXX"] },
+        }),
+      }),
+      store,
+    );
+    const { item } = (await json(created)) as { item: { id: string } };
+    const listed = await handleSavedAssetsCollection(
+      request("http://localhost/api/saved-assets?type=list", { accountId: userA }),
+      store,
+      { listsEntitled: false },
+    );
+    assert.equal(listed.status, 403);
+    const opened = await handleSavedAssetItem(
+      request(`http://localhost/api/saved-assets/${item.id}`, { accountId: userA }),
+      item.id,
+      store,
+      { listsEntitled: false },
+    );
+    assert.equal(opened.status, 403);
+  });
+
   it("returns 401 when the request has no account session", async () => {
     const store = new MemorySavedAssetStore();
     const response = await handleSavedAssetsCollection(
